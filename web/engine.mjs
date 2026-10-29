@@ -1,3 +1,4 @@
+import {suggestTags} from './content-tools.mjs';
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
 export const DICTIONARY = {
   'Саларьево парк':'萨拉里耶沃公园住宅区', 'Скандинавский':'斯堪的纳维亚住宅区',
@@ -94,15 +95,20 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   const main=routes[0],metro=main?zh(main.name):'';
   const featureSet=new Set(v.features||[]);
   const highlight=zh(v.highlight||'');
-  const titles=[
+  let titles=[
     ['🔥莫斯科'+price+layout,area,main?metro+(main.time?' '+(modes[main.mode]||'')+main.time+'分钟':''):null].filter(Boolean).join('｜'),
     ['🏡莫斯科'+area+layout,featureSet.has('bed')?'独立大床':null,featureSet.has('ac')?'空调':null,price?'月租'+price:null].filter(Boolean).join('｜'),
     positive('occupants')&&positive('price')?['🚨莫斯科'+price+'整套'+layout, v.occupants+'人人均'+wan(Number(v.price)/Number(v.occupants)),area].filter(Boolean).join('｜'):
       ['✈️莫斯科'+price+layout,metro?'近'+metro:null,v.registration&&v.registration!=='none'?'免费协助登记':null].filter(Boolean).join('｜'),
   ];
+  const variation=Math.abs(Number(v.titleVariant)||0);
+  const hooks=[];if(featureSet.has('ac'))hooks.push('空调');if(featureSet.has('bed'))hooks.push('双人床');if(featureSet.has('closet'))hooks.push('衣帽间');if(featureSet.has('dishwasher'))hooks.push('洗碗机');
+  if(variation%3===1)titles=[['🏡'+area+layout,metro||'莫斯科',hooks.join('＋')||'整套出租',price].filter(Boolean).join('｜'),...titles.slice(0,2)];
+  if(variation%3===2)titles=[['✈️莫斯科'+price,area+layout,v.registration&&v.registration!=='none'?'免费协助登记':hooks.join('＋')||metro].filter(Boolean).join('｜'),titles[2],titles[1]];
   const lines=[]; const push=(...s)=>lines.push(...s);
   if(v.style==='story')push('🇷🇺 想在莫斯科找一套适合自己生活节奏的住房？这套'+(area?area+'的':'')+layout+'可以了解一下！','');
   if(v.complex||v.districtZh)push('📍 莫斯科｜'+zh(v.complex||v.districtZh));
+  if(v.campus)push('🎓 校区：'+zh(v.campus));
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
   else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');
   else if(v.layout==='studio')push('🏠 户型：开放式Studio');
@@ -153,7 +159,10 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   for(const r of routes)tags.push('#'+zh(r.name).replace(/[\s#]/g,''));
   for(const u of universities)tags.push('#'+zh(u.name).replace(/[\s#]/g,''));
   if(prefs.brandTags)tags.push(...prefs.brandTags.split(/\s+/).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t));
-  return {titles,body:lines.join('\n'),tags:[...new Set(tags)].join(' '),unknown:[...new Set(unknown)],problems};
+  const tagSuggestions=suggestTags(v,rules,translate,parseRoutes);
+  const finalTags=tagSuggestions.map(x=>'#'+x.tag);
+  if(prefs.brandTags)finalTags.push(...prefs.brandTags.split(/\s+/).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t));
+  return {titles,body:lines.join('\n'),tags:[...new Set(finalTags)].join(' '),tagSuggestions,unknown:[...new Set(unknown)],problems};
 }
 
 export function extractFacts(text,rules=DICTIONARY) {

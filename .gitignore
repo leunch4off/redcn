@@ -5,3 +5,8 @@ site.tar.gz
 .env
 .env.*
 *.backup.json
+__pycache__/
+*.pyc
+.redcn-cache/
+output/
+*.sqlite3

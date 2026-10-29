@@ -1,18 +1,22 @@
 import {DICTIONARY,FEATURES,DEFAULT_PREFS,generateListing,extractFacts,rubles} from './engine.mjs';
+import {TAG_CATALOG,listingEligible} from './content-tools.mjs';
+import {setupWordEditor} from './word-editor.mjs';
 
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
 let toastTimer;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Не удалось сохранить: хранилище браузера заполнено или недоступно. Экспортируйте копию.');return false;}}
-const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople'];
-const defaults={style:'compact',layout:'classic',utilities:'unknown',registration:'assist',support:true,uniMode:'步行'};
+const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission'];
+const defaults={style:'compact',layout:'classic',utilities:'unknown',registration:'assist',support:true,uniMode:'步行',seller:'unknown',audience:'general'};
 const storedRules=read('most-rules',null);
 let rules=read('most-rules-version',0)===2&&storedRules?storedRules:{...DICTIONARY,...storedRules};
 if(read('most-rules-version',0)!==2&&write('most-rules',rules))write('most-rules-version',2);
 let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
 let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
 let current=null,titleIndex=0,currentTitles=[];
+let titleVariant=0,wordEditor=null,photoUrls=[];
+let wordCustom=read('most-word-custom',[]);if(!Array.isArray(wordCustom))wordCustom=[];
 
 // Generate checkboxes using safe DOM methods; nothing from a listing becomes HTML.
 const groupNames={bedroom:'СПАЛЬНЯ',living:'ГОСТИНАЯ',kitchen:'КУХНЯ',bathroom:'САНУЗЕЛ',storage:'ХРАНЕНИЕ'};
@@ -23,11 +27,11 @@ for(const group of Object.keys(groupNames)){
     wrapper.append(input,document.createTextNode(label));$('featureGrid').append(wrapper);
   }
 }
-function snapshot(){const value={};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
-function populate(value){const v={...defaults,...value};for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES)$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);}
+function snapshot(){const value={titleVariant,photos:photoUrls};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
+function populate(value){wordEditor?.reset();const v={...defaults,...value};titleVariant=Number(v.titleVariant)||0;photoUrls=Array.isArray(v.photos)?v.photos:[];renderPhotos();for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES)$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
-function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();}
-function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();}
+function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
+function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();}
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>tab(button.dataset.tab));
 function renderTitles(){
   $('variants').replaceChildren();
@@ -35,10 +39,14 @@ function renderTitles(){
 }
 function generate(){
   const result=generateListing(snapshot(),rules,prefs);if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');toast('Проверьте числовые поля');return;}
-  currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();
+  currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);
   $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.';saveDraft();
 }
 $('generate').onclick=generate;
+$('rotateTitles').onclick=()=>{titleVariant++;const result=generateListing(snapshot(),rules,prefs);currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);saveDraft();toast('Новые заголовки и теги. Текст описания сохранён.');};
+function renderTagReasons(suggestions=[]){$('tagReasons').replaceChildren();for(const item of suggestions){const div=document.createElement('div');div.className='tag-item';div.textContent='#'+item.tag+' — '+item.ru+' · '+item.reason;$('tagReasons').append(div);}}
+function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$('tagCatalog').replaceChildren();for(const [tag,ru] of TAG_CATALOG.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q))){const button=document.createElement('button');button.className='btn word-result';button.textContent='#'+tag+' — '+ru;button.onclick=()=>{const tags=new Set($('tags').value.split(/\s+/).filter(Boolean));tags.add('#'+tag);$('tags').value=[...tags].join(' ');saveDraft();};$('tagCatalog').append(button);}}
+$('tagSearch').oninput=renderTagCatalog;
 for(const key of fields)$(key).addEventListener('input',saveDraft);
 for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',saveDraft);
 for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',saveDraft);
@@ -79,7 +87,7 @@ $('save').onclick=()=>{
 $('newObject').onclick=()=>{saveDraft();populate({});current=null;currentTitles=[];$('output').value='';$('outputTitle').value='';$('tags').value='';renderTitles();saveDraft();toast('Новая карточка. Объекты из библиотеки сохранены.');};
 function renderList(){
   const q=$('search').value.toLowerCase();$('list').replaceChildren();
-  const found=objects.filter(o=>[o.name,o.metro,o.complex,o.title].join(' ').toLowerCase().includes(q));
+  const mode=$('libraryFilter').value;const found=objects.filter(o=>[o.name,o.metro,o.complex,o.title].join(' ').toLowerCase().includes(q)&&(mode==='all'||mode==='owner'&&o.seller==='owner'||mode==='eligible'&&listingEligible(o.seller,o.commission)));
   if(!found.length)$('list').textContent='Здесь появятся сохранённые объекты.';
   found.forEach(object=>{const row=document.createElement('div'),title=document.createElement('span'),open=document.createElement('button'),remove=document.createElement('button');row.className='saved';
     title.textContent=(object.name||object.complex||object.metro||'Без названия')+' · '+(object.price?rubles(object.price)+' ₽':'Цена не указана');
@@ -87,7 +95,7 @@ function renderList(){
     remove.textContent='Удалить';remove.onclick=()=>{if(confirm('Удалить объект «'+(object.name||'Без названия')+'»?')){const next=objects.filter(o=>o.id!==object.id);if(write('most-objects',next)){objects=next;if(current===object.id)current=null;renderList();saveDraft();}}};row.append(title,open,remove);$('list').append(row);
   });
 }
-$('search').oninput=renderList;
+$('search').oninput=renderList;$('libraryFilter').onchange=renderList;
 function renderRules(){
   $('ruleList').replaceChildren();for(const [key,value] of Object.entries(rules)){
     const row=document.createElement('div'),a=document.createElement('input'),b=document.createElement('input'),remove=document.createElement('button');row.className='rule';a.value=key;a.readOnly=true;a.setAttribute('aria-label','Триггер '+key);b.value=value;b.setAttribute('aria-label','Перевод '+key);
@@ -98,7 +106,7 @@ $('addRule').onclick=()=>{const key=$('trigger').value.trim(),value=$('translati
 for(const key of ['benefits','contact','brandTags'])$(key).value=prefs[key];
 $('saveSettings').onclick=()=>{const next={benefits:$('benefits').value,contact:$('contact').value,brandTags:$('brandTags').value};if(write('most-prefs',next)){prefs=next;toast('Преимущества и теги сохранены. Создайте текст заново, чтобы применить.');}};
 function download(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('export').onclick=()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,draft:read('most-draft',null)});
+$('export').onclick=()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,draft:read('most-draft',null)});
 $('restore').onclick=()=>$('file').click();
 function validRecord(o){return o&&typeof o==='object'&&!Array.isArray(o)&&typeof o.id==='string'&&(!o.features||Array.isArray(o.features)&&o.features.every(x=>typeof x==='string'));}
 $('file').onchange=async()=>{
@@ -106,7 +114,7 @@ $('file').onchange=async()=>{
     if(![1,2].includes(data.version)||!Array.isArray(data.objects)||!data.objects.every(validRecord)||!data.rules||Array.isArray(data.rules)||!Object.entries(data.rules).every(([k,v])=>k.trim()&&typeof v==='string')||typeof data.prefs?.benefits!=='string')throw Error('format');
     if(!confirm('Заменить библиотеку, словарь и настройки данными из резервной копии?'))return;
     if(!write('most-objects',data.objects)||!write('most-rules',data.rules)||!write('most-prefs',data.prefs))return;
-    write('most-rules-version',2);if(data.draft)write('most-draft',data.draft);location.reload();
+    write('most-rules-version',2);if(Array.isArray(data.wordCustom))write('most-word-custom',data.wordCustom);if(data.draft)write('most-draft',data.draft);location.reload();
   }catch{toast('Не удалось импортировать файл: проверьте формат резервной копии (до 8 МБ).');}finally{$('file').value='';}
 };
 $('demo').onclick=()=>{
@@ -120,4 +128,13 @@ $('demo').onclick=()=>{
 const draft=read('most-draft',null);
 if(draft?.version===2){populate(draft.fields||{});current=draft.id||null;$('outputTitle').value=draft.title||'';$('output').value=draft.output||'';$('tags').value=draft.tags||'';currentTitles=Array.isArray(draft.titles)?draft.titles:[];renderTitles();}
 else populate(draft||{});
-counts();
+wordEditor=setupWordEditor({getRules:()=>rules,getCustom:()=>wordCustom,saveCustom:value=>{wordCustom=value;write('most-word-custom',wordCustom);},onChange:saveDraft,toast});
+renderTagCatalog();renderTagReasons(generateListing(snapshot(),rules,prefs).tagSuggestions);counts();
+
+function renderPhotos(){const safe=[];for(const raw of photoUrls.slice(0,30)){try{const u=new URL(typeof raw==='string'?raw:raw.url);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|cdn-cian\.ru|ciancdn\.ru|avito\.ru|avito\.st)$/i.test(u.hostname)&&!u.username&&!u.password)safe.push(u.href);}catch{}}photoUrls=safe;$('photoCard').classList.toggle('hidden',!safe.length);$('photoGallery').replaceChildren();for(const url of safe){const a=document.createElement('a'),img=document.createElement('img');a.href=url;a.target='_blank';a.rel='noopener noreferrer';img.src=url;img.loading='lazy';img.referrerPolicy='no-referrer';img.alt='Фото квартиры из источника';a.append(img);$('photoGallery').append(a);}}
+$('importCli').onclick=()=>$('cliFile').click();
+$('cliFile').onchange=async()=>{try{const file=$('cliFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const value=JSON.parse(await file.text());if(!value.fields||typeof value.fields!=='object'||!Array.isArray(value.titles)||!value.titles.every(t=>typeof t==='string')||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Нужен JSON-результат Python CLI с fields/titles/body/tags');populate({...value.fields,photos:value.listing?.images||value.fields.photos||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();toast('Карточка из Python импортирована. Проверьте поля перед публикацией.');}catch(error){toast(error.message);}finally{$('cliFile').value='';}};
+let roadmapDataClient=null;
+async function loadRoadmap(){try{const response=await fetch('/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
+function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataClient.tasks;const done=tasks.filter(t=>t.status==='done').length;$('roadmapSummary').replaceChildren(document.createTextNode(done+' / '+tasks.length+' выполнено · '+(tasks.length-done)+' в планах. '));if(roadmapDataClient.github_issue_url){const a=document.createElement('a');a.textContent='Roadmap на GitHub ↗';a.href=roadmapDataClient.github_issue_url;a.target='_blank';a.rel='noopener noreferrer';$('roadmapSummary').append(a);}const q=$('roadmapSearch').value.toLowerCase(),mode=$('roadmapFilter').value;$('roadmapList').replaceChildren();for(const task of tasks.filter(t=>(mode==='all'||t.status===mode)&&(t.id+' '+t.section+' '+t.title+' '+t.acceptance).toLowerCase().includes(q))){const card=document.createElement('article'),head=document.createElement('header'),p=document.createElement('p'),evidence=document.createElement('div');card.className='task '+task.status;head.textContent=(task.status==='done'?'✓ ':'○ ')+task.id+' · '+task.title;p.textContent=task.acceptance;evidence.className='evidence';evidence.textContent=task.priority+' · '+task.section+(task.evidence.length?' · '+task.evidence.join(' · '):' · Проверка ещё не завершена');card.append(head,p,evidence);$('roadmapList').append(card);}}
+$('roadmapSearch').oninput=renderRoadmap;$('roadmapFilter').onchange=renderRoadmap;
