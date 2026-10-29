@@ -44,6 +44,7 @@ test('DOM fallback extracts all numeric blocks but does not guess walking from a
 test('explicit negative source never becomes a free registration or ready furnished promise',()=>{
  const r=generateListing({...v,style:'story',registration:'provided',registrationMonths:'6',support:true});
  assert.doesNotMatch(r.body,/免费提供临时居住登记|免费协助办理临时居住登记|家具家电齐全|合租预算|双人床|✅ 冰箱|✅ 洗衣机/);
+ assert(r.titles.every(t=>!t.includes('1人人均')));
  assert.match(r.body,/不提供临时居住登记/);assert.match(r.body,/电视柜/);assert.match(r.body,/140,000₽/);assert.doesNotMatch(r.tags,/莫大|友大|近地铁/);
 });
 test('future installation and conflicts are shown and excluded from checked furniture',()=>{

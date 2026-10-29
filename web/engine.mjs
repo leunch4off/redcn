@@ -112,7 +112,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   let titles=[
     ['🔥莫斯科'+price+layout,area,main?metro+(main.time?' '+(modes[main.mode]||'')+main.time+'分钟':''):null].filter(Boolean).join('｜'),
     ['🏡莫斯科'+area+layout,featureSet.has('bed')?'独立大床':null,featureSet.has('ac')?'空调':null,price?'月租'+price:null].filter(Boolean).join('｜'),
-    positive('occupants')&&positive('price')?['🚨莫斯科'+price+'整套'+layout, v.occupants+'人人均'+wan(Number(v.price)/Number(v.occupants)),area].filter(Boolean).join('｜'):
+    Number(v.occupants)>=2&&positive('price')?['🚨莫斯科'+price+'整套'+layout, v.occupants+'人人均'+wan(Number(v.price)/Number(v.occupants)),area].filter(Boolean).join('｜'):
       ['✈️莫斯科'+price+layout,metro?((main?.mode==='walk'&&Number(main.time)<=10)?'近':'')+metro:null,v.registration&&v.registration!=='none'?'免费协助登记':null].filter(Boolean).join('｜'),
   ];
   const variation=Math.abs(Number(v.titleVariant)||0);

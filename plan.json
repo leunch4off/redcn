@@ -648,8 +648,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/media-core.mjs; web/photo-ui.mjs: ZIP с выбранными файлами, post.txt и manifest.json",
+        "Браузер HTTPS: ZIP скачан; Python zipfile проверил CRC, состав и JPEG 1280×754"
+      ]
     },
     {
       "id": "RCN-049",
@@ -2563,8 +2566,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/photo-ui.mjs: фото + текст + ссылка источника одним ZIP без публикации",
+        "Браузер HTTPS: post.txt содержит китайский текст, manifest.json содержит исходную ссылку"
+      ]
     },
     {
       "id": "RCN-181",
