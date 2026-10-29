@@ -1,5 +1,10 @@
 # GitHub Pages без ChatGPT-входа
 
+**Рабочий адрес:** https://leunch4off.github.io/redcn/
+**Репозиторий:** https://github.com/leunch4off/redcn
+
+29 октября 2026 GitHub подтвердил public=true, status=built и источник main/docs. Живая страница открыта и проверена в браузере.
+
 Сборка `node scripts/build.mjs` создаёт автономный `docs/index.html` со встроенными стилями и JavaScript, `docs/.nojekyll` и публичные JSON-справочники. Публикуемый источник: ветка main, каталог /docs. Код редактора не требует OpenAI API, ChatGPT-входа или внешнего сервера.
 
 На GitHub Pages работают генератор, словари, знания, редактирование, теги, аналитика импортированных данных, библиотека и JSON-перенос. GitHub Pages — статический хостинг: серверный `/api/import` там не запускается. Импортировать ЦИАН/Авито можно через Python CLI и загрузить JSON либо вставить текст объявления.

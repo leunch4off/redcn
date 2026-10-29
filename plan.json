@@ -2638,16 +2638,16 @@
     {
       "id": "RCN-186",
       "section": "Тесты, доступ и защита данных",
-      "title": "Приватный GitHub",
-      "acceptance": "Исходники и референсы находятся в приватном redcn.",
+      "title": "Видимость GitHub по указанию владельца",
+      "acceptance": "Видимость репозитория соответствует актуальному указанию владельца и подтверждена GitHub.",
       "priority": "P0",
       "depends_on": [
         "RCN-004"
       ],
       "status": "done",
       "evidence": [
-        "Sites get_site: только владелец; GitHub get_repo: private",
-        "Аудит доступа в этой сессии; audience не менялся"
+        "2026-10-29: пользователь разрешил открыть redcn для GitHub Pages",
+        "GitHub get_repo: visibility=public; Pages status=built, main/docs"
       ]
     },
     {

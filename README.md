@@ -2,9 +2,11 @@
 
 Рабочий инструмент для подготовки китайских объявлений о московской недвижимости. Не требует ключа ИИ: факты, редактируемые правила и воспроизводимые шаблоны.
 
-**Репозиторий и личная ссылка GitHub:** https://github.com/leunch4off/redcn
+**Сайт GitHub Pages без входа в ChatGPT:** https://leunch4off.github.io/redcn/
 
-Автономная версия подготовлена для GitHub Pages из main/docs. См. [GitHub Pages](docs/GITHUB-PAGES.md).
+**Публичный репозиторий GitHub:** https://github.com/leunch4off/redcn
+
+Автономная версия опубликована на GitHub Pages из main/docs. См. [GitHub Pages](docs/GITHUB-PAGES.md).
 
 ## Возможности
 
