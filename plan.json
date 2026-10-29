@@ -618,8 +618,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/photo-ui.mjs: диалог оригинал/копия и выбранный набор",
+        "Браузер: фото открывается без навигации, исключено 5 из 6 фото"
+      ]
     },
     {
       "id": "RCN-047",
@@ -630,8 +633,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/photo-ui.mjs: стрелки и На обложку, photoEdits в snapshot",
+        "Браузер: после выбора обложки и reload первым осталось фото 2239194414"
+      ]
     },
     {
       "id": "RCN-048",

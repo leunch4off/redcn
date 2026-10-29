@@ -257,7 +257,7 @@ export function analyzeListingSource(input,rules=DICTIONARY){
   const conditionText=(source.description||'')+'\n'+(source.records||[]).filter(r=>r.name==='OfferFactItem').map(r=>r.text).join('\n');
   const conditions=detectConditions(conditionText);
   const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.offer||{});
-  const facts={...simple.facts,...structured.facts,...conditions.facts,source:source.text||source.description||'',sourceDescription:source.description||'',features:furniture.filter(r=>r.status==='present').map(r=>r.id),featureCounts:Object.fromEntries(furniture.filter(r=>r.count).map(r=>[r.id,r.count])),photos:source.images||[]};
+  const facts={...simple.facts,...structured.facts,...conditions.facts,source:source.text||source.description||'',sourceDescription:source.description||'',features:furniture.filter(r=>r.status==='present').map(r=>r.id),featureCounts:Object.fromEntries(furniture.filter(r=>r.count).map(r=>[r.id,r.count])),photos:source.images||[],relatedOffers:source.related||[]};
   const warnings=[...structured.warnings];
   if(facts.contractMonths&&facts.minMonths&&Number(facts.contractMonths)!==Number(facts.minMonths))warnings.push('Противоречие: в описании договор на '+facts.contractMonths+' месяцев, в условиях карточки — от '+facts.minMonths+' месяцев. Требуется уточнение.');
   if(facts.registrationPolicy==='not_available')warnings.push('Собственник не делает регистрацию: бесплатная регистрация для этого объекта отключена.');

@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import shutil
 import socket
+import ssl
 import sqlite3
 import subprocess
 import sys
@@ -69,18 +70,31 @@ class CheckedRedirect(urllib.request.HTTPRedirectHandler):
 def fetch_bytes(url, images=False):
     url = allowed_url(url, images=images)
     request = urllib.request.Request(url, headers={'User-Agent': 'redcn/3.0 (single listing import)', 'Accept': 'image/*' if images else 'text/html'})
-    opener = urllib.request.build_opener(CheckedRedirect(images))
-    with opener.open(request, timeout=15) as response:
-        content_type = response.headers.get_content_type()
-        if images and content_type not in ('image/jpeg', 'image/png', 'image/webp'):
-            raise ValueError('Неподдерживаемый формат фото: ' + content_type)
-        if not images and content_type not in ('text/html', 'application/xhtml+xml'):
-            raise ValueError('Источник вернул не HTML')
-        limit = MAX_IMAGE if images else MAX_HTML
-        content = response.read(limit + 1)
-        if len(content) > limit:
-            raise ValueError('Файл превышает ограничение размера')
-        return content, content_type
+    # Python.org macOS installs may have no root bundle. Keep TLS verification;
+    # use the maintained certifi CA bundle when installed with media dependencies.
+    try:
+        import certifi
+        context=ssl.create_default_context(cafile=certifi.where())
+    except ImportError: context=ssl.create_default_context()
+    opener = urllib.request.build_opener(CheckedRedirect(images),urllib.request.HTTPSHandler(context=context))
+    for attempt in range(2):
+        try:
+            with opener.open(request, timeout=15) as response:
+                content_type = response.headers.get_content_type()
+                if images and content_type not in ('image/jpeg', 'image/png', 'image/webp'):
+                    raise ValueError('Неподдерживаемый формат фото: ' + content_type)
+                if not images and content_type not in ('text/html', 'application/xhtml+xml'):
+                    raise ValueError('Источник вернул не HTML')
+                limit = MAX_IMAGE if images else MAX_HTML
+                content = response.read(limit + 1)
+                if len(content) > limit:
+                    raise ValueError('Файл превышает ограничение размера')
+                return content, content_type
+        except (TimeoutError,urllib.error.URLError) as error:
+            if attempt == 0 and (isinstance(error,TimeoutError) or isinstance(getattr(error,'reason',None),TimeoutError)):
+                continue
+            raise
+
 
 
 class ListingHTML(HTMLParser):
@@ -241,7 +255,7 @@ def generate(text, data=None, rules=None, prefs=None):
     return json.loads(result.stdout)
 
 
-def download_photos(urls, directory):
+def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=None):
     directory.mkdir(parents=True, exist_ok=True)
     results = []
     for index, url in enumerate(urls[:30], 1):
@@ -255,7 +269,17 @@ def download_photos(urls, directory):
             path = directory / f'{index:02d}-{digest[:12]}.{extension}'
             if not path.exists():
                 path.write_bytes(content)
-            results.append({'url': url, 'path': str(path), 'sha256': digest})
+            row={'url': url, 'path': str(path), 'sha256': digest}
+            if crop or crop_bottom is not None:
+                import base64
+                import photo_store
+                media_dir=cache_dir or directory/'.redcn-media'
+                original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode())
+                edited=photo_store.crop_photo(media_dir,original['id'],{'bottom':crop_bottom} if crop_bottom is not None else None)
+                row['crop']=edited
+                if edited.get('kind')=='crop':
+                    copy_path=directory/f'{index:02d}-crop-{edited["id"][:12]}.jpg';copy_path.write_bytes(photo_store.asset(media_dir,edited['id'])[0]);row['crop_path']=str(copy_path)
+            results.append(row)
         except (OSError, ValueError) as error:
             results.append({'url': url, 'error': str(error)})
     (directory / 'manifest.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -283,8 +307,12 @@ def main(argv=None):
     parser.add_argument('--cache-dir', type=Path, default=Path.home() / '.cache' / 'redcn')
     parser.add_argument('--refresh', action='store_true')
     parser.add_argument('--download-photos', type=Path, metavar='DIRECTORY')
+    parser.add_argument('--crop-photos', action='store_true', help='OCR метки ЦИАН и кадрированные копии; нужен --download-photos')
+    parser.add_argument('--crop-bottom', type=float, metavar='PERCENT', help='Явный нижний отступ 0–40%% для каждого фото; нужен --download-photos')
     parser.add_argument('--batch', type=Path, help='JSON-манифест новых ссылок с seller / commission')
     args = parser.parse_args(argv)
+    if (args.crop_photos or args.crop_bottom is not None) and not args.download_photos:parser.error('Кадрирование требует --download-photos DIRECTORY')
+    if args.crop_bottom is not None and not 0 <= args.crop_bottom <= 40:parser.error('--crop-bottom: 0–40 процентов')
     if not 15 <= args.browser_timeout <= 600: parser.error('--browser-timeout: 15–600 секунд')
     if args.serve:
         from local_server import serve
@@ -316,7 +344,7 @@ def main(argv=None):
                     generated = generate(listing['text'], {**listing.get('fields',{}), 'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
                     row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
-                        row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12])
+                        row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12],args.crop_photos,args.crop_bottom,args.cache_dir)
                     result.append(row)
                     connection.execute('INSERT OR REPLACE INTO seen VALUES (?,?)', (url, time.time()));connection.commit()
                 except (OSError, ValueError) as error:
@@ -340,7 +368,7 @@ def main(argv=None):
             if listing:
                 result['listing'] = listing
                 if args.download_photos:
-                    result['photos'] = download_photos(listing['images'], args.download_photos)
+                    result['photos'] = download_photos(listing['images'], args.download_photos,args.crop_photos,args.crop_bottom,args.cache_dir)
             output = json.dumps(result, ensure_ascii=False, indent=2) if args.json else '\n'.join(['ЗАГОЛОВКИ:', *[f'{i+1}. {t}' for i, t in enumerate(result['titles'])], '', 'ОПИСАНИЕ:', result['body'], '', result['tags'], '', 'Непереведённые фразы: '+', '.join(result['unknown'])])
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True);args.output.write_text(output, encoding='utf-8')

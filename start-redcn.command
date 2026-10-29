@@ -14,4 +14,8 @@ if ! .venv/bin/python -c 'import playwright.sync_api' 2>/dev/null; then
   echo "Первый запуск: устанавливаем библиотеку для управления Google Chrome…"
   .venv/bin/python -m pip install -r cli/requirements-browser.txt
 fi
+if ! .venv/bin/python -c 'import PIL, certifi' 2>/dev/null; then
+  echo "Первый запуск фото: устанавливаем обработку изображений и корневые сертификаты…"
+  .venv/bin/python -m pip install -r cli/requirements-media.txt
+fi
 exec .venv/bin/python cli/redcn.py --serve "$@"

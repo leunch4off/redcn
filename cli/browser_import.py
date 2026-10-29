@@ -16,7 +16,8 @@ SNAPSHOT = r'''() => {
   return {title: document.title, body: body.slice(0,12000),
     text: [...new Set(blocks)].join('\n'), fallback: (root.innerText || root.textContent || '').slice(0,40000),
     metadata: [...document.querySelectorAll('script[type="application/ld+json"],script:not([src]),meta[property="og:image"],meta[property="og:description"],meta[property="og:title"]')].filter(e=>e.tagName!=='SCRIPT'||e.type==='application/ld+json'||e.textContent.includes("_cianConfig['frontend-offer-card']")).map(e=>e.outerHTML).join('\n'),
-    images: [...document.querySelectorAll('main img,[data-name="Gallery"] img,[data-marker*="gallery"] img')].map(e=>e.currentSrc || e.src).filter(Boolean).slice(0,60)};
+    relatedHtml: [...document.querySelectorAll('[data-name*="Similar"], [data-name*="Recommend"], [data-marker*="similar"], [data-marker*="recommend"]')].map(e=>e.outerHTML).join('\n').slice(0,1500000),
+    images: [...document.querySelectorAll('[data-name="OfferGallery"] img,[data-name="Gallery"] img,[data-marker*="gallery"] img')].map(e=>e.currentSrc || e.src).filter(Boolean).slice(0,60)};
 }'''
 
 
@@ -91,7 +92,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                     last = current
                     if ready and stable >= 2:
                         from html import escape
-                        result = parse_html(snapshot['metadata']+'<p>'+escape(current)+'</p>', url)
+                        result = parse_html(snapshot['metadata']+'<p>'+escape(current)+'</p>'+snapshot.get('relatedHtml',''), url)
                         # Visible summary includes price, floor and transit absent from JSON-LD.
                         result['text'] = current[:40000]
                         for image in snapshot['images']:

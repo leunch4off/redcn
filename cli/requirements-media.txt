@@ -1,0 +1,3 @@
+# Image decoding, orientation, dimension checks and crop derivatives.
+Pillow>=12.0,<14
+certifi>=2024.8.30

@@ -16,6 +16,7 @@ import urllib.request
 import webbrowser
 
 import redcn
+import photo_store
 
 
 def store_history(directory, entry):
@@ -81,7 +82,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
-    identity = {'app':'redcn', 'protocol':2, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':3, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
@@ -134,6 +135,12 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if not self.permitted(api=True): return
                 if path == '/api/local/history':
                     self.respond(200,{'entries':history_rows(directory)});return
+                if path.startswith('/api/local/media/'):
+                    try:
+                        content,mime,_=photo_store.asset(directory,path.rsplit('/',1)[-1])
+                        self.respond(200,content,mime)
+                    except (OSError,ValueError) as error:self.respond(404,{'error':str(error)})
+                    return
                 if path.startswith('/api/local/history/'):
                     entry=history_rows(directory,path.rsplit('/',1)[-1])
                     self.respond(200 if entry else 404,{'entry':entry} if entry else {'error':'Запись истории не найдена'});return
@@ -168,11 +175,20 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             try:
                 if self.headers.get_content_type() != 'application/json': raise ValueError('Нужен JSON')
                 size = int(self.headers.get('Content-Length','0'))
-                limit=4_500_000 if urlsplit(self.path).path=='/api/local/history' else 1_000_000
+                limit=16_100_000 if urlsplit(self.path).path=='/api/local/photo' else 4_500_000 if urlsplit(self.path).path=='/api/local/history' else 1_000_000
                 if not 1 <= size <= limit: raise ValueError('Превышен размер запроса')
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                if path == '/api/local/photo':
+                    if data.get('action','load')=='load':
+                        result=photo_store.load_photo(directory,data.get('url',''),data.get('refresh') is True)
+                    elif data.get('action')=='crop':
+                        result=photo_store.crop_photo(directory,data.get('id'),data.get('margins'))
+                    elif data.get('action')=='attach':
+                        result=photo_store.attach_photo(directory,data.get('url',''),data.get('data'))
+                    else: raise ValueError('Неверное действие с фотографией')
+                    self.respond(200,result);return
                 if path == '/api/local/history':
                     entry_id=store_history(directory,data.get('entry'))
                     self.respond(200,{'id':entry_id});return
@@ -215,7 +231,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 def matching_server(directory, port, browser_channel):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *_args, **_kwargs): return None
-    expected = {'app':'redcn','protocol':2,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    expected = {'app':'redcn','protocol':3,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:

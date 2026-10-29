@@ -1,3 +1,5 @@
+import {photoSources} from './media-core.mjs';
+import {readRelatedHtml} from './related.mjs';
 // Only data-name / id / data-marker and literal JSON data are read. No page code runs.
 const SOURCE_NAMES=new Set(['Description','OfferDescription','OfferTitleNew','OfferTitle','ObjectFactoidsItem','OfferSummaryInfoItem','FeaturesItem','FeaturesLayout','PriceInfo','OfferFactItem','AddressItem','AddressContainer','UndergroundItem','HomeownerInfo','HomeownerLayout','NoFeeLabelContainer']);
 const sourceDecode=s=>String(s||'').replace(/&(#x[\da-f]+|#\d+|nbsp|amp|quot|apos|lt|gt);/gi,(_,key)=>{if(key[0]==='#'){const n=key[1].toLowerCase()==='x'?parseInt(key.slice(2),16):parseInt(key.slice(1),10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):'';}return ({nbsp:' ',amp:'&',quot:'"',apos:"'",lt:'<',gt:'>'})[key.toLowerCase()];});
@@ -26,10 +28,11 @@ export function readSourceHtml(input) {
     for(const a of value.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=sourceDecode(a[2]??a[3]??a[4]);
     let name=attrs['data-name']||'';if(attrs.id==='description')name='Description';if(tag==='title')name='title';if(tag==='h1'&&!name)name='OfferTitle';
     if(attrs['data-marker']?.includes('item-description'))name='Description';if(attrs['data-marker']?.includes('item-price'))name='PriceInfo';if(attrs['data-marker']?.includes('item-params'))name='OfferSummaryInfoItem';
-    if(tag==='a'&&attrs.href)for(const node of stack)if(node.name==='UndergroundItem'&&!node.href)node.href=attrs.href;
+    const excluded=stack.some(n=>n.excluded)||/similar|recommend/i.test((attrs['data-name']||'')+' '+(attrs['data-marker']||''));
+    if(tag==='a'&&attrs.href&&!excluded)for(const node of stack)if(node.name==='UndergroundItem'&&!node.href)node.href=attrs.href;
     if(tag==='meta'&&/^(og:image|twitter:image)$/i.test(attrs.property||attrs.name||''))images.push(attrs.content);
     if(tag==='br'||/^(div|p|li|h[1-6]|span|dt|dd)$/.test(tag))for(const node of stack)if(node.capture)node.parts.push('\n');
-    if(!sourceVoid.has(tag)&&!value.endsWith('/>'))stack.push({tag,name,capture:SOURCE_NAMES.has(name)||name==='title',parts:[],length:0,href:''});
+    if(!sourceVoid.has(tag)&&!value.endsWith('/>'))stack.push({tag,name,excluded,capture:!excluded&&(SOURCE_NAMES.has(name)||name==='title'),parts:[],length:0,href:''});
   }
   for(const node of stack.reverse())finish(node);
   const first=name=>records.find(r=>r.name===name)?.text||'';
@@ -40,11 +43,11 @@ export function readSourceHtml(input) {
   if(!text)for(const item of ld){if(typeof item?.description==='string')text+=item.description+'\n';}
   for(const item of ld){if(Array.isArray(item?.image))images.push(...item.image);else if(typeof item?.image==='string')images.push(item.image);}
   if(offer?.photos)for(const p of offer.photos)if(typeof p.fullUrl==='string')images.push(p.fullUrl);
-  const safeImages=[...new Set(images.filter(v=>typeof v==='string'&&/^https:\/\/([\w-]+\.)*(?:cian\.ru|cdn-cian\.ru|ciancdn\.ru|avito\.ru|avito\.st)\//i.test(v)))].slice(0,30);
+  const safeImages=photoSources(images);
   const url=ld.find(x=>typeof x?.offers?.url==='string')?.offers.url||(offer?.cianId?'https://www.cian.ru/rent/flat/'+offer.cianId+'/':'');
   // Keep a strict allowlist: no phones, account IDs, tokens, tracking or site config.
   const selected={};if(offer)for(const key of ['cianId','description','geo','isByHomeowner','totalArea','livingArea','kitchenArea','roomsCount','floorNumber','building','loggiasCount','balconiesCount','windowsViewType','separateWcsCount','combinedWcsCount','repairType','bargainTerms','hasFridge','hasDishwasher','hasWasher','hasFurniture','hasKitchenFurniture','hasConditioner','hasTv','hasInternet','hasBathtub','hasShower','hasLift'])if(offer[key]!==undefined)selected[key]=offer[key];
-  return {version:1,title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,records:picked,offer:offer?selected:null,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
+  return {version:1,title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
 }
 
 export function sourceFieldFacts(source) {
