@@ -1066,8 +1066,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/fact-evidence.mjs: статус planned отдельно от present",
+        "tests/source.test.mjs: будущая установка без отметки наличия",
+        "docs/CIAN-HTML-ANALYSIS.md"
+      ]
     },
     {
       "id": "RCN-080",
@@ -2537,8 +2541,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/history-ui.mjs; web/history.mjs: восстановление отдельным событием",
+        "Браузер: сохранение, PNG, восстановление цены 70000 / залога 140000 / площади 54",
+        "docs/HISTORY.md"
+      ]
     },
     {
       "id": "RCN-180",
