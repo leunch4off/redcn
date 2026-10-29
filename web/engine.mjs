@@ -102,11 +102,20 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
       ['✈️莫斯科'+price+layout,metro?'近'+metro:null,v.registration&&v.registration!=='none'?'免费协助登记':null].filter(Boolean).join('｜'),
   ];
   const variation=Math.abs(Number(v.titleVariant)||0);
+  const copyVariation=Math.abs(Math.trunc(Number(v.copyVariant)||0));
   const hooks=[];if(featureSet.has('ac'))hooks.push('空调');if(featureSet.has('bed'))hooks.push('双人床');if(featureSet.has('closet'))hooks.push('衣帽间');if(featureSet.has('dishwasher'))hooks.push('洗碗机');
   if(variation%3===1)titles=[['🏡'+area+layout,metro||'莫斯科',hooks.join('＋')||'整套出租',price].filter(Boolean).join('｜'),...titles.slice(0,2)];
   if(variation%3===2)titles=[['✈️莫斯科'+price,area+layout,v.registration&&v.registration!=='none'?'免费协助登记':hooks.join('＋')||metro].filter(Boolean).join('｜'),titles[2],titles[1]];
+  if(variation>=3){
+    const anchors=[area,metro?metro+(main.time?' '+(modes[main.mode]||'公共交通')+main.time+'分钟':''):null,...hooks].filter(Boolean);
+    const start=Math.floor(variation/3)%Math.max(anchors.length,1);
+    const ordered=[...anchors.slice(start),...anchors.slice(0,start)];
+    const emojis=['🔥','🏡','✨','💗','✈️','🌿'];
+    titles=titles.map((_,i)=>[emojis[(variation+i)%emojis.length]+'莫斯科'+price+layout,...ordered.slice(i).concat(ordered.slice(0,i)).slice(0,2)].filter(Boolean).join('｜'));
+  }
   const lines=[]; const push=(...s)=>lines.push(...s);
-  if(v.style==='story')push('🇷🇺 想在莫斯科找一套适合自己生活节奏的住房？这套'+(area?area+'的':'')+layout+'可以了解一下！','');
+  const wording=(...choices)=>choices[copyVariation%choices.length];
+  if(v.style==='story')push(wording('🇷🇺 想在莫斯科找一套适合自己生活节奏的住房？这套'+(area?area+'的':'')+layout+'可以了解一下！','🏡 在莫斯科寻找下一处住处？先看看这套'+(area?area+'的':'')+layout+'，再了解位置、配置和租赁条件。','🌿 莫斯科租房参考：这套'+(area?area+'的':'')+layout+'，位置与配置信息整理在下面。'),'');
   if(v.complex||v.districtZh)push('📍 莫斯科｜'+zh(v.complex||v.districtZh));
   if(v.campus)push('🎓 校区：'+zh(v.campus));
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
@@ -120,16 +129,16 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.floor||v.floors)push('🏢 楼层：'+(v.floor||'待确认')+'/'+(v.floors||'待确认')+'层');
   if(positive('price'))push('💰 租金：'+price+'/月（'+rubles(v.price)+'₽）');
   if(v.deposit!==''&&v.deposit!==undefined)push('🔐 押金：'+(Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）'));
-  if(highlight)push('','🔥 最大亮点：'+highlight);
+  if(highlight)push('',wording('🔥 最大亮点：','✨ 值得关注：','💡 房源亮点：')+highlight);
   if(v.rentFreeMonths&&Number(v.rentFreeMonths)>0)push('🎁 房东提供'+v.rentFreeMonths+'个月装修免租期，具体条件以合同为准。');
-  if(v.description)push('','🏡 公寓介绍：',zh(v.description));
+  if(v.description)push('',wording('🏡 公寓介绍：','🏡 走进这套公寓：','🏡 居住空间：'),zh(v.description));
   if(v.style!=='compact'){
     const groups=[['bedroom','🛏️ 独立卧室','休息区域配有'],['living','🛋️ 生活空间','生活区域配有'],['kitchen','🍳 厨房配置','厨房配有'],['bathroom','🛁 卫生间','卫生间配有'],['storage','👗 储物与阳台','收纳与附属设施包括']];
     for(const [key,title,intro] of groups){const f=FEATURES.filter(x=>x[3]===key&&featureSet.has(x[0]));if(!f.length)continue;push('',title);if(v.style==='story')push(intro+f.map(x=>x[1]).join('、')+'。');else push(...f.map(x=>'✅ '+x[1]));}
-  }else{const f=FEATURES.filter(x=>featureSet.has(x[0]));if(f.length)push('','🛋 家具家电：',...f.map(x=>'✅ '+x[1]));}
+  }else{const f=FEATURES.filter(x=>featureSet.has(x[0]));if(f.length)push('',wording('🛋 家具家电：','🛋 室内配置：','🛋 已配备：'),...f.map(x=>'✅ '+x[1]));}
   if(v.details)push('','🌳 周边与房屋亮点：',zh(v.details));
   const routeLine=r=>zh(r.name)+(r.time?'｜'+(modes[r.mode]||'公共交通')+'约'+r.time+'分钟':'｜时间待确认')+(r.line?'｜'+r.line.replace(/^([0-9]+)$/,'$1号线'):'');
-  if(routes.length)push('','🚇 交通：',...routes.map(r=>'▪️ '+routeLine(r)));
+  if(routes.length)push('',wording('🚇 交通：','🚇 地铁与出行：','🚇 位置与交通：'),...routes.map(r=>'▪️ '+routeLine(r)));
   if(v.route)push('🗺 '+zh(v.route));
   if(universities.length)push('','🎓 大学通勤参考：',...universities.map(r=>'▪️ '+routeLine(r)));
   if(positive('occupants')&&positive('price')){
@@ -153,7 +162,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.arrival)push('📋 免费协助了解抵达后的相关手续。');
   if(v.support&&prefs.benefits)push('','🇨🇳 我们的优势：',prefs.benefits);
   if(prefs.contact)push('','📩 联系我们：'+prefs.contact);
-  else push('','📩 欢迎中文咨询，了解房源详情并预约看房！');
+  else push('',wording('📩 欢迎中文咨询，了解房源详情并预约看房！','💌 想了解租赁条件或安排看房？欢迎用中文私信我们！','📨 欢迎中文留言咨询，我们协助了解房源并预约看房。'));
   const tags=['#莫斯科租房','#莫斯科留学','#莫斯科生活'];
   if(v.rooms)tags.push('#莫斯科'+({1:'一居室',2:'两居室',3:'三居室'}[v.rooms]||'租房'));
   for(const r of routes)tags.push('#'+zh(r.name).replace(/[\s#]/g,''));
@@ -170,7 +179,7 @@ export function extractFacts(text,rules=DICTIONARY) {
   const capture=(key,re)=>{const m=t.match(re);if(m)out[key]=m[1].replace(/\s/g,'').replace(',','.');};
   capture('area',/(?:общая\s*площадь\s*[:—-]?\s*)?(\d+(?:[.,]\d+)?)\s*(?:м²|м2|кв\.?\s*м|㎡)/i);
   capture('rooms',/(\d+)\s*[- ]?(?:комн|комнат)/i);
-  const f=t.match(/(\d+)\s*\/\s*(\d+)\s*(?:эт|楼|层)/i);if(f){out.floor=f[1];out.floors=f[2];}
+  const f=t.match(/(\d+)\s*\/\s*(\d+)\s*(?:эт|楼|层)/i)||t.match(/этаж\s*[:—-]?\s*(\d+)\s*(?:из|\/)\s*(\d+)/i);if(f){out.floor=f[1];out.floors=f[2];}
   else {capture('floor',/(?:этаж\s*[:—-]?\s*)(\d+)/i);capture('floors',/(\d+)\s*[- ]?этажн/i);}
   const price=t.match(/(?:аренда|цена|стоимость|月租|租金)\s*[:：—-]?\s*(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?\s*(?:₽|руб|卢布)?/i)
     ||t.match(/(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?\s*(?:₽|руб)\s*(?:\/\s*(?:мес|月)|в месяц)/i);

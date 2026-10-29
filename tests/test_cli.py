@@ -45,7 +45,7 @@ class CLITests(unittest.TestCase):
     def test_sqlite_cache_and_refresh(self):
         with tempfile.TemporaryDirectory() as folder:
             conn = cli.open_cache(Path(folder))
-            with patch.object(cli, 'fetch_bytes', return_value=(b'<p>Apartment description, enough text for the fixture.</p>', 'text/html')) as fetch:
+            with patch.object(cli, 'fetch_bytes', return_value=('<p>Квартира 38 м², аренда 70 000 ₽ в месяц.</p>'.encode(), 'text/html')) as fetch:
                 first = cli.load_listing('https://cian.ru/flat/1', conn)
                 second = cli.load_listing('https://cian.ru/flat/1', conn)
                 third = cli.load_listing('https://cian.ru/flat/1', conn, refresh=True)

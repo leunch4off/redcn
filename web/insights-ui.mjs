@@ -36,12 +36,12 @@ export function setupInsights({read,write,toast,onRule}){
   if(rows.length){const a=document.createElement('a');a.href=rows[0].source;a.textContent='Источник ↗';a.target='_blank';a.rel='noopener noreferrer';el('metricSource').append(a);}
  }
  el('metricSeries').onchange=renderAnalytics;el('metricEnd').value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());el('metricEnd').onchange=renderAnalytics;
- async function loadResearch(){try{const response=await fetch(new URL('research.json',location.href));if(!response.ok)throw Error();research=await response.json();
+ async function loadResearch(){try{const response=await fetch(new URL('research.json',document.baseURI));if(!response.ok)throw Error();research=await response.json();
    el('researchTerms').replaceChildren();for(const item of research.terms){const div=document.createElement('article'),head=document.createElement('strong'),p=document.createElement('p');div.className='task';head.textContent=item.cn+' — '+item.ru;p.textContent=item.evidence+' · '+item.condition;div.append(head,p);el('researchTerms').append(div);}
    el('researchStatus').textContent=research.status;for(const source of research.sources){const a=document.createElement('a');a.href=source.url;a.textContent=source.name+' ↗';a.target='_blank';a.rel='noopener noreferrer';a.className='research-link';el('researchSources').append(a);}
   }catch{el('researchStatus').textContent='Отчёт исследования не загрузился; см. docs/RESEARCH-REDNOTE.md в репозитории.';}}
  el('rememberContent').checked=read('most-remember',true);el('rememberContent').onchange=()=>write('most-remember',el('rememberContent').checked);
- async function loadSeed(){try{const r=await fetch(new URL('knowledge-seed.json',location.href));if(!r.ok)return;const data=await r.json();if(read('most-knowledge-seed-version',null)===data.version)return;for(const item of data.items||[])knowledge=rememberContent(knowledge,{...item,status:'unreviewed'});if(persistKB())write('most-knowledge-seed-version',data.version);renderKnowledge();}catch{}}
+ async function loadSeed(){try{const r=await fetch(new URL('knowledge-seed.json',document.baseURI));if(!r.ok)return;const data=await r.json();if(read('most-knowledge-seed-version',null)===data.version)return;for(const item of data.items||[])knowledge=rememberContent(knowledge,{...item,status:'unreviewed'});if(persistKB())write('most-knowledge-seed-version',data.version);renderKnowledge();}catch{}}
  renderSeries();renderAnalytics();renderKnowledge();loadResearch();loadSeed();
  return {capture,renderKnowledge,renderAnalytics,exportData:()=>({knowledge,metrics})};
 }

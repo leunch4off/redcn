@@ -26,6 +26,22 @@ MAX_HTML = 2_000_000
 MAX_IMAGE = 12_000_000
 
 
+class ChallengeError(ValueError):
+    pass
+
+
+def normalize_url(raw):
+    """Accept a pasted Markdown link or terminal line, without weakening host checks."""
+    raw = html.unescape(str(raw)).strip()
+    markdown = re.search(r'\[[^\]]*\]\((https://[^\s)]+)\)', raw)
+    match = markdown or re.search(r'https://[^\s<>\[\]"\u201c\u201d]+', raw)
+    if not match:
+        raise ValueError('Вставьте HTTPS-ссылку ЦИАН или Авито')
+    url = match.group(1) if markdown else match.group(0)
+    url = re.split(r'Ошибка|Error:|<urlopen', url, maxsplit=1)[0].rstrip(')\\.,:;')
+    return allowed_url(url, resolve=False)
+
+
 def allowed_url(url, images=False, resolve=True):
     parsed = urllib.parse.urlsplit(url)
     host = (parsed.hostname or '').lower()
@@ -112,10 +128,11 @@ class ListingHTML(HTMLParser):
 
 
 def parse_html(markup, base_url):
-    if re.search(r'captcha|verify you are human|проверка браузера|доступ ограничен|checking your browser', markup[:12000], re.I):
-        raise ValueError('Источник запросил проверку браузера. Вставьте текст вручную; защита не обходится.')
     parser = ListingHTML()
     parser.feed(markup)
+    # A script named captcha.js is not evidence of a visible challenge.
+    if re.search(r'verify you are human|проверка браузера|доступ ограничен|checking your browser|подтвердите[, ]+что вы|пройдите проверку|вы не робот|проверяем.{0,30}браузер', ''.join(parser.parts)[:12000], re.I):
+        raise ChallengeError('Источник запросил проверку браузера. Пройдите её в окне Chrome; автоматически защита не обходится.')
     descriptions = []
     def walk(value):
         if isinstance(value, list):
@@ -161,17 +178,38 @@ def open_cache(directory):
     return connection
 
 
-def load_listing(url, connection, refresh=False):
+def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None):
     # Resolve only on a network miss; cached pages remain available offline.
-    url = allowed_url(url, resolve=False)
+    url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
     if row and not refresh and time.time() - row[0] < 86400:
         return {**json.loads(row[1]), 'cached': True}
-    content, _ = fetch_bytes(url)
-    result = parse_html(content.decode('utf-8', errors='replace'), url)
+    result = None
+    if loader != 'chrome':
+        try:
+            if status: status('Загрузка объявления по HTTP…')
+            content, _ = fetch_bytes(url)
+            result = parse_html(content.decode('utf-8', errors='replace'), url)
+            if not re.search(r'\d[\d\s\xa0,.]*\s*(?:м²|м2|кв\.?\s*м|㎡)', result['text'], re.I) or not re.search(r'\d[\d\s\xa0]*\s*(?:₽|руб)', result['text'], re.I):
+                result = None
+                raise ValueError('HTTP-страница не содержит площади и цены; возможно, нужен JavaScript. Используйте Chrome или --input.')
+        except (OSError, ValueError) as error:
+            if loader == 'http': raise
+            if status: status('HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180])
+    if result is None:
+        from browser_import import load_browser
+        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / 'chrome-profile', parse_html, allowed_url, browser_timeout, status, cancel)
     connection.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (url, time.time(), json.dumps(result, ensure_ascii=False)))
     connection.commit()
     return {**result, 'cached': False}
+
+
+def next_variant(connection, key):
+    connection.execute('CREATE TABLE IF NOT EXISTS variants (key TEXT PRIMARY KEY, value INTEGER NOT NULL)')
+    row = connection.execute('SELECT value FROM variants WHERE key=?', (key,)).fetchone()
+    value = row[0] + 1 if row else 0
+    connection.execute('INSERT OR REPLACE INTO variants VALUES (?,?)', (key, value));connection.commit()
+    return value
 
 
 def eligible(seller, commission):
@@ -221,7 +259,13 @@ def main(argv=None):
     parser.add_argument('--data', type=Path, help='Проверенные поля карточки JSON')
     parser.add_argument('--rules', type=Path, help='Словарь RU → CN JSON')
     parser.add_argument('--prefs', type=Path, help='Преимущества и теги JSON')
-    parser.add_argument('--variant', type=int, default=0, help='Номер варианта заголовков и тегов')
+    parser.add_argument('--variant', type=int, help='Фиксированный вариант; без флага подача меняется при каждом запуске')
+    parser.add_argument('--loader', choices=['auto', 'http', 'chrome'], default='auto', help='auto: HTTP, затем видимый Chrome при ошибке')
+    parser.add_argument('--browser', action='store_true', help='Сразу открыть видимый Google Chrome')
+    parser.add_argument('--browser-timeout', type=int, default=180, help='Ожидание страницы / ручной проверки, 15–600 секунд')
+    parser.add_argument('--serve', action='store_true', help='Запустить локальный сайт и открыть его в браузере')
+    parser.add_argument('--open', action='store_true', help='После генерации открыть сохранённую карточку на локальном сайте')
+    parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--json', action='store_true', help='Машиночитаемый вывод')
     parser.add_argument('--output', type=Path, help='Сохранить результат в файл')
     parser.add_argument('--cache-dir', type=Path, default=Path.home() / '.cache' / 'redcn')
@@ -229,11 +273,17 @@ def main(argv=None):
     parser.add_argument('--download-photos', type=Path, metavar='DIRECTORY')
     parser.add_argument('--batch', type=Path, help='JSON-манифест новых ссылок с seller / commission')
     args = parser.parse_args(argv)
+    if not 15 <= args.browser_timeout <= 600: parser.error('--browser-timeout: 15–600 секунд')
+    if args.serve:
+        from local_server import serve
+        return serve(args.cache_dir, args.port)
     read_json = lambda p: json.loads(p.read_text(encoding='utf-8')) if p else {}
     data, rules, prefs = read_json(args.data), read_json(args.rules), read_json(args.prefs)
     if not isinstance(data, dict) or not isinstance(rules, dict) or not isinstance(prefs, dict):
         raise ValueError('Поля, словарь и настройки должны быть JSON-объектами')
-    data['titleVariant'] = args.variant
+    if args.variant is not None: data['titleVariant'] = args.variant
+    loader = 'chrome' if args.browser else args.loader
+    progress = lambda message: print(message, file=sys.stderr, flush=True)
     connection = open_cache(args.cache_dir)
     try:
         if args.batch:
@@ -244,14 +294,14 @@ def main(argv=None):
             for item in items:
                 if not isinstance(item, dict) or not item.get('url'):
                     raise ValueError('Каждая запись: {url, seller, commission}')
-                url = allowed_url(item['url'], resolve=False)
+                url = normalize_url(item['url'])
                 if not eligible(item.get('seller'), item.get('commission')):
                     result.append({'url': url, 'status': 'filtered', 'reason': 'Нужен собственник или посредник с известной комиссией 0–50%'});continue
                 if connection.execute('SELECT 1 FROM seen WHERE url=?', (url,)).fetchone():
                     result.append({'url': url, 'status': 'seen'});continue
                 try:
-                    listing = load_listing(url, connection, args.refresh)
-                    generated = generate(listing['text'], {**data, **item.get('data', {})}, rules, prefs)
+                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress)
+                    generated = generate(listing['text'], {'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
                     row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
                         row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12])
@@ -266,9 +316,10 @@ def main(argv=None):
                 text = args.input.read_text(encoding='utf-8')
             else:
                 url = args.url or input('Ссылка на объявление ЦИАН / Авито: ').strip()
-                listing = load_listing(url, connection, args.refresh)
+                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress)
                 text = listing['text']
-            result = generate(text, data, rules, prefs)
+            key = listing.get('url', url) if listing else hashlib.sha256(text.encode()).hexdigest()
+            result = generate(text, {'titleVariant':next_variant(connection,key), **data, 'source':text, **({'url':key} if listing else {})}, rules, prefs)
             if listing:
                 result['listing'] = listing
                 if args.download_photos:
@@ -278,8 +329,14 @@ def main(argv=None):
             args.output.parent.mkdir(parents=True, exist_ok=True);args.output.write_text(output, encoding='utf-8')
         else:
             print(output)
+        if args.open and not args.batch:
+            from local_server import save_result, serve
+            result_id = save_result(args.cache_dir, result)
+            connection.close()
+            connection = None
+            return serve(args.cache_dir, args.port, result_id)
     finally:
-        connection.close()
+        if connection: connection.close()
     return 0
 
 

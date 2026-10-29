@@ -19,3 +19,11 @@ test('tokenization preserves all text and longest known phrase',()=>{
 test('selection replacement is exact and stale selection rejected',()=>{assert.equal(replaceSpan('冰箱＋冰箱',3,5,'冰箱','冷藏箱'),'冰箱＋冷藏箱');assert.throws(()=>replaceSpan('洗衣机',0,2,'冰箱','冷藏箱'),/Текст изменился/);});
 test('custom CN/RU dictionary overrides built-in meaning',()=>{const entries=phraseEntries({},[{zh:'冰箱',ru:'Моя формулировка',alternatives:['冷藏箱']}]);assert.equal(entries.find(x=>x.zh==='冰箱').ru,'Моя формулировка');});
 test('website eligibility matches strict commission boundary',()=>{assert(listingEligible('owner',''));assert(listingEligible('agent','50'));assert(!listingEligible('agent',''));assert(!listingEligible('agent','50.01'));assert(!listingEligible('unknown','0'));});
+test('new copy varies wording reproducibly without losing price, area, deposit or transit',()=>{
+ const v={style:'compact',rooms:1,price:'68000',deposit:'34000',area:'34',transit:'Саларьево | 11 | walk',features:['bed','ac']};
+ const a=generateListing(v),b=generateListing({...v,titleVariant:4,copyVariant:1});
+ assert.notEqual(a.body,b.body);assert.notEqual(a.titles[0],b.titles[0]);
+ for(const result of [a,b])for(const fact of ['34㎡','68,000₽','34,000₽','11分钟','空调'])assert(result.body.includes(fact),fact);
+ assert.deepEqual(b,generateListing({...v,titleVariant:4,copyVariant:1}));
+ assert.doesNotMatch(b.body,/落地签|免费接送|莫斯科国立大学/);
+});

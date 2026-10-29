@@ -9,4 +9,5 @@ __pycache__/
 *.pyc
 .redcn-cache/
 output/
+.venv/
 *.sqlite3

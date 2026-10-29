@@ -8,7 +8,7 @@ const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fa
 let toastTimer;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Не удалось сохранить: хранилище браузера заполнено или недоступно. Экспортируйте копию.');return false;}}
-const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission'];
+const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission','phraseNotes'];
 const defaults={style:'compact',layout:'classic',utilities:'unknown',registration:'assist',support:true,uniMode:'步行',seller:'unknown',audience:'general'};
 const storedRules=read('most-rules',null);
 let rules=read('most-rules-version',0)===2&&storedRules?storedRules:{...DICTIONARY,...storedRules};
@@ -16,8 +16,10 @@ if(read('most-rules-version',0)!==2&&write('most-rules',rules))write('most-rules
 let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
 let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
 let current=null,titleIndex=0,currentTitles=[];
+let copyVariant=0,localResultId=null,localJob=null;
 let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null;
-const staticHosting=document.querySelector('meta[name="redcn-hosting"]')?.content==='github-pages';
+const hosting=document.querySelector('meta[name="redcn-hosting"]')?.content;
+const localHosting=hosting==='local',staticHosting=hosting==='github-pages'||localHosting;
 let wordCustom=read('most-word-custom',[]);if(!Array.isArray(wordCustom))wordCustom=[];
 
 // Generate checkboxes using safe DOM methods; nothing from a listing becomes HTML.
@@ -29,8 +31,8 @@ for(const group of Object.keys(groupNames)){
     wrapper.append(input,document.createTextNode(label));$('featureGrid').append(wrapper);
   }
 }
-function snapshot(){const value={titleVariant,photos:photoUrls};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
-function populate(value){wordEditor?.reset();const v={...defaults,...value};titleVariant=Number(v.titleVariant)||0;photoUrls=Array.isArray(v.photos)?v.photos:[];renderPhotos();for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES)$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);}
+function snapshot(){const value={titleVariant,copyVariant,photos:photoUrls};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
+function populate(value){localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=Array.isArray(v.photos)?v.photos:[];renderPhotos();for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES)$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
 function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
 function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge')insightsUI?.renderKnowledge();if(name==='analytics')insightsUI?.renderAnalytics();}
@@ -44,7 +46,8 @@ function generate(){
   currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);
   $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.';saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);
 }
-$('generate').onclick=generate;
+$('generate').onclick=()=>{titleVariant++;copyVariant++;generate();};
+$('rewriteCopy').onclick=()=>{if($('output').value&&!confirm('Создать новую подачу по текущим полям? Ручные правки описания будут заменены.'))return;titleVariant++;copyVariant++;generate();};
 $('rotateTitles').onclick=()=>{titleVariant++;const result=generateListing(snapshot(),rules,prefs);currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);saveDraft();toast('Новые заголовки и теги. Текст описания сохранён.');};
 function renderTagReasons(suggestions=[]){$('tagReasons').replaceChildren();for(const item of suggestions){const div=document.createElement('div');div.className='tag-item';div.textContent='#'+item.tag+' — '+item.ru+' · '+item.reason;$('tagReasons').append(div);}}
 function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$('tagCatalog').replaceChildren();for(const [tag,ru] of TAG_CATALOG.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q))){const button=document.createElement('button');button.className='btn word-result';button.textContent='#'+tag+' — '+ru;button.onclick=()=>{const tags=new Set($('tags').value.split(/\s+/).filter(Boolean));tags.add('#'+tag);$('tags').value=[...tags].join(' ');saveDraft();};$('tagCatalog').append(button);}}
@@ -64,6 +67,7 @@ function extract(){
 $('extract').onclick=extract;
 let importing=false;
 $('import').onclick=async()=>{
+  if(localHosting)return importLocal();
   if(staticHosting)return toast('GitHub Pages не выполняет серверные запросы. Импортируйте ссылку через Python CLI или вставьте текст.');
   if(importing)return;let raw=$('url').value;
   try{const u=new URL(raw);if(u.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)||u.username||u.password||u.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');
@@ -88,7 +92,7 @@ $('save').onclick=()=>{
   const object={...value,id:current||(globalThis.crypto?.randomUUID?.()||'object-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles,updated:new Date().toISOString()};
   const next=[object,...objects.filter(o=>o.id!==object.id)];if(write('most-objects',next)){objects=next;current=object.id;saveDraft();toast('Объект сохранён вместе с заголовком и описанием');}
 };
-$('newObject').onclick=()=>{saveDraft();populate({});current=null;currentTitles=[];$('output').value='';$('outputTitle').value='';$('tags').value='';renderTitles();saveDraft();toast('Новая карточка. Объекты из библиотеки сохранены.');};
+$('newObject').onclick=()=>{if(localHosting)history.pushState({},'', '/');saveDraft();populate({});current=null;currentTitles=[];$('output').value='';$('outputTitle').value='';$('tags').value='';renderTitles();saveDraft();toast('Новая карточка. Объекты из библиотеки сохранены.');};
 function renderList(){
   const q=$('search').value.toLowerCase();$('list').replaceChildren();
   const mode=$('libraryFilter').value;const found=objects.filter(o=>[o.name,o.metro,o.complex,o.title].join(' ').toLowerCase().includes(q)&&(mode==='all'||mode==='owner'&&o.seller==='owner'||mode==='eligible'&&listingEligible(o.seller,o.commission)));
@@ -132,7 +136,7 @@ $('demo').onclick=()=>{
 const draft=read('most-draft',null);
 if(draft?.version===2){populate(draft.fields||{});current=draft.id||null;$('outputTitle').value=draft.title||'';$('output').value=draft.output||'';$('tags').value=draft.tags||'';currentTitles=Array.isArray(draft.titles)?draft.titles:[];renderTitles();}
 else populate(draft||{});
-wordEditor=setupWordEditor({getRules:()=>rules,getCustom:()=>wordCustom,saveCustom:value=>{wordCustom=value;write('most-word-custom',wordCustom);},onChange:saveDraft,toast});
+wordEditor=setupWordEditor({getRules:()=>rules,getCustom:()=>[...wordCustom,...noteEntries()],saveCustom:value=>{wordCustom=value;write('most-word-custom',wordCustom);},onChange:saveDraft,toast});
 renderTagCatalog();renderTagReasons(generateListing(snapshot(),rules,prefs).tagSuggestions);counts();
 
 function renderPhotos(){const safe=[];for(const raw of photoUrls.slice(0,30)){try{const u=new URL(typeof raw==='string'?raw:raw.url);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|cdn-cian\.ru|ciancdn\.ru|avito\.ru|avito\.st)$/i.test(u.hostname)&&!u.username&&!u.password)safe.push(u.href);}catch{}}photoUrls=safe;$('photoCard').classList.toggle('hidden',!safe.length);$('photoGallery').replaceChildren();for(const url of safe){const a=document.createElement('a'),img=document.createElement('img');a.href=url;a.target='_blank';a.rel='noopener noreferrer';img.src=url;img.loading='lazy';img.referrerPolicy='no-referrer';img.alt='Фото квартиры из источника';a.append(img);$('photoGallery').append(a);}}
@@ -144,4 +148,15 @@ function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataCli
 $('roadmapSearch').oninput=renderRoadmap;$('roadmapFilter').onchange=renderRoadmap;
 function captureKnowledge(type,title,text){if(insightsUI&&$('rememberContent').checked&&text.trim())insightsUI.capture({type,title,text,source:$('url').value,status:'unreviewed'});}
 insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{rules[ru]=cn;write('most-rules',rules);renderRules();}});
-if(staticHosting){$('importStatus').textContent='GitHub Pages: вставьте текст или импортируйте JSON из Python CLI.';$('import').textContent='Импорт через CLI';}
+if(staticHosting&&!localHosting){$('importStatus').textContent='GitHub Pages: вставьте текст или импортируйте JSON из Python CLI.';$('import').textContent='Импорт через CLI';}
+
+// Local desktop backend is available only in the loopback-served build.
+function noteEntries(){return $('phraseNotes').value.split('\n').map(line=>line.split('|').map(s=>s.trim())).filter(parts=>parts.length>=2&&parts[0]&&parts[1]).map(([zh,ru,...alternatives])=>({zh,ru,alternatives:alternatives.filter(Boolean)}));}
+$('phraseNotes').addEventListener('input',()=>wordEditor?.render());
+async function localApi(path,data){const response=await fetch('/api/local/'+path,{method:data?'POST':'GET',headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||'',...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})});const value=await response.json();if(!response.ok)throw Error(value.error||'Ошибка локального сервера');return value;}
+function applyGenerated(value){if(!value.fields||!Array.isArray(value.titles)||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Неверный результат');populate({...value.fields,photos:value.listing?.images||value.fields.photos||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);}
+function showLocalLink(id){localResultId=id;$('localResult').classList.remove('hidden');$('resultLink').href='/listing/'+id;$('resultLink').textContent=location.origin+'/listing/'+id;try{const u=new URL($('url').value);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)){$('sourceLink').href=u.href;$('sourceLink').classList.remove('hidden');}else $('sourceLink').classList.add('hidden');}catch{$('sourceLink').classList.add('hidden');}}
+async function importLocal(){if(importing)return;importing=true;$('import').disabled=true;$('cancelImport').classList.remove('hidden');try{const old=snapshot(),data={};for(const key of ['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','phraseNotes'])data[key]=old[key];const start=await localApi('import',{url:$('url').value,loader:$('localLoader').value,timeout:Number($('localTimeout').value),refresh:$('localRefresh').checked,data,rules,prefs});localJob=start.job_id;while(true){const job=await localApi('jobs/'+localJob);$('importStatus').textContent=job.message;if(job.state==='error')throw Error(job.message);if(job.state==='done'){const result=await localApi('results/'+job.result_id);applyGenerated(result);showLocalLink(job.result_id);history.pushState({},'', '/listing/'+job.result_id);$('review').textContent='Карточка загружена. Проверьте факты, словарь и условия; время до вузов добавляется после проверки.';toast('Заголовки, описание и теги готовы. Ссылка карточки сохранена.');break;}await new Promise(resolve=>setTimeout(resolve,1000));}}catch(error){$('importStatus').textContent=error.message;}finally{importing=false;localJob=null;$('import').disabled=false;$('cancelImport').classList.add('hidden');}}
+$('cancelImport').onclick=async()=>{if(localJob)try{await localApi('cancel',{job_id:localJob});$('importStatus').textContent='Отмена импорта…';}catch(error){toast(error.message);}};
+$('saveLocal').onclick=async()=>{try{const fields=snapshot(),result={fields,titles:[$('outputTitle').value,...currentTitles.filter(t=>t!==$('outputTitle').value)].slice(0,3),body:$('output').value,tags:$('tags').value,listing:{url:fields.url,text:fields.source,images:photoUrls}};const saved=await localApi('save',{result_id:localResultId,result});showLocalLink(saved.result_id);history.replaceState({},'', '/listing/'+saved.result_id);$('localSaveStatus').textContent='Сохранено '+new Date().toLocaleTimeString('ru-RU');}catch(error){toast(error.message);}};
+if(localHosting){$('localControls').classList.remove('hidden');$('localHelp').classList.add('hidden');$('importStatus').textContent='Локальный импорт: Chrome и кеш на 24 часа';$('import').textContent='Загрузить и создать';const match=location.pathname.match(/^\/listing\/([a-f0-9]{32})$/);if(match)localApi('results/'+match[1]).then(result=>{applyGenerated(result);showLocalLink(match[1]);}).catch(error=>toast(error.message));}
