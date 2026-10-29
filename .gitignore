@@ -1,0 +1,7 @@
+dist/
+node_modules/
+*.tar.gz
+site.tar.gz
+.env
+.env.*
+*.backup.json
