@@ -1,5 +1,7 @@
 """Loopback-only editor, background imports and durable local listing links."""
 import json
+import errno
+import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import re
@@ -8,6 +10,7 @@ import sqlite3
 import threading
 import time
 from urllib.parse import urlsplit
+import urllib.request
 import webbrowser
 
 import redcn
@@ -39,6 +42,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
+    identity = {'app':'redcn', 'protocol':1, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
@@ -85,6 +89,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         def do_GET(self):
             if not self.permitted(): return
             path = urlsplit(self.path).path
+            if path == '/api/local/health':
+                self.respond(200,identity);return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
                 if path.startswith('/api/local/jobs/'):
@@ -153,9 +159,37 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     return server
 
 
+def matching_server(directory, port, browser_channel):
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *_args, **_kwargs): return None
+    expected = {'app':'redcn','protocol':1,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    try:
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+        with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:
+            return json.loads(response.read(4097)) == expected
+    except (OSError,ValueError): return False
+
+
+def bind_or_reuse(directory, port, browser_channel='chrome'):
+    if type(port) is not int or not 0 <= port <= 65535: raise ValueError('Порт должен быть от 0 до 65535')
+    for candidate in ([0] if port==0 else range(port,min(port+20,65536))):
+        try:
+            server = create_server(directory,candidate,browser_channel)
+            return server,server.server_port
+        except OSError as error:
+            if error.errno != errno.EADDRINUSE: raise
+            if matching_server(directory,candidate,browser_channel): return None,candidate
+    raise ValueError('Не найден свободный порт. Используйте --port 0 для автоматического выбора.')
+
+
 def serve(directory, port=8765, result_id=None, open_browser=True, browser_channel='chrome'):
-    server = create_server(directory,port,browser_channel)
-    link = f'http://127.0.0.1:{server.server_port}'+('/listing/'+result_id if result_id else '/')
+    server, selected_port = bind_or_reuse(directory,port,browser_channel)
+    link = f'http://127.0.0.1:{selected_port}'+('/listing/'+result_id if result_id else '/')
+    if server is None:
+        print('\nredcn уже работает: '+link+'\nОткрываем существующий сайт. Второй сервер не нужен.',flush=True)
+        if open_browser: webbrowser.open(link)
+        return 0
+    if port and port != selected_port: print(f'Порт {port} занят другой программой. Выбран порт {selected_port}.',flush=True)
     print('\nЛокальный redcn: '+link+'\nОставьте терминал открытым. Остановка: Ctrl+C.',flush=True)
     if open_browser: webbrowser.open(link)
     try: server.serve_forever()

@@ -2,6 +2,7 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import socket
 import sys
 import tempfile
 import threading
@@ -118,6 +119,32 @@ class LocalServerTests(unittest.TestCase):
         for extra,token in [({'Origin':'https://evil.example'},True),({'Host':'evil.example'},True),({},False)]:
             with self.assertRaises(urllib.error.HTTPError) as caught: self.request('/api/local/import',{'url':URL},extra,token)
             self.assertEqual(caught.exception.code,403)
+
+    def test_repeat_start_reuses_running_server_and_saved_link(self):
+        with patch.object(local_server.webbrowser,'open') as opened,patch.object(local_server,'create_server',wraps=local_server.create_server) as create:
+            self.assertEqual(local_server.serve(self.directory,self.server.server_port,result_id='a'*32),0)
+            opened.assert_called_once_with(self.base+'/listing/'+'a'*32)
+            self.assertEqual(create.call_count,1)
+        self.assertFalse(local_server.matching_server(self.directory/'different-data',self.server.server_port,'chrome'))
+        self.assertFalse(local_server.matching_server(self.directory,self.server.server_port,'chromium'))
+
+    def test_foreign_listener_is_kept_and_next_port_is_used(self):
+        with socket.socket() as occupied:
+            occupied.bind(('127.0.0.1',0));occupied.listen()
+            port=occupied.getsockname()[1]
+            with patch.object(local_server,'matching_server',return_value=False):
+                server,selected=local_server.bind_or_reuse(self.directory,port)
+            try:
+                self.assertGreater(selected,port)
+                self.assertEqual(occupied.getsockname()[1],port)
+            finally: server.server_close()
+
+    def test_health_needs_correct_origin_but_never_exposes_token_or_directory(self):
+        health=self.request('/api/local/health',token=False)
+        self.assertEqual(health['app'],'redcn');self.assertEqual(len(health['storage']),64)
+        self.assertNotIn(self.token,json.dumps(health));self.assertNotIn(str(self.directory),json.dumps(health))
+        with self.assertRaises(urllib.error.HTTPError) as caught: self.request('/api/local/health',extra={'Origin':'https://evil.example'},token=False)
+        self.assertEqual(caught.exception.code,403)
 
     def test_job_to_durable_link_and_saved_word_notes(self):
         with patch.object(redcn,'load_listing',return_value={'url':URL,'text':TEXT,'images':[],'cached':False}):
