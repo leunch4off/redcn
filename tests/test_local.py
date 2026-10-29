@@ -80,6 +80,21 @@ class ImportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'отменён'): browser_import.load_browser(URL,Path(folder),redcn.parse_html,lambda value,**_:value,cancel=event)
             context.close.assert_called_once()
 
+    def test_pending_blank_navigation_is_waited_for_not_rejected_as_bad_url(self):
+        page,context,pw,api=MagicMock(),MagicMock(),MagicMock(),MagicMock()
+        page.url='about:blank';page.is_closed.return_value=False;context.pages=[page]
+        page.wait_for_timeout.side_effect=lambda _:setattr(page,'url',URL)
+        page.evaluate.return_value={'text':TEXT,'fallback':TEXT,'body':TEXT,'title':'Аренда квартиры','metadata':'','images':[]}
+        pw.chromium.launch_persistent_context.return_value=context
+        api.sync_playwright.return_value.__enter__.return_value=pw
+        api.Error=type('FakeBrowserError',(Exception,),{});api.TimeoutError=type('FakeBrowserTimeout',(api.Error,),{})
+        validate=MagicMock(side_effect=lambda value,**_:value)
+        with tempfile.TemporaryDirectory() as folder,patch.dict(sys.modules,{'playwright':MagicMock(),'playwright.sync_api':api}):
+            result=browser_import.load_browser(URL,Path(folder),redcn.parse_html,validate,channel='chromium')
+            self.assertEqual(result['browser_channel'],'chromium')
+            self.assertFalse(any(call.args[0]=='about:blank' for call in validate.call_args_list))
+            self.assertIsNone(pw.chromium.launch_persistent_context.call_args.kwargs['channel'])
+
 
 class LocalServerTests(unittest.TestCase):
     def setUp(self):

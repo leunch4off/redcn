@@ -51,6 +51,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                 raise ValueError('Не удалось открыть '+browser_name+'. '+hint+' '+str(error).splitlines()[0]) from error
             try:
                 if cancel and cancel.is_set(): raise ValueError('Импорт отменён')
+                report('Браузер открыт. Загружаем объявление и ждём факты квартиры…')
                 page = context.pages[0] if context.pages else context.new_page()
                 page.set_default_timeout(3000)
                 deadline = time.monotonic() + timeout
@@ -60,10 +61,20 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                 except BrowserTimeout:
                     report('Страница ещё загружается. Ожидаем содержимое в открытом Chrome…')
                 last, stable, challenge_reported = '', 0, False
+                pending_reported = False
                 while time.monotonic() < deadline:
                     if cancel and cancel.is_set(): raise ValueError('Импорт отменён')
                     if page.is_closed(): raise ValueError('Окно Chrome закрыто до завершения импорта')
-                    validate_url(page.url, resolve=False)
+                    current_url = page.url
+                    if current_url == 'about:blank':
+                        if not pending_reported:
+                            report('Chrome ещё не установил соединение с источником. Ссылка корректна; ожидаем загрузку страницы…')
+                            pending_reported = True
+                        page.wait_for_timeout(1000)
+                        continue
+                    if current_url.startswith('chrome-error:'):
+                        raise ValueError('Chrome не смог подключиться к источнику. Проверьте доступность ссылки в обычном браузере либо используйте --input. Настройки сертификатов не изменяются.')
+                    validate_url(current_url, resolve=False)
                     snapshot = page.evaluate(SNAPSHOT)
                     # A selector can be renamed by a source; use the pruned rendered
                     # main section when it contains facts absent from the small blocks.
