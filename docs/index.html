@@ -1,0 +1,624 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="redcn-hosting" content="github-pages"><meta name="viewport" content="width=device-width,initial-scale=1"><title>МОСТ — CIAN CN Rednote</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f0;color:#252b27;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}aside{width:222px;background:#fff;border-right:1px solid #e5e6df;position:fixed;height:100vh;padding:34px 22px;display:flex;flex-direction:column}.brand{font-size:30px;letter-spacing:-2px;font-weight:800}.brand b{color:#bd4937}.sub{font-size:10px;letter-spacing:2px;color:#8b918b;margin-top:7px}nav{margin-top:55px}nav button{display:block;border:0;background:none;width:100%;text-align:left;padding:14px;border-radius:8px;color:#6d756e;margin-bottom:7px}nav button.active{background:#eaf0e9;color:#35513c;font-weight:600}.sidebottom{margin-top:auto;color:#7b837c;font-size:12px;line-height:1.8}.dot{color:#55846b}main{margin-left:222px;padding:0 44px 50px;max-width:1600px}header{height:83px;border-bottom:1px solid #dedfd8;display:flex;align-items:center;justify-content:space-between;color:#7b827b;font-size:12px}.private{background:white;border:1px solid #e0e3da;padding:8px 12px;border-radius:30px;color:#4d6250}.heading{display:flex;justify-content:space-between;align-items:center;margin:37px 0 26px}h1{font-size:33px;font-weight:500;letter-spacing:-1px;margin:0 0 10px}p{color:#858b83;margin:0;line-height:1.65}.pill{font-size:11px;letter-spacing:1px;color:#74806f}.grid{display:grid;grid-template-columns:1.05fr 1fr;gap:25px}.card{background:#fff;border:1px solid #e2e4dc;border-radius:12px;padding:25px;margin-bottom:20px}h2{font-size:16px;font-weight:600;margin:0 0 20px}.step{display:inline-grid;place-items:center;border:1px solid #d8ded3;border-radius:50%;width:25px;height:25px;margin-right:9px;font-size:12px;color:#70806a}label{display:block;color:#6f786e;font-size:12px;margin:14px 0 8px}input,textarea,select{width:100%;border:1px solid #dfe2d9;border-radius:7px;padding:11px 12px;background:#fdfdfb;color:#30392e;outline:none}input:focus,textarea:focus{border-color:#7d987c}textarea{resize:vertical;line-height:1.6}.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.btn{border:1px solid #dce1d6;background:#fff;border-radius:7px;padding:11px 16px;color:#53614d;white-space:nowrap}.primary{background:#364e3b;color:#fff;border-color:#364e3b}.small{font-size:11px;color:#8a9185;margin-top:10px;line-height:1.5}.split{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}.checks label{display:flex;align-items:center;gap:9px;font-size:12px;line-height:1.5}.checks input{width:15px;accent-color:#526d4d}.preview{background:#fbfaf6;min-height:630px;padding:26px;border-radius:8px;border:1px solid #e9e8de}.preview textarea{background:transparent;border:0;min-height:490px;font-size:15px;line-height:2;resize:vertical;padding:0}.previewtop{display:flex;justify-content:space-between;color:#8b8a80;font-size:10px;letter-spacing:1.8px;margin-bottom:27px}.red{color:#ca5442;background:#fae8e1;padding:5px 8px;border-radius:4px;letter-spacing:0}.tags{color:#66815f;font-size:12px;line-height:2}.toolbar{display:flex;align-items:center;justify-content:space-between;margin:18px 0 0}.notice{border-left:3px solid #c5cfb8;padding:10px 14px;background:#f3f5ee;color:#7b846f;font-size:12px;line-height:1.6}.hidden{display:none!important}.saved{padding:18px;border-bottom:1px solid #e5e7dd;display:flex;justify-content:space-between;gap:10px}.toast{position:fixed;bottom:25px;left:50%;background:#344b39;color:white;border-radius:10px;padding:13px 24px;z-index:10}.rule{display:grid;grid-template-columns:1fr 1fr 34px;gap:10px;margin:10px 0}.eyebrow{font-size:11px;letter-spacing:2px;color:#a4ab9a;margin-bottom:14px}@media(max-width:1050px){aside{width:175px;padding:25px 14px}main{margin-left:175px;padding:0 22px}.grid{grid-template-columns:1fr}}@media(max-width:650px){aside{position:static;width:auto;height:auto;padding:18px}.brand{font-size:25px}nav{margin-top:16px;display:flex;overflow:auto}nav button{width:auto;white-space:nowrap;padding:9px}.sidebottom,.sub{display:none}main{margin:0;padding:0 16px}header{height:50px}.heading{margin:25px 0}h1{font-size:26px}.card{padding:18px}.split{grid-template-columns:1fr 1fr}.pill{display:none}}
+
+.form-section{padding-top:20px;margin-top:22px;border-top:1px solid #e5e8de}.form-section h3{font-weight:550;font-size:14px}.muted{color:#899080;font-size:11px;line-height:1.7}.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.feature-grid label{display:flex;gap:8px;align-items:center;line-height:1.4}.feature-grid input{width:15px;accent-color:#526d4d}.feature-group{font-size:11px;letter-spacing:1px;color:#8b9585;grid-column:1/-1;margin-top:12px}.variant{display:block;text-align:left;width:100%;white-space:normal;font-size:13px;margin-top:8px;line-height:1.7}.variant.chosen{border-color:#7c9674;background:#f0f5eb}.preview input{font-size:19px;font-weight:600;line-height:1.7;border:0;border-bottom:1px solid #e0e3d8;border-radius:0;background:transparent;padding:0 0 17px;margin-bottom:18px}.preview textarea{min-height:580px;font-size:14px}.sticky{position:static}.output-options{display:flex;gap:8px;flex-wrap:wrap}.output-options button{font-size:12px;padding:9px 12px}.checks label input{flex-shrink:0}.badge{display:inline-block;font-size:10px;border-radius:5px;background:#eef2e9;color:#6e8265;padding:4px 7px}.error{border-color:#b97855;background:#fff3e9;color:#986235}.saved span{overflow-wrap:anywhere}.import-summary{white-space:pre-wrap}.previewtop{margin-bottom:16px}.rule{grid-template-columns:1fr 1fr 34px}#outputTitle{width:100%}#bodyCount{white-space:nowrap}.card .row{flex-wrap:wrap}@media(max-width:1050px){.sticky{position:static}}@media(max-width:650px){.row{flex-wrap:wrap}.row .btn{flex-basis:auto}.rule input{padding:8px}.feature-grid{gap:0 6px}.preview input{font-size:17px}#variants .btn{padding:8px}.split{gap:0 10px}}
+
+.word-panel{margin-top:14px;border:1px solid #dbe2d2;background:#f8faf5;border-radius:10px;padding:18px}.word-panel h3{font-size:13px;font-weight:600}.token-text{white-space:pre-wrap;line-height:2.3;max-height:280px;overflow:auto;border:1px solid #e5e8df;background:white;border-radius:7px;padding:12px}.word{font:inherit;color:inherit;border:0;background:transparent;padding:1px 2px;cursor:pointer;line-height:1.9;border-bottom:1px dotted #b9bcaf}.word.known{border-bottom:2px solid #9db790}.word:hover,.word:focus{background:#e0edd8;outline:1px solid #99af8c;border-radius:3px}.inspector{padding:16px;border-radius:8px;border:1px solid #bacbb0;margin-top:16px;background:white}.inspector strong{font-size:22px}.inspector p{margin-top:8px;color:#48613d}.word-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.word-result{width:100%;text-align:left;margin-top:6px;white-space:normal}.tag-explain{margin-top:15px;font-size:12px;line-height:1.8;color:#64735b}.tag-explain summary{cursor:pointer}.tag-item{margin:8px 0;padding:8px;border-bottom:1px solid #e5e8df}.tag-item button{white-space:normal;font-size:12px}#rotateTitles{font-size:11px;white-space:normal}#tagCatalog{max-height:250px;overflow:auto}
+
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:16px}.photo-grid img{width:100%;height:110px;object-fit:cover;border-radius:7px}.task{background:white;border:1px solid #e0e6da;border-radius:8px;padding:15px;margin-bottom:10px}.task header{height:auto;border:0;margin-bottom:8px;color:#4b6444}.task p{font-size:12px}.task .evidence{font-size:11px;color:#839078;margin-top:7px}.task.done{border-left:4px solid #87a671}
+
+.header-links{display:flex;align-items:center;gap:16px}a{color:#4a6d46}.research-link{display:inline-block;margin:12px 18px 8px 0;font-size:12px}.research-terms{display:grid;grid-template-columns:1fr 1fr;gap:0 15px}.research-terms p{font-size:12px;margin-top:7px}.table-wrap{overflow:auto;margin:20px 0}.metrics-table{border-collapse:collapse;width:100%;font-size:13px}.metrics-table th,.metrics-table td{padding:13px;text-align:left;border-bottom:1px solid #e2e7db;vertical-align:top}.metrics-table td small{display:block;color:#8b9581;font-size:10px;max-width:160px;margin-top:6px}.kb-body{white-space:pre-wrap;max-height:180px;overflow:auto;color:#4d5946;margin:10px 0;font-size:13px}.task button{margin:10px 8px 0 0;font-size:11px}.metrics-table th:first-child{min-width:140px}@media(max-width:650px){.research-terms{grid-template-columns:1fr}.header-links{gap:8px}.private{font-size:10px}}
+</style><aside><div class="brand">МОСТ<b>↗</b></div><div class="sub">CIAN → CN · REDNOTE</div><nav><button class="active" data-tab="editor">▧ &nbsp; Новое объявление</button><button data-tab="library">▤ &nbsp; Библиотека объектов</button><button data-tab="rules">⌘ &nbsp; Словарь и правила</button><button data-tab="analytics">◷ &nbsp; Теги и статистика</button><button data-tab="knowledge">知 &nbsp; База знаний</button><button data-tab="roadmap">☷ &nbsp; Roadmap · 200 задач</button><button data-tab="settings">⚙ &nbsp; Наши преимущества</button></nav><div class="sidebottom"><span class="dot">●</span> Личное пространство<br>Москва → 中国<br><hr style="border:0;border-top:1px solid #eee;margin:20px 0">Точные факты. Живой язык.</div></aside><main><header><span>Рабочее пространство / <b id="crumb">Новое объявление</b></span><div class="header-links"><a href="https://github.com/leunch4off/redcn" target="_blank" rel="noopener noreferrer">GitHub ↗</a><span class="private">GitHub Pages · данные локально</span></div></header><section id="editor"><div class="heading"><div><div class="eyebrow">ИЗ МОСКВЫ — С ЗАБОТОЙ</div><h1>Объявление без языковых границ</h1><p>Броский заголовок. Живое описание. Только факты из вашей карточки.</p></div><span class="pill">RU &nbsp; → &nbsp; 中文</span></div><div class="grid"><div><div class="card"><h2>Формат публикации</h2><div class="split"><div><label for="style">Подача текста</label><select id="style"><option value="compact">Коротко и ярко</option><option value="detailed">Подробно по блокам</option><option value="story">Рассказ о квартире</option></select></div><div><label for="layout">Планировка</label><select id="layout"><option value="classic">Комнаты + отдельная кухня</option><option value="euro2">Евро-2: спальня + кухня-гостиная</option><option value="euro3">Евро-3: 2 спальни + кухня-гостиная</option><option value="studio">Студия</option></select></div></div></div>
+<div class="card"><h2><span class="step">1</span> Источник объявления</h2><label>Ссылка на ЦИАН или Авито</label><div class="row"><input id="url" type="url" placeholder="https://www.cian.ru/rent/flat/…"><button class="btn" id="import">↓ Загрузить</button></div><label for="source">Или вставьте текст объявления</label><textarea id="source" rows="4" placeholder="2-комнатная квартира, 52 м². Метро Университет, 8 минут пешком. Аренда 85 000 ₽, залог 85 000 ₽…"></textarea><div class="row" style="margin-top:14px"><button id="importCli" class="btn">Импорт результата Python / JSON</button><input id="cliFile" type="file" accept="application/json" hidden></div><div class="split"><div><label for="seller">Кто сдаёт</label><select id="seller"><option value="unknown">Не проверено</option><option value="owner">Собственник</option><option value="agent">Посредник</option></select></div><div><label for="commission">Комиссия, %</label><input id="commission" type="number" min="0" step="any" placeholder="Неизвестно"></div></div><div class="toolbar"><span class="small" role="status" id="importStatus">Ссылки запоминаются на 24 часа в этом браузере</span><button class="btn" id="extract">Разобрать текст ↗</button></div></div>
+<div class="card"><h2><span class="step">2</span> Данные и расположение</h2><div class="split"><div><label for="name">Название / адрес</label><input id="name" placeholder="Квартира у МГУ"></div><div><label for="district">Район (для справки)</label><input id="district" placeholder="Гагаринский"></div><div><label for="complex">ЖК / локация для текста</label><input id="complex" placeholder="Саларьево парк"></div><div><label for="districtZh">Район на китайском (если нет ЖК)</label><input id="districtZh" placeholder="莫斯科西南部"></div><div><label for="metro">Метро · русский или китайский</label><input id="metro" placeholder="Университет"></div><div><label for="walk">До метро пешком, минут</label><input id="walk" placeholder="8 или 11–15"></div><div><label for="area">Площадь, м²</label><input id="area" type="number" step="any" min="0" placeholder="52"></div><div><label for="rooms">Комнат по объявлению</label><input id="rooms" type="number" min="0" placeholder="2"></div><div><label for="kitchen">Кухня / кухня-гостиная, м²</label><input id="kitchen" type="number" min="0" step="any"></div><div><label for="living">Жилая площадь, м²</label><input id="living" type="number" min="0" step="any"></div><div><label for="bedroomArea">Спальня, м²</label><input id="bedroomArea" type="number" min="0" step="any"></div><div><label for="occupants">До скольких человек считать бюджет</label><input id="occupants" type="number" min="1" max="12" placeholder="4"></div><div><label for="floor">Этаж</label><input id="floor" type="number" min="0" placeholder="7"></div><div><label for="floors">Этажей в доме</label><input id="floors" type="number" min="1" placeholder="16"></div><div><label for="price">Аренда, ₽ / месяц</label><input id="price" type="number" min="0" placeholder="85000"></div><div><label for="deposit">Залог, ₽</label><input id="deposit" type="number" min="0" placeholder="85000"></div><div><label for="university">Вуз</label><input id="university" placeholder="МГУ"></div><div><label for="uniTime">Время до вуза, минут</label><input id="uniTime" placeholder="15 или 35–50"></div><div><label for="uniMode">Как добраться до вуза</label><select id="uniMode"><option value="步行">Пешком</option><option value="乘坐地铁">На метро</option><option value="乘坐公交">На автобусе</option></select></div><div><label for="route">Маршрут / линия (по-китайски)</label><input id="route" placeholder="乘坐地铁1号线，无需换乘"></div></div><div class="split"><div><label for="campus">Кампус · название на китайском / из словаря</label><input id="campus" placeholder="Точный кампус, без предположений"></div><div><label for="region">Район для тегов</label><select id="region"><option value="">Не указан</option><option value="southwest">Юго-запад Москвы</option></select></div><div><label for="audience">Аудитория тегов</label><select id="audience"><option value="general">Общая</option><option value="student">Студенты</option><option value="professional">Командированные / работающие</option></select></div></div><div class="checks"><label><input id="ready" type="checkbox">Полностью готова к заселению</label><label><input id="newRenovation" type="checkbox">Новый ремонт подтверждён</label></div><div class="form-section"><h3>Несколько станций и вузов</h3><label for="transit">Метро: станция | минуты | способ | линия</label><textarea id="transit" rows="3" placeholder="Прокшино | 12 | walk | 1&#10;Филатов Луг | 19 | walk | 1&#10;Саларьево | 7 | bus | 1"></textarea><p class="muted">Одна строка — один маршрут. walk = пешком, bus = автобус, metro = метро, public = общественный транспорт. Эти строки заменяют одиночное поле метро выше.</p><label for="universities">Вузы: название | минуты | способ</label><textarea id="universities" rows="3" placeholder="МГУ | 35–50 | public&#10;РУДН | 30–45 | public"></textarea><p class="muted">Без времени маршрут выйдет с пометкой «уточнить». Вузы добавляются в теги только при наличии в карточке.</p></div><div class="form-section"><h3>Факты, которые делают текст живым</h3><label for="highlight">Главная особенность · китайский / триггеры словаря</label><input id="highlight" placeholder="独立卧室＋大厨房客厅＋衣帽间"><label for="description">Описание квартиры · китайский / триггеры словаря</label><textarea id="description" rows="4" placeholder="Описание планировки, ремонта и преимуществ. Свои русские фразы добавьте в словарь — справа появится точный китайский текст."></textarea><label for="details">О районе и квартире · на китайском или по словарю</label><textarea id="details" rows="2" placeholder="китайский магазин, китайский ресторан, балкон"></textarea><div class="small">Время пути указывайте по проверенному маршруту. Неизвестные слова появятся в списке проверки.</div></div><div class="form-section"><h3>Мебель и техника — только то, что есть</h3><div id="featureGrid" class="feature-grid"></div></div><div class="form-section"><h3>Условия проживания</h3><div class="split"><div><label for="utilities">Коммунальные платежи</label><select id="utilities"><option value="unknown">Не указаны — не включать</option><option value="meters">Включены, кроме воды и электричества</option><option value="included">Все расходы включены</option><option value="extra">Оплачиваются отдельно</option></select></div><div><label for="rentFreeMonths">Месяцев бесплатно на ремонт</label><input id="rentFreeMonths" type="number" min="0" max="24"></div><div><label for="minMonths">Минимальный срок, месяцев</label><input id="minMonths" type="number" min="1"></div></div><div class="checks"><label><input id="separate" type="checkbox">Комнаты изолированные</label><label><input id="children" type="checkbox">Можно с детьми</label><label><input id="pets" type="checkbox">Животные по согласованию</label><label><input id="shortTerm" type="checkbox">Возможна краткосрочная аренда</label></div></div></div>
+<div class="card"><h2><span class="step">3</span> Сервис, включённый бесплатно</h2><label for="registration">Регистрация при заселении</label><select id="registration"><option value="assist">Бесплатная помощь с временной регистрацией</option><option value="provided">Бесплатная регистрация входит в услугу</option><option value="none">Не включать в текст</option></select><div class="split"><div><label for="registrationMonths">Срок регистрации, месяцев</label><input id="registrationMonths" type="number" min="1" max="60" placeholder="Только подтверждённый срок"></div><div><label for="registrationPeople">Количество людей</label><input id="registrationPeople" type="number" min="1" max="12"></div></div><p class="muted">В тексте используется 临时居住登记 — временная регистрация. Это не обещание выдачи визы.</p><div class="checks"><label><input type="checkbox" id="pickup">Встреча по прибытии и трансфер до квартиры</label><label><input type="checkbox" id="luggage">Помощь с багажом при трансфере</label><label><input type="checkbox" id="arrival">Помощь с документами после прибытия</label><label><input type="checkbox" id="support" checked>Сопровождение и помощь после заселения</label></div><div class="small">Указывайте только услуги, которые действительно входят в предложение.</div><button class="btn primary" id="generate" style="width:100%;margin-top:20px">Создать заголовки и описание &nbsp; ↗</button></div></div><div><div class="sticky"><div class="card"><div class="toolbar" style="margin:0 0 20px"><h2 style="margin:0">Готово к публикации</h2><span class="small">Упрощённый китайский</span></div><div class="toolbar"><label>Выберите заголовок</label><button class="btn" id="rotateTitles">↻ Другие заголовки и теги</button></div><div id="variants"></div><div class="preview" style="margin-top:20px"><div class="previewtop"><span>ПРЕДПРОСМОТР ТЕКСТА</span><span class="red">小红书 REDNOTE</span></div><input id="outputTitle" aria-label="Заголовок на китайском" placeholder="🔥 Заголовок объявления"><textarea id="output" aria-label="Китайское объявление" placeholder="Ваше объявление появится здесь.&#10;&#10;Заполните данные или загрузите пример, чтобы увидеть результат."></textarea><label for="tags">Теги (можно редактировать)</label><textarea class="tags" id="tags" style="min-height:60px;font-size:12px" rows="3">#莫斯科租房 #莫斯科生活 #俄罗斯留学</textarea></div><details class="tag-explain"><summary>Почему выбраны эти теги · каталог CN → RU</summary><div id="tagReasons"></div><label for="tagSearch">Поиск тегов и значений</label><input id="tagSearch" placeholder="МГУ, метро, 租房…"><div id="tagCatalog"></div><p class="muted">Каталог из ваших примеров, не статистика популярности. Нажмите тег для добавления.</p></details><div class="toolbar"><span class="small" id="bodyCount">0 знаков</span><span class="small" id="titleCount">Заголовок: 0</span></div><div class="output-options" style="margin-top:15px"><button class="btn" id="copyTitle">Заголовок</button><button class="btn" id="copyBody">Описание</button><button class="btn primary" id="copy">Всё целиком ⧉</button></div><button id="wordToggle" class="btn" aria-expanded="false" style="width:100%;margin-top:16px">文 Проверка слов · китайский → русский</button><div id="wordPanel" class="hidden word-panel"><p class="muted">Нажмите фразу или выделите часть текста в заголовке / описании. Зелёное подчёркивание — есть перевод, пунктир — добавить в словарь.</p><h3>Заголовок</h3><div id="titleTokens" class="token-text"></div><h3>Описание</h3><div id="bodyTokens" class="token-text"></div><div id="wordInspector" class="hidden inspector"><strong id="wordSelection"></strong><p id="wordMeaning"></p><div id="wordOptions" class="word-options"></div><label for="wordReplacement">Заменить на</label><input id="wordReplacement" placeholder="Китайское слово или фраза"><label for="wordRussian">Значение по-русски</label><input id="wordRussian" placeholder="Русский перевод"><div class="checks"><label><input id="wordReplaceAll" type="checkbox">Заменить все совпадения в заголовке и описании</label><label><input id="wordRemember" type="checkbox" checked>Запомнить замену с русским значением</label></div><button id="wordApply" class="btn primary">Применить замену</button></div><label for="wordSearch">Подобрать слово из словаря</label><input id="wordSearch" placeholder="Холодильник, аренда, кухня…"><div id="wordSearchResults"></div><button id="wordUndo" class="btn" disabled style="margin-top:12px">↶ Отменить замену</button></div><div class="toolbar"><button class="btn" id="save">♡ Сохранить объект</button><button class="btn" id="newObject">＋ Новый объект</button></div></div><div class="card hidden" id="photoCard"><h2>Фото из импортированной карточки</h2><p class="muted">Оригиналы из источника; полный набор можно скачать через Python CLI.</p><div id="photoGallery" class="photo-grid"></div></div><div class="notice" role="status" id="review">Текст строится по вашим правилам. Проверьте цену, маршрут и условия перед публикацией.</div><button class="btn" id="demo" style="margin-top:18px">Попробовать на примере ↗</button><p class="muted" style="margin-top:12px">Изменения карточки сохраняются как черновик. Сохранённые объекты и резервная копия включают ваш отредактированный текст.</p></div></div></div></section>
+<section id="library" class="hidden"><div class="heading"><div><h1>Библиотека объектов</h1><p>Сохранённые карточки в этом браузере. Экспортируйте резервную копию.</p></div></div><div class="row"><input id="search" placeholder="Поиск по названию или метро"><select id="libraryFilter" aria-label="Фильтр собственников и комиссии"><option value="all">Все объекты</option><option value="eligible">Собственники / комиссия ≤50%</option><option value="owner">Только собственники</option></select><button class="btn" id="export">Экспорт JSON</button><button class="btn" id="restore">Импорт JSON</button><input type="file" id="file" accept="application/json" hidden></div><div class="card" id="list" style="margin-top:20px"></div></section>
+<section id="rules" class="hidden"><div class="heading"><div><h1>Словарь и правила</h1><p>Кодовое слово → точная китайская формулировка. Правила сохраняются автоматически.</p></div></div>
+<div class="card"><div class="row"><input id="trigger" placeholder="Кодовое слово, например: МГУ"><input id="translation" placeholder="中文：莫斯科国立大学"><button id="addRule" class="btn primary">Добавить</button></div><div id="ruleList" style="margin-top:20px"></div></div></section>
+<section id="analytics" class="hidden"><div class="heading"><div><h1>Теги, формулировки и статистика</h1><p>Исследование китайских источников и отчёты по подтверждённым данным.</p></div></div><div class="card"><h2>Что удалось проверить</h2><p id="researchStatus" role="status">Загрузка исследования…</p><div id="researchSources"></div><p class="muted">Число подсказок, поисковый индекс, запросы, лайки, просмотры и клики — разные показатели. Подсказки не доказывают популярность тега.</p></div><div id="researchTerms" class="research-terms"></div><div class="card"><h2>День · 7 дней · 30 дней</h2><label for="metricSeries">Тег / объект / источник / часовой пояс</label><select id="metricSeries"></select><label for="metricEnd">Последний день периода в календаре источника</label><input id="metricEnd" type="date"><div class="table-wrap"><table class="metrics-table"><thead><tr><th>Показатель</th><th>1 день</th><th>7 дней</th><th>30 дней</th></tr></thead><tbody id="metricTableBody"></tbody></table></div><p class="muted" id="metricSource"></p><p class="muted">Накопительный счётчик требует двух снимков на границах периода. Отсутствующие дни не считаются нулём. Индекс поиска усредняется и не превращается в число запросов. Данные разных постов и источников не складываются.</p></div><div class="card"><h2>Импорт статистики</h2><p class="muted">CSV/JSON из доступного вам кабинета или собственного журнала. Каждая строка содержит дату, метрику, значение, объект, источник и тип daily/cumulative. Файл не отправляется на сервер.</p><label for="metricsText">Вставить CSV или JSON</label><textarea id="metricsText" rows="4" placeholder="tag,date,metric,value,kind,scope,entity,source,timezone,sourceSystem"></textarea><div class="output-options" style="margin-top:14px"><button id="metricsApply" class="btn primary">Применить данные</button><button id="metricsImport" class="btn">Импорт файла</button><button id="metricsTemplate" class="btn">Шаблон CSV</button></div><input id="metricsFile" type="file" accept=".csv,.json" hidden></div></section><section id="knowledge" class="hidden"><div class="heading"><div><h1>База знаний и память контента</h1><p>Примеры, китайские формулировки и замечания к системе — в одном месте.</p></div></div><div class="card"><p id="kbCount" role="status"></p><div class="checks"><label><input id="rememberContent" type="checkbox" checked>Запоминать входящий текст и созданные объявления в этом браузере</label></div><p class="muted">Новые записи попадают на проверку. Система не меняет переводы автоматически. Вы можете прислать мне замечания в чате или экспортировать их отсюда.</p><div class="output-options"><button id="kbExport" class="btn">Экспорт знаний и замечаний</button><button id="kbImport" class="btn">Импорт базы</button></div><input id="kbFile" type="file" accept="application/json" hidden></div><div class="card"><h2>Добавить знание или недочёт</h2><div class="split"><div><label for="kbType">Тип записи</label><select id="kbType"><option value="correction">Замечание / недочёт</option><option value="term">Термин</option><option value="example">Пример</option><option value="rule">Правило</option></select></div><div><label for="kbTitle">Название</label><input id="kbTitle"></div><div><label for="kbRussian">По-русски (для термина)</label><input id="kbRussian"></div><div><label for="kbChinese">По-китайски (для термина)</label><input id="kbChinese"></div></div><label for="kbSource">Источник / ссылка (необязательно)</label><input id="kbSource" type="url"><label for="kbText">Что запомнить или исправить</label><textarea id="kbText" rows="4" placeholder="Например: в этом контексте слово лучше заменить на…"></textarea><button id="kbSave" class="btn primary" style="margin-top:12px">Сохранить на проверку</button></div><div class="row"><input id="kbSearch" aria-label="Поиск в базе знаний" placeholder="Поиск по CN, RU или замечанию"><select id="kbFilter" aria-label="Тип знаний"><option value="all">Все записи</option><option value="correction">Замечания</option><option value="term">Термины</option><option value="example">Примеры</option><option value="rule">Правила</option></select></div><div id="kbList" style="margin-top:18px"></div></section><section id="roadmap" class="hidden"><div class="heading"><div><h1>Roadmap · 200 задач</h1><p>Реализация по проверяемым критериям. Галочка — только с доказательством.</p></div></div><div class="card"><div id="roadmapSummary" role="status">Загрузка плана…</div><div class="row" style="margin-top:15px"><input id="roadmapSearch" aria-label="Поиск задач" placeholder="Python, фото, RCN-…"><select id="roadmapFilter" aria-label="Статус задач"><option value="all">Все статусы</option><option value="done">Выполнено</option><option value="planned">В планах</option></select></div></div><div id="roadmapList"></div></section><section id="settings" class="hidden"><div class="heading"><div><h1>Наши преимущества</h1><p>Ваш голос и забота о клиенте — в каждом объявлении.</p></div></div>
+<div class="card"><label for="benefits">Завершающий блок на китайском</label><textarea id="benefits" rows="7"></textarea><p class="muted">Включайте здесь только ваши фактические услуги. Блок добавляется при включённом сопровождении в карточке.</p><label for="brandTags">Постоянные теги студии</label><input id="brandTags" placeholder="#齐工作室 #齐房产"><label for="contact">Контакт для связи (вставляется без перевода)</label><input id="contact" placeholder="WeChat / Telegram"><button id="saveSettings" class="btn primary" style="margin-top:20px">Сохранить</button></div></section>
+<footer class="muted" style="margin-top:28px">МОСТ · CIAN CN Rednote <span class="badge">v4</span> &nbsp; Данные хранятся в этом браузере. Для переноса используйте резервную копию.</footer></main><div id="toast" class="toast hidden" role="status"></div><script type="module">// User-supplied editorial tag catalogue. This is not a popularity ranking or live analytics.
+const TAG_CATALOG = [
+  ['莫斯科','Москва','city'],['莫斯科生活','Жизнь в Москве','city'],['莫斯科留学','Учёба в Москве','student'],
+  ['莫斯科留学生','Иностранные студенты в Москве','student'],['莫斯科通勤','Дорога и поездки в Москве','transport'],
+  ['莫斯科地铁','Московское метро','transport'],['莫斯科房产','Недвижимость Москвы','city'],['莫斯科外派','Работа по направлению / командировке','professional'],
+  ['租','Аренда','general'],['租房','Аренда жилья','general'],['莫斯科租房','Аренда жилья в Москве','base'],
+  ['莫斯科租房信息','Информация об аренде жилья','base'],['莫斯科租房服务','Услуги аренды жилья','service'],
+  ['莫斯科租房中介','Агент по аренде','manual'],['莫斯科转租','Пересдача / субаренда','manual'],
+  ['莫斯科合租','Совместная аренда','sharing'],['留学生租房','Аренда для иностранных студентов','student'],
+  ['年轻人租房','Аренда для молодых людей','manual'],['FIT租房','Аренда, связанная с FIT; значение нужно уточнить','manual'],
+  ['过上整租生活','Жизнь в отдельно арендованной квартире','general'],['租房也要幸福','Комфортная жизнь в аренде','general'],
+  ['公寓','Квартира / апартаменты','general'],['在家','Домашняя атмосфера','general'],
+  ['拎包入住','Полностью готово к заселению','ready'],['全新装修','Новый ремонт','renovation'],['近地铁','Рядом с метро','near'],
+  ['落地签','Разговорный неоднозначный тег; не выбирается автоматически для регистрации','manual'],
+  ['留学生首选','Предпочтительный вариант для студентов; оценочное утверждение','manual'],
+  ['莫斯科一居','Однокомнатный вариант в Москве','one'],['莫斯科一居室','Однокомнатная квартира','one'],
+  ['莫斯科一室一厅','Спальня и гостиная в Москве','euro2'],['一室一厅','Спальня и гостиная','euro2'],
+  ['莫斯科两居','Двухкомнатный вариант','two'],['莫斯科二居','Двухкомнатный вариант','two'],['莫斯科两居室','Двухкомнатная квартира','two'],
+  ['两居室','Двухкомнатная квартира','two'],['莫斯科独立两居','Две изолированные комнаты','twoSeparate'],
+  ['莫斯科独立两居室','Двухкомнатная квартира с изолированными комнатами','twoSeparate'],
+  ['莫斯科两室一厅','Две спальни и гостиная','euro3'],['莫斯科三居','Трёхкомнатный вариант','three'],
+  ['莫斯科独立三居','Три изолированные комнаты','threeSeparate'],['莫斯科四居','Четырёхкомнатный вариант','four'],
+  ['莫斯科西南','Юго-запад Москвы','southwest'],['莫斯科租房西南','Аренда на юго-западе Москвы','southwest'],
+  ['莫斯科西南租房','Аренда на юго-западе Москвы','southwest'],['莫斯科西南区租房','Аренда в юго-западной части Москвы','southwest'],
+  ['莫斯科国立大学','МГУ — полное китайское название','msu'],['莫大','МГУ — сокращённое название','msu'],['莫大租房','Аренда для студентов МГУ','msu'],
+  ['人民友谊大学','РУДН','rudn'],['俄罗斯人民友谊大学','РУДН — полное название','rudn'],['莫斯科友大租房','Аренда для студентов РУДН','rudn'],
+  ['经济学院','Экономический институт / факультет; не конкретный вуз','manual'],['音乐学院','Музыкальный институт / консерватория; не конкретный вуз','manual'],
+];
+
+function suggestTags(v, rules, translateFn, routesFn) {
+  const seed=Math.abs(Number(v.titleVariant)||0), candidates=[];
+  const add=(tag,reason)=>{tag=tag.replace(/^#/,'');if(!candidates.some(x=>x.tag===tag))candidates.push({tag,reason,ru:TAG_CATALOG.find(x=>x[0]===tag)?.[1]||'Тег из указанного названия'});};
+  add('莫斯科租房','Основная тема');add('莫斯科租房信息','Информация об объекте');
+  const routes=routesFn(v.transit),universities=routesFn(v.universities);
+  if(!routes.length&&v.metro)routes.push({name:v.metro,time:v.walk,mode:'walk'});
+  if(!universities.length&&v.university)universities.push({name:v.university});
+  for(const route of routes){const name=translateFn(route.name,rules).replace(/[\s#]/g,'');if(!/[а-яё]/i.test(name))add(name,'Станция указана в карточке');}
+  for(const university of universities){const zh=translateFn(university.name,rules);if(!/[а-яё]/i.test(zh))add(zh.replace(/[\s#]/g,''),'Вуз указан в карточке');
+    if(/МГУ|莫斯科国立大学|莫大/i.test(university.name+' '+zh))add('莫大租房','Указан МГУ');
+    if(/РУДН|RUDN|人民友谊/i.test(university.name+' '+zh))add('莫斯科友大租房','Указан РУДН');
+  }
+  if(v.campus){const zh=translateFn(v.campus,rules).replace(/[\s#]/g,'');if(!/[а-яё]/i.test(zh))add(zh,'Кампус указан вручную');}
+  if(v.layout==='studio')add('莫斯科Studio','Планировка: студия');
+  else if(v.layout==='euro2')add('莫斯科一室一厅','Спальня + кухня-гостиная');
+  else if(v.layout==='euro3')add('莫斯科两室一厅','Две спальни + кухня-гостиная');
+  else {const groups={1:'one',2:v.separate?'twoSeparate':'two',3:v.separate?'threeSeparate':'three',4:'four'};const options=TAG_CATALOG.filter(x=>x[2]===groups[v.rooms]);if(options.length)add(options[seed%options.length][0],'Планировка из карточки');}
+  if(Number(v.occupants)>=2)add('莫斯科合租','Включён расчёт совместной аренды');
+  if(universities.length||v.audience==='student')add(seed%2?'留学生租房':'莫斯科留学','Указан вуз или студенческая аудитория');
+  if(v.audience==='professional')add('莫斯科外派','Выбрана рабочая аудитория');
+  if(routes.length)add(seed%2?'莫斯科地铁':'莫斯科通勤','Есть транспортный блок');
+  if(routes.some(r=>r.mode==='walk'&&/^\d+$/.test(String(r.time))&&Number(r.time)<=10))add('近地铁','Пешком до метро не более 10 минут по введённым данным');
+  if(v.region==='southwest'){const options=TAG_CATALOG.filter(x=>x[2]==='southwest');add(options[seed%options.length][0],'Район отмечен оператором');}
+  if(v.ready)add('拎包入住','Готовность к заселению подтверждена отметкой');
+  if(v.newRenovation)add('全新装修','Новый ремонт подтверждён отметкой');
+  add(seed%2?'租房也要幸福':'莫斯科生活','Общий редакционный тег');
+  return candidates;
+}
+
+const PHRASES = [
+  ['莫斯科','Москва',['俄罗斯莫斯科']],['租房','Аренда жилья',['房屋出租']],['月租','Аренда в месяц',['每月租金']],
+  ['租金','Арендная плата',['房租']],['押金','Залог',['租赁押金']],['面积','Площадь',['总面积']],
+  ['独立卧室','Отдельная спальня',['单独卧室']],['厨房客厅','Кухня-гостиная',['客餐厨空间']],
+  ['独立厨房','Отдельная кухня',['单独厨房']],['一室一厅','Одна спальня и гостиная',['一卧一厅']],
+  ['两室一厅','Две спальни и гостиная',['两卧一厅']],['整套公寓','Квартира целиком',['整租公寓']],
+  ['双人床','Двуспальная кровать',['双人大床']],['大型衣柜','Большой шкаф',['大衣柜']],
+  ['客厅沙发','Диван в гостиной',['客厅里的沙发']],['冰箱','Холодильник',[]],['洗衣机','Стиральная машина',[]],
+  ['洗碗机','Посудомоечная машина',[]],['空调','Кондиционер',[]],['电视','Телевизор',[]],['浴缸','Ванна',[]],
+  ['烤箱','Духовка',[]],['微波炉','Микроволновая печь',[]],['电热水壶','Электрический чайник',[]],
+  ['阳台','Балкон',[]],['独立衣帽间','Отдельная гардеробная',['单独衣帽间']],
+  ['步行','Пешком',['走路']],['公共交通','Общественный транспорт',[]],['地铁','Метро',[]],['分钟','Минуты',[]],
+  ['临时居住登记','Временная регистрация',[]],['免费协助办理','Бесплатно помогаем оформить',[]],
+  ['免费接送到家','Бесплатный трансфер до дома',['免费接送至住处']],
+  ['协助搬运行李','Помогаем с багажом',['协助搬送行李']],['中文沟通','Общение на китайском',['提供中文沟通']],
+  ['我们的优势','Наши преимущества',['我们的服务优势']],['欢迎中文咨询','Можно обратиться на китайском',['欢迎用中文咨询']],
+  ['预约看房','Запись на просмотр',['预约参观房源']],['独立两居','Две отдельные комнаты',[]],
+  ['莫斯科国立大学','Московский государственный университет',['莫大']],['俄罗斯人民友谊大学','РУДН',['人民友谊大学']],
+];
+function phraseEntries(rules={},custom=[]) {
+  const map=new Map(PHRASES.map(([zh,ru,alternatives])=>[zh,{zh,ru,alternatives}]));
+  for(const [ru,zh] of Object.entries(rules))if(zh&&!map.has(zh))map.set(zh,{zh,ru,alternatives:[]});
+  for(const entry of custom)if(entry&&typeof entry.zh==='string'&&entry.zh&&typeof entry.ru==='string')map.set(entry.zh,{...entry,alternatives:Array.isArray(entry.alternatives)?entry.alternatives:[]});
+  return [...map.values()].sort((a,b)=>b.zh.length-a.zh.length);
+}
+function tokenize(text,entries) {
+  const tokens=[];let offset=0;
+  const segmenter=typeof Intl.Segmenter==='function'?new Intl.Segmenter('zh',{granularity:'word'}):null;
+  while(offset<text.length){const known=entries.find(e=>text.startsWith(e.zh,offset));if(known){tokens.push({text:known.zh,start:offset,end:offset+known.zh.length,entry:known});offset+=known.zh.length;continue;}
+    let end=offset+String.fromCodePoint(text.codePointAt(offset)).length;
+    if(segmenter){const first=segmenter.segment(text.slice(offset))[Symbol.iterator]().next().value?.segment;if(first)end=offset+first.length;}
+    // Never allow an unknown segment to consume the start of a known phrase.
+    for(let i=offset+1;i<end;i++)if(entries.some(e=>text.startsWith(e.zh,i))){end=i;break;}
+    tokens.push({text:text.slice(offset,end),start:offset,end,entry:null});offset=end;
+  }return tokens;
+}
+function replaceSpan(text,start,end,expected,replacement){if(text.slice(start,end)!==expected)throw Error('Текст изменился. Выберите слово заново.');return text.slice(0,start)+replacement+text.slice(end);}
+function listingEligible(seller,commission){return seller==='owner'||seller==='agent'&&commission!==''&&commission!==null&&commission!==undefined&&Number.isFinite(Number(commission))&&Number(commission)>=0&&Number(commission)<=50;}
+
+// Deterministic copy engine. No inferred furniture, routes, or journey times.
+const DICTIONARY = {
+  'Саларьево парк':'萨拉里耶沃公园住宅区', 'Скандинавский':'斯堪的纳维亚住宅区',
+  'Москвичка':'莫斯科人住宅区', 'Бунинские луга':'布宁草地住宅区',
+  'Испанские кварталы':'西班牙街区', 'Тропарёво Парк':'特罗帕廖沃公园住宅区',
+  'Прокшино':'普罗克希诺', 'Саларьево':'萨拉里耶沃', 'Филатов Луг':'菲拉托夫卢格',
+  'Ольховая':'奥尔霍瓦亚', 'Корниловская':'科尔尼洛夫斯卡娅', 'Потапово':'波塔波沃',
+  'Новомосковская':'新莫斯科', 'Коммунарка':'科穆纳尔卡', 'Румянцево':'鲁缅采沃',
+  'Тропарёво':'特罗帕廖沃', 'Рассказовка':'拉斯卡佐夫卡', 'Каховская':'卡霍夫斯卡娅',
+  'Севастопольская':'塞瓦斯托波尔', 'Зюзино':'久津诺', 'Бунинская аллея':'布宁林荫道',
+  'Улица Горчакова':'戈尔恰科夫街', 'Проспект Вернадского':'维尔纳茨基大街',
+  'Университет':'大学站', 'Беляево':'别利亚耶沃', 'Бауманская':'鲍曼', 'Сокол':'索科尔',
+  'МГУ':'莫斯科国立大学', 'RUDN':'俄罗斯人民友谊大学', 'РУДН':'俄罗斯人民友谊大学',
+  'РАНХиГС':'俄罗斯总统国民经济与公共管理学院', 'МГИМО':'莫斯科国际关系学院',
+  'ВШЭ':'高等经济大学', 'РЭУ':'普列汉诺夫俄罗斯经济大学', 'МИСИС':'国立研究型技术大学MISIS',
+  'китайские магазины':'附近有中国商店', 'китайский магазин':'附近有中国商店',
+  'китайские рестораны':'附近有中餐厅', 'китайский ресторан':'附近有中餐厅',
+  'рядом парк':'附近有公园', 'рядом лес':'附近有森林', 'закрытый двор':'封闭式庭院',
+  'вид на реку':'窗外可见河景', 'окна во двор':'窗户朝向庭院', 'новый ремонт':'全新装修',
+  'дизайнерский ремонт':'设计感装修', 'без мебели':'无家具，方便按自己的喜好布置',
+  'два балкона':'两个独立阳台', 'балкон':'带阳台', 'лоджия':'带封闭式阳台',
+  'гардеробная':'独立衣帽间', 'можно с детьми':'可带孩子',
+  'можно с животными':'宠物入住可与房东协商', 'можно с питомцами':'宠物入住可与房东协商',
+  'краткосрочная аренда':'可协商短租', 'wi-fi':'Wi-Fi网络',
+};
+
+const FEATURES = [
+  ['bed','双人床＋床垫','Двуспальная кровать','bedroom',['двуспальная кровать','двуспальную кровать','двуспальной кроватью']],
+  ['wardrobe','大型衣柜','Шкаф','bedroom',['шкаф','шкафы','шкафом']],
+  ['desk','学习桌＋椅子','Рабочий стол','bedroom',['письменный стол','рабочий стол','учебный стол']],
+  ['sofa','客厅沙发','Диван','living',['диван','диваном']],
+  ['tv','电视','Телевизор','living',['телевизор','телевизором','тв']],
+  ['ac','空调','Кондиционер','living',['кондиционер','кондиционером']],
+  ['internet','Wi-Fi网络','Интернет / Wi-Fi','living',['wi-fi','wifi','интернет']],
+  ['fridge','冰箱','Холодильник','kitchen',['холодильник','холодильником']],
+  ['stove','炉灶','Плита','kitchen',['плита','плитой','варочная панель','электроплита']],
+  ['oven','烤箱','Духовка','kitchen',['духовка','духовой шкаф','духовым шкафом']],
+  ['microwave','微波炉','Микроволновка','kitchen',['микроволновка','микроволновая печь','свч']],
+  ['dishwasher','洗碗机','Посудомоечная машина','kitchen',['посудомоечная машина','посудомоечная','посудомойка']],
+  ['kettle','电热水壶','Чайник','kitchen',['чайник','чайником']],
+  ['table','餐桌＋椅子','Обеденный стол','kitchen',['обеденный стол','стол и стулья','стол со стульями']],
+  ['washer','洗衣机','Стиральная машина','bathroom',['стиральная машина','стиральная','стиралка']],
+  ['dryer','烘干机','Сушильная машина','bathroom',['сушильная машина','сушильная']],
+  ['bath','浴缸','Ванна','bathroom',['ванна','ванной']],
+  ['shower','淋浴设施','Душ','bathroom',['душ','душевая кабина','душевой кабиной']],
+  ['closet','独立衣帽间','Гардеробная','storage',['гардеробная','гардеробной']],
+  ['balcony','阳台','Балкон','storage',['балкон','балконом']],
+];
+
+const DEFAULT_PREFS = {
+  benefits:'✅ 免费接送到家\n✅ 协助搬运行李\n✅ 中文租赁文件翻译\n✅ 协助核实房东及租赁文件\n✅ 中文沟通，协助看房、签约和入住\n❤️ 入住后也可以随时联系我们。像朋友一样，陪您适应莫斯科生活，遇到问题一起想办法。',
+  contact:'', brandTags:'#齐工作室 #齐房产 #莫斯科租房信息 #莫斯科租房中介推荐',
+};
+
+const fold = s => String(s ?? '').toLowerCase().replaceAll('ё','е');
+const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function translate(text, rules) {
+  const entries = Object.entries(rules).filter(([k,v])=>k.trim() && typeof v==='string').sort((a,b)=>b[0].length-a[0].length);
+  if (!entries.length) return String(text ?? '');
+  const lookup = new Map(entries.map(([k,v])=>[fold(k),v]));
+  const expression = entries.map(([k])=>escape(k).replaceAll('ё','[ёе]').replaceAll('Ё','[ёе]')).join('|');
+  return String(text ?? '').replace(new RegExp(expression,'giu'),match=>lookup.get(fold(match)) ?? match);
+}
+
+function rubles(value) { return Number(value).toLocaleString('zh-CN',{maximumFractionDigits:2}); }
+function wan(value, digits=2) { return Number((Number(value)/10000).toFixed(digits))+'W'; }
+function kind(v) {
+  if (v.layout==='studio') return 'Studio';
+  if (v.layout==='euro2') return '一室一厅';
+  if (v.layout==='euro3') return '两室一厅';
+  return ({1:'独立一居',2:'独立两居',3:'三居室',4:'四居室'})[v.rooms] || (v.rooms?v.rooms+'居室':'整套公寓');
+}
+const modes={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};
+function parseRoutes(raw) {
+  return String(raw||'').split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{
+    const [name,time='',mode='walk',line='']=s.split('|').map(x=>x.trim());
+    return {name,time,mode,line};
+  });
+}
+function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
+  const unknown=[],problems=[];
+  const zh=s=>{const t=translate(s,rules);if(/[а-яё]/i.test(t))unknown.push(String(s));return t;};
+  const positive=k=>Number(v[k])>0;
+  for(const k of ['price','deposit','area','kitchen','living','bedroomArea','floor','floors','occupants','registrationPeople','registrationMonths']){
+    if(v[k]!==undefined && v[k]!=='' && (!Number.isFinite(Number(v[k]))||Number(v[k])<0))problems.push('Проверьте значение: '+k);
+  }
+  if(positive('floor')&&positive('floors')&&Number(v.floor)>Number(v.floors))problems.push('Этаж выше этажности дома');
+  if(positive('kitchen')&&positive('area')&&Number(v.kitchen)>Number(v.area))problems.push('Кухня больше общей площади');
+  const routes=parseRoutes(v.transit);
+  if(!routes.length&&v.metro)routes.push({name:v.metro,time:v.walk||'',mode:'walk',line:''});
+  const universities=parseRoutes(v.universities);
+  if(!universities.length&&v.university)universities.push({name:v.university,time:v.uniTime||'',mode:v.uniMode||'public',line:''});
+  const layout=kind(v), area=positive('area')?v.area+'㎡':'', price=positive('price')?wan(v.price):'';
+  const main=routes[0],metro=main?zh(main.name):'';
+  const featureSet=new Set(v.features||[]);
+  const highlight=zh(v.highlight||'');
+  let titles=[
+    ['🔥莫斯科'+price+layout,area,main?metro+(main.time?' '+(modes[main.mode]||'')+main.time+'分钟':''):null].filter(Boolean).join('｜'),
+    ['🏡莫斯科'+area+layout,featureSet.has('bed')?'独立大床':null,featureSet.has('ac')?'空调':null,price?'月租'+price:null].filter(Boolean).join('｜'),
+    positive('occupants')&&positive('price')?['🚨莫斯科'+price+'整套'+layout, v.occupants+'人人均'+wan(Number(v.price)/Number(v.occupants)),area].filter(Boolean).join('｜'):
+      ['✈️莫斯科'+price+layout,metro?'近'+metro:null,v.registration&&v.registration!=='none'?'免费协助登记':null].filter(Boolean).join('｜'),
+  ];
+  const variation=Math.abs(Number(v.titleVariant)||0);
+  const hooks=[];if(featureSet.has('ac'))hooks.push('空调');if(featureSet.has('bed'))hooks.push('双人床');if(featureSet.has('closet'))hooks.push('衣帽间');if(featureSet.has('dishwasher'))hooks.push('洗碗机');
+  if(variation%3===1)titles=[['🏡'+area+layout,metro||'莫斯科',hooks.join('＋')||'整套出租',price].filter(Boolean).join('｜'),...titles.slice(0,2)];
+  if(variation%3===2)titles=[['✈️莫斯科'+price,area+layout,v.registration&&v.registration!=='none'?'免费协助登记':hooks.join('＋')||metro].filter(Boolean).join('｜'),titles[2],titles[1]];
+  const lines=[]; const push=(...s)=>lines.push(...s);
+  if(v.style==='story')push('🇷🇺 想在莫斯科找一套适合自己生活节奏的住房？这套'+(area?area+'的':'')+layout+'可以了解一下！','');
+  if(v.complex||v.districtZh)push('📍 莫斯科｜'+zh(v.complex||v.districtZh));
+  if(v.campus)push('🎓 校区：'+zh(v.campus));
+  if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
+  else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');
+  else if(v.layout==='studio')push('🏠 户型：开放式Studio');
+  else push('🏠 户型：'+layout+(v.separate?'｜房间独立':''));
+  if(area)push('📐 面积：'+area);
+  if(positive('living'))push('🛋 居住面积：'+v.living+'㎡');
+  if(positive('kitchen'))push('🍳 厨房：'+v.kitchen+'㎡');
+  if(positive('bedroomArea'))push('🛏 卧室：'+v.bedroomArea+'㎡');
+  if(v.floor||v.floors)push('🏢 楼层：'+(v.floor||'待确认')+'/'+(v.floors||'待确认')+'层');
+  if(positive('price'))push('💰 租金：'+price+'/月（'+rubles(v.price)+'₽）');
+  if(v.deposit!==''&&v.deposit!==undefined)push('🔐 押金：'+(Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）'));
+  if(highlight)push('','🔥 最大亮点：'+highlight);
+  if(v.rentFreeMonths&&Number(v.rentFreeMonths)>0)push('🎁 房东提供'+v.rentFreeMonths+'个月装修免租期，具体条件以合同为准。');
+  if(v.description)push('','🏡 公寓介绍：',zh(v.description));
+  if(v.style!=='compact'){
+    const groups=[['bedroom','🛏️ 独立卧室','休息区域配有'],['living','🛋️ 生活空间','生活区域配有'],['kitchen','🍳 厨房配置','厨房配有'],['bathroom','🛁 卫生间','卫生间配有'],['storage','👗 储物与阳台','收纳与附属设施包括']];
+    for(const [key,title,intro] of groups){const f=FEATURES.filter(x=>x[3]===key&&featureSet.has(x[0]));if(!f.length)continue;push('',title);if(v.style==='story')push(intro+f.map(x=>x[1]).join('、')+'。');else push(...f.map(x=>'✅ '+x[1]));}
+  }else{const f=FEATURES.filter(x=>featureSet.has(x[0]));if(f.length)push('','🛋 家具家电：',...f.map(x=>'✅ '+x[1]));}
+  if(v.details)push('','🌳 周边与房屋亮点：',zh(v.details));
+  const routeLine=r=>zh(r.name)+(r.time?'｜'+(modes[r.mode]||'公共交通')+'约'+r.time+'分钟':'｜时间待确认')+(r.line?'｜'+r.line.replace(/^([0-9]+)$/,'$1号线'):'');
+  if(routes.length)push('','🚇 交通：',...routes.map(r=>'▪️ '+routeLine(r)));
+  if(v.route)push('🗺 '+zh(v.route));
+  if(universities.length)push('','🎓 大学通勤参考：',...universities.map(r=>'▪️ '+routeLine(r)));
+  if(positive('occupants')&&positive('price')){
+    push('','💸 合租预算参考：');
+    const max=Math.min(Math.floor(Number(v.occupants)),12);
+    for(let n=2;n<=max;n++)push(n+'人：约'+wan(Number(v.price)/n)+'（'+rubles(Math.round(Number(v.price)/n))+'₽）/人/月');
+    push('👥 入住人数及合租安排需与房东确认。');
+  }
+  const utilities={included:'💡 租金包含各项费用。',meters:'💡 物业费已包含，仅水电按表计费。',extra:'💡 物业及水电等费用另付，具体金额请确认。'};
+  if(utilities[v.utilities])push('',utilities[v.utilities]);
+  if(v.shortTerm)push('📅 可协商短租'+(v.minMonths?'，'+v.minMonths+'个月起':'')+'，具体条件请咨询。');
+  if(v.children)push('👶 可带孩子');
+  if(v.pets)push('🐾 宠物入住可与房东协商');
+  if(v.registration&&v.registration!=='none'){
+    let registration=v.registration==='provided'?'免费提供临时居住登记':'免费协助办理临时居住登记';
+    if(positive('registrationMonths'))registration+='（'+v.registrationMonths+'个月）';
+    if(positive('registrationPeople'))registration+='，最多'+v.registrationPeople+'人';
+    push('','✈️ '+registration+'。');
+  }
+  if(v.pickup)push('🚕 免费接送到入住地点'+(v.luggage?'，协助搬运行李':'')+'。');
+  if(v.arrival)push('📋 免费协助了解抵达后的相关手续。');
+  if(v.support&&prefs.benefits)push('','🇨🇳 我们的优势：',prefs.benefits);
+  if(prefs.contact)push('','📩 联系我们：'+prefs.contact);
+  else push('','📩 欢迎中文咨询，了解房源详情并预约看房！');
+  const tags=['#莫斯科租房','#莫斯科留学','#莫斯科生活'];
+  if(v.rooms)tags.push('#莫斯科'+({1:'一居室',2:'两居室',3:'三居室'}[v.rooms]||'租房'));
+  for(const r of routes)tags.push('#'+zh(r.name).replace(/[\s#]/g,''));
+  for(const u of universities)tags.push('#'+zh(u.name).replace(/[\s#]/g,''));
+  if(prefs.brandTags)tags.push(...prefs.brandTags.split(/\s+/).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t));
+  const tagSuggestions=suggestTags(v,rules,translate,parseRoutes);
+  const finalTags=tagSuggestions.map(x=>'#'+x.tag);
+  if(prefs.brandTags)finalTags.push(...prefs.brandTags.split(/\s+/).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t));
+  return {titles,body:lines.join('\n'),tags:[...new Set(finalTags)].join(' '),tagSuggestions,unknown:[...new Set(unknown)],problems};
+}
+
+function extractFacts(text,rules=DICTIONARY) {
+  const out={features:[]}, warnings=[];const t=String(text||'').replace(/\u00a0/g,' ');
+  const capture=(key,re)=>{const m=t.match(re);if(m)out[key]=m[1].replace(/\s/g,'').replace(',','.');};
+  capture('area',/(?:общая\s*площадь\s*[:—-]?\s*)?(\d+(?:[.,]\d+)?)\s*(?:м²|м2|кв\.?\s*м|㎡)/i);
+  capture('rooms',/(\d+)\s*[- ]?(?:комн|комнат)/i);
+  const f=t.match(/(\d+)\s*\/\s*(\d+)\s*(?:эт|楼|层)/i);if(f){out.floor=f[1];out.floors=f[2];}
+  else {capture('floor',/(?:этаж\s*[:—-]?\s*)(\d+)/i);capture('floors',/(\d+)\s*[- ]?этажн/i);}
+  const price=t.match(/(?:аренда|цена|стоимость|月租|租金)\s*[:：—-]?\s*(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?\s*(?:₽|руб|卢布)?/i)
+    ||t.match(/(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?\s*(?:₽|руб)\s*(?:\/\s*(?:мес|月)|в месяц)/i);
+  if(price)out.price=String(Number(price[1].replace(/\s/g,'').replace(',','.'))*(price[2]?/[wW万]/.test(price[2])?10000:1000:1));
+  const deposit=t.match(/(?:залог|депозит|押金)\s*[:：—-]?\s*(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?/i);
+  if(deposit)out.deposit=String(Number(deposit[1].replace(/\s/g,'').replace(',','.'))*(deposit[2]?/[wW万]/.test(deposit[2])?10000:1000:1));
+  if(/без залога/i.test(t))out.deposit='0';
+  capture('kitchen',/(?:кухня|кухни|кухня-гостиная)\s*[:—-]?\s*(\d+(?:[.,]\d+)?)\s*(?:м|㎡)/i);
+  capture('living',/(?:жилая\s*(?:площадь)?)\s*[:—-]?\s*(\d+(?:[.,]\d+)?)\s*(?:м|㎡)/i);
+  if(/студия|studio/i.test(t))out.layout='studio';
+  if(/евро[ -]?2|евродвушк/i.test(t))out.layout='euro2';
+  if(/евро[ -]?3|евротрешк|евротрёшк/i.test(t))out.layout='euro3';
+  for(const [id,,, ,triggers] of FEATURES){
+    let positive=false,negative=false;
+    for(const trigger of triggers){
+      const re=new RegExp('(?<![а-яёa-z])'+escape(trigger)+'(?![а-яёa-z])','giu');
+      for(const match of t.matchAll(re)){
+        const before=fold(t.slice(Math.max(0,match.index-65),match.index));
+        const after=fold(t.slice(match.index+match[0].length,match.index+match[0].length+30));
+        if(/(?:нет|без|не будет|не установлен[ао]?|отсутствует|может установить|можно установить|установит|установят|будет установлен[ао]?)\s*(?:[а-я-]+\s*){0,2}$/.test(before)||/^\s*(?:отсутствует|не установлен|будет установлен|установят)/.test(after))negative=true;
+        else positive=true;
+      }
+    }
+    if(positive&&!negative)out.features.push(id);
+    if(negative)warnings.push('Проверьте наличие: '+FEATURES.find(x=>x[0]===id)[2]);
+  }
+  const metroNames=['Саларьево','Филатов Луг','Прокшино','Коммунарка','Новомосковская','Потапово','Ольховая','Румянцево','Тропарёво','Каховская','Севастопольская','Зюзино','Рассказовка','Проспект Вернадского','Университет','Беляево','Бунинская аллея','Корниловская'];
+  const routes=[];
+  for(const name of metroNames){const re=new RegExp(escape(name).replaceAll('ё','[ёе]'),'giu');let m=re.exec(t);if(!m)continue;const tail=t.slice(m.index+name.length,m.index+name.length+95).split(/[\n;]/)[0];const time=tail.match(/^[^\d]*?(\d+(?:\s*[–—-]\s*\d+)?)\s*(?:минут|мин\.?|分钟)/i);routes.push({name,time:time?time[1].replace(/\s/g,''):'',mode:/автобус|транспорт|公交/i.test(tail)?'bus':'walk',at:m.index});}
+  routes.sort((a,b)=>a.at-b.at);
+  if(routes.length){out.metro=routes[0].name;out.walk=routes[0].time;out.transit=routes.map(r=>[r.name,r.time,r.mode].join(' | ')).join('\n');}
+  const details=Object.keys(rules).filter(k=>k.length>5&&/магазин|ресторан|вид на|окна во|ремонт|двор|парк|лес|без мебели/.test(k)&&fold(t).includes(fold(k)));
+  if(details.length)out.details=details.join(', ');
+  if(/(?:можно|разрешено|допускается)\s+с детьми/i.test(t))out.children=true;
+  if(/(?:можно|разрешено|обсужда[а-я]+)\s+(?:с\s+)?(?:животными|питомцами)/i.test(t))out.pets=true;
+  if(/только\s+(?:вода|свет|воду|свету|счетчик|счётчик)|вода и свет|счетчикам|счётчикам/i.test(t))out.utilities='meters';
+  warnings.push('Извлечены только найденные факты. Маршруты до вузов, услуги и доступность объекта проверяются отдельно.');
+  return {facts:out,warnings};
+}
+
+
+function setupWordEditor({getRules,getCustom,saveCustom,onChange,toast}) {
+  const el=id=>document.getElementById(id);let selected=null,undo=[],timer;
+  const entries=()=>phraseEntries(getRules(),getCustom());
+  const snapshot=()=>({title:el('outputTitle').value,body:el('output').value});
+  function render(){
+    if(el('wordPanel').classList.contains('hidden'))return;
+    const dictionary=entries();
+    for(const [field,target] of [['outputTitle','titleTokens'],['output','bodyTokens']]){
+      el(target).replaceChildren();const text=el(field).value;
+      if(!text)el(target).textContent='Сначала создайте текст.';
+      for(const token of tokenize(text,dictionary)){
+        if(/^\s+$/.test(token.text)){el(target).append(document.createTextNode(token.text));continue;}
+        const button=document.createElement('button');button.className='word '+(token.entry?'known':'unknown');button.type='button';button.textContent=token.text;
+        button.title=token.entry?.ru||'Нет перевода — добавить в словарь';button.onclick=()=>choose({...token,field});el(target).append(button);
+      }
+    }
+  }
+  function choose(token){selected=token;el('wordSelection').textContent=token.text;el('wordMeaning').textContent=token.entry?.ru||'Перевода этой фразы пока нет в словаре. Добавьте русское значение ниже.';el('wordReplacement').value='';el('wordRussian').value=token.entry?.ru||'';el('wordOptions').replaceChildren();
+    for(const alternative of token.entry?.alternatives||[]){const button=document.createElement('button');button.className='btn';button.textContent=alternative;button.onclick=()=>{el('wordReplacement').value=alternative;};el('wordOptions').append(button);}
+    el('wordInspector').classList.remove('hidden');el('wordApply').disabled=false;
+  }
+  el('wordToggle').onclick=()=>{const hidden=el('wordPanel').classList.toggle('hidden');el('wordToggle').setAttribute('aria-expanded',String(!hidden));render();};
+  function apply(){if(!selected)return toast('Выберите слово или выделите фразу');const replacement=el('wordReplacement').value.trim();if(!replacement)return toast('Укажите замену');
+    try{const previous=snapshot();const field=el(selected.field);replaceSpan(field.value,selected.start,selected.end,selected.text,replacement);
+      if(el('wordReplaceAll').checked){for(const name of ['outputTitle','output'])el(name).value=el(name).value.split(selected.text).join(replacement);}
+      else field.value=replaceSpan(field.value,selected.start,selected.end,selected.text,replacement);
+      undo.push(previous);undo=undo.slice(-20);el('wordUndo').disabled=false;
+      if(el('wordRemember').checked&&el('wordRussian').value.trim()){
+        const custom=getCustom().filter(e=>e.zh!==replacement);custom.push({zh:replacement,ru:el('wordRussian').value.trim(),alternatives:[selected.text]});saveCustom(custom);
+      }
+      selected=null;el('wordInspector').classList.add('hidden');onChange();render();toast('Замена применена. Проверьте смысл фразы.');
+    }catch(error){toast(error.message);}
+  }
+  el('wordApply').onclick=apply;
+  el('wordUndo').onclick=()=>{const previous=undo.pop();if(!previous)return;el('outputTitle').value=previous.title;el('output').value=previous.body;el('wordUndo').disabled=!undo.length;selected=null;el('wordInspector').classList.add('hidden');onChange();render();toast('Замена отменена');};
+  el('wordSearch').oninput=()=>{el('wordSearchResults').replaceChildren();const query=el('wordSearch').value.trim().toLowerCase();if(!query)return;
+    for(const entry of entries().filter(e=>(e.zh+' '+e.ru).toLowerCase().includes(query)).slice(0,20)){
+      const button=document.createElement('button');button.className='btn word-result';button.textContent=entry.zh+' — '+entry.ru;button.onclick=()=>{if(!selected)return toast('Сначала выберите слово в тексте');el('wordReplacement').value=entry.zh;el('wordRussian').value=entry.ru;};el('wordSearchResults').append(button);
+    }
+  };
+  for(const field of ['outputTitle','output']){
+    el(field).addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(render,200);});
+    const inspectSelection=()=>{const start=el(field).selectionStart,end=el(field).selectionEnd;if(end<=start)return;const text=el(field).value.slice(start,end);choose({field,start,end,text,entry:entries().find(e=>e.zh===text)});el('wordPanel').classList.remove('hidden');el('wordToggle').setAttribute('aria-expanded','true');render();};
+    for(const event of ['mouseup','keyup','select'])el(field).addEventListener(event,inspectSelection);
+  }
+  function reset(){selected=null;undo=[];el('wordUndo').disabled=true;el('wordInspector').classList.add('hidden');}
+  return {render,reset};
+}
+
+const METRICS={searches:'Поисковые запросы',search_index:'Индекс поиска',impressions:'Показы',views:'Просмотры / чтения',clicks:'Клики',likes:'Лайки',saves:'Сохранения'};
+function safeSource(value){try{const u=new URL(value);if(!['https:','http:'].includes(u.protocol)||u.username||u.password)return '';return u.href;}catch{return '';}}
+function parseCSV(input){
+ const rows=[];let row=[],field='',quoted=false;
+ for(let i=0;i<input.length;i++){const ch=input[i];if(ch==='"'){if(quoted&&input[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}else if(ch===','&&!quoted){row.push(field);field='';}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&input[i+1]==='\n')i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field='';}else field+=ch;}
+ if(quoted)throw Error('Незакрытая кавычка CSV');row.push(field);if(row.some(x=>x.trim()))rows.push(row);if(!rows.length)return [];
+ const headers=rows.shift().map(x=>x.trim().replace(/^\uFEFF/,''));return rows.map((r,i)=>{if(r.length!==headers.length)throw Error('CSV: неверное число колонок в строке '+(i+2));return Object.fromEntries(headers.map((h,j)=>[h,r[j].trim()]));});
+}
+function validDate(date){return /^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date+'T00:00:00Z'))&&new Date(date+'T00:00:00Z').toISOString().slice(0,10)===date;}
+function normalizeMetrics(records){
+ if(!Array.isArray(records)||records.length>50000)throw Error('Нужен массив до 50 000 строк');
+ if(records.some(r=>!r||typeof r!=='object'||Array.isArray(r)))throw Error('Неверная строка статистики');
+ return records.filter(r=>r.value!==''&&r.value!==null&&r.value!==undefined).map((r,index)=>{
+  if(!r||!validDate(String(r.date))||!METRICS[r.metric]||!['daily','cumulative'].includes(r.kind)||!['keyword','topic','note'].includes(r.scope))throw Error('Некорректная схема статистики, строка '+(index+1));
+  const source=safeSource(r.source),value=Number(r.value);if(!source||!Number.isFinite(value)||value<0||!r.tag||!r.entity)throw Error('Нужны источник, объект, тег и неотрицательное значение');
+  if(r.metric!=='search_index'&&!Number.isInteger(value))throw Error('Счётчик должен быть целым числом');
+  const timezone=String(r.timezone||'Asia/Shanghai');try{new Intl.DateTimeFormat('en',{timeZone:timezone});}catch{throw Error('Неизвестный часовой пояс источника');}
+  return {tag:String(r.tag).replace(/^#/,''),date:r.date,metric:r.metric,value,kind:r.kind,scope:r.scope,entity:String(r.entity),source,timezone,sourceSystem:String(r.sourceSystem||'import'),importedAt:new Date().toISOString()};
+ });
+}
+function metricSeriesKey(r){return JSON.stringify([r.tag,r.scope,r.entity,r.source,r.timezone,r.sourceSystem,r.kind]);}
+function mergeMetrics(old,incoming){const map=new Map();for(const r of [...old,...incoming])map.set(metricSeriesKey(r)+'\u001f'+r.metric+'\u001f'+r.date,r);return [...map.values()];}
+function dayShift(date,amount){const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+amount);return d.toISOString().slice(0,10);}
+function summarizeSeries(records,end,days){
+ if(!validDate(end)||![1,7,30].includes(Number(days)))throw Error('Нужны дата окончания и период 1/7/30');
+ const keys=new Set(records.map(metricSeriesKey));if(keys.size>1)throw Error('Нельзя складывать разные темы, посты, источники или часовые пояса');
+ const start=dayShift(end,1-days),prior=dayShift(start,-1),result={start,end,days,metrics:{}};
+ for(const metric of Object.keys(METRICS)){
+  const rows=records.filter(r=>r.metric===metric),kind=records[0]?.kind||'daily';
+  if(kind==='cumulative'){
+   const a=rows.find(r=>r.date===prior),b=rows.find(r=>r.date===end);
+   if(metric==='search_index'){result.metrics[metric]={value:null,status:'Индекс нельзя получать разностью накопительных счётчиков',coverage:0};continue;}
+   if(!a||!b){result.metrics[metric]={value:null,status:'Нужны снимки на '+prior+' и '+end,coverage:0};continue;}
+   const delta=b.value-a.value;result.metrics[metric]=delta<0?{value:null,status:'Счётчик уменьшился: нужна проверка',coverage:0}:{value:delta,status:'Разность двух снимков',coverage:days};
+  }else{
+   const unique=new Map(rows.filter(r=>r.date>=start&&r.date<=end).map(r=>[r.date,r.value]));const values=[...unique.values()];
+   const value=values.length?values.reduce((a,b)=>a+b,0)/(metric==='search_index'?values.length:1):null;
+   result.metrics[metric]={value,status:values.length===0?'Нет данных':values.length<days?'Частичные данные '+values.length+'/'+days:metric==='search_index'?'Средний индекс за период':'Полный период',coverage:values.length};
+  }
+ }
+ const clicks=result.metrics.clicks,impressions=result.metrics.impressions;
+ const clickDays=new Set(records.filter(r=>r.metric==='clicks'&&r.date>=start&&r.date<=end).map(r=>r.date));
+ const impressionDays=new Set(records.filter(r=>r.metric==='impressions'&&r.date>=start&&r.date<=end).map(r=>r.date));
+ const aligned=records[0]?.kind==='cumulative'||clickDays.size===impressionDays.size&&[...clickDays].every(d=>impressionDays.has(d));
+ result.ctr=aligned&&clicks.coverage===days&&impressions.coverage===days&&impressions.value>0?clicks.value/impressions.value*100:null;
+ return result;
+}
+function rememberContent(records,item){
+ const text=String(item.text||'').trim();if(!text)return records;
+ const existing=records.find(r=>r.text===text&&r.type===item.type&&r.source===(item.source||''));
+ const now=new Date().toISOString();if(existing)return records.map(r=>r===existing?{...r,lastSeen:now,seen:(r.seen||1)+1}:r);
+ const id=globalThis.crypto?.randomUUID?.()||'kb-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+ return [{id,type:item.type||'example',title:String(item.title||text.slice(0,60)),text,source:item.source||'',ru:String(item.ru||''),cn:String(item.cn||''),status:item.status||'unreviewed',createdAt:now,lastSeen:now,seen:1},...records].slice(0,1000);
+}
+
+
+function setupInsights({read,write,toast,onRule}){
+ const el=id=>document.getElementById(id);let research=null;
+ let knowledge=read('most-knowledge',[]),metrics=read('most-metrics',[]);if(!Array.isArray(knowledge))knowledge=[];knowledge=knowledge.filter(r=>r&&typeof r.text==='string');try{metrics=normalizeMetrics(metrics);}catch{metrics=[];}
+ const persistKB=()=>write('most-knowledge',knowledge);
+ function capture(item){knowledge=rememberContent(knowledge,item);persistKB();if(!el('knowledge').classList.contains('hidden'))renderKnowledge();}
+ function saveKB(){const text=el('kbText').value.trim();if(!text)return toast('Добавьте текст заметки');capture({type:el('kbType').value,title:el('kbTitle').value,text,source:el('kbSource').value,ru:el('kbRussian').value,cn:el('kbChinese').value});for(const k of ['kbText','kbTitle','kbSource','kbRussian','kbChinese'])el(k).value='';renderKnowledge();toast('Запись сохранена. Применение к словарю требует отдельного подтверждения.');}
+ el('kbSave').onclick=saveKB;
+ function renderKnowledge(){const q=el('kbSearch').value.toLowerCase(),type=el('kbFilter').value;el('kbList').replaceChildren();
+  el('kbCount').textContent=knowledge.length+' записей · сохраняются в этом браузере · до 1000 записей';
+  for(const item of knowledge.filter(r=>(type==='all'||r.type===type)&&(r.title+' '+r.text+' '+r.ru+' '+r.cn).toLowerCase().includes(q))){
+   const card=document.createElement('article'),title=document.createElement('strong'),meta=document.createElement('p'),text=document.createElement('p'),button=document.createElement('button');card.className='task';title.textContent=item.title||item.type;meta.className='muted';meta.textContent=item.type+' · '+(item.status==='reviewed'?'Проверено':'Требует проверки')+' · встречалось '+item.seen+' раз';text.className='kb-body';text.textContent=item.text;card.append(title,meta,text);
+   const source=safeSource(item.source);if(source){const a=document.createElement('a');a.href=source;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Источник ↗';card.append(a);}
+   button.className='btn';button.textContent=item.status==='reviewed'?'Отметить непроверенным':'Подтвердить запись';button.onclick=()=>{knowledge=knowledge.map(r=>r.id===item.id?{...r,status:r.status==='reviewed'?'unreviewed':'reviewed'}:r);persistKB();renderKnowledge();};card.append(button);
+   if(item.ru&&item.cn){const apply=document.createElement('button');apply.className='btn';apply.textContent='Добавить RU → CN в словарь';apply.disabled=item.status!=='reviewed';apply.onclick=()=>{onRule(item.ru,item.cn);toast('Подтверждённая пара добавлена в словарь');};card.append(apply);}
+   el('kbList').append(card);
+  }
+ }
+ el('kbSearch').oninput=renderKnowledge;el('kbFilter').onchange=renderKnowledge;
+ function downloadJSON(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ el('kbExport').onclick=()=>downloadJSON('redcn-knowledge-and-feedback.json',{version:1,knowledge});
+ el('kbImport').onclick=()=>el('kbFile').click();
+ el('kbFile').onchange=async()=>{try{const file=el('kbFile').files[0];if(!file)return;if(file.size>5000000)throw Error('Файл больше 5 МБ');const value=JSON.parse(await file.text());if(!Array.isArray(value.knowledge)||!value.knowledge.every(r=>r&&typeof r.text==='string'))throw Error('Неверный формат базы знаний');for(const item of value.knowledge)capture({...item,status:'unreviewed'});renderKnowledge();toast('Импортировано как непроверенные записи');}catch(e){toast(e.message);}finally{el('kbFile').value='';}};
+ el('metricsImport').onclick=()=>el('metricsFile').click();
+ function importMetricText(text){const parsed=text.trim().startsWith('[')?JSON.parse(text):parseCSV(text);const rows=normalizeMetrics(parsed);metrics=mergeMetrics(metrics,rows);if(write('most-metrics',metrics)){renderSeries();renderAnalytics();toast('Добавлено '+rows.length+' наблюдений. Происхождение указано в каждой серии.');}}
+ el('metricsApply').onclick=()=>{try{importMetricText(el('metricsText').value);}catch(e){toast(e.message);}};
+ el('metricsFile').onchange=async()=>{try{const file=el('metricsFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');importMetricText(await file.text());}catch(e){toast(e.message);}finally{el('metricsFile').value='';}};
+ el('metricsTemplate').onclick=()=>{const csv='tag,date,metric,value,kind,scope,entity,source,timezone,sourceSystem\n莫斯科租房,2026-10-29,views,,daily,topic,REPLACE_TOPIC,https://www.xiaohongshu.com/,Asia/Shanghai,creator_export\n';const url=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='redcn-metrics-template.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+ function renderSeries(){const previous=el('metricSeries').value;el('metricSeries').replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent='Нет выбранной серии';el('metricSeries').append(empty);const unique=new Map(metrics.map(r=>[metricSeriesKey(r),r]));for(const [key,r] of unique){const option=document.createElement('option');option.value=key;option.textContent='#'+r.tag+' · '+r.scope+' · '+r.entity+' · '+r.kind+' · '+r.sourceSystem+' · '+r.timezone;el('metricSeries').append(option);}if(unique.has(previous))el('metricSeries').value=previous;else if(unique.size===1)el('metricSeries').value=[...unique.keys()][0];}
+ function renderAnalytics(){const selected=el('metricSeries').value,rows=metrics.filter(r=>metricSeriesKey(r)===selected),end=el('metricEnd').value;el('metricTableBody').replaceChildren();
+  let reports;try{reports=[1,7,30].map(days=>summarizeSeries(rows,end,days));}catch(e){return toast(e.message);}
+  for(const [key,label] of Object.entries(METRICS)){const tr=document.createElement('tr'),name=document.createElement('th');name.textContent=label;tr.append(name);for(const report of reports){const td=document.createElement('td'),r=report.metrics[key];td.textContent=r.value===null?'—':r.value.toLocaleString('ru-RU',{maximumFractionDigits:2});const note=document.createElement('small');note.textContent=r.status;td.append(note);tr.append(td);}el('metricTableBody').append(tr);}
+  const ctr=document.createElement('tr'),label=document.createElement('th');label.textContent='CTR (клики / показы)';ctr.append(label);for(const report of reports){const td=document.createElement('td');td.textContent=report.ctr===null?'—':report.ctr.toFixed(2)+'%';ctr.append(td);}el('metricTableBody').append(ctr);
+  el('metricSource').replaceChildren(document.createTextNode(rows.length?'Серия: '+rows[0].scope+' · '+rows[0].entity+' · '+rows[0].timezone+' · ':'Данные по тегам Rednote пока не получены. Нужен подтверждённый экспорт или доступ к кабинету.'));
+  if(rows.length){const a=document.createElement('a');a.href=rows[0].source;a.textContent='Источник ↗';a.target='_blank';a.rel='noopener noreferrer';el('metricSource').append(a);}
+ }
+ el('metricSeries').onchange=renderAnalytics;el('metricEnd').value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());el('metricEnd').onchange=renderAnalytics;
+ async function loadResearch(){try{const response=await fetch(new URL('research.json',location.href));if(!response.ok)throw Error();research=await response.json();
+   el('researchTerms').replaceChildren();for(const item of research.terms){const div=document.createElement('article'),head=document.createElement('strong'),p=document.createElement('p');div.className='task';head.textContent=item.cn+' — '+item.ru;p.textContent=item.evidence+' · '+item.condition;div.append(head,p);el('researchTerms').append(div);}
+   el('researchStatus').textContent=research.status;for(const source of research.sources){const a=document.createElement('a');a.href=source.url;a.textContent=source.name+' ↗';a.target='_blank';a.rel='noopener noreferrer';a.className='research-link';el('researchSources').append(a);}
+  }catch{el('researchStatus').textContent='Отчёт исследования не загрузился; см. docs/RESEARCH-REDNOTE.md в репозитории.';}}
+ el('rememberContent').checked=read('most-remember',true);el('rememberContent').onchange=()=>write('most-remember',el('rememberContent').checked);
+ async function loadSeed(){try{const r=await fetch(new URL('knowledge-seed.json',location.href));if(!r.ok)return;const data=await r.json();if(read('most-knowledge-seed-version',null)===data.version)return;for(const item of data.items||[])knowledge=rememberContent(knowledge,{...item,status:'unreviewed'});if(persistKB())write('most-knowledge-seed-version',data.version);renderKnowledge();}catch{}}
+ renderSeries();renderAnalytics();renderKnowledge();loadResearch();loadSeed();
+ return {capture,renderKnowledge,renderAnalytics,exportData:()=>({knowledge,metrics})};
+}
+
+
+const $=id=>document.getElementById(id);
+const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
+let toastTimer;
+function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
+function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Не удалось сохранить: хранилище браузера заполнено или недоступно. Экспортируйте копию.');return false;}}
+const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission'];
+const defaults={style:'compact',layout:'classic',utilities:'unknown',registration:'assist',support:true,uniMode:'步行',seller:'unknown',audience:'general'};
+const storedRules=read('most-rules',null);
+let rules=read('most-rules-version',0)===2&&storedRules?storedRules:{...DICTIONARY,...storedRules};
+if(read('most-rules-version',0)!==2&&write('most-rules',rules))write('most-rules-version',2);
+let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
+let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
+let current=null,titleIndex=0,currentTitles=[];
+let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null;
+const staticHosting=document.querySelector('meta[name="redcn-hosting"]')?.content==='github-pages';
+let wordCustom=read('most-word-custom',[]);if(!Array.isArray(wordCustom))wordCustom=[];
+
+// Generate checkboxes using safe DOM methods; nothing from a listing becomes HTML.
+const groupNames={bedroom:'СПАЛЬНЯ',living:'ГОСТИНАЯ',kitchen:'КУХНЯ',bathroom:'САНУЗЕЛ',storage:'ХРАНЕНИЕ'};
+for(const group of Object.keys(groupNames)){
+  const heading=document.createElement('div');heading.className='feature-group';heading.textContent=groupNames[group];$('featureGrid').append(heading);
+  for(const [id,,label,key] of FEATURES.filter(x=>x[3]===group)){
+    const wrapper=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.id='feature-'+id;
+    wrapper.append(input,document.createTextNode(label));$('featureGrid').append(wrapper);
+  }
+}
+function snapshot(){const value={titleVariant,photos:photoUrls};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
+function populate(value){wordEditor?.reset();const v={...defaults,...value};titleVariant=Number(v.titleVariant)||0;photoUrls=Array.isArray(v.photos)?v.photos:[];renderPhotos();for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES)$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);}
+function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
+function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
+function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();}
+document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>tab(button.dataset.tab));
+function renderTitles(){
+  $('variants').replaceChildren();
+  currentTitles.forEach((title,i)=>{const button=document.createElement('button');button.className='btn variant'+(i===titleIndex?' chosen':'');button.textContent=title;button.setAttribute('aria-pressed',String(i===titleIndex));button.onclick=()=>{titleIndex=i;$('outputTitle').value=title;renderTitles();saveDraft();};$('variants').append(button);});
+}
+function generate(){
+  const result=generateListing(snapshot(),rules,prefs);if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');toast('Проверьте числовые поля');return;}
+  currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);
+  $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.';saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);
+}
+$('generate').onclick=generate;
+$('rotateTitles').onclick=()=>{titleVariant++;const result=generateListing(snapshot(),rules,prefs);currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);saveDraft();toast('Новые заголовки и теги. Текст описания сохранён.');};
+function renderTagReasons(suggestions=[]){$('tagReasons').replaceChildren();for(const item of suggestions){const div=document.createElement('div');div.className='tag-item';div.textContent='#'+item.tag+' — '+item.ru+' · '+item.reason;$('tagReasons').append(div);}}
+function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$('tagCatalog').replaceChildren();for(const [tag,ru] of TAG_CATALOG.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q))){const button=document.createElement('button');button.className='btn word-result';button.textContent='#'+tag+' — '+ru;button.onclick=()=>{const tags=new Set($('tags').value.split(/\s+/).filter(Boolean));tags.add('#'+tag);$('tags').value=[...tags].join(' ');saveDraft();};$('tagCatalog').append(button);}}
+$('tagSearch').oninput=renderTagCatalog;
+for(const key of fields)$(key).addEventListener('input',saveDraft);
+for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',saveDraft);
+for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',saveDraft);
+function extract(){
+  if(!$('source').value.trim())return toast('Сначала вставьте текст объявления');
+  captureKnowledge('example','Входящий текст объявления',$('source').value);
+  const {facts,warnings}=extractFacts($('source').value,rules);
+  // Preserve service policy, but clear all property facts to avoid borrowing from the last object.
+  const old=snapshot(),keep={};for(const key of ['url','source','style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople'])keep[key]=old[key];
+  populate({...keep,...facts});current=null;$('output').value='';$('outputTitle').value='';$('tags').value='';currentTitles=[];renderTitles();
+  $('review').textContent=warnings.join('\n');$('review').classList.remove('error');saveDraft();toast('Факты извлечены. Проверьте поля и отметки мебели.');
+}
+$('extract').onclick=extract;
+let importing=false;
+$('import').onclick=async()=>{
+  if(staticHosting)return toast('GitHub Pages не выполняет серверные запросы. Импортируйте ссылку через Python CLI или вставьте текст.');
+  if(importing)return;let raw=$('url').value;
+  try{const u=new URL(raw);if(u.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)||u.username||u.password||u.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');
+    let cache=read('most-cache',{}),saved=cache[u.href];
+    if(saved&&Date.now()-saved.at<86400000){$('source').value=saved.text;extract();$('importStatus').textContent='Загружено из кеша · '+new Date(saved.at).toLocaleString('ru-RU');return;}
+    importing=true;$('import').disabled=true;$('importStatus').textContent='Загружаем страницу…';
+    const response=await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u.href})});
+    const data=await response.json();if(!response.ok)throw Error(data.error||'Источник не разрешил загрузку.');
+    $('source').value=data.text;cache[u.href]={at:Date.now(),text:data.text};
+    cache=Object.fromEntries(Object.entries(cache).sort((a,b)=>b[1].at-a[1].at).slice(0,20));write('most-cache',cache);extract();$('importStatus').textContent='Страница загружена. Проверьте извлечённые данные.';
+  }catch(error){$('importStatus').textContent=error.message+' Вставьте текст вручную.';}
+  finally{importing=false;$('import').disabled=false;}
+};
+async function copy(part){
+  if(!$('outputTitle').value&&!$('output').value)return toast('Сначала создайте текст');
+  const text=part==='title'?$('outputTitle').value:part==='body'?$('output').value+'\n\n'+$('tags').value:$('outputTitle').value+'\n\n'+$('output').value+'\n\n'+$('tags').value;
+  try{await navigator.clipboard.writeText(text);toast('Скопировано');}catch{toast('Браузер не разрешил копирование. Выделите текст и скопируйте вручную.');}
+}
+$('copy').onclick=()=>copy('all');$('copyTitle').onclick=()=>copy('title');$('copyBody').onclick=()=>copy('body');
+$('save').onclick=()=>{
+  const value=snapshot();if(!value.name&&!value.metro&&!value.source&&!value.complex)return toast('Добавьте данные объекта');
+  const object={...value,id:current||(globalThis.crypto?.randomUUID?.()||'object-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles,updated:new Date().toISOString()};
+  const next=[object,...objects.filter(o=>o.id!==object.id)];if(write('most-objects',next)){objects=next;current=object.id;saveDraft();toast('Объект сохранён вместе с заголовком и описанием');}
+};
+$('newObject').onclick=()=>{saveDraft();populate({});current=null;currentTitles=[];$('output').value='';$('outputTitle').value='';$('tags').value='';renderTitles();saveDraft();toast('Новая карточка. Объекты из библиотеки сохранены.');};
+function renderList(){
+  const q=$('search').value.toLowerCase();$('list').replaceChildren();
+  const mode=$('libraryFilter').value;const found=objects.filter(o=>[o.name,o.metro,o.complex,o.title].join(' ').toLowerCase().includes(q)&&(mode==='all'||mode==='owner'&&o.seller==='owner'||mode==='eligible'&&listingEligible(o.seller,o.commission)));
+  if(!found.length)$('list').textContent='Здесь появятся сохранённые объекты.';
+  found.forEach(object=>{const row=document.createElement('div'),title=document.createElement('span'),open=document.createElement('button'),remove=document.createElement('button');row.className='saved';
+    title.textContent=(object.name||object.complex||object.metro||'Без названия')+' · '+(object.price?rubles(object.price)+' ₽':'Цена не указана');
+    open.className=remove.className='btn';open.textContent='Открыть';open.onclick=()=>{populate(object);current=object.id;currentTitles=Array.isArray(object.titles)?object.titles:[];$('outputTitle').value=object.title||'';$('output').value=object.output||'';$('tags').value=object.tags||'';renderTitles();saveDraft();tab('editor');};
+    remove.textContent='Удалить';remove.onclick=()=>{if(confirm('Удалить объект «'+(object.name||'Без названия')+'»?')){const next=objects.filter(o=>o.id!==object.id);if(write('most-objects',next)){objects=next;if(current===object.id)current=null;renderList();saveDraft();}}};row.append(title,open,remove);$('list').append(row);
+  });
+}
+$('search').oninput=renderList;$('libraryFilter').onchange=renderList;
+function renderRules(){
+  $('ruleList').replaceChildren();for(const [key,value] of Object.entries(rules)){
+    const row=document.createElement('div'),a=document.createElement('input'),b=document.createElement('input'),remove=document.createElement('button');row.className='rule';a.value=key;a.readOnly=true;a.setAttribute('aria-label','Триггер '+key);b.value=value;b.setAttribute('aria-label','Перевод '+key);
+    b.onchange=()=>{rules[key]=b.value;write('most-rules',rules);};remove.textContent='×';remove.className='btn';remove.style.padding='5px';remove.setAttribute('aria-label','Удалить правило '+key);remove.onclick=()=>{delete rules[key];write('most-rules',rules);renderRules();};row.append(a,b,remove);$('ruleList').append(row);
+  }
+}
+$('addRule').onclick=()=>{const key=$('trigger').value.trim(),value=$('translation').value.trim();if(!key||!value)return toast('Заполните триггер и перевод');rules[key]=value;if(write('most-rules',rules)){renderRules();$('trigger').value='';$('translation').value='';toast('Правило сохранено');}};
+for(const key of ['benefits','contact','brandTags'])$(key).value=prefs[key];
+$('saveSettings').onclick=()=>{const next={benefits:$('benefits').value,contact:$('contact').value,brandTags:$('brandTags').value};if(write('most-prefs',next)){prefs=next;toast('Преимущества и теги сохранены. Создайте текст заново, чтобы применить.');}};
+function download(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('export').onclick=()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,...insightsUI?.exportData(),draft:read('most-draft',null)});
+$('restore').onclick=()=>$('file').click();
+function validRecord(o){return o&&typeof o==='object'&&!Array.isArray(o)&&typeof o.id==='string'&&(!o.features||Array.isArray(o.features)&&o.features.every(x=>typeof x==='string'));}
+$('file').onchange=async()=>{
+  try{const file=$('file').files[0];if(!file)return;if(file.size>8000000)throw Error('size');const data=JSON.parse(await file.text());
+    if(![1,2].includes(data.version)||!Array.isArray(data.objects)||!data.objects.every(validRecord)||!data.rules||Array.isArray(data.rules)||!Object.entries(data.rules).every(([k,v])=>k.trim()&&typeof v==='string')||typeof data.prefs?.benefits!=='string')throw Error('format');
+    if(!confirm('Заменить библиотеку, словарь и настройки данными из резервной копии?'))return;
+    if(!write('most-objects',data.objects)||!write('most-rules',data.rules)||!write('most-prefs',data.prefs))return;
+    write('most-rules-version',2);if(Array.isArray(data.wordCustom))write('most-word-custom',data.wordCustom);if(Array.isArray(data.knowledge))write('most-knowledge',data.knowledge);if(Array.isArray(data.metrics))write('most-metrics',data.metrics);if(data.draft)write('most-draft',data.draft);location.reload();
+  }catch{toast('Не удалось импортировать файл: проверьте формат резервной копии (до 8 МБ).');}finally{$('file').value='';}
+};
+$('demo').onclick=()=>{
+  populate({name:'Пример · Прокшино, 52 м²',complex:'Прокшино',area:'52',rooms:'2',floor:'11',floors:'17',price:'85000',deposit:'85000',kitchen:'11',occupants:'4',style:'detailed',layout:'classic',separate:true,metro:'Прокшино',walk:'12',
+    transit:'Прокшино | 12 | walk | 1\nФилатов Луг | 19 | walk | 1\nСаларьево | 7 | bus | 1',
+    universities:'МГУ | 35–50 | public\nРУДН | 30–45 | public',
+    highlight:'52㎡宽敞空间＋独立厨房＋双人学习区',description:'两个独立房间，厨房与居住区域分开。窗边设有学习桌，方便在家学习或远程办公。',
+    features:['sofa','desk','fridge','oven','stove','bath'],utilities:'meters',registration:'assist',support:true});
+  current=null;generate();toast('Это демонстрационные данные, включая маршруты. Не реальное предложение.');
+};
+const draft=read('most-draft',null);
+if(draft?.version===2){populate(draft.fields||{});current=draft.id||null;$('outputTitle').value=draft.title||'';$('output').value=draft.output||'';$('tags').value=draft.tags||'';currentTitles=Array.isArray(draft.titles)?draft.titles:[];renderTitles();}
+else populate(draft||{});
+wordEditor=setupWordEditor({getRules:()=>rules,getCustom:()=>wordCustom,saveCustom:value=>{wordCustom=value;write('most-word-custom',wordCustom);},onChange:saveDraft,toast});
+renderTagCatalog();renderTagReasons(generateListing(snapshot(),rules,prefs).tagSuggestions);counts();
+
+function renderPhotos(){const safe=[];for(const raw of photoUrls.slice(0,30)){try{const u=new URL(typeof raw==='string'?raw:raw.url);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|cdn-cian\.ru|ciancdn\.ru|avito\.ru|avito\.st)$/i.test(u.hostname)&&!u.username&&!u.password)safe.push(u.href);}catch{}}photoUrls=safe;$('photoCard').classList.toggle('hidden',!safe.length);$('photoGallery').replaceChildren();for(const url of safe){const a=document.createElement('a'),img=document.createElement('img');a.href=url;a.target='_blank';a.rel='noopener noreferrer';img.src=url;img.loading='lazy';img.referrerPolicy='no-referrer';img.alt='Фото квартиры из источника';a.append(img);$('photoGallery').append(a);}}
+$('importCli').onclick=()=>$('cliFile').click();
+$('cliFile').onchange=async()=>{try{const file=$('cliFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const value=JSON.parse(await file.text());if(!value.fields||typeof value.fields!=='object'||!Array.isArray(value.titles)||!value.titles.every(t=>typeof t==='string')||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Нужен JSON-результат Python CLI с fields/titles/body/tags');populate({...value.fields,photos:value.listing?.images||value.fields.photos||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();toast('Карточка из Python импортирована. Проверьте поля перед публикацией.');}catch(error){toast(error.message);}finally{$('cliFile').value='';}};
+let roadmapDataClient=null;
+async function loadRoadmap(){try{const response=await fetch(staticHosting?'./plan.json':'/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
+function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataClient.tasks;const done=tasks.filter(t=>t.status==='done').length;$('roadmapSummary').replaceChildren(document.createTextNode(done+' / '+tasks.length+' выполнено · '+(tasks.length-done)+' в планах. '));if(roadmapDataClient.github_issue_url){const a=document.createElement('a');a.textContent='Roadmap на GitHub ↗';a.href=roadmapDataClient.github_issue_url;a.target='_blank';a.rel='noopener noreferrer';$('roadmapSummary').append(a);}const q=$('roadmapSearch').value.toLowerCase(),mode=$('roadmapFilter').value;$('roadmapList').replaceChildren();for(const task of tasks.filter(t=>(mode==='all'||t.status===mode)&&(t.id+' '+t.section+' '+t.title+' '+t.acceptance).toLowerCase().includes(q))){const card=document.createElement('article'),head=document.createElement('header'),p=document.createElement('p'),evidence=document.createElement('div');card.className='task '+task.status;head.textContent=(task.status==='done'?'✓ ':'○ ')+task.id+' · '+task.title;p.textContent=task.acceptance;evidence.className='evidence';evidence.textContent=task.priority+' · '+task.section+(task.evidence.length?' · '+task.evidence.join(' · '):' · Проверка ещё не завершена');card.append(head,p,evidence);$('roadmapList').append(card);}}
+$('roadmapSearch').oninput=renderRoadmap;$('roadmapFilter').onchange=renderRoadmap;
+function captureKnowledge(type,title,text){if(insightsUI&&$('rememberContent').checked&&text.trim())insightsUI.capture({type,title,text,source:$('url').value,status:'unreviewed'});}
+insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{rules[ru]=cn;write('most-rules',rules);renderRules();}});
+if(staticHosting){$('importStatus').textContent='GitHub Pages: вставьте текст или импортируйте JSON из Python CLI.';$('import').textContent='Импорт через CLI';}
+</script></html>

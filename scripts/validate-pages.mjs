@@ -1,0 +1,11 @@
+import {readFile,stat} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root=new URL('../',import.meta.url),html=await readFile(new URL('docs/index.html',root),'utf8');
+assert(html.includes('name="redcn-hosting" content="github-pages"'));
+assert(!/<script[^>]+src=/.test(html),'Standalone page must not depend on root-path scripts');
+assert(!/href="\/(styles|app)/.test(html));
+const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
+const check=spawnSync(process.execPath,['--check','--input-type=module'],{input:script,encoding:'utf8'});assert.equal(check.status,0,check.stderr);
+for(const file of ['docs/plan.json','docs/research.json','docs/knowledge-seed.json'])JSON.parse(await readFile(new URL(file,root),'utf8'));
+await stat(new URL('docs/.nojekyll',root));console.log('Standalone Pages application and all public datasets are valid');

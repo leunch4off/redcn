@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const root=new URL('../',import.meta.url),read=p=>readFile(new URL(p,root),'utf8');
 test('all editor controls referenced in application have a unique DOM id',async()=>{
- const [html,app,editor]=await Promise.all(['web/index.html','web/app.js','web/word-editor.mjs'].map(read));
+ const [html,app,editor,insightsUI]=await Promise.all(['web/index.html','web/app.js','web/word-editor.mjs','web/insights-ui.mjs'].map(read));
  const ids=[...html.matchAll(/id="([^"]+)"/g)].map(x=>x[1]);assert.equal(new Set(ids).size,ids.length);
  const fields=[...app.match(/const fields=\[(.*?)\];/s)[1].matchAll(/'([^']+)'/g)].map(x=>x[1]);
- const controls=[...[...app.matchAll(/\$\('([^']+)'\)/g)].map(x=>x[1]),...[...editor.matchAll(/el\('([^']+)'\)/g)].map(x=>x[1]),...fields];
+ const controls=[...[...app.matchAll(/\$\('([^']+)'\)/g)].map(x=>x[1]),...[...(editor+insightsUI).matchAll(/el\('([^']+)'\)/g)].map(x=>x[1]),...fields];
  for(const id of controls)assert(ids.includes(id),'Missing DOM control '+id);
 });
 test('roadmap has exactly 200 permanent IDs and proof for completed work',async()=>{

@@ -1,6 +1,7 @@
 import {DICTIONARY,FEATURES,DEFAULT_PREFS,generateListing,extractFacts,rubles} from './engine.mjs';
 import {TAG_CATALOG,listingEligible} from './content-tools.mjs';
 import {setupWordEditor} from './word-editor.mjs';
+import {setupInsights} from './insights-ui.mjs';
 
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
@@ -15,7 +16,8 @@ if(read('most-rules-version',0)!==2&&write('most-rules',rules))write('most-rules
 let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
 let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
 let current=null,titleIndex=0,currentTitles=[];
-let titleVariant=0,wordEditor=null,photoUrls=[];
+let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null;
+const staticHosting=document.querySelector('meta[name="redcn-hosting"]')?.content==='github-pages';
 let wordCustom=read('most-word-custom',[]);if(!Array.isArray(wordCustom))wordCustom=[];
 
 // Generate checkboxes using safe DOM methods; nothing from a listing becomes HTML.
@@ -40,7 +42,7 @@ function renderTitles(){
 function generate(){
   const result=generateListing(snapshot(),rules,prefs);if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');toast('Проверьте числовые поля');return;}
   currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);
-  $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.';saveDraft();
+  $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.';saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);
 }
 $('generate').onclick=generate;
 $('rotateTitles').onclick=()=>{titleVariant++;const result=generateListing(snapshot(),rules,prefs);currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);saveDraft();toast('Новые заголовки и теги. Текст описания сохранён.');};
@@ -52,6 +54,7 @@ for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',saveDraft)
 for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',saveDraft);
 function extract(){
   if(!$('source').value.trim())return toast('Сначала вставьте текст объявления');
+  captureKnowledge('example','Входящий текст объявления',$('source').value);
   const {facts,warnings}=extractFacts($('source').value,rules);
   // Preserve service policy, but clear all property facts to avoid borrowing from the last object.
   const old=snapshot(),keep={};for(const key of ['url','source','style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople'])keep[key]=old[key];
@@ -61,6 +64,7 @@ function extract(){
 $('extract').onclick=extract;
 let importing=false;
 $('import').onclick=async()=>{
+  if(staticHosting)return toast('GitHub Pages не выполняет серверные запросы. Импортируйте ссылку через Python CLI или вставьте текст.');
   if(importing)return;let raw=$('url').value;
   try{const u=new URL(raw);if(u.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)||u.username||u.password||u.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');
     let cache=read('most-cache',{}),saved=cache[u.href];
@@ -106,7 +110,7 @@ $('addRule').onclick=()=>{const key=$('trigger').value.trim(),value=$('translati
 for(const key of ['benefits','contact','brandTags'])$(key).value=prefs[key];
 $('saveSettings').onclick=()=>{const next={benefits:$('benefits').value,contact:$('contact').value,brandTags:$('brandTags').value};if(write('most-prefs',next)){prefs=next;toast('Преимущества и теги сохранены. Создайте текст заново, чтобы применить.');}};
 function download(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('export').onclick=()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,draft:read('most-draft',null)});
+$('export').onclick=()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,...insightsUI?.exportData(),draft:read('most-draft',null)});
 $('restore').onclick=()=>$('file').click();
 function validRecord(o){return o&&typeof o==='object'&&!Array.isArray(o)&&typeof o.id==='string'&&(!o.features||Array.isArray(o.features)&&o.features.every(x=>typeof x==='string'));}
 $('file').onchange=async()=>{
@@ -114,7 +118,7 @@ $('file').onchange=async()=>{
     if(![1,2].includes(data.version)||!Array.isArray(data.objects)||!data.objects.every(validRecord)||!data.rules||Array.isArray(data.rules)||!Object.entries(data.rules).every(([k,v])=>k.trim()&&typeof v==='string')||typeof data.prefs?.benefits!=='string')throw Error('format');
     if(!confirm('Заменить библиотеку, словарь и настройки данными из резервной копии?'))return;
     if(!write('most-objects',data.objects)||!write('most-rules',data.rules)||!write('most-prefs',data.prefs))return;
-    write('most-rules-version',2);if(Array.isArray(data.wordCustom))write('most-word-custom',data.wordCustom);if(data.draft)write('most-draft',data.draft);location.reload();
+    write('most-rules-version',2);if(Array.isArray(data.wordCustom))write('most-word-custom',data.wordCustom);if(Array.isArray(data.knowledge))write('most-knowledge',data.knowledge);if(Array.isArray(data.metrics))write('most-metrics',data.metrics);if(data.draft)write('most-draft',data.draft);location.reload();
   }catch{toast('Не удалось импортировать файл: проверьте формат резервной копии (до 8 МБ).');}finally{$('file').value='';}
 };
 $('demo').onclick=()=>{
@@ -135,6 +139,9 @@ function renderPhotos(){const safe=[];for(const raw of photoUrls.slice(0,30)){tr
 $('importCli').onclick=()=>$('cliFile').click();
 $('cliFile').onchange=async()=>{try{const file=$('cliFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const value=JSON.parse(await file.text());if(!value.fields||typeof value.fields!=='object'||!Array.isArray(value.titles)||!value.titles.every(t=>typeof t==='string')||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Нужен JSON-результат Python CLI с fields/titles/body/tags');populate({...value.fields,photos:value.listing?.images||value.fields.photos||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();toast('Карточка из Python импортирована. Проверьте поля перед публикацией.');}catch(error){toast(error.message);}finally{$('cliFile').value='';}};
 let roadmapDataClient=null;
-async function loadRoadmap(){try{const response=await fetch('/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
+async function loadRoadmap(){try{const response=await fetch(staticHosting?'./plan.json':'/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
 function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataClient.tasks;const done=tasks.filter(t=>t.status==='done').length;$('roadmapSummary').replaceChildren(document.createTextNode(done+' / '+tasks.length+' выполнено · '+(tasks.length-done)+' в планах. '));if(roadmapDataClient.github_issue_url){const a=document.createElement('a');a.textContent='Roadmap на GitHub ↗';a.href=roadmapDataClient.github_issue_url;a.target='_blank';a.rel='noopener noreferrer';$('roadmapSummary').append(a);}const q=$('roadmapSearch').value.toLowerCase(),mode=$('roadmapFilter').value;$('roadmapList').replaceChildren();for(const task of tasks.filter(t=>(mode==='all'||t.status===mode)&&(t.id+' '+t.section+' '+t.title+' '+t.acceptance).toLowerCase().includes(q))){const card=document.createElement('article'),head=document.createElement('header'),p=document.createElement('p'),evidence=document.createElement('div');card.className='task '+task.status;head.textContent=(task.status==='done'?'✓ ':'○ ')+task.id+' · '+task.title;p.textContent=task.acceptance;evidence.className='evidence';evidence.textContent=task.priority+' · '+task.section+(task.evidence.length?' · '+task.evidence.join(' · '):' · Проверка ещё не завершена');card.append(head,p,evidence);$('roadmapList').append(card);}}
 $('roadmapSearch').oninput=renderRoadmap;$('roadmapFilter').onchange=renderRoadmap;
+function captureKnowledge(type,title,text){if(insightsUI&&$('rememberContent').checked&&text.trim())insightsUI.capture({type,title,text,source:$('url').value,status:'unreviewed'});}
+insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{rules[ru]=cn;write('most-rules',rules);renderRules();}});
+if(staticHosting){$('importStatus').textContent='GitHub Pages: вставьте текст или импортируйте JSON из Python CLI.';$('import').textContent='Импорт через CLI';}

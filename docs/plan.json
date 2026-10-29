@@ -1,0 +1,2855 @@
+{
+  "project": "redcn",
+  "version": 3,
+  "total": 200,
+  "tasks": [
+    {
+      "id": "RCN-001",
+      "section": "Продукт и управление",
+      "title": "Единый реестр 200 задач",
+      "acceptance": "Все ID RCN-001…200 уникальны; количество проверяется тестом.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/PRODUCT.md",
+        "docs/ROADMAP-POLICY.md",
+        "docs/REFERENCE-MAP.md",
+        "tests/structure.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-002",
+      "section": "Продукт и управление",
+      "title": "Главный GitHub issue Roadmap",
+      "acceptance": "Issue содержит 200 checkbox и ссылку на исходники.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "GitHub issue #1: Roadmap, 200 checkbox"
+      ]
+    },
+    {
+      "id": "RCN-003",
+      "section": "Продукт и управление",
+      "title": "Сохранить вложение пользователя",
+      "acceptance": "Оригинальные UTF-8 байты находятся в docs/references/user-listing-examples.txt.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/references/manifest.json; SHA-256 совпадает с вложением"
+      ]
+    },
+    {
+      "id": "RCN-004",
+      "section": "Продукт и управление",
+      "title": "Спецификация назначения продукта",
+      "acceptance": "Описаны оператор, сценарий RU→CN, сайт, CLI и границы автоматизации.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/PRODUCT.md",
+        "docs/ROADMAP-POLICY.md",
+        "docs/REFERENCE-MAP.md",
+        "tests/structure.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-005",
+      "section": "Продукт и управление",
+      "title": "Критерии закрытия задач",
+      "acceptance": "Каждая задача имеет проверяемый результат; без доказательства checkbox не закрывается.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/PRODUCT.md",
+        "docs/ROADMAP-POLICY.md",
+        "docs/REFERENCE-MAP.md",
+        "tests/structure.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-006",
+      "section": "Продукт и управление",
+      "title": "Политика сохранности roadmap",
+      "acceptance": "Запрещено удалять задачи и переиспользовать ID; изменения статусов сохраняются в git.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/PRODUCT.md",
+        "docs/ROADMAP-POLICY.md",
+        "docs/REFERENCE-MAP.md",
+        "tests/structure.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-007",
+      "section": "Продукт и управление",
+      "title": "Приоритеты и зависимости",
+      "acceptance": "Каждая задача содержит P0/P1/P2 и зависимости на группы или ID.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/PRODUCT.md",
+        "docs/ROADMAP-POLICY.md",
+        "docs/REFERENCE-MAP.md",
+        "tests/structure.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-008",
+      "section": "Продукт и управление",
+      "title": "Трассировка референсов к функциям",
+      "acceptance": "Из примеров выделены заголовки, комнаты, маршруты, условия и сервисы без переноса чужих фактов.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/PRODUCT.md",
+        "docs/ROADMAP-POLICY.md",
+        "docs/REFERENCE-MAP.md",
+        "tests/structure.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-009",
+      "section": "Продукт и управление",
+      "title": "Журнал выпусков",
+      "acceptance": "Каждый опубликованный выпуск имеет перечень изменений и результаты проверок.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "CHANGELOG.md",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-010",
+      "section": "Продукт и управление",
+      "title": "Экран прогресса в приложении",
+      "acceptance": "Сайт показывает статусы всех 200 задач и ссылки на связанные issue.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "Браузерная приёмка: 200 карточек задач и ссылка на issue #1"
+      ]
+    },
+    {
+      "id": "RCN-011",
+      "section": "Импорт ЦИАН",
+      "title": "Ручная загрузка ссылки ЦИАН",
+      "acceptance": "HTTPS-ссылка возвращает доступный HTML или понятный отказ.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-012",
+      "section": "Импорт ЦИАН",
+      "title": "Извлечение JSON-LD описания",
+      "acceptance": "Описание из структурированных данных имеет приоритет перед навигацией.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок"
+      ]
+    },
+    {
+      "id": "RCN-013",
+      "section": "Импорт ЦИАН",
+      "title": "Структурированная цена ЦИАН",
+      "acceptance": "Цена и период аренды распознаются из fixtures разных форматов.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-014",
+      "section": "Импорт ЦИАН",
+      "title": "Планировка ЦИАН",
+      "acceptance": "Разделены комнаты, спальни, общая и жилая площадь без подмены евро-форматов.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-015",
+      "section": "Импорт ЦИАН",
+      "title": "Метро из карточки ЦИАН",
+      "acceptance": "Для каждой станции сохраняются своё время и способ передвижения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-016",
+      "section": "Импорт ЦИАН",
+      "title": "Комиссия ЦИАН",
+      "acceptance": "Извлечён процент, источник и признак отсутствующих данных.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-017",
+      "section": "Импорт ЦИАН",
+      "title": "Автор ЦИАН",
+      "acceptance": "Собственник/агент подтверждаются явным полем источника, иначе unknown.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-018",
+      "section": "Импорт ЦИАН",
+      "title": "Изменения карточки ЦИАН",
+      "acceptance": "Повторная загрузка показывает различия цены и условий с предыдущим снимком.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-019",
+      "section": "Импорт ЦИАН",
+      "title": "Отказ при защите страницы",
+      "acceptance": "CAPTCHA и блокировка не обходятся; доступна вставка текста.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок"
+      ]
+    },
+    {
+      "id": "RCN-020",
+      "section": "Импорт ЦИАН",
+      "title": "Fixtures реальных схем ЦИАН",
+      "acceptance": "Обезличенные разрешённые HTML-снимки покрывают несколько вариантов карточки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-021",
+      "section": "Импорт Авито",
+      "title": "Ручная загрузка ссылки Авито",
+      "acceptance": "HTTPS-ссылка поддерживается серверным импортом и CLI.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-022",
+      "section": "Импорт Авито",
+      "title": "Описание Авито из JSON-LD",
+      "acceptance": "Текст карточки очищен от рекомендаций и рекламы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок"
+      ]
+    },
+    {
+      "id": "RCN-023",
+      "section": "Импорт Авито",
+      "title": "Цена и залог Авито",
+      "acceptance": "Различены месячная плата, обеспечительный платёж и разовые сборы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-024",
+      "section": "Импорт Авито",
+      "title": "Расположение Авито",
+      "acceptance": "Адрес, район и станции хранятся отдельными полями с источником.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-025",
+      "section": "Импорт Авито",
+      "title": "Комиссия Авито",
+      "acceptance": "Извлекается точный процент либо unknown, без вывода из цены.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-026",
+      "section": "Импорт Авито",
+      "title": "Автор Авито",
+      "acceptance": "Метка собственника проверяется по данным карточки, не по отсутствию комиссии.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-027",
+      "section": "Импорт Авито",
+      "title": "Статус публикации Авито",
+      "acceptance": "Архивные и снятые объявления исключаются из новых.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-028",
+      "section": "Импорт Авито",
+      "title": "Перенаправления Авито",
+      "acceptance": "Каждый переход проверяет домен; неподдерживаемый URL отклоняется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок"
+      ]
+    },
+    {
+      "id": "RCN-029",
+      "section": "Импорт Авито",
+      "title": "Ошибки Авито в интерфейсе",
+      "acceptance": "Пользователь видит причину отказа и может вставить текст.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-030",
+      "section": "Импорт Авито",
+      "title": "Fixtures карточек Авито",
+      "acceptance": "Проверяются обычная карточка, недоступный объект и частично заполненная страница.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-031",
+      "section": "Новые объявления и отбор",
+      "title": "Пакетный манифест источников",
+      "acceptance": "CLI принимает до 100 ссылок с seller и commission.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-061",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen"
+      ]
+    },
+    {
+      "id": "RCN-032",
+      "section": "Новые объявления и отбор",
+      "title": "Фильтр собственников",
+      "acceptance": "Записи с явно заданным seller=owner проходят отбор.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-061",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen"
+      ]
+    },
+    {
+      "id": "RCN-033",
+      "section": "Новые объявления и отбор",
+      "title": "Фильтр комиссии до 50%",
+      "acceptance": "Посредник с 0…50% проходит; выше 50% отклоняется.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-061",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen"
+      ]
+    },
+    {
+      "id": "RCN-034",
+      "section": "Новые объявления и отбор",
+      "title": "Неизвестная комиссия",
+      "acceptance": "Посредник без подтверждённого процента не проходит автоматический отбор.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-061",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen"
+      ]
+    },
+    {
+      "id": "RCN-035",
+      "section": "Новые объявления и отбор",
+      "title": "Реестр уже обработанных ссылок",
+      "acceptance": "SQLite seen предотвращает повторную обработку успешной новой записи.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-061",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen"
+      ]
+    },
+    {
+      "id": "RCN-036",
+      "section": "Новые объявления и отбор",
+      "title": "Лента новых карточек на сайте",
+      "acceptance": "Новые объекты появляются в очереди с временем обнаружения.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-037",
+      "section": "Новые объявления и отбор",
+      "title": "Коннектор поиска ЦИАН",
+      "acceptance": "Разрешённый доступный источник выдачи или API преобразуется в кандидатов без обхода защиты.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-038",
+      "section": "Новые объявления и отбор",
+      "title": "Коннектор поиска Авито",
+      "acceptance": "Разрешённый источник выдачи или API выдаёт новых кандидатов с полями отбора.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-039",
+      "section": "Новые объявления и отбор",
+      "title": "Фильтры бюджета и района",
+      "acceptance": "Новые карточки отбираются по аренде, площади, комнатам и географии.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-040",
+      "section": "Новые объявления и отбор",
+      "title": "Объяснение отбора",
+      "acceptance": "У каждой записи видно, почему она принята, отклонена или отложена на проверку.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-041",
+      "section": "Фотографии и медиа",
+      "title": "Ссылки фото из OG и JSON-LD",
+      "acceptance": "CLI сохраняет только URL изображений, объявленных источником.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-012",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
+        "tests/test_cli.py: fixture фото и manifest"
+      ]
+    },
+    {
+      "id": "RCN-042",
+      "section": "Фотографии и медиа",
+      "title": "Скачивание фотографий CLI",
+      "acceptance": "Фото сохраняются в указанную директорию по явному флагу.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-012",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
+        "tests/test_cli.py: fixture фото и manifest"
+      ]
+    },
+    {
+      "id": "RCN-043",
+      "section": "Фотографии и медиа",
+      "title": "Проверка типов фотографий",
+      "acceptance": "Разрешены JPEG/PNG/WebP; проверяются MIME, сигнатура и лимит размера.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-012",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
+        "tests/test_cli.py: fixture фото и manifest"
+      ]
+    },
+    {
+      "id": "RCN-044",
+      "section": "Фотографии и медиа",
+      "title": "Манифест фотографий",
+      "acceptance": "Сохранены URL, путь, SHA-256 либо причина ошибки каждого файла.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-012",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
+        "tests/test_cli.py: fixture фото и manifest"
+      ]
+    },
+    {
+      "id": "RCN-045",
+      "section": "Фотографии и медиа",
+      "title": "Сопоставление фото объекту",
+      "acceptance": "У каждой квартиры отдельная папка с устойчивым ID.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-012",
+        "RCN-062"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
+        "tests/test_cli.py: fixture фото и manifest"
+      ]
+    },
+    {
+      "id": "RCN-046",
+      "section": "Фотографии и медиа",
+      "title": "Галерея сайта",
+      "acceptance": "Фото можно просматривать, открывать крупно и удалять из выбранного набора.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-047",
+      "section": "Фотографии и медиа",
+      "title": "Порядок фотографий",
+      "acceptance": "Оператор переставляет фото и выбирает обложку; порядок сохраняется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-048",
+      "section": "Фотографии и медиа",
+      "title": "Пакет медиа ZIP",
+      "acceptance": "Сайт экспортирует выбранные фото с текстом и источником одним архивом.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-049",
+      "section": "Фотографии и медиа",
+      "title": "Дубликаты фото",
+      "acceptance": "Полные дубликаты выявляются по SHA-256 между объявлениями.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-050",
+      "section": "Фотографии и медиа",
+      "title": "Обложки Rednote",
+      "acceptance": "Редактор накладывает выбранный заголовок и параметры на разрешённое фото без удаления водяных знаков.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-051",
+      "section": "Данные и кеш",
+      "title": "Кеш HTML-импорта браузера",
+      "acceptance": "Повторная ссылка читается из кеша до 24 часов, хранится максимум 20 страниц.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: кеш URL 24 часа, ограничение 20 записей"
+      ]
+    },
+    {
+      "id": "RCN-052",
+      "section": "Данные и кеш",
+      "title": "Кеш CLI SQLite",
+      "acceptance": "Повторный URL использует локальный payload и дату загрузки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: sqlite_cache_and_refresh"
+      ]
+    },
+    {
+      "id": "RCN-053",
+      "section": "Данные и кеш",
+      "title": "Принудительное обновление CLI",
+      "acceptance": "Флаг --refresh заменяет устаревший снимок после успешной загрузки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_cli.py: sqlite_cache_and_refresh"
+      ]
+    },
+    {
+      "id": "RCN-054",
+      "section": "Данные и кеш",
+      "title": "Версионирование фактов",
+      "acceptance": "Цена и условия имеют историю с автором изменения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-055",
+      "section": "Данные и кеш",
+      "title": "Проверка схемы объекта",
+      "acceptance": "Некорректные типы полей отклоняются до сохранения и генерации.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-056",
+      "section": "Данные и кеш",
+      "title": "Серверная база объектов",
+      "acceptance": "Карточки доступны после входа с другого устройства.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-057",
+      "section": "Данные и кеш",
+      "title": "Изоляция данных пользователей",
+      "acceptance": "Каждая серверная операция проверяет владельца объекта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-058",
+      "section": "Данные и кеш",
+      "title": "Облачные резервные копии",
+      "acceptance": "Восстановление возвращает библиотеку, словари и медиа в согласованном состоянии.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-059",
+      "section": "Данные и кеш",
+      "title": "Очистка кеша",
+      "acceptance": "В интерфейсе отдельно очищается кеш без удаления карточек и словаря.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-060",
+      "section": "Данные и кеш",
+      "title": "Источники отдельных фактов",
+      "acceptance": "Цена, мебель и время маршрута показывают URL/ручной ввод и дату проверки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-061",
+      "section": "Python и терминал",
+      "title": "Интерактивный ввод URL",
+      "acceptance": "python3 cli/redcn.py запрашивает ссылку при отсутствии аргументов.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-062",
+      "section": "Python и терминал",
+      "title": "Режим URL из аргумента",
+      "acceptance": "Ссылка ЦИАН/Авито обрабатывается без браузерного интерфейса.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-063",
+      "section": "Python и терминал",
+      "title": "Локальный текст CLI",
+      "acceptance": "Флаг --input принимает UTF-8 объявление без сети.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-064",
+      "section": "Python и терминал",
+      "title": "Проверенные поля JSON",
+      "acceptance": "--data дополняет или переопределяет извлечённые факты.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-065",
+      "section": "Python и терминал",
+      "title": "Общий генератор сайта и CLI",
+      "acceptance": "Python вызывает тот же JS-модуль, результаты совпадают на fixture.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-066",
+      "section": "Python и терминал",
+      "title": "Вывод JSON",
+      "acceptance": "--json выдаёт titles/body/tags/fields/unknown без сервисного текста в stdout.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-067",
+      "section": "Python и терминал",
+      "title": "Вывод в файл",
+      "acceptance": "--output сохраняет итоговый текст или JSON по заданному пути.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-068",
+      "section": "Python и терминал",
+      "title": "Настройки и словарь CLI",
+      "acceptance": "--rules и --prefs применяют пользовательские переводы и преимущества.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-069",
+      "section": "Python и терминал",
+      "title": "Варианты через CLI",
+      "acceptance": "--variant меняет заголовки и допустимые теги при сохранении фактов.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator"
+      ]
+    },
+    {
+      "id": "RCN-070",
+      "section": "Python и терминал",
+      "title": "Установка одной командой",
+      "acceptance": "Подготовлен установочный пакет с проверкой Python/Node для macOS и Windows.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-071",
+      "section": "Извлечение и качество фактов",
+      "title": "Базовые числа объявления",
+      "acceptance": "Из текста извлекаются площадь, комнаты, цена, залог и этажность.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты"
+      ]
+    },
+    {
+      "id": "RCN-072",
+      "section": "Извлечение и качество фактов",
+      "title": "Десятичные площади",
+      "acceptance": "31,6 и 31.6 преобразуются в одно числовое значение.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты"
+      ]
+    },
+    {
+      "id": "RCN-073",
+      "section": "Извлечение и качество фактов",
+      "title": "Цены W и тысячи",
+      "acceptance": "6.4W, 6,4 тыс. и рубли обрабатываются явно без смешения единиц.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты"
+      ]
+    },
+    {
+      "id": "RCN-074",
+      "section": "Извлечение и качество фактов",
+      "title": "Наличие техники",
+      "acceptance": "Фразы об отсутствии и будущей установке не превращаются в существующую технику.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты"
+      ]
+    },
+    {
+      "id": "RCN-075",
+      "section": "Извлечение и качество фактов",
+      "title": "Несколько станций",
+      "acceptance": "Каждой станции сопоставляются её диапазон времени и способ поездки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты"
+      ]
+    },
+    {
+      "id": "RCN-076",
+      "section": "Извлечение и качество фактов",
+      "title": "Факты из изображений",
+      "acceptance": "Опциональный анализ фото предлагает признаки с уровнем уверенности и ручным подтверждением.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-077",
+      "section": "Извлечение и качество фактов",
+      "title": "Противоречия источника",
+      "acceptance": "Расхождения между текстом, JSON-LD и ручным вводом выделены отдельно.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-078",
+      "section": "Извлечение и качество фактов",
+      "title": "Платежи первого месяца",
+      "acceptance": "Сумма аренда+залог+комиссия рассчитывается с пояснением.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-079",
+      "section": "Извлечение и качество фактов",
+      "title": "Планируемая техника",
+      "acceptance": "Будущая установка хранится отдельно от уже имеющейся мебели.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-080",
+      "section": "Извлечение и качество фактов",
+      "title": "Запрет переноса прошлых фактов",
+      "acceptance": "Разбор нового объявления очищает характеристики предыдущей квартиры.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: extract очищает старые факты и выделяет новый объект"
+      ]
+    },
+    {
+      "id": "RCN-081",
+      "section": "Динамические заголовки",
+      "title": "Отдельное поле заголовка",
+      "acceptance": "Заголовок редактируется и копируется отдельно от описания.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-082",
+      "section": "Динамические заголовки",
+      "title": "Три варианта заголовка",
+      "acceptance": "На карточку выводятся три варианта без изменения фактов.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-083",
+      "section": "Динамические заголовки",
+      "title": "Ротация без перезаписи описания",
+      "acceptance": "Кнопка других заголовков сохраняет вручную отредактированное описание.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-084",
+      "section": "Динамические заголовки",
+      "title": "Цена W в заголовке",
+      "acceptance": "68 000 превращается в 6.8W с воспроизводимым округлением.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-085",
+      "section": "Динамические заголовки",
+      "title": "Метро в заголовке",
+      "acceptance": "Название и минуты берутся из основной станции карточки.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-086",
+      "section": "Динамические заголовки",
+      "title": "Заголовок о совместной аренде",
+      "acceptance": "Показывается расчёт на человека только при заданном количестве людей.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-087",
+      "section": "Динамические заголовки",
+      "title": "Заголовок по удобствам",
+      "acceptance": "Кровать, кондиционер и гардеробная используются только при соответствующих отметках.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-088",
+      "section": "Динамические заголовки",
+      "title": "Счётчик символов",
+      "acceptance": "Заголовок имеет отдельный счётчик Unicode-символов.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "Браузер: ротация сохраняет описание"
+      ]
+    },
+    {
+      "id": "RCN-089",
+      "section": "Динамические заголовки",
+      "title": "История выбранных заголовков",
+      "acceptance": "Можно сравнить и восстановить предыдущие варианты.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-090",
+      "section": "Динамические заголовки",
+      "title": "Редактор формул заголовков",
+      "acceptance": "Оператор сохраняет собственные формулы с проверяемыми переменными.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-091",
+      "section": "Описание и стиль",
+      "title": "Короткий формат",
+      "acceptance": "Краткие блоки фактов и список удобств доступны без лишних абзацев.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs: styles and layouts"
+      ]
+    },
+    {
+      "id": "RCN-092",
+      "section": "Описание и стиль",
+      "title": "Подробный формат",
+      "acceptance": "Техника и мебель разбиты на спальню, гостиную, кухню, санузел и хранение.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs: styles and layouts"
+      ]
+    },
+    {
+      "id": "RCN-093",
+      "section": "Описание и стиль",
+      "title": "Повествовательный формат",
+      "acceptance": "Факты собираются в связный китайский текст без выдуманных преимуществ.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs: styles and layouts"
+      ]
+    },
+    {
+      "id": "RCN-094",
+      "section": "Описание и стиль",
+      "title": "Планировки Studio и евро",
+      "acceptance": "Студия, евро-2, евро-3 и классические комнаты различаются в тексте.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs: styles and layouts"
+      ]
+    },
+    {
+      "id": "RCN-095",
+      "section": "Описание и стиль",
+      "title": "Главная особенность",
+      "acceptance": "Отдельный блок 最大亮点 использует введённую оператором формулировку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs: styles and layouts"
+      ]
+    },
+    {
+      "id": "RCN-096",
+      "section": "Описание и стиль",
+      "title": "Китайское описание вручную",
+      "acceptance": "Авторский абзац сохраняется вместе с карточкой и постом.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/engine.test.mjs: styles and layouts"
+      ]
+    },
+    {
+      "id": "RCN-097",
+      "section": "Описание и стиль",
+      "title": "Профили аудитории описания",
+      "acceptance": "Студент, семья и работающий получают разные вступления без дискриминационных ограничений.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-098",
+      "section": "Описание и стиль",
+      "title": "Сохранённые стили студии",
+      "acceptance": "Набор пунктуации, эмодзи и обращения выбирается из профилей.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-099",
+      "section": "Описание и стиль",
+      "title": "Дифф ручных правок",
+      "acceptance": "Перед регенерацией показано, какие фразы будут изменены.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-100",
+      "section": "Описание и стиль",
+      "title": "Автопроверка смысловых противоречий",
+      "acceptance": "Нельзя одновременно заявить Studio и отдельную спальню без предупреждения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-101",
+      "section": "Интерактивный словарь",
+      "title": "Кликабельные фразы в заголовке",
+      "acceptance": "Известные фразы выделены и открывают русское значение.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-102",
+      "section": "Интерактивный словарь",
+      "title": "Кликабельные фразы в описании",
+      "acceptance": "Китайский текст сегментирован с сохранением позиций замен.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-103",
+      "section": "Интерактивный словарь",
+      "title": "Перевод китайский→русский",
+      "acceptance": "Известные фразы используют двуязычный словарь; неизвестные явно обозначены.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-104",
+      "section": "Интерактивный словарь",
+      "title": "Подсказки замен",
+      "acceptance": "После выбора фразы отображаются доступные варианты из словаря.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-105",
+      "section": "Интерактивный словарь",
+      "title": "Замена выбранного фрагмента",
+      "acceptance": "Меняется только выделенное совпадение по его позиции.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-106",
+      "section": "Интерактивный словарь",
+      "title": "Замена всех совпадений",
+      "acceptance": "По отдельной отметке фраза заменяется в заголовке и описании.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-107",
+      "section": "Интерактивный словарь",
+      "title": "Добавление своей замены",
+      "acceptance": "Новая китайская фраза с русским значением сохраняется локально.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-108",
+      "section": "Интерактивный словарь",
+      "title": "Поиск словаря CN/RU",
+      "acceptance": "Замены ищутся на китайском и русском.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-109",
+      "section": "Интерактивный словарь",
+      "title": "Отмена замены",
+      "acceptance": "Можно отменить последние 20 замен текста.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-110",
+      "section": "Интерактивный словарь",
+      "title": "Выделение произвольной фразы",
+      "acceptance": "Выделенный в textarea фрагмент открывается для перевода и замены.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-081",
+        "RCN-111"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/word-editor.mjs",
+        "tests/content.test.mjs: token positions / replacement / stale span",
+        "Браузер: RU-значение, замена и отмена"
+      ]
+    },
+    {
+      "id": "RCN-111",
+      "section": "Локализация и терминология",
+      "title": "Словарь RU→CN",
+      "acceptance": "Триггеры, включая спецсимволы, заменяются по приоритету длинной фразы.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: DICTIONARY / translate",
+        "tests/engine.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-112",
+      "section": "Локализация и терминология",
+      "title": "Отсутствие рекурсивных замен",
+      "acceptance": "Результат одного перевода не переводится повторно другим правилом.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: DICTIONARY / translate",
+        "tests/engine.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-113",
+      "section": "Локализация и терминология",
+      "title": "Рабочие переводы станций",
+      "acceptance": "Базовые станции из пользовательских примеров доступны в словаре.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: DICTIONARY / translate",
+        "tests/engine.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-114",
+      "section": "Локализация и терминология",
+      "title": "Рабочие переводы вузов",
+      "acceptance": "МГУ, РУДН, МГИМО, РАНХиГС и другие доступны по алиасам.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: DICTIONARY / translate",
+        "tests/engine.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-115",
+      "section": "Локализация и терминология",
+      "title": "Каталог официальных наименований",
+      "acceptance": "Для названий хранится проверенный источник и дата подтверждения.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-116",
+      "section": "Локализация и терминология",
+      "title": "Автоматический перевод неизвестных слов",
+      "acceptance": "Подключаемый провайдер переводит выбранную фразу только по запросу оператора.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-117",
+      "section": "Локализация и терминология",
+      "title": "Контекстное различение комнат",
+      "acceptance": "Словарь учитывает разницу комнаты, спальни и гостиной в планировке.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-118",
+      "section": "Локализация и терминология",
+      "title": "Произношение и пиньинь",
+      "acceptance": "Известные термины можно изучать с пиньинем и произношением.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-119",
+      "section": "Локализация и терминология",
+      "title": "Проверка неоднозначных терминов",
+      "acceptance": "Регистрация и виза не используются как взаимозаменяемые обещания.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: отдельная формулировка 临时居住登记",
+        "tests/engine.test.mjs: registration"
+      ]
+    },
+    {
+      "id": "RCN-120",
+      "section": "Локализация и терминология",
+      "title": "Общий словарь команды",
+      "acceptance": "Изменения переводов проходят версии и доступны коллегам.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-121",
+      "section": "Теги и семантика",
+      "title": "Каталог пользовательских тегов",
+      "acceptance": "Все теги из запроса доступны с русским значением.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-122",
+      "section": "Теги и семантика",
+      "title": "Контекст метро",
+      "acceptance": "В теги попадают только станции, указанные в карточке.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-123",
+      "section": "Теги и семантика",
+      "title": "Контекст вуза",
+      "acceptance": "Для МГУ и РУДН добавляются уместные полные и арендные теги.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-124",
+      "section": "Теги и семантика",
+      "title": "Контекст кампуса",
+      "acceptance": "Указанный кампус имеет отдельный тег без географических догадок.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-125",
+      "section": "Теги и семантика",
+      "title": "Теги по планировке",
+      "acceptance": "Studio, евро-2, евро-3 и комнаты не смешиваются.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-126",
+      "section": "Теги и семантика",
+      "title": "Теги по подтверждённым признакам",
+      "acceptance": "Близость метро, новый ремонт и готовность требуют явного подтверждения.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-127",
+      "section": "Теги и семантика",
+      "title": "Управляемая ротация тегов",
+      "acceptance": "Номер варианта меняет допустимые общие теги, сохраняя тематические.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-128",
+      "section": "Теги и семантика",
+      "title": "Пояснение каждого тега",
+      "acceptance": "Оператор видит русский перевод и причину автоматического выбора.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-129",
+      "section": "Теги и семантика",
+      "title": "Ручное добавление тегов",
+      "acceptance": "Нажатие на тег каталога добавляет его без дубликатов.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-071",
+        "RCN-113",
+        "RCN-114"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/content-tools.mjs: TAG_CATALOG / suggestTags",
+        "tests/content.test.mjs",
+        "web/app.js: каталог и объяснения"
+      ]
+    },
+    {
+      "id": "RCN-130",
+      "section": "Теги и семантика",
+      "title": "Аналитика эффективности тегов",
+      "acceptance": "Теги связываются с просмотрами и обращениями по введённой статистике.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-131",
+      "section": "Метро и город",
+      "title": "Несколько маршрутов метро",
+      "acceptance": "Карточка хранит отдельные строки станция/минуты/способ/линия.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: parseRoutes",
+        "tests/engine.test.mjs: ranges, modes and no invented times"
+      ]
+    },
+    {
+      "id": "RCN-132",
+      "section": "Метро и город",
+      "title": "Диапазоны времени",
+      "acceptance": "11–15 и 21–30 минут сохраняются без превращения в точное число.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: parseRoutes",
+        "tests/engine.test.mjs: ranges, modes and no invented times"
+      ]
+    },
+    {
+      "id": "RCN-133",
+      "section": "Метро и город",
+      "title": "Пешком, автобус, метро",
+      "acceptance": "Способ поездки сохраняется в китайском описании.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: parseRoutes",
+        "tests/engine.test.mjs: ranges, modes and no invented times"
+      ]
+    },
+    {
+      "id": "RCN-134",
+      "section": "Метро и город",
+      "title": "Неизвестное время",
+      "acceptance": "Без чисел выводится «уточнить», не придумывается маршрут.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: parseRoutes",
+        "tests/engine.test.mjs: ranges, modes and no invented times"
+      ]
+    },
+    {
+      "id": "RCN-135",
+      "section": "Метро и город",
+      "title": "Номера и цвета линий",
+      "acceptance": "Проверенный справочник связывает станции с актуальными линиями.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-136",
+      "section": "Метро и город",
+      "title": "Расчёт по карте",
+      "acceptance": "Подключаемый маршрутный провайдер возвращает реальное время и дату расчёта.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-137",
+      "section": "Метро и город",
+      "title": "Кеш маршрутов",
+      "acceptance": "Одинаковый маршрут переиспользуется в пределах заданного TTL.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-138",
+      "section": "Метро и город",
+      "title": "Выход метро и вход дома",
+      "acceptance": "При расчёте учитываются конкретные доступные входы.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-139",
+      "section": "Метро и город",
+      "title": "Городские преимущества",
+      "acceptance": "Китайские магазины, рестораны и парки имеют координаты и источник.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-140",
+      "section": "Метро и город",
+      "title": "Предупреждение о приблизительности",
+      "acceptance": "Для оценок показаны способ расчёта и дата проверки.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-141",
+      "section": "Вузы и кампусы",
+      "title": "Несколько вузов карточки",
+      "acceptance": "У каждого вуза собственное время и способ поездки.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js / web/index.html: universities и campus",
+        "tests/content.test.mjs: university/campus context"
+      ]
+    },
+    {
+      "id": "RCN-142",
+      "section": "Вузы и кампусы",
+      "title": "Поле кампуса",
+      "acceptance": "Можно вручную указать точный кампус на китайском или через словарь.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js / web/index.html: universities и campus",
+        "tests/content.test.mjs: university/campus context"
+      ]
+    },
+    {
+      "id": "RCN-143",
+      "section": "Вузы и кампусы",
+      "title": "Справочник кампусов",
+      "acceptance": "Один вуз содержит несколько подтверждённых адресов кампусов.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-144",
+      "section": "Вузы и кампусы",
+      "title": "Маршрут к конкретному корпусу",
+      "acceptance": "Не подставляется общий маршрут ко всему вузу.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-145",
+      "section": "Вузы и кампусы",
+      "title": "Выбор целевых вузов",
+      "acceptance": "Оператор задаёт список вузов вместо одинакового набора для всех квартир.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js / web/index.html: universities и campus",
+        "tests/content.test.mjs: university/campus context"
+      ]
+    },
+    {
+      "id": "RCN-146",
+      "section": "Вузы и кампусы",
+      "title": "Фильтр максимальной дороги",
+      "acceptance": "Объекты сравниваются по дороге до выбранного кампуса.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-147",
+      "section": "Вузы и кампусы",
+      "title": "Пересадки и последний участок",
+      "acceptance": "Отображаются пешая часть, транспорт и число пересадок.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-148",
+      "section": "Вузы и кампусы",
+      "title": "Общежития и аренда рядом",
+      "acceptance": "Районы анализируются без выдачи квартиры за общежитие.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-149",
+      "section": "Вузы и кампусы",
+      "title": "Источник названия кампуса",
+      "acceptance": "Для каждой записи хранится проверенный URL учреждения.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-150",
+      "section": "Вузы и кампусы",
+      "title": "Сравнение объектов по вузам",
+      "acceptance": "Таблица показывает аренду, итоговые платежи и дорогу до кампуса.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-151",
+      "section": "Условия и наши услуги",
+      "title": "Аренда и залог раздельно",
+      "acceptance": "Нулевой залог не теряется; платежи отображаются независимо.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-152",
+      "section": "Условия и наши услуги",
+      "title": "Коммунальные варианты",
+      "acceptance": "Все включено, только счётчики и отдельная оплата различаются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-153",
+      "section": "Условия и наши услуги",
+      "title": "Регистрация: помощь или включённая услуга",
+      "acceptance": "Формулировка выбирается оператором без обещания визы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-154",
+      "section": "Условия и наши услуги",
+      "title": "Срок и число регистраций",
+      "acceptance": "В текст попадают только введённые месяц и количество людей.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-155",
+      "section": "Условия и наши услуги",
+      "title": "Трансфер и багаж",
+      "acceptance": "Опции включаются отдельно и отражаются в объявлении.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-156",
+      "section": "Условия и наши услуги",
+      "title": "Блок преимуществ студии",
+      "acceptance": "Сопровождение, перевод документов и помощь после заселения редактируются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-157",
+      "section": "Условия и наши услуги",
+      "title": "Короткая аренда",
+      "acceptance": "Минимальный срок и возможность согласования отображаются отдельно.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-158",
+      "section": "Условия и наши услуги",
+      "title": "Дети и животные",
+      "acceptance": "Подтверждённые условия и согласование с владельцем не смешиваются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-159",
+      "section": "Условия и наши услуги",
+      "title": "Ремонтные каникулы",
+      "acceptance": "Число бесплатных месяцев показывается с условием подтверждения договором.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs: платежи, регистрация, услуги, сроки и условия",
+        "tests/engine.test.mjs",
+        "web/index.html: отдельные поля"
+      ]
+    },
+    {
+      "id": "RCN-160",
+      "section": "Условия и наши услуги",
+      "title": "Подтверждение услуг перед публикацией",
+      "acceptance": "Проверочный список фиксирует дату подтверждения каждого обещания.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-161",
+      "section": "Рабочее пространство",
+      "title": "Сохранённые объекты",
+      "acceptance": "Карточка и вручную отредактированные заголовок/текст/теги сохраняются вместе.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: библиотека / черновик / поиск / новая карточка / seller filter",
+        "Браузер: сохранение и открытие объекта",
+        "tests/content.test.mjs: commission boundary"
+      ]
+    },
+    {
+      "id": "RCN-162",
+      "section": "Рабочее пространство",
+      "title": "Черновик редактора",
+      "acceptance": "Перезагрузка браузера восстанавливает незавершённую карточку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: библиотека / черновик / поиск / новая карточка / seller filter",
+        "Браузер: сохранение и открытие объекта",
+        "tests/content.test.mjs: commission boundary"
+      ]
+    },
+    {
+      "id": "RCN-163",
+      "section": "Рабочее пространство",
+      "title": "Поиск библиотеки",
+      "acceptance": "Поиск работает по названию, метро, ЖК и заголовку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: библиотека / черновик / поиск / новая карточка / seller filter",
+        "Браузер: сохранение и открытие объекта",
+        "tests/content.test.mjs: commission boundary"
+      ]
+    },
+    {
+      "id": "RCN-164",
+      "section": "Рабочее пространство",
+      "title": "Удаление и новая карточка",
+      "acceptance": "Удаление подтверждается; новый объект не удаляет библиотеку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: библиотека / черновик / поиск / новая карточка / seller filter",
+        "Браузер: сохранение и открытие объекта",
+        "tests/content.test.mjs: commission boundary"
+      ]
+    },
+    {
+      "id": "RCN-165",
+      "section": "Рабочее пространство",
+      "title": "Фильтр продавца в библиотеке",
+      "acceptance": "Можно оставить собственников и агентов с комиссией до 50%.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: библиотека / черновик / поиск / новая карточка / seller filter",
+        "Браузер: сохранение и открытие объекта",
+        "tests/content.test.mjs: commission boundary"
+      ]
+    },
+    {
+      "id": "RCN-166",
+      "section": "Рабочее пространство",
+      "title": "Доска статусов",
+      "acceptance": "Новый, проверен, готов, опубликован и архив имеют отдельные состояния.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-167",
+      "section": "Рабочее пространство",
+      "title": "Задачи по карточке",
+      "acceptance": "У объекта есть ответственный, срок и список недостающих данных.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-168",
+      "section": "Рабочее пространство",
+      "title": "Массовое редактирование",
+      "acceptance": "Услуги и профиль тегов меняются у выбранных карточек с предпросмотром.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-169",
+      "section": "Рабочее пространство",
+      "title": "Дубликаты объявлений",
+      "acceptance": "Одинаковый объект разных источников связывается после проверки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-170",
+      "section": "Рабочее пространство",
+      "title": "Мобильная приёмка",
+      "acceptance": "Редактор и словарь полностью проверены на узком экране с клавиатурой.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-171",
+      "section": "Экспорт и командная работа",
+      "title": "Копирование заголовка",
+      "acceptance": "Копируется только выбранный китайский заголовок.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: copy / export / restore; wordCustom включён в backup",
+        "Браузерная приёмка v2: сохранение редактированного заголовка"
+      ]
+    },
+    {
+      "id": "RCN-172",
+      "section": "Экспорт и командная работа",
+      "title": "Копирование описания",
+      "acceptance": "Копируются описание и теги без заголовка.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: copy / export / restore; wordCustom включён в backup",
+        "Браузерная приёмка v2: сохранение редактированного заголовка"
+      ]
+    },
+    {
+      "id": "RCN-173",
+      "section": "Экспорт и командная работа",
+      "title": "Полное копирование",
+      "acceptance": "Заголовок, описание и теги выдаются в правильном порядке.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: copy / export / restore; wordCustom включён в backup",
+        "Браузерная приёмка v2: сохранение редактированного заголовка"
+      ]
+    },
+    {
+      "id": "RCN-174",
+      "section": "Экспорт и командная работа",
+      "title": "JSON-резервная копия",
+      "acceptance": "Библиотека, словари, преимущества и черновик экспортируются и восстанавливаются.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: copy / export / restore; wordCustom включён в backup",
+        "Браузерная приёмка v2: сохранение редактированного заголовка"
+      ]
+    },
+    {
+      "id": "RCN-175",
+      "section": "Экспорт и командная работа",
+      "title": "Словарь замен в резервной копии",
+      "acceptance": "Пользовательские CN/RU замены переносятся между браузерами.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js: copy / export / restore; wordCustom включён в backup",
+        "Браузерная приёмка v2: сохранение редактированного заголовка"
+      ]
+    },
+    {
+      "id": "RCN-176",
+      "section": "Экспорт и командная работа",
+      "title": "CSV/XLSX выгрузка",
+      "acceptance": "Объекты экспортируются с фильтрами и отдельными полями платежей.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-177",
+      "section": "Экспорт и командная работа",
+      "title": "Роли коллег",
+      "acceptance": "Владелец, редактор и просмотр имеют проверяемые права.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-178",
+      "section": "Экспорт и командная работа",
+      "title": "Согласование публикации",
+      "acceptance": "Подготовленный пост может пройти проверку коллегой до размещения.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-179",
+      "section": "Экспорт и командная работа",
+      "title": "Версии поста",
+      "acceptance": "Возврат к ранее сохранённой редакции не стирает историю.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-180",
+      "section": "Экспорт и командная работа",
+      "title": "Экспорт пакета для Rednote",
+      "acceptance": "Текст, фото и источник собираются без автоматической публикации без команды.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-181",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Тесты генератора",
+      "acceptance": "Автотесты покрывают факты, деньги, маршруты и отсутствие выдуманных условий.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "tests/test_cli.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-182",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Тесты словаря",
+      "acceptance": "Проверяются сегментация, замена одного совпадения, отмена и устаревший диапазон.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "tests/test_cli.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-183",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Тесты тегов",
+      "acceptance": "Ротация, планировка, вуз и кампус проверены на разных карточках.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "tests/test_cli.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-184",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Тесты Python",
+      "acceptance": "Покрыты HTML, кеш, фильтры, фото и передача данных общему генератору.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/engine.test.mjs",
+        "tests/content.test.mjs",
+        "tests/test_cli.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-185",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Приватный доступ сайта",
+      "acceptance": "Сайт закрыт владельцу; публикация не меняет аудиторию.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "Sites get_site: только владелец; GitHub get_repo: private",
+        "Аудит доступа в этой сессии; audience не менялся"
+      ]
+    },
+    {
+      "id": "RCN-186",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Приватный GitHub",
+      "acceptance": "Исходники и референсы находятся в приватном redcn.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "Sites get_site: только владелец; GitHub get_repo: private",
+        "Аудит доступа в этой сессии; audience не менялся"
+      ]
+    },
+    {
+      "id": "RCN-187",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Ограничение сетевых URL",
+      "acceptance": "CLI проверяет HTTPS/домен/публичный IP/редирект до запроса.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py: allowed_url / CheckedRedirect",
+        "tests/test_cli.py: URL, private IP, redirect"
+      ]
+    },
+    {
+      "id": "RCN-188",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Безопасный вывод источника",
+      "acceptance": "Текст объявлений и словаря вставляется как текст, не исполняемый HTML.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js / web/word-editor.mjs: textContent и createTextNode; нет исполнения HTML источника"
+      ]
+    },
+    {
+      "id": "RCN-189",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Сканирование секретов",
+      "acceptance": "Перед push автоматически проверяются токены и локальные файлы с данными.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-190",
+      "section": "Тесты, доступ и защита данных",
+      "title": "Автоматическая браузерная регрессия",
+      "acceptance": "В CI проверяется создание, сохранение, замена и восстановление карточки.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-191",
+      "section": "Публикация и эксплуатация",
+      "title": "Воспроизводимая сборка",
+      "acceptance": "Из web-модулей собирается один валидный Worker.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "scripts/build.mjs",
+        "scripts/validate-artifact.mjs",
+        "README.md",
+        "docs/CLI.md",
+        "docs/WORD-EDITOR.md"
+      ]
+    },
+    {
+      "id": "RCN-192",
+      "section": "Публикация и эксплуатация",
+      "title": "Инструкция запуска CLI",
+      "acceptance": "README описывает ввод URL, текст, JSON, batch и скачивание фото.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "scripts/build.mjs",
+        "scripts/validate-artifact.mjs",
+        "README.md",
+        "docs/CLI.md",
+        "docs/WORD-EDITOR.md"
+      ]
+    },
+    {
+      "id": "RCN-193",
+      "section": "Публикация и эксплуатация",
+      "title": "Инструкция словаря",
+      "acceptance": "Описаны перевод, подсказки, выбранное/все совпадения и отмена.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "scripts/build.mjs",
+        "scripts/validate-artifact.mjs",
+        "README.md",
+        "docs/CLI.md",
+        "docs/WORD-EDITOR.md"
+      ]
+    },
+    {
+      "id": "RCN-194",
+      "section": "Публикация и эксплуатация",
+      "title": "Публикация проверенной версии",
+      "acceptance": "Развёрнута версия с совпадающими исходниками и пройденными проверками.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "Sites deployment succeeded: appgdep_6ae3ac3068d881918ac7a2148ebe3847",
+        "Source commit 69f234962a8bbd7263dd5eff5b583b31b786d8f4; 21 JS + 10 Python checks"
+      ]
+    },
+    {
+      "id": "RCN-195",
+      "section": "Публикация и эксплуатация",
+      "title": "Автодеплой GitHub→Sites",
+      "acceptance": "Разрешённый pipeline публикует только проверенный коммит.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-196",
+      "section": "Публикация и эксплуатация",
+      "title": "Логи импортов",
+      "acceptance": "Сохраняются время, статус и причина отказа без приватных заголовков запроса.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-197",
+      "section": "Публикация и эксплуатация",
+      "title": "Повторные попытки",
+      "acceptance": "Ошибки сети обрабатываются с ограничением и без обхода защиты.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-198",
+      "section": "Публикация и эксплуатация",
+      "title": "Планировщик новых объявлений",
+      "acceptance": "После отдельной настройки выполняет разрешённый источник по расписанию.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-199",
+      "section": "Публикация и эксплуатация",
+      "title": "Уведомления о новых объектах",
+      "acceptance": "Выбранный канал получает только согласованные уведомления.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-200",
+      "section": "Публикация и эксплуатация",
+      "title": "Контроль выпуска и roadmap",
+      "acceptance": "Релиз фиксирует число выполненных задач и оставшиеся ограничения, issue остаётся открытым.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-002",
+        "RCN-009",
+        "RCN-191"
+      ],
+      "status": "done",
+      "evidence": [
+        "CHANGELOG.md",
+        "docs/VERIFICATION.md",
+        "GitHub issue #1 остаётся open"
+      ]
+    }
+  ],
+  "github_issue_url": "https://github.com/leunch4off/redcn/issues/1"
+}

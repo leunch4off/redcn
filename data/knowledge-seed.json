@@ -1,0 +1,104 @@
+{
+  "version": 4,
+  "items": [
+    {
+      "type": "term",
+      "title": "莫斯科租房",
+      "text": "Аренда жилья в Москве. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Аренда жилья в Москве",
+      "cn": "莫斯科租房",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "一居室",
+      "text": "Однокомнатный вариант. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Однокомнатный вариант",
+      "cn": "一居室",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "二居室",
+      "text": "Двухкомнатный вариант. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Двухкомнатный вариант",
+      "cn": "二居室",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "三居室",
+      "text": "Трёхкомнатный вариант. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Трёхкомнатный вариант",
+      "cn": "三居室",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "找室友",
+      "text": "Ищу соседа по квартире. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Ищу соседа по квартире",
+      "cn": "找室友",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "无中介费",
+      "text": "Без комиссии посредника — только при 0%. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Без комиссии посредника — только при 0%",
+      "cn": "无中介费",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "短租",
+      "text": "Краткосрочная аренда. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Краткосрочная аренда",
+      "cn": "短租",
+      "source": "https://www.xiaohongshu.com/explore",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "拎包入住",
+      "text": "Готово к заселению. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Готово к заселению",
+      "cn": "拎包入住",
+      "source": "https://jrhqzx.com/city/RUS/category.php?areaid=11803&catid=41",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "地铁站附近",
+      "text": "Рядом со станцией метро. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Рядом со станцией метро",
+      "cn": "地铁站附近",
+      "source": "https://jrhqzx.com/city/RUS/category.php?areaid=11803&catid=41",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "莫大",
+      "text": "МГУ. Наблюдение о языке, без измеренной частотности.",
+      "ru": "МГУ",
+      "cn": "莫大",
+      "source": "https://jrhqzx.com/city/RUS/category.php?areaid=11803&catid=41",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "合租",
+      "text": "Совместная аренда. Наблюдение о языке, без измеренной частотности.",
+      "ru": "Совместная аренда",
+      "cn": "合租",
+      "source": "https://liuxue.xdf.cn/blog/baolingrong/blog/5381773.shtml",
+      "status": "unreviewed"
+    }
+  ]
+}
