@@ -34,7 +34,8 @@ def read_result(directory, result_id):
     finally: connection.close()
 
 
-def create_server(directory, port=8765):
+def create_server(directory, port=8765, browser_channel='chrome'):
+    if browser_channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
@@ -44,7 +45,7 @@ def create_server(directory, port=8765):
             with lock: jobs[job_id].update(message=message)
         connection = redcn.open_cache(directory)
         try:
-            listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel)
+            listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
             if cancel.is_set(): raise ValueError('Импорт отменён')
             data = params.get('data', {})
             fields = {**data, 'titleVariant':redcn.next_variant(connection,listing['url']), 'url':listing['url'], 'source':listing['text']}
@@ -99,7 +100,7 @@ def create_server(directory, port=8765):
                 if not page_path.exists():
                     self.respond(503,{'error':'Сначала выполните npm run build'});return
                 page = page_path.read_text(encoding='utf-8').replace('name="redcn-hosting" content="github-pages"','name="redcn-hosting" content="local"')
-                page = page.replace('<meta charset="utf-8">','<meta charset="utf-8"><base href="/"><meta name="redcn-token" content="'+token+'">')
+                page = page.replace('<meta charset="utf-8">','<meta charset="utf-8"><base href="/"><meta name="redcn-browser-channel" content="'+browser_channel+'"><meta name="redcn-token" content="'+token+'">')
                 page = page.replace('GitHub Pages · данные локально','Локально · Chrome подключён')
                 self.respond(200,page.encode(),'text/html; charset=utf-8');return
             files = {'/plan.json':redcn.ROOT/'plan.json', '/research.json':redcn.ROOT/'data/research.json', '/knowledge-seed.json':redcn.ROOT/'data/knowledge-seed.json'}
@@ -119,6 +120,7 @@ def create_server(directory, port=8765):
                 if path == '/api/local/import':
                     data['url'] = redcn.normalize_url(data.get('url',''))
                     if data.get('loader','auto') not in ('auto','http','chrome'): raise ValueError('Неверный режим загрузки')
+                    if data.get('browser_channel',browser_channel) not in ('chrome','chromium'): raise ValueError('Неверный браузер')
                     if type(data.get('timeout',180)) is not int or not 15 <= data.get('timeout',180) <= 600: raise ValueError('Ожидание: 15–600 секунд')
                     for field in ('rules','prefs','data'):
                         if field in data and not isinstance(data[field],dict): raise ValueError('Неверный формат '+field)
@@ -151,8 +153,8 @@ def create_server(directory, port=8765):
     return server
 
 
-def serve(directory, port=8765, result_id=None, open_browser=True):
-    server = create_server(directory,port)
+def serve(directory, port=8765, result_id=None, open_browser=True, browser_channel='chrome'):
+    server = create_server(directory,port,browser_channel)
     link = f'http://127.0.0.1:{server.server_port}'+('/listing/'+result_id if result_id else '/')
     print('\nЛокальный redcn: '+link+'\nОставьте терминал открытым. Остановка: Ctrl+C.',flush=True)
     if open_browser: webbrowser.open(link)

@@ -178,7 +178,7 @@ def open_cache(directory):
     return connection
 
 
-def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None):
+def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None, browser_channel='chrome'):
     # Resolve only on a network miss; cached pages remain available offline.
     url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
@@ -198,7 +198,7 @@ def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=
             if status: status('HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180])
     if result is None:
         from browser_import import load_browser
-        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / 'chrome-profile', parse_html, allowed_url, browser_timeout, status, cancel)
+        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel)
     connection.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (url, time.time(), json.dumps(result, ensure_ascii=False)))
     connection.commit()
     return {**result, 'cached': False}
@@ -262,6 +262,7 @@ def main(argv=None):
     parser.add_argument('--variant', type=int, help='Фиксированный вариант; без флага подача меняется при каждом запуске')
     parser.add_argument('--loader', choices=['auto', 'http', 'chrome'], default='auto', help='auto: HTTP, затем видимый Chrome при ошибке')
     parser.add_argument('--browser', action='store_true', help='Сразу открыть видимый Google Chrome')
+    parser.add_argument('--browser-channel', choices=['chrome','chromium'], default='chrome', help='Google Chrome или совместимый браузер Playwright Chromium')
     parser.add_argument('--browser-timeout', type=int, default=180, help='Ожидание страницы / ручной проверки, 15–600 секунд')
     parser.add_argument('--serve', action='store_true', help='Запустить локальный сайт и открыть его в браузере')
     parser.add_argument('--open', action='store_true', help='После генерации открыть сохранённую карточку на локальном сайте')
@@ -276,7 +277,7 @@ def main(argv=None):
     if not 15 <= args.browser_timeout <= 600: parser.error('--browser-timeout: 15–600 секунд')
     if args.serve:
         from local_server import serve
-        return serve(args.cache_dir, args.port)
+        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel)
     read_json = lambda p: json.loads(p.read_text(encoding='utf-8')) if p else {}
     data, rules, prefs = read_json(args.data), read_json(args.rules), read_json(args.prefs)
     if not isinstance(data, dict) or not isinstance(rules, dict) or not isinstance(prefs, dict):
@@ -300,7 +301,7 @@ def main(argv=None):
                 if connection.execute('SELECT 1 FROM seen WHERE url=?', (url,)).fetchone():
                     result.append({'url': url, 'status': 'seen'});continue
                 try:
-                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress)
+                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
                     generated = generate(listing['text'], {'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
                     row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
@@ -316,7 +317,7 @@ def main(argv=None):
                 text = args.input.read_text(encoding='utf-8')
             else:
                 url = args.url or input('Ссылка на объявление ЦИАН / Авито: ').strip()
-                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress)
+                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
                 text = listing['text']
             key = listing.get('url', url) if listing else hashlib.sha256(text.encode()).hexdigest()
             result = generate(text, {'titleVariant':next_variant(connection,key), **data, 'source':text, **({'url':key} if listing else {})}, rules, prefs)
@@ -334,7 +335,7 @@ def main(argv=None):
             result_id = save_result(args.cache_dir, result)
             connection.close()
             connection = None
-            return serve(args.cache_dir, args.port, result_id)
+            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel)
     finally:
         if connection: connection.close()
     return 0

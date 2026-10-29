@@ -28,25 +28,29 @@ def listing_ready(snapshot):
     return bool(len(text) >= 80 and facts and not challenge and not unavailable), bool(challenge), bool(unavailable)
 
 
-def load_browser(url, profile, parse_html, validate_url, timeout=180, status=None, cancel=None):
+def load_browser(url, profile, parse_html, validate_url, timeout=180, status=None, cancel=None, channel='chrome'):
     try:
         from playwright.sync_api import sync_playwright, Error, TimeoutError as BrowserTimeout
     except ImportError as error:
         raise ValueError('Для Chrome установите: python3 -m venv .venv && .venv/bin/python -m pip install -r cli/requirements-browser.txt\nЗатем: .venv/bin/python cli/redcn.py --browser --open') from error
     report = status or (lambda message: None)
+    if channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
+    browser_name = 'Google Chrome' if channel=='chrome' else 'Chromium / Chrome for Testing'
     if not _browser_lock.acquire(blocking=False):
         raise ValueError('Другое объявление уже открыто в Chrome. Дождитесь его загрузки или отмените импорт.')
     context = None
     try:
         validate_url(url)
         profile.mkdir(parents=True, exist_ok=True, mode=0o700)
-        report('Открывается Google Chrome. Если появится проверка, пройдите её в этом окне. Окно закроется после чтения объявления.')
+        report('Открывается '+browser_name+'. Если появится проверка, пройдите её в этом окне. Окно закроется после чтения объявления.')
         with sync_playwright() as playwright:
             try:
-                context = playwright.chromium.launch_persistent_context(str(profile), channel='chrome', headless=False, accept_downloads=False, timeout=30000)
+                context = playwright.chromium.launch_persistent_context(str(profile), channel='chrome' if channel=='chrome' else None, headless=False, accept_downloads=False, timeout=90000)
             except Error as error:
-                raise ValueError('Не удалось открыть Google Chrome. Установите Google Chrome и закройте другое окно профиля redcn. '+str(error).splitlines()[0]) from error
+                hint = 'Откройте Google Chrome вручную один раз и закройте окно профиля redcn. Либо установите совместимый браузер: .venv/bin/python -m playwright install chromium и используйте --browser-channel chromium.' if channel=='chrome' else 'Установите браузер: .venv/bin/python -m playwright install chromium. Закройте другое окно профиля redcn.'
+                raise ValueError('Не удалось открыть '+browser_name+'. '+hint+' '+str(error).splitlines()[0]) from error
             try:
+                if cancel and cancel.is_set(): raise ValueError('Импорт отменён')
                 page = context.pages[0] if context.pages else context.new_page()
                 page.set_default_timeout(3000)
                 deadline = time.monotonic() + timeout
@@ -86,6 +90,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                             except ValueError: pass
                         result['images'] = result['images'][:30]
                         result['loader'] = 'chrome'
+                        result['browser_channel'] = channel
                         report('Карточка прочитана. Закрываем окно импорта Chrome.')
                         return result
                     page.wait_for_timeout(1000)
