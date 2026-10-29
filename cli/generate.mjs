@@ -7,4 +7,4 @@ const fields={style:'detailed',registration:'assist',support:true,...extracted.f
 fields.copyVariant ??= fields.titleVariant || 0;
 const result=generateListing(fields,rules,{...DEFAULT_PREFS,...input.prefs});
 if(result.problems.length){process.stderr.write(result.problems.join('\n'));process.exitCode=2;}
-else process.stdout.write(JSON.stringify({fields,...result,warnings:extracted.warnings}));
+else process.stdout.write(JSON.stringify({fields,...result,warnings:[...extracted.warnings,...(fields.sourceAudit?.warnings||[])]}));

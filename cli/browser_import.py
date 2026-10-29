@@ -8,14 +8,14 @@ _browser_lock = threading.Lock()
 # Read rendered listing blocks first. Remove recommendation cards from the fallback.
 SNAPSHOT = r'''() => {
   const body = document.body?.innerText || '';
-  const selectors = '[data-name="OfferSummaryInfoGroup"], [data-name="OfferTitle"], [data-name="OfferDescription"], [data-name="Description"], [data-name="PriceInfo"], [data-name="GeneralInfoSection"], [data-name="Geo"], [data-name="Underground"], [data-marker="item-view/item-params"], [data-marker="item-view/item-description"], [data-marker="item-view/item-price"], h1';
+  const selectors = '[data-name="OfferSummaryInfoItem"], [data-name="ObjectFactoidsItem"], [data-name="OfferFactItem"], [data-name="FeaturesItem"], [data-name="OfferSummaryInfoGroup"], [data-name="OfferTitleNew"], [data-name="OfferTitle"], [data-name="OfferDescription"], [data-name="Description"], [data-name="PriceInfo"], [data-name="GeneralInfoSection"], [data-name="Geo"], [data-name="Underground"], [data-marker="item-view/item-params"], [data-marker="item-view/item-description"], [data-marker="item-view/item-price"], h1';
   const blocks = [...document.querySelectorAll(selectors)].map(e=>e.innerText?.trim()).filter(Boolean);
   const root = (document.querySelector('main') || document.body).cloneNode(true);
   root.querySelectorAll('script,style,nav,header,footer,[data-name*="Similar"],[data-name*="Recommendation"],[data-marker*="recommend"],[data-marker*="similar"]').forEach(e=>e.remove());
   root.querySelectorAll('p,div,li,section,br,dt,dd').forEach(e=>e.append('\n'));
   return {title: document.title, body: body.slice(0,12000),
     text: [...new Set(blocks)].join('\n'), fallback: (root.innerText || root.textContent || '').slice(0,40000),
-    metadata: [...document.querySelectorAll('script[type="application/ld+json"],meta[property="og:image"],meta[property="og:description"],meta[property="og:title"]')].map(e=>e.outerHTML).join('\n'),
+    metadata: [...document.querySelectorAll('script[type="application/ld+json"],script:not([src]),meta[property="og:image"],meta[property="og:description"],meta[property="og:title"]')].filter(e=>e.tagName!=='SCRIPT'||e.type==='application/ld+json'||e.textContent.includes("_cianConfig['frontend-offer-card']")).map(e=>e.outerHTML).join('\n'),
     images: [...document.querySelectorAll('main img,[data-name="Gallery"] img,[data-marker*="gallery"] img')].map(e=>e.currentSrc || e.src).filter(Boolean).slice(0,60)};
 }'''
 

@@ -1,5 +1,7 @@
 """Loopback-only editor, background imports and durable local listing links."""
 import json
+import base64
+from datetime import datetime
 import errno
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -14,6 +16,43 @@ import urllib.request
 import webbrowser
 
 import redcn
+
+
+def store_history(directory, entry):
+    if not isinstance(entry,dict) or not re.fullmatch(r'[a-zA-Z0-9-]{8,80}',str(entry.get('id',''))): raise ValueError('Неверный ID истории')
+    if entry.get('kind') not in ('generate','save','copy-title','copy-body','copy-all','restore','import'): raise ValueError('Неверное событие')
+    if not all(isinstance(entry.get(k),str) for k in ('title','body','tags','at')) or not isinstance(entry.get('fields'),dict): raise ValueError('Неверный снимок истории')
+    try: stamp=datetime.fromisoformat(entry['at'].replace('Z','+00:00')).timestamp()
+    except (ValueError,OverflowError) as error: raise ValueError('Неверная дата истории') from error
+    item=dict(entry);image=item.pop('png',None);png=None
+    if image is not None:
+        if not isinstance(image,str) or not image.startswith('data:image/png;base64,'): raise ValueError('Нужен PNG')
+        try: png=base64.b64decode(image.split(',',1)[1],validate=True)
+        except ValueError as error: raise ValueError('Неверный PNG') from error
+        if len(png)>3_000_000 or not png.startswith(b'\x89PNG\r\n\x1a\n'): raise ValueError('Неверный PNG или файл больше 3 МБ')
+    connection=redcn.open_cache(directory)
+    try:
+        connection.execute('CREATE TABLE IF NOT EXISTS history (id TEXT PRIMARY KEY, stamp REAL, payload TEXT, png BLOB)')
+        connection.execute('INSERT OR REPLACE INTO history VALUES (?,?,?,?)',(item['id'],stamp,json.dumps(item,ensure_ascii=False),png))
+        connection.execute('DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY stamp DESC LIMIT 200)')
+        connection.commit()
+    finally: connection.close()
+    return item['id']
+
+
+def history_rows(directory, entry_id=None, image=False):
+    connection=redcn.open_cache(directory)
+    try:
+        connection.execute('CREATE TABLE IF NOT EXISTS history (id TEXT PRIMARY KEY, stamp REAL, payload TEXT, png BLOB)')
+        if entry_id:
+            row=connection.execute('SELECT payload,png FROM history WHERE id=?',(entry_id,)).fetchone()
+            if not row:return None
+            return row[1] if image else json.loads(row[0])
+        result=[]
+        for payload,has_image in connection.execute('SELECT payload,png IS NOT NULL FROM history ORDER BY stamp DESC LIMIT 200'):
+            e=json.loads(payload);result.append({**{k:e[k] for k in ('id','kind','at','title') if k in e},'hasSnapshot':bool(has_image),'url':e.get('fields',{}).get('url','')})
+        return result
+    finally: connection.close()
 
 
 def save_result(directory, result, result_id=None):
@@ -42,7 +81,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
-    identity = {'app':'redcn', 'protocol':1, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':2, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
@@ -52,7 +91,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
             if cancel.is_set(): raise ValueError('Импорт отменён')
             data = params.get('data', {})
-            fields = {**data, 'titleVariant':redcn.next_variant(connection,listing['url']), 'url':listing['url'], 'source':listing['text']}
+            fields = {**data, **listing.get('fields',{}), 'titleVariant':redcn.next_variant(connection,listing['url']), 'url':listing['url'], 'source':listing['text']}
             result = {**redcn.generate(listing['text'],fields,params.get('rules'),params.get('prefs')), 'listing':listing}
             if cancel.is_set(): raise ValueError('Импорт отменён')
             result_id = save_result(directory, result)
@@ -93,6 +132,16 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 self.respond(200,identity);return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
+                if path == '/api/local/history':
+                    self.respond(200,{'entries':history_rows(directory)});return
+                if path.startswith('/api/local/history/'):
+                    entry=history_rows(directory,path.rsplit('/',1)[-1])
+                    self.respond(200 if entry else 404,{'entry':entry} if entry else {'error':'Запись истории не найдена'});return
+                if path.startswith('/api/local/history-image/'):
+                    png=history_rows(directory,path.rsplit('/',1)[-1],image=True)
+                    if png:self.respond(200,png,'image/png')
+                    else:self.respond(404,{'error':'PNG не найден'})
+                    return
                 if path.startswith('/api/local/jobs/'):
                     job_id = path.rsplit('/',1)[-1]
                     with lock: job = {k:v for k,v in jobs.get(job_id,{}).items() if k not in ('cancel',)}
@@ -119,10 +168,14 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             try:
                 if self.headers.get_content_type() != 'application/json': raise ValueError('Нужен JSON')
                 size = int(self.headers.get('Content-Length','0'))
-                if not 1 <= size <= 1_000_000: raise ValueError('Запрос должен быть от 1 байта до 1 МБ')
+                limit=4_500_000 if urlsplit(self.path).path=='/api/local/history' else 1_000_000
+                if not 1 <= size <= limit: raise ValueError('Превышен размер запроса')
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                if path == '/api/local/history':
+                    entry_id=store_history(directory,data.get('entry'))
+                    self.respond(200,{'id':entry_id});return
                 if path == '/api/local/import':
                     data['url'] = redcn.normalize_url(data.get('url',''))
                     if data.get('loader','auto') not in ('auto','http','chrome'): raise ValueError('Неверный режим загрузки')
@@ -162,7 +215,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 def matching_server(directory, port, browser_channel):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *_args, **_kwargs): return None
-    expected = {'app':'redcn','protocol':1,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    expected = {'app':'redcn','protocol':2,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:
@@ -189,7 +242,7 @@ def serve(directory, port=8765, result_id=None, open_browser=True, browser_chann
         print('\nredcn уже работает: '+link+'\nОткрываем существующий сайт. Второй сервер не нужен.',flush=True)
         if open_browser: webbrowser.open(link)
         return 0
-    if port and port != selected_port: print(f'Порт {port} занят другой программой. Выбран порт {selected_port}.',flush=True)
+    if port and port != selected_port: print(f'Порт {port} занят. Выбран порт {selected_port}.',flush=True)
     print('\nЛокальный redcn: '+link+'\nОставьте терминал открытым. Остановка: Ctrl+C.',flush=True)
     if open_browser: webbrowser.open(link)
     try: server.serve_forever()

@@ -1,4 +1,5 @@
 import importlib.util
+import base64
 import json
 from pathlib import Path
 import re
@@ -174,6 +175,27 @@ class LocalServerTests(unittest.TestCase):
                 if job['state']!='running': break
                 time.sleep(.01)
         self.assertEqual(job['state'],'error');self.assertNotIn('result_id',job)
+
+    def test_history_persists_edited_fields_and_png_after_successful_action(self):
+        png=b'\x89PNG\r\n\x1a\nfixture'
+        entry={'version':1,'id':'event-12345678','kind':'copy-all','at':'2026-10-30T00:00:00Z','title':'标题','body':'正文已编辑','tags':'#莫斯科','fields':{'price':'70000','featureCounts':{'slidingWardrobe':'2'}},'png':'data:image/png;base64,'+base64.b64encode(png).decode()}
+        self.request('/api/local/history',{'entry':entry})
+        listed=self.request('/api/local/history')['entries'];self.assertEqual(len(listed),1);self.assertTrue(listed[0]['hasSnapshot'])
+        saved=self.request('/api/local/history/event-12345678')['entry'];self.assertEqual(saved['body'],'正文已编辑');self.assertEqual(saved['fields']['featureCounts']['slidingWardrobe'],'2');self.assertNotIn('png',saved)
+        self.assertEqual(local_server.history_rows(self.directory,'event-12345678',image=True),png)
+
+    def test_history_rejects_non_png_and_unauthenticated_writes(self):
+        entry={'version':1,'id':'event-12345678','kind':'save','at':'2026-10-30T00:00:00Z','title':'标题','body':'正文','tags':'','fields':{},'png':'data:image/svg+xml;base64,AAAA'}
+        with self.assertRaises(urllib.error.HTTPError) as caught:self.request('/api/local/history',{'entry':entry})
+        self.assertEqual(caught.exception.code,400)
+        with self.assertRaises(urllib.error.HTTPError) as caught:self.request('/api/local/history',{'entry':entry},token=False)
+        self.assertEqual(caught.exception.code,403)
+
+    def test_real_html_fixture_uses_shared_analyzer_in_python(self):
+        path=Path(__file__).parent/'fixtures/cian-54.html'
+        listing=redcn.parse_html(path.read_text(),URL)
+        self.assertEqual(listing['fields']['price'],'70000');self.assertEqual(listing['fields']['deposit'],'140000');self.assertEqual(listing['fields']['registrationPolicy'],'not_available')
+        self.assertIn('tvStand',listing['fields']['features']);self.assertNotIn('tv',listing['fields']['features']);self.assertEqual(len(listing['images']),6)
 
 
 if __name__=='__main__': unittest.main()

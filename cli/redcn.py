@@ -22,7 +22,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 LISTING_HOSTS = ('cian.ru', 'avito.ru')
 IMAGE_HOSTS = LISTING_HOSTS + ('cdn-cian.ru', 'ciancdn.ru', 'avito.st')
-MAX_HTML = 2_000_000
+MAX_HTML = 8_000_000
 MAX_IMAGE = 12_000_000
 
 
@@ -128,6 +128,16 @@ class ListingHTML(HTMLParser):
 
 
 def parse_html(markup, base_url):
+    if len(markup.encode('utf-8')) > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
+    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card', markup):
+        node = shutil.which('node')
+        if node:
+            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs')],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
+            if parsed.returncode: raise ValueError('Ошибка разбора HTML: '+parsed.stderr[:300])
+            result = json.loads(parsed.stdout)
+            if result.get('text'):
+                result['url'] = result.get('url') or base_url
+                return result
     parser = ListingHTML()
     parser.feed(markup)
     # A script named captcha.js is not evidence of a visible challenge.
@@ -256,6 +266,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='redcn: ссылка / текст → китайские заголовки, описание и теги')
     parser.add_argument('url', nargs='?')
     parser.add_argument('--input', type=Path, help='Текст объявления UTF-8')
+    parser.add_argument('--html', type=Path, help='Сохранённая HTML-страница ЦИАН / Авито, до 8 МБ')
     parser.add_argument('--data', type=Path, help='Проверенные поля карточки JSON')
     parser.add_argument('--rules', type=Path, help='Словарь RU → CN JSON')
     parser.add_argument('--prefs', type=Path, help='Преимущества и теги JSON')
@@ -302,7 +313,7 @@ def main(argv=None):
                     result.append({'url': url, 'status': 'seen'});continue
                 try:
                     listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
-                    generated = generate(listing['text'], {'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
+                    generated = generate(listing['text'], {**listing.get('fields',{}), 'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
                     row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
                         row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12])
@@ -313,14 +324,19 @@ def main(argv=None):
             output = json.dumps(result, ensure_ascii=False, indent=2)
         else:
             listing = None
-            if args.input:
+            if args.html or args.input and args.input.suffix.lower() in ('.html','.htm'):
+                path = args.html or args.input
+                if path.stat().st_size > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
+                listing = parse_html(path.read_text(encoding='utf-8'), args.url or 'https://www.cian.ru/')
+                text = listing['text']
+            elif args.input:
                 text = args.input.read_text(encoding='utf-8')
             else:
                 url = args.url or input('Ссылка на объявление ЦИАН / Авито: ').strip()
                 listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
                 text = listing['text']
-            key = listing.get('url', url) if listing else hashlib.sha256(text.encode()).hexdigest()
-            result = generate(text, {'titleVariant':next_variant(connection,key), **data, 'source':text, **({'url':key} if listing else {})}, rules, prefs)
+            key = listing.get('url') if listing else hashlib.sha256(text.encode()).hexdigest()
+            result = generate(text, {**(listing.get('fields',{}) if listing else {}), 'titleVariant':next_variant(connection,key), **data, 'source':text, **({'url':key} if listing else {})}, rules, prefs)
             if listing:
                 result['listing'] = listing
                 if args.download_photos:
