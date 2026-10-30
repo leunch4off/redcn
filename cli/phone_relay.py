@@ -21,6 +21,7 @@ import zipfile
 
 import redcn
 import photo_store
+import http_delivery
 
 PAIR_TTL = 600
 SESSION_TTL = 30 * 86400
@@ -230,13 +231,13 @@ def list_cards(directory,after=0):
         db.execute('CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, updated REAL, payload TEXT)')
         rows=db.execute('SELECT id,updated,payload FROM results WHERE (updated>? OR (updated=? AND id>?)) AND updated<=? ORDER BY updated,id LIMIT 201',(stamp,stamp,identifier,upper)).fetchall()
     finally:db.close()
-    has_more=len(rows)>200;rows=rows[:200];cards=[];metadata=original_metadata(directory)
+    has_more=len(rows)>200;rows=rows[:200];cards=[];metadata=original_metadata(directory) if rows else {}
     for result_id,updated,payload in rows:
         try:result=json.loads(payload)
         except ValueError:continue
         if result.get('fields',{}).get('isDemo') is True:continue
         fields=result.get('fields',{});media=card_media(directory,result,include_crops=False,originals_by_url=metadata)
-        cards.append({'id':result_id,'updated':updated,'title':(result.get('titles') or [''])[0], 'price':fields.get('price',''),'metro':fields.get('metro',''),'area':fields.get('area',''),'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':media[0]['url'] if media else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
+        cards.append({'id':result_id,'updated':updated,'title':(result.get('titles') or [''])[0], 'price':fields.get('price',''),'metro':fields.get('metro',''),'area':fields.get('area',''),'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+media[0]['id'] if media else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
     cursor=(repr(rows[-1][1])+':'+rows[-1][0]) if has_more and rows else (repr(upper)+':'+'f'*32)
     return {'cards':cards,'cursor':cursor,'serverTime':upper,'hasMore':has_more}
 
@@ -277,18 +278,28 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
         def log_message(self,*_args):pass
         def respond(self,status,value,content_type='application/json; charset=utf-8',headers=None):
             content=json.dumps(value,ensure_ascii=False).encode() if content_type.startswith('application/json') else value
+            content,compression=http_delivery.response_bytes(content,content_type,self.headers.get('Accept-Encoding',''))
             self.send_response(status)
-            for key,val in {'Content-Type':content_type,'Content-Length':str(len(content)),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY',**(headers or {})}.items():self.send_header(key,val)
+            for key,val in {'Content-Type':content_type,'Content-Length':str(len(content)),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY',**compression,**(headers or {})}.items():self.send_header(key,val)
             self.end_headers()
             try:self.wfile.write(content)
             except (BrokenPipeError,ConnectionResetError):pass
         def permitted(self,auth=True,csrf=False):
             host=self.headers.get('Host','')
+            self.secure=False
             try:
                 parsed=urlsplit('http://'+host)
-                if parsed.hostname not in allowed or parsed.port!=self.server.server_port or parsed.username or parsed.password:raise ValueError()
+                if parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:raise ValueError()
+                external='https://'+host
+                with self.server.origins_lock:trusted=external in self.server.external_origins
+                if trusted:
+                    if not ipaddress.ip_address(self.client_address[0]).is_loopback:raise ValueError()
+                    self.secure=True;origin=external
+                else:
+                    if parsed.hostname not in allowed or parsed.port!=self.server.server_port:raise ValueError()
+                    origin='http://'+host
             except ValueError:self.respond(403,{'error':'Используйте адрес подключения с Mac'});return False
-            if self.headers.get('Origin') not in (None,'http://'+host):self.respond(403,{'error':'Неверный источник запроса'});return False
+            if self.headers.get('Origin') not in (None,origin):self.respond(403,{'error':'Неверный источник запроса'});return False
             try:
                 cookies=SimpleCookie();cookies.load(self.headers.get('Cookie',''));self.session=cookies[COOKIE].value if COOKIE in cookies else ''
             except Exception:self.session=''
@@ -316,6 +327,10 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
                     self.respond(200,list_cards(directory,after));return
+                match=re.fullmatch(r'/api/phone/previews/([a-f0-9]{64})',path)
+                if match:
+                    from media_preview import preview
+                    data,mime,_=preview(directory,match[1]);self.respond(200,data,mime);return
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})(\.zip)?',path)
                 if match:
                     result_id,download=match.groups()
@@ -349,11 +364,12 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if not isinstance(data,dict):raise ValueError('Нужен JSON-объект')
                 if pair:
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
+                    if self.secure:cookie+='; Secure'
                     self.respond(200,{'paired':True,'csrfToken':state.csrf(token)},headers={'Set-Cookie':cookie});return
                 document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                 if document:self.respond(*document);return
                 if path=='/api/phone/logout':
-                    state.revoke(self.session);self.respond(200,{'ok':True},headers={'Set-Cookie':f'{COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});return
+                    state.revoke(self.session);self.respond(200,{'ok':True},headers={'Set-Cookie':f'{COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'+('; Secure' if self.secure else '')});return
                 if path=='/api/phone/import':
                     # Phone requests a source; browser selection, dictionary and arbitrary
                     # override data remain controlled by the Mac, not an untrusted payload.
@@ -365,14 +381,52 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
             except PairingThrottled as error:self.respond(429,{'error':str(error),'retryAfter':error.retry_after},headers={'Retry-After':str(error.retry_after)})
             except (ValueError,TypeError,OSError) as error:self.respond(400,{'error':str(error)})
     server=ThreadingHTTPServer((bind,port),Handler);server.daemon_threads=True;server.pairing=state;server.allowed_hosts=allowed
+    server.external_origins=set();server.origins_lock=threading.RLock()
     return server
 
 
 class RelayManager:
-    def __init__(self,directory,controller):self.directory=directory;self.controller=controller;self.server=None;self.thread=None;self.lock=threading.RLock();self.pair=None
+    def __init__(self,directory,controller):
+        self.directory=directory;self.controller=controller;self.server=None;self.thread=None;self.lock=threading.RLock();self.pair=None
+        from remote_access import RemoteAccess
+        self.remote_preference=Path(directory)/'phone-remote.json'
+        try:self.remote_enabled=json.loads(self.remote_preference.read_text()).get('enabled') is True
+        except (OSError,ValueError,AttributeError):self.remote_enabled=False
+        self.remote=RemoteAccess(directory,on_url=self._allow_remote,on_stop=self._remove_remote,forbidden_ports=(8765,getattr(controller,'server_port',8765)))
+
+    def _allow_remote(self,url):
+        from remote_access import quick_tunnel_url
+        if quick_tunnel_url(url)!=url:raise ValueError('Неверный внешний адрес')
+        with self.lock:
+            if self.server:
+                with self.server.origins_lock:self.server.external_origins.add(url)
+
+    def _remove_remote(self,url):
+        with self.lock:
+            if self.server:
+                with self.server.origins_lock:self.server.external_origins.discard(url)
+
+    def _save_remote_preference(self,enabled):
+        if self.remote_preference.is_symlink():raise ValueError('Неверный путь настройки внешнего доступа')
+        self.remote_preference.parent.mkdir(parents=True,exist_ok=True)
+        with tempfile.NamedTemporaryFile(mode='w',dir=self.remote_preference.parent,encoding='utf-8',delete=False) as output:
+            json.dump({'enabled':enabled},output);temporary=Path(output.name)
+        temporary.chmod(0o600);temporary.replace(self.remote_preference);self.remote_enabled=enabled
+
+    def enable_remote(self):
+        with self.lock:
+            self._save_remote_preference(True)
+            if not self.server:self.enable()
+            self.remote.start(self.server.server_port)
+            return self.status()
+
+    def disable_remote(self):
+        with self.lock:
+            self._save_remote_preference(False);self.remote.stop()
+            return self.status()
     def status(self):
         with self.lock:
-            result={'enabled':self.server is not None,'port':self.server.server_port if self.server else None,'urls':self.urls() if self.server else [],'pairExpires':None,'pairCode':None,'pairUrls':[]}
+            result={'enabled':self.server is not None,'port':self.server.server_port if self.server else None,'urls':self.urls() if self.server else [],'pairExpires':None,'pairCode':None,'pairUrls':[],'remote':{**self.remote.status(),'enabled':self.remote_enabled}}
             if self.server:
                 code,manual,expires=self.server.pairing.current();self.pair=(code,expires)
                 result.update(pairCode=manual,pairExpires=expires,pairUrls=[url+'pair#'+code for url in result['urls']],serverTime=time.time())
@@ -380,12 +434,14 @@ class RelayManager:
     def urls(self):
         names=self.server.allowed_hosts
         ordered=sorted([name for name in names if name not in ('127.0.0.1','localhost')],key=lambda name:(not name.endswith('.local'),name))
-        return ['http://'+host+':'+str(self.server.server_port)+'/phone/' for host in ordered]
+        remote=self.remote.status()
+        return ([remote['url']+'/phone/'] if remote['state']=='ready' and remote['url'] else [])+['http://'+host+':'+str(self.server.server_port)+'/phone/' for host in ordered]
     def enable(self,port=8767):
         with self.lock:
             if self.server is None:
                 self.server=create_phone_server(self.directory,self.controller,port)
                 self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
+                if self.remote_enabled:self.remote.start(self.server.server_port)
             return self.issue_pair()
     def issue_pair(self):
         with self.lock:
@@ -394,6 +450,8 @@ class RelayManager:
             return self.status()
     def stop(self,revoke=False):
         with self.lock:
+            if revoke:self._save_remote_preference(False)
+            self.remote.stop()
             if self.server:
                 if revoke:self.server.pairing.revoke()
                 self.server.shutdown();self.server.server_close();self.server=None

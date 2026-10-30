@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import re
 import secrets
+import signal
 import sqlite3
 import threading
 import time
@@ -18,6 +19,7 @@ import webbrowser
 import redcn
 import photo_store
 import card_api
+import http_delivery
 
 
 def store_history(directory, entry):
@@ -100,7 +102,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
-    identity = {'app':'redcn', 'protocol':6, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
@@ -173,6 +175,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 
         def respond(self, status, value, content_type='application/json; charset=utf-8', headers=None):
             content = json.dumps(value, ensure_ascii=False).encode() if content_type.startswith('application/json') else value
+            content,compression=http_delivery.response_bytes(content,content_type,self.headers.get('Accept-Encoding',''))
             self.send_response(status)
             self.send_header('Content-Type',content_type)
             self.send_header('Content-Length',str(len(content)))
@@ -180,6 +183,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','no-referrer')
             self.send_header('X-Frame-Options','DENY')
+            for key,val in compression.items():self.send_header(key,val)
             for key,val in (headers or {}).items():self.send_header(key,val)
             self.end_headers();self.wfile.write(content)
 
@@ -286,6 +290,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     elif action=='profile':result=self.server.phone_relay.save_profile(data)
                     elif action=='pair':result=self.server.phone_relay.issue_pair()
                     elif action=='disable':result=self.server.phone_relay.disable()
+                    elif action=='remote-start':result=self.server.phone_relay.enable_remote()
+                    elif action=='remote-stop':result=self.server.phone_relay.disable_remote()
                     else:raise ValueError('Неверное действие телефонного доступа')
                     self.respond(200,result);return
                 if path == '/api/local/import':
@@ -324,7 +330,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 def matching_server(directory, port, browser_channel):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *_args, **_kwargs): return None
-    expected = {'app':'redcn','protocol':6,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    expected = {'app':'redcn','protocol':7,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:
@@ -371,7 +377,12 @@ def serve(directory, port=8765, result_id=None, open_browser=True, browser_chann
     if port and port != selected_port: print(f'Порт {port} занят. Выбран порт {selected_port}.',flush=True)
     print('\nЛокальный redcn: '+link+'\nОставьте терминал открытым. Остановка: Ctrl+C.',flush=True)
     if open_browser: webbrowser.open(link)
+    previous_term=None
+    if threading.current_thread() is threading.main_thread():
+        previous_term=signal.signal(signal.SIGTERM,lambda *_:threading.Thread(target=server.shutdown,daemon=True).start())
     try: server.serve_forever()
     except KeyboardInterrupt: pass
-    finally: server.server_close()
+    finally:
+        server.server_close()
+        if previous_term is not None:signal.signal(signal.SIGTERM,previous_term)
     return 0

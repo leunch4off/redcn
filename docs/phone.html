@@ -77,7 +77,7 @@
   <div class="eyebrow">КОМПЬЮТЕР СОБИРАЕТ · ТЕЛЕФОН ПУБЛИКУЕТ</div>
   <h1>Ваши объявления.<br>Теперь под рукой.</h1>
   <p class="lead">Готовые китайские тексты и фотографии приходят сюда с вашего Mac.</p>
-  <div class="pair-card"><div class="pair-symbol" aria-hidden="true">⌁</div><h2>Соединить с компьютером</h2><p>На Mac откройте сайт → «Телефон». Там показан обновляемый код из 8 цифр. Введите его здесь. Оба устройства должны быть в одной сети.</p><form id="phonePairForm"><label for="phonePairCode">8 цифр с экрана Mac</label><input id="phonePairCode" type="text" inputmode="numeric" enterkeyhint="go" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="1234 5678" aria-describedby="phonePairHelp" required><button id="phonePairSubmit" class="button primary" type="submit">Подключить телефон <span aria-hidden="true">↗</span></button></form><p id="phonePairStatus" class="status-note" role="status"></p><p id="phonePairHelp" class="quiet">После установки на экран «Домой» может понадобиться отдельный вход. Откройте установленное приложение и введите текущие 8 цифр из раздела «Телефон» на Mac. Если код использован или истёк, на компьютере появится новый.</p></div>
+  <div class="pair-card"><div class="pair-symbol" aria-hidden="true">⌁</div><h2>Соединить с компьютером</h2><p>На Mac откройте сайт → «Телефон». Там показан обновляемый код из 8 цифр. Введите его здесь. <span id="phoneNetworkHelp">Локальная ссылка работает в одной сети; внешняя HTTPS-ссылка — через мобильный интернет.</span></p><form id="phonePairForm"><label for="phonePairCode">8 цифр с экрана Mac</label><input id="phonePairCode" type="text" inputmode="numeric" enterkeyhint="go" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="1234 5678" aria-describedby="phonePairHelp" required><button id="phonePairSubmit" class="button primary" type="submit">Подключить телефон <span aria-hidden="true">↗</span></button></form><p id="phonePairStatus" class="status-note" role="status"></p><button id="phoneReconnect" class="button secondary hidden" type="button">Проверить связь ещё раз</button><p id="phonePairHelp" class="quiet">После установки на экран «Домой» может понадобиться отдельный вход. Откройте установленное приложение и введите текущие 8 цифр из раздела «Телефон» на Mac. Если код использован или истёк, на компьютере появится новый.</p></div>
   <p class="quiet">Карточки открываются после подключения. Mac должен оставаться включённым.</p>
 </section>
 <div id="phoneWorkspace" class="hidden">
@@ -97,7 +97,7 @@
   <section id="phoneDesignView" class="phone-view hidden"><p class="quiet">Дизайн использует последнюю открытую карточку. Сначала выберите квартиру в разделе «Карточки».</p><div id="phoneDesignMount"></div></section><section id="phoneSetupView" class="phone-view hidden">
     <div class="eyebrow">ВСЁ ГОТОВО К РАБОТЕ</div><h1>Мой телефон</h1>
     <div class="surface"><h2>МОСТ на экране «Домой»</h2><p>Открывайте студию как отдельное приложение. Кнопка установки исчезнет при запуске с экрана «Домой».</p><div id="phoneInstall"></div></div>
-    <div class="surface"><h2>Компьютер остаётся сервером</h2><p>Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Для обновления нужны включённый компьютер и доступ к его сети.</p><p id="phoneServerStatus" class="status-note"></p></div>
+    <div class="surface"><h2>Компьютер остаётся сервером</h2><p id="phoneNetworkDescription">Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Для обновления нужны включённый компьютер и доступ к его сети.</p><p id="phoneServerStatus" class="status-note"></p></div>
     <div class="surface"><h2>Фотографии на iPhone</h2><p>В карточке нажмите «Поделиться фото» и выберите сохранение изображения в системном меню. Если меню недоступно, откройте фото и удерживайте его для сохранения.</p><p class="quiet">iPhone подтверждает сохранение в «Фото». Сайт не может записывать изображения в медиатеку без вашего действия. ZIP сохраняется в «Файлы».</p></div>
   </section>
   <section id="phoneDetailView" class="phone-view hidden">
@@ -583,7 +583,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   imageDownload.onclick=()=>action(async()=>{const kind=active==='intro'?'intro':'outro';if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,value=kind==='intro'?snapshot.intro:snapshot.outro;if(!value)throw new Error('Сначала обновите изображение');if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot);const asset=await api('card-export',{result_id:resultId,kind,data:value});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание изображения не подключено');status.textContent='Изображение сохранено на Mac и доступно в карточке на телефоне.';}else{const response=await fetch(value);psDownloadBlob('most-'+kind+'.png',await response.blob());}toast('Изображение готово');});
   syncInputs();selectTab('pdf');render(false);
   if(api)api('design').then(result=>{if(!destroyed&&!templateTouched&&result.template){template=normalizeDesignTemplate(result.template);syncInputs();persistLocal();queueRender();}}).catch(()=>{});
-  return {refresh:()=>{demo=false;return render(true);},template:()=>normalizeDesignTemplate(template),destroy:()=>{destroyed=true;revision++;clearTimeout(timer);if(proofDialog.open)proofDialog.close();clearProof();mount.replaceChildren();}};
+  return {refresh:()=>{clearTimeout(timer);demo=false;return render(true);},template:()=>normalizeDesignTemplate(template),destroy:()=>{destroyed=true;revision++;clearTimeout(timer);if(proofDialog.open)proofDialog.close();clearProof();mount.replaceChildren();}};
 }
 
 // Installation is detected from the running app, never inferred from a button tap.
@@ -658,62 +658,88 @@ function initializePwaInstall({container,phoneUrl='/phone/',registerWorker=true}
 
 
 const ph=id=>document.getElementById(id);
-let phoneArchiveUI=null,phoneFilesUI=null,phonePresentationUI=null;
+let phoneArchiveUI=null,phoneFilesUI=null,phonePresentationUI=null,phoneDesignInitializing=null,phoneStarting=false;
+const phoneFeedViews=new Map();let phoneFeedSignature='';
 const phoneState={authEpoch:0,paired:false,csrf:'',cards:new Map(),cursor:null,hasMore:false,view:'cards',detail:null,detailId:null,media:[],photo:0,variant:'original',job:null,jobResult:null,lastSync:0,polling:false};
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
 const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
 const phoneTime=value=>phoneDate(value)?.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})||'';
 const phoneCardCount=count=>count+' '+(count%100>=11&&count%100<=14?'карточек':count%10===1?'карточка':count%10>=2&&count%10<=4?'карточки':'карточек');
 const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(value).toLocaleString('ru-RU')+' ₽':'';
-function phoneAsset(path){try{const url=new URL(path,location.origin);return url.origin===location.origin&&/^\/api\/phone\/(?:media\/|cards\/)/.test(url.pathname)?url.pathname+url.search:null;}catch{return null;}}
+function phoneAsset(path){try{const url=new URL(path,location.origin);return url.origin===location.origin&&/^\/api\/phone\/(?:media\/|previews\/|cards\/)/.test(url.pathname)?url.pathname+url.search:null;}catch{return null;}}
 function phoneToast(text){clearTimeout(phoneToastTimer);ph('phoneToast').textContent=text;ph('phoneToast').classList.remove('hidden');phoneToastTimer=setTimeout(()=>ph('phoneToast').classList.add('hidden'),5000);}
-function phoneConnection(online){ph('phoneConnection').textContent=online?'Mac на связи':'Нет связи с Mac';ph('phoneConnection').classList.toggle('offline',!online);ph('phoneServerStatus').textContent=online?'Компьютер отвечает. Обновления приходят автоматически.':'Проверьте, что Mac включён и телефон находится в его сети.';if(!online&&phoneState.lastSync)ph('phoneSync').textContent='Нет связи · последнее обновление в '+phoneTime(phoneState.lastSync)+'. Показаны ранее полученные карточки.';}
-function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(paired&&!phonePresentationUI)phoneInitializeDesigner();if(!paired){phonePresentationUI?.destroy();phonePresentationUI=null;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);}}
-async function phoneApi(path,data){
-  const epoch=phoneState.authEpoch;let response;
-  try{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal:AbortSignal.timeout(path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:25000)});}catch{if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error('Mac не отвечает. Проверьте сеть и запущенную студию на компьютере.');}
-  const value=await response.json().catch(()=>({error:'Компьютер вернул непонятный ответ.'}));
+function phoneConnection(online){ph('phoneConnection').textContent=online?'Mac на связи':'Нет связи с Mac';ph('phoneConnection').classList.toggle('offline',!online);ph('phoneServerStatus').textContent=online?'Компьютер отвечает. Обновления приходят автоматически.':(location.protocol==='https:'?'Проверьте интернет на телефоне и внешний доступ на включённом Mac.':'Проверьте, что Mac включён и телефон находится в его локальной сети. Для работы с улицы откройте внешнюю HTTPS-ссылку.');if(!online&&phoneState.lastSync)ph('phoneSync').textContent='Нет связи · последнее обновление в '+phoneTime(phoneState.lastSync)+'. Показаны ранее полученные карточки.';}
+function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);}}
+// The first usable feed has a shared budget; PDF and attachment work keep their
+// longer operation deadlines and cannot make initial navigation wait for them.
+async function phoneApi(path,data,{deadline=0}={}){
+  const epoch=phoneState.authEpoch;
+  const normalTimeout=path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:8000;
+  const timeout=deadline?Math.min(normalTimeout,Math.max(1,Math.ceil(deadline-performance.now()))):normalTimeout;
+  const signal=AbortSignal.timeout(timeout);let response,value;
+  try{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});value=await response.json();}
+  catch{if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error(signal.aborted?'Mac не ответил за несколько секунд. Нажмите «Обновить» или проверьте подключение.':'Mac не отвечает. Проверьте интернет на телефоне и запущенную студию на компьютере.');}
   if(path!=='pair'&&epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;throw error;}
-  if(response.status===401){phoneAuth(false);ph('phonePairStatus').textContent='Для этого окна нужен вход. На Mac нажмите «Телефон» и введите показанные там 8 цифр. После установки на экран «Домой» подключитесь здесь ещё раз.';}
+  if(response.status===401){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';ph('phoneReconnect').classList.add('hidden');ph('phonePairStatus').textContent='Для этого окна нужен вход. На Mac нажмите «Телефон» и введите показанные там 8 цифр. После установки на экран «Домой» подключитесь здесь ещё раз.';}
   if(!response.ok){const error=Error(value.error||'Не удалось выполнить запрос.');error.status=response.status;throw error;}
-  if(path!=='pair'&&epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;throw error;}
   phoneConnection(true);return value;
 }
-function phoneView(view){phoneState.view=view;if(view==='design')phonePresentationUI?.refresh();for(const [key,id] of Object.entries({cards:'phoneCardsView',import:'phoneImportView',setup:'phoneSetupView',design:'phoneDesignView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
+function phoneView(view){phoneState.view=view;if(view==='design')phoneInitializeDesigner().then(studio=>{if(studio&&phoneState.paired&&phoneState.view==='design')studio.refresh();}).catch(error=>phoneToast(error.message));for(const [key,id] of Object.entries({cards:'phoneCardsView',import:'phoneImportView',setup:'phoneSetupView',design:'phoneDesignView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
 document.querySelectorAll('[data-phone-view]').forEach(button=>button.addEventListener('click',()=>{phoneView(button.dataset.phoneView);if(button.dataset.phoneView==='cards')phoneRefreshCards().catch(error=>phoneToast(error.message));}));
+function phoneCardView(card){
+  let view=phoneFeedViews.get(card.id);
+  if(!view){
+    const button=document.createElement('button');button.type='button';button.className='listing-card';button.dataset.cardId=card.id;button.onclick=()=>phoneOpenCard(card.id);
+    const cover=document.createElement('div');cover.className='listing-cover';const badge=document.createElement('span');badge.className='photo-badge';cover.append(badge);
+    const info=document.createElement('div');info.className='listing-info';const price=document.createElement('div');price.className='listing-price';
+    const title=document.createElement('h3'),meta=document.createElement('div'),stamp=document.createElement('div');meta.className='listing-meta';stamp.className='listing-updated';info.append(price,title,meta,stamp);button.append(cover,info);
+    view={button,cover,badge,price,title,meta,stamp,source:undefined,image:null};phoneFeedViews.set(card.id,view);
+  }
+  const signature=JSON.stringify(card);if(view.signature===signature)return view.button;view.signature=signature;
+  view.button.setAttribute('aria-label','Открыть '+(card.title||'карточку квартиры'));
+  const source=phoneAsset(card.coverUrl);
+  if(source!==view.source){
+    if(view.image)view.image.remove();view.source=source;
+    if(source){const img=document.createElement('img');img.src=source;img.alt='Фото квартиры';img.loading=phoneFeedViews.size===1?'eager':'lazy';img.decoding='async';img.width=400;img.height=210;if(phoneFeedViews.size===1)img.fetchPriority='high';view.image=img;}
+    else{const empty=document.createElement('div');empty.className='cover-placeholder';empty.textContent='▧';view.image=empty;}
+    view.cover.prepend(view.image);
+  }
+  view.badge.textContent=Number(card.photoCount)>0?card.photoCount+' фото':card.mediaStatus==='loading'?'Фото готовятся':'Без фотографий';
+  view.price.textContent=phoneMoney(card.price)||'Цена в карточке';if(phoneMoney(card.price)){const period=document.createElement('small');period.textContent='/ месяц';view.price.append(period);}
+  view.title.textContent=card.title||'Квартира в Москве';view.meta.replaceChildren();if(card.metro){const station=document.createElement('span');station.textContent='🚇 '+card.metro;view.meta.append(station);}
+  view.stamp.textContent=phoneTime(card.updated)?'Обновлено в '+phoneTime(card.updated):'С компьютера';return view.button;
+}
 function phoneRenderCards(){
   const query=ph('phoneSearch').value.toLocaleLowerCase('ru').trim();
   const rows=[...phoneState.cards.values()].sort((a,b)=>(phoneDate(b.updated)?.getTime()||0)-(phoneDate(a.updated)?.getTime()||0)).filter(card=>[card.title,card.price,card.metro].join(' ').toLocaleLowerCase('ru').includes(query));
-  ph('phoneCards').replaceChildren();ph('phoneEmpty').classList.toggle('hidden',phoneState.cards.size>0||!!query);ph('phoneMore').classList.toggle('hidden',!phoneState.hasMore);
-  if(!rows.length&&query){const note=document.createElement('p');note.className='surface';note.textContent='По этому запросу карточек пока нет.';ph('phoneCards').append(note);}
-  for(const card of rows){
-    const button=document.createElement('button');button.type='button';button.className='listing-card';button.setAttribute('aria-label','Открыть '+(card.title||'карточку квартиры'));button.onclick=()=>phoneOpenCard(card.id);
-    const cover=document.createElement('div');cover.className='listing-cover';const source=phoneAsset(card.coverUrl);
-    if(source){const img=document.createElement('img');img.src=source;img.alt='Фото квартиры';img.loading='lazy';cover.append(img);}else{const empty=document.createElement('div');empty.className='cover-placeholder';empty.textContent='▧';cover.append(empty);}
-    const badge=document.createElement('span');badge.className='photo-badge';badge.textContent=Number(card.photoCount)>0?card.photoCount+' фото':card.mediaStatus==='loading'?'Фото готовятся':'Без фотографий';cover.append(badge);
-    const info=document.createElement('div');info.className='listing-info';const price=document.createElement('div');price.className='listing-price';price.textContent=phoneMoney(card.price)||'Цена в карточке';if(phoneMoney(card.price)){const period=document.createElement('small');period.textContent='/ месяц';price.append(period);}
-    const title=document.createElement('h3');title.textContent=card.title||'Квартира в Москве';const meta=document.createElement('div');meta.className='listing-meta';if(card.metro){const station=document.createElement('span');station.textContent='🚇 '+card.metro;meta.append(station);}
-    const stamp=document.createElement('div');stamp.className='listing-updated';stamp.textContent=phoneTime(card.updated)?'Обновлено в '+phoneTime(card.updated):'С компьютера';info.append(price,title,meta,stamp);button.append(cover,info);ph('phoneCards').append(button);
-  }
+  const signature=JSON.stringify([query,phoneState.hasMore,rows]);if(signature===phoneFeedSignature)return;phoneFeedSignature=signature;
+  ph('phoneEmpty').classList.toggle('hidden',phoneState.cards.size>0||!!query);ph('phoneMore').classList.toggle('hidden',!phoneState.hasMore);
+  const container=ph('phoneCards');
+  if(!rows.length){container.replaceChildren();if(query){const note=document.createElement('p');note.className='surface';note.textContent='По этому запросу карточек пока нет.';container.append(note);}return;}
+  const nodes=rows.map(phoneCardView),wanted=new Set(nodes);
+  for(const child of [...container.children])if(!wanted.has(child))child.remove();
+  for(let index=0;index<nodes.length;index++)if(container.children[index]!==nodes[index])container.insertBefore(nodes[index],container.children[index]||null);
 }
-async function phoneRefreshCards({reset=false}={}){
-  if(!phoneState.paired||phoneState.polling)return;const epoch=phoneState.authEpoch;phoneState.polling=true;ph('phoneRefresh').disabled=true;
-  try{const after=!reset&&phoneState.cursor!==null?'?after='+encodeURIComponent(phoneState.cursor):'';const data=await phoneApi('cards'+after);for(const card of data.cards||[]){if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,card);}if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);phoneRenderCards();const changed=(data.cards||[]).find(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));if(changed&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(changed.id,{keepScroll:true});if(phoneState.view==='detail'&&phoneState.detail){phoneArchiveUI?.refresh();phoneFilesUI?.refresh();}}
+async function phoneRefreshCards({reset=false,deadline=0}={}){
+  if(!phoneState.paired||phoneState.polling)return;const epoch=phoneState.authEpoch;phoneState.polling=true;ph('phoneRefresh').disabled=true;if(!phoneState.cards.size)ph('phoneSync').textContent='Загружаем карточки с Mac…';
+  try{const after=!reset&&phoneState.cursor!==null?'?after='+encodeURIComponent(phoneState.cursor):'';const data=await phoneApi('cards'+after,undefined,{deadline});for(const card of data.cards||[]){if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,card);}if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);phoneRenderCards();const changed=(data.cards||[]).find(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));if(changed&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(changed.id,{keepScroll:true});if(phoneState.view==='detail'&&phoneState.detail){phoneArchiveUI?.refresh();phoneFilesUI?.refresh();}}
+  catch(error){if(epoch===phoneState.authEpoch&&!phoneState.cards.size)ph('phoneSync').textContent=error.message;throw error;}
   finally{if(epoch===phoneState.authEpoch){phoneState.polling=false;ph('phoneRefresh').disabled=false;phoneSchedulePoll();}}
 }
 function phoneSchedulePoll(){clearTimeout(phonePollTimer);if(phoneState.paired&&!document.hidden)phonePollTimer=setTimeout(()=>phoneRefreshCards().catch(()=>{}),5000);}
 ph('phoneRefresh').onclick=()=>phoneRefreshCards({reset:true}).catch(error=>phoneToast(error.message));ph('phoneMore').onclick=()=>phoneRefreshCards().catch(error=>phoneToast(error.message));ph('phoneSearch').oninput=phoneRenderCards;
-async function phonePair(code){
+async function phonePair(code,{deadline=performance.now()+9000}={}){
   try{if(code.includes('#'))code=new URL(code).hash.slice(1);}catch{}
-  ph('phonePairSubmit').disabled=true;ph('phonePairStatus').textContent='Соединяем телефон с Mac…';ph('phonePairStatus').classList.remove('error');
-  try{await phoneApi('pair',{code});ph('phonePairCode').value='';const state=await phoneApi('state');phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');phoneState.cursor=null;await phoneRefreshCards({reset:true});ph('phonePairStatus').textContent='';}
-  catch(error){ph('phonePairStatus').textContent=error.message;ph('phonePairStatus').classList.add('error');}
-  finally{ph('phonePairSubmit').disabled=false;}
+  const epoch=++phoneState.authEpoch;
+  ph('phonePairSubmit').disabled=true;ph('phonePairStatus').textContent='Соединяем телефон с Mac…';ph('phonePairStatus').classList.remove('error');ph('phoneReconnect').classList.add('hidden');
+  try{const state=await phoneApi('pair',{code},{deadline});if(epoch!==phoneState.authEpoch)return;ph('phonePairCode').value='';phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');phoneState.cursor=null;await phoneRefreshCards({reset:true,deadline});ph('phonePairStatus').textContent='';}
+  catch(error){if(epoch===phoneState.authEpoch){ph('phonePairStatus').textContent=error.message;ph('phonePairStatus').classList.add('error');ph('phoneReconnect').classList.toggle('hidden',phoneState.paired);}}
+  finally{if(epoch===phoneState.authEpoch)ph('phonePairSubmit').disabled=false;}
 }
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
-async function phoneOpenCard(id,{keepScroll=false}={}){
+async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
   if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='original';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id);if(revision!==phoneDetailRevision)return;phoneState.detail=card;ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=card;phoneInitializeCardTools();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
@@ -759,20 +785,38 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeo
 initializePwaInstall({container:ph('phoneInstall')});
 initializePwaInstall({container:ph('phoneInstallTop'),registerWorker:false});
 async function phoneStart(){
-  let pairCode='';if(location.hash.length>1){try{pairCode=decodeURIComponent(location.hash.slice(1)).trim();}catch{pairCode=location.hash.slice(1).trim();}history.replaceState({},'',location.pathname+location.search);}
-  if(pairCode){ph('phonePairCode').value=pairCode;await phonePair(pairCode);return;}
-  try{const state=await phoneApi('state');if(!state.paired){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';return;}phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');await phoneRefreshCards({reset:true});const card=new URLSearchParams(location.search).get('card');if(card)await phoneOpenCard(card);}
-  catch(error){if(error.status!==401)ph('phonePairStatus').textContent=error.message;ph('phoneConnection').textContent=error.status===401?'Нужно подключение':'Нет связи с Mac';}
+  if(phoneStarting)return;phoneStarting=true;const epoch=phoneState.authEpoch,deadline=performance.now()+9000;ph('phoneReconnect').disabled=true;
+  try{
+    let pairCode='';if(location.hash.length>1){try{pairCode=decodeURIComponent(location.hash.slice(1)).trim();}catch{pairCode=location.hash.slice(1).trim();}history.replaceState({},'',location.pathname+location.search);}
+    if(pairCode){ph('phonePairCode').value=pairCode;await phonePair(pairCode,{deadline});return;}
+    const state=await phoneApi('state',undefined,{deadline});if(epoch!==phoneState.authEpoch)return;
+    if(!state.paired){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';return;}
+    phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');ph('phoneReconnect').classList.add('hidden');await phoneRefreshCards({reset:true,deadline});const card=new URLSearchParams(location.search).get('card');if(card)await phoneOpenCard(card,{deadline});
+  }catch(error){if(epoch!==phoneState.authEpoch)return;if(error.status!==401){ph('phonePairStatus').textContent=error.message;ph('phoneReconnect').classList.remove('hidden');}ph('phoneConnection').textContent=error.status===401?'Нужно подключение':'Нет связи с Mac';}
+  finally{phoneStarting=false;ph('phoneReconnect').disabled=false;}
 }
+ph('phoneReconnect').onclick=()=>phoneStart();
 
 async function phoneExportBlob(asset){const epoch=phoneState.authEpoch,url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/phone\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');const response=await fetch(url.pathname,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(90000)});if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(response.status===401){phoneAuth(false);throw Error('Введите текущий код с компьютера');}if(!response.ok){const value=await response.json().catch(()=>({}));throw Error(value.error||'Файл недоступен');}const blob=await response.blob();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;}
 async function phoneDownloadAsset(asset){cardDownloadBlob(await phoneExportBlob(asset),asset.name);phoneFilesUI?.refresh();}
 async function phonePresentationPhotos(){const id=phoneState.detailId,epoch=phoneState.authEpoch,photos=[];for(const original of (phoneState.detail?.media||[]).slice(0,6)){const selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;const response=await fetch(path,{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw Error('Фотография недоступна на Mac');const dataUrl=await cardPhotoDataUrl(await response.blob());if(epoch!==phoneState.authEpoch||id!==phoneState.detailId)throw Error('Выбрана другая карточка');photos.push({dataUrl});}return photos;}
 async function phoneEnsurePresentationCard(){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return phoneState.detail.id;}
+function phoneInitializeCardTools(){if(phoneArchiveUI)return;
 phoneArchiveUI=setupCardArchive({mount:ph('phoneArchiveMount'),getCardId:()=>phoneState.detailId,ensureCard:phoneEnsurePresentationCard,api:phoneApi,downloadAttachment:phoneDownloadAsset,toast:phoneToast});
 phoneFilesUI=setupCardFiles({mount:ph('phoneFilesMount'),getCardId:()=>phoneState.detailId,api:phoneApi,download:phoneDownloadAsset,previewImage:async asset=>{const blob=await phoneExportBlob(asset);if(blob.type!=='image/png')throw Error('Нужен PNG');if(phoneExportViewerUrl)URL.revokeObjectURL(phoneExportViewerUrl);phoneExportViewerUrl=URL.createObjectURL(blob);ph('phoneViewerImage').src=phoneExportViewerUrl;ph('phonePhotoViewer').showModal();},toast:phoneToast});
-function phoneInitializeDesigner(){phonePresentationUI=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api:phoneApi,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card)=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}),toast:phoneToast});}
+}
+function phoneInitializeDesigner(){
+  if(phoneDesignInitializing)return phoneDesignInitializing;
+  if(phonePresentationUI)return Promise.resolve(phonePresentationUI);
+  const epoch=phoneState.authEpoch;let initialRead=null;
+  const api=(path,data)=>{const request=phoneApi(path,data);if(path==='design'&&!data)initialRead=request;return request;};
+  const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card)=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}),toast:phoneToast});phonePresentationUI=studio;
+  const ready=(initialRead||Promise.resolve()).catch(()=>{}).then(()=>epoch===phoneState.authEpoch&&studio===phonePresentationUI?studio:null);
+  phoneDesignInitializing=ready;ready.finally(()=>{if(phoneDesignInitializing===ready)phoneDesignInitializing=null;});return ready;
+}
 ph('phoneDesignCard').onclick=()=>phoneView('design');
+ph('phoneNetworkHelp').textContent=location.protocol==='https:'?'Внешняя HTTPS-ссылка работает через мобильный интернет; Mac должен оставаться включённым.':'Локальный адрес работает в одной сети с Mac. Для мобильного интернета используйте внешнюю HTTPS-ссылку из раздела «Телефон» на компьютере.';
+ph('phoneNetworkDescription').textContent=location.protocol==='https:'?'Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки через интернет. Нужны включённый Mac и работающий внешний доступ.':'Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Локальная ссылка требует общей сети; внешняя HTTPS-ссылка работает через мобильный интернет.';
 phoneStart();
 </script>
 </body>

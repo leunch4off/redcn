@@ -3,10 +3,18 @@ export const GEO_CATALOG = {"version":1,"records":[{"id":"hh:135.855","kind":"me
 // Runtime is kept separate so catalog refreshes never change lookup behavior.
 const geoFold = value => String(value ?? '').normalize('NFC').toLocaleLowerCase('ru').replaceAll('ё','е').replace(/\s+/g,' ').trim();
 const geoKinds = {metro:'地铁站',street:'街道',stop:'公交站'};
-const geoByName = new Map();
-for(const row of GEO_CATALOG.records){const key=geoFold(row.ru);if(!geoByName.has(key))geoByName.set(key,[]);geoByName.get(key).push(row);}
+let geoByName=null;
+function geoNameIndex(){
+  if(!geoByName){
+    const index=new Map();
+    for(const row of GEO_CATALOG.records){const key=geoFold(row.ru);if(!index.has(key))index.set(key,[]);index.get(key).push(row);}
+    geoByName=index;
+  }
+  return geoByName;
+}
 export function resolveGeo(name,kind=''){
-  const rows=geoByName.get(geoFold(name))||[];
+  const key=geoFold(name);if(!key)return undefined;
+  const rows=geoNameIndex().get(key)||[];
   return rows.find(row=>(!kind||row.kind===kind)&&row.translationStatus==='reviewed')||rows.find(row=>!kind||row.kind===kind);
 }
 export function geoLabel(row,{includeRussian=true}={}){
@@ -37,7 +45,11 @@ function geoTrie(names){
   for(const name of names){let node=root;for(const char of name){if(!node.has(char))node.set(char,new Map());node=node.get(char);}node.value=name;}
   return root;
 }
-const geoNameTrie=geoTrie([...geoByName.keys()].filter(name=>name.length>2));
+let geoNameTrie=null;
+function geoCatalogMatcher(){
+  if(!geoNameTrie)geoNameTrie=geoTrie([...geoNameIndex().keys()].filter(name=>name.length>2));
+  return geoNameTrie;
+}
 const geoRegexCache=new Map();
 const geoEmptyOverrides=Object.freeze({});
 function geoMatcher(supplied){
@@ -59,19 +71,19 @@ function geoMatchAt(root,text,start){
   return best;
 }
 export function translateGeo(text,overrides=geoEmptyOverrides,{includeRussian=true}={}){
-  const original=String(text??'');
+  const original=String(text??'');if(!original)return original;
   const supplied=new Map(Object.entries(overrides||{}).filter(([key,value])=>key.trim()&&typeof value==='string').map(([key,value])=>[geoFold(key),value]));
-  const exact=resolveGeo(original);
   if(supplied.has(geoFold(original)))return supplied.get(geoFold(original));
+  const exact=resolveGeo(original);
   if(exact)return geoLabel(exact,{includeRussian});
   // Full names only. Never turn Юго-Западная into a made-up mixed name.
   // Existing non-geographic dictionary terms are handled by the caller.
   // A trie avoids a megabyte regular expression and keeps unknown input cheap.
-  const folded=original.toLocaleLowerCase('ru').replaceAll('ё','е'),customTrie=geoMatcher(supplied);
+  const folded=original.toLocaleLowerCase('ru').replaceAll('ё','е'),customTrie=geoMatcher(supplied),catalogTrie=geoCatalogMatcher();
   let output='',cursor=0;
   for(let start=0;start<folded.length;start++){
     if(geoWordCharacter(folded[start-1]))continue;
-    const geographic=geoMatchAt(geoNameTrie,folded,start),custom=geoMatchAt(customTrie,folded,start);
+    const geographic=geoMatchAt(catalogTrie,folded,start),custom=geoMatchAt(customTrie,folded,start);
     const match=custom&&(!geographic||custom.end>=geographic.end)?custom:geographic;
     if(!match)continue;
     output+=original.slice(cursor,start)+(supplied.has(match.key)?supplied.get(match.key):geoLabel(resolveGeo(match.key),{includeRussian}));

@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 6,
-  "total": 242,
+  "version": 7,
+  "total": 247,
   "tasks": [
     {
       "id": "RCN-001",
@@ -3560,6 +3560,92 @@
       "priority": "P2",
       "depends_on": [
         "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-243",
+      "section": "Скорость и работа через интернет",
+      "title": "Временный HTTPS-доступ к телефону через интернет",
+      "acceptance": "Отдельный телефонный сервер получает HTTPS-ссылку без проброса роутера; по внешнему адресу проверены вход, Secure-cookie и отказ без сессии, рабочий стол не публикуется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/remote_access.py",
+        "cli/phone_relay.py",
+        "tests/test_remote_access.py",
+        "tests/test_external_phone.py",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-244",
+      "section": "Скорость и работа через интернет",
+      "title": "Готовность редактора и ленты до 10 секунд",
+      "acceptance": "На Mac браузерная приёмка проверяет редактор и ленту из 100 карточек менее чем за 10 секунд; недоступный сервер показывает повтор вместо долгого ожидания.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_desktop_performance.py",
+        "tests/test_phone_performance.py",
+        "web/app.js",
+        "web/phone.mjs",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-245",
+      "section": "Скорость и работа через интернет",
+      "title": "Сжатие страниц и небольшие обложки",
+      "acceptance": "Текстовые ответы передаются gzip при согласовании; лента использует превью до 480×360, неизменённые карточки сохраняют изображения, оригиналы доступны отдельно.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/http_delivery.py",
+        "cli/media_preview.py",
+        "tests/test_http_delivery.py",
+        "tests/test_media_preview.py",
+        "web/phone.mjs",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-246",
+      "section": "Скорость и работа через интернет",
+      "title": "Отложенный запуск скрытых панелей и географии",
+      "acceptance": "Дизайнер, знания и индексы географии не создаются при пустом старте; открытие соответствующих разделов сохраняет все функции и данные каталога.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "web/phone.mjs",
+        "scripts/geo-catalog-runtime.mjs",
+        "tests/test_desktop_performance.py",
+        "tests/geo.test.mjs",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-247",
+      "section": "Скорость и работа через интернет",
+      "title": "Постоянный HTTPS-адрес установленного приложения",
+      "acceptance": "Подключить постоянный домен и управляемый туннель или частную сеть; после перезапуска Mac адрес и установленная иконка продолжают вести в тот же origin без новой установки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
       ],
       "status": "planned",
       "evidence": []

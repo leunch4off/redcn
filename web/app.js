@@ -47,7 +47,7 @@ function snapshot(){const value={resultId:localResultId,isDemo,titleVariant,copy
 function populate(value){clearTimeout(relaySyncTimer);editorCardEpoch++;editorRevision++;clearTimeout(toastTimer);$('toast').classList.add('hidden');localResultId=localHosting&&/^[a-f0-9]{32}$/.test(value?.resultId||'')?value.resultId:null;archiveUI?.clear();cardFilesUI?.clear();$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};isDemo=v.isDemo===true;renderDemoNotice();sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();if(localHosting&&localResultId){showLocalLink(localResultId);archiveUI?.refresh();cardFilesUI?.refresh();}}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
 function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
-function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library'){renderList();renderMacCards();}if(name==='presentation')presentationUI?.refresh?.();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge')insightsUI?.renderKnowledge();if(name==='analytics')insightsUI?.renderAnalytics();if(name==='history')historyUI?.render();}
+function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library'){renderList();renderMacCards();}if(name==='presentation')refreshPresentation().catch(error=>toast(error.message));if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge'){ensureInsights().renderKnowledge();renderGeoCatalog();}if(name==='analytics')ensureInsights().renderAnalytics();if(name==='history')historyUI?.render();}
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>tab(button.dataset.tab));
 function renderTitles(){
   $('variants').replaceChildren();
@@ -131,7 +131,7 @@ $('addRule').onclick=()=>{const key=$('trigger').value.trim(),value=$('translati
 for(const key of ['benefits','contact','brandTags'])$(key).value=prefs[key];
 $('saveSettings').onclick=()=>{const next={benefits:$('benefits').value,contact:$('contact').value,brandTags:$('brandTags').value};if(write('most-prefs',next)){prefs=next;toast('Преимущества и теги сохранены. Создайте текст заново, чтобы применить.');}};
 function download(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('export').onclick=async()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,history:await historyUI?.exportEntries(),...insightsUI?.exportData(),draft:read('most-draft',null)});
+$('export').onclick=async()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,history:await historyUI?.exportEntries(),...ensureInsights().exportData(),draft:read('most-draft',null)});
 $('restore').onclick=()=>$('file').click();
 function validRecord(o){return o&&typeof o==='object'&&!Array.isArray(o)&&typeof o.id==='string'&&(!o.features||Array.isArray(o.features)&&o.features.every(x=>typeof x==='string'));}
 $('file').onchange=async()=>{
@@ -157,7 +157,7 @@ const startup=editorStartup({local:localHosting,pathname:location.pathname,draft
 populate(startup.fields);
 if(startup.draft){const draft=startup.draft;current=draft.id||null;$('outputTitle').value=draft.title||'';$('output').value=draft.output||'';$('tags').value=draft.tags||'';currentTitles=Array.isArray(draft.titles)?draft.titles:[];renderTitles();}
 wordEditor=setupWordEditor({getRules:()=>rules,getCustom:()=>[...wordCustom,...noteEntries()],saveCustom:value=>{wordCustom=value;write('most-word-custom',wordCustom);},onChange:saveDraft,toast});
-renderTagCatalog();renderTagReasons(generateListing(snapshot(),rules,prefs).tagSuggestions);counts();
+renderTagCatalog();renderTagReasons();counts();
 
 function renderPhotos(){photoUrls=photoSources(photoUrls);photoUI?.setSources(photoUrls,photoEdits);}
 $('importCli').onclick=()=>$('cliFile').click();
@@ -166,8 +166,8 @@ let roadmapDataClient=null;
 async function loadRoadmap(){try{const response=await fetch(staticHosting?'./plan.json':'/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
 function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataClient.tasks;const done=tasks.filter(t=>t.status==='done').length;$('roadmapSummary').replaceChildren(document.createTextNode(done+' / '+tasks.length+' выполнено · '+(tasks.length-done)+' в планах. '));if(roadmapDataClient.github_issue_url){const a=document.createElement('a');a.textContent='Roadmap на GitHub ↗';a.href=roadmapDataClient.github_issue_url;a.target='_blank';a.rel='noopener noreferrer';$('roadmapSummary').append(a);}const q=$('roadmapSearch').value.toLowerCase(),mode=$('roadmapFilter').value;$('roadmapList').replaceChildren();for(const task of tasks.filter(t=>(mode==='all'||t.status===mode)&&(t.id+' '+t.section+' '+t.title+' '+t.acceptance).toLowerCase().includes(q))){const card=document.createElement('article'),head=document.createElement('header'),p=document.createElement('p'),evidence=document.createElement('div');card.className='task '+task.status;head.textContent=(task.status==='done'?'✓ ':'○ ')+task.id+' · '+task.title;p.textContent=task.acceptance;evidence.className='evidence';evidence.textContent=task.priority+' · '+task.section+(task.evidence.length?' · '+task.evidence.join(' · '):' · Проверка ещё не завершена');card.append(head,p,evidence);$('roadmapList').append(card);}}
 $('roadmapSearch').oninput=renderRoadmap;$('roadmapFilter').onchange=renderRoadmap;
-function captureKnowledge(type,title,text){if(insightsUI&&$('rememberContent').checked&&text.trim())insightsUI.capture({type,title,text,source:$('url').value,status:'unreviewed'});}
-insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{rules[ru]=cn;write('most-rules',rules);renderRules();}});
+function ensureInsights(){if(!insightsUI)insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{rules[ru]=cn;write('most-rules',rules);renderRules();}});return insightsUI;}
+function captureKnowledge(type,title,text){const enabled=insightsUI?$('rememberContent').checked:read('most-remember',true);if(enabled&&text.trim())ensureInsights().capture({type,title,text,source:$('url').value,status:'unreviewed'});}
 if(staticHosting&&!localHosting){$('importStatus').textContent='GitHub Pages: вставьте текст или импортируйте JSON из Python CLI.';$('import').textContent='Импорт через CLI';}
 
 // Local desktop backend is available only in the loopback-served build.
@@ -207,7 +207,7 @@ relatedUI=setupRelated({getCurrent:snapshot,getObjects:()=>objects,getSource:()=
 renderPhotos();relatedUI.render();
 
 function renderGeoCatalog(){const stats=getGeoStats();$('geoSummary').textContent=`Записей станций по линиям: ${stats.metro} (${stats.metroNames} названий, ${stats.translatedMetroNames} с китайским вариантом) · улиц и дорог: ${stats.street} · остановочных объектов: ${stats.stop}. Срез: ${stats.updatedAt}. Полнота: ${typeof stats.coverage==='string'?stats.coverage:'см. источники'}`;const rows=searchGeo($('geoSearch').value,{kind:$('geoKind').value,limit:30});$('geoResults').replaceChildren();for(const row of rows){const el=document.createElement('div');el.className='tag-item';el.textContent=row.ru+' → '+(row.zh||'Русское название сохранено целиком')+' · '+row.translationStatus;$('geoResults').append(el);}}
-$('geoSearch').oninput=renderGeoCatalog;$('geoKind').onchange=renderGeoCatalog;renderGeoCatalog();
+$('geoSearch').oninput=renderGeoCatalog;$('geoKind').onchange=renderGeoCatalog;
 
 function applyPhotoFeatures(observation){
  const blocked=new Set((sourceAudit?.furniture||[]).filter(row=>['absent','planned','conflict'].includes(row.status)).map(row=>row.id));
@@ -244,7 +244,16 @@ function presentationCurrentCard(){const revision=historyCurrent(),{resultId,...
 async function ensurePresentationCard(){if(!localHosting)throw Error('Сохранение на Mac доступно в локальном редакторе.');const epoch=editorCardEpoch;if(!$('outputTitle').value.trim()&&!$('output').value.trim())throw Error('Сначала заполните карточку и создайте описание.');clearTimeout(relaySyncTimer);const saved=await persistLocal();if(epoch!==editorCardEpoch)throw Error('Карточка изменилась. Повторите действие.');return saved.result_id;}
 async function localExportBlob(asset){const url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/local\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');const response=await fetch(url.pathname,{headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||''},cache:'no-store'});if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'Файл недоступен');}return response.blob();}
 async function localDownloadAsset(asset){cardDownloadBlob(await localExportBlob(asset),asset.name);cardFilesUI?.refresh();}
-presentationUI=setupPresentationStudio({mount:$('presentationMount'),getCard:presentationCurrentCard,getPhotos:()=>photoUI?.presentationPhotos()||[],ensureCard:ensurePresentationCard,api:localHosting?localApi:null,downloadExport:localDownloadAsset,getExportBlob:localExportBlob,getMapImage:localHosting?(card)=>localApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}):null,toast});
+let presentationReady=Promise.resolve();
+function ensurePresentation(){
+ if(presentationUI)return presentationUI;
+ let initialDesignRequest=null;
+ const designApi=localHosting?(path,data)=>{const request=localApi(path,data);if(path==='design'&&!data)initialDesignRequest=request;return request;}:null;
+ presentationUI=setupPresentationStudio({mount:$('presentationMount'),getCard:presentationCurrentCard,getPhotos:()=>photoUI?.presentationPhotos()||[],ensureCard:ensurePresentationCard,api:designApi,downloadExport:localDownloadAsset,getExportBlob:localExportBlob,getMapImage:localHosting?(card)=>localApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}):null,toast});
+ presentationReady=initialDesignRequest?initialDesignRequest.catch(()=>{}):Promise.resolve();
+ return presentationUI;
+}
+async function refreshPresentation(){const ui=ensurePresentation();await presentationReady;return ui.refresh();}
 archiveUI=localHosting?setupCardArchive({mount:$('cardArchiveMount'),getCardId:()=>localResultId,ensureCard:ensurePresentationCard,api:localApi,downloadAttachment:localDownloadAsset,toast}):null;
 cardFilesUI=setupCardFiles({mount:$('cardFilesMount'),getCardId:()=>localResultId,api:localApi,download:localDownloadAsset,toast});
 $('openPresentation').onclick=()=>tab('presentation');
@@ -252,3 +261,7 @@ if(localHosting){archiveUI.refresh();cardFilesUI.refresh();}else{$('cardFilesMou
 let macCatalogRevision=0;
 async function renderMacCards(){if(!localHosting)return;const revision=++macCatalogRevision,list=$('macCardList');list.textContent='Загружаем карточки с компьютера…';try{let cursor='0',more=true,rows=[];while(more&&rows.length<1000){const page=await localApi('cards?after='+encodeURIComponent(cursor));rows.push(...page.cards);more=page.hasMore;cursor=page.cursor;}if(revision!==macCatalogRevision)return;list.replaceChildren();for(const card of rows){const row=document.createElement('div'),link=document.createElement('a'),text=document.createElement('span');row.className='card-file-row';link.className='btn';link.href='/listing/'+card.id;link.textContent='Открыть';text.textContent=[card.title,card.metro,card.price&&rubles(card.price)+' ₽'].filter(Boolean).join(' · ');row.append(link,text);list.append(row);}if(!rows.length)list.textContent='Здесь появятся все карточки, подготовленные на Mac, включая отправленные с телефона.';}catch(error){if(revision===macCatalogRevision)list.textContent=error.message;}}
 $('macCardRefresh').onclick=renderMacCards;
+
+// Ready means the editor handlers are available; optional panels initialize on demand.
+document.documentElement.dataset.editorReady='true';
+performance.mark?.('most-editor-ready');
