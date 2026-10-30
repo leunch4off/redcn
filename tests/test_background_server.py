@@ -4,6 +4,7 @@ import importlib.util
 from pathlib import Path
 import plistlib
 import signal
+import subprocess
 import sys
 import tempfile
 import threading
@@ -87,6 +88,83 @@ class BackgroundServerTests(unittest.TestCase):
 
 
 class LaunchAgentTests(unittest.TestCase):
+    def result(self, code=0, stderr=''):
+        return subprocess.CompletedProcess([],code,'',stderr)
+
+    def test_runtime_arch_falls_back_when_native_dependencies_cannot_load(self):
+        python = Path('/tmp/project with spaces/.venv/bin/python')
+        responses = [self.result(1,'dlopen: incompatible architecture'),
+                     subprocess.CompletedProcess([],0,'x86_64\n','')]
+        with patch.object(macos_service.subprocess,'run',side_effect=responses) as run:
+            self.assertEqual(macos_service.select_runtime_arch(python,preferred='arm64'),'x86_64')
+        self.assertEqual([call.args[0][:3] for call in run.call_args_list],
+                         [['/usr/bin/arch','-arm64',str(python)],['/usr/bin/arch','-x86_64',str(python)]])
+        for call in run.call_args_list:
+            probe = call.args[0][-1]
+            self.assertIn('from PIL import Image, ImageOps',probe)
+            self.assertIn('playwright.sync_api, certifi',probe)
+            self.assertEqual(call.kwargs['timeout'],15)
+
+    def test_runtime_arch_keeps_working_preference_and_rejects_no_compatible_environment(self):
+        with patch.object(macos_service.platform,'machine',return_value='x86_64'), patch.object(macos_service.subprocess,'run',return_value=subprocess.CompletedProcess([],0,'x86_64\n','')) as run:
+            self.assertEqual(macos_service.select_runtime_arch('/tmp/python'),'x86_64')
+            self.assertEqual(run.call_count,1)
+        with patch.object(macos_service.subprocess,'run',side_effect=[subprocess.TimeoutExpired('probe',15),self.result(1)]) as run:
+            with self.assertRaisesRegex(ValueError,'Зависимости не изменены'):
+                macos_service.select_runtime_arch('/tmp/python',preferred='arm64')
+            self.assertEqual(run.call_count,2)
+
+    def test_owned_legacy_manifest_upgrades_to_arch_wrapped_runtime(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve(); path = root/'agent.plist'
+            macos_service.write_manifest(path,macos_service.manifest(root,root))
+            macos_service.assert_owned_manifest(path,root)
+            for architecture in ('x86_64','arm64'):
+                payload = macos_service.manifest(root,root,runtime_arch=architecture)
+                self.assertEqual(payload['ProgramArguments'][:5],
+                                 ['/usr/bin/arch','-'+architecture,str(root/'.venv/bin/python'),'-u',str(root/'cli/background_server.py')])
+                macos_service.write_manifest(path,payload)
+                macos_service.assert_owned_manifest(path,root)
+            payload['ProgramArguments'][4] = '/another-copy/cli/background_server.py'
+            with path.open('wb') as stream: plistlib.dump(payload,stream)
+            with self.assertRaisesRegex(ValueError,'другой копии'):
+                macos_service.assert_owned_manifest(path,root)
+
+    def test_reload_waits_for_async_unload_and_retries_only_absent_bootstrap_race(self):
+        responses = [self.result(), self.result(), self.result(), self.result(113),
+                     self.result(5,'Input/output error'), self.result(113), self.result()]
+        with patch.object(macos_service,'assert_owned_manifest') as owned, patch.object(macos_service,'launchctl',side_effect=responses) as launch, patch.object(macos_service.time,'sleep') as sleep:
+            macos_service.reload_agent('gui/501',Path('/tmp/agent.plist'))
+        owned.assert_called_once_with(Path('/tmp/agent.plist'))
+        self.assertEqual([call.args[0] for call in launch.call_args_list],
+                         ['bootout','print','print','print','bootstrap','print','bootstrap'])
+        self.assertEqual([call.args[0] for call in sleep.call_args_list],[.2,.2,.3])
+
+    def test_reload_does_not_retry_permanent_error_or_loaded_label(self):
+        scenarios = (
+            [self.result(),self.result(113),self.result(9,'Bad file descriptor')],
+            [self.result(),self.result(113),self.result(5,'Input/output error'),self.result()],
+        )
+        for responses in scenarios:
+            with self.subTest(responses=responses), patch.object(macos_service,'assert_owned_manifest'), patch.object(macos_service,'launchctl',side_effect=responses) as launch, patch.object(macos_service.time,'sleep') as sleep:
+                with self.assertRaisesRegex(ValueError,'scripts/macos-service.py status'):
+                    macos_service.reload_agent('gui/501',Path('/tmp/agent.plist'))
+                self.assertEqual(sum(call.args[0]=='bootstrap' for call in launch.call_args_list),1)
+                self.assertEqual(sum(call.args[0]=='bootout' for call in launch.call_args_list),1)
+                sleep.assert_not_called()
+
+    def test_reload_attempts_and_unload_wait_are_bounded(self):
+        responses = [self.result(),self.result(113),self.result(5),self.result(113),
+                     self.result(5),self.result(113),self.result(5),self.result(113)]
+        with patch.object(macos_service,'assert_owned_manifest'), patch.object(macos_service,'launchctl',side_effect=responses) as launch, patch.object(macos_service.time,'sleep'):
+            with self.assertRaisesRegex(ValueError,'launchd не принял'):
+                macos_service.reload_agent('gui/501',Path('/tmp/agent.plist'))
+            self.assertEqual(sum(call.args[0]=='bootstrap' for call in launch.call_args_list),3)
+        with patch.object(macos_service,'assert_owned_manifest'), patch.object(macos_service,'launchctl',return_value=self.result()) as launch, patch.object(macos_service.time,'monotonic',side_effect=[0,1,3]), patch.object(macos_service.time,'sleep'):
+            with self.assertRaisesRegex(ValueError,'ещё завершает'):
+                macos_service.reload_agent('gui/501',Path('/tmp/agent.plist'),timeout=2)
+            self.assertFalse(any(call.args[0]=='bootstrap' for call in launch.call_args_list))
+
     def test_manifest_contains_literal_project_python_and_no_shell_or_browser(self):
         root = Path('/tmp/project with spaces').resolve(); home = Path('/tmp/user')
         manifest = macos_service.manifest(root,home)

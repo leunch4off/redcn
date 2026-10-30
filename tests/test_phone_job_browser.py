@@ -136,5 +136,33 @@ class PhoneJobBrowserAcceptance(unittest.TestCase):
         self.assertEqual(self.page.locator('#phoneJobMessage').text_content(),'')
         self.assertEqual(self.page.locator('#phoneImportUrl').input_value(),'')
 
+    def test_partial_photos_are_not_averaged_and_retry_prepares_existing_card(self):
+        acceptance.PhoneBrowserAcceptance.connect(self)
+        first='a'*32;second='b'*32;imports=[];prepares=[]
+        partial={'state':'done','partial':True,'message':'Текст готов, фотографии подготовлены частично.',
+            'result_id':self.card_id,'progress':{'stage':'done','elapsedSeconds':5,
+                'stageElapsedSeconds':0,'historyEligible':False,'estimateSource':'none','sampleCount':0}}
+        complete={'state':'done','partial':False,'message':'Фотографии готовы','result_id':self.card_id,
+            'progress':{'stage':'done','elapsedSeconds':12,'stageElapsedSeconds':0,
+                'estimateSource':'history','sampleCount':1,'estimateSeconds':12}}
+        def start_import(route):
+            imports.append(True);route.fulfill(status=202,content_type='application/json',body=json.dumps({'job_id':first}))
+        def start_prepare(route):
+            prepares.append(True);route.fulfill(status=202,content_type='application/json',body=json.dumps({'job_id':second}))
+        self.page.route('**/api/phone/import',start_import)
+        self.page.route('**/api/phone/cards/'+self.card_id+'/prepare',start_prepare)
+        self.page.route('**/api/phone/jobs/'+first,lambda route:route.fulfill(status=200,content_type='application/json',body=json.dumps(partial,ensure_ascii=False)))
+        self.page.route('**/api/phone/jobs/'+second,lambda route:route.fulfill(status=200,content_type='application/json',body=json.dumps(complete,ensure_ascii=False)))
+        self.page.locator('#phoneTabs [data-phone-view="import"]').click()
+        self.page.locator('#phoneImportUrl').fill('https://www.cian.ru/rent/flat/300691182/')
+        self.page.locator('#phoneImportSubmit').click()
+        self.page.locator('#phoneJobRestart').wait_for(state='visible')
+        self.assertIn('частично',self.page.locator('#phoneJobTitle').inner_text())
+        self.assertIn('не включается',self.page.locator('#phoneJobEstimate').inner_text())
+        self.page.locator('#phoneJobRestart').click()
+        self.page.wait_for_function("document.querySelector('#phoneJobTitle').textContent==='Готово на Mac'")
+        self.assertEqual(len(imports),1);self.assertEqual(len(prepares),1)
+        self.assertTrue(self.page.locator('#phoneJobRestart').is_hidden())
+
 
 if __name__=='__main__':unittest.main()

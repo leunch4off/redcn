@@ -110,6 +110,20 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
 
+    def photo_outcome(result):
+        processing=result.get('photoProcessing') if isinstance(result.get('photoProcessing'),dict) else {}
+        status=result.get('mediaStatus','pending')
+        download_failed=processing.get('downloadFailed',0)
+        failed=processing.get('failed',0)
+        skipped=processing.get('skipped',0)
+        warnings=[]
+        if status!='ready' or download_failed:
+            warnings.append('Часть фотографий не загрузилась на Mac'+(': '+str(download_failed) if download_failed else '')+'.')
+        if failed:warnings.append('Не удалось автоматически обработать фото: '+str(failed)+'.')
+        if skipped:warnings.append('Не все фото успели пройти автоматическую проверку: '+str(skipped)+'.')
+        learn=status=='ready' and not any((download_failed,failed,skipped))
+        return learn,{'mediaStatus':status,'photoProcessing':processing,'partial':not learn,'warnings':warnings}
+
     def run_import(job_id, params, cancel):
         def report(message, **fields):
             with lock:
@@ -118,10 +132,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         connection = None
         result_id=None
         success=False
+        learn=False
         try:
             report('Проверяем общий генератор Node.js до запуска Chrome…',stage='preflight')
             from node_runtime import resolve_node
             resolve_node()
+            report('Генератор доступен. Проверяем библиотеку обработки фотографий на Mac…',stage='preflight')
+            photo_store.pillow()
             if cancel.is_set():raise ValueError('Импорт отменён')
             connection = redcn.open_cache(directory)
             listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
@@ -140,8 +157,9 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             cache_photos(directory,result,report,cancel)
             report('Сохраняем карточку и подготовленные фотографии…',stage='save')
             merge_prepared_media(directory,result_id,result)
+            learn,outcome=photo_outcome(result)
             success=True
-            with lock: jobs[job_id].update(state='done', message='Готово', result_id=result_id)
+            with lock: jobs[job_id].update(state='done',message='Готово' if learn else 'Текст готов, подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
         except Exception as error:
             if result_id:
                 try:
@@ -152,7 +170,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 except (OSError,ValueError,sqlite3.Error):pass
             with lock: jobs[job_id].update(state='error', message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
         finally:
-            with lock:jobs[job_id]['tracker'].finish(success)
+            with lock:jobs[job_id]['tracker'].finish(success,learn=learn)
             if connection is not None:connection.close()
 
     def start_import(params):
@@ -200,21 +218,25 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                          'tracker':JobProgress(timing_history,'prepare')}
         def run():
             success=False
+            learn=False
             def report(message, **fields):
                 with lock:
                     jobs[job_id].update(message=message)
                     jobs[job_id]['tracker'].update(message,**fields)
             try:
+                report('Проверяем библиотеку обработки фотографий на Mac…',stage='photos')
+                photo_store.pillow()
                 cache_photos(directory,result,report=report,cancel=cancel)
                 if cancel.is_set():raise ValueError('Загрузка отменена')
                 report('Сохраняем подготовленные фотографии…',stage='save')
                 merge_prepared_media(directory,result_id,result)
+                learn,outcome=photo_outcome(result)
                 success=True
-                with lock:jobs[job_id].update(state='done',message='Фотографии готовы',result_id=result_id)
+                with lock:jobs[job_id].update(state='done',message='Фотографии готовы' if learn else 'Подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
             except Exception as error:
                 with lock:jobs[job_id].update(state='error',message=str(error).strip() or 'Подготовка фото прервана: '+type(error).__name__)
             finally:
-                with lock:jobs[job_id]['tracker'].finish(success)
+                with lock:jobs[job_id]['tracker'].finish(success,learn=learn)
         threading.Thread(target=run,daemon=True).start();return job_id
 
     class Handler(BaseHTTPRequestHandler):

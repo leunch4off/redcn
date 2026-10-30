@@ -134,6 +134,7 @@ class JobProgress:
         self.seen = [self.current]
         self.awaiting_user = False
         self.wait_limit = None
+        self.history_eligible = None
         self.estimate = history.estimate(key)
 
     def set_profile(self, key):
@@ -172,18 +173,20 @@ class JobProgress:
             if type(total) is int and total >= 0:
                 self.counts['total'] = total
 
-    def finish(self, success):
+    def finish(self, success, learn=True):
         with self.lock:
             if self.state != 'running':
                 return
             self.stopped = self.clock()
             self.durations[self.current] = self.durations.get(self.current, 0) + self.stopped - self.stage_started
             self.state = 'done' if success else 'error'
+            self.history_eligible = bool(success and learn)
             if success:
                 if self.current not in self.completed_stages:
                     self.completed_stages.append(self.current)
-                self.history.record(self.key, self.stopped - self.started, self.durations)
-                self.estimate = self.history.estimate(self.key)
+                if learn:
+                    self.history.record(self.key, self.stopped - self.started, self.durations)
+                    self.estimate = self.history.estimate(self.key)
 
     def snapshot(self):
         with self.lock:
@@ -211,6 +214,7 @@ class JobProgress:
                 'message': self.message, 'state': self.state,
                 'startedAt': self.started_at, 'serverTime': self.wall_clock(),
                 'profile': self.key,
+                'historyEligible': self.history_eligible,
                 'elapsedSeconds': round(elapsed, 1), 'stageElapsedSeconds': round(stage_elapsed, 1),
                 'awaitingUser': self.awaiting_user and self.state == 'running',
                 'maxTotalSeconds': self.wait_limit, 'remainingSeconds': remaining,

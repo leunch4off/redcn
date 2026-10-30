@@ -13,6 +13,7 @@ import job_progress
 import local_server
 import node_runtime
 import phone_relay
+import photo_store
 import redcn
 import browser_import
 
@@ -136,6 +137,39 @@ class ImportJobProgressTests(unittest.TestCase):
         self.assertIsNone(job['progress']['estimateSeconds'])
         self.assertEqual(self.server.latest_job()['id'],job_id)
         self.assertFalse((self.directory/'import-timings.json').exists())
+
+    def test_photo_runtime_failure_is_reported_before_browser_is_called(self):
+        with patch.object(node_runtime,'resolve_node',return_value='/fixture/node'),patch.object(photo_store,'pillow',side_effect=ValueError('Несовместимая архитектура Pillow')),patch.object(redcn,'load_listing') as load:
+            job_id=self.server.start_import({'url':URL,'loader':'chrome'})
+            job=self.wait_job(job_id)
+        load.assert_not_called()
+        self.assertEqual(job['state'],'error')
+        self.assertEqual(job['progress']['stage'],'preflight')
+        self.assertIn('Pillow',job['message'])
+        self.assertFalse(job['progress']['historyEligible'])
+        self.assertFalse((self.directory/'import-timings.json').exists())
+
+    def test_twenty_failed_photos_keep_text_but_never_train_fast_success_average(self):
+        photos=['https://images.cdn-cian.ru/images/partial-'+str(i)+'.jpg' for i in range(20)]
+        def partial(directory,result,report=None,cancel=None):
+            result.update(media=[{'sourceUrl':url,'error':'Не удалось загрузить фото'} for url in photos],
+                mediaStatus='partial',photoProcessing={'total':20,'checked':0,'cropped':0,
+                    'review':0,'failed':0,'skipped':20,'downloadFailed':20})
+        with patch.object(node_runtime,'resolve_node',return_value='/fixture/node'),patch.object(redcn,'load_listing',return_value={'url':URL,'text':'Квартира 54 м². 80 000 руб.','images':photos,'cached':True}),patch.object(redcn,'generate',return_value={'fields':{'photos':photos},'titles':['标题'],'body':'正文','tags':'#租房'}),patch.object(phone_relay,'cache_photos',side_effect=partial):
+            job_id=self.server.start_import({'url':URL,'loader':'chrome'})
+            job=self.wait_job(job_id)
+        self.assertEqual(job['state'],'done')
+        self.assertTrue(job['partial'])
+        self.assertEqual(job['mediaStatus'],'partial')
+        self.assertTrue(job['warnings'])
+        self.assertIn('не полностью',job['message'])
+        self.assertFalse(job['progress']['historyEligible'])
+        self.assertEqual(job['progress']['sampleCount'],0)
+        self.assertIsNone(job['progress']['estimateSeconds'])
+        self.assertFalse((self.directory/'import-timings.json').exists())
+        stored=local_server.read_result(self.directory,job['result_id'])
+        self.assertEqual(stored['body'],'正文')
+        self.assertEqual(stored['photoProcessing']['downloadFailed'],20)
 
     def test_running_snapshot_advances_and_cached_success_has_separate_history(self):
         entered,release=threading.Event(),threading.Event()
