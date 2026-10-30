@@ -3110,8 +3110,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/phone.html",
+        "web/phone.css",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-217",
@@ -3122,8 +3128,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/pwa-install.mjs",
+        "web/manifest.webmanifest",
+        "tests/pwa-install.test.mjs",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-218",
@@ -3134,8 +3147,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py",
+        "web/qr-code.mjs",
+        "tests/test_phone_relay.py",
+        "tests/qr-code.test.mjs",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-219",
@@ -3146,8 +3166,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/local_server.py",
+        "web/phone.mjs",
+        "tests/test_phone_relay.py",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-220",
@@ -3158,8 +3185,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-221",
@@ -3170,8 +3202,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py",
+        "web/phone.mjs",
+        "tests/test_phone_relay.py",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-222",
@@ -3182,8 +3221,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "web/phone-connection.mjs",
+        "cli/phone_relay.py",
+        "tests/test_phone_relay.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-223",
@@ -3194,8 +3240,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/styles.css",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-224",

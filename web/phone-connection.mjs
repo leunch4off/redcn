@@ -27,7 +27,6 @@ export function setupPhoneConnection({local,api,toast,getProfile}){
     pairBox.classList.toggle('hidden',!data.pairUrls?.length);
     address.replaceChildren();
     for(const value of data.pairUrls||[]){const option=make('option',new URL(value).host);option.value=value;address.append(option);}
-    const ip=(data.pairUrls||[]).find(value=>/^\d+\./.test(new URL(value).hostname));if(ip)address.value=ip;
     if(data.pairUrls?.length){expires.textContent='Одноразовое подключение, действует до '+new Date(data.pairExpires*1000).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'.';showQr();}
     else qr.replaceChildren();
   }

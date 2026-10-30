@@ -79,6 +79,10 @@ class PhoneBrowserAcceptance(unittest.TestCase):
         self.page.wait_for_function("document.getElementById('phoneBody').textContent.includes('Mac 已更新')",timeout=15000)
         self.assertTrue(self.page.locator('#phonePhotoPosition').inner_text().startswith('2 /'))
         self.page.wait_for_function("document.getElementById('phonePhotos').scrollLeft>=document.getElementById('phonePhotos').clientWidth*.8")
+        self.page.locator('#phoneOpenPhoto').click()
+        self.page.locator('#phonePhotoViewer').wait_for(state='visible')
+        self.page.wait_for_function("document.getElementById('phoneViewerImage').naturalWidth>0")
+        self.page.locator('#phoneViewerClose').click()
         asset=self.page.locator('#phoneDownloadPhoto').get_attribute('href')
         response=self.context.request.get(self.base+asset)
         self.assertEqual(response.status,200);self.assertIn('attachment',response.headers['content-disposition'])
@@ -116,6 +120,25 @@ class PhoneBrowserAcceptance(unittest.TestCase):
             self.assertGreaterEqual(self.page.locator('#metro').evaluate('el=>parseFloat(getComputedStyle(el).fontSize)'),16)
             self.assertGreaterEqual(self.page.locator('#generate').bounding_box()['height'],44)
             self.assert_mobile_fit()
+        finally:
+            self.controller.shutdown();thread.join()
+
+    def test_mac_generation_and_text_edits_sync_without_duplicate_cards(self):
+        thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
+        try:
+            with patch.object(self.controller.phone_relay,'status',return_value={'enabled':True,'port':self.phone.server_port,'urls':[]}):
+                self.page.goto('http://127.0.0.1:'+str(self.controller.server_port))
+                self.page.wait_for_function("document.getElementById('phoneConnectionStatus').textContent.includes('включён')")
+                self.page.locator('#price').fill('90000');self.page.locator('#area').fill('55')
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000):
+                    self.page.locator('#generate').click()
+                self.page.wait_for_function("document.getElementById('resultLink').getAttribute('href')?.startsWith('/listing/')")
+                result_id=self.page.locator('#resultLink').get_attribute('href').rsplit('/',1)[-1]
+                self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),2)
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000):
+                    self.page.locator('#output').fill('运营人员修订后的最终中文说明。')
+                self.assertEqual(local_server.read_result(self.directory,result_id)['body'],'运营人员修订后的最终中文说明。')
+                self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),2)
         finally:
             self.controller.shutdown();thread.join()
 
