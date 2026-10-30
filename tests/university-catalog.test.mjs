@@ -40,6 +40,13 @@ test('search finds Chinese/Russian aliases and address without truncating the fu
   assert(searchUniversities('ВШЭ',{includeCampuses:false,limit:100}).every(row=>row.kind==='university'));
   assert(searchUniversities('ВШЭ',{limit:1}).length<=1);
 });
+test('exact university aliases rank before longer abbreviations and substring matches',()=>{
+  assert.equal(searchUniversities('МГУ',{includeCampuses:false,limit:10})[0]?.id,'msu');
+  assert.equal(searchUniversities('мгу',{includeCampuses:false,limit:10})[0]?.id,'msu');
+  assert.equal(searchUniversities('ВШЭ',{includeCampuses:false,limit:10})[0]?.id,'hse');
+  assert.equal(searchUniversities('ВШЭ Таллинская',{limit:10})[0]?.id,resolveCampus('ВШЭ Таллинская')?.id);
+  assert.equal(resolveUniversity('РГУ'),null);assert.equal(resolveUniversity('МГУП'),null);
+});
 test('rules and counts separate institutions, teaching locations and addresses',()=>{
   const stats=universityStats(),rules=universityRules();
   assert.equal(stats.universities,UNIVERSITY_CATALOG.universities.length);assert.equal(stats.locations,UNIVERSITY_CATALOG.campuses.length);
