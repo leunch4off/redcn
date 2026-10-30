@@ -82,7 +82,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
-    identity = {'app':'redcn', 'protocol':3, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':4, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
@@ -185,6 +185,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                         result=photo_store.load_photo(directory,data.get('url',''),data.get('refresh') is True)
                     elif data.get('action')=='crop':
                         result=photo_store.crop_photo(directory,data.get('id'),data.get('margins'))
+                    elif data.get('action')=='analyze':
+                        result=photo_store.analyze_photo(directory,data.get('id'))
                     elif data.get('action')=='attach':
                         result=photo_store.attach_photo(directory,data.get('url',''),data.get('data'))
                     else: raise ValueError('Неверное действие с фотографией')
@@ -220,7 +222,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     result_id = save_result(directory,result,data.get('result_id'))
                     self.respond(200,{'result_id':result_id});return
                 self.respond(404,{'error':'Не найдено'})
-            except (ValueError,TypeError,OSError) as error:
+            except (ValueError,TypeError,OSError,redcn.subprocess.SubprocessError) as error:
                 self.respond(400,{'error':str(error)})
 
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
@@ -231,7 +233,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 def matching_server(directory, port, browser_channel):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *_args, **_kwargs): return None
-    expected = {'app':'redcn','protocol':3,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    expected = {'app':'redcn','protocol':4,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:

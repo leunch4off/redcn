@@ -146,20 +146,47 @@ def recognize(image,directory):
 
 
 def watermark_boxes(rows,allow_id_footer=False):
+    # OCR may split a brand into several adjacent words. Join only nearby
+    # tokens on the same line, keeping their measured union as evidence.
+    safe_rows=[]
+    for row in rows if isinstance(rows,list) else []:
+        if not isinstance(row,dict):continue
+        try:
+            numbers={k:float(row[k]) for k in ('x','y','width','height','confidence')}
+            if not all(math.isfinite(v) for v in numbers.values()):continue
+            safe_rows.append({**row,**numbers})
+        except (KeyError,TypeError,ValueError):continue
+    rows=safe_rows
+    joined=[]
+    for first in rows:
+        try:
+            line=[row for row in rows if abs(float(row['y'])-float(first['y']))<=max(float(first['height']),float(row['height']))*.35]
+            line.sort(key=lambda row:float(row['x']))
+            for start in range(len(line)):
+                group=[line[start]]
+                for row in line[start+1:start+4]:
+                    previous=group[-1]
+                    if float(row['x'])-(float(previous['x'])+float(previous['width']))>max(float(row['height']),float(previous['height']))*1.8:break
+                    group.append(row)
+                    x=min(float(v['x']) for v in group);y=min(float(v['y']) for v in group)
+                    joined.append({'text':' '.join(str(v.get('text','')) for v in group),'confidence':min(float(v.get('confidence',0)) for v in group),'x':x,'y':y,'width':max(float(v['x'])+float(v['width']) for v in group)-x,'height':max(float(v['y'])+float(v['height']) for v in group)-y})
+        except (KeyError,TypeError,ValueError):continue
     result=[]
-    for row in rows:
+    for row in [*rows,*joined]:
         text=re.sub(r'[^a-zа-я]','',str(row.get('text','')).lower()).translate(str.maketrans({'с':'c','і':'i','а':'a','н':'h'}))
         original=str(row.get('text','')).lower()
         footer=allow_id_footer and re.search(r'\bid\s*[:#]?\s*\d{4,}',original) and float(row.get('x',0))>.45 and float(row.get('y',0))>.65 and float(row.get('confidence',0))>=.8
         if not (re.search(r'ци[аa][нh]|c[i1l][aа][nп]|сian',original) or 'cian' in text or footer):continue
         if float(row.get('confidence',0))<.45:continue
-        box={k:float(row[k]) for k in ('x','y','width','height')}
-        if not all(math.isfinite(v) and 0<=v<=1 for v in box.values()):continue
+        try:box={k:float(row[k]) for k in ('x','y','width','height')}
+        except (KeyError,TypeError,ValueError):continue
+        if not all(math.isfinite(v) and 0<=v<=1 for v in box.values()) or box['width']<=0 or box['height']<=0 or box['x']+box['width']>1.00001 or box['y']+box['height']>1.00001:continue
         if footer:
             # CIAN's pin + brand sit above its ID line; scale the exclusion
             # zone with the measured text height instead of fixed pixels.
             box['y']=max(0,box['y']-3.3*box['height']);box['height']=min(1-box['y'],box['height']*2)
-        result.append({**box,'text':row['text'],'confidence':row.get('confidence'),'method':'cian-id-footer' if footer else 'brand-text'})
+        candidate={**box,'text':row['text'],'confidence':row.get('confidence'),'method':'cian-id-footer' if footer else 'brand-text'}
+        if not any(all(abs(candidate[k]-other[k])<.001 for k in ('x','y','width','height')) for other in result):result.append(candidate)
     return result
 
 
@@ -187,14 +214,17 @@ def propose_crop(width,height,boxes):
     # Padding covers the pin/icon adjacent to or above the OCR text.
     for box in boxes:
         x,y,w,h=(box[k] for k in ('x','y','width','height'))
-        vertical_pad=max(.02,h*.8);horizontal_pad=max(.035,w*.25)
+        # ID footer boxes already include the icon above the text. Avoid
+        # adding the icon height a second time; keep a small safety gap.
+        vertical_pad=max(.008,h*.3) if box.get('method')=='cian-id-footer' else max(.025,h*1.25)
+        horizontal_pad=max(.035,w*.25)
         choices={'bottom':(1-y+vertical_pad)*100,'top':(y+h+vertical_pad)*100,'right':(1-x+horizontal_pad)*100,'left':(x+w+horizontal_pad)*100}
         edge,value=min(choices.items(),key=lambda v:v[1])
         if value>28:return {'status':'review','message':'Метка далеко от края: автоматическая обрезка уберёт слишком много кадра. Нужна проверка.','boxes':boxes}
         margins[edge]=max(margins[edge],round(value,4))
     try: rect=crop_rect(width,height,margins)
     except ValueError as error:return {'status':'review','message':str(error),'boxes':boxes}
-    return {'status':'detected','margins':margins,'rect':rect,'boxes':boxes}
+    return {'status':'detected','margins':margins,'rect':rect,'boxes':boxes,'method':'normalized-ocr-edge','retainedArea':round((rect[2]-rect[0])*(rect[3]-rect[1])/(width*height),4)}
 
 
 def crop_photo(directory,digest,margins=None):
@@ -216,7 +246,28 @@ def crop_photo(directory,digest,margins=None):
             try: rows,_=recognize(cropped,directory);remaining=watermark_boxes(rows,allow_id_footer);verification='mark-remains' if remaining else 'ocr-checked'
             except (OSError,ValueError,subprocess.SubprocessError):verification='not-checked'
         buffer=io.BytesIO();cropped.save(buffer,'JPEG',quality=95,subsampling=0)
-        metadata=_save(directory,buffer.getvalue(),'image/jpeg',{'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification})
+        metadata=_save(directory,buffer.getvalue(),'image/jpeg',{'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification,'cropMethod':'normalized-ocr-edge' if engine else 'manual','retainedArea':round(cropped.width*cropped.height/(image.width*image.height),4)})
         cropped.close()
         return {**metadata,'status':'review' if verification in ('mark-remains','not-checked') else 'cropped','boxes':boxes,'remaining':remaining,'message': 'В копии ещё распознаётся метка: проверьте кадр.' if remaining else 'Копия кадрирована; оригинал сохранён.'}
     finally:image.close()
+
+
+def analyze_photo(directory,digest):
+    """Analyze the verified original; suggested objects never become facts here."""
+    import vision_photo
+    content,_,original=asset(directory,digest)
+    if original.get('kind')!='original':raise ValueError('Распознавание выполняется по оригиналу')
+    folder=Path(directory)/'vision';folder.mkdir(parents=True,exist_ok=True)
+    model=vision_photo.os.environ.get('REDCN_VISION_MODEL','').strip()
+    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+model.encode()).hexdigest()[:16]
+    cache=folder/(digest+'-'+source_hash+'.json')
+    if cache.exists():
+        try:return {**json.loads(cache.read_text()),'cached':True}
+        except (OSError,ValueError):pass
+    image=open_photo(content)
+    try:result={**vision_photo.analyze_image(image,directory),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
+    finally:image.close()
+    with tempfile.NamedTemporaryFile(mode='w',dir=folder,encoding='utf-8',delete=False) as stream:
+        json.dump(result,stream,ensure_ascii=False);temp=Path(stream.name)
+    temp.replace(cache)
+    return result

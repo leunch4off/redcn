@@ -62,7 +62,7 @@ class ImportTests(unittest.TestCase):
         page, context = MagicMock(), MagicMock()
         page.url=URL;page.is_closed.return_value=False
         snapshot={'text':TEXT,'fallback':TEXT,'body':TEXT,'title':'Аренда квартиры','metadata':'','images':[]}
-        page.evaluate.return_value=snapshot;context.pages=[page]
+        page.evaluate.side_effect=lambda script: {'top':100,'height':900,'bottom':True} if script==browser_import.SCROLL else snapshot;context.pages=[page];context.new_page.return_value=page
         pw=MagicMock();pw.chromium.launch_persistent_context.return_value=context
         api=MagicMock();api.sync_playwright.return_value.__enter__.return_value=pw
         api.Error=type('FakeBrowserError',(Exception,),{});api.TimeoutError=type('FakeBrowserTimeout',(api.Error,),{})
@@ -84,9 +84,9 @@ class ImportTests(unittest.TestCase):
 
     def test_pending_blank_navigation_is_waited_for_not_rejected_as_bad_url(self):
         page,context,pw,api=MagicMock(),MagicMock(),MagicMock(),MagicMock()
-        page.url='about:blank';page.is_closed.return_value=False;context.pages=[page]
+        page.url='about:blank';page.is_closed.return_value=False;context.pages=[page];context.new_page.return_value=page
         page.wait_for_timeout.side_effect=lambda _:setattr(page,'url',URL)
-        page.evaluate.return_value={'text':TEXT,'fallback':TEXT,'body':TEXT,'title':'Аренда квартиры','metadata':'','images':[]}
+        page.evaluate.side_effect=lambda script: {'top':100,'height':900,'bottom':True} if script==browser_import.SCROLL else {'text':TEXT,'fallback':TEXT,'body':TEXT,'title':'Аренда квартиры','metadata':'','images':[]}
         pw.chromium.launch_persistent_context.return_value=context
         api.sync_playwright.return_value.__enter__.return_value=pw
         api.Error=type('FakeBrowserError',(Exception,),{});api.TimeoutError=type('FakeBrowserTimeout',(api.Error,),{})

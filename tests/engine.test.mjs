@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DICTIONARY,DEFAULT_PREFS,generateListing,extractFacts,translate,wan} from '../web/engine.mjs';
 const property={rooms:'2',layout:'euro2',style:'detailed',price:'70000',deposit:'35000',area:'39.3',floor:'3',floors:'17',occupants:'4',registration:'assist',features:['bed','ac','dishwasher']};
-test('separate titles and body, exact money and sharing budget',()=>{
-  const r=generateListing(property);assert.equal(r.titles.length,3);assert.match(r.titles[0],/7W/);assert.match(r.body,/35,000₽/);assert.match(r.body,/4人：约1.75W/);assert.match(r.body,/一室一厅/);assert.match(r.body,/洗碗机/);assert.doesNotMatch(r.body,/冰箱|大学通勤|35–50/);
+test('separate titles and body, exact money and no unsupported sharing budget',()=>{
+  const r=generateListing(property);assert.equal(r.titles.length,3);assert.match(r.titles[0],/7W/);assert.match(r.body,/35,000₽/);assert.doesNotMatch(r.body,/合租预算/);assert.match(r.body,/一室一厅/);assert.match(r.body,/洗碗机/);assert.doesNotMatch(r.body,/冰箱|大学通勤|35–50/);
 });
 test('route ranges and modes stay with their own station',()=>{
   const r=generateListing({...property,transit:'Прокшино | 6–10 | walk | 1\nФилатов Луг | 8 | bus',universities:'МГУ | 35–50 | public'});
@@ -12,10 +12,10 @@ test('route ranges and modes stay with their own station',()=>{
 test('no times invented for university or metro',()=>{
   const r=generateListing({...property,transit:'Румянцево',universities:'РУДН'});assert.match(r.body,/时间待确认/);assert.doesNotMatch(r.body,/15–20|25–30|红线/);
 });
-test('registration can be removed or scoped; never promise visa',()=>{
+test('studio arrival registration assistance is always present and can be scoped',()=>{
   const r=generateListing({...property,registration:'provided',registrationMonths:'6',registrationPeople:'3'});
-  assert.match(r.body,/免费提供临时居住登记（6个月），最多3人/);assert.doesNotMatch(r.body,/落地签/);
-  assert.doesNotMatch(generateListing({...property,registration:'none'}).body,/临时居住登记/);
+  assert.match(r.body,/抵达登记（临时居住登记）：提供办理协助（6个月），最多3人/);assert.doesNotMatch(r.body,/落地签/);
+  assert.match(generateListing({...property,registration:'none'}).body,/抵达登记（临时居住登记）/);
 });
 test('no irrelevant university tags',()=>{const r=generateListing(property);assert.doesNotMatch(r.tags,/莫大|国立大学/);assert.match(r.tags,/#齐工作室/);});
 test('custom dictionary special chars, overlapping terms and no recursive replacement',()=>{

@@ -29,3 +29,17 @@ export async function photoZip(files){
   const end=new Uint8Array(22),v=new DataView(end.buffer);v.setUint32(0,0x06054b50,true);v.setUint16(8,files.length,true);v.setUint16(10,files.length,true);v.setUint32(12,central.reduce((n,c)=>n+c.length,0),true);v.setUint32(16,offset,true);
   return new Blob([...local,...central,end],{type:'application/zip'});
 }
+
+// One object may be visible in several photographs. Keep the largest confirmed
+// per-photo count instead of adding duplicate views of the same furniture.
+export function confirmedPhotoFeatures(items=[]){
+ const features=new Set(),featureCounts={},photoEvidence=[];
+ for(const item of items){if(!item.selected||!item.analysis)continue;
+  for(const row of item.analysis.candidates||[]){const confirmation=item.confirmed?.[row.id];if(!confirmation)continue;
+   features.add(row.id);const count=confirmation.count;
+   if(Number.isInteger(count)&&count>=1&&count<=12)featureCounts[row.id]=Math.max(featureCounts[row.id]||0,count);
+   photoEvidence.push({id:row.id,sourceUrl:item.url,photoId:item.analysis.originalId,originalId:item.analysis.originalId,engine:item.analysis.engine,status:'confirmed',count:Number.isInteger(count)?count:null,confidence:row.confidence,evidence:row.evidence||[]});
+  }
+ }
+ return {features:[...features],featureCounts,photoEvidence,replaceAll:true};
+}

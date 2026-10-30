@@ -5,6 +5,7 @@ import {setupInsights} from './insights-ui.mjs';
 import {setupHistory} from './history-ui.mjs';
 import {photoSources} from './media-core.mjs';
 import {setupPhotos} from './photo-ui.mjs';
+import {getGeoStats,searchGeo} from './geo-catalog.mjs';
 import {setupRelated} from './related-ui.mjs';
 
 const $=id=>document.getElementById(id);
@@ -12,17 +13,18 @@ const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fa
 let toastTimer;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Не удалось сохранить: хранилище браузера заполнено или недоступно. Экспортируйте копию.');return false;}}
-const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission','phraseNotes','city','address','renovation','windows','bathroom','combinedWcs','separateWcs','buildingYear','buildingType','buildingSeries','floorType','entrances','heating','emergency','ceiling','balconies','loggias','prepayMonths','contractMonths','leaseTerm','registrationPolicy','petPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','sourceDescription','railways','lift','latitude','longitude'];
+const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission','phraseNotes','city','address','renovation','windows','bathroom','combinedWcs','separateWcs','buildingYear','buildingType','buildingSeries','floorType','entrances','heating','emergency','ceiling','balconies','loggias','prepayMonths','contractMonths','leaseTerm','registrationPolicy','childrenPolicy','petPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','sourceDescription','railways','lift','latitude','longitude'];
 const defaults={style:'compact',layout:'classic',utilities:'unknown',registration:'assist',support:true,uniMode:'步行',seller:'unknown',audience:'general'};
 const storedRules=read('most-rules',null);
 let rules=read('most-rules-version',0)>=2&&storedRules?storedRules:{...DICTIONARY,...storedRules};
 if(read('most-rules-version',0)<2&&write('most-rules',rules))write('most-rules-version',2);
 if(read('most-rules-version',0)<3){for(const key of ['Москва','СВАО','район Лианозово','р-н Лианозово','Лианозово','Алтуфьево','Угличская ул.','Угличская улица','Марк','Бескудниково','Евроремонт','На улицу и двор','совмещенный','Монолитный','Железобетонные','Индивидуальный проект','Центральное','в Лианозовском парке'])if(!Object.hasOwn(rules,key))rules[key]=DICTIONARY[key];if(write('most-rules',rules))write('most-rules-version',3);}
+if(read('most-rules-version',0)<4){for(const [key,value] of Object.entries(DICTIONARY))if(!Object.hasOwn(rules,key))rules[key]=value;if(write('most-rules',rules))write('most-rules-version',4);}
 let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
 let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
 let current=null,titleIndex=0,currentTitles=[],sourceAudit=null,featureCounts={},historyUI=null;
 let copyVariant=0,localResultId=null,localJob=null;
-let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null,photoUI=null,relatedUI=null,relatedOffers=[],photoEdits={};
+let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null,photoUI=null,relatedUI=null,relatedOffers=[],photoEdits={},photoEvidence=[],photoFeatureBaseline={};
 const hosting=document.querySelector('meta[name="redcn-hosting"]')?.content;
 const localHosting=hosting==='local',staticHosting=hosting==='github-pages'||localHosting;
 let wordCustom=read('most-word-custom',[]);if(!Array.isArray(wordCustom))wordCustom=[];
@@ -33,11 +35,11 @@ for(const group of Object.keys(groupNames)){
   const heading=document.createElement('div');heading.className='feature-group';heading.textContent=groupNames[group];$('featureGrid').append(heading);
   for(const [id,,label,key] of FEATURES.filter(x=>x[3]===group)){
     const wrapper=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.id='feature-'+id;
-    const quantity=document.createElement('input');quantity.type='number';quantity.min='1';quantity.max='50';quantity.className='feature-qty';quantity.id='feature-qty-'+id;quantity.placeholder='шт.';quantity.setAttribute('aria-label','Количество: '+label);quantity.oninput=()=>{if(quantity.value)featureCounts[id]=quantity.value;else delete featureCounts[id];saveDraft();};wrapper.append(input,document.createTextNode(label),quantity);$('featureGrid').append(wrapper);
+    const quantity=document.createElement('input');quantity.type='number';quantity.min='1';quantity.max='50';quantity.className='feature-qty';quantity.id='feature-qty-'+id;quantity.placeholder='шт.';quantity.setAttribute('aria-label','Количество: '+label);quantity.oninput=()=>{if(photoFeatureBaseline[id])photoFeatureBaseline[id].count=quantity.value;if(quantity.value)featureCounts[id]=quantity.value;else delete featureCounts[id];saveDraft();};wrapper.append(input,document.createTextNode(label),quantity);$('featureGrid').append(wrapper);
   }
 }
-function snapshot(){const value={titleVariant,copyVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
-function populate(value){localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};sourceAudit=v.sourceAudit||null;featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();}
+function snapshot(){const value={titleVariant,copyVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,photoEvidence:[...photoEvidence],photoFeatureBaseline:{...photoFeatureBaseline},featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
+function populate(value){localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
 function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
 function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge')insightsUI?.renderKnowledge();if(name==='analytics')insightsUI?.renderAnalytics();if(name==='history')historyUI?.render();}
@@ -60,7 +62,7 @@ function renderTagReasons(suggestions=[]){$('tagReasons').replaceChildren();for(
 function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$('tagCatalog').replaceChildren();for(const [tag,ru] of TAG_CATALOG.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q))){const button=document.createElement('button');button.className='btn word-result';button.textContent='#'+tag+' — '+ru;button.onclick=()=>{const tags=new Set($('tags').value.split(/\s+/).filter(Boolean));tags.add('#'+tag);$('tags').value=[...tags].join(' ');saveDraft();};$('tagCatalog').append(button);}}
 $('tagSearch').oninput=renderTagCatalog;
 for(const key of fields)$(key).addEventListener('input',saveDraft);
-for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',saveDraft);
+for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',()=>{if(photoFeatureBaseline[id])photoFeatureBaseline[id].checked=$('feature-'+id).checked;saveDraft();});
 for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',saveDraft);
 function extract(){
   if(!$('source').value.trim())return toast('Сначала вставьте текст объявления');
@@ -174,7 +176,7 @@ if(localHosting){$('localBrowser').value=read('most-local-browser',document.quer
 
 var fieldLabels=Object.fromEntries(fields.map(id=>[id,document.querySelector('label[for="'+id+'"]')?.textContent||id]));
 function renderSourceAudit(){
-  $('registration').disabled=$('registrationPolicy').value==='not_available';if($('registration').disabled)$('registration').value='none';
+  $('registration').disabled=false;
   $('sourceFields').replaceChildren();$('furnitureEvidence').replaceChildren();$('sourceWarnings').replaceChildren();
   if(!sourceAudit){$('sourceStats').textContent='После разбора HTML появятся значения и фрагменты источника.';return;}
   if(sourceAudit.warnings?.length)$('sourceAnalysis').open=true;
@@ -192,6 +194,26 @@ renderSourceAudit();
 
 function applySourceEnvelope(source){const old=snapshot(),keep={};for(const key of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[key]=old[key];const result=analyzeListingSource(source,rules);populate({...keep,...result.facts});current=null;advanceVariant();generate();$('sourceAnalysis').open=true;}
 
-photoUI=setupPhotos({local:localHosting,hosted:!staticHosting,api:localApi,toast,read,write,onChange:saveDraft,getPost:()=>({url:$('url').value,title:$('outputTitle').value,body:$('output').value,tags:$('tags').value})});
+photoUI=setupPhotos({local:localHosting,hosted:!staticHosting,api:localApi,toast,read,write,onChange:saveDraft,getPost:()=>({url:$('url').value,title:$('outputTitle').value,body:$('output').value,tags:$('tags').value}),onFeatures:applyPhotoFeatures});
 relatedUI=setupRelated({getCurrent:snapshot,getObjects:()=>objects,getSource:()=>relatedOffers,onAdd:rows=>{relatedOffers=[...relatedOffers,...rows].filter((r,i,all)=>all.findIndex(x=>x.url===r.url)===i).slice(-40);saveDraft();},toast,onOpen:async row=>{try{await historyUI?.record('save');}catch(error){toast('Не удалось записать текущую версию: '+error.message);return;}if(row.libraryId){const object=objects.find(o=>o.id===row.libraryId);if(object){populate(object.fields||object);current=object.id;currentTitles=object.titles||[object.title];$('outputTitle').value=object.title||'';$('output').value=object.output||object.body||'';$('tags').value=object.tags||'';renderTitles();saveDraft();tab('editor');return;}}const old=snapshot(),keep={};for(const k of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[k]=old[k];populate({...keep,url:row.url});current=null;currentTitles=[];$('outputTitle').value='';$('output').value='';$('tags').value='';renderTitles();saveDraft();tab('editor');if(localHosting)await importLocal();else if(!staticHosting)$('import').click();else toast('Ссылка выбрана. Импортируйте HTML / JSON этой карточки или загрузите её в локальном redcn.');}});
 renderPhotos();relatedUI.render();
+
+function renderGeoCatalog(){const stats=getGeoStats();$('geoSummary').textContent=`Записей станций по линиям: ${stats.metro} (${stats.metroNames} названий, ${stats.translatedMetroNames} с китайским вариантом) · улиц и дорог: ${stats.street} · остановочных объектов: ${stats.stop}. Срез: ${stats.updatedAt}. Полнота: ${typeof stats.coverage==='string'?stats.coverage:'см. источники'}`;const rows=searchGeo($('geoSearch').value,{kind:$('geoKind').value,limit:30});$('geoResults').replaceChildren();for(const row of rows){const el=document.createElement('div');el.className='tag-item';el.textContent=row.ru+' → '+(row.zh||'Русское название сохранено целиком')+' · '+row.translationStatus;$('geoResults').append(el);}}
+$('geoSearch').oninput=renderGeoCatalog;$('geoKind').onchange=renderGeoCatalog;renderGeoCatalog();
+
+function applyPhotoFeatures(observation){
+ const blocked=new Set((sourceAudit?.furniture||[]).filter(row=>['absent','planned','conflict'].includes(row.status)).map(row=>row.id));
+ const next=new Set((observation.features||[]).filter(id=>!blocked.has(id))),previous=new Set(photoEvidence.map(row=>row.id));
+ for(const id of new Set([...previous,...next])){
+  const box=$('feature-'+id),input=$('feature-qty-'+id);if(!box||!input)continue;
+  if(!Object.hasOwn(photoFeatureBaseline,id))photoFeatureBaseline[id]={checked:box.checked,count:featureCounts[id]??''};
+  const baseline=photoFeatureBaseline[id];
+  box.checked=next.has(id)||baseline.checked;
+  const count=next.has(id)?Math.max(Number(baseline.count)||0,Number(observation.featureCounts?.[id])||0):Number(baseline.count)||0;
+  if(count)featureCounts[id]=count;else delete featureCounts[id];input.value=count||'';
+  if(!next.has(id))delete photoFeatureBaseline[id];
+ }
+ photoEvidence=(observation.photoEvidence||[]).filter(row=>next.has(row.id));
+ if((observation.features||[]).some(id=>blocked.has(id)))toast('Фото расходится с данными объявления. Проверьте противоречие в разборе источника.');
+ generate();saveDraft();
+}
