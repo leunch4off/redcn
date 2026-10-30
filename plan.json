@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 13,
-  "total": 286,
+  "version": 14,
+  "total": 287,
   "tasks": [
     {
       "id": "RCN-001",
@@ -4229,6 +4229,20 @@
       ],
       "status": "planned",
       "evidence": []
+    },
+    {
+      "id": "RCN-287",
+      "section": "Ciliev: следующие улучшения",
+      "title": "Ускорить первое открытие дизайнера на телефоне",
+      "acceptance": "На 393 px через внешний HTTPS измерить открытие canvas и готовность фотографий отдельно; сократить первую готовность редактора до 10 секунд, сохраняя общий генератор и авторизацию. Фактический замер v16: canvas 16,118 с, фото ещё готовятся.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-283"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/VERIFICATION.md#v16"
+      ]
     }
   ],
   "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",
