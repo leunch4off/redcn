@@ -30,7 +30,7 @@ test('publication facts never infer appliances, permissions or room separation',
 });
 
 test('university route times and methods use only supplied facts and custom names win',()=>{
-  const d=resolvePublicationData(publicationTestCard,{}, {rules:{РУДН:'我选择的大学'}});assert.equal(d.route1.title,'我选择的大学');assert.equal(d.route1.time,'约40-55分钟');assert.equal(d.route1.stops[1],'公共交通');
+  const d=resolvePublicationData(publicationTestCard,{}, {rules:{РУДН:'我选择的大学'}});assert.equal(d.route1.title,'我选择的大学');assert.equal(d.route1.time,'约40–55分钟');assert.equal(d.route1.stops[1],'公共交通');
   const unknown=resolvePublicationData({fields:{university:'МГУ'}});assert.equal(unknown.route1.time,'通勤时间待确认');assert.equal(unknown.route1.stops[1],'出行方式待确认');assert.doesNotMatch(unknown.route1.stops.join(' '),/步行|15/);
 });
 

@@ -1,24 +1,27 @@
 """Bounded publication model shared by persistent PDF and social-card layouts.
 
 No node can supply CSS, a URL, executable markup or arbitrary image bytes. The
+explicit WeChat branding URL is validated separately as ordinary HTTPS. The
 browser owns normalisation; this boundary validates its complete v2 output.
 """
 import math
 import re
+from urllib.parse import urlsplit
 
 
 SURFACES = ('pdfOverview', 'pdfGallery', 'pdfLocation', 'intro', 'outro')
 BINDINGS = frozenset(('title', 'body', 'brandName', 'agency', 'tagline', 'agentName',
-    'agentRole', 'contact', 'phone', 'email', 'footer', 'metro', 'metroLine', 'walk',
+    'agentRole', 'contact', 'phone', 'email', 'wechat', 'wechatLabel', 'wechatId', 'footer', 'metro', 'metroLine', 'walk',
     'price', 'priceLarge', 'priceUnit', 'area', 'layout', 'floor', 'address', 'city',
     'features', 'service', 'introFacts', 'mapTitle', 'mapMetro', 'routesTitle',
     'route1Title', 'route1Time', 'route1Stops', 'route2Title', 'route2Time',
     'route2Stops', 'disclaimer', 'mapAttribution', 'facts', 'route1', 'route2',
     'map', 'logo', 'avatar', *(f'photo{index}' for index in range(1, 31)),
     *(f'fact{index}{suffix}' for index in range(1, 7) for suffix in ('Label', 'Value')),
+    *(f'route{route}{suffix}' for route in (1, 2) for suffix in ('Distance', 'Transport', 'Yandex', 'Google', 'OSM')),
     *(f'route{route}Stop{stop}' for route in (1, 2) for stop in (1, 2, 3))))
 BRAND_KEYS = frozenset(('name', 'agency', 'tagline', 'agentName', 'agentRole', 'phone',
-    'email', 'contact', 'footer', 'logoAssetId', 'avatarAssetId'))
+    'email', 'contact', 'wechatId', 'wechatUrl', 'wechatLabel', 'footer', 'logoAssetId', 'avatarAssetId'))
 THEME_KEYS = frozenset(('background', 'foreground', 'accent', 'muted', 'panel', 'line'))
 NODE_KEYS = frozenset(('id', 'type', 'x', 'y', 'w', 'h', 'bind', 'text', 'photoIndex',
     'visible', 'locked', 'z', 'style'))
@@ -56,18 +59,48 @@ def _color(value, label):
         raise ValueError('Цвет дизайна должен иметь формат #RRGGBB: '+label)
 
 
+def _contact_url(value):
+    if not value:
+        return
+    try:
+        url = urlsplit(value)
+        host = (url.hostname or '').lower()
+        valid = (url.scheme == 'https' and not url.username and not url.password
+                 and url.port in (None, 443) and '.' in host and ':' not in host
+                 and not re.fullmatch(r'[0-9.]+', host)
+                 and re.fullmatch(r'([a-z0-9-]+\.)+[a-z0-9-]+', host)
+                 and not re.search(r'(^|\.)(localhost|local|internal|lan|invalid|test)$', host)
+                 and not re.search(r'[\x00-\x20\x7f]', value))
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError('Для контакта разрешена только обычная HTTPS-ссылка')
+
+
 def validate_publication_template(template):
-    _object(template, ('version', 'preset', 'paper', 'orientation', 'brand', 'theme', 'surfaces'), 'template')
+    if isinstance(template,dict) and 'revision' not in template:
+        template={**template,'revision':1}
+    _object(template, ('version', 'revision', 'preset', 'paper', 'orientation', 'brand', 'theme', 'surfaces'), 'template')
+    _number(template['revision'],1,2,'revision',integer=True)
     if type(template['version']) is not int or template['version']!=2:
         raise ValueError('Нужна версия дизайна 2')
     _choice(template['preset'], ('ciliev-elite', 'ciliev-navy'), 'preset')
     _choice(template['paper'], ('A4', 'Letter'), 'paper')
     _choice(template['orientation'], ('landscape',), 'orientation')
+    # Old v2 layouts predate explicit WeChat fields. Upgrade a copy, retaining
+    # private stored phone/contact values without publishing them.
+    if isinstance(template.get('brand'), dict):
+        template = {**template, 'brand': {**template['brand']}}
+        for key, value in (('wechatId', ''), ('wechatUrl', ''), ('wechatLabel', '微信联系')):
+            template['brand'].setdefault(key, value)
     _object(template['brand'], BRAND_KEYS, 'brand')
     for key, value in template['brand'].items():
-        _string(value, 1000 if key in ('contact', 'footer') else 500, 'brand.'+key)
+        _string(value, 2048 if key=='wechatUrl' else 1000 if key in ('contact', 'footer') else 500, 'brand.'+key)
         if key.endswith('AssetId') and value and not _ASSET.fullmatch(value):
             raise ValueError('Неверный ID изображения бренда')
+    _contact_url(template['brand']['wechatUrl'])
+    if template['brand']['wechatId'] and not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_.-]{0,63}', template['brand']['wechatId']):
+        raise ValueError('Неверный WeChat ID')
     _object(template['theme'], ('pdf', 'social'), 'theme')
     for group, colors in template['theme'].items():
         _object(colors, THEME_KEYS, 'theme.'+group)

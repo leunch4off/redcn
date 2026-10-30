@@ -23,6 +23,12 @@ TEXT = '1-комнатная квартира, 38 м². Аренда 70 000 ₽.
 
 
 class ImportTests(unittest.TestCase):
+    def test_raw_search_parameters_are_not_html_entities(self):
+        url = 'https://www.cian.ru/cat.php?deal_type=rent&region=1&resume=1'
+        self.assertEqual(redcn.normalize_url(url), url)
+        self.assertEqual(redcn.normalize_url(url.replace('&', '&amp;')), url)
+        self.assertEqual(redcn.normalize_url(url.replace('&', '&#38;')), url)
+
     def test_markdown_and_pasted_error_cleanup(self):
         for value in [f'[{URL}]({URL})', URL+'Ошибка: <urlopen error timed out>', '<'+URL+'>', URL+'\nОшибка: timed out']:
             self.assertEqual(redcn.normalize_url(value), URL)

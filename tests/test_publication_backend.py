@@ -56,6 +56,40 @@ class PublicationBackendTests(unittest.TestCase):
             cwd=ROOT,capture_output=True,text=True,timeout=15,check=True)
         self.assertEqual(set(json.loads(result.stdout)),set(publication_schema.BINDINGS))
 
+    def test_wechat_contact_schema_keeps_old_v2_private_fields_and_validates_urls(self):
+        old=copy.deepcopy(self.template)
+        for key in ('wechatId','wechatUrl','wechatLabel'):
+            old['brand'].pop(key)
+        old['brand']['phone']='+7 999 123 45 67'
+        original=copy.deepcopy(old)
+        saved=card_assets.save_design(self.directory,old)['template']
+        self.assertEqual(old,original)
+        self.assertEqual(saved['brand']['phone'],original['brand']['phone'])
+        self.assertEqual(saved['brand']['wechatLabel'],'微信联系')
+        good=copy.deepcopy(saved);good['brand'].update(wechatId='ciliev',wechatUrl='https://weixin.qq.com/r/contact?scene=1')
+        self.assertEqual(card_assets.save_design(self.directory,good)['template'],good)
+        for value in ('javascript:alert(1)','weixin://dl/chat?ciliev','http://weixin.qq.com/r/x','https://user:pass@weixin.qq.com/r/x','https://127.0.0.1/x','https://a.local/x'):
+            bad=copy.deepcopy(good);bad['brand']['wechatUrl']=value
+            with self.assertRaises(ValueError):card_assets.save_design(self.directory,bad)
+
+    def test_actual_wechat_anchor_passes_static_boundary_without_phone_numbers(self):
+        script="import {defaultPublicationDesign} from './web/publication-model.mjs';import {buildPublicationHtml} from './web/publication-render.mjs';const d=defaultPublicationDesign();Object.assign(d.brand,{phone:'+7 999 123 45 67',wechatId:'ciliev',wechatUrl:'https://weixin.qq.com/r/contact?from=pdf&scene=1'});process.stdout.write(buildPublicationHtml({body:'Телефон +7 999 123 45 67; 68,000 руб',fields:{price:68000}},d));"
+        html=subprocess.run([resolve_node(),'--input-type=module','-e',script],cwd=ROOT,capture_output=True,text=True,timeout=15,check=True).stdout
+        self.assertEqual(card_assets.validate_html(html),html)
+        self.assertIn('href="https://weixin.qq.com/r/contact?from=pdf&amp;scene=1"',html)
+        self.assertIn('微信: ciliev',html)
+        self.assertNotIn('123 45 67',html)
+
+    def test_revision_preserves_old_v2_compatibility_and_refuses_unknown_versions(self):
+        old=copy.deepcopy(self.template);old.pop('revision')
+        saved=card_assets.save_design(self.directory,old)['template']
+        self.assertNotIn('revision',old)
+        self.assertEqual(saved['revision'],1)
+        self.assertEqual(saved['surfaces'],old['surfaces'])
+        for revision in (True,0,3,1.5):
+            bad=copy.deepcopy(self.template);bad['revision']=revision
+            with self.assertRaises(ValueError):card_assets.save_design(self.directory,bad)
+
     def test_actual_browser_v2_contract_roundtrips_and_v1_stays_unchanged(self):
         v1={'version':1,'preset':'night','background':'#17251e','intro':{'headline':'旧标题'}}
         card_assets.save_design(self.directory,v1)

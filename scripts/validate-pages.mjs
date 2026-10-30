@@ -30,3 +30,11 @@ assert(!phoneDesigner.includes('name="redcn-token"'),'Public designer module mus
 assert(phoneScript.includes("import('/phone/designer.mjs')"),'Designer must load on demand');
 assert(!phoneScript.includes('UNIVERSITY_CATALOG ='),'Phone startup must not embed the large designer vocabulary');
 console.log('Lazy phone designer is valid and separate from startup');
+
+const phoneRoutes=await readFile(new URL('docs/phone-routes.mjs',root),'utf8');
+const routeCheck=spawnSync(process.execPath,['--check','--input-type=module'],{input:phoneRoutes,encoding:'utf8'});
+assert.equal(routeCheck.status,0,routeCheck.stderr);
+assert(phoneRoutes.includes('export {setupUniversityRoutes}'));
+assert(!phoneRoutes.includes('name="redcn-token"'));
+assert(phoneScript.includes("import('/phone/routes.mjs')"),'University route form must be lazy');
+console.log('Lazy route form is valid and separate from phone startup');

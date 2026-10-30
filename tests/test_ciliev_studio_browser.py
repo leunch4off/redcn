@@ -91,6 +91,45 @@ class CilievStudioAcceptance(unittest.TestCase):
         self.page.wait_for_function("document.getElementById('presentationImagePreview').naturalWidth===1080")
         self.assertEqual(self.page.locator('#presentationImagePreview').evaluate('image=>image.naturalHeight'),1920)
 
+    def test_wechat_only_contact_persists_and_exports_an_active_link_without_phone(self):
+        import card_assets
+        import local_server
+        from test_publication_backend import design_fixture
+        design=design_fixture()
+        design['brand'].update(phone='+7 999 111 22 33',email='private@example.com',contact='Телефон +7 999 222 33 44')
+        card_assets.save_design(self.directory,design)
+        source=local_server.read_result(self.directory,self.card_id)
+        source['body']+='\n联系手机: +7 (999) 123-45-67'
+        local_server.save_result(self.directory,source,self.card_id)
+        self.open_studio()
+        self.assertEqual(self.page.locator('#presentation-brand-phone').count(),0)
+        self.page.locator('#presentation-brand-wechatId').fill('ciliev_test')
+        self.page.locator('#presentation-brand-wechatId').dispatch_event('change')
+        url='https://weixin.qq.com/r/ciliev-test-contact?from=pdf&scene=1'
+        self.page.locator('#presentation-brand-wechatUrl').fill(url)
+        self.page.locator('#presentation-brand-wechatUrl').dispatch_event('change')
+        self.page.locator('#presentation-brand-wechatLabel').fill('微信咨询')
+        self.page.locator('#presentation-brand-wechatLabel').dispatch_event('change')
+        self.assertTrue(self.page.locator('#presentationWechatCopy').is_enabled())
+        self.assertEqual(self.page.locator('#presentationWechatOpen').get_attribute('href'),url)
+        self.save()
+        saved=self.saved_design()
+        self.assertEqual(saved['revision'],2)
+        self.assertEqual(saved['brand']['wechatId'],'ciliev_test')
+        self.assertEqual(saved['brand']['phone'],'+7 999 111 22 33','Private legacy data remains stored')
+        with self.page.expect_download(timeout=45000) as result:self.page.locator('#presentationHtml').click()
+        markup=Path(result.value.path()).read_text()
+        self.assertIn('href="https://weixin.qq.com/r/ciliev-test-contact?from=pdf&amp;scene=1"',markup)
+        self.assertIn('微信: ciliev_test',markup)
+        for phone in ('111 22 33','222 33 44','123-45-67','private@example.com'):
+            self.assertNotIn(phone,markup)
+        self.assertEqual(local_server.read_result(self.directory,self.card_id)['body'],source['body'])
+        self.page.reload();self.page.locator('#openPresentation').click()
+        self.page.wait_for_function("document.getElementById('presentation-brand-wechatId').value==='ciliev_test'")
+        self.assertEqual(self.page.locator('#presentation-brand-wechatUrl').input_value(),url)
+        self.page.set_viewport_size({'width':393,'height':852})
+        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
+
     def test_logo_upload_saves_only_private_asset_reference_and_survives_reload(self):
         from PIL import Image
         self.open_studio()

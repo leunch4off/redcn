@@ -344,12 +344,12 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
             return True
         def do_GET(self):
             path=urlsplit(self.path).path
-            public=path in ('/phone','/phone/','/phone/pair','/phone/manifest.webmanifest','/phone/sw.js','/phone/designer.mjs','/phone/icon-192.png','/phone/icon-512.png','/phone/apple-touch-icon.png','/phone/icons/icon-192.png','/phone/icons/icon-512.png','/phone/icons/apple-touch-icon.png')
+            public=path in ('/phone','/phone/','/phone/pair','/phone/manifest.webmanifest','/phone/sw.js','/phone/designer.mjs','/phone/routes.mjs','/phone/icon-192.png','/phone/icon-512.png','/phone/apple-touch-icon.png','/phone/icons/icon-192.png','/phone/icons/icon-512.png','/phone/icons/apple-touch-icon.png')
             if not self.permitted(auth=not public):return
             try:
                 if public:
                     if path=='/phone':self.respond(302,b'','text/plain',{'Location':'/phone/'});return
-                    files={'/phone/':('docs/phone.html','text/html; charset=utf-8'),'/phone/pair':('docs/phone.html','text/html; charset=utf-8'),'/phone/manifest.webmanifest':('docs/phone.webmanifest','application/manifest+json'),'/phone/sw.js':('docs/phone-sw.js','text/javascript'),'/phone/designer.mjs':('docs/phone-designer.mjs','text/javascript; charset=utf-8'),'/phone/icon-192.png':('docs/icons/icon-192.png','image/png'),'/phone/icon-512.png':('docs/icons/icon-512.png','image/png'),'/phone/apple-touch-icon.png':('docs/icons/apple-touch-icon.png','image/png')}
+                    files={'/phone/':('docs/phone.html','text/html; charset=utf-8'),'/phone/pair':('docs/phone.html','text/html; charset=utf-8'),'/phone/manifest.webmanifest':('docs/phone.webmanifest','application/manifest+json'),'/phone/sw.js':('docs/phone-sw.js','text/javascript'),'/phone/designer.mjs':('docs/phone-designer.mjs','text/javascript; charset=utf-8'),'/phone/routes.mjs':('docs/phone-routes.mjs','text/javascript; charset=utf-8'),'/phone/icon-192.png':('docs/icons/icon-192.png','image/png'),'/phone/icon-512.png':('docs/icons/icon-512.png','image/png'),'/phone/apple-touch-icon.png':('docs/icons/apple-touch-icon.png','image/png')}
                     for icon in ('icon-192.png','icon-512.png','apple-touch-icon.png'):files['/phone/icons/'+icon]=('docs/icons/'+icon,'image/png')
                     name,mime=files[path];file=redcn.ROOT/name
                     if not file.exists():self.respond(503,{'error':'Сначала соберите мобильную страницу: npm run build'});return
@@ -357,6 +357,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if path.startswith('/api/phone/'):
                     import card_api
                     import language_service
+                    workspace=getattr(controller,'workspace_api',None)
+                    document=workspace(path.removeprefix('/api/phone/'),namespace='phone',query=parse_qs(urlsplit(self.path).query)) if callable(workspace) else None
+                    if document:self.respond(*document);return
                     document=language_service.dispatch(directory,path.removeprefix('/api/phone/'))
                     if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
@@ -406,6 +409,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     if self.secure:cookie+='; Secure'
                     self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info()},headers={'Set-Cookie':cookie});return
+                workspace=getattr(controller,'workspace_api',None)
+                document=workspace(relative,data,namespace='phone') if callable(workspace) else None
+                if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data)
                 if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))

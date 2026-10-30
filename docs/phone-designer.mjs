@@ -240,7 +240,10 @@ function translateRussian(text,{rules={},entries=null,mode='safe',preservePunctu
  const input=String(text??'').slice(0,20000),user=ruZhUser(rules),open=entries?ruZhIndex(entries.map(row=>Array.isArray(row)?{ru:row[0],zh:row[1],source:row[2]||'open-lexicon',reviewed:false}:row)):(ruZhOpenIndex||(ruZhOpenIndex=ruZhIndex(ruZhOpenRows))),ctx={user,open,mode};
  const pieces=ruZhProtectedPieces(input,ctx);let output='',unknown=[],matches=[],warnings=[],sourceOffset=0;
  for(const part of pieces){const partStart=sourceOffset;sourceOffset+=part.length;if(!part)continue;if(/^[\n\r.!?。！？;]+$/u.test(part)){output+=preservePunctuation?part:part==='.'?'。':part===';'?'；':part==='!'?'！':part==='?'?'？':part;continue;}
-  const left=part.match(/^\s*/u)[0],right=part.match(/\s*$/u)[0],raw=part.trim();if(!raw){output+=part;continue;}
+  // Native trimming also handles astral characters and lone UTF-16 surrogates
+  // without depending on WebKit's zero-width Unicode regexp edge matching.
+  const raw=part.trim();if(!raw){output+=part;continue;}
+  const left=part.slice(0,part.length-part.trimStart().length),right=part.slice(part.trimEnd().length);
   const exact=ruZhWhole(raw,ctx);let result=exact&&exact.category!=='inventory'?ruZhResult(exact.zh,[],[ruZhMatch(exact,raw)]):/^(?:есть ли|можно ли|будет ли|можно ли будет|разрешено ли)/iu.test(raw)?ruZhResult(raw,[raw],[],['Вопрос сохранён как вопрос и не превращён в утверждение.']):ruZhPattern(raw,ctx);
   if(!result&&/(?:^|\s)(?:нет|без|не|нельзя|запрещ\S*|отсутств\S*|если|возможно|возможно,|только если)(?:\s|$)/iu.test(raw)&&ruZhCyrillic.test(raw))result=ruZhResult(raw,[raw],[],['Условие или отрицание сохранено целиком: нужен перевод или проверка.']);
   if(!result)result=ruZhScan(raw,ctx);
@@ -918,6 +921,161 @@ function analyzeListingSource(input,rules=DICTIONARY){
 }
 
 
+// Map links ask the provider for a current route. They are not a local routing
+// result and never establish bus numbers, travelling time, or road distance.
+const UNIVERSITY_ROUTE_LIMIT=10;
+const UNIVERSITY_ROUTE_STOP_LIMIT=3;
+const universityRouteModes={unknown:'出行方式待确认',public:'公共交通',metro:'地铁',bus:'公交',walk:'步行',car:'驾车',bike:'骑行'};
+const universityRouteText=(value,max=240)=>typeof value==='string'?value.trim().slice(0,max):'';
+const universityRouteNumber=value=>{
+  if(typeof value==='number')return Number.isFinite(value)?value:null;
+  if(typeof value!=='string'||!value.trim()||!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?$/i.test(value.trim()))return null;
+  const number=Number(value);return Number.isFinite(number)?number:null;
+};
+const universityRouteClone=value=>JSON.parse(JSON.stringify(value));
+const universityRouteCampusById=new Map(UNIVERSITY_CATALOG.campuses.map(row=>[row.id,row]));
+const universityRouteSchoolById=new Map(UNIVERSITY_CATALOG.universities.map(row=>[row.id,row]));
+function universityRouteMode(value){const aliases={'步行':'walk','乘坐地铁':'metro','地铁':'metro','乘坐公交':'bus','公交':'bus','公共交通':'public','驾车':'car','骑行':'bike'};const mode=aliases[value]||value;return Object.hasOwn(universityRouteModes,mode)?mode:'unknown';}
+
+function universityRouteCoordinates(latitude,longitude){
+  const lat=universityRouteNumber(latitude),lon=universityRouteNumber(longitude);
+  return lat!==null&&lon!==null&&Math.abs(lat)<=90&&Math.abs(lon)<=180?{latitude:lat,longitude:lon}:null;
+}
+
+function universityStraightLineKm(origin,destination){
+  const a=universityRouteCoordinates(origin?.latitude,origin?.longitude),b=universityRouteCoordinates(destination?.latitude,destination?.longitude);
+  if(!a||!b)return null;
+  const radians=value=>value*Math.PI/180,deltaLat=radians(b.latitude-a.latitude),deltaLon=radians(b.longitude-a.longitude);
+  const haversine=Math.sin(deltaLat/2)**2+Math.cos(radians(a.latitude))*Math.cos(radians(b.latitude))*Math.sin(deltaLon/2)**2;
+  return 6371.0088*2*Math.asin(Math.sqrt(Math.max(0,Math.min(1,haversine))));
+}
+
+function universityRouteCoordinateText(point){return point.latitude.toFixed(6).replace(/\.?0+$/,'')+','+point.longitude.toFixed(6).replace(/\.?0+$/,'');}
+function universityRouteUrl(base,parameters){const value=new URL(base);for(const [name,text]of Object.entries(parameters))if(text!==''&&text!=null)value.searchParams.set(name,String(text));const result=value.href;return result.length<=2048?result:'';}
+function universityRouteQuery(value){
+  // A pasted contact number is not an address and must not become a hidden
+  // phone number inside an exported map hyperlink. Stored input is unchanged.
+  return universityRouteText(value,500).replace(/\+\d(?:[\s().-]*\d){9,14}/g,'').replace(/(?:^|[^\d])8(?:[\s().-]*\d){10}(?!\d)/g,match=>/^8/.test(match)?'':match[0]).replace(/\s+/g,' ').trim();
+}
+
+function universityStopLinks(stop={},city='Москва'){
+  const coordinates=universityRouteCoordinates(stop.latitude,stop.longitude),raw=universityRouteQuery(stop.address||stop.name),place=universityRouteText(city),fold=value=>value.toLocaleLowerCase('ru'),alreadyPrefixed=place&&(fold(raw)===fold(place)||fold(raw).startsWith(fold(place)+',')||fold(raw).startsWith(fold(place)+' '));
+  const query=coordinates?universityRouteCoordinateText(coordinates):alreadyPrefixed?raw:[place,raw].filter(Boolean).join(', ');
+  if(!query||!coordinates&&!universityRouteText(stop.address||stop.name))return {yandex:'',google:'',osm:''};
+  return {
+    yandex:coordinates?universityRouteUrl('https://yandex.ru/maps/',{pt:coordinates.longitude+','+coordinates.latitude,z:17}):universityRouteUrl('https://yandex.ru/maps/',{text:query}),
+    google:universityRouteUrl('https://www.google.com/maps/search/',{api:1,query}),
+    osm:coordinates?universityRouteUrl('https://www.openstreetmap.org/',{mlat:coordinates.latitude,mlon:coordinates.longitude})+'#map=17/'+coordinates.latitude+'/'+coordinates.longitude:universityRouteUrl('https://www.openstreetmap.org/search',{query})
+  };
+}
+
+function universityMapLinks(origin={},destination={},mode='public',{city='Москва',confirmedDestination=true}={}){
+  const from=universityRouteCoordinates(origin.latitude,origin.longitude),to=universityRouteCoordinates(destination.latitude,destination.longitude);
+  const originQuery=from?universityRouteCoordinateText(from):universityRouteQuery(origin.address);
+  const destinationQuery=to?universityRouteCoordinateText(to):universityRouteQuery(destination.address||destination.name);
+  const stopLinks=universityStopLinks({...destination,name:destinationQuery},city);
+  const links={...stopLinks,yandexKind:'search',googleKind:'search',osmKind:'position'};
+  if(!confirmedDestination||!originQuery||!destinationQuery)return links;
+  const normalMode=universityRouteMode(mode),googleMode=normalMode==='walk'?'walking':normalMode==='car'?'driving':normalMode==='bike'?'bicycling':'transit';
+  links.google=universityRouteUrl('https://www.google.com/maps/dir/',{api:1,origin:originQuery,destination:destinationQuery,travelmode:googleMode});links.googleKind='route';
+  // Yandex documents routing coordinates as latitude,longitude, while pt is
+  // longitude,latitude. Text-only destinations use an honest search link.
+  if(from&&to){links.yandex=universityRouteUrl('https://yandex.ru/maps/',{rtext:universityRouteCoordinateText(from)+'~'+universityRouteCoordinateText(to),rtt:normalMode==='walk'?'pd':normalMode==='car'?'auto':normalMode==='bike'?'bc':'mt'});links.yandexKind='route';}
+  return links;
+}
+
+function normalizeUniversityRoutes(fields={}){
+  const f=fields&&typeof fields==='object'?fields:{};let rows;
+  // An explicit empty array means the operator removed all routes. Legacy
+  // fields must not resurrect them after a save/reload.
+  if(Array.isArray(f.universityRoutes))rows=f.universityRoutes;
+  else{
+    rows=universityRouteText(f.universities,6000).split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{const [name,time='',mode='',transport='']=line.split('|').map(value=>value.trim());return {name,time,mode,transport};});
+    if(rows.length&&universityRouteText(f.campus))rows[0].campus=f.campus;
+    if(!rows.length&&universityRouteText(f.university))rows=[{name:f.university,campus:f.campus,time:f.uniTime,mode:f.uniMode,transport:f.route}];
+  }
+  return rows.slice(0,UNIVERSITY_ROUTE_LIMIT).filter(row=>row&&typeof row==='object'&&!Array.isArray(row)).map(row=>{
+    const coordinate=(value,limit)=>{const number=universityRouteNumber(value);return number!==null&&Math.abs(number)<=limit?number:'';},distance=universityRouteNumber(row.routeDistanceKm),campusId=universityRouteText(row.campusId,100);
+    const stops=(Array.isArray(row.stops)?row.stops:typeof row.stops==='string'?row.stops.split('\n').map(line=>{const [name,latitude='',longitude='']=line.split('|').map(value=>value.trim());return {name,latitude,longitude};}):[]).slice(0,UNIVERSITY_ROUTE_STOP_LIMIT).map(stop=>typeof stop==='string'?{name:stop}:stop).filter(stop=>stop&&typeof stop==='object'&&!Array.isArray(stop)).map(stop=>({name:universityRouteText(stop.name),latitude:coordinate(stop.latitude,90),longitude:coordinate(stop.longitude,180)})).filter(stop=>stop.name);
+    return {name:universityRouteText(row.name||row.university),campus:universityRouteText(row.campus),campusId:universityRouteCampusById.has(campusId)?campusId:'',address:universityRouteText(row.address,500),latitude:coordinate(row.latitude,90),longitude:coordinate(row.longitude,180),time:universityRouteText(row.time,80),mode:universityRouteMode(row.mode),transport:universityRouteText(row.transport||row.line,600),routeDistanceKm:distance!==null&&distance>=0&&distance<=20000?distance:'',stops};
+  }).filter(row=>row.name||row.campus||row.campusId||row.address);
+}
+
+function universityRouteDistanceLabel(distance,kind){
+  if(distance===null)return '';
+  const length=distance<1?Math.round(distance*1000/10)*10+'米':Number(distance.toFixed(1))+'公里';
+  return (kind==='straight-line'?'直线距离约':'路线距离约')+length+(kind==='provided-route'?'（按已填资料）':'');
+}
+function universityRouteTimeLabel(value,translate){
+  if(!value)return {label:'通勤时间待确认',confirmed:false};
+  const match=/^(\d{1,3})(?:\s*[-–—]\s*(\d{1,3}))?$/.exec(value);
+  if(match){if(match[2]&&Number(match[2])<Number(match[1]))return {label:'通勤时间待确认',confirmed:false,invalid:true};return {label:'约'+match[1]+(match[2]?'–'+match[2]:'')+'分钟',confirmed:true};}
+  return {label:translate(value),confirmed:true};
+}
+
+function resolveUniversityRoutes(fields={},options={}){
+  const f=fields&&typeof fields==='object'?fields:{},translate=typeof options.translate==='function'?options.translate:value=>String(value??''),city=universityRouteText(f.city)||'Москва',origin={...universityRouteCoordinates(f.latitude,f.longitude),address:universityRouteText(f.address,500)};
+  return normalizeUniversityRoutes(f).map(row=>{
+    const warnings=[],university=resolveUniversity(row.name),namedCampus=resolveCampus(row.campus||row.name),campus=universityRouteCampusById.get(row.campusId)||namedCampus,mismatch=!!(university&&campus&&university.id!==campus.universityId||namedCampus&&campus&&namedCampus.id!==campus.id);
+    if(mismatch)warnings.push('Вуз и выбранный кампус не совпадают. Уточните место назначения.');
+    const selectedCampus=mismatch?null:campus,parent=selectedCampus?universityRouteSchoolById.get(selectedCampus.universityId):null;
+    const destinationPoint=mismatch?null:universityRouteCoordinates(row.latitude,row.longitude),destinationAddress=mismatch?'':row.address||selectedCampus?.addressRu||'';
+    const rawTitle=row.name||(parent?.ru)||row.campus||'院校/校区',translatedTitle=translate(rawTitle),title=translatedTitle!==rawTitle?translatedTitle:university?.zh||parent?.zh||selectedCampus?.zh||translatedTitle;
+    const rawCampus=row.campus||selectedCampus?.ru||'',translatedCampus=translate(rawCampus),campusTitle=translatedCampus!==rawCampus?translatedCampus:selectedCampus?.zh||translatedCampus,destination={name:selectedCampus?.ru||row.campus||row.name,address:destinationAddress,...destinationPoint};
+    const confirmedDestination=!!(destinationPoint||destinationAddress),time=universityRouteTimeLabel(row.time,translate);
+    if(time.invalid)warnings.push('Проверьте диапазон времени поездки: начало больше конца.');
+    const computed=confirmedDestination?universityStraightLineKm(origin,destination):null,provided=mismatch?null:universityRouteNumber(row.routeDistanceKm),distanceKind=provided!==null?'provided-route':computed!==null?'straight-line':'unknown',distanceKm=provided??computed;
+    const modeLabel=universityRouteModes[row.mode],transport=translate(row.transport),links=mismatch?{yandex:'',google:'',osm:'',yandexKind:'search',googleKind:'search',osmKind:'position'}:universityMapLinks(origin,destination,row.mode,{city,confirmedDestination});
+    const stopDetails=row.stops.length?row.stops.map(stop=>({name:stop.name,label:translate(stop.name),latitude:stop.latitude,longitude:stop.longitude,links:universityStopLinks(stop,city)})):[
+      {name:universityRouteText(f.metro)||'住处',label:translate(universityRouteText(f.metro))||'住处',links:universityRouteText(f.metro)?universityStopLinks({name:'метро '+f.metro},city):universityStopLinks(origin,city)},
+      {name:row.transport,label:transport||modeLabel,links:{yandex:'',google:'',osm:''}},
+      {name:destination.name,label:campusTitle||title,links:{yandex:links.yandexKind==='search'?links.yandex:universityStopLinks(destination,city).yandex,google:universityStopLinks(destination,city).google,osm:links.osm}}
+    ];
+    return {...row,title,campusTitle,destination,confirmedDestination,time:time.label,timeLabel:time.label,confirmedTime:time.confirmed,modeLabel,transport,transportLabel:transport?modeLabel+' · '+transport:'',distanceKm,distanceKind,distanceLabel:universityRouteDistanceLabel(distanceKm,distanceKind),straightLineKm:computed,stops:stopDetails.map(stop=>stop.label),stopDetails,links,warnings};
+  });
+}
+
+function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},translate=value=>String(value??'')}={}){
+  if(!mount)return {value:()=>[],refresh:()=>{},setPrimary:()=>{},destroy:()=>{}};
+  let rows=[],destroyed=false;
+  const make=(tag,text='',className='')=>{const element=document.createElement(tag);element.textContent=text;if(className)element.className=className;return element;};
+  const shell=make('section','','university-route-editor'),heading=make('h3','Вузы, транспорт и кнопки карт'),note=make('p','Укажите конкретный кампус. Время, номера автобусов и остановки сохраняются только из ваших подтверждённых данных. Расчёт по координатам — расстояние по прямой, а актуальный маршрут откроется в картах.','muted'),list=make('div','','university-route-list'),add=make('button','Добавить вуз / маршрут','btn');add.type='button';shell.append(heading,note,list,add);mount.replaceChildren(shell);
+  const emit=()=>{if(!destroyed)onChange(universityRouteClone(normalizeUniversityRoutes({universityRoutes:rows})));};
+  function preview(container){
+    const f=getFields()||{},resolved=resolveUniversityRoutes({...f,universityRoutes:rows},{translate});container.replaceChildren();
+    for(const route of resolved){const block=make('div','','university-route-preview-row');block.append(make('strong',route.title),make('p',[route.distanceLabel,route.timeLabel,route.transportLabel].filter(Boolean).join(' · '),'muted'));
+      for(const [kind,label]of [['yandex',route.links.yandexKind==='route'?'Яндекс: маршрут':'Яндекс: найти кампус'],['google',route.links.googleKind==='route'?'Google: маршрут':'Google: найти кампус'],['osm','OpenStreetMap: место']])if(route.links[kind]){const a=make('a',label);a.href=route.links[kind];a.target='_blank';a.rel='noopener noreferrer';block.append(a);}
+      for(const stop of route.stopDetails.filter(value=>value.name&&value.links.yandex)){const a=make('a','Ориентир: '+stop.label);a.href=stop.links.yandex;a.target='_blank';a.rel='noopener noreferrer';block.append(a);}
+      for(const warning of route.warnings)block.append(make('p',warning,'university-route-warning'));container.append(block);
+    }
+    if(!resolved.length)container.append(make('p','Маршруты пока не заполнены.','muted'));
+  }
+  function render(){
+    if(destroyed)return;list.replaceChildren();add.disabled=rows.length>=UNIVERSITY_ROUTE_LIMIT;
+    const previews=make('div','','university-route-previews');
+    rows.forEach((row,index)=>{
+      const detail=make('details','','university-route-entry'),summary=make('summary',(row.name||row.campus||'Новый вуз')+' · маршрут '+(index+1)),grid=make('div','','university-route-fields');detail.open=!row.name;detail.append(summary,grid);
+      const update=()=>{summary.textContent=(row.name||row.campus||'Новый вуз')+' · маршрут '+(index+1);emit();preview(previews);};
+      function input(key,label,{placeholder='',type='text',area=false}={}){const wrapper=make('label',label),control=make(area?'textarea':'input');if(!area)control.type=type;control.value=row[key]??'';control.placeholder=placeholder;control.setAttribute('aria-label',label+' · маршрут '+(index+1));if(type==='number'){control.step='any';control.inputMode='decimal';}if(area)control.rows=3;control.addEventListener('input',()=>{row[key]=control.value;update();});wrapper.append(control);grid.append(wrapper);return control;}
+      input('name','Вуз',{placeholder:'МГУ / РУДН / своё название'});
+      const selectLabel=make('label','Адрес из справочника'),selection=make('select');selection.setAttribute('aria-label','Кампус из справочника · маршрут '+(index+1));selection.append(new Option('Свой кампус / адрес',''));
+      for(const school of UNIVERSITY_CATALOG.universities){const campuses=UNIVERSITY_CATALOG.campuses.filter(value=>value.universityId===school.id);if(!campuses.length)continue;const group=make('optgroup');group.label=school.ru;for(const campus of campuses)group.append(new Option(campus.ru,campus.id));selection.append(group);}selection.value=row.campusId||'';
+      selection.onchange=()=>{const selected=universityRouteCampusById.get(selection.value);row.campusId=selection.value;if(selected){row.name=universityRouteSchoolById.get(selected.universityId)?.ru||row.name;row.campus=selected.ru;row.address=selected.addressRu||'';row.latitude=row.longitude=row.routeDistanceKm=row.time=row.transport='';row.stops=[];}emit();render();};selectLabel.append(selection);grid.append(selectLabel);
+      input('campus','Кампус / корпус',{placeholder:'Конкретное место обучения'});input('address','Адрес кампуса',{placeholder:'Официальный адрес выбранного корпуса'});
+      input('latitude','Широта кампуса',{type:'number',placeholder:'55.702…'});input('longitude','Долгота кампуса',{type:'number',placeholder:'37.530…'});
+      input('time','Подтверждённое время, мин',{placeholder:'40–55'});
+      const modeLabel=make('label','Способ поездки'),mode=make('select');mode.setAttribute('aria-label','Способ поездки · маршрут '+(index+1));for(const [value,label]of [['unknown','Не указан'],['public','Общественный транспорт'],['metro','Метро'],['bus','Автобус'],['walk','Пешком'],['car','Автомобиль'],['bike','Велосипед']])mode.append(new Option(label,value));mode.value=row.mode||'unknown';mode.onchange=()=>{row.mode=mode.value;update();};modeLabel.append(mode);grid.append(modeLabel);
+      input('transport','Автобусы / пересадки',{placeholder:'Автобус №… → метро…',area:true});input('routeDistanceKm','Проверенная длина маршрута, км',{type:'number',placeholder:'Из карты; пусто — считать только прямую'});
+      const stopLabel=make('label','Остановки / ориентиры: до трёх строк «название | широта | долгота»'),stops=make('textarea');stops.rows=3;stops.setAttribute('aria-label','Остановки и координаты · маршрут '+(index+1));stops.value=(Array.isArray(row.stops)?row.stops:[]).map(stop=>[stop.name,stop.latitude??'',stop.longitude??''].join(' | ')).join('\n');stops.oninput=()=>{row.stops=stops.value.split('\n').slice(0,UNIVERSITY_ROUTE_STOP_LIMIT).map(line=>{const [name,latitude='',longitude='']=line.split('|').map(value=>value.trim());return {name,latitude,longitude};});update();};stopLabel.append(stops);grid.append(stopLabel);
+      const remove=make('button','Убрать маршрут','btn');remove.type='button';remove.onclick=()=>{rows.splice(index,1);emit();render();};detail.append(remove);list.append(detail);
+    });list.append(previews);preview(previews);
+  }
+  function refresh(fields=getFields()){rows=normalizeUniversityRoutes(fields);render();}
+  add.onclick=()=>{if(rows.length>=UNIVERSITY_ROUTE_LIMIT)return;rows.push({name:'',campus:'',campusId:'',address:'',latitude:'',longitude:'',time:'',mode:'unknown',transport:'',routeDistanceKm:'',stops:[]});render();};
+  refresh();return {value:()=>universityRouteClone(normalizeUniversityRoutes({universityRoutes:rows})),refresh,setPrimary({university='',campus=''}={}){const old=rows[0],next={name:university,campus};if(old&&old.name===university&&old.campus===campus)return;const row={...next,time:'',mode:'unknown',transport:'',stops:[]};if(rows.length)rows[0]=row;else if(university||campus)rows.push(row);emit();render();},destroy(){destroyed=true;rows=[];mount.replaceChildren();}};
+}
+
+
 // Publication-only address labels; provenance and editorial status are recorded
 // in docs/CILIEV-DESIGN-REFERENCE.md. Keep historical source names intact.
 const publicationAddressTerms={
@@ -932,8 +1090,8 @@ const publicationAddressTerms={
 // One logical-coordinate model drives the editor, raster cards and printed HTML.
 const PUBLICATION_SURFACES=['pdfOverview','pdfGallery','pdfLocation','intro','outro'];
 const PUBLICATION_BINDINGS=[
-  ['title','Название'],['body','Описание'],['brandName','Название агентства'],['agency','Подпись агентства'],['tagline','Слоган'],['agentName','Имя консультанта'],['agentRole','Должность'],['contact','Контакты'],['phone','Телефон'],['email','Почта'],['footer','Подвал'],['metro','Метро'],['metroLine','Линия метро'],['walk','Время до метро'],['price','Аренда'],['priceLarge','Цена крупно'],['priceUnit','Единица цены'],['area','Площадь'],['layout','Планировка'],['floor','Этаж'],['address','Адрес'],['city','Город'],['features','Мебель и техника'],['service','Регистрация'],['introFacts','Краткие параметры'],['mapTitle','Расположение'],['mapMetro','Подпись метро'],['routesTitle','Заголовок маршрутов'],['route1Title','Вуз 1'],['route1Time','Время до вуза 1'],['route1Stops','Маршрут 1'],['route2Title','Вуз 2'],['route2Time','Время до вуза 2'],['route2Stops','Маршрут 2'],['disclaimer','Примечание к маршрутам'],['mapAttribution','Авторство карты'],['facts','Таблица параметров'],['route1','Первая поездка'],['route2','Вторая поездка'],['map','Карта'],['logo','Логотип'],['avatar','Аватар консультанта'],...Array.from({length:30},(_,i)=>['photo'+(i+1),'Фото '+(i+1)])
-].concat(Array.from({length:6},(_,i)=>[['fact'+(i+1)+'Label','Параметр '+(i+1)+' · подпись'],['fact'+(i+1)+'Value','Параметр '+(i+1)+' · значение']]).flat(),Array.from({length:2},(_,r)=>Array.from({length:3},(_,s)=>['route'+(r+1)+'Stop'+(s+1),'Маршрут '+(r+1)+' · пункт '+(s+1)])).flat()).map(([id,label])=>({id,label}));
+  ['title','Название'],['body','Описание'],['brandName','Название агентства'],['agency','Подпись агентства'],['tagline','Слоган'],['agentName','Имя консультанта'],['agentRole','Должность'],['contact','WeChat · совместимость'],['phone','Телефон · скрыт в публикации'],['email','Почта · скрыта в публикации'],['wechat','WeChat · логин'],['wechatLabel','WeChat · кнопка'],['wechatId','WeChat ID'],['footer','Подвал'],['metro','Метро'],['metroLine','Линия метро'],['walk','Время до метро'],['price','Аренда'],['priceLarge','Цена крупно'],['priceUnit','Единица цены'],['area','Площадь'],['layout','Планировка'],['floor','Этаж'],['address','Адрес'],['city','Город'],['features','Мебель и техника'],['service','Регистрация'],['introFacts','Краткие параметры'],['mapTitle','Расположение'],['mapMetro','Подпись метро'],['routesTitle','Заголовок маршрутов'],['route1Title','Вуз 1'],['route1Time','Время до вуза 1'],['route1Stops','Маршрут 1'],['route2Title','Вуз 2'],['route2Time','Время до вуза 2'],['route2Stops','Маршрут 2'],['disclaimer','Примечание к маршрутам'],['mapAttribution','Авторство карты'],['facts','Таблица параметров'],['route1','Первая поездка'],['route2','Вторая поездка'],['map','Карта'],['logo','Логотип'],['avatar','Аватар консультанта'],...Array.from({length:30},(_,i)=>['photo'+(i+1),'Фото '+(i+1)])
+].concat(Array.from({length:2},(_,i)=>['Distance','Transport','Yandex','Google','OSM'].map(suffix=>['route'+(i+1)+suffix,'Маршрут '+(i+1)+' · '+({Distance:'расстояние',Transport:'транспорт',Yandex:'Yandex',Google:'Google',OSM:'OpenStreetMap'})[suffix]])).flat(),Array.from({length:6},(_,i)=>[['fact'+(i+1)+'Label','Параметр '+(i+1)+' · подпись'],['fact'+(i+1)+'Value','Параметр '+(i+1)+' · значение']]).flat(),Array.from({length:2},(_,r)=>Array.from({length:3},(_,s)=>['route'+(r+1)+'Stop'+(s+1),'Маршрут '+(r+1)+' · пункт '+(s+1)])).flat()).map(([id,label])=>({id,label}));
 const PUBLICATION_FONT_STACKS={sans:'"PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif',serif:'"Songti SC", "Noto Serif CJK SC", Georgia, serif'};
 const publicationBindingIds=new Set(PUBLICATION_BINDINGS.map(row=>row.id));
 const publicationTypes=['text','image','rect','line','logo','avatar','map','route','facts'];
@@ -943,6 +1101,36 @@ const publicationColor=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:fallback;
 const publicationChoice=(v,values,fallback)=>values.includes(v)?v:fallback;
 const publicationId=(v,fallback)=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(v)?v:fallback;
 const publicationAssetId=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v)?v:'';
+
+// Only an explicit HTTPS contact URL becomes a link. A WeChat ID is not
+// converted to an undocumented application URI or a guaranteed direct chat.
+function safePublicationLink(value){
+  if(typeof value!=='string')return '';value=value.trim();
+  if(value.length>2048||/[\u0000-\u0020\u007f]/u.test(value))return '';
+  try{const url=new URL(value);const host=url.hostname.toLowerCase();
+    if(url.protocol!=='https:'||url.username||url.password||url.port&&url.port!=='443'||!host.includes('.')||/^[\d.]+$/u.test(host)||host.includes(':')||!/[a-z]/u.test(host)||!/^([a-z0-9-]+\.)+[a-z0-9-]+$/u.test(host)||/(?:^|\.)(?:localhost|local|internal|lan|invalid|test)$/u.test(host))return '';
+    return url.href;
+  }catch{return '';}
+}
+function publicationWeChat(brand={}){
+  const validId=value=>typeof value==='string'&&/^[a-z][a-z0-9_.-]{0,63}$/iu.test(value.trim())?value.trim():'';
+  const old=String(brand.contact||'').match(/(?:^|[\n\s])(?:wechat|weixin|微信|вичат)(?:[ \t]*(?:ID\b|号))?[ \t]*[:：]?[ \t]*([a-z][a-z0-9_.-]{0,63})(?=[\s,，;；]|$)/iu);
+  const id=validId(brand.wechatId)||validId(old?.[1]),url=safePublicationLink(brand.wechatUrl),label=publicationSafeString(brand.wechatLabel,120)||'微信联系';
+  return {id,url,label:url?label:'',text:id?'微信: '+id:'',contact:id?'微信: '+id:url?label:''};
+}
+function redactPublicationPhones(value){
+  let text=String(value??'');
+  const removePhone=(match,offset,source)=>/^[ \t\u00a0]*(?:₽|руб(?:\b|лей)|RUB\b|卢布|元|万)/iu.test(source.slice(offset+match.length))?match:'';
+  // Fixed lengths avoid swallowing a rent amount written after a telephone.
+  text=text.replace(/(?<![\p{L}\p{N}_])(?:[+＋][7７]|[8８])[ \t\u00a0\u202f()（）.‐‑‒–—−－-]*[349３４９](?:[ \t\u00a0\u202f()（）.‐‑‒–—−－-]*[0-9０-９]){9}(?![0-9０-９])/gu,removePhone);
+  text=text.replace(/(?<![\p{L}\p{N}_])[+＋][8８][6６](?:[ \t\u00a0\u202f()（）.‐‑‒–—−－-]*[0-9０-９]){11}(?![0-9０-９])/gu,removePhone);
+  text=text.replace(/(?<![\p{L}\p{N}_])[+＋][1１](?:[ \t\u00a0\u202f()（）.‐‑‒–—−－-]*[0-9０-９]){10}(?![0-9０-９])/gu,removePhone);
+  text=text.replace(/(?<![\p{L}\p{N}_])[+＋][1-9１-９][0-9０-９]{7,14}(?![0-9０-９])/gu,removePhone);
+  text=text.replace(/(?:电话|手机|联系电话|联系号码|тел(?:ефон)?\.?|phone|mobile|whatsapp|ватсап)\s*[:：]?\s*(?:[0-9]{7,15}|\([0-9]{3}\)[ \t]*[0-9]{3}[- ][0-9]{2}[- ][0-9]{2}|[0-9]{3}[- ][0-9]{2}[- ][0-9]{2})(?![0-9])/giu,'');
+  text=text.replace(/(?:联系(?:电话|手机)|电话|手机|联系电话|联系号码|тел(?:ефон)?\.?|phone|mobile|whatsapp|ватсап)[ \t]*[:：]?[ \t]*(?=$|\n|[;；])/gimu,'');
+  return text;
+}
+
 const publicationThemeDefaults={pdf:{background:'#07162b',foreground:'#ffffff',accent:'#b79665',muted:'#9daac0',panel:'#0e223c',line:'#42516a'},social:{background:'#06152e',foreground:'#ffffff',accent:'#ef4b69',muted:'#a8b8d2',panel:'#0b2242',line:'#294568'}};
 const publicationStyle=(extra={})=>({fontSize:32,color:'#ffffff',fontFamily:'sans',align:'left',opacity:1,background:'#06152e',borderColor:'#294568',borderWidth:0,radius:0,fontWeight:600,objectFit:'cover',lineHeight:1.35,...extra});
 const publicationNode=(id,type,x,y,w,h,bind='',text='',style={})=>({id,type,x,y,w,h,bind,text,photoIndex:0,visible:true,locked:false,z:0,style:publicationStyle(style)});
@@ -956,13 +1144,19 @@ function publicationFactNodes(node){
   }
   return nodes;
 }
+function publicationRouteExtraNodes(node,accent){
+  const {x,y,w,h,bind}=node,small=w<700,pad=Math.min(small?24:25,Math.max(0,(w-4)/2)),buttonWidth=Math.max(4,(w-pad*2-20)/3);
+  const nodes=[publicationText(node.id+'-distance',x+w-(small?240:258),y+(small?84:80),small?216:233,small?42:28,bind+'Distance','',{...node.style,fontSize:small?18:20,align:'right',borderWidth:0,radius:0}),publicationText(node.id+'-transport',x+pad,y+(small?127:80),Math.max(4,small?w-pad*2:w-pad-280),small?20:28,bind+'Transport','',{...node.style,fontSize:small?14:20,color:'#9daac0',fontWeight:500,borderWidth:0,radius:0})];
+  for(const [index,suffix]of ['Yandex','Google','OSM'].entries())nodes.push(publicationText(node.id+'-open-'+suffix.toLowerCase(),x+pad+index*(buttonWidth+10),y+h+(small?3:4),buttonWidth,small?20:22,bind+suffix,'',{...node.style,fontSize:small?13:17,color:accent,align:'center',borderColor:accent,borderWidth:1,radius:5,fontWeight:600,lineHeight:1.2}));
+  return nodes;
+}
 function publicationRouteNodes(node,accent){
   const {x,y,w,h,bind}=node,pad=w<700?24:25,small=w<700,lineY=small?h-62:h*.56;
-  const nodes=[{...node,type:'rect'},publicationText(node.id+'-title',x+pad,y+pad,w-pad*2-(small?0:238),small?72:56,bind+'Title','',{...node.style,fontWeight:700,borderWidth:0,radius:0}),publicationText(node.id+'-time',x+(small?pad:w-258),y+(small?84:25),small?w-pad*2:233,42,bind+'Time','',{...node.style,fontSize:small?20:node.style.fontSize-2,align:small?'left':'right',borderWidth:0,radius:0}),{...publicationLine(node.id+'-track',x+pad,y+lineY,w-pad*2,accent,small?3:4),bind}];
+  const nodes=[{...node,type:'rect'},publicationText(node.id+'-title',x+pad,y+pad,w-pad*2-(small?0:238),small?72:56,bind+'Title','',{...node.style,fontWeight:700,borderWidth:0,radius:0}),publicationText(node.id+'-time',x+(small?pad:w-258),y+(small?84:25),small?225:233,42,bind+'Time','',{...node.style,fontSize:small?20:node.style.fontSize-2,align:small?'left':'right',borderWidth:0,radius:0}),{...publicationLine(node.id+'-track',x+pad,y+lineY,w-pad*2,accent,small?3:4),bind}];
   for(let index=0;index<3;index++){const cx=pad+index*(w-pad*2)/2,r=small?5:6,sw=(w-pad*2)/3;
     nodes.push(publicationNode(node.id+'-stop-'+(index+1)+'-dot','rect',x+cx-r,y+lineY-r,r*2,r*2,bind,'',{background:node.style.background,borderColor:'#ffffff',borderWidth:2,radius:r}),publicationText(node.id+'-stop-'+(index+1),x+Math.max(pad,Math.min(w-pad-sw,cx-sw/2)),y+lineY+18,sw,h-lineY-24,bind+'Stop'+(index+1),'',{...node.style,fontSize:small?16:Math.max(19,node.style.fontSize-7),fontWeight:600,align:index===0?'left':index===2?'right':'center',borderWidth:0,radius:0}));
   }
-  return nodes;
+  return nodes.concat(publicationRouteExtraNodes(node,accent));
 }
 
 function publicationBaseSurfaces(){
@@ -978,8 +1172,9 @@ function publicationBaseSurfaces(){
     publicationNode('agent-avatar','avatar',80,392,174,174,'avatar','',{radius:87,borderColor:'#b79665',borderWidth:2}),
     publicationText('agent-name',80,596,438,55,'agentName','',{fontSize:31,fontWeight:700}),
     publicationText('agent-role',80,652,438,42,'agentRole','',{fontSize:22,color:'#9daac0',fontWeight:400}),
-    publicationText('agent-phone',80,711,438,45,'phone','',{fontSize:26,color:'#b79665'}),
-    publicationText('agent-contact',80,767,438,95,'contact','',{fontSize:23,color:'#aab6c9',fontWeight:400}),
+    publicationNode('agent-wechat-button-bg','rect',80,711,438,58,'wechatLabel','',{background:'#0e223c',borderColor:'#b79665',borderWidth:1,radius:10}),
+    publicationText('agent-wechat-button',100,725,398,34,'wechatLabel','',{fontSize:25,color:'#b79665',align:'center',fontWeight:700}),
+    publicationText('agent-contact',80,792,438,70,'wechat','',{fontSize:23,color:'#aab6c9',fontWeight:400}),
     publicationNode('facts','facts',616,385,891,402,'facts','',{fontSize:26,color:'#ffffff',borderColor:'#42516a',borderWidth:1}),
     publicationText('description-heading',616,834,891,42,'','房源介绍',{fontSize:27,color:'#b79665',fontWeight:700}),
     publicationText('body',616,892,891,139,'body','',{fontSize:23,fontWeight:400,lineHeight:1.5}),
@@ -1058,12 +1253,13 @@ function publicationBaseSurfaces(){
   return {pdfOverview,pdfGallery,pdfLocation,intro,outro};
 }
 
-function defaultPublicationDesign(){return {version:2,preset:'ciliev-elite',paper:'A4',orientation:'landscape',brand:{name:'ciliev',agency:'房地产',tagline:'莫斯科房产服务',agentName:'房产顾问',agentRole:'专属房产顾问',phone:'',email:'',contact:'',footer:'ciliev 房地产 · 莫斯科',logoAssetId:'',avatarAssetId:''},theme:JSON.parse(JSON.stringify(publicationThemeDefaults)),surfaces:publicationBaseSurfaces()};}
+function defaultPublicationDesign(){return {version:2,revision:2,preset:'ciliev-elite',paper:'A4',orientation:'landscape',brand:{name:'ciliev',agency:'房地产',tagline:'莫斯科房产服务',agentName:'房产顾问',agentRole:'专属房产顾问',phone:'',email:'',contact:'',wechatId:'',wechatUrl:'',wechatLabel:'微信联系',footer:'ciliev 房地产 · 莫斯科',logoAssetId:'',avatarAssetId:''},theme:JSON.parse(JSON.stringify(publicationThemeDefaults)),surfaces:publicationBaseSurfaces()};}
 
 function normalizePublicationDesign(input={}){
   const source=input&&typeof input==='object'&&!Array.isArray(input)?input:{},base=defaultPublicationDesign();
   const brand=source.brand&&typeof source.brand==='object'?source.brand:{};
-  for(const key of Object.keys(base.brand))base.brand[key]=key.endsWith('AssetId')?publicationAssetId(brand[key]):publicationSafeString(brand[key]??base.brand[key],['contact','footer'].includes(key)?1000:500);
+  for(const key of Object.keys(base.brand))base.brand[key]=key.endsWith('AssetId')?publicationAssetId(brand[key]):publicationSafeString(brand[key]??base.brand[key],key==='wechatUrl'?2048:['contact','footer'].includes(key)?1000:500);
+  base.brand.wechatUrl=safePublicationLink(base.brand.wechatUrl);base.brand.wechatId=publicationWeChat({wechatId:base.brand.wechatId}).id;
   base.preset=publicationChoice(source.preset,['ciliev-elite','ciliev-navy'],'ciliev-elite');base.paper=publicationChoice(source.paper,['A4','Letter'],'A4');
   for(const group of ['pdf','social'])for(const key of Object.keys(base.theme[group]))base.theme[group][key]=publicationColor(source.theme?.[group]?.[key],base.theme[group][key]);
   for(const [id,surface] of Object.entries(base.surfaces)){const group=id.startsWith('pdf')?'pdf':'social';surface.background=base.theme[group].background;for(const node of surface.nodes)for(const prop of ['color','background','borderColor'])for(const key of Object.keys(publicationThemeDefaults[group]))if(node.style[prop]===publicationThemeDefaults[group][key]){node.style[prop]=base.theme[group][key];break;}}
@@ -1090,6 +1286,25 @@ function normalizePublicationDesign(input={}){
       return {id:nodeId,type,x:publicationNumber(n.x,0,Math.max(0,surface.width-w),0),y:publicationNumber(n.y,0,Math.max(0,surface.height-h),0),w,h,bind:publicationBindingIds.has(n.bind)?n.bind:'',text:publicationSafeString(n.text,20000),photoIndex:Math.round(publicationNumber(n.photoIndex,0,29,0)),visible:n.visible!==false,locked:n.locked===true,z:Math.round(publicationNumber(n.z,-100,100,0)),style:{fontSize:publicationNumber(s.fontSize,10,200,def.fontSize),color:publicationColor(s.color,def.color),fontFamily:publicationChoice(s.fontFamily,['sans','serif'],def.fontFamily),align:publicationChoice(s.align,['left','center','right'],def.align),opacity:publicationNumber(s.opacity,0,1,1),background:publicationColor(s.background,def.background),borderColor:publicationColor(s.borderColor,def.borderColor),borderWidth:publicationNumber(s.borderWidth,0,20,0),radius:publicationNumber(s.radius,0,400,0),fontWeight:publicationChoice(Number(s.fontWeight),[400,500,600,700,800],600),objectFit:publicationChoice(s.objectFit,['cover','contain'],'cover'),lineHeight:publicationNumber(s.lineHeight,1,2.4,1.35)}};
     });
   }
+  if(source.version===2&&source.revision!==2){
+    const overview=base.surfaces.pdfOverview,oldPhone=overview.nodes.find(node=>node.bind==='phone'&&node.type==='text');
+    if(oldPhone&&!overview.nodes.some(node=>node.bind==='wechatLabel')&&overview.nodes.length<=78){
+      const padX=Math.min(6,Math.max(0,(oldPhone.w-4)/2)),padY=Math.min(6,Math.max(0,(oldPhone.h-2)/2)),prefix=oldPhone.id.slice(0,60);
+      const contacts=[publicationNode(prefix+'-wechat-bg','rect',oldPhone.x,oldPhone.y,oldPhone.w,oldPhone.h,'wechatLabel','',{background:base.theme.pdf.panel,borderColor:base.theme.pdf.accent,borderWidth:1,radius:8}),publicationText(prefix+'-wechat-cta',oldPhone.x+padX,oldPhone.y+padY,Math.max(4,oldPhone.w-padX*2),Math.max(2,oldPhone.h-padY*2),'wechatLabel','',{fontSize:Math.min(26,oldPhone.style.fontSize),color:base.theme.pdf.accent,fontFamily:oldPhone.style.fontFamily,align:'center',fontWeight:700})];
+      for(const node of contacts){let suffix=0,id=node.id;while(overview.nodes.some(value=>value.id===id))id=node.id+'-'+(++suffix);node.id=id;node.visible=oldPhone.visible;node.z=oldPhone.z;overview.nodes.push(node);}
+    }
+    // Add only the new route fields to older saved canvases. Existing nodes,
+    // including deliberate positions and hidden states, remain unchanged.
+    for(const id of ['pdfLocation','outro']){const surface=base.surfaces[id];
+      for(const bind of ['route1','route2']){const anchor=surface.nodes.find(node=>node.bind===bind&&['rect','route'].includes(node.type));if(!anchor)continue;
+        for(const extra of publicationRouteExtraNodes(anchor,base.theme[id==='outro'?'social':'pdf'].accent)){
+          if(surface.nodes.some(node=>node.bind===extra.bind)||surface.nodes.length>=80)continue;
+          let suffix=0,identifier=extra.id;while(surface.nodes.some(node=>node.id===identifier))identifier=extra.id.slice(0,70)+'-'+(++suffix);
+          extra.id=identifier;extra.w=Math.min(extra.w,surface.width);extra.h=Math.min(extra.h,surface.height);extra.x=Math.max(0,Math.min(extra.x,surface.width-extra.w));extra.y=Math.max(0,Math.min(extra.y,surface.height-extra.h));extra.visible=anchor.visible;extra.z=anchor.z;surface.nodes.push(extra);
+        }
+      }
+    }
+  }
   return base;
 }
 
@@ -1107,22 +1322,29 @@ function resolvePublicationData(card={},input={},assets={}){
   const metro=zh(f.metro||''),address=zh(f.address||f.district||f.complex||''),city=zh(f.city||'Москва');
   const mapPlace=metro||address;
   const mapTitle=mapPlace===city||(city&&mapPlace.startsWith(city)&&/^[\s,，·]/u.test(mapPlace.slice(city.length)))?mapPlace:[city,mapPlace].filter(Boolean).join(' · ');
-  const routeRows=String(f.universities||'').split('\n').map(value=>value.trim()).filter(Boolean).slice(0,10).map(value=>{const [name,time='',mode='',line='']=value.split('|').map(v=>v.trim());return {name,time,mode,line};});
-  if(!routeRows.length&&f.university)routeRows.push({name:String(f.university),time:String(f.uniTime||''),mode:String(f.uniMode||''),line:''});
-  const routes=routeRows.map(row=>{const university=resolveUniversity(row.name),campus=resolveCampus(row.name),personal=Object.keys(assets.rules||{}).some(key=>key.toLocaleLowerCase('ru').replaceAll('ё','е')===row.name.toLocaleLowerCase('ru').replaceAll('ё','е')),name=personal?zh(row.name):university?.zh||campus?.zh||zh(row.name);const time=/^\d{1,3}(?:\s*[-–—]\s*\d{1,3})?$/.test(row.time)?'约'+row.time.replace(/[–—]/g,'-')+'分钟':row.time?zh(row.time):'通勤时间待确认';return {title:name,time,stops:[metro||'住处',row.line?zh(row.line):publicationMode[row.mode]||'出行方式待确认',name],confirmedTime:!!row.time};});
+  const routes=resolveUniversityRoutes({...f,latitude:f.latitude??card.listing?.latitude,longitude:f.longitude??card.listing?.longitude},{translate:value=>zh(redactPublicationPhones(value))});
+  for(const route of routes)warnings.push(...route.warnings);
   const featureSet=new Set(Array.isArray(f.features)?f.features:[]);const features=FEATURES.filter(row=>featureSet.has(row[0])).map(row=>{const count=publicationNumeric(f.featureCounts?.[row[0]]);return(count!==null&&count>1?count+'件 ':'')+row[1];}).join(' / ');
-  const title=zh(card.title||card.titles?.[0]||f.name||f.complex||'房源详情'),body=zh(card.body||f.description||'');
+  const title=zh(redactPublicationPhones(card.title||card.titles?.[0]||f.name||f.complex||'房源详情')),body=zh(redactPublicationPhones(card.body||f.description||'')),wechat=publicationWeChat(design.brand);
   const walk=f.walk!==''&&f.walk!=null?(/^[\d\s–—-]+$/.test(String(f.walk))?'步行'+String(f.walk).replace(/[–—]/g,'-')+'分钟':zh(f.walk)):'距离待确认';
   const priceNumber=price===null?'':price.toLocaleString('zh-CN',{maximumFractionDigits:2});
   const priceLarge=price===null?'租金待确认':price>=10000?Number((price/10000).toFixed(2))+'万':priceNumber;
-  const data={title,body,brandName:design.brand.name,agency:design.brand.agency,tagline:design.brand.tagline,agentName:design.brand.agentName,agentRole:design.brand.agentRole,phone:design.brand.phone,email:design.brand.email,contact:design.brand.contact||design.brand.email,footer:design.brand.footer,metro,metroLine:zh(f.metroLine||f.line||''),walk,price:priceNumber||'租金待确认',priceLarge,priceUnit:'卢布 / 月',area:area===null?'':String(area)+'㎡',layout,floor:floor===null?'':String(floor)+(floors!==null?' / '+floors:'')+'层',address,city,features,service:'抵达登记（临时居住登记）· 提供办理协助',introFacts:[layout,area!==null?String(area)+'㎡':''].filter(Boolean).join(' / '),mapTitle,mapMetro:[metro,walk].filter(Boolean).join('\n'),routesTitle:'大学通勤参考',route1Title:routes[0]?.title||'院校信息待确认',route1Time:routes[0]?.time||'',route1Stops:routes[0]?.stops.join(' → ')||'',route2Title:routes[1]?.title||'更多院校',route2Time:routes[1]?.time||'',route2Stops:routes[1]?.stops.join(' → ')||'',route1:routes[0]||null,route2:routes[1]||null,routes,facts:[['房屋类型',layout],['月租金',priceNumber?priceNumber+' 卢布':''],['面积',area!==null?String(area)+'㎡':''],['楼层',floor===null?'':String(floor)+(floors!==null?' / '+floors:'')+'层'],['地铁',metro],['家具家电',features]].filter(row=>row[1]),disclaimer:routes.some(row=>row.confirmedTime)?'通勤时间按已提供资料整理，具体以校区和实际路线为准。':'通勤时间及路线尚待确认。',mapAttribution:assets.mapAttribution?'地图数据 © OpenStreetMap 贡献者':coordinates?'地图数据 © OpenStreetMap 贡献者':'尚未确认房源坐标',latitude:coordinates?lat:null,longitude:coordinates?lon:null,mapUrl:coordinates?'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon:'',warnings:[...new Set(warnings)]};
+  const data={title,body,brandName:design.brand.name,agency:design.brand.agency,tagline:design.brand.tagline,agentName:design.brand.agentName,agentRole:design.brand.agentRole,phone:'',email:'',contact:wechat.contact,wechat:wechat.text,wechatId:wechat.id,wechatLabel:wechat.label,wechatUrl:wechat.url,footer:design.brand.footer,metro,metroLine:zh(f.metroLine||f.line||''),walk,price:priceNumber||'租金待确认',priceLarge,priceUnit:'卢布 / 月',area:area===null?'':String(area)+'㎡',layout,floor:floor===null?'':String(floor)+(floors!==null?' / '+floors:'')+'层',address,city,features,service:'抵达登记（临时居住登记）· 提供办理协助',introFacts:[layout,area!==null?String(area)+'㎡':''].filter(Boolean).join(' / '),mapTitle,mapMetro:[metro,walk].filter(Boolean).join('\n'),routesTitle:'大学通勤参考',route1Title:routes[0]?.title||'院校信息待确认',route1Time:routes[0]?.time||'',route1Stops:routes[0]?.stops.join(' → ')||'',route2Title:routes[1]?.title||'更多院校',route2Time:routes[1]?.time||'',route2Stops:routes[1]?.stops.join(' → ')||'',route1:routes[0]||null,route2:routes[1]||null,routes,facts:[['房屋类型',layout],['月租金',priceNumber?priceNumber+' 卢布':''],['面积',area!==null?String(area)+'㎡':''],['楼层',floor===null?'':String(floor)+(floors!==null?' / '+floors:'')+'层'],['地铁',metro],['家具家电',features]].filter(row=>row[1]),disclaimer:routes.some(row=>row.confirmedTime)?'通勤时间按已提供资料整理，具体以校区和实际路线为准。':'通勤时间及路线尚待确认。',mapAttribution:assets.mapAttribution?'地图数据 © OpenStreetMap 贡献者':coordinates?'地图数据 © OpenStreetMap 贡献者':'尚未确认房源坐标',latitude:coordinates?lat:null,longitude:coordinates?lon:null,mapUrl:coordinates?'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon:'',warnings:[...new Set(warnings)]};
   const fixedFacts=[['房屋类型',layout],['月租金',priceNumber?priceNumber+' 卢布':''],['面积',area!==null?String(area)+'㎡':''],['楼层',data.floor],['地铁',metro],['家具家电',features]];
   fixedFacts.forEach(([label,value],index)=>{data['fact'+(index+1)+'Label']=value?label:'';data['fact'+(index+1)+'Value']=value||'';});
-  for(let r=0;r<2;r++)for(let s=0;s<3;s++)data['route'+(r+1)+'Stop'+(s+1)]=routes[r]?.stops[s]||'';
+  data.links={};
+  for(let index=0;index<2;index++){const route=routes[index],prefix='route'+(index+1);data[prefix+'Distance']=route?.distanceLabel||'';data[prefix+'Transport']=route?.transportLabel||'';
+    for(const [name,key]of [['Yandex','yandex'],['Google','google'],['OSM','osm']]){const href=safePublicationLink(route?.links?.[key]);data[prefix+name]=href?name+' 地图':'';data.links[prefix+name]=href;}
+    data.links[prefix+'Title']=safePublicationLink(route?.links?.yandex);data.links[prefix+'Time']=safePublicationLink(route?.links?.google);data.links[prefix+'Distance']=safePublicationLink(route?.links?.google);data.links[prefix+'Transport']=safePublicationLink(route?.links?.yandex);
+    for(let stop=0;stop<3;stop++){const bind=prefix+'Stop'+(stop+1);data[bind]=route?.stops?.[stop]||'';data.links[bind]=safePublicationLink(route?.stopDetails?.[stop]?.links?.yandex);}
+  }
+  for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=redactPublicationPhones(data[key]);
   return data;
 }
 
-function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:'');}
+function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return redactPublicationPhones(String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:''));}
+
+function publicationNodeLink(node,data){if(['wechat','wechatLabel','wechatId','contact'].includes(node.bind))return safePublicationLink(data.wechatUrl);if(node.type==='map')return safePublicationLink(data.mapUrl);return safePublicationLink(data.links?.[node.bind]);}
 
 
 const publicationEscape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1157,7 +1379,7 @@ function publicationNodeImage(node,data,assets,photos){
   // attached to the same original photo in both canvas preview and export.
   return (index<5?photos:publicationPhotoList(assets))[index]||'';
 }
-function publicationBoundEmpty(node,data){const route=/^route([12])(?:Title|Time|Stops|Stop[123])?$/.exec(node.bind||'');if(route&&!data['route'+route[1]])return true;if(/^fact[1-6](?:Label|Value)$/.test(node.bind||'')&&!data[node.bind])return true;return node.type==='route'&&!data[node.bind||'route1'];}
+function publicationBoundEmpty(node,data){if(['phone','email','wechat','wechatLabel','wechatId','contact'].includes(node.bind)&&!data[node.bind])return true;if(/^route[12](?:Distance|Transport|Yandex|Google|OSM)$/.test(node.bind)&&!data[node.bind])return true;const route=/^route([12])(?:Title|Time|Distance|Transport|Yandex|Google|OSM|Stops|Stop[123])?$/.exec(node.bind||'');if(route&&!data['route'+route[1]])return true;if(/^fact[1-6](?:Label|Value)$/.test(node.bind||'')&&!data[node.bind])return true;return node.type==='route'&&!data[node.bind||'route1'];}
 function publicationSurfaceNodes(surface){return surface.nodes.filter(row=>row.visible).map((node,index)=>({...node,_order:index})).sort((a,b)=>a.z-b.z||a._order-b._order);}
 function publicationPageData(card,design,assets,surfaceId){const data=resolvePublicationData(card,design,assets);if(surfaceId==='pdfOverview'){const body=design.surfaces.pdfOverview.nodes.find(node=>node.bind==='body'&&node.visible);if(body)data.body=publicationDescriptionSlice(data.body,body)[0];}return data;}
 function publicationDescriptionSlice(text,node){
@@ -1231,6 +1453,7 @@ function publicationHtmlNode(node,surface,data,assets,photos,theme){
   else if(node.type==='route'){css+='background:'+node.style.background+';';content=publicationHtmlRoute(node,data[node.bind||'route1'],surface,theme);extra=' route-card'+(node.w<700?' route-small':'');}
   else{const source=publicationNodeImage(node,data,assets,photos);if(source)content='<img src="'+source+'" alt="'+(node.type==='map'?'房源位置':node.type==='avatar'?'房产顾问头像':node.type==='logo'?'ciliev':'房源照片')+'" style="object-fit:'+node.style.objectFit+'">';else if(node.type==='logo'||node.type==='avatar'){content='<div class="monogram '+(node.type==='logo'?'brand-monogram':'')+'" style="font-size:'+Math.min(node.w,node.h)*.52/surface.width*100+'cqw">C</div>';css+='background:'+node.style.background+';';}else{content='<span class="image-placeholder">'+(node.type==='map'?'位置待确认<br>请补充真实坐标':'房源照片')+'</span>';css+='background:'+node.style.background+';';}}
   if(node.style.borderWidth)css+='border:'+node.style.borderWidth/surface.width*100+'cqw solid '+node.style.borderColor+';';
+  const href=publicationNodeLink(node,data);if(href)content='<a class="publication-action" href="'+publicationEscape(href)+'">'+content+'</a>';
   return '<div class="pub-node pub-'+node.type+extra+'" data-node-id="'+publicationEscape(node.id)+'" data-bind="'+publicationEscape(node.bind)+'" style="'+publicationEscape(css)+'">'+content+'</div>';
 }
 
@@ -1250,7 +1473,7 @@ function publicationDocumentPages(card={},input={},assets={}){
 function buildPublicationHtml(card={},input={},assets={}){
   const document=publicationDocumentPages(card,input,assets),design=document.design,esc=publicationEscape,paper=design.paper==='Letter'?{w:279.4,h:215.9,name:'Letter'}:{w:297,h:210,name:'A4'};
   const pages=document.pages.map(({surface,data,photos},index)=>'<section class="publication-page" aria-label="第'+(index+1)+'页" style="background:'+surface.background+';--page-ratio:'+surface.width+'/'+surface.height+'">'+publicationSurfaceNodes(surface).map(node=>publicationHtmlNode(node,surface,data,assets,photos,design.theme.pdf)).join('')+'<span class="page-number">'+String(index+1).padStart(2,'0')+' / '+String(document.pages.length).padStart(2,'0')+'</span></section>').join('');
-  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(document.data.title)+' · ciliev</title><style>@page{size:'+paper.name+' landscape;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:'+design.theme.pdf.background+';color:'+design.theme.pdf.foreground+';font-family:'+PUBLICATION_FONT_STACKS.sans+';-webkit-print-color-adjust:exact;print-color-adjust:exact}.publication-page{position:relative;container-type:inline-size;width:'+paper.w+'mm;height:'+paper.h+'mm;margin:0;overflow:hidden;break-after:page;page-break-after:always}.publication-page:last-child{break-after:auto;page-break-after:auto}.pub-node{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere}.pub-inner-text{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere}.pub-node img{display:block;width:100%;height:100%}.image-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:'+design.theme.pdf.muted+';font-size:2cqw;text-align:center}.monogram{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;font:500 8cqw Georgia,serif;color:#fff}.brand-monogram{font-size:8cqw}.facts-table{height:100%;display:flex;flex-direction:column}.fact-row{flex:1;display:grid;grid-template-columns:35% 65%;align-items:center;gap:1cqw;min-height:0;border-bottom:1px solid '+design.theme.pdf.line+';font-size:1.55cqw;line-height:1.35}.fact-row span{color:'+design.theme.pdf.muted+';font-weight:400}.fact-row strong{font-weight:600;font-size:1.45cqw;max-height:100%;overflow:hidden}.route-card{padding:1.6cqw}.route-heading{display:flex;justify-content:space-between;gap:1cqw;min-height:2.6cqw;font-size:1.8cqw;line-height:1.25}.route-heading strong{max-width:72%;font-weight:700}.route-heading span{white-space:nowrap;text-align:right;font-size:1.6cqw}.route-line{height:.25cqw;position:relative;display:flex;justify-content:space-between;margin:3cqw .5cqw 1.5cqw}.route-line i{display:block;width:.8cqw;height:.8cqw;border:1.5px solid #fff;border-radius:50%;background:'+design.theme.pdf.panel+';transform:translateY(-35%)}.route-stops{display:flex;justify-content:space-between;gap:1cqw;font-size:1.15cqw}.route-stops span{width:33.333%}.route-stops span:nth-child(2){text-align:center}.route-stops span:last-child{text-align:right}.route-small .route-heading{display:block;font-size:1.5cqw;min-height:5cqw}.route-small .route-heading strong{display:block;max-width:100%}.route-small .route-heading span{display:block;text-align:left;font-size:1.2cqw;margin-top:.5cqw}.route-small .route-line{margin-top:1.5cqw}.route-small .route-stops{font-size:.95cqw}.page-number{position:absolute;bottom:1.8%;right:4.8%;font-size:.9cqw;letter-spacing:.12em;color:'+design.theme.pdf.muted+'}@media screen{body{padding:20px;background:#030b16}.publication-page{width:min('+paper.w+'mm,100%);height:auto;aspect-ratio:'+paper.w+'/'+paper.h+';margin:0 auto 20px;box-shadow:0 10px 40px #0008}}@media print{body{padding:0}.publication-page{margin:0;box-shadow:none}}</style></head><body>'+pages+'</body></html>';
+  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(document.data.title)+' · ciliev</title><style>@page{size:'+paper.name+' landscape;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:'+design.theme.pdf.background+';color:'+design.theme.pdf.foreground+';font-family:'+PUBLICATION_FONT_STACKS.sans+';-webkit-print-color-adjust:exact;print-color-adjust:exact}.publication-page{position:relative;container-type:inline-size;width:'+paper.w+'mm;height:'+paper.h+'mm;margin:0;overflow:hidden;break-after:page;page-break-after:always}.publication-page:last-child{break-after:auto;page-break-after:auto}.pub-node{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere}.pub-inner-text{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere}.pub-node img{display:block;width:100%;height:100%}.publication-action{display:block;width:100%;height:100%;color:inherit;text-decoration:none}.publication-action:hover{text-decoration:underline}.image-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:'+design.theme.pdf.muted+';font-size:2cqw;text-align:center}.monogram{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;font:500 8cqw Georgia,serif;color:#fff}.brand-monogram{font-size:8cqw}.facts-table{height:100%;display:flex;flex-direction:column}.fact-row{flex:1;display:grid;grid-template-columns:35% 65%;align-items:center;gap:1cqw;min-height:0;border-bottom:1px solid '+design.theme.pdf.line+';font-size:1.55cqw;line-height:1.35}.fact-row span{color:'+design.theme.pdf.muted+';font-weight:400}.fact-row strong{font-weight:600;font-size:1.45cqw;max-height:100%;overflow:hidden}.route-card{padding:1.6cqw}.route-heading{display:flex;justify-content:space-between;gap:1cqw;min-height:2.6cqw;font-size:1.8cqw;line-height:1.25}.route-heading strong{max-width:72%;font-weight:700}.route-heading span{white-space:nowrap;text-align:right;font-size:1.6cqw}.route-line{height:.25cqw;position:relative;display:flex;justify-content:space-between;margin:3cqw .5cqw 1.5cqw}.route-line i{display:block;width:.8cqw;height:.8cqw;border:1.5px solid #fff;border-radius:50%;background:'+design.theme.pdf.panel+';transform:translateY(-35%)}.route-stops{display:flex;justify-content:space-between;gap:1cqw;font-size:1.15cqw}.route-stops span{width:33.333%}.route-stops span:nth-child(2){text-align:center}.route-stops span:last-child{text-align:right}.route-small .route-heading{display:block;font-size:1.5cqw;min-height:5cqw}.route-small .route-heading strong{display:block;max-width:100%}.route-small .route-heading span{display:block;text-align:left;font-size:1.2cqw;margin-top:.5cqw}.route-small .route-line{margin-top:1.5cqw}.route-small .route-stops{font-size:.95cqw}.page-number{position:absolute;bottom:1.8%;right:4.8%;font-size:.9cqw;letter-spacing:.12em;color:'+design.theme.pdf.muted+'}@media screen{body{padding:20px;background:#030b16}.publication-page{width:min('+paper.w+'mm,100%);height:auto;aspect-ratio:'+paper.w+'/'+paper.h+';margin:0 auto 20px;box-shadow:0 10px 40px #0008}}@media print{body{padding:0}.publication-page{margin:0;box-shadow:none}}</style></head><body>'+pages+'</body></html>';
 }
 
 
@@ -1447,13 +1670,13 @@ function expandDesignText(text,card){const data=presentationCardData(card);retur
 function escapePresentationText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function safePresentationImage(value){return typeof value==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[a-z\d+/=\s]+$/i.test(value)&&value.length<=18_000_000?value:'';}
 function buildLegacyPresentationHtml(card,input={},assets={}){
-  const t=normalizeLegacyDesignTemplate(input),d=presentationCardData(card),esc=escapePresentationText;
+  const t=normalizeLegacyDesignTemplate(input),d=presentationCardData(card),esc=value=>escapePresentationText(redactPublicationPhones(value)),wechat=publicationWeChat({contact:t.contact});
   const photos=(assets.photos||[]).map(value=>safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url)).filter(Boolean).slice(0,6);
   const cover=safePresentationImage(assets.intro),outro=safePresentationImage(assets.outro);
   const facts=[d.price&&['Аренда',d.price+' ₽ / месяц'],d.area&&['Площадь',d.area+' м²'],d.rooms&&['Комнаты',d.rooms],d.metro&&['Метро',d.metro],d.floor&&['Этаж',d.floor]].filter(Boolean);
   const photo=(src,alt,cls='')=>'<img class="'+cls+'" src="'+src+'" alt="'+esc(alt)+'">';
   const location=d.address||d.mapUrl||d.route||outro;const attribution=psSafeString(assets.mapAttribution,300);
-  const sections={cover:cover?'<section class="cover">'+photo(cover,'Обложка объявления')+'</section>':'',title:'<section class="title"><p class="eyebrow">'+esc(t.footer)+'</p><h1>'+esc(d.title)+'</h1></section>',facts:facts.length?'<section class="facts">'+facts.map(([name,value])=>'<div><span>'+esc(name)+'</span><strong>'+esc(value)+'</strong></div>').join('')+'</section>':'',description:d.body?'<section class="description"><h2>Описание</h2><div class="copy">'+esc(d.body)+'</div>'+(d.tags?'<p class="tags">'+esc(d.tags)+'</p>':'')+'</section>':'',photos:photos.length?'<section class="photos"><h2>Фотографии</h2><div class="photo-grid">'+photos.map((src,index)=>'<figure>'+photo(src,'Фото квартиры '+(index+1))+'<figcaption>'+String(index+1).padStart(2,'0')+'</figcaption></figure>').join('')+'</div></section>':'',location:location?'<section class="location"><h2>'+esc(t.outro.heading)+'</h2>'+(outro?photo(outro,'Расположение и контакты','outro'):'')+(attribution?'<p class="muted">'+esc(attribution)+' · <a href="https://www.openstreetmap.org/copyright">Условия использования карты</a></p>':'')+(d.address?'<p>'+esc(d.address)+'</p>':'')+(d.route?'<p>'+esc(d.route)+'</p>':'')+(d.mapUrl?'<p>Координаты: '+esc(d.latitude+', '+d.longitude)+'<br><a href="'+d.mapUrl+'">Открыть точку на OpenStreetMap</a></p>':'<p class="muted">Координаты не указаны. Уточните расположение перед отправкой клиенту.</p>')+'</section>':'',contact:t.contact?'<section class="contact"><h2>Связаться с нами</h2><p>'+esc(t.contact)+'</p></section>':''};
+  const sections={cover:cover?'<section class="cover">'+photo(cover,'Обложка объявления')+'</section>':'',title:'<section class="title"><p class="eyebrow">'+esc(t.footer)+'</p><h1>'+esc(d.title)+'</h1></section>',facts:facts.length?'<section class="facts">'+facts.map(([name,value])=>'<div><span>'+esc(name)+'</span><strong>'+esc(value)+'</strong></div>').join('')+'</section>':'',description:d.body?'<section class="description"><h2>Описание</h2><div class="copy">'+esc(d.body)+'</div>'+(d.tags?'<p class="tags">'+esc(d.tags)+'</p>':'')+'</section>':'',photos:photos.length?'<section class="photos"><h2>Фотографии</h2><div class="photo-grid">'+photos.map((src,index)=>'<figure>'+photo(src,'Фото квартиры '+(index+1))+'<figcaption>'+String(index+1).padStart(2,'0')+'</figcaption></figure>').join('')+'</div></section>':'',location:location?'<section class="location"><h2>'+esc(t.outro.heading)+'</h2>'+(outro?photo(outro,'Расположение и контакты','outro'):'')+(attribution?'<p class="muted">'+esc(attribution)+' · <a href="https://www.openstreetmap.org/copyright">Условия использования карты</a></p>':'')+(d.address?'<p>'+esc(d.address)+'</p>':'')+(d.route?'<p>'+esc(d.route)+'</p>':'')+(d.mapUrl?'<p>Координаты: '+esc(d.latitude+', '+d.longitude)+'<br><a href="'+d.mapUrl+'">Открыть точку на OpenStreetMap</a></p>':'<p class="muted">Координаты не указаны. Уточните расположение перед отправкой клиенту.</p>')+'</section>':'',contact:wechat.text?'<section class="contact"><h2>微信联系</h2><p>'+esc(wechat.text)+'</p></section>':''};
   return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(d.title)+'</title><style>@page{size:'+t.paper+';margin:14mm}*{box-sizing:border-box}html{background:'+t.background+';color:'+t.foreground+';font-family:'+PS_FONT[t.font]+'}body{margin:0;line-height:1.6;font-size:11pt;overflow-wrap:anywhere}main{max-width:182mm;margin:auto}h1{font-size:27pt;line-height:1.25;margin:10pt 0 20pt;overflow-wrap:anywhere}h2{font-size:15pt;line-height:1.35;margin:0 0 12pt;color:'+t.accent+'}p{margin:8pt 0;white-space:pre-wrap}section{margin:0 0 22pt;max-width:100%}img{max-width:100%;display:block;object-fit:cover}.cover img{width:100%;max-height:238mm;object-fit:contain}.cover{break-after:page}.eyebrow{font-size:9pt;color:'+t.accent+';letter-spacing:.5pt}.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt;border-top:2pt solid '+t.accent+';padding-top:14pt}.facts>div{border-bottom:1pt solid '+t.accent+'33;padding:6pt 0;break-inside:avoid}.facts span{display:block;font-size:9pt;opacity:.7}.facts strong{font-size:13pt;font-weight:600;line-height:1.4}.copy{white-space:pre-wrap;orphans:3;widows:3}.tags{color:'+t.accent+';font-size:10pt}.photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt}.photo-grid figure{margin:0;break-inside:avoid}.photo-grid img{width:100%;height:58mm;object-fit:cover}.photo-grid figcaption{font-size:8pt;opacity:.6;margin:3pt 0}.location,.contact{break-inside:avoid}.outro{width:100%;max-height:148mm;object-fit:contain;margin-bottom:12pt}a{color:'+t.accent+';overflow-wrap:anywhere}.muted{font-size:9pt;opacity:.65}footer{font-size:8pt;padding:12pt 0;border-top:1pt solid '+t.accent+';opacity:.7}@media screen{body{padding:22px}main{max-width:760px}.cover img{max-height:980px}.photo-grid img{height:210px}.outro{max-height:560px}}@media print{section{box-decoration-break:clone}.title{break-after:avoid}.description h2,.photos h2,.location h2{break-after:avoid}}</style></head><body><main>'+t.blocks.filter(block=>block.enabled).map(block=>sections[block.id]).join('')+'<footer>'+esc(t.footer)+'</footer></main></body></html>';
 }
 
@@ -1495,7 +1718,7 @@ async function renderLegacyPresentationImage(kind,card,input,photos=[],mapImage=
       y+=h+28;
     }
     y+=psPaintText(ctx,d.route,64,y,950,29,t.foreground,{maxLines:4,weight:400})+28;
-    ctx.fillStyle=t.accent;ctx.fillRect(64,1240,952,3);psPaintText(ctx,t.contact||'Контакт можно настроить в шаблоне',64,1272,950,29,t.foreground,{maxLines:2,weight:500});psPaintText(ctx,t.footer,64,1388,950,20,t.foreground,{maxLines:1,weight:400});
+    ctx.fillStyle=t.accent;ctx.fillRect(64,1240,952,3);psPaintText(ctx,publicationWeChat({contact:t.contact}).text||'微信联系方式待填写',64,1272,950,29,t.foreground,{maxLines:2,weight:500});psPaintText(ctx,t.footer,64,1388,950,20,t.foreground,{maxLines:1,weight:400});
   }
   return canvas;
 }
@@ -1554,10 +1777,10 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   const setPath=(object,path,value)=>{const keys=path.split('.'),last=keys.pop();keys.reduce((value,key)=>value[key],object)[last]=value;};
   function field(parent,key,label,{type='text',options,rows=2,id}={}){
     const wrapper=psElement('label',label),input=psElement(type==='textarea'?'textarea':options?'select':'input');input.id=id||'presentation-'+key.replaceAll('.','-');
-    if(type!=='textarea'&&!options)input.type=type;if(type==='textarea')input.rows=rows;
+    if(type!=='textarea'&&!options)input.type=type;if(type==='textarea')input.rows=rows;if(['brand.wechatId','brand.wechatUrl','brand.contact'].includes(key)){input.setAttribute('autocapitalize','none');input.setAttribute('autocorrect','off');input.spellcheck=false;}
     if(options)for(const [value,text]of options){const option=psElement('option',text);option.value=value;input.append(option);}
     wrapper.htmlFor=input.id;wrapper.append(input);parent.append(wrapper);inputs[key]=input;
-    input.addEventListener(type==='color'?'input':'change',()=>{const previous=getPath(template,key);setPath(template,key,input.value);if(key.startsWith('theme.')){const [,group,colorKey]=key.split('.');applyThemeColor(template,group,colorKey,previous,input.value);}template=normalizePublicationDesign(template);persistLocal();queueRender();});return input;
+    input.addEventListener(type==='color'?'input':'change',()=>{if(key==='brand.wechatId'&&input.value.trim()&&!publicationWeChat({wechatId:input.value}).id){input.setCustomValidity('Укажите только WeChat ID: латинские буквы, цифры, точка, дефис или подчёркивание');input.setAttribute('aria-invalid','true');toast('Введите WeChat ID без подписи и пробелов');return;}if(key==='brand.wechatUrl'&&input.value.trim()&&!safePublicationLink(input.value.trim())){input.setCustomValidity('Нужна HTTPS-ссылка без логина, пароля или локального адреса');input.setAttribute('aria-invalid','true');toast('Вставьте корректную HTTPS-ссылку WeChat');return;}input.setCustomValidity('');input.removeAttribute('aria-invalid');const previous=getPath(template,key);setPath(template,key,input.value);if(key.startsWith('theme.')){const [,group,colorKey]=key.split('.');applyThemeColor(template,group,colorKey,previous,input.value);}template=normalizePublicationDesign(template);persistLocal();if(key.startsWith('brand.wechat')||key==='brand.contact')syncInputs();queueRender();});return input;
   }
   const preset=field(settings,'preset','Цветовой вариант',{options:[['ciliev-elite','Ciliev Elite · PDF с золотом'],['ciliev-navy','Ciliev Navy · синий и коралловый']]});
   function applyThemeColor(design,group,key,oldColor,newColor){for(const [id,page]of Object.entries(design.surfaces)){if((group==='pdf')!==id.startsWith('pdf'))continue;if(key==='background'&&page.background===oldColor)page.background=newColor;for(const node of page.nodes){for(const name of ['color','background','borderColor'])if(node.style[name]===oldColor)node.style[name]=newColor;}}}
@@ -1565,8 +1788,12 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
     // A colour choice must retain the operator's positions, bindings and text.
     template=normalizePublicationDesign(next);syncInputs();persistLocal();editor?.refresh();queueRender();};
   field(settings,'brand.name','Бренд');field(settings,'brand.agency','Подпись агентства · 中文');field(settings,'brand.tagline','Слоган · 中文');
-  field(settings,'brand.agentName','Имя консультанта · 中文');field(settings,'brand.agentRole','Должность · 中文');field(settings,'brand.phone','Телефон');field(settings,'brand.email','Почта');
-  field(settings,'brand.contact','Контакт / WeChat',{type:'textarea',id:'presentation-contact'});field(settings,'brand.footer','Подвал · 中文');
+  field(settings,'brand.agentName','Имя консультанта · 中文');field(settings,'brand.agentRole','Должность · 中文');
+  const wechatIdInput=field(settings,'brand.wechatId','WeChat ID · логин');wechatIdInput.placeholder='ciliev';field(settings,'brand.wechatUrl','Ссылка профиля / контакта WeChat · HTTPS',{type:'url'});field(settings,'brand.wechatLabel','Текст кнопки WeChat · 中文');
+  field(settings,'brand.contact','Прежняя подпись WeChat · совместимость',{type:'textarea',id:'presentation-contact'});field(settings,'brand.footer','Подвал · 中文');
+  settings.append(psElement('p','Телефоны и почта в публикацию не попадают. Вставьте готовую HTTPS-ссылку из профиля или QR WeChat: из одного логина ссылка на личный чат автоматически не создаётся.','muted'));
+  const wechatTools=psElement('div','','presentation-toolbar'),wechatCopy=button('Скопировать WeChat ID','presentationWechatCopy'),wechatOpen=psElement('a','Открыть WeChat-ссылку','btn');wechatOpen.id='presentationWechatOpen';wechatOpen.target='_blank';wechatOpen.rel='noopener noreferrer';wechatTools.append(wechatCopy,wechatOpen);settings.append(wechatTools);
+  wechatCopy.onclick=async()=>{const id=publicationWeChat(template.brand).id;if(!id)return;try{await navigator.clipboard.writeText(id);toast('WeChat ID скопирован');}catch{toast('WeChat ID: '+id);}};
   const brandFiles=psElement('div','','presentation-brand-files');settings.append(brandFiles);
   const uploadInputs={};
   for(const [role,label]of [['logo','Логотип агентства'],['avatar','Аватар консультанта']]){
@@ -1592,7 +1819,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   const rules=()=>getRules?.()||savedServerRules||{};
   const assets=()=>({photos,mapImage,mapAttribution,logo,avatar,rules:{...rules()}});
   function persistLocal({touched=true}={}){if(touched){templateTouched=true;dirty=true;designEpoch++;revision++;lastRendered=null;}try{localStorage.setItem(PS_STUDIO_KEY,JSON.stringify({version:2,template,dirty,baseUpdated:serverUpdated}));if(legacyBackup)localStorage.setItem('most-presentation-design-legacy-backup-v1',JSON.stringify(legacyBackup));if(draftBackup)localStorage.setItem('most-presentation-design-draft-backup-v2',JSON.stringify(draftBackup));}catch{if(!destroyed)status.textContent='Шаблон изменён. Сохраните его на Mac или экспортируйте JSON.';}}
-  function syncInputs(){for(const [key,input]of Object.entries(inputs))input.value=getPath(template,key)??'';oldExport.hidden=!legacyBackup;draftExport.hidden=!draftBackup;for(const role of ['logo','avatar']){const value=role==='logo'?logo:avatar,element=uploadInputs[role].image;element.hidden=!value;if(value)element.src=value;else element.removeAttribute('src');}}
+  function syncInputs(){const wechat=publicationWeChat(template.brand);wechatCopy.disabled=!wechat.id;wechatOpen.hidden=!wechat.url;if(wechat.url)wechatOpen.href=wechat.url;else wechatOpen.removeAttribute('href');for(const [key,input]of Object.entries(inputs))input.value=getPath(template,key)??'';oldExport.hidden=!legacyBackup;draftExport.hidden=!draftBackup;for(const role of ['logo','avatar']){const value=role==='logo'?logo:avatar,element=uploadInputs[role].image;element.hidden=!value;if(value)element.src=value;else element.removeAttribute('src');}}
   function activeSurface(){return active==='pdf'?pdfSurface:active;}
   function selectTab(id){active=id;for(const key of Object.keys(tabButtons)){tabButtons[key].classList.toggle('chosen',key===id);tabButtons[key].setAttribute('aria-pressed',String(key===id));}frameWrap.hidden=id!=='pdf';imageWrap.hidden=id==='pdf';if(id!=='pdf')imageWrap.open=true;imageSummary.textContent=(id==='intro'?'Intro · обложка':'Outro · карта')+' · 1080 × 1920';editor?.setSurface(activeSurface());showImage();}
   function surfaceChanged(id){if(id.startsWith('pdf')){pdfSurface=id;active='pdf';}else active=id;for(const key of Object.keys(tabButtons)){tabButtons[key].classList.toggle('chosen',key===active);tabButtons[key].setAttribute('aria-pressed',String(key===active));}frameWrap.hidden=active!=='pdf';imageWrap.hidden=active==='pdf';if(active!=='pdf')imageWrap.open=true;imageSummary.textContent=(active==='intro'?'Intro · обложка':'Outro · карта')+' · 1080 × 1920';showImage();}

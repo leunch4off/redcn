@@ -125,7 +125,10 @@ export function translateRussian(text,{rules={},entries=null,mode='safe',preserv
  const input=String(text??'').slice(0,20000),user=ruZhUser(rules),open=entries?ruZhIndex(entries.map(row=>Array.isArray(row)?{ru:row[0],zh:row[1],source:row[2]||'open-lexicon',reviewed:false}:row)):(ruZhOpenIndex||(ruZhOpenIndex=ruZhIndex(ruZhOpenRows))),ctx={user,open,mode};
  const pieces=ruZhProtectedPieces(input,ctx);let output='',unknown=[],matches=[],warnings=[],sourceOffset=0;
  for(const part of pieces){const partStart=sourceOffset;sourceOffset+=part.length;if(!part)continue;if(/^[\n\r.!?。！？;]+$/u.test(part)){output+=preservePunctuation?part:part==='.'?'。':part===';'?'；':part==='!'?'！':part==='?'?'？':part;continue;}
-  const left=part.match(/^\s*/u)[0],right=part.match(/\s*$/u)[0],raw=part.trim();if(!raw){output+=part;continue;}
+  // Native trimming also handles astral characters and lone UTF-16 surrogates
+  // without depending on WebKit's zero-width Unicode regexp edge matching.
+  const raw=part.trim();if(!raw){output+=part;continue;}
+  const left=part.slice(0,part.length-part.trimStart().length),right=part.slice(part.trimEnd().length);
   const exact=ruZhWhole(raw,ctx);let result=exact&&exact.category!=='inventory'?ruZhResult(exact.zh,[],[ruZhMatch(exact,raw)]):/^(?:есть ли|можно ли|будет ли|можно ли будет|разрешено ли)/iu.test(raw)?ruZhResult(raw,[raw],[],['Вопрос сохранён как вопрос и не превращён в утверждение.']):ruZhPattern(raw,ctx);
   if(!result&&/(?:^|\s)(?:нет|без|не|нельзя|запрещ\S*|отсутств\S*|если|возможно|возможно,|только если)(?:\s|$)/iu.test(raw)&&ruZhCyrillic.test(raw))result=ruZhResult(raw,[raw],[],['Условие или отрицание сохранено целиком: нужен перевод или проверка.']);
   if(!result)result=ruZhScan(raw,ctx);

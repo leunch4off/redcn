@@ -33,7 +33,9 @@ class ChallengeError(ValueError):
 
 def normalize_url(raw):
     """Accept a pasted Markdown link or terminal line, without weakening host checks."""
-    raw = html.unescape(str(raw)).strip()
+    # Raw query parameters such as &region must not be decoded as the legacy
+    # HTML entity &reg (®). Decode only complete escaped ampersands from paste.
+    raw = re.sub(r'&(?:amp|#0*38|#x0*26);', '&', str(raw).strip(), flags=re.I)
     markdown = re.search(r'\[[^\]]*\]\((https://[^\s)]+)\)', raw)
     match = markdown or re.search(r'https://[^\s<>\[\]"\u201c\u201d]+', raw)
     if not match:

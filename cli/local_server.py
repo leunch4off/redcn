@@ -104,6 +104,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
+    audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
     identity = {'app':'redcn', 'protocol':7, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
@@ -130,7 +131,11 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             with lock:
                 jobs[job_id].update(message=message)
                 jobs[job_id]['tracker'].update(message,**fields)
+            try:workspace.diagnostics.record(audit_tokens.get(job_id), message, **fields)
+            except (OSError, ValueError, sqlite3.Error):pass
         connection = None
+        listing = None
+        failure = None
         result_id=None
         success=False
         learn=False
@@ -162,6 +167,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             success=True
             with lock: jobs[job_id].update(state='done',message='Готово' if learn else 'Текст готов, подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
         except Exception as error:
+            failure = error
             if result_id:
                 try:
                     current=read_result(directory,result_id)
@@ -171,7 +177,16 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 except (OSError,ValueError,sqlite3.Error):pass
             with lock: jobs[job_id].update(state='error', message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
         finally:
-            with lock:jobs[job_id]['tracker'].finish(success,learn=learn)
+            with lock:
+                jobs[job_id]['tracker'].finish(success,learn=learn)
+                measured = jobs[job_id]['tracker'].snapshot()
+                audit_token = audit_tokens.pop(job_id, None)
+            try:
+                if audit_token:
+                    workspace.diagnostics.complete(audit_token,
+                        'success' if success else 'cancelled' if cancel.is_set() else 'error',
+                        progress=measured, capture=(listing or {}).get('capture'), error=failure)
+            except (OSError, ValueError, sqlite3.Error):pass
             if connection is not None:connection.close()
 
     def start_import(params):
@@ -190,6 +205,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             jobs[job_id]={'state':'running','message':'Начинаем загрузку…','cancel':cancel,
                          'kind':'import','sourceUrl':params['url'],
                          'tracker':JobProgress(timing_history,'import:'+params.get('loader','auto'))}
+            try:audit_tokens[job_id] = workspace.diagnostics.begin(job_id, params['url'], manual=True)
+            except (OSError, ValueError, sqlite3.Error):pass
         threading.Thread(target=run_import,args=(job_id,params,cancel),daemon=True).start()
         return job_id
 
@@ -276,6 +293,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
                 try:
+                    document=workspace.dispatch(path.removeprefix('/api/local/'), query=parse_qs(urlsplit(self.path).query))
+                    if document:self.respond(*document);return
                     document=language_service.dispatch(directory,path.removeprefix('/api/local/'))
                     if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/local/'),browser_channel=browser_channel)
@@ -336,6 +355,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                document=workspace.dispatch(relative,data)
+                if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data)
                 if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,browser_channel=browser_channel)
@@ -397,13 +418,18 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server.daemon_threads = True
     server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card;server.latest_job=latest_job
     server.browser_channel=browser_channel
+    from workspace_api import WorkspaceAPI
+    workspace = WorkspaceAPI(directory, browser_channel=browser_channel)
+    server.workspace_api=workspace.dispatch
+    server.listing_watch=workspace.watch
+    server.import_diagnostics=workspace.diagnostics
     from phone_relay import RelayManager
     server.phone_relay=RelayManager(directory,server)
     from connection_diagnostics import ConnectionDiagnostics
     server.connection_diagnostics=ConnectionDiagnostics()
     close=server.server_close
     def close_all():
-        server.connection_diagnostics.close();server.phone_relay.stop();close()
+        workspace.close();server.connection_diagnostics.close();server.phone_relay.stop();close()
     server.server_close=close_all
     return server
 

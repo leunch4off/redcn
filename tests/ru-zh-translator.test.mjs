@@ -2,6 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {translateRussian,setExtendedLexicon,getLexiconStats,searchLexiconPage} from '../web/ru-zh-translator.mjs';
 
+test('translation preserves edge whitespace without WebKit zero-width regexp results',()=>{
+ const original=RegExp.prototype[Symbol.match];
+ RegExp.prototype[Symbol.match]=function(value){
+  if(this.source==='\\s*$'||this.source==='^\\s*')return null;
+  return original.call(this,value);
+ };
+ try{
+  const result=translateRussian('\u00a0\tМГУ\u202f ',{rules:{МГУ:'莫斯科国立大学'}});
+  assert.equal(result.text,'\u00a0\t莫斯科国立大学\u202f ');
+  assert.deepEqual(result.unknown,[]);
+  for(const suffix of ['😀','𫓧','\ud83d','\ude00']){
+   const source='\t我的房源'+suffix+'\u00a0';
+   assert.equal(translateRussian(source).text,source);
+  }
+  assert.equal(translateRussian('\t\u00a0\u202f ').text,'\t\u00a0\u202f ');
+ }finally{RegExp.prototype[Symbol.match]=original;}
+});
+
 test('rental translation preserves amounts, units, floors and inventory quantities',()=>{
  const result=translateRussian('Цена 80 тыс. рублей в месяц; Площадь 52,5 м²; Этаж 7 из 16; Есть 2 стула, холодильник и духовка');
  assert.match(result.text,/80,000卢布/);assert.match(result.text,/52\.5平方米/);assert.match(result.text,/第7层，共16层/);assert.match(result.text,/2把椅子/);assert.match(result.text,/冰箱/);assert.match(result.text,/烤箱/);
