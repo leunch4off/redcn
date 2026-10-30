@@ -1,6 +1,7 @@
 import {COMMUNITY_RENTAL_ENTRIES,COMMUNITY_RENTAL_META} from './community-phrases.mjs';
 import {translateGeo} from './geo-catalog.mjs';
 import {RENTAL_LEXICON,RENTAL_RULES,RENTAL_LEXICON_META} from './rental-lexicon.mjs';
+import {UNIVERSITY_CATALOG,universityRules,resolveUniversity,resolveCampus} from './university-catalog.mjs';
 
 export {RENTAL_LEXICON,RENTAL_RULES,RENTAL_LEXICON_META};
 export const rentalRules=RENTAL_RULES;
@@ -9,7 +10,8 @@ const ruZhCyrillic=/[\u0400-\u052f]/u;
 const ruZhWordChar=/[\p{L}\p{N}_]/u;
 let ruZhCoreIndex=null,ruZhOpenRows=[],ruZhOpenForms=new Map(),ruZhOpenIndex=null,ruZhOpenMeta=null,ruZhLoading=null;
 function ruZhIndex(rows){const map=new Map(),prefix=new Map();for(const row of rows){const key=ruZhFold(row.ru);if(!key)continue;if(!map.has(key))map.set(key,row);const first=key[0];if(!prefix.has(first))prefix.set(first,[]);prefix.get(first).push({...row,key});}for(const list of prefix.values())list.sort((a,b)=>b.key.length-a.key.length);return {map,prefix};}
-function ruZhCore(){return ruZhCoreIndex||(ruZhCoreIndex=ruZhIndex([...COMMUNITY_RENTAL_ENTRIES.map(([ru,zh,category])=>({ru,zh,category,source:'community-rental',reviewed:true})),...RENTAL_LEXICON.map(([ru,zh,category])=>({ru,zh,category,source:'rental-core',reviewed:true}))]));}
+function ruZhAcademicEntries(){return Object.entries(universityRules()).map(([ru,zh])=>{const row=resolveCampus(ru)||resolveUniversity(ru);return {ru,zh,category:row?.kind||'university',source:'university-catalog',sourceIds:row?.sourceIds||[],reviewed:row?.translationStatus==='official'};});}
+function ruZhCore(){return ruZhCoreIndex||(ruZhCoreIndex=ruZhIndex([...ruZhAcademicEntries(),...COMMUNITY_RENTAL_ENTRIES.map(([ru,zh,category])=>({ru,zh,category,source:'community-rental',reviewed:true})),...RENTAL_LEXICON.map(([ru,zh,category])=>({ru,zh,category,source:'rental-core',reviewed:true}))]));}
 function ruZhUser(rules){return ruZhIndex(Object.entries(rules||{}).filter(([ru,zh])=>typeof zh==='string'&&zh.trim()&&ruZhCore().map.get(ruZhFold(ru))?.zh!==zh).map(([ru,zh])=>({ru,zh,source:'user',reviewed:true})));}
 function ruZhWhole(value,ctx){const key=ruZhFold(value);return ctx.user.map.get(key)||ruZhCore().map.get(key)||null;}
 function ruZhMatch(row,text,start=0){return {ru:text,zh:row.zh,start,end:start+text.length,source:row.source||'rental-core',reviewed:row.reviewed!==false};}
@@ -94,9 +96,34 @@ function ruZhScan(raw,ctx){
   else{if(!pending)pendingStart=i;pending+=raw[i++];}}
  flush();return ruZhResult(output,unknown,matches);
 }
+function ruZhProtectedPieces(input,ctx){
+ // Initials inside a known full name are part of that name, not sentence
+ // boundaries. Protect delimiter positions without changing source text or
+ // introducing markers that a later translator could alter.
+ const ranges=[],prefix=new Map();
+ for(const index of [ctx.user,ruZhCore()])for(const [first,candidates] of index.prefix){
+  const filtered=candidates.filter(row=>/[.!?;。！？]/u.test(row.key));
+  if(filtered.length)prefix.set(first,[...(prefix.get(first)||[]),...filtered]);
+ }
+ for(let index=0;index<input.length;index++){
+  const first=ruZhFold(input[index]),candidates=prefix.get(first)||[];
+  for(const row of candidates){
+   const actual=input.slice(index,index+row.key.length);
+   if(ruZhFold(actual)!==row.key)continue;
+   if((index&&ruZhWordChar.test(input[index-1])&&ruZhWordChar.test(row.key[0]))||(ruZhWordChar.test(input[index+actual.length]||'')&&ruZhWordChar.test(row.key.at(-1))))continue;
+   ranges.push([index,index+actual.length]);index+=actual.length-1;break;
+  }
+ }
+ const pieces=[],boundary=/([\n\r]+|(?<!тыс|руб|мин|кв)\.(?=\s|$)|[!?。！？](?=\s|$)|;)/giu;let start=0;
+ for(const match of input.matchAll(boundary)){
+  if(ranges.some(([left,right])=>match.index>=left&&match.index<right))continue;
+  pieces.push(input.slice(start,match.index),match[0]);start=match.index+match[0].length;
+ }
+ pieces.push(input.slice(start));return pieces;
+}
 export function translateRussian(text,{rules={},entries=null,mode='safe',preservePunctuation=false}={}){
  const input=String(text??'').slice(0,20000),user=ruZhUser(rules),open=entries?ruZhIndex(entries.map(row=>Array.isArray(row)?{ru:row[0],zh:row[1],source:row[2]||'open-lexicon',reviewed:false}:row)):(ruZhOpenIndex||(ruZhOpenIndex=ruZhIndex(ruZhOpenRows))),ctx={user,open,mode};
- const pieces=input.split(/([\n\r]+|(?<!тыс|руб|мин|кв)\.(?=\s|$)|[!?。！？](?=\s|$)|;)/iu);let output='',unknown=[],matches=[],warnings=[],sourceOffset=0;
+ const pieces=ruZhProtectedPieces(input,ctx);let output='',unknown=[],matches=[],warnings=[],sourceOffset=0;
  for(const part of pieces){const partStart=sourceOffset;sourceOffset+=part.length;if(!part)continue;if(/^[\n\r.!?。！？;]+$/u.test(part)){output+=preservePunctuation?part:part==='.'?'。':part===';'?'；':part==='!'?'！':part==='?'?'？':part;continue;}
   const left=part.match(/^\s*/u)[0],right=part.match(/\s*$/u)[0],raw=part.trim();if(!raw){output+=part;continue;}
   const exact=ruZhWhole(raw,ctx);let result=exact&&exact.category!=='inventory'?ruZhResult(exact.zh,[],[ruZhMatch(exact,raw)]):/^(?:есть ли|можно ли|будет ли|можно ли будет|разрешено ли)/iu.test(raw)?ruZhResult(raw,[raw],[],['Вопрос сохранён как вопрос и не превращён в утверждение.']):ruZhPattern(raw,ctx);
@@ -105,7 +132,8 @@ export function translateRussian(text,{rules={},entries=null,mode='safe',preserv
   const offset=partStart+left.length;let matchCursor=0;matches.push(...result.matches.map(m=>{const found=raw.indexOf(m.ru,matchCursor),position=found>=0?found:m.start;matchCursor=position+m.ru.length;return {...m,start:position+offset,end:position+m.ru.length+offset};}));unknown.push(...result.unknown);warnings.push(...result.warnings);output+=left+result.text+right;
  }
  const unique=[...new Set(unknown.filter(Boolean))],totalWords=(input.match(/[\p{Script=Cyrillic}]+/gu)||[]).length,remainingWords=unknown.reduce((n,s)=>n+(s.match(/[\p{Script=Cyrillic}]+/gu)||[]).length,0);
- if(matches.some(m=>m.reviewed===false&&m.source!=='geo-catalog'))warnings.push('Открытый словарь содержит непроверенные значения и неоднозначные слова; это подсказка для проверки, а не машинный перевод предложения.');
+ if(matches.some(m=>m.reviewed===false&&!['geo-catalog','university-catalog'].includes(m.source)))warnings.push('Открытый словарь содержит непроверенные значения и неоднозначные слова; это подсказка для проверки, а не машинный перевод предложения.');
+ if(matches.some(m=>m.reviewed===false&&m.source==='university-catalog'))warnings.push('Китайское название вуза или кампуса содержит редакционный перевод; проверьте его по указанным источникам.');
  return {text:output,unknown:unique,matches,coverage:{totalWords,translatedWords:Math.max(0,totalWords-remainingWords),ratio:totalWords?Math.max(0,Math.min(1,(totalWords-remainingWords)/totalWords)):1},warnings:[...new Set(warnings)],needsReview:unique.length>0||matches.some(m=>m.reviewed===false&&m.source!=='geo-catalog'),backend:'rental-phrases',limited:input.length!==String(text??'').length};
 }
 export function setExtendedLexicon(data){const rows=Array.isArray(data)?data:data?.entries||[];ruZhOpenRows=rows.filter(r=>Array.isArray(r)&&typeof r[0]==='string'&&typeof r[1]==='string'&&ruZhCyrillic.test(r[0])&&/\p{Script=Han}/u.test(r[1])).map(r=>({ru:r[0],zh:r[1],source:r[2]||'wiktionary',sourcePage:r[3]||null,sourceUrl:(Array.isArray(data?.sources)?data.sources.find(s=>s.id===r[2])?.pageUrlPrefix:'')?data.sources.find(s=>s.id===r[2]).pageUrlPrefix+encodeURIComponent(r[3]||r[0]):null,reviewed:false}));ruZhOpenForms=new Map();for(const [form,lemma] of Array.isArray(data?.forms)?data.forms:[]){const key=ruZhFold(form),value=ruZhFold(lemma);if(!ruZhOpenForms.has(key))ruZhOpenForms.set(key,[]);if(!ruZhOpenForms.get(key).includes(value))ruZhOpenForms.get(key).push(value);}ruZhOpenMeta=Array.isArray(data)?null:data;ruZhOpenIndex=null;return getLexiconStats();}

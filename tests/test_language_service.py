@@ -146,6 +146,18 @@ class LanguageUpdates(unittest.TestCase):
             language.translate(self.directory,{'text':'Залог; есть рабочий стол. Незнакомый оборот'})
         self.assertEqual(machine.call_args.args[1],{'залог':'自定义押金','есть рабочий стол':'配有书桌'})
 
+    def test_editorial_university_name_stays_exact_and_keeps_its_review_warning(self):
+        preview={'text':'莫斯科物理技术学院; неизвестный оборот','unknown':['оборот'],
+            'warnings':['Китайское название вуза переведено редакционно; проверьте его.'],
+            'matches':[{'ru':'МФТИ','zh':'莫斯科物理技术学院','reviewed':False,'source':'university-catalog'},
+                {'ru':'оборот','zh':'不确定','reviewed':False,'source':'open-lexicon'}]}
+        with patch.object(language,'node_language',return_value=preview), \
+             patch.object(language,'machine_translate',return_value={'text':'莫斯科物理技术学院，中文草稿。','warnings':[]}) as machine:
+            result=language.translate(self.directory,{'text':'МФТИ; неизвестный оборот'})
+        self.assertEqual(machine.call_args.args[1],{'МФТИ':'莫斯科物理技术学院','кодовое слово':'自定义'})
+        self.assertTrue(result['needsReview'])
+        self.assertIn(preview['warnings'][0],result['warnings'])
+
 
 class AuthenticatedLanguageRoutes(unittest.TestCase):
     setUp=route_fixture.CardDocumentRoutes.setUp

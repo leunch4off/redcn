@@ -93,7 +93,7 @@ class CaptureTests(unittest.TestCase):
         page.url = URL
         page.is_closed.return_value = False
         snap = snapshot(['/full.jpg', 'https://bad.invalid/x.jpg'])
-        page.evaluate.side_effect = lambda script: {'height': 800, 'bottom': True} if script == browser_import.SCROLL else snap
+        page.evaluate.side_effect = lambda script, *_args: {'height': 800, 'bottom': True} if script == browser_import.SCROLL else snap
         context.pages = [existing]
         context.new_page.return_value = page
         pw.chromium.launch_persistent_context.return_value = context

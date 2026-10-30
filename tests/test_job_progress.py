@@ -101,7 +101,9 @@ class MeasuredProgressTests(unittest.TestCase):
         events=[]
         _,audit=browser_import.capture_scrolled(page,snapshot(),time.monotonic()+10,
             lambda *_args,**_kwargs:None,status=lambda message,**fields:events.append((message,fields)))
-        updates=[fields for _,fields in events if 'completed' in fields]
+        resets=[fields for _,fields in events if fields.get('completed')==0]
+        self.assertEqual(len(resets),1,'A fallback page walk resets any earlier section counter')
+        updates=[fields for _,fields in events if fields.get('completed',0)>0]
         self.assertEqual(len(updates),audit['scrolls'])
         self.assertTrue(all(fields['stage']=='scroll' for fields in updates))
         self.assertEqual(updates[-1]['completed'],audit['scrolls'])

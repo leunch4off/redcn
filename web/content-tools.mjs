@@ -45,7 +45,7 @@ export function suggestTags(v, rules, translateFn, routesFn) {
   else if(v.layout==='euro3')add('莫斯科两室一厅','Две спальни + кухня-гостиная');
   else {const groups={1:'one',2:v.separate?'twoSeparate':'two',3:v.separate?'threeSeparate':'three',4:'four'};const options=TAG_CATALOG.filter(x=>x[2]===groups[v.rooms]);if(options.length)add(options[seed%options.length][0],'Планировка из карточки');}
   if(Number(v.rooms)===2&&v.separate===true&&!['studio','euro2'].includes(v.layout))add('莫斯科合租','Две изолированные комнаты; приведён пример деления бюджета, условия заселения требуют согласования');
-  if(universities.length||v.audience==='student')add(seed%2?'留学生租房':'莫斯科留学','Указан вуз или студенческая аудитория');
+  if(v.audience==='student')add(seed%2?'留学生租房':'莫斯科留学','Оператор выбрал студенческую аудиторию');
   if(v.audience==='professional')add('莫斯科外派','Выбрана рабочая аудитория');
   if(routes.length)add(seed%2?'莫斯科地铁':'莫斯科通勤','Есть транспортный блок');
   if(routes.some(r=>r.mode==='walk'&&/^\d+$/.test(String(r.time))&&Number(r.time)<=10))add('近地铁','Пешком до метро не более 10 минут по введённым данным');

@@ -5,6 +5,7 @@ import {GEO_CATALOG} from './geo-catalog.mjs';
 import {RENTAL_RULES,translateRussian} from './ru-zh-translator.mjs';
 import {getTemplate,renderTemplate,catalogStats} from './template-catalog.mjs';
 import {COMMUNITY_RENTAL_RULES,COMMUNITY_RENTAL_META} from './community-phrases.mjs';
+import {UNIVERSITY_CATALOG,universityRules,resolveUniversity,resolveCampus,universityStats} from './university-catalog.mjs';
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
 const engineCommunityKey=value=>String(value).toLowerCase().replaceAll('ё','е');
 const engineCommunityMeanings=new Map(Object.entries(COMMUNITY_RENTAL_RULES).map(([ru,zh])=>[engineCommunityKey(ru),zh]));
@@ -37,6 +38,7 @@ export const DICTIONARY = {
   'вытяжка':'抽油烟机', 'духовой шкаф':'烤箱', 'варочная панель':'灶台', 'кладовая':'储藏室', 'стеллаж':'置物架',
   'можно с животными':'宠物入住可与房东协商', 'можно с питомцами':'宠物入住可与房东协商',
   'краткосрочная аренда':'可协商短租', 'wi-fi':'Wi-Fi网络', 'Евроремонт':'现代装修', 'На улицу и двор':'窗户朝向街道和庭院', 'совмещенный':'卫生间与浴室合一', 'совмещённый':'卫生间与浴室合一', 'раздельный':'厕所与浴室分开', 'Монолитный':'整体浇筑结构', 'Железобетонные':'钢筋混凝土', 'Индивидуальный проект':'独立设计', 'Центральное':'集中供暖', 'в Лианозовском парке':'位于利阿诺佐沃公园内（按房源描述）',
+  ...universityRules(),
 };
 
 export const FEATURES = [
@@ -103,6 +105,7 @@ export function translateDraft(text,{rules=DICTIONARY,entries=[],mode='draft'}={
 export function generationCapabilities(){
   return {templates:catalogStats(),curatedRules:Object.keys(DICTIONARY).length,
     communityPhrases:COMMUNITY_RENTAL_META.entryCount,
+    universities:universityStats(),
     customText:{offline:true,unknown:'review',manualRulesPriority:true},
     variants:['titleVariant','copyVariant','tagVariant']};
 }
@@ -124,6 +127,43 @@ export function parseRoutes(raw) {
     return {name,time,mode,line};
   });
 }
+function engineSchoolAliases(){
+  const rows=[];
+  for(const school of UNIVERSITY_CATALOG.universities)for(const alias of [school.ru,school.zh,...(school.aliases||[])]){
+    if(typeof alias==='string'&&alias.length>=3&&resolveUniversity(alias)?.id===school.id)rows.push({alias,record:school,kind:'university'});
+  }
+  for(const campus of UNIVERSITY_CATALOG.campuses){
+    const parent=UNIVERSITY_CATALOG.universities.find(row=>row.id===campus.universityId);if(!parent)continue;
+    const parentAliases=[parent.ru,parent.zh,...(parent.aliases||[])].filter(alias=>typeof alias==='string'&&alias.length>=3&&resolveUniversity(alias)?.id===parent.id);
+    for(const alias of [campus.ru,campus.zh,...(campus.aliases||[])])if(typeof alias==='string'&&resolveCampus(alias)?.id===campus.id&&parentAliases.some(name=>fold(alias).includes(fold(name))))rows.push({alias,record:campus,kind:'campus'});
+  }
+  return rows.sort((a,b)=>b.alias.length-a.alias.length);
+}
+let engineSchoolAliasCache;
+export function extractUniversityReferences(text){
+  const source=String(text||''),rows=engineSchoolAliasCache||(engineSchoolAliasCache=engineSchoolAliases()),schools=new Map(),campuses=new Map(),evidence=[];
+  for(const row of rows){
+    const expression=new RegExp('(?<![а-яёa-z0-9])'+escape(row.alias).replaceAll('ё','[ёе]')+'(?![а-яёa-z0-9])','giu');
+    const match=expression.exec(source);if(!match||!confirmedDetailTrigger(source,row.alias))continue;
+    const clause=source.slice(Math.max(0,match.index-80),match.index+row.alias.length+100).split(/[.!?;\n]/).find(part=>fold(part).includes(fold(row.alias)))||'';
+    if(/[?？]|можно ли|есть ли|находится ли/i.test(clause))continue;
+    if(row.kind==='campus'){
+      if(!campuses.has(row.record.id)){campuses.set(row.record.id,row.record);evidence.push({field:'campus',value:row.record.ru,text:match[0],source:'Описание · точная площадка / адрес вуза'});}
+      continue;
+    }
+    if(schools.has(row.record.id))continue;
+    const tail=source.slice(match.index+match[0].length,match.index+match[0].length+90).split(/[.!?;\n,]/)[0];
+    const time=tail.match(/^[^\d]{0,25}(\d+(?:\s*[–—-]\s*\d+)?)\s*(?:минут|мин\.?|分钟)/i);
+    const routeText=source.slice(Math.max(0,match.index-35),match.index)+tail;
+    const mode=/пешком|пешая|步行/i.test(routeText)?'walk':/автобус|公交/i.test(routeText)?'bus':/на метро|метрополитен|乘.*地铁/i.test(routeText)?'metro':'unknown';
+    schools.set(row.record.id,{name:row.record.ru,time:time?time[1].replace(/\s/g,''):'',mode});
+    evidence.push({field:'university',value:row.record.ru,text:match[0],source:'Описание · точное название вуза'});
+  }
+  const references=[...schools.values()],foundCampuses=[...campuses.values()],fields={};
+  if(references.length){fields.university=references[0].name;fields.universities=references.map(row=>[row.name,row.time,row.mode].join(' | ')).join('\n');fields.uniTime=references[0].time;fields.uniMode=references[0].mode;}
+  if(foundCampuses.length===1)fields.campus=foundCampuses[0].ru;
+  return {fields,evidence,universities:references,campuses:foundCampuses};
+}
 export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   v={...v};
   const sourceConditions=detectConditions(v.sourceDescription||v.sourceAudit?.description||'').facts;
@@ -139,7 +179,15 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   const routes=parseRoutes(v.transit);
   if(!routes.length&&v.metro)routes.push({name:v.metro,time:v.walk||'',mode:'walk',line:''});
   const universities=parseRoutes(v.universities);
-  if(!universities.length&&v.university)universities.push({name:v.university,time:v.uniTime||'',mode:v.uniMode||'public',line:''});
+  const universityInputs=String(v.universities||'').split('\n').map(row=>row.trim()).filter(Boolean);
+  for(let index=0;index<universities.length;index++)if(!universityInputs[index]?.split('|')[2]?.trim())universities[index].mode='unknown';
+  if(!universities.length&&v.university)universities.push({name:v.university,time:v.uniTime||'',mode:v.uniMode||'unknown',line:''});
+  // A school is a reference chosen by the operator/source, not evidence that
+  // the apartment is nearby. A campus address never supplies a journey time.
+  const selectedUniversity=resolveUniversity(universities[0]?.name||'');
+  const selectedCampus=resolveCampus(v.campus||'');
+  if(selectedCampus&&selectedUniversity&&selectedCampus.universityId!==selectedUniversity.id)problems.push('Выбранный кампус относится к другому вузу. Проверьте вуз и кампус.');
+  const universityTarget=universities.length?zh(universities[0].name):selectedCampus?zh(UNIVERSITY_CATALOG.universities.find(row=>row.id===selectedCampus.universityId)?.ru||''):'';
   const layout=kind(v), area=positive('area')?v.area+'㎡':'', price=positive('price')?wan(v.price):'';
   const main=routes[0],metro=main?zh(main.name):'';
   const featureSet=new Set(v.features||[]);if(['bed','bedAny','slidingWardrobe','wardrobe','desk','nightstands'].some(id=>featureSet.has(id)))featureSet.delete('roomFurniture');
@@ -177,7 +225,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   section('location');
   if(v.address)push('📍 '+zh(v.address));
   else if(v.complex||v.districtZh)push('📍 莫斯科｜'+zh(v.complex||v.districtZh));
-  if(v.campus)push('🎓 校区：'+zh(v.campus));
+  if(v.campus){const labels={teaching_campus:'校区',teaching_building:'教学楼',main_address:'院校地址参考',contact_address:'联络地址参考',administrative:'行政地址参考',student_center:'学生中心',dormitory:'宿舍地址参考'};push('🎓 '+(labels[selectedCampus?.locationType]||'校区')+'：'+zh(v.campus));}
   section('facts');
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
   else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');
@@ -224,7 +272,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   section('transport');
   if(routes.length)push('',wording('🚇 交通：','🚇 地铁与出行：','🚇 位置与交通：'),...routes.map(r=>'▪️ '+routeLine(r)));
   if(v.route)push('🗺 '+zh(v.route));
-  if(universities.length)push('','🎓 大学通勤参考：',...universities.map(r=>'▪️ '+routeLine(r)));
+  if(universities.length)push('',universities.some(r=>r.time)?'🎓 大学通勤参考：':'🎓 关注院校（通勤时间待确认）：',...universities.map(r=>'▪️ '+routeLine(r)));
   section('conditions');
   if(sharingAllowed&&positive('price')){
     push('','💸 合租预算参考：');
@@ -280,6 +328,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
       descriptionId:getTemplate('description',copyVariation).id,tagId:getTemplate('tags',tagVariation).id,
       indices:{title:variation,description:copyVariation,tags:tagVariation},counts:catalogStats()};
   }
+  if(universityTarget)titles[0]+='｜🎓通勤目标：'+universityTarget;
   return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],problems,templateInfo};
 }
 
@@ -334,9 +383,9 @@ export function extractFacts(text,rules=DICTIONARY) {
   if(/(?:можно|разрешено|допускается)\s+с детьми/i.test(t))out.children=true;
   if(/(?:можно|разрешено|обсужда[а-я]+)\s+(?:с\s+)?(?:животными|питомцами)/i.test(t))out.pets=true;
   if(/только\s+(?:вода|свет|воду|свету|счетчик|счётчик)|вода и свет|счетчикам|счётчикам/i.test(t))out.utilities='meters';
-  const conditions=detectConditions(text);Object.assign(out,conditions.facts);if(!out.sourceDescription)out.sourceDescription=String(text||'');
+  const conditions=detectConditions(text),schoolReferences=extractUniversityReferences(text);Object.assign(out,conditions.facts,schoolReferences.fields);if(!out.sourceDescription)out.sourceDescription=String(text||'');
   warnings.push('Извлечены только найденные факты. Маршруты до вузов, услуги и доступность объекта проверяются отдельно.');
-  out.sourceAudit={version:1,stats:{},fields:conditions.evidence,furniture,warnings,description:String(text||'')};
+  out.sourceAudit={version:1,stats:{},fields:[...conditions.evidence,...schoolReferences.evidence],furniture,warnings,description:String(text||'')};
   return {facts:out,warnings,furniture,evidence:conditions.evidence};
 }
 
@@ -356,13 +405,18 @@ export function analyzeListingSource(input,rules=DICTIONARY){
   }
   const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.offer||{});
   const facts={...simple.facts,...structured.facts,...conditions.facts,source:source.text||source.description||'',sourceDescription:source.description||'',features:furniture.filter(r=>r.status==='present').map(r=>r.id),featureCounts:Object.fromEntries(furniture.filter(r=>r.count).map(r=>[r.id,r.count])),photos:source.images||[],relatedOffers:source.related||[]};
+  // Recommendations and page navigation may mention another university.
+  // Prefer the apartment's own description when that section was identified.
+  const schoolReferences=extractUniversityReferences(source.description||source.text||'');
+  for(const key of ['university','universities','uniTime','uniMode','campus'])delete facts[key];
+  Object.assign(facts,schoolReferences.fields);
   const warnings=[...structured.warnings,...conditions.warnings];
   if(facts.contractMonths&&facts.minMonths&&Number(facts.contractMonths)!==Number(facts.minMonths))warnings.push('Противоречие: в описании договор на '+facts.contractMonths+' месяцев, в условиях карточки — от '+facts.minMonths+' месяцев. Требуется уточнение.');
   if(facts.registrationPolicy==='not_available')warnings.push('Источник: собственник не предоставляет регистрацию. Услуга студии по содействию оформлению указывается отдельно; это не обещание регистрации по адресу объекта.');
   for(const row of furniture.filter(r=>r.status==='conflict'||r.status==='planned'))warnings.push('Мебель: '+row.label+' — '+(row.status==='conflict'?'противоречие источников':'только планируется установка'));
   if(!facts.price)warnings.push('Цена не найдена; заполните вручную.');
   warnings.push('Маршруты до вузов, кампус, услуги и наличие китайских магазинов не определяются без подтверждённых данных.');
-  const fields=[...structured.evidence,...conditions.evidence];
+  const fields=[...structured.evidence,...conditions.evidence,...schoolReferences.evidence];
   facts.sourceAudit={version:1,stats:source.stats||{},fields,furniture,warnings,description:source.description||'',unmapped:(source.records||[]).filter(r=>!fields.some(e=>e.text===r.text)).slice(0,100)};
   return {facts,warnings,sourceAudit:facts.sourceAudit};
 }

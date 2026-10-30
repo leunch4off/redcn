@@ -84,20 +84,23 @@ def capabilities(directory):
     profile = _profile(directory)
     watched = [redcn.ROOT/path for path in ('cli/language.mjs', 'web/engine.mjs', 'web/template-catalog.mjs',
         'web/community-phrases.mjs',
-        'web/ru-zh-translator.mjs', 'web/rental-lexicon.mjs', 'data/ru-zh-open-lexicon.json')]
+        'web/ru-zh-translator.mjs', 'web/rental-lexicon.mjs', 'data/ru-zh-open-lexicon.json',
+        'data/moscow-universities.json', 'web/university-catalog.mjs')]
     signature = []
     for path in watched:
         try:
             stat = path.stat(); signature.append((str(path), stat.st_mtime_ns, stat.st_size))
         except OSError:
             signature.append((str(path), None))
-    key = hashlib.sha256(json.dumps([profile, signature], ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    key = hashlib.sha256(json.dumps([str(Path(directory).resolve()), profile, signature], ensure_ascii=False, sort_keys=True).encode()).hexdigest()
     with _capability_lock:
         cached = _capabilities.get(key)
         if cached and time.monotonic()-cached[0] < 60:
             _capabilities.move_to_end(key)
             return copy.deepcopy(cached[1])
         value = node_language({'action': 'capabilities', 'rules': profile.get('rules', {})})
+        import university_store
+        value['universities'] = university_store.stats(directory)
         _capabilities[key] = (time.monotonic(), value)
         while len(_capabilities) > 8:
             _capabilities.popitem(last=False)
@@ -121,8 +124,10 @@ def translate(directory, data):
     remaining = min(52, 60-(time.monotonic()-started))
     if remaining <= 3:
         return {**preview, 'warnings': [*warnings, 'Время обработки истекло. Показан перевод знакомых фраз; проверьте остальной текст.']}
+    # Canonical university names remain exact even when their Chinese label is
+    # editorial. This preserves a proper name, not a claim that it was reviewed.
     glossary = {match['ru']: match['zh'] for match in preview.get('matches', [])
-        if isinstance(match, dict) and match.get('reviewed') is True
+        if isinstance(match, dict) and (match.get('reviewed') is True or match.get('source')=='university-catalog')
         and isinstance(match.get('ru'), str) and isinstance(match.get('zh'), str)}
     glossary.update(profile.get('rules', {}))
     try:
@@ -179,13 +184,16 @@ def machine_translate(text, rules, timeout):
 def search(directory, data):
     query = _text(data.get('query'), 200, 'Поисковый запрос')
     scope = data.get('scope', 'all')
-    if scope not in ('all', 'open', 'rental', 'geo', 'custom'):
+    if scope not in ('all', 'open', 'rental', 'geo', 'custom', 'universities'):
         raise ValueError('Неизвестная область словаря')
     limit, offset = data.get('limit', 40), data.get('offset', 0)
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
         raise ValueError('Размер страницы: от 1 до 100')
     if isinstance(offset, bool) or not isinstance(offset, int) or not 0 <= offset <= 1_000_000:
         raise ValueError('Неверная позиция страницы')
+    if scope=='universities':
+        import university_store
+        return university_store.search(directory, query, limit=limit, offset=offset)
     return node_language({'action': 'search', 'query': query, 'scope': scope,
         'limit': limit, 'offset': offset, 'rules': _profile(directory).get('rules', {})})
 
@@ -319,10 +327,17 @@ def edit_text(directory, card_id, data):
 def dispatch(directory, path, data=None):
     """Caller must already enforce desktop token or paired session plus CSRF."""
     catalog = re.fullmatch(r'language/catalog/(title|description|tags)', path)
-    if path not in ('language', 'language/search', 'translate') and not catalog and not re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)', path):
+    if path not in ('language', 'language/search', 'translate', 'universities', 'universities/search') and not catalog and not re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)', path):
         return None
     try:
-        if catalog and data is None:
+        if path=='universities' and data is None:
+            import university_store
+            result = university_store.stats(directory)
+        elif path=='universities/search' and data is not None:
+            import university_store
+            result = university_store.search(directory, data.get('query'), kind=data.get('kind', 'all'),
+                limit=data.get('limit', 40), offset=data.get('offset', 0))
+        elif catalog and data is None:
             filename = catalog[1]+'.ndjson.gz'
             artifact = redcn.ROOT/'data/template-catalog'/filename
             if not artifact.is_file():
