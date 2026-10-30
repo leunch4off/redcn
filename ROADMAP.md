@@ -2,7 +2,7 @@
 
 **Назначение:** redcn — рабочее место подготовки китайских объявлений о московской аренде: ЦИАН/Авито, сайт и Python CLI, динамические названия и теги, двуязычный словарь, новые объекты и фотографии.
 
-**247 задач: 161 выполнено, 86 в плане.** Галочка означает выполнение критерия и наличие доказательства. Issue остаётся открытым.
+**251 задач: 165 выполнено, 86 в плане.** Галочка означает выполнение критерия и наличие доказательства. Issue остаётся открытым.
 
 [Правила](https://github.com/leunch4off/redcn/blob/main/docs/ROADMAP-POLICY.md) · [Машиночитаемый план](https://github.com/leunch4off/redcn/blob/main/plan.json) · [Назначение и функции](https://github.com/leunch4off/redcn/blob/main/docs/PRODUCT.md) · [Референс пользователя](https://github.com/leunch4off/redcn/blob/main/docs/references/user-listing-examples.txt) · [Связь референса с функциями](https://github.com/leunch4off/redcn/blob/main/docs/REFERENCE-MAP.md)
 
@@ -305,5 +305,11 @@
 - [x] **RCN-245 · Сжатие страниц и небольшие обложки** (P1). Приёмка: Текстовые ответы передаются gzip при согласовании; лента использует превью до 480×360, неизменённые карточки сохраняют изображения, оригиналы доступны отдельно. Доказательство: cli/http_delivery.py; cli/media_preview.py; tests/test_http_delivery.py; tests/test_media_preview.py; web/phone.mjs; docs/VERIFICATION.md#v11-2026-10-30
 - [x] **RCN-246 · Отложенный запуск скрытых панелей и географии** (P1). Приёмка: Дизайнер, знания и индексы географии не создаются при пустом старте; открытие соответствующих разделов сохраняет все функции и данные каталога. Доказательство: web/app.js; web/phone.mjs; scripts/geo-catalog-runtime.mjs; tests/test_desktop_performance.py; tests/geo.test.mjs; docs/VERIFICATION.md#v11-2026-10-30
 - [ ] **RCN-247 · Постоянный HTTPS-адрес установленного приложения** (P1). Приёмка: Подключить постоянный домен и управляемый туннель или частную сеть; после перезапуска Mac адрес и установленная иконка продолжают вести в тот же origin без новой установки.
+## Надёжное подключение и диагностика
+
+- [x] **RCN-248 · Автозапуск сервера после входа в macOS** (P1). Приёмка: Пользовательский LaunchAgent запускает сервер и телефон без браузера, восстанавливает свой процесс и не создаёт второй экземпляр; удаление сохраняет данные. Доказательство: cli/background_server.py; scripts/macos-service.py; tests/test_background_server.py; docs/VERIFICATION.md#v12-2026-10-30
+- [x] **RCN-249 · Реальные этапы загрузки на телефоне** (P1). Приёмка: Адрес, время и этапы связи/входа/карточек видны; таймаут и ошибки HTML-шлюза допускают повтор без раскрытия кода. Доказательство: web/phone.mjs; web/phone.html; tests/test_phone_performance.py; docs/VERIFICATION.md#v12-2026-10-30
+- [x] **RCN-250 · Диагностика сервера, DNS и HTTPS** (P1). Приёмка: Защищённая проверка с Mac отличает локальный ответ, процесс туннеля, DNS и внешний HTTPS; запросы ограничены по времени и не передают личные данные. Доказательство: cli/connection_diagnostics.py; web/phone-connection.mjs; tests/test_connection_diagnostics.py; docs/VERIFICATION.md#v12-2026-10-30
+- [x] **RCN-251 · Подключение другого HTTPS-шлюза** (P1). Приёмка: Проверяемый публичный HTTPS-origin сохраняется для Tuna/ngrok/VPS; точные Host/Origin, loopback-прокси и Secure-cookie остаются обязательными. Доказательство: cli/external_origin.py; cli/phone_relay.py; tests/test_custom_gateway.py; docs/CONNECTION-RU.md; docs/VERIFICATION.md#v12-2026-10-30
 
 Статусы хранятся в git; удалять пункты или переиспользовать ID запрещено. См. docs/VERIFICATION.md для границ проверки.

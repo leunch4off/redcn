@@ -16,6 +16,21 @@
 <body>
 <header class="phone-header"><a class="phone-brand" href="/phone/" aria-label="МОСТ · Главная">МОСТ<span>↗</span></a><span id="phoneConnection" class="connection" role="status">Подключаемся</span></header>
 <main class="phone-main">
+<section id="phoneLoading" class="phone-loading" aria-label="Подробности подключения">
+  <details id="phoneLoadDetails" open>
+    <summary><span id="phoneLoadTitle" role="status">Проверяем подключение</span><span id="phoneLoadElapsed" class="load-elapsed">0,0 с</span></summary>
+    <div class="load-content"><p id="phoneLoadHost" class="load-host"></p>
+      <ol class="load-steps">
+        <li id="phoneLoadPage" data-state="done"><span class="load-mark" aria-hidden="true">✓</span><span><strong>Страница открыта</strong><small id="phoneLoadPageNote">Интерфейс получен браузером</small></span></li>
+        <li id="phoneLoadConnection" data-state="active"><span class="load-mark" aria-hidden="true">…</span><span><strong>Связь с Mac</strong><small id="phoneLoadConnectionNote">Ждём ответ сервера</small></span></li>
+        <li id="phoneLoadSession" data-state="waiting"><span class="load-mark" aria-hidden="true">·</span><span><strong>Вход на телефон</strong><small id="phoneLoadSessionNote">Проверим действующую сессию</small></span></li>
+        <li id="phoneLoadCards" data-state="waiting"><span class="load-mark" aria-hidden="true">·</span><span><strong>Карточки</strong><small id="phoneLoadCardsNote">Загрузим после входа</small></span></li>
+      </ol>
+      <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
+      <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
+    </div>
+  </details>
+</section>
 <section id="phonePair" class="pair-screen">
   <div class="eyebrow">КОМПЬЮТЕР СОБИРАЕТ · ТЕЛЕФОН ПУБЛИКУЕТ</div>
   <h1>Ваши объявления.<br>Теперь под рукой.</h1>

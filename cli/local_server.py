@@ -104,6 +104,9 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
     identity = {'app':'redcn', 'protocol':7, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
+    def phone_status():
+        return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
+
     def run_import(job_id, params, cancel):
         def report(message):
             with lock: jobs[job_id].update(message=message)
@@ -211,7 +214,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 except (ValueError,TypeError,OSError) as error:
                     self.respond(400,{'error':str(error)});return
                 if path == '/api/local/phone':
-                    self.respond(200,self.server.phone_relay.status());return
+                    self.respond(200,phone_status());return
                 if path == '/api/local/history':
                     self.respond(200,{'entries':history_rows(directory)});return
                 if path == '/api/local/cards':
@@ -292,6 +295,11 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     elif action=='disable':result=self.server.phone_relay.disable()
                     elif action=='remote-start':result=self.server.phone_relay.enable_remote()
                     elif action=='remote-stop':result=self.server.phone_relay.disable_remote()
+                    elif action=='external-set':result=self.server.phone_relay.set_external_origin(data.get('url'))
+                    elif action=='external-clear':result=self.server.phone_relay.clear_external_origin()
+                    elif action=='diagnose':
+                        self.server.connection_diagnostics.start(self.server.phone_relay.status())
+                        result=phone_status()
                     else:raise ValueError('Неверное действие телефонного доступа')
                     self.respond(200,result);return
                 if path == '/api/local/import':
@@ -320,9 +328,11 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server.browser_channel=browser_channel
     from phone_relay import RelayManager
     server.phone_relay=RelayManager(directory,server)
+    from connection_diagnostics import ConnectionDiagnostics
+    server.connection_diagnostics=ConnectionDiagnostics()
     close=server.server_close
     def close_all():
-        server.phone_relay.stop();close()
+        server.connection_diagnostics.close();server.phone_relay.stop();close()
     server.server_close=close_all
     return server
 

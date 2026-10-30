@@ -390,43 +390,94 @@ class RelayManager:
         self.directory=directory;self.controller=controller;self.server=None;self.thread=None;self.lock=threading.RLock();self.pair=None
         from remote_access import RemoteAccess
         self.remote_preference=Path(directory)/'phone-remote.json'
-        try:self.remote_enabled=json.loads(self.remote_preference.read_text()).get('enabled') is True
-        except (OSError,ValueError,AttributeError):self.remote_enabled=False
+        from external_origin import normalize_external_origin
+        try:
+            preference=json.loads(self.remote_preference.read_text())
+            self.remote_enabled=preference.get('enabled') is True
+            self.remote_provider='custom' if preference.get('provider')=='custom' else 'cloudflare'
+            self.custom_origin=normalize_external_origin(preference.get('url')) if self.remote_provider=='custom' else None
+        except (OSError,ValueError,AttributeError):
+            self.remote_enabled=False;self.remote_provider='cloudflare';self.custom_origin=None
         self.remote=RemoteAccess(directory,on_url=self._allow_remote,on_stop=self._remove_remote,forbidden_ports=(8765,getattr(controller,'server_port',8765)))
 
     def _allow_remote(self,url):
         from remote_access import quick_tunnel_url
         if quick_tunnel_url(url)!=url:raise ValueError('Неверный внешний адрес')
         with self.lock:
-            if self.server:
+            if self.server and self.remote_enabled and self.remote_provider=='cloudflare':
                 with self.server.origins_lock:self.server.external_origins.add(url)
 
     def _remove_remote(self,url):
         with self.lock:
+            # A late cloudflared callback must not revoke a new manual mapping
+            # if an operator explicitly configured that same public hostname.
+            if self.remote_provider=='custom' and self.remote_enabled and url==self.custom_origin:return
             if self.server:
                 with self.server.origins_lock:self.server.external_origins.discard(url)
 
-    def _save_remote_preference(self,enabled):
+    def _save_remote_preference(self,enabled,provider=None,url=None):
         if self.remote_preference.is_symlink():raise ValueError('Неверный путь настройки внешнего доступа')
         self.remote_preference.parent.mkdir(parents=True,exist_ok=True)
+        provider=provider or self.remote_provider
+        custom=url if provider=='custom' and url is not None else self.custom_origin if provider=='custom' else None
+        value={'enabled':enabled,'provider':provider}
+        if custom:value['url']=custom
         with tempfile.NamedTemporaryFile(mode='w',dir=self.remote_preference.parent,encoding='utf-8',delete=False) as output:
-            json.dump({'enabled':enabled},output);temporary=Path(output.name)
-        temporary.chmod(0o600);temporary.replace(self.remote_preference);self.remote_enabled=enabled
+            json.dump(value,output);temporary=Path(output.name)
+        temporary.chmod(0o600);temporary.replace(self.remote_preference)
+        self.remote_enabled=enabled;self.remote_provider=provider;self.custom_origin=custom
+
+    def remote_status(self):
+        if self.remote_provider=='custom':
+            active=self.remote_enabled and self.server is not None
+            return {'provider':'custom','state':'configured' if active else 'stopped',
+                    'url':self.custom_origin if active else None,'configuredUrl':self.custom_origin,
+                    'error':'','pid':None,'available':True,'temporary':False,
+                    'managedExternally':True,'enabled':self.remote_enabled}
+        return {**self.remote.status(),'provider':'cloudflare','enabled':self.remote_enabled}
+
+    def _activate_custom(self):
+        if self.server and self.remote_enabled and self.custom_origin:
+            with self.server.origins_lock:self.server.external_origins.add(self.custom_origin)
+
+    def set_external_origin(self,url):
+        from external_origin import normalize_external_origin
+        origin=normalize_external_origin(url,resolve=True)
+        with self.lock:
+            old_origin=self.custom_origin
+            self._save_remote_preference(True,'custom',origin)
+            self.remote.stop()
+            if old_origin and old_origin!=origin:self._remove_remote(old_origin)
+            if not self.server:self.enable()
+            self._activate_custom()
+            return self.status()
+
+    def clear_external_origin(self):
+        with self.lock:
+            old_origin=self.custom_origin
+            self._save_remote_preference(False,'cloudflare')
+            if old_origin:self._remove_remote(old_origin)
+            self.remote.stop()
+            return self.status()
 
     def enable_remote(self):
         with self.lock:
-            self._save_remote_preference(True)
+            old_origin=self.custom_origin
+            self._save_remote_preference(True,'cloudflare')
+            if old_origin:self._remove_remote(old_origin)
             if not self.server:self.enable()
             self.remote.start(self.server.server_port)
             return self.status()
 
     def disable_remote(self):
         with self.lock:
+            old_origin=self.custom_origin
             self._save_remote_preference(False);self.remote.stop()
+            if old_origin:self._remove_remote(old_origin)
             return self.status()
     def status(self):
         with self.lock:
-            result={'enabled':self.server is not None,'port':self.server.server_port if self.server else None,'urls':self.urls() if self.server else [],'pairExpires':None,'pairCode':None,'pairUrls':[],'remote':{**self.remote.status(),'enabled':self.remote_enabled}}
+            result={'enabled':self.server is not None,'port':self.server.server_port if self.server else None,'urls':self.urls() if self.server else [],'pairExpires':None,'pairCode':None,'pairUrls':[],'remote':self.remote_status()}
             if self.server:
                 code,manual,expires=self.server.pairing.current();self.pair=(code,expires)
                 result.update(pairCode=manual,pairExpires=expires,pairUrls=[url+'pair#'+code for url in result['urls']],serverTime=time.time())
@@ -434,14 +485,16 @@ class RelayManager:
     def urls(self):
         names=self.server.allowed_hosts
         ordered=sorted([name for name in names if name not in ('127.0.0.1','localhost')],key=lambda name:(not name.endswith('.local'),name))
-        remote=self.remote.status()
-        return ([remote['url']+'/phone/'] if remote['state']=='ready' and remote['url'] else [])+['http://'+host+':'+str(self.server.server_port)+'/phone/' for host in ordered]
+        remote=self.remote_status()
+        return ([remote['url']+'/phone/'] if remote['state'] in ('ready','configured') and remote['url'] else [])+['http://'+host+':'+str(self.server.server_port)+'/phone/' for host in ordered]
     def enable(self,port=8767):
         with self.lock:
             if self.server is None:
                 self.server=create_phone_server(self.directory,self.controller,port)
                 self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
-                if self.remote_enabled:self.remote.start(self.server.server_port)
+                if self.remote_enabled:
+                    if self.remote_provider=='custom':self._activate_custom()
+                    else:self.remote.start(self.server.server_port)
             return self.issue_pair()
     def issue_pair(self):
         with self.lock:

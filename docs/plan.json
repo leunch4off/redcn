@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 7,
-  "total": 247,
+  "version": 8,
+  "total": 251,
   "tasks": [
     {
       "id": "RCN-001",
@@ -3649,6 +3649,75 @@
       ],
       "status": "planned",
       "evidence": []
+    },
+    {
+      "id": "RCN-248",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Автозапуск сервера после входа в macOS",
+      "acceptance": "Пользовательский LaunchAgent запускает сервер и телефон без браузера, восстанавливает свой процесс и не создаёт второй экземпляр; удаление сохраняет данные.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/background_server.py",
+        "scripts/macos-service.py",
+        "tests/test_background_server.py",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-249",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Реальные этапы загрузки на телефоне",
+      "acceptance": "Адрес, время и этапы связи/входа/карточек видны; таймаут и ошибки HTML-шлюза допускают повтор без раскрытия кода.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "web/phone.html",
+        "tests/test_phone_performance.py",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-250",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Диагностика сервера, DNS и HTTPS",
+      "acceptance": "Защищённая проверка с Mac отличает локальный ответ, процесс туннеля, DNS и внешний HTTPS; запросы ограничены по времени и не передают личные данные.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/connection_diagnostics.py",
+        "web/phone-connection.mjs",
+        "tests/test_connection_diagnostics.py",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-251",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Подключение другого HTTPS-шлюза",
+      "acceptance": "Проверяемый публичный HTTPS-origin сохраняется для Tuna/ngrok/VPS; точные Host/Origin, loopback-прокси и Secure-cookie остаются обязательными.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/external_origin.py",
+        "cli/phone_relay.py",
+        "tests/test_custom_gateway.py",
+        "docs/CONNECTION-RU.md",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
     }
   ],
   "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",
