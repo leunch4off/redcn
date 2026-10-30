@@ -142,7 +142,7 @@
     <div id="phoneDetailLoading" class="surface" role="status">Открываем карточку с Mac…</div>
     <article id="phoneDetail" class="hidden">
       <div class="detail-heading"><div id="phoneDetailFacts" class="facts-row"></div><h1 id="phoneDetailTitle"></h1></div>
-      <section class="surface photo-surface"><div class="block-heading"><h2>Фотографии</h2><span id="phonePhotoCount"></span></div><div class="variant-switch" id="phonePhotoVariants"><button id="phoneCropVariant" class="active" type="button" aria-pressed="true">Готовые фото</button><button id="phoneOriginalVariant" type="button" aria-pressed="false">Оригиналы</button></div><div id="phonePhotos" class="phone-gallery" aria-label="Фотографии квартиры"></div><div class="gallery-nav"><button id="phonePhotoPrev" class="icon-button" type="button" aria-label="Предыдущее фото">←</button><span id="phonePhotoPosition"></span><button id="phonePhotoNext" class="icon-button" type="button" aria-label="Следующее фото">→</button></div><p id="phoneMediaStatus" class="status-note" role="status"></p><button id="phonePreparePhotos" class="button secondary hidden" type="button">Подготовить фотографии на Mac</button><div class="photo-buttons"><button id="phoneSharePhoto" class="button primary" type="button">Поделиться фото</button><a id="phoneDownloadPhoto" class="button secondary" download>Скачать фото</a></div><div class="photo-links"><a id="phoneOpenPhoto" target="_blank" rel="noopener noreferrer">Открыть фото ↗</a><a id="phoneDownloadZip" download>Все фото · ZIP</a></div><p id="phoneShareHelp" class="quiet">«Поделиться фото» открывает системное меню. Для «Фото» выберите сохранение изображения.</p></section>
+      <section class="surface photo-surface"><div class="block-heading"><h2>Фотографии</h2><span id="phonePhotoCount"></span></div><div class="variant-switch" id="phonePhotoVariants"><button id="phoneCropVariant" class="active" type="button" aria-pressed="true">Готовые фото</button><button id="phoneOriginalVariant" type="button" aria-pressed="false">Оригиналы</button></div><div id="phonePhotos" class="phone-gallery" aria-label="Фотографии квартиры"></div><div class="gallery-nav"><button id="phonePhotoPrev" class="icon-button" type="button" aria-label="Предыдущее фото">←</button><span id="phonePhotoPosition"></span><button id="phonePhotoNext" class="icon-button" type="button" aria-label="Следующее фото">→</button></div><p id="phoneMediaStatus" class="status-note" role="status"></p><button id="phonePreparePhotos" class="button secondary hidden" type="button">Подготовить фотографии на Mac</button><button id="phoneAnalyzeFurniture" class="button secondary" type="button">Новое описание по всем фото</button><p class="quiet">Mac проверит мебель и технику и пересоберёт текст по полям карточки. Правки, сделанные во время анализа, сохранятся.</p><div id="phonePhotoInventory"></div><div class="photo-buttons"><button id="phoneSharePhoto" class="button primary" type="button">Поделиться фото</button><a id="phoneDownloadPhoto" class="button secondary" download>Скачать фото</a></div><div class="photo-links"><a id="phoneOpenPhoto" target="_blank" rel="noopener noreferrer">Открыть фото ↗</a><a id="phoneDownloadZip" download>Все фото · ZIP</a></div><p id="phoneShareHelp" class="quiet">«Поделиться фото» открывает системное меню. Для «Фото» выберите сохранение изображения.</p></section>
       <section class="surface text-surface"><div class="block-heading"><h2>Китайский заголовок</h2><button class="text-button" id="phoneCopyTitle" type="button">Копировать</button></div><button id="phoneRewriteTitle" class="writing-button" type="button">↻ Другой заголовок</button><p id="phoneTitleCopy" class="chinese-title" lang="zh-Hans"></p></section>
       <section class="surface text-surface"><div class="block-heading"><h2>Описание</h2><button class="text-button" id="phoneCopyBody" type="button">Копировать</button></div><button id="phoneRewriteBody" class="writing-button" type="button">↻ Другое описание</button><p id="phoneBody" class="post-body" lang="zh-Hans"></p></section>
       <section class="surface text-surface"><div class="block-heading"><h2>Теги</h2><button class="text-button" id="phoneCopyTags" type="button">Копировать</button></div><button id="phoneRewriteTags" class="writing-button" type="button">↻ Другие теги</button><p id="phoneTags" class="tags" lang="zh-Hans"></p></section>
@@ -154,7 +154,124 @@
 </main>
 <nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="watch"><span aria-hidden="true">◉</span>Новое</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="design"><span aria-hidden="true">◈</span>Дизайн</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
 <dialog id="phonePhotoViewer" class="phone-photo-viewer" aria-label="Сохранить фотографию"><div class="viewer-head"><h2>Сохранить в «Фото»</h2><button id="phoneViewerClose" class="icon-button" type="button" aria-label="Закрыть фото">×</button></div><img id="phoneViewerImage" alt="Фотография для сохранения"><p>Удерживайте изображение и выберите «Сохранить в Фото» или «Добавить в Фото» в меню iPhone.</p></dialog><div id="phoneToast" class="phone-toast hidden" role="status"></div>
-<script type="module">// Common artifact transfers. Desktop credentials stay in request headers.
+<script type="module">// A request owns its timer and abort listener, including response-body reads.
+// Older Safari has AbortController but no static AbortSignal timeout/any APIs.
+function rdAbortReason(){const error=Error('The request was cancelled.');error.name='AbortError';return error;}
+function rdTimeoutReason(){const error=Error('The request timed out.');error.name='TimeoutError';return error;}
+
+async function withRequestDeadline(milliseconds,operation,{signal:externalSignal}={}){
+  if(typeof milliseconds!=='number'||!Number.isFinite(milliseconds)||milliseconds<0||milliseconds>2147483647)throw RangeError('Invalid request deadline.');
+  if(typeof operation!=='function')throw TypeError('A request operation is required.');
+  if(externalSignal!=null&&(typeof externalSignal.addEventListener!=='function'||typeof externalSignal.removeEventListener!=='function'))throw TypeError('Invalid cancellation signal.');
+  let controller=null;try{if(typeof AbortController==='function')controller=new AbortController();}catch{}
+  let timer=null,disposed=false,aborted=false,timedOut=false,reason,listening=false,rejectAbort;
+  const cancellation=new Promise((_,reject)=>{rejectAbort=reject;});
+  const detach=()=>{if(listening){externalSignal.removeEventListener('abort',onExternalAbort);listening=false;}};
+  const clearTimer=()=>{if(timer!==null){clearTimeout(timer);timer=null;}};
+  function abort(value,timeout=false){
+    if(disposed||aborted)return;aborted=true;timedOut=timeout;reason=value;clearTimer();detach();
+    // Reject our promise first: old WebKit may replace the controller's reason
+    // with a generic AbortError while it aborts a fetch or response body.
+    rejectAbort(reason);
+    if(controller)try{controller.abort(reason);}catch{try{controller.abort();}catch{}}
+  }
+  function onExternalAbort(){abort(externalSignal.reason===undefined?rdAbortReason():externalSignal.reason);}
+  const scope={signal:controller?.signal||externalSignal||undefined,get aborted(){return aborted;},get timedOut(){return timedOut;},get reason(){return reason;},throwIfAborted(){if(aborted)throw reason;}};
+  try{
+    if(externalSignal?.aborted)onExternalAbort();
+    else{
+      if(externalSignal){listening=true;externalSignal.addEventListener('abort',onExternalAbort,{once:true});if(externalSignal.aborted)onExternalAbort();}
+      if(!aborted)timer=setTimeout(()=>abort(rdTimeoutReason(),true),Math.ceil(milliseconds));
+    }
+    const result=Promise.resolve().then(()=>{scope.throwIfAborted();return operation(scope.signal,scope);});
+    return await Promise.race([cancellation,result]);
+  }finally{disposed=true;clearTimer();detach();}
+}
+
+// Positive photo observations only. Keep these object terms aligned with
+// cli/local_photo_ai.py; no model loading, network or generator dependency.
+const PHOTO_OBJECT_TERMS=Object.freeze({
+  "bedAny": "кроват|bed|床",
+  "mattress": "матрас|mattress|床垫",
+  "wardrobe": "шкаф|wardrobe|armoire|衣柜",
+  "slidingWardrobe": "купе|sliding|推拉",
+  "nightstands": "тумб|nightstand|bedside|床头柜",
+  "desk": "стол|desk|书桌",
+  "sofa": "диван|sofa|couch|沙发",
+  "armchair": "кресл|armchair|recliner|扶手椅",
+  "tvStand": "тумб|stand|电视柜",
+  "tv": "телевиз|\\btv\\b|television|电视",
+  "computer": "компьют|моноблок|ноутбук|computer|laptop|电脑",
+  "projector": "проектор|projector|投影",
+  "piano": "пианино|фортепиано|роял|piano|钢琴",
+  "ac": "кондиционер|air.?condition|\\bac\\b|空调",
+  "fridge": "холодильник|fridge|refrigerator|冰箱",
+  "stove": "плит|варочн|cooktop|stove|hob|炉|灶",
+  "oven": "духов|духовк|oven|烤箱",
+  "hood": "вытяжк|hood|extractor|油烟机",
+  "sink": "мойк|раковин|sink|水槽",
+  "microwave": "микроволн|свч|microwave|微波炉",
+  "dishwasher": "посудомо|dishwasher|洗碗机",
+  "kettle": "чайник|kettle|水壶",
+  "table": "стол|table|餐桌",
+  "chairs": "стул|стуль|chair|椅",
+  "kitchenFurniture": "кухон|шкаф|cabinet|橱柜",
+  "washer": "стираль|washing|washer|洗衣机",
+  "dryer": "сушиль|dryer|烘干机",
+  "bath": "ванн|bath|浴缸",
+  "shower": "душ|shower|淋浴",
+  "washbasin": "раковин|умывальник|basin|sink|洗手盆",
+  "shelves": "полк|полок|стеллаж|shel|rack|架",
+  "coffeeTable": "журнальн|кофейн|coffee.?table|茶几",
+  "dresser": "комод|dresser|chest.?of.?drawers|斗柜",
+  "cabinet": "тумб|буфет|шкафчик|cabinet|sideboard|边柜",
+  "shoeCabinet": "обувниц|обувн|shoe|鞋柜",
+  "ottoman": "пуф|ottoman|pouf|软凳",
+  "bench": "скам|лавк|bench|长凳",
+  "mirror": "зеркал|mirror|镜",
+  "curtains": "штор|занавес|гардин|curtain|drape|窗帘",
+  "dryingRack": "сушилк|бель|drying.?rack|clothes.?rack|晾衣架",
+  "iron": "утюг|\\biron\\b|熨斗",
+  "vacuum": "пылесос|vacuum|吸尘器",
+  "coffeeMachine": "кофемаш|кофеварк|coffee.?machine|coffee.?maker|咖啡机",
+  "toaster": "тостер|toaster|烤面包机",
+  "router": "роутер|маршрутизатор|router|路由器",
+  "monitor": "монитор|monitor|显示器",
+  "speakers": "колон|динамик|speaker|音箱",
+  "waterHeater": "водонагрев|бойлер|water.?heater|boiler|热水器",
+  "waterFilter": "фильтр|water.?filter|净水器"
+});
+const PHOTO_REVIEW_ONLY=Object.freeze(['bed','internet','closet','pantry','balcony','loggia','homeCinema','roomFurniture']);
+const PHOTO_FEATURE_IDS=Object.freeze([...new Set([...Object.keys(PHOTO_OBJECT_TERMS),...PHOTO_REVIEW_ONLY])]);
+const photoPolicyReviewOnly=new Set(PHOTO_REVIEW_ONLY);
+// Python's \w and \b are Unicode-aware; JavaScript's are ASCII-only with /u.
+const photoPolicyWord='[\\p{L}\\p{N}_]';
+const photoPolicyBoundary='(?:(?<='+photoPolicyWord+')(?!'+photoPolicyWord+')|(?<!'+photoPolicyWord+')(?='+photoPolicyWord+'))';
+const photoPolicyUnicode=pattern=>pattern.replaceAll('\\w',photoPolicyWord).replaceAll('\\b',photoPolicyBoundary);
+const PHOTO_NON_DIRECT_PATTERN="\\b(?:no|not|absent|missing|cannot|without|unseen|hidden|inferred|assum\\w*|probab\\w*|perhaps|maybe|might|possibly|uncertain|unclear|likely|suggests?|could|will|planned|planning|plans?|intend\\w*|upcoming|future|pending|scheduled|going\\s+to)\\b|(?<![а-яё])(?:не|нет|без|возможно|вероятно|скрыт\\w*|предполож\\w*|долж\\w*|скорее|похож\\w*|кажется|сомн\\w*|отсутств\\w*|будет|будут|буду|будем|будете|будешь|планир\\w*|запланир\\w*|планах|намерен\\w*|собира(?:ется|ются|емся|юсь)|предстоит|скоро|купят|докупят|установят|привезут|доставят|появится|появятся)(?![а-яё])|没有|沒有|未见|未見|看不到|不可见|不可見|不确定|不確定|可能|推测|推測|隐藏|隱藏|将|將|计划|計劃|准备|準備|打算|待安装|待安裝|待购|待購|待添置|尚未|还未|還未";
+const photoPolicyNonDirect=new RegExp(photoPolicyUnicode(PHOTO_NON_DIRECT_PATTERN),'iu');
+const photoPolicyObjects=new Map(Object.entries(PHOTO_OBJECT_TERMS).map(([id,expression])=>[id,new RegExp(photoPolicyUnicode(expression),'iu')]));
+const photoPolicyHash=value=>typeof value==='string'&&value.length===64&&/^[a-f0-9]{64}$/u.test(value);
+function photoPolicyLocalModel(value){
+  return typeof value==='string'&&value.length>=1&&value.length<=128&&/^[A-Za-z0-9]/u.test(value)&&!/[^A-Za-z0-9_.:/-]/u.test(value)&&!/cloud|:\/\//iu.test(value);
+}
+function photoPolicyDirectPart(part,row){
+  if(!part||typeof part!=='object'||Array.isArray(part)||part.kind!=='model-visual-observation'||part.provider!=='ollama'||part.source!=='local-photo'||part.originalId!==row.originalId||part.photoId!==row.originalId||part.directlyVisible!==true||part.confidence!==row.confidence||!photoPolicyLocalModel(part.model))return false;
+  if(typeof part.text!=='string')return false;
+  const text=part.text.trim();if(text.length<8||text.length>600)return false;
+  const length=[...text].length;
+  return length>=8&&length<=300&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/u.test(text)&&!photoPolicyNonDirect.test(text)&&photoPolicyObjects.get(row.id).test(text);
+}
+
+/** Strict acceptance of one directly visible, local, original-bound object.
+ * Missing observations prove nothing; repeated views and counts are handled
+ * by the caller. Structural categories and double-bed width require a human.
+ */
+function isAutomaticPhotoObservation(row){
+  return !!row&&typeof row==='object'&&!Array.isArray(row)&&photoPolicyObjects.has(row.id)&&!photoPolicyReviewOnly.has(row.id)&&row.status==='auto-visible'&&row.autoEligible===true&&typeof row.confidence==='number'&&Number.isFinite(row.confidence)&&row.confidence>=.9&&row.confidence<=1&&photoPolicyHash(row.originalId)&&row.photoId===row.originalId&&Array.isArray(row.evidence)&&row.evidence.slice(0,8).some(part=>photoPolicyDirectPart(part,row));
+}
+
+// Common artifact transfers. Desktop credentials stay in request headers.
 async function cardBlobDataUrl(blob){
  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Не удалось прочитать файл'));reader.readAsDataURL(blob);});
 }
@@ -854,9 +971,9 @@ async function phoneApi(path,data,{deadline=0}={}){
   const epoch=phoneState.authEpoch;
   const normalTimeout=path==='translate'||/^cards\/[a-f0-9]{32}\/(?:rewrite|edit-text)$/.test(path)?65000:path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:8000;
   const timeout=deadline?Math.min(normalTimeout,Math.max(1,Math.ceil(deadline-performance.now()))):normalTimeout;
-  const signal=AbortSignal.timeout(timeout);let response,value;
-  try{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});try{value=await response.json();}catch(error){if(signal.aborted)throw error;value=null;}}
-  catch{if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error(signal.aborted?'Mac не ответил за несколько секунд. Нажмите «Обновить» или проверьте подключение.':navigator.onLine===false?'Телефон без интернета. Включите Wi-Fi или мобильные данные.':'Не удалось связаться с Mac. Проверьте интернет на телефоне и запущенную студию на компьютере.');}
+  let response,value;
+  try{await withRequestDeadline(timeout,async(signal,scope)=>{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});try{value=await response.json();}catch(error){scope.throwIfAborted();value=null;}});}
+  catch(error){if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error(error?.name==='TimeoutError'?'Mac не ответил за несколько секунд. Нажмите «Обновить» или проверьте подключение.':navigator.onLine===false?'Телефон без интернета. Включите Wi-Fi или мобильные данные.':'Не удалось связаться с Mac. Проверьте интернет на телефоне и запущенную студию на компьютере.');}
   if(epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;error.staleAuth=true;throw error;}
   if(response.status===401){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';ph('phoneReconnect').classList.add('hidden');ph('phonePairStatus').textContent='Для этого окна нужен вход. На Mac нажмите «Телефон» и введите показанные там 8 цифр. После установки на экран «Домой» подключитесь здесь ещё раз.';}
   if(!response.ok){const gateway=[502,503,504].includes(response.status),message=gateway?(location.protocol==='https:'?'Внешний адрес':'Сервер')+' вернул HTTP '+response.status+'. Соединение с приложением недоступно; проверьте сервер и внешний доступ на Mac.':typeof value?.error==='string'?value.error:response.status===401?'Для этого окна нужен вход. Введите текущие 8 цифр с Mac.':'Сервер вернул HTTP '+response.status+' без ответа приложения. Повторите запрос или проверьте внешний адрес.';const error=Error(message);error.status=response.status;error.proxy=gateway||(!value&&response.status!==401);if(error.proxy)phoneConnection(false);if(response.status===401)error.authEpoch=phoneState.authEpoch;throw error;}
@@ -929,10 +1046,30 @@ function phoneRenderMedia(){
   ph('phonePhotoVariants').classList.toggle('hidden',!all.length);for(const [variant,id] of [['original','phoneOriginalVariant'],['prepared','phoneCropVariant']]){const selected=phoneState.variant===variant;ph(id).classList.toggle('active',selected);ph(id).setAttribute('aria-pressed',String(selected));}
   ph('phonePhotos').replaceChildren();for(const [index,row] of phoneState.media.entries()){const figure=document.createElement('figure');figure.className='phone-slide';const image=document.createElement('img');image.src=phoneAsset(row.url);image.alt='Фотография квартиры '+(index+1);image.loading=index?'lazy':'eager';figure.append(image);ph('phonePhotos').append(figure);}
   const count=phoneState.media.length,expected=Number(card.photoCount??card.fields?.photos?.length??count),processing=card.photoProcessing||{};
+  ph('phoneAnalyzeFurniture').classList.toggle('hidden',expected===0);phoneRenderPhotoInventory(card);
   ph('phonePhotoCount').textContent=count+' фото';ph('phonePreparePhotos').classList.toggle('hidden',expected===0||(count>=expected&&!(Number(processing.failed)>0||Number(processing.skipped)>0)));
   ph('phonePreparePhotos').textContent=count>=expected?'Повторить подготовку фото на Mac':'Подготовить фотографии на Mac';
   ph('phoneMediaStatus').textContent=!count?(expected===0?'В объявлении нет фотографий.':'Mac ещё готовит фотографии.'):(prepared?'Готовые фото: '+crops.length+' обрезано автоматически или проверено. Остальные сохранены целиком.':'Показаны исходные фотографии без изменений.')+(expected>count?' Загружено '+count+' из '+expected+'.':'')+(Number(processing.review)>0?' '+processing.review+' фото оставлено целиком: безопасная обрезка не подтверждена.':'')+(Number(processing.failed)>0?' Автообрезка пока недоступна для '+processing.failed+' фото; оригиналы сохранены.':'')+(Number(processing.skipped)>0?' Ещё '+processing.skipped+' фото сохранено без изменений по лимиту обработки.':'');
   const zip='/api/phone/cards/'+card.id+'.zip?variant='+phoneState.variant;ph('phoneDownloadZip').href=zip;ph('phoneDownloadZip').classList.toggle('hidden',!count);ph('phoneDownloadZip').download='most-'+card.id+'-'+phoneState.variant+'.zip';ph('phonePhotos').scrollLeft=ph('phonePhotos').clientWidth*phoneState.photo;phoneSelectPhoto(phoneState.photo,false);
+}
+function phoneRenderPhotoInventory(card){
+ const mount=ph('phonePhotoInventory'),inventory=card.photoInventory,wasOpen=mount.querySelector('details')?.open===true;mount.replaceChildren();
+ if(!inventory)return;
+ const panel=document.createElement('details'),summary=document.createElement('summary'),note=document.createElement('p');panel.open=wasOpen;
+ const checked=Number(inventory.checked)||0,total=Number(inventory.total)||0;
+ summary.textContent='Мебель и техника · проверено '+checked+' / '+total+' фото';
+ note.className='quiet';note.textContent=inventory.state==='disabled'?'Локальная модель ещё не включена на Mac.':inventory.state==='partial'?'Часть фото не проверена. Неопознанные предметы остаются неизвестными.':'Фото обработаны. Оценка модели не гарантирует полноту списка или работоспособность техники.';
+ if(inventory.message)note.textContent+=' '+inventory.message;
+ if(inventory.truncated)note.textContent+=' В этой проверке лимит '+inventory.coverageLimit+' фото из '+inventory.totalAvailable+'.';
+ panel.append(summary,note);
+ for(const [index,photo] of (inventory.photos||[]).entries()){
+  const row=document.createElement('p'),button=document.createElement('button'),text=document.createElement('span');button.type='button';button.className='button secondary';button.textContent='Фото '+(index+1);
+  const mediaIndex=phoneState.media.findIndex(item=>item.sourceUrl===photo.sourceUrl);button.disabled=mediaIndex<0;button.onclick=()=>phoneSelectPhoto(mediaIndex);
+  const candidates=Array.isArray(photo.candidates)?photo.candidates:[];
+  text.textContent=' '+(photo.status==='duplicate'?'Повторный ракурс того же файла':candidates.length?candidates.map(item=>item.label+(item.autoEligible?' · видно на фото':' · проверьте')).join('; '):photo.status==='review'?'Уверенных находок нет; это не означает отсутствие мебели.':'Анализ не завершён.');
+  row.append(button,text);panel.append(row);
+ }
+ mount.append(panel);
 }
 function phoneSelectPhoto(index,scroll=true){
   const count=phoneState.media.length;phoneState.photo=count?Math.max(0,Math.min(count-1,index)):0;const row=phoneState.media[phoneState.photo],source=phoneAsset(row?.url),download=phoneAsset(row?.downloadUrl)||source;ph('phonePhotoPosition').textContent=count?(phoneState.photo+1)+' / '+count:'Нет фото';ph('phonePhotoPrev').disabled=count<2;ph('phonePhotoNext').disabled=count<2;ph('phoneDownloadPhoto').classList.toggle('hidden',!source);ph('phoneOpenPhoto').classList.toggle('hidden',!source);ph('phoneSharePhoto').disabled=!source;
@@ -948,7 +1085,7 @@ async function phonePrimeShare(path,row){
   if(!supported){phoneShareFile=null;phoneSharePath=path;ph('phoneSharePhoto').textContent='Сохранить в «Фото»';ph('phoneSharePhoto').disabled=false;ph('phoneShareHelp').textContent='Откройте фото, удерживайте изображение и выберите сохранение. ZIP сохраняется в «Файлы».';return;}
   if(phoneSharePath===path&&phoneShareFile){ph('phoneSharePhoto').textContent='Поделиться фото';ph('phoneSharePhoto').disabled=false;return;}
   const revision=++phoneShareRevision;phoneSharePath=path;phoneShareFile=null;ph('phoneSharePhoto').textContent='Готовим фото…';ph('phoneSharePhoto').disabled=true;
-  try{const response=await fetch(path,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error('Фото недоступно');const blob=await response.blob();if(blob.size>12_000_000||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Формат фото недоступен');const file=new File([blob],'most-photo.'+(row.mime==='image/png'?'png':row.mime==='image/webp'?'webp':'jpg'),{type:blob.type});if(!navigator.canShare({files:[file]}))throw Error('Обмен файлами недоступен');if(revision!==phoneShareRevision)return;phoneShareFile=file;ph('phoneSharePhoto').textContent='Поделиться фото';ph('phoneShareHelp').textContent='В системном меню выберите сохранение изображения в «Фото».';}
+  try{const blob=await withRequestDeadline(25000,async signal=>{const response=await fetch(path,{credentials:'same-origin',cache:'no-store',signal});if(!response.ok)throw Error('Фото недоступно');return response.blob();});if(blob.size>12_000_000||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Формат фото недоступен');const file=new File([blob],'most-photo.'+(row.mime==='image/png'?'png':row.mime==='image/webp'?'webp':'jpg'),{type:blob.type});if(!navigator.canShare({files:[file]}))throw Error('Обмен файлами недоступен');if(revision!==phoneShareRevision)return;phoneShareFile=file;ph('phoneSharePhoto').textContent='Поделиться фото';ph('phoneShareHelp').textContent='В системном меню выберите сохранение изображения в «Фото».';}
   catch{if(revision===phoneShareRevision){phoneShareFile=null;ph('phoneSharePhoto').textContent='Открыть для сохранения';ph('phoneShareHelp').textContent='Удерживайте открытое изображение и выберите сохранение в «Фото».';}}
   finally{if(revision===phoneShareRevision)ph('phoneSharePhoto').disabled=false;}
 }
@@ -1050,6 +1187,7 @@ async function phoneCheckJob(){
 ph('phoneJobOpen').onclick=()=>{if(phoneState.jobResult)phoneOpenCard(phoneState.jobResult);};ph('phoneJobRetry').onclick=()=>{ph('phoneJobRetry').classList.add('hidden');phoneCheckJob();};
 ph('phoneJobRestart').onclick=async()=>{if(phoneJobLast?.kind==='prepare'&&phoneJobLast.cardId){ph('phoneJobRestart').disabled=true;try{const result=await phoneApi('cards/'+phoneJobLast.cardId+'/prepare',{});phoneSetJob(result.job_id,'prepare',phoneJobLast.cardId);}catch(error){phoneToast(error.message);}finally{ph('phoneJobRestart').disabled=false;}}else ph('phoneImportForm').requestSubmit();};
 ph('phoneImportForm').onsubmit=async event=>{event.preventDefault();let url;try{const parsed=new URL(ph('phoneImportUrl').value);if(parsed.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(parsed.hostname)||parsed.username||parsed.password||parsed.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');url=parsed.href;}catch(error){phoneToast(error.message==='Invalid URL'?'Проверьте ссылку объявления.':error.message);return;}try{await phoneImportListing(url);}catch(error){phoneToast(error.message);}};
+ph('phoneAnalyzeFurniture').onclick=async()=>{if(!phoneState.detailId)return;if(phoneState.job){phoneToast('Дождитесь текущей обработки на Mac.');return;}const button=ph('phoneAnalyzeFurniture');button.disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/analyze',{});phoneSetJob(result.job_id,'prepare');phoneToast('Mac проверяет мебель и технику на всех доступных фото.');}catch(error){phoneToast(error.message);}finally{button.disabled=false;}};
 ph('phonePreparePhotos').onclick=async()=>{if(!phoneState.detailId)return;ph('phonePreparePhotos').disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/prepare',{});phoneSetJob(result.job_id,'prepare');ph('phoneMediaStatus').textContent='Mac загружает фотографии…';phoneToast('Mac загружает фото. Они появятся в карточке после подготовки.');}catch(error){phoneToast(error.message);}finally{ph('phonePreparePhotos').disabled=false;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);}else if(phoneState.paired){phoneRefreshCards().catch(()=>{});if(phoneState.job)phoneCheckJob();}});window.addEventListener('online',()=>{if(phoneState.paired)phoneRefreshCards().catch(()=>{});});
 initializePwaInstall({container:ph('phoneInstall')});
@@ -1068,7 +1206,7 @@ async function phoneStart(){
 ph('phoneReconnect').onclick=()=>phoneStart();
 ph('phoneLoadRetry').onclick=()=>phoneStart();
 
-async function phoneExportBlob(asset){const epoch=phoneState.authEpoch,url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/phone\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');const response=await fetch(url.pathname,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(90000)});if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(response.status===401){phoneAuth(false);throw Error('Введите текущий код с компьютера');}if(!response.ok){const value=await response.json().catch(()=>({}));throw Error(value.error||'Файл недоступен');}const blob=await response.blob();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;}
+async function phoneExportBlob(asset){const epoch=phoneState.authEpoch,url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/phone\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');return withRequestDeadline(90000,async(signal,scope)=>{const response=await fetch(url.pathname,{credentials:'same-origin',cache:'no-store',signal});scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(response.status===401){phoneAuth(false);throw Error('Введите текущий код с компьютера');}if(!response.ok){const value=await response.json().catch(()=>({}));scope.throwIfAborted();throw Error(value.error||'Файл недоступен');}const blob=await response.blob();scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;});}
 async function phoneDownloadAsset(asset){cardDownloadBlob(await phoneExportBlob(asset),asset.name);phoneFilesUI?.refresh();}
 async function phonePresentationPhotos(){const id=phoneState.detailId,epoch=phoneState.authEpoch,photos=[];for(const original of (phoneState.detail?.media||[]).slice(0,30)){const selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;const response=await fetch(path,{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw Error('Фотография недоступна на Mac');const dataUrl=await cardPhotoDataUrl(await response.blob());if(epoch!==phoneState.authEpoch||id!==phoneState.detailId)throw Error('Выбрана другая карточка');photos.push({dataUrl});}return photos;}
 async function phoneEnsurePresentationCard(){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return phoneState.detail.id;}
@@ -1108,7 +1246,7 @@ function phoneInitializeWatch(){
  return phoneWatchUI;
 }
 function phoneInitializeAudit(){
- if(!phoneImportAuditUI)phoneImportAuditUI=setupImportDiagnostics({mount:ph('phoneImportDiagnostics'),api:phoneApi,toast:phoneToast,getBundle:async()=>{const epoch=phoneState.authEpoch,r=await fetch('/api/phone/import-diagnostics/tg.zip',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(30000)});if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(r.status===401){phoneAuth(false);throw Error('Введите текущий код с Mac');}if(!r.ok){const v=await r.json().catch(()=>({}));throw Error(v.error||'Архив ещё не готов');}return r.blob();}});
+ if(!phoneImportAuditUI)phoneImportAuditUI=setupImportDiagnostics({mount:ph('phoneImportDiagnostics'),api:phoneApi,toast:phoneToast,getBundle:()=>{const epoch=phoneState.authEpoch;return withRequestDeadline(30000,async(signal,scope)=>{const r=await fetch('/api/phone/import-diagnostics/tg.zip',{credentials:'same-origin',cache:'no-store',signal});scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(r.status===401){phoneAuth(false);throw Error('Введите текущий код с Mac');}if(!r.ok){const v=await r.json().catch(()=>({}));scope.throwIfAborted();throw Error(v.error||'Архив ещё не готов');}const blob=await r.blob();scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;});}});
  return phoneImportAuditUI;
 }
 function phoneUpdateRouteTools(){

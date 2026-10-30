@@ -33,7 +33,7 @@ MAX_CAMPAIGNS = 20
 MAX_BUNDLE_BYTES = 8 * 1024 * 1024
 MAX_SECONDS = 86400
 STAGES = frozenset(('preflight', 'browser', 'navigate', 'challenge', 'scroll',
-                    'extract', 'generate', 'photos', 'crop', 'save'))
+                    'extract', 'generate', 'photos', 'crop', 'vision', 'save'))
 SECTIONS = frozenset(('gallery', 'description', 'characteristics'))
 PROFILES = frozenset(('import:auto', 'import:chrome', 'import:http',
                       'import:cache', 'prepare'))

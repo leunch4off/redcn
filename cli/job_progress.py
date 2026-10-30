@@ -18,7 +18,7 @@ STAGES = (
     ('navigate', 'Загрузка страницы'), ('challenge', 'Проверка в браузере'),
     ('scroll', 'Прокрутка и догрузка'), ('extract', 'Чтение объявления'),
     ('generate', 'Китайский текст'), ('photos', 'Загрузка фотографий'),
-    ('crop', 'Автоматическое кадрирование'), ('save', 'Сохранение карточки'),
+    ('crop', 'Автоматическое кадрирование'), ('vision','Мебель и техника на фото'), ('save', 'Сохранение карточки'),
 )
 LABELS = dict(STAGES)
 PROFILES = ('import:auto', 'import:chrome', 'import:http', 'import:cache', 'prepare')

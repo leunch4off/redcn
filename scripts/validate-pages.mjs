@@ -38,3 +38,12 @@ assert(phoneRoutes.includes('export {setupUniversityRoutes}'));
 assert(!phoneRoutes.includes('name="redcn-token"'));
 assert(phoneScript.includes("import('/phone/routes.mjs')"),'University route form must be lazy');
 console.log('Lazy route form is valid and separate from phone startup');
+
+const phoneServiceWorker=await readFile(new URL('docs/phone-sw.js',root),'utf8');
+const swCheck=spawnSync(process.execPath,['--check','--input-type=commonjs'],{input:phoneServiceWorker,encoding:'utf8'});
+assert.equal(swCheck.status,0,swCheck.stderr);
+for(const [name,source]of [['main',script],['phone',phoneScript],['service worker',phoneServiceWorker]]){
+ assert(!/AbortSignal\.(?:timeout|any)\s*\(/.test(source),name+' must work without AbortSignal static helpers');
+ assert(source.includes('async function withRequestDeadline'),name+' must include its scoped request deadline');
+}
+console.log('Safari-compatible request deadlines are bundled in phone, main and service worker');

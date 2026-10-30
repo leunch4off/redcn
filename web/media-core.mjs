@@ -1,3 +1,4 @@
+import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
 // Shared URL, crop and archive rules. Originals and edited copies are distinct.
 export function photoSourceUrl(raw,base=''){
   if(raw&&typeof raw==='object')raw=raw.sourceUrl||raw.originalUrl||raw.url||raw.fullUrl;
@@ -35,11 +36,12 @@ export async function photoZip(files){
 export function confirmedPhotoFeatures(items=[]){
  const features=new Set(),featureCounts={},photoEvidence=[];
  for(const item of items){if(!item.selected||!item.analysis)continue;
-  for(const row of item.analysis.candidates||[]){const confirmation=item.confirmed?.[row.id];if(!confirmation)continue;
-   features.add(row.id);const count=confirmation.count;
+  for(const row of item.analysis.candidates||[]){if(item.rejected?.[row.id])continue;const confirmation=item.confirmed?.[row.id];
+   const automatic=item.analysis.autoApply===true&&isAutomaticPhotoObservation({...row,status:'auto-visible',originalId:item.analysis.originalId,photoId:item.analysis.originalId});if(!confirmation&&!automatic)continue;
+   features.add(row.id);const count=confirmation?.count;
    if(Number.isInteger(count)&&count>=1&&count<=12)featureCounts[row.id]=Math.max(featureCounts[row.id]||0,count);
-   photoEvidence.push({id:row.id,sourceUrl:item.url,photoId:item.analysis.originalId,originalId:item.analysis.originalId,engine:item.analysis.engine,status:'confirmed',count:Number.isInteger(count)?count:null,confidence:row.confidence,evidence:row.evidence||[]});
+   photoEvidence.push({id:row.id,sourceUrl:item.url,photoId:item.analysis.originalId,originalId:item.analysis.originalId,engine:item.analysis.engine,status:confirmation?'confirmed':'auto-visible',autoEligible:automatic,count:Number.isInteger(count)?count:null,confidence:row.confidence,evidence:row.evidence||[]});
   }
  }
- return {features:[...features],featureCounts,photoEvidence,replaceAll:true};
+ return {features:[...features],featureCounts,photoEvidence,analyzedSources:items.filter(item=>!item.selected||item.analysis).map(item=>item.url),replaceAll:true};
 }

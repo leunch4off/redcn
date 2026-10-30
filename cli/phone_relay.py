@@ -425,6 +425,8 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     self.respond(202,{'job_id':controller.start_import(params)});return
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/prepare',path)
                 if match:self.respond(202,{'job_id':controller.prepare_card(match[1])});return
+                match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/analyze',path)
+                if match:self.respond(202,{'job_id':controller.prepare_card(match[1],analyze=True)});return
                 self.respond(404,{'error':'Не найдено'})
             except PairingThrottled as error:self.respond(429,{'error':str(error),'retryAfter':error.retry_after},headers={'Retry-After':str(error.retry_after)})
             except (ValueError,TypeError,OSError) as error:self.respond(400,{'error':str(error)})

@@ -81,7 +81,7 @@ def read_result(directory, result_id):
     finally: connection.close()
 
 
-def merge_prepared_media(directory,result_id,prepared):
+def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,photo_generated=None):
     from phone_relay import source_images
     # Lock the read/merge/write so the completed download cannot save an old text snapshot.
     connection=redcn.open_cache(directory)
@@ -92,6 +92,18 @@ def merge_prepared_media(directory,result_id,prepared):
         if not current or source_images(current)!=source_images(prepared):raise ValueError('Фотографии карточки изменились. Повторите загрузку.')
         current.update(media=prepared.get('media',[]),mediaStatus=prepared.get('mediaStatus','ready'))
         if isinstance(prepared.get('photoProcessing'),dict):current['photoProcessing']=prepared['photoProcessing']
+        if isinstance(prepared.get('photoInventory'),dict):
+            current['photoInventory']=prepared['photoInventory']
+        if isinstance(photo_generated,dict) and isinstance(photo_baseline,dict):
+            # Do not replace a manual edit made while the model was running.
+            unchanged=all(current.get(key)==photo_baseline.get(key) for key in ('fields','body','titles','tags'))
+            if unchanged:
+                for key in ('fields','body','titles','tags','tagSuggestions','templateInfo','translationWarnings','unknown','problems','warnings'):
+                    if key in photo_generated:current[key]=photo_generated[key]
+            if 'photoInventory' in current:
+                current['photoInventory']['textUpdated']=unchanged
+                if not unchanged:
+                    current['photoInventory']['message']='Карточка изменена во время анализа. Ваш текст сохранён; находки доступны для следующей генерации.'
         connection.execute('UPDATE results SET updated=max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),payload=? WHERE id=?',(time.time(),json.dumps(current,ensure_ascii=False),result_id))
         connection.commit();return current
     except BaseException:
@@ -119,11 +131,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         failed=processing.get('failed',0)
         skipped=processing.get('skipped',0)
         warnings=[]
+        inventory=result.get('photoInventory') or {}
+        if inventory.get('state')=='partial':warnings.append('Мебель и техника проверены не на всех фото. Неопознанные предметы остаются неизвестными.')
         if status!='ready' or download_failed:
             warnings.append('Часть фотографий не загрузилась на Mac'+(': '+str(download_failed) if download_failed else '')+'.')
         if failed:warnings.append('Не удалось автоматически обработать фото: '+str(failed)+'.')
         if skipped:warnings.append('Не все фото успели пройти автоматическую проверку: '+str(skipped)+'.')
-        learn=status=='ready' and not any((download_failed,failed,skipped))
+        learn=status=='ready' and not any((download_failed,failed,skipped)) and inventory.get('state')!='partial'
         return learn,{'mediaStatus':status,'photoProcessing':processing,'partial':not learn,'warnings':warnings}
 
     def run_import(job_id, params, cancel):
@@ -156,13 +170,16 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             data = params.get('data', {})
             fields = {**data, **listing.get('fields',{}), 'titleVariant':redcn.next_variant(connection,listing['url']), 'url':listing['url'], 'source':listing['text']}
             result = {**redcn.generate(listing['text'],fields,params.get('rules'),params.get('prefs')), 'listing':listing}
+            photo_baseline=json.loads(json.dumps(result,ensure_ascii=False))
             if cancel.is_set(): raise ValueError('Импорт отменён')
             from phone_relay import cache_photos
             result['mediaStatus']='loading'
             result_id = save_result(directory, result)
             cache_photos(directory,result,report,cancel)
+            from photo_generation import photo_revision
+            photo_generated=photo_revision(directory,result,text=listing['text'],rules=params.get('rules'),prefs=params.get('prefs'),report=report,cancel=cancel)
             report('Сохраняем карточку и подготовленные фотографии…',stage='save')
-            merge_prepared_media(directory,result_id,result)
+            merge_prepared_media(directory,result_id,result,photo_baseline=photo_baseline,photo_generated=photo_generated)
             learn,outcome=photo_outcome(result)
             success=True
             with lock: jobs[job_id].update(state='done',message='Готово' if learn else 'Текст готов, подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
@@ -223,7 +240,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             selected=next((job_id for job_id,job in reversed(list(jobs.items())) if job['state']=='running'),next(reversed(jobs)))
         return {'id':selected,**job_status(selected)}
 
-    def prepare_card(result_id):
+    def prepare_card(result_id,*,analyze=False):
         from phone_relay import cache_photos
         result=read_result(directory,result_id)
         if not result or result.get('fields',{}).get('isDemo') is True:raise ValueError('Карточка не найдена')
@@ -245,9 +262,16 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 report('Проверяем библиотеку обработки фотографий на Mac…',stage='photos')
                 photo_store.pillow()
                 cache_photos(directory,result,report=report,cancel=cancel)
+                baseline=json.loads(json.dumps(result,ensure_ascii=False))
+                generated=None
+                if analyze:
+                    from photo_generation import photo_revision
+                    from phone_relay import load_profile
+                    profile=load_profile(directory)
+                    generated=photo_revision(directory,result,rules=profile.get('rules'),prefs=profile.get('prefs'),report=report,cancel=cancel)
                 if cancel.is_set():raise ValueError('Загрузка отменена')
                 report('Сохраняем подготовленные фотографии…',stage='save')
-                merge_prepared_media(directory,result_id,result)
+                merge_prepared_media(directory,result_id,result,photo_baseline=baseline,photo_generated=generated)
                 learn,outcome=photo_outcome(result)
                 success=True
                 with lock:jobs[job_id].update(state='done',message='Фотографии готовы' if learn else 'Подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
@@ -415,6 +439,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 self.respond(400,{'error':str(error)})
 
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
+    from photo_ai_runtime import start_background
+    start_background(directory)
     server.daemon_threads = True
     server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card;server.latest_job=latest_job
     server.browser_channel=browser_channel

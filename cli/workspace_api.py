@@ -50,6 +50,13 @@ class WorkspaceAPI:
     def dispatch(self, path, data=None, *, namespace='local', query=None):
         import language_service
         try:
+            if path == 'photo-ai':
+                from photo_ai_settings import load_config, save_config
+                value = load_config(self.directory) if data is None else save_config(self.directory, data)
+                if data is not None:
+                    from photo_ai_runtime import start_background
+                    start_background(self.directory)
+                return 200, value, 'application/json; charset=utf-8', {}
             document = self.watch.dispatch(path, data, query=query)
             if document:
                 return document

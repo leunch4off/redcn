@@ -336,22 +336,30 @@ def auto_crop_photo(directory,digest,*,cancel=None,max_seconds=AUTO_CROP_SECONDS
     finally:_auto_crop_lock.release()
 
 
-def analyze_photo(directory,digest):
+def analyze_photo(directory,digest,*,cancel=None,deadline=None):
     """Analyze the verified original; suggested objects never become facts here."""
     import vision_photo
-    content,_,original=asset(directory,digest)
+    _check_photo_cancel(cancel)
+    if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
+    content,mime,original=asset(directory,digest)
     if original.get('kind')!='original':raise ValueError('Распознавание выполняется по оригиналу')
     folder=Path(directory)/'vision';folder.mkdir(parents=True,exist_ok=True)
-    model=vision_photo.os.environ.get('REDCN_VISION_MODEL','').strip()
-    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+model.encode()).hexdigest()[:16]
+    from photo_ai_settings import load_config
+    config=load_config(directory)
+    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
     cache=folder/(digest+'-'+source_hash+'.json')
     if cache.exists():
-        try:return {**json.loads(cache.read_text()),'cached':True}
+        try:
+            saved=json.loads(cache.read_text())
+            if saved.get('originalId')==digest and saved.get('status')=='review' and not saved.get('fallback'):
+                return {**saved,'cached':True}
         except (OSError,ValueError):pass
     image=open_photo(content)
-    try:result={**vision_photo.analyze_image(image,directory),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
+    try:result={**vision_photo.analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
     finally:image.close()
-    with tempfile.NamedTemporaryFile(mode='w',dir=folder,encoding='utf-8',delete=False) as stream:
-        json.dump(result,stream,ensure_ascii=False);temp=Path(stream.name)
-    temp.replace(cache)
+    _check_photo_cancel(cancel)
+    if result.get('status')=='review' and not result.get('fallback'):
+        with tempfile.NamedTemporaryFile(mode='w',dir=folder,encoding='utf-8',delete=False) as stream:
+            temp=Path(stream.name);temp.chmod(0o600);json.dump(result,stream,ensure_ascii=False)
+        temp.replace(cache)
     return result

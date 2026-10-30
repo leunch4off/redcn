@@ -23,8 +23,8 @@ export function setupLanguageStudio({local=false,api,getRules=()=>({}),onApplyTe
   const results=node('div','',{id:'dictionaryResults',class:'language-results'});
   const pager=node('div','',{class:'language-actions'}),prev=button('← Назад','dictionaryPrev'),next=button('Далее →','dictionaryNext');prev.disabled=true;next.disabled=true;pager.append(prev,next);
   studio.append(searchRow,searchStatus,results,pager);
-  const catalog=node('details','',{class:'language-catalog'});catalog.append(node('summary','Каталог готовых схем · заголовки, описание, теги'));
-  catalog.append(node('p','По 262 144 индексируемые композиции каждого типа. Они собраны из языковых блоков; это число схем, а не слов, отдельных хештегов или вручную написанных объявлений. Поля заполняются подтверждёнными фактами карточки.',{class:'muted'}));
+  const catalog=node('details','',{class:'language-catalog'});catalog.append(node('summary','Базовые схемы и варианты оформления'));
+  catalog.append(node('p','По 262 144 индексируемые композиции каждого типа. Они собраны из языковых блоков; это число схем, а не слов, отдельных хештегов или вручную написанных объявлений. Поля заполняются подтверждёнными фактами карточки. Готовая публикация использует 20 семейств оформления; ниже показана базовая схема композиции, а не точный внешний вид объявления.',{class:'muted'}));
   const catalogRow=node('div','',{class:'language-grid'}),kind=select('catalogKind',[['title','Заголовок'],['description','Описание'],['tags','Набор тегов']]),index=node('input','',{id:'catalogIndex',type:'number',min:0,max:CATALOG_SIZE-1,step:1,value:0,inputmode:'numeric'});
   const kwrap=node('div'),iwrap=node('div');kwrap.append(label('Тип схемы','catalogKind'),kind);iwrap.append(label('Номер схемы · от 0','catalogIndex'),index);catalogRow.append(kwrap,iwrap);
   const preview=node('pre','',{id:'catalogPreview',class:'language-template-preview','aria-live':'polite'}),catalogId=node('p','',{class:'muted',id:'catalogIdentity'});

@@ -1,4 +1,5 @@
-import {DICTIONARY,DEFAULT_PREFS,extractFacts,generateListing,translateDraft} from '../web/engine.mjs';
+import {DICTIONARY,DEFAULT_PREFS,FEATURES,extractFacts,generateListing,translateDraft} from '../web/engine.mjs';
+import {resolvePhotoFurniture} from '../web/fact-evidence.mjs';
 let raw='';for await(const chunk of process.stdin)raw+=chunk;
 const input=JSON.parse(raw);
 const rules={...DICTIONARY,...input.rules};
@@ -8,6 +9,8 @@ const fields={style:'detailed',registration:'assist',support:true,...extracted.f
 fields.templateMode ??= 'catalog';
 fields.copyVariant ??= fields.titleVariant || 0;
 fields.tagVariant ??= fields.titleVariant || 0;
+const equipment=resolvePhotoFurniture(fields,FEATURES);
+fields.features=equipment.features;fields.featureCounts=equipment.featureCounts;
 const result=generateListing(fields,rules,{...DEFAULT_PREFS,...input.prefs});
 if(result.problems.length){process.stderr.write(result.problems.join('\n'));process.exitCode=2;}
 else process.stdout.write(JSON.stringify({fields,...result,warnings:[...extracted.warnings,...(fields.sourceAudit?.warnings||[])]}));

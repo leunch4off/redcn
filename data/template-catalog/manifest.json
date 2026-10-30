@@ -11,7 +11,7 @@
   "factPolicy": "caller-confirmed-only",
   "sparseContextMayReduceDistinctOutputs": true,
   "countsDescribe": "unique-composed-skeletons-not-handwritten-texts-or-individual-hashtags",
-  "sourceSha256": "7b38ffd7d405a58b69143cff553f9e1bf6108d4076d85680c2327cd10aa33d27",
+  "sourceSha256": "c53261e8255e83e754b85de7950b908ee40452f7f8ec9378dc23f852bc4eb59b",
   "auditContext": "complete-confirmed-fixture",
   "qualification": "Counts are composed skeletons; sparse listings can have fewer different renderings.",
   "kinds": {
