@@ -31,7 +31,8 @@ def manifest(root=ROOT, home=None):
         'ThrottleInterval': 10, 'Umask': 0o077,
         'StandardOutPath': str(log_dir/'server.log'),
         'StandardErrorPath': str(log_dir/'server.log'),
-        'EnvironmentVariables': {'PYTHONUNBUFFERED': '1'},
+        'EnvironmentVariables': {'PYTHONUNBUFFERED': '1',
+            'PATH': '/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin'},
     }
 
 

@@ -90,6 +90,7 @@ def merge_prepared_media(directory,result_id,prepared):
         current=json.loads(row[0]) if row else None
         if not current or source_images(current)!=source_images(prepared):raise ValueError('Фотографии карточки изменились. Повторите загрузку.')
         current.update(media=prepared.get('media',[]),mediaStatus=prepared.get('mediaStatus','ready'))
+        if isinstance(prepared.get('photoProcessing'),dict):current['photoProcessing']=prepared['photoProcessing']
         connection.execute('UPDATE results SET updated=max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),payload=? WHERE id=?',(time.time(),json.dumps(current,ensure_ascii=False),result_id))
         connection.commit();return current
     except BaseException:
@@ -102,19 +103,33 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
+    from job_progress import DurationHistory, JobProgress
+    timing_history=DurationHistory(directory)
     identity = {'app':'redcn', 'protocol':7, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
 
     def run_import(job_id, params, cancel):
-        def report(message):
-            with lock: jobs[job_id].update(message=message)
-        connection = redcn.open_cache(directory)
+        def report(message, **fields):
+            with lock:
+                jobs[job_id].update(message=message)
+                jobs[job_id]['tracker'].update(message,**fields)
+        connection = None
         result_id=None
+        success=False
         try:
+            report('Проверяем общий генератор Node.js до запуска Chrome…',stage='preflight')
+            from node_runtime import resolve_node
+            resolve_node()
+            if cancel.is_set():raise ValueError('Импорт отменён')
+            connection = redcn.open_cache(directory)
             listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
+            with lock:
+                jobs[job_id]['tracker'].set_profile('import:cache' if listing.get('cached') else
+                    'import:chrome' if listing.get('loader')=='chrome' else 'import:'+params.get('loader','auto'))
             if cancel.is_set(): raise ValueError('Импорт отменён')
+            report('Объявление прочитано. Формируем китайский заголовок и описание…',stage='generate')
             data = params.get('data', {})
             fields = {**data, **listing.get('fields',{}), 'titleVariant':redcn.next_variant(connection,listing['url']), 'url':listing['url'], 'source':listing['text']}
             result = {**redcn.generate(listing['text'],fields,params.get('rules'),params.get('prefs')), 'listing':listing}
@@ -123,16 +138,22 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             result['mediaStatus']='loading'
             result_id = save_result(directory, result)
             cache_photos(directory,result,report,cancel)
+            report('Сохраняем карточку и подготовленные фотографии…',stage='save')
             merge_prepared_media(directory,result_id,result)
+            success=True
             with lock: jobs[job_id].update(state='done', message='Готово', result_id=result_id)
-        except (OSError, ValueError, redcn.subprocess.SubprocessError) as error:
+        except Exception as error:
             if result_id:
-                current=read_result(directory,result_id)
-                if current and current.get('mediaStatus')=='loading':
-                    current['mediaStatus']='cancelled' if cancel.is_set() else 'error'
-                    save_result(directory,current,result_id)
-            with lock: jobs[job_id].update(state='error', message=str(error))
-        finally: connection.close()
+                try:
+                    current=read_result(directory,result_id)
+                    if current and current.get('mediaStatus')=='loading':
+                        current['mediaStatus']='cancelled' if cancel.is_set() else 'error'
+                        save_result(directory,current,result_id)
+                except (OSError,ValueError,sqlite3.Error):pass
+            with lock: jobs[job_id].update(state='error', message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
+        finally:
+            with lock:jobs[job_id]['tracker'].finish(success)
+            if connection is not None:connection.close()
 
     def start_import(params):
         params=dict(params)
@@ -147,12 +168,24 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущего импорта или отмените его')
             while len(jobs)>=32:jobs.pop(next(iter(jobs)))
             job_id,cancel=secrets.token_hex(16),threading.Event()
-            jobs[job_id]={'state':'running','message':'Начинаем загрузку…','cancel':cancel}
+            jobs[job_id]={'state':'running','message':'Начинаем загрузку…','cancel':cancel,
+                         'kind':'import','sourceUrl':params['url'],
+                         'tracker':JobProgress(timing_history,'import:'+params.get('loader','auto'))}
         threading.Thread(target=run_import,args=(job_id,params,cancel),daemon=True).start()
         return job_id
 
     def job_status(job_id):
-        with lock:return {k:v for k,v in jobs.get(job_id,{}).items() if k!='cancel'}
+        with lock:
+            job=jobs.get(job_id)
+            if not job:return {}
+            return {**{k:v for k,v in job.items() if k not in ('cancel','tracker')},
+                    'progress':job['tracker'].snapshot()}
+
+    def latest_job():
+        with lock:
+            if not jobs:return None
+            selected=next((job_id for job_id,job in reversed(list(jobs.items())) if job['state']=='running'),next(reversed(jobs)))
+        return {'id':selected,**job_status(selected)}
 
     def prepare_card(result_id):
         from phone_relay import cache_photos
@@ -162,15 +195,26 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущей загрузки')
             while len(jobs)>=32:jobs.pop(next(iter(jobs)))
             job_id,cancel=secrets.token_hex(16),threading.Event()
-            jobs[job_id]={'state':'running','message':'Сохраняем фотографии на Mac…','cancel':cancel}
+            jobs[job_id]={'state':'running','message':'Сохраняем фотографии на Mac…','cancel':cancel,
+                         'kind':'prepare','cardId':result_id,
+                         'tracker':JobProgress(timing_history,'prepare')}
         def run():
+            success=False
+            def report(message, **fields):
+                with lock:
+                    jobs[job_id].update(message=message)
+                    jobs[job_id]['tracker'].update(message,**fields)
             try:
-                cache_photos(directory,result,cancel=cancel)
+                cache_photos(directory,result,report=report,cancel=cancel)
                 if cancel.is_set():raise ValueError('Загрузка отменена')
+                report('Сохраняем подготовленные фотографии…',stage='save')
                 merge_prepared_media(directory,result_id,result)
+                success=True
                 with lock:jobs[job_id].update(state='done',message='Фотографии готовы',result_id=result_id)
-            except (OSError,ValueError) as error:
-                with lock:jobs[job_id].update(state='error',message=str(error))
+            except Exception as error:
+                with lock:jobs[job_id].update(state='error',message=str(error).strip() or 'Подготовка фото прервана: '+type(error).__name__)
+            finally:
+                with lock:jobs[job_id]['tracker'].finish(success)
         threading.Thread(target=run,daemon=True).start();return job_id
 
     class Handler(BaseHTTPRequestHandler):
@@ -237,7 +281,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     return
                 if path.startswith('/api/local/jobs/'):
                     job_id = path.rsplit('/',1)[-1]
-                    with lock: job = {k:v for k,v in jobs.get(job_id,{}).items() if k not in ('cancel',)}
+                    job = job_status(job_id)
                     self.respond(200 if job else 404,job or {'error':'Задача не найдена'});return
                 if path.startswith('/api/local/results/'):
                     result = read_result(directory,path.rsplit('/',1)[-1])
@@ -324,7 +368,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
     server.daemon_threads = True
-    server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card
+    server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card;server.latest_job=latest_job
     server.browser_channel=browser_channel
     from phone_relay import RelayManager
     server.phone_relay=RelayManager(directory,server)

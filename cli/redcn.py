@@ -144,7 +144,9 @@ class ListingHTML(HTMLParser):
 def parse_html(markup, base_url):
     if len(markup.encode('utf-8')) > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
     if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card', markup):
-        node = shutil.which('node')
+        from node_runtime import resolve_node, NodeRuntimeError
+        try: node = resolve_node()
+        except NodeRuntimeError: node = None
         if node:
             parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs')],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
             if parsed.returncode: raise ValueError('Ошибка разбора HTML: '+parsed.stderr[:300])
@@ -203,23 +205,26 @@ def open_cache(directory):
 
 
 def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None, browser_channel='chrome'):
+    from job_progress import emit
     # Resolve only on a network miss; cached pages remain available offline.
     url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
     if row and not refresh and time.time() - row[0] < 86400:
+        emit(status,'Берём уже прочитанное объявление из кеша Mac; Chrome не требуется.',stage='extract')
         return {**json.loads(row[1]), 'cached': True}
     result = None
     if loader != 'chrome':
         try:
-            if status: status('Загрузка объявления по HTTP…')
+            emit(status,'Загружаем исходную страницу объявления по HTTP…',stage='navigate',maxTotalSeconds=30)
             content, _ = fetch_bytes(url)
+            emit(status,'Страница получена. Читаем описание, цену, площадь и фотографии…',stage='extract')
             result = parse_html(content.decode('utf-8', errors='replace'), url)
             if not re.search(r'\d[\d\s\xa0,.]*\s*(?:м²|м2|кв\.?\s*м|㎡)', result['text'], re.I) or not re.search(r'\d[\d\s\xa0]*\s*(?:₽|руб)', result['text'], re.I):
                 result = None
                 raise ValueError('HTTP-страница не содержит площади и цены; возможно, нужен JavaScript. Используйте Chrome или --input.')
         except (OSError, ValueError) as error:
             if loader == 'http': raise
-            if status: status('HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180])
+            emit(status,'HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180],stage='browser')
     if result is None:
         from browser_import import load_browser
         result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel)
@@ -246,13 +251,19 @@ def eligible(seller, commission):
 
 
 def generate(text, data=None, rules=None, prefs=None):
-    node = shutil.which('node')
-    if not node:
-        raise ValueError('Нужен Node.js 22+: сайт и CLI используют один генератор, без расхождения правил.')
-    result = subprocess.run([node, str(ROOT / 'cli/generate.mjs')], input=json.dumps({'text': text, 'data': data or {}, 'rules': rules or {}, 'prefs': prefs or {}}, ensure_ascii=False), text=True, encoding='utf-8', capture_output=True, check=False)
+    from node_runtime import resolve_node
+    node = resolve_node()
+    try:
+        result = subprocess.run([node, str(ROOT / 'cli/generate.mjs')], input=json.dumps({'text': text, 'data': data or {}, 'rules': rules or {}, 'prefs': prefs or {}}, ensure_ascii=False), text=True, encoding='utf-8', capture_output=True, check=False, timeout=30)
+    except subprocess.TimeoutExpired:
+        raise ValueError('Генератор не ответил за 30 секунд. Повторите подготовку объявления.') from None
+    except OSError:
+        raise ValueError('Не удалось запустить найденный Node.js. Проверьте его установку и перезапустите сервер.') from None
     if result.returncode:
         raise ValueError(result.stderr.strip() or 'Ошибка генерации')
-    return json.loads(result.stdout)
+    try: return json.loads(result.stdout)
+    except ValueError:
+        raise ValueError('Генератор вернул некорректный ответ. Повторите подготовку объявления.') from None
 
 
 def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=None):

@@ -100,7 +100,7 @@ class PhoneBrowserAcceptance(unittest.TestCase):
         self.assertTrue(self.page.locator('#phoneInstall [data-pwa-install]').is_hidden());self.assert_mobile_fit()
         source='https://www.cian.ru/rent/flat/300691182/'
         prepared={**self.result,'fields':{**self.result['fields'],'photos':[self.assets[0]['sourceUrl']]},'titles':['通过 Mac 准备的新房源']}
-        with patch.object(redcn,'load_listing',return_value={'url':source,'text':'Квартира 54 м². Аренда 80 000 руб.','images':[self.assets[0]['sourceUrl']]}),patch.object(redcn,'generate',return_value=prepared),patch.object(photo_store,'load_photo',return_value=self.assets[0]) as load:
+        with patch.object(redcn,'load_listing',return_value={'url':source,'text':'Квартира 54 м². Аренда 80 000 руб.','images':[self.assets[0]['sourceUrl']]}),patch.object(redcn,'generate',return_value=prepared),patch.object(photo_store,'load_photo',return_value=self.assets[0]) as load,patch.object(photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
             self.page.locator('#phoneTabs [data-phone-view="import"]').click();self.assert_mobile_fit()
             self.page.locator('#phoneImportUrl').fill(source);self.page.locator('#phoneImportSubmit').click()
             self.page.locator('#phoneJobOpen').wait_for(state='visible',timeout=15000)

@@ -101,7 +101,7 @@ class PhoneRelayTests(unittest.TestCase):
 
     def test_phone_import_uses_mac_queue_and_caches_photo_before_job_done(self):
         asset=self.photo();self.pair()
-        with patch.object(redcn,'load_listing',return_value={'url':URL,'text':'Квартира 54 м². Аренда 80 000 руб.','images':[PHOTO]}),patch.object(redcn,'generate',return_value={'fields':{'photos':[PHOTO],'price':'80000'},'titles':['标题'],'body':'正文','tags':'#租房'}),patch.object(photo_store,'load_photo',return_value=asset) as load:
+        with patch.object(redcn,'load_listing',return_value={'url':URL,'text':'Квартира 54 м². Аренда 80 000 руб.','images':[PHOTO]}),patch.object(redcn,'generate',return_value={'fields':{'photos':[PHOTO],'price':'80000'},'titles':['标题'],'body':'正文','tags':'#租房'}),patch.object(photo_store,'load_photo',return_value=asset) as load,patch.object(photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
             response=self.request('/api/phone/import',{'url':URL})
             for _ in range(100):
                 job=self.request('/api/phone/jobs/'+response['job_id'])
@@ -114,7 +114,7 @@ class PhoneRelayTests(unittest.TestCase):
 
     def test_prepare_old_card_downloads_on_mac_and_queue_serializes(self):
         asset=self.photo();result_id=self.add_card([PHOTO]);self.pair()
-        with patch.object(photo_store,'load_photo',return_value=asset):
+        with patch.object(photo_store,'load_photo',return_value=asset),patch.object(photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
             response=self.request('/api/phone/cards/'+result_id+'/prepare',{})
             for _ in range(100):
                 job=self.request('/api/phone/jobs/'+response['job_id'])
@@ -146,7 +146,7 @@ class PhoneRelayTests(unittest.TestCase):
         asset=self.photo();result_id=self.add_card([PHOTO]);self.pair()
         entered,release=threading.Event(),threading.Event()
         def load(*args,**kwargs):entered.set();release.wait(2);return asset
-        with patch.object(photo_store,'load_photo',side_effect=load):
+        with patch.object(photo_store,'load_photo',side_effect=load),patch.object(photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
             response=self.request('/api/phone/cards/'+result_id+'/prepare',{});self.assertTrue(entered.wait(1))
             current=local_server.read_result(self.directory,result_id);current['body']='Новый текст';current['fields']['price']='81000'
             local_server.save_result(self.directory,current,result_id);release.set()

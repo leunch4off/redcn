@@ -1,6 +1,6 @@
 """Opt-in LAN companion: paired phones read Mac cards; imports stay on the Mac."""
 import base64
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hashlib
@@ -167,16 +167,47 @@ def source_images(result):
 
 
 def cache_photos(directory,result,report=None,cancel=None):
+    from job_progress import emit
     urls=source_images(result)
+    if cancel and cancel.is_set():raise ValueError('Загрузка отменена')
     def load(url):
         if cancel and cancel.is_set():return {'sourceUrl':url,'error':'Загрузка отменена'}
         try:return photo_store.load_photo(directory,url)
         except (OSError,ValueError,redcn.subprocess.SubprocessError) as error:return {'sourceUrl':url,'error':str(error)}
-    if report:report('Сохраняем фотографии на Mac: '+str(len(urls)))
-    with ThreadPoolExecutor(max_workers=3) as pool:media=list(pool.map(load,urls))
+    emit(report,'Сохраняем фотографии на Mac: '+str(len(urls)),stage='photos',completed=0,total=len(urls))
+    by_url={}
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        futures={pool.submit(load,url):url for url in urls}
+        for future in as_completed(futures):
+            by_url[futures[future]]=future.result()
+            emit(report,'Фотографии: '+str(len(by_url))+' из '+str(len(urls))+' получено',stage='photos',completed=len(by_url),total=len(urls))
+    media=[by_url[url] for url in urls]
     result['media']=media;result['mediaStatus']='partial' if any(row.get('error') for row in media) else 'ready'
     if cancel and cancel.is_set():
         result['mediaStatus']='cancelled';raise ValueError('Загрузка отменена')
+    processing={'total':len(urls),'checked':0,'cropped':0,'manual':0,'review':0,'failed':0,'skipped':0,'downloadFailed':sum(bool(row.get('error')) for row in media)}
+    end=time.monotonic()+90
+    emit(report,'Проверяем края фотографий и готовим безопасные копии',stage='crop',completed=0,total=len(media))
+    for index,row in enumerate(media,1):
+        if cancel and cancel.is_set():
+            result['mediaStatus']='cancelled';raise ValueError('Загрузка отменена')
+        if row.get('error') or not row.get('id'):
+            processing['skipped']+=1
+        else:
+            emit(report,'Проверяем фото '+str(index)+' из '+str(len(media))+': метка у края, затем повторный OCR',stage='crop',completed=index-1,total=len(media))
+            try:
+                decision=photo_store.auto_crop_photo(directory,row['id'],cancel=cancel,deadline=end)
+                state=decision.get('autoStatus','unavailable')
+                row['autoCrop']={key:decision[key] for key in ('autoStatus','cached','message','reason','id') if key in decision}
+                if state in ('cropped','unchanged','review','manual'):processing['checked']+=1
+                if state in ('cropped','review','manual','skipped'):processing[state]+=1
+                elif state=='unavailable':processing['failed']+=1
+            except (OSError,ValueError,redcn.subprocess.SubprocessError) as error:
+                if cancel and cancel.is_set():
+                    result['mediaStatus']='cancelled';raise ValueError('Загрузка отменена') from error
+                processing['failed']+=1;row['autoCrop']={'autoStatus':'unavailable','message':'Оригинал сохранён; автоматическая проверка сейчас недоступна.'}
+        emit(report,'Фотографии подготовлены: '+str(index)+' из '+str(len(media))+'; безопасно обрезано '+str(processing['cropped']),stage='crop',completed=index,total=len(media))
+    result['photoProcessing']=processing
     return result
 
 
@@ -201,10 +232,10 @@ def card_media(directory,result,include_crops=True,originals_by_url=None):
                 try:meta=json.loads(raw)
                 except ValueError:continue
                 original=meta.get('originalId')
-                if meta.get('kind')=='crop' and original in original_ids and original not in crops and meta.get('verification') not in ('mark-remains','not-checked'):
-                    crops[original]=meta
+                if meta.get('kind')=='crop' and original in original_ids and meta.get('verification') in ('manual','ocr-checked') and re.fullmatch(r'[a-f0-9]{64}',str(meta.get('id',''))) and (Path(directory)/'media'/meta['id']).is_file():
+                    if original not in crops or (meta.get('verification')=='manual' and crops[original].get('verification')!='manual'):crops[original]=meta
     def public(row):
-        return {**{k:row[k] for k in ('id','mime','width','height','bytes','sourceUrl','kind') if k in row},'url':'/api/phone/media/'+row['id'],'downloadUrl':'/api/phone/media/'+row['id']+'?download=1'}
+        return {**{k:row[k] for k in ('id','mime','width','height','bytes','sourceUrl','kind','verification') if k in row},'url':'/api/phone/media/'+row['id'],'downloadUrl':'/api/phone/media/'+row['id']+'?download=1'}
     output=[]
     for original in originals:
         item=public(original)
@@ -255,12 +286,12 @@ def public_card(directory,result_id):
 def card_zip(directory,result_id,variant='original'):
     card=public_card(directory,result_id)
     if not card:raise ValueError('Карточка не найдена')
-    if variant not in ('original','crop'):raise ValueError('Неверный вариант фотографий')
+    if variant not in ('original','crop','prepared'):raise ValueError('Неверный вариант фотографий')
     stream=io.BytesIO();total=0;manifest=[]
     with zipfile.ZipFile(stream,'w',compression=zipfile.ZIP_STORED) as archive:
         for n,item in enumerate(card['media'],1):
             if variant=='crop' and not item.get('crop'):continue
-            selected=item['crop'] if variant=='crop' else item
+            selected=item.get('crop',item) if variant=='prepared' else item['crop'] if variant=='crop' else item
             data,mime,_=photo_store.asset(directory,selected['id']);total+=len(data)
             if total>MAX_ZIP_BYTES:raise ValueError('Пакет больше 120 МБ. Скачайте фотографии по отдельности.')
             extension={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[mime];name=f'{n:02}.{extension}'
@@ -274,6 +305,10 @@ def card_zip(directory,result_id,variant='original'):
 def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None):
     directory=Path(directory);state=PairingState(directory);allowed=set(hosts or lan_names())
     if not allowed:raise ValueError('Не найдены локальные адреса Mac')
+    def latest_job_info():
+        getter=getattr(controller,'latest_job',None)
+        value=getter() if callable(getter) else None
+        return value if isinstance(value,dict) and re.fullmatch(r'[a-f0-9]{32}',str(value.get('id',''))) else None
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*_args):pass
         def respond(self,status,value,content_type='application/json; charset=utf-8',headers=None):
@@ -323,7 +358,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     import card_api
                     document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                     if document:self.respond(*document);return
-                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':2});return
+                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':2,'activeJob':latest_job_info()});return
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
                     self.respond(200,list_cards(directory,after));return
@@ -365,7 +400,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if pair:
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     if self.secure:cookie+='; Secure'
-                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token)},headers={'Set-Cookie':cookie});return
+                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info()},headers={'Set-Cookie':cookie});return
                 document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                 if document:self.respond(*document);return
                 if path=='/api/phone/logout':

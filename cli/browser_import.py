@@ -3,6 +3,7 @@ import re
 import threading
 import time
 from urllib.parse import urljoin
+from job_progress import emit
 
 _browser_lock = threading.Lock()
 
@@ -67,14 +68,14 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
     The import's original deadline always wins. Images are accumulated because
     galleries may virtualize previous slides; facts use the latest valid snapshot.
     """
-    report = status or (lambda message: None)
+    report = status
     snapshot = initial
     images = list(initial.get('images', []))
     end = min(deadline, time.monotonic() + budget)
     scrolls = 0
     bottom_stable = 0
     previous_bottom = None
-    report('Прокручиваем объявление: догружаем фотографии и блоки квартиры…')
+    emit(report,'Прокручиваем объявление: догружаем фотографии и блоки квартиры…',stage='scroll',maxTotalSeconds=budget)
     try:
         while scrolls < max_scrolls and time.monotonic() < end:
             if cancel and cancel.is_set():
@@ -88,7 +89,7 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
             current = usable_snapshot(page.evaluate(SNAPSHOT))
             ready, challenge, unavailable = listing_ready(current)
             if challenge:
-                report('Источник запросил проверку при прокрутке. Пройдите её вручную; Chrome остаётся открыт.')
+                emit(report,'Источник запросил проверку при прокрутке. Пройдите её вручную; Chrome остаётся открыт.',stage='challenge',awaitingUser=True)
                 # Human verification may appear after a lazy-load request. The
                 # original import deadline applies, not the short scroll budget.
                 while challenge and time.monotonic() < deadline:
@@ -102,11 +103,13 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
                     ready, challenge, unavailable = listing_ready(current)
                 if challenge:
                     raise ValueError('Время ручной проверки Chrome истекло. Повторите импорт.')
+                emit(report,'Проверка завершена. Продолжаем догружать фотографии прокруткой…',stage='scroll',awaitingUser=False)
             if unavailable:
                 raise ValueError('Объявление стало недоступно во время чтения.')
             if ready:
                 snapshot = current
             images.extend(current.get('images', []))
+            emit(report,'Прокрутка '+str(scrolls)+': найдено фото '+str(len(set(images)))+'. Проверяем конец страницы; предел '+str(max_scrolls)+' прохода.',stage='scroll',completed=scrolls)
             signature = (position.get('height'), tuple(dict.fromkeys(images)),
                          current.get('text') or current.get('fallback', ''))
             if position.get('bottom') is True:
@@ -139,7 +142,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
         from playwright.sync_api import sync_playwright, Error, TimeoutError as BrowserTimeout
     except ImportError as error:
         raise ValueError('Для Chrome установите: python3 -m venv .venv && .venv/bin/python -m pip install -r cli/requirements-browser.txt\nЗатем: .venv/bin/python cli/redcn.py --browser --open') from error
-    report = status or (lambda message: None)
+    report = status
     if channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     browser_name = 'Google Chrome' if channel=='chrome' else 'Chromium / Chrome for Testing'
     if not _browser_lock.acquire(blocking=False):
@@ -148,7 +151,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
     try:
         validate_url(url)
         profile.mkdir(parents=True, exist_ok=True, mode=0o700)
-        report('Открывается '+browser_name+'. Если появится проверка, пройдите её в этом окне. Окно закроется после чтения объявления.')
+        emit(report,'Запускаем отдельное окно '+browser_name+'. Первый запуск браузера может быть дольше обычного. Ждём готовности окна, до 90 секунд.',stage='browser',maxTotalSeconds=90)
         with sync_playwright() as playwright:
             try:
                 context = playwright.chromium.launch_persistent_context(str(profile), channel='chrome' if channel=='chrome' else None, headless=False, accept_downloads=False, timeout=90000)
@@ -157,7 +160,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                 raise ValueError('Не удалось открыть '+browser_name+'. '+hint+' '+str(error).splitlines()[0]) from error
             try:
                 if cancel and cancel.is_set(): raise ValueError('Импорт отменён')
-                report('Браузер открыт. Загружаем объявление и ждём факты квартиры…')
+                emit(report,'Chrome открыт. Подключаемся к объявлению и ждём начальную страницу, до '+str(min(45,timeout))+' секунд…',stage='navigate',maxTotalSeconds=min(45,timeout))
                 # This is a dedicated redcn context, never a CDP attachment to the
                 # user's running Chrome. Do not overwrite a restored profile tab.
                 page = context.new_page()
@@ -167,16 +170,17 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                     response = page.goto(url, wait_until='domcontentloaded', timeout=min(45000, timeout*1000))
                     if response and response.status == 404: raise ValueError('Объявление не найдено (404). Проверьте ссылку.')
                 except BrowserTimeout:
-                    report('Страница ещё загружается. Ожидаем содержимое в открытом Chrome…')
+                    emit(report,'Источник ещё не завершил начальную загрузку. Читаем уже появившиеся блоки в Chrome…',stage='navigate',maxTotalSeconds=timeout)
                 last, stable, challenge_reported = '', 0, False
                 pending_reported = False
+                last_wait_report = 0
                 while time.monotonic() < deadline:
                     if cancel and cancel.is_set(): raise ValueError('Импорт отменён')
                     if page.is_closed(): raise ValueError('Окно Chrome закрыто до завершения импорта')
                     current_url = page.url
                     if current_url == 'about:blank':
                         if not pending_reported:
-                            report('Chrome ещё не установил соединение с источником. Ссылка корректна; ожидаем загрузку страницы…')
+                            emit(report,'Chrome ещё не установил соединение с источником. Ждём ответ сайта, а не генерацию текста…',stage='navigate',maxTotalSeconds=timeout)
                             pending_reported = True
                         page.wait_for_timeout(1000)
                         continue
@@ -189,16 +193,32 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                     snapshot = usable_snapshot(snapshot)
                     ready, challenge, unavailable = listing_ready(snapshot)
                     if unavailable: raise ValueError('Объявление снято или недоступно. Вставьте сохранённый текст вручную.')
-                    if challenge and not challenge_reported:
-                        report('Нужна ваша проверка в окне Chrome. Пройдите её вручную; программа ждёт, ничего не нажимая.')
+                    if challenge and (not challenge_reported or time.monotonic()-last_wait_report>=4):
+                        emit(report,'Нужна ваша проверка в окне Chrome на Mac. Импорт ждёт её завершения; автоматически защита не обходится.',stage='challenge',awaitingUser=True)
                         challenge_reported = True
+                        last_wait_report = time.monotonic()
+                    elif not challenge and challenge_reported:
+                        emit(report,'Проверка браузера завершена. Продолжаем чтение блоков квартиры…',stage='navigate',awaitingUser=False)
+                        challenge_reported=False
                     current = snapshot['text'] or snapshot['fallback']
                     stable = stable + 1 if ready and current == last else 0
                     last = current
+                    if not challenge and time.monotonic()-last_wait_report>=4:
+                        if ready:
+                            message='Цена, площадь и описание найдены. Проверяем, что данные перестали меняться: '+str(min(stable+1,3))+' из 3 чтений.'
+                        else:
+                            missing=[]
+                            if not re.search(r'\d[\d\s\xa0,.]*\s*(?:м²|м2|кв\.?\s*м|㎡)',current,re.I):missing.append('площадь')
+                            if not re.search(r'\d[\d\s\xa0]*\s*(?:₽|руб)',current,re.I):missing.append('цена')
+                            if len(current)<80:missing.append('описание')
+                            message='Страница открыта. Ждём блоки квартиры: '+(', '.join(missing) or 'полные данные')+'. Найдено кандидатов фото: '+str(len(snapshot.get('images',[])))+'.'
+                        emit(report,message,stage='navigate',awaitingUser=False)
+                        last_wait_report=time.monotonic()
                     if ready and stable >= 2:
                         from html import escape
                         snapshot, capture = capture_scrolled(page, snapshot, deadline, validate_url,
                                                              status=report, cancel=cancel)
+                        emit(report,'Читаем текст, цену, метро и найденные фотографии из загруженных блоков…',stage='extract')
                         current = snapshot['text'] or snapshot.get('fallback', '')
                         result = parse_html(snapshot.get('metadata','')+snapshot.get('sourceHtml','')+'<p>'+escape(current)+'</p>'+snapshot.get('relatedHtml',''), url)
                         # Visible summary includes price, floor and transit absent from JSON-LD.
@@ -213,8 +233,8 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         result['browser_channel'] = channel
                         result['capture'] = capture
                         if capture['bounded']:
-                            report('Лимит прокрутки достигнут: сохранены доступные данные. Проверьте полноту фотографий в карточке.')
-                        report('Карточка прочитана. Закрываем окно импорта Chrome.')
+                            emit(report,'Лимит прокрутки достигнут: сохранены доступные данные. Проверьте полноту фотографий в карточке.',stage='extract')
+                        emit(report,'Объявление прочитано. Закрываем окно Chrome и передаём данные генератору…',stage='extract')
                         return result
                     page.wait_for_timeout(500)
                 raise ValueError('Время ожидания Chrome истекло. Проверка или загрузка не завершилась. Повторите --browser --browser-timeout 300 либо вставьте текст вручную.')

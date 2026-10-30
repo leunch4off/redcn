@@ -2,7 +2,7 @@
 
 **Назначение:** redcn — рабочее место подготовки китайских объявлений о московской аренде: ЦИАН/Авито, сайт и Python CLI, динамические названия и теги, двуязычный словарь, новые объекты и фотографии.
 
-**251 задач: 165 выполнено, 86 в плане.** Галочка означает выполнение критерия и наличие доказательства. Issue остаётся открытым.
+**254 задач: 168 выполнено, 86 в плане.** Галочка означает выполнение критерия и наличие доказательства. Issue остаётся открытым.
 
 [Правила](https://github.com/leunch4off/redcn/blob/main/docs/ROADMAP-POLICY.md) · [Машиночитаемый план](https://github.com/leunch4off/redcn/blob/main/plan.json) · [Назначение и функции](https://github.com/leunch4off/redcn/blob/main/docs/PRODUCT.md) · [Референс пользователя](https://github.com/leunch4off/redcn/blob/main/docs/references/user-listing-examples.txt) · [Связь референса с функциями](https://github.com/leunch4off/redcn/blob/main/docs/REFERENCE-MAP.md)
 
@@ -311,5 +311,10 @@
 - [x] **RCN-249 · Реальные этапы загрузки на телефоне** (P1). Приёмка: Адрес, время и этапы связи/входа/карточек видны; таймаут и ошибки HTML-шлюза допускают повтор без раскрытия кода. Доказательство: web/phone.mjs; web/phone.html; tests/test_phone_performance.py; docs/VERIFICATION.md#v12-2026-10-30
 - [x] **RCN-250 · Диагностика сервера, DNS и HTTPS** (P1). Приёмка: Защищённая проверка с Mac отличает локальный ответ, процесс туннеля, DNS и внешний HTTPS; запросы ограничены по времени и не передают личные данные. Доказательство: cli/connection_diagnostics.py; web/phone-connection.mjs; tests/test_connection_diagnostics.py; docs/VERIFICATION.md#v12-2026-10-30
 - [x] **RCN-251 · Подключение другого HTTPS-шлюза** (P1). Приёмка: Проверяемый публичный HTTPS-origin сохраняется для Tuna/ngrok/VPS; точные Host/Origin, loopback-прокси и Secure-cookie остаются обязательными. Доказательство: cli/external_origin.py; cli/phone_relay.py; tests/test_custom_gateway.py; docs/CONNECTION-RU.md; docs/VERIFICATION.md#v12-2026-10-30
+## Понятный импорт и готовые фотографии
+
+- [x] **RCN-252 · Общий Node.js в фоновом сервере** (P1). Приёмка: Генератор и HTML-анализатор находят Node.js >=22 по абсолютному пути при коротком launchd PATH; проверка выполняется до Chrome, ошибки выполнения различаются. Доказательство: cli/node_runtime.py; cli/redcn.py; scripts/macos-service.py; tests/test_node_runtime.py; docs/IMPORT-AND-AUTO-PHOTOS.md; docs/VERIFICATION.md#v13-2026-10-30
+- [x] **RCN-253 · Этапы импорта и измеренное время на телефоне** (P1). Приёмка: Телефон показывает фактические этапы и счётчики, прошедшее время, среднее последних успешных операций отдельно для кеша/сети/фото и восстанавливает текущее задание после обновления. Доказательство: cli/job_progress.py; cli/browser_import.py; cli/local_server.py; web/phone.mjs; tests/test_job_progress.py; tests/test_phone_job_browser.py; docs/IMPORT-AND-AUTO-PHOTOS.md; docs/VERIFICATION.md#v13-2026-10-30
+- [x] **RCN-254 · Автоматическая подготовка фотографий для телефона** (P1). Приёмка: Импорт автоматически скачивает и проверяет края фото, использует только подтверждённые копии, сохраняет оригиналы и полный смешанный набор в галерее/ZIP; решения кешируются, сомнительные случаи остаются целиком. Доказательство: cli/photo_store.py; cli/phone_relay.py; web/phone.mjs; tests/test_auto_photo_crop.py; tests/test_phone_job_browser.py; docs/IMPORT-AND-AUTO-PHOTOS.md; docs/VERIFICATION.md#v13-2026-10-30
 
 Статусы хранятся в git; удалять пункты или переиспользовать ID запрещено. См. docs/VERIFICATION.md для границ проверки.

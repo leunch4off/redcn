@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 8,
-  "total": 251,
+  "version": 9,
+  "total": 254,
   "tasks": [
     {
       "id": "RCN-001",
@@ -3717,6 +3717,66 @@
         "tests/test_custom_gateway.py",
         "docs/CONNECTION-RU.md",
         "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-252",
+      "section": "Понятный импорт и готовые фотографии",
+      "title": "Общий Node.js в фоновом сервере",
+      "acceptance": "Генератор и HTML-анализатор находят Node.js >=22 по абсолютному пути при коротком launchd PATH; проверка выполняется до Chrome, ошибки выполнения различаются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/node_runtime.py",
+        "cli/redcn.py",
+        "scripts/macos-service.py",
+        "tests/test_node_runtime.py",
+        "docs/IMPORT-AND-AUTO-PHOTOS.md",
+        "docs/VERIFICATION.md#v13-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-253",
+      "section": "Понятный импорт и готовые фотографии",
+      "title": "Этапы импорта и измеренное время на телефоне",
+      "acceptance": "Телефон показывает фактические этапы и счётчики, прошедшее время, среднее последних успешных операций отдельно для кеша/сети/фото и восстанавливает текущее задание после обновления.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/job_progress.py",
+        "cli/browser_import.py",
+        "cli/local_server.py",
+        "web/phone.mjs",
+        "tests/test_job_progress.py",
+        "tests/test_phone_job_browser.py",
+        "docs/IMPORT-AND-AUTO-PHOTOS.md",
+        "docs/VERIFICATION.md#v13-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-254",
+      "section": "Понятный импорт и готовые фотографии",
+      "title": "Автоматическая подготовка фотографий для телефона",
+      "acceptance": "Импорт автоматически скачивает и проверяет края фото, использует только подтверждённые копии, сохраняет оригиналы и полный смешанный набор в галерее/ZIP; решения кешируются, сомнительные случаи остаются целиком.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_store.py",
+        "cli/phone_relay.py",
+        "web/phone.mjs",
+        "tests/test_auto_photo_crop.py",
+        "tests/test_phone_job_browser.py",
+        "docs/IMPORT-AND-AUTO-PHOTOS.md",
+        "docs/VERIFICATION.md#v13-2026-10-30"
       ]
     }
   ],
