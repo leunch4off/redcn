@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -102,6 +103,22 @@ class BrowserAcceptance(unittest.TestCase):
             self.assertEqual(self.page.locator('#feature-qty-chairs').input_value(), '5')
             draft = self.page.evaluate("JSON.parse(localStorage.getItem('most-draft'))")
             self.assertEqual(draft['fields']['photoEvidence'], [])
+
+    def test_real_chrome_scroll_loads_gallery_and_reaches_bottom(self):
+        import browser_import
+        self.page.goto(self.url)
+        self.page.set_content('''<main><h1>Сдаётся 2-комнатная квартира 54 м²</h1>
+            <div data-name="PriceInfo">80 000 ₽ в месяц</div>
+            <div data-name="Description">Две изолированные комнаты</div>
+            <div style="height:2400px"></div><div data-name="OfferGallery"><img id="lazy"></div></main>
+            <script>addEventListener('scroll',()=>{if(scrollY>1000)document.querySelector('#lazy').setAttribute('data-original','https://images.cdn-cian.ru/images/lazy-room.jpg');});</script>''')
+        first = self.page.evaluate(browser_import.SNAPSHOT)
+        snapshot, capture = browser_import.capture_scrolled(self.page, first, time.monotonic()+12, lambda url, **kwargs: url)
+        self.assertTrue(capture['completed'])
+        self.assertFalse(capture['bounded'])
+        self.assertGreater(capture['scrolls'], 1)
+        self.assertIn('https://images.cdn-cian.ru/images/lazy-room.jpg', snapshot['images'])
+        self.assertEqual(self.page.evaluate('scrollY'), 0)
 
 
 if __name__ == '__main__':

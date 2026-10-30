@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 3,
-  "total": 200,
+  "version": 4,
+  "total": 215,
   "tasks": [
     {
       "id": "RCN-001",
@@ -1039,8 +1039,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/vision_photo.py",
+        "cli/classify-photo.swift",
+        "tests/test_vision.py",
+        "tests/test_ui_browser.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-077",
@@ -2869,7 +2875,233 @@
         "docs/VERIFICATION.md",
         "GitHub issue #1 остаётся open"
       ]
+    },
+    {
+      "id": "RCN-201",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Снимок метро, МЦК и МЦД Москвы",
+      "acceptance": "Все записи ответа HH metro/1 включены с устойчивыми ID, линиями, координатами и датой; уникальные названия и записи по линиям считаются отдельно, статус движения не выдумывается.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/moscow-geo.json",
+        "tests/geo.test.mjs",
+        "docs/MOSCOW-GEO.md",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-202",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Снимок московских улиц и дорог",
+      "acceptance": "Именованные дороги в административной границе Москвы OSM загружены с исходным именем, источником и датой; поиск доступен автономно, пределы покрытия указаны.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/moscow-geo.json",
+        "scripts/update-moscow-geo.py",
+        "tests/test_geo_catalog.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-203",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Снимок остановок и платформ",
+      "acceptance": "Именованные остановочные объекты OSM в границе Москвы сохраняют отдельные ID и координаты; одинаковое имя не объединяет противоположные платформы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/moscow-geo.json",
+        "scripts/update-moscow-geo.py",
+        "tests/geo.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-204",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Полные китайские географические названия",
+      "acceptance": "Справочник использует проверенные и помеченные community-соответствия целого имени, операторский словарь имеет приоритет; неизвестное русское имя не разрывается на случайные куски.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/metro-zh-supplement.json",
+        "web/geo-catalog.mjs",
+        "tests/geo.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-205",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Постоянная услуга регистрации по прибытии",
+      "acceptance": "Виза прибытия (временная регистрация) обозначена в интерфейсе и китайском описании как помощь студии независимо от регистрации у собственника; исходное условие сохраняется в аудите.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/copy-v8.test.mjs",
+        "tests/test_ui_browser.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-206",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Автоподрезка отметки у края фото",
+      "acceptance": "OCR предлагает границу в долях реального размера фото, создаёт копию и повторно проверяет метку; оригинал неизменен, неуверенные случаи остаются на проверку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_store.py",
+        "tests/test_photos.py",
+        "docs/VERIFICATION.md#v8-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-207",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Компактные варианты по комплектации и бюджету",
+      "acceptance": "Структура и вводная меняются по варианту и подтверждённой комплектации; отдельные приборы не выводятся из духовки, пример бюджета 2/4 человек доступен только двум явно изолированным комнатам.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "web/fact-evidence.mjs",
+        "tests/copy-v8.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-208",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Дети и животные только по разрешению",
+      "acceptance": "Положительное разрешение из текста, плашки или подтверждённой отметки учитывается; молчание, запрет и конфликт не превращаются в разрешение в китайском тексте.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/fact-evidence.mjs",
+        "web/content-tools.mjs",
+        "tests/copy-v8.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-209",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Быстрый захват с прокруткой Chrome",
+      "acceptance": "Собственная вкладка ограниченно прокручивается, собирает отложенные данные, отдаёт метаданные полноты и закрывается; пользовательские вкладки не перенаправляются, проверка площадки ожидается вручную.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/browser_import.py",
+        "tests/test_browser_capture.py",
+        "tests/test_ui_browser.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-210",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Сверка полноты с официальными реестрами Москвы",
+      "acceptance": "После получения актуальных официальных выгрузок сравнить улицы, остановки и действующие станции, показать отсутствующие записи и дату подтверждения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-211",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Проверка остальных китайских названий МЦД",
+      "acceptance": "Найти источники для непереведённых названий МЦД и новых линий, проверить алиасы и не выдавать community-названия за официальные.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-212",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Контрольная выборка распознавания мебели",
+      "acceptance": "Собрать разрешённую размеченную выборку кухонь и комнат и измерить точность по шкафам, стульям, вытяжкам, компьютерам и пианино.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-213",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Экземпляры предметов на нескольких ракурсах",
+      "acceptance": "Сопоставлять один предмет между разными фото, обосновывать точное количество отдельными видимыми экземплярами и показывать ошибки сопоставления.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-214",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Проверка китайских фраз оператором",
+      "acceptance": "Замечания из базы знаний переводить в версии утверждённого словаря с примерами до/после и сохранением исправленной формулировки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-215",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Полнота виртуальных фотогалерей",
+      "acceptance": "Проверить галереи с невидимыми слайдами и выдавать отдельный индикатор пропущенных фото вместо обещания полного сбора по прокрутке.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
     }
   ],
-  "github_issue_url": "https://github.com/leunch4off/redcn/issues/1"
+  "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",
+  "review_url": "https://github.com/leunch4off/redcn/pull/6"
 }

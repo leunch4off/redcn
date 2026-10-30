@@ -75,6 +75,14 @@ test('metro extraction uses the catalog and keeps complete compound station name
   assert.equal(v.transit.split('\n').length,2);
 });
 
+test('translated catalog stations are Chinese in posts and tags without false unknown alerts',()=>{
+  const result=generateListing({metro:'Юго-Западная',walk:'7',price:'80000'});
+  assert.match(result.body,/西南/);
+  assert.doesNotMatch(result.body,/Юго-Западная/);
+  assert(!result.unknown.includes('Юго-Западная'));
+  assert(result.tagSuggestions.some(row=>row.tag.includes('西南')));
+});
+
 test('sink and cupboards retain their room context rather than becoming kitchen or bedroom equipment',()=>{
   const bathroom=extractFacts('В ванной комнате новая раковина.').facts;
   assert(bathroom.features.includes('washbasin'));assert(!bathroom.features.includes('sink'));

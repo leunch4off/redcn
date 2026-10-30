@@ -56,12 +56,12 @@ function geoMatchAt(root,text,start){
   }
   return best;
 }
-export function translateGeo(text,overrides=geoEmptyOverrides){
+export function translateGeo(text,overrides=geoEmptyOverrides,{includeRussian=true}={}){
   const original=String(text??'');
   const supplied=new Map(Object.entries(overrides||{}).filter(([key,value])=>key.trim()&&typeof value==='string').map(([key,value])=>[geoFold(key),value]));
   const exact=resolveGeo(original);
   if(supplied.has(geoFold(original)))return supplied.get(geoFold(original));
-  if(exact)return geoLabel(exact);
+  if(exact)return geoLabel(exact,{includeRussian});
   // Full names only. Never turn Юго-Западная into a made-up mixed name.
   // Existing non-geographic dictionary terms are handled by the caller.
   // A trie avoids a megabyte regular expression and keeps unknown input cheap.
@@ -72,7 +72,7 @@ export function translateGeo(text,overrides=geoEmptyOverrides){
     const geographic=geoMatchAt(geoNameTrie,folded,start),custom=geoMatchAt(customTrie,folded,start);
     const match=custom&&(!geographic||custom.end>=geographic.end)?custom:geographic;
     if(!match)continue;
-    output+=original.slice(cursor,start)+(supplied.has(match.key)?supplied.get(match.key):geoLabel(resolveGeo(match.key)));
+    output+=original.slice(cursor,start)+(supplied.has(match.key)?supplied.get(match.key):geoLabel(resolveGeo(match.key),{includeRussian}));
     cursor=match.end;start=match.end-1;
   }
   return output+original.slice(cursor);

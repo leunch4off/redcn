@@ -85,7 +85,7 @@ const catalogMetroNames=[...new Set(GEO_CATALOG.records.filter(row=>row.kind==='
 const catalogMetroByName=new Map(catalogMetroNames.map(name=>[fold(name),name]));
 const catalogMetroExpression=new RegExp('(?<![а-яa-z])('+catalogMetroNames.map(name=>escape(name).replaceAll('ё','[ёе]')).join('|')+')(?![а-яa-z])','giu');
 export function translate(text, rules) {
-  return translateGeo(text,rules);
+  return translateGeo(text,rules,{includeRussian:false});
 }
 
 export function rubles(value) { return Number(value).toLocaleString('zh-CN',{maximumFractionDigits:2}); }
