@@ -16,6 +16,58 @@
 .install-banner{margin:0 0 18px}.install-banner:has(button[hidden]){display:none}
 
 .phone-photo-viewer{box-sizing:border-box;width:calc(100vw - 24px);max-width:640px;max-height:92svh;border:1px solid #dfe5d8;border-radius:20px;background:#fffef9;padding:16px;color:#27352b}.phone-photo-viewer::backdrop{background:#1e2d23cf}.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}.viewer-head h2{margin:0}.phone-photo-viewer img{display:block;width:100%;max-height:65svh;object-fit:contain;-webkit-touch-callout:default;user-select:auto}.phone-photo-viewer p{font-size:13px;line-height:1.6;margin-top:16px}
+
+#phonePairCode{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:.1em}#phonePairHelp{margin-top:16px}
+
+.phone-tabs button{width:min(25%,160px)}.card-files{margin-top:24px;overflow-wrap:anywhere}.card-files h2{font-size:16px}.card-files p{font-size:12px;margin-bottom:12px}.card-files .btn,.card-file-row .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 15px;border:1px solid #d4ddcb;border-radius:10px;background:#f6f8f1;color:#4a6540;min-height:44px;font:inherit;font-size:13px;text-decoration:none}.card-file-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid #e4e8dd;padding:14px 0;min-width:0}.card-file-row span{flex:1;min-width:100px;font-size:11px;overflow-wrap:anywhere}
+
+.card-archive{--archive-ink:#334638;--archive-muted:#75816f;--archive-line:#dfe5d8;box-sizing:border-box;min-width:0;margin:20px 0;padding:24px;border:1px solid var(--archive-line);border-radius:18px;background:#fffefb;color:var(--archive-ink);overflow-wrap:anywhere}
+.card-archive *{box-sizing:border-box}
+.card-archive .archive-title-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-archive h2{font-size:19px;line-height:1.4;margin:0}
+.card-archive h3{font-size:15px;line-height:1.5;margin:22px 0 12px}
+.card-archive .archive-private{display:inline-block;font-size:11px;line-height:1.4;padding:6px 9px;background:#ecf0e6;color:#627455;border-radius:99px}
+.card-archive p{font-size:13px;line-height:1.65;margin:8px 0;color:var(--archive-muted)}
+.card-archive .archive-status{min-height:23px;color:#527047}
+.card-archive .archive-status.archive-error{color:#a15139}
+.card-archive .archive-form{display:grid;gap:12px}
+.card-archive label{display:block;font-size:12px;font-weight:550;line-height:1.5;color:#63735b;margin:0}
+.card-archive input,.card-archive select,.card-archive textarea{display:block;width:100%;min-width:0;max-width:100%;min-height:46px;border:1px solid #d6dfce;border-radius:10px;padding:11px 12px;margin-top:7px;font:inherit;font-size:16px;line-height:1.5;background:#fbfcf7;color:#334638}
+.card-archive textarea{resize:vertical;min-height:120px}
+.card-archive input[type=file]{font-size:13px;background:#f5f7ef;white-space:normal;overflow-wrap:anywhere;padding:9px}
+.card-archive input[type=file]::file-selector-button{font:inherit;padding:8px 9px;margin-right:10px;border:0;border-radius:6px;background:#e3ebd9;color:#47603b}
+.card-archive .archive-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:11px 15px;border:1px solid #d4ddcb;border-radius:10px;background:#f6f8f1;color:#4a6540;font:inherit;font-size:13px;line-height:1.4;text-align:center;cursor:pointer;white-space:normal}
+.card-archive .archive-button.archive-primary{background:#38533d;border-color:#38533d;color:#fff}
+.card-archive .archive-button[hidden]{display:none!important}
+.card-archive .archive-button.archive-remove{color:#9c5b46;border-color:#eadacf;background:#fffaf5}
+.card-archive .archive-button:disabled,.card-archive input:disabled,.card-archive select:disabled,.card-archive textarea:disabled{opacity:.55;cursor:default}
+.card-archive .archive-button:focus-visible,.card-archive input:focus-visible,.card-archive select:focus-visible,.card-archive textarea:focus-visible{outline:3px solid #a0b98e;outline-offset:3px}
+.card-archive .archive-dirty{margin:0;color:#9b7644;font-size:12px;min-height:18px}
+.card-archive .archive-upload{display:grid;gap:12px;margin-top:14px;border-top:1px solid var(--archive-line);padding-top:3px}
+.card-archive .archive-upload h3{margin-bottom:0}
+.card-archive .archive-confidentiality{padding:11px 12px;border-left:3px solid #bbcbb0;background:#f2f6ec;border-radius:0 8px 8px 0;font-size:12px;color:#66745d;margin:0}
+.card-archive .archive-file-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.card-archive .archive-file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px;border:1px solid var(--archive-line);border-radius:12px;background:#fafbf6;min-width:0}
+.card-archive .archive-file-info{min-width:0;align-self:center}
+.card-archive .archive-file-info strong{font-size:13px;line-height:1.6;font-weight:600;word-break:break-word}
+.card-archive .archive-file-info p{font-size:11px;margin:3px 0 0}
+.card-archive .archive-file-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.card-archive .archive-file-actions .archive-button{font-size:12px;padding:10px 11px}
+.card-archive .archive-remove-confirm{grid-column:1/-1;padding-top:8px;border-top:1px solid #e5e9df}
+.card-archive .archive-remove-confirm[hidden],.card-archive .archive-empty[hidden]{display:none!important}
+.card-archive .archive-remove-confirm .archive-button{margin:7px 7px 0 0}
+.card-archive .archive-empty{padding:15px 0}
+@media(max-width:600px){.card-archive{padding:18px;border-radius:17px;margin:18px 0}.card-archive h2{font-size:17px}.card-archive .archive-file{grid-template-columns:minmax(0,1fr)}.card-archive .archive-file-actions{display:grid;grid-template-columns:1fr 1fr}.card-archive .archive-form>.archive-button,.card-archive .archive-upload>.archive-button{width:100%}.card-archive .archive-button{min-height:46px}.card-archive .archive-private{font-size:10px}}
+
+/* Component base is shared by desktop editor and standalone phone shell. */
+.presentation-studio,.presentation-studio *{box-sizing:border-box}.presentation-studio [hidden],.presentation-studio .hidden{display:none!important}.presentation-studio .heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:26px 0 22px}.presentation-studio .heading>div{min-width:0}.presentation-studio h1{font-size:30px;line-height:1.2;letter-spacing:-.7px;margin:0 0 12px;color:#293b2c;overflow-wrap:anywhere}.presentation-studio .heading p{font-size:14px;line-height:1.65;color:#718066;margin:0}.presentation-studio .eyebrow{font-size:10px;letter-spacing:1.4px;margin:0 0 12px;color:#829173}.presentation-studio .muted{font-size:12px;line-height:1.65;color:#75836a;margin:0}.presentation-studio .btn{display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:44px;max-width:100%;padding:11px 14px;border:1px solid #d4decc;border-radius:9px;background:#ffffff;color:#4d6444;font:inherit;font-size:13px;line-height:1.4;text-align:center;text-decoration:none;white-space:normal;overflow-wrap:anywhere;cursor:pointer;touch-action:manipulation}.presentation-studio .btn.primary{background:#36563b;border-color:#36563b;color:#ffffff;font-weight:600}.presentation-studio .btn:disabled{opacity:.5;cursor:default}.presentation-studio .btn:focus-visible,.presentation-studio input:focus-visible,.presentation-studio textarea:focus-visible,.presentation-studio select:focus-visible{outline:3px solid #a7bd9766;outline-offset:2px}.presentation-studio .presentation-controls{background:#ffffff;border:1px solid #dce4d4;border-radius:13px}.presentation-studio label{display:block;margin:15px 0 8px;color:#5a7050;font-size:12px;font-weight:500;line-height:1.5}.presentation-studio input,.presentation-studio textarea,.presentation-studio select{display:block;min-width:0;max-width:100%;width:100%;min-height:44px;margin-top:7px;padding:10px 11px;border:1px solid #d9e1d1;border-radius:8px;background:#fcfdf9;color:#2d402b;font:inherit;font-size:14px;line-height:1.5}.presentation-studio textarea{resize:vertical}.presentation-studio input[type=checkbox]{display:inline-block;flex:0 0 auto;width:20px;max-width:20px;height:20px;min-height:20px;padding:0;margin:0;accent-color:#496c42}.presentation-studio input[type=range]{min-height:44px;border:0;background:transparent}.presentation-studio input[type=color]{height:44px;padding:4px;cursor:pointer}.presentation-studio .presentation-block-row label{margin:0}.presentation-studio .presentation-block-row .btn{min-height:44px}.presentation-studio .presentation-proof-tools h2{font-size:18px;color:#293b2c}
+@media(max-width:650px){.presentation-studio .heading{margin:22px 0 20px}.presentation-studio h1{font-size:27px;line-height:1.2}.presentation-studio .heading p{font-size:13px}.presentation-studio input,.presentation-studio textarea,.presentation-studio select{font-size:16px;min-height:48px;padding:11px;border-radius:10px}.presentation-studio input[type=checkbox]{width:22px;max-width:22px;height:22px;min-height:22px;padding:0}.presentation-studio input[type=range]{padding:8px 0}.presentation-studio input[type=color]{padding:4px}.presentation-studio .btn{min-height:44px;border-radius:10px}.presentation-studio .presentation-proof-tools{gap:8px}.presentation-studio .presentation-proof-tools .btn{flex:0 0 auto;max-width:45%}}
+.presentation-studio{min-width:0}.presentation-toolbar{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px}.presentation-status{margin:8px 0 20px;padding:12px 15px;border:1px solid #dce4d5;border-radius:10px;color:#53634b;background:#f4f7ef;font-size:13px;overflow-wrap:anywhere}.presentation-layout{display:grid;grid-template-columns:minmax(265px,330px) minmax(0,1fr);gap:24px;align-items:start}.presentation-controls{padding:20px;min-width:0;position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}.presentation-tabs{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:20px}.presentation-tabs .btn{text-align:left;font-size:13px}.presentation-tabs .chosen{background:#eaf0e4;border-color:#9aaf8c;color:#324c30;font-weight:600}.presentation-controls h3{margin:25px 0 12px;font-size:13px;color:#52644a}.presentation-controls textarea{font-size:13px}.presentation-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.presentation-colors input{height:44px;padding:4px}.presentation-control-panel>label:has(input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:44px}.presentation-control-panel input[type=checkbox]{width:18px;height:18px;accent-color:#496c42}.presentation-block-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid #e5eade}.presentation-block-row label{display:flex;align-items:center;gap:8px;margin:0;font-size:12px}.presentation-block-row .btn{padding:5px;min-height:44px}.presentation-template-tools{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 14px}.presentation-template-tools .btn{font-size:11px;padding:8px 9px}.presentation-previews{min-width:0}.presentation-preview-card{min-width:0;background:#e8ebe3;padding:18px;border:1px solid #dce3d4;border-radius:14px}.presentation-preview-label{font-size:11px;letter-spacing:.5px;margin:0 0 13px;color:#66775c}.presentation-frame{display:block;background:#fff;width:100%;height:900px;min-height:600px;border:0;box-shadow:0 4px 16px #25392218;border-radius:3px}.presentation-image{display:block;width:100%;height:auto;max-height:80vh;object-fit:contain;object-position:center top;margin:auto}.presentation-empty{padding:90px 28px;text-align:center;min-height:300px;background:#f7f8f3;border:1px dashed #b7c7ab;border-radius:10px}.presentation-preview-card>.btn{display:block;margin:16px auto 0;min-width:160px}.presentation-controls input[type=range]{padding:8px 0;accent-color:#4c6944}.presentation-controls .btn:disabled{opacity:.45;cursor:default}
+@media(max-width:1150px){.presentation-layout{grid-template-columns:minmax(240px,290px) minmax(0,1fr);gap:16px}.presentation-controls{padding:16px}.presentation-preview-card{padding:12px}.presentation-frame{height:780px}}
+@media(max-width:850px){.presentation-layout{grid-template-columns:minmax(0,1fr)}.presentation-controls{position:static;max-height:none}.presentation-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.presentation-tabs .btn{text-align:center;white-space:normal}.presentation-frame{height:850px}.presentation-image{max-height:none}.presentation-preview-card{padding:10px}}
+@media(max-width:650px){.presentation-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.presentation-toolbar .btn{font-size:12px;min-height:48px}.presentation-toolbar .primary{grid-column:1/-1}.presentation-tabs{gap:5px}.presentation-tabs .btn{font-size:12px;padding:8px 5px}.presentation-control-panel>label{font-size:13px}.presentation-controls textarea{font-size:16px}.presentation-block-row{grid-template-columns:minmax(0,1fr) 44px 44px;gap:7px;min-height:56px}.presentation-block-row .btn{min-height:44px}.presentation-block-row label{font-size:13px;min-height:44px}.presentation-controls input[type=checkbox]{width:22px;height:22px}.presentation-controls label:has(input[type=checkbox]){min-height:44px}.presentation-template-tools .btn{font-size:13px;flex:1}.presentation-frame{height:650px;min-height:480px}.presentation-colors input{min-height:48px}.presentation-status{font-size:12px;padding:12px}.presentation-preview-label{font-size:10px;line-height:1.5}.presentation-layout{gap:10px}.presentation-empty{padding:70px 20px}.presentation-image{width:100%}}
+
+.presentation-proof-dialog{width:min(1120px,96vw);height:min(94svh,1100px);max-width:96vw;max-height:94svh;padding:20px;border:1px solid #dce4d5;border-radius:16px;color:#29352e;background:#f6f8f2;overflow:auto}.presentation-proof-dialog::backdrop{background:#18271ebd}.presentation-proof-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px}.presentation-proof-tools h2{margin:0}.presentation-proof-dialog>a{display:inline-flex;align-items:center;min-height:44px;margin:12px 0;text-decoration:none}.presentation-proof-frame{display:block;width:100%;height:calc(94svh - 200px);min-height:280px;border:0;background:#d5dad0}.presentation-proof-tools .btn{min-height:44px}@media(max-width:650px){.presentation-proof-dialog{padding:14px;width:calc(100vw - 12px);max-width:calc(100vw - 12px);height:calc(100svh - 16px);max-height:calc(100svh - 16px);border-radius:13px}.presentation-proof-frame{height:calc(100svh - 210px)}.presentation-proof-tools h2{font-size:18px}.presentation-proof-dialog .muted{font-size:12px}}
 </style>
 </head>
 <body>
@@ -25,7 +77,7 @@
   <div class="eyebrow">КОМПЬЮТЕР СОБИРАЕТ · ТЕЛЕФОН ПУБЛИКУЕТ</div>
   <h1>Ваши объявления.<br>Теперь под рукой.</h1>
   <p class="lead">Готовые китайские тексты и фотографии приходят сюда с вашего Mac.</p>
-  <div class="pair-card"><div class="pair-symbol" aria-hidden="true">⌁</div><h2>Соединить с компьютером</h2><p>Откройте на Mac раздел «Телефон» и перейдите по ссылке подключения на iPhone. Оба устройства должны быть в одной сети.</p><form id="phonePairForm"><label for="phonePairCode">Или вставьте код подключения</label><input id="phonePairCode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Код с компьютера" required><button id="phonePairSubmit" class="button primary" type="submit">Подключить телефон <span aria-hidden="true">↗</span></button></form><p id="phonePairStatus" class="status-note" role="status"></p></div>
+  <div class="pair-card"><div class="pair-symbol" aria-hidden="true">⌁</div><h2>Соединить с компьютером</h2><p>На Mac откройте сайт → «Телефон». Там показан обновляемый код из 8 цифр. Введите его здесь. Оба устройства должны быть в одной сети.</p><form id="phonePairForm"><label for="phonePairCode">8 цифр с экрана Mac</label><input id="phonePairCode" type="text" inputmode="numeric" enterkeyhint="go" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="1234 5678" aria-describedby="phonePairHelp" required><button id="phonePairSubmit" class="button primary" type="submit">Подключить телефон <span aria-hidden="true">↗</span></button></form><p id="phonePairStatus" class="status-note" role="status"></p><p id="phonePairHelp" class="quiet">После установки на экран «Домой» может понадобиться отдельный вход. Откройте установленное приложение и введите текущие 8 цифр из раздела «Телефон» на Mac. Если код использован или истёк, на компьютере появится новый.</p></div>
   <p class="quiet">Карточки открываются после подключения. Mac должен оставаться включённым.</p>
 </section>
 <div id="phoneWorkspace" class="hidden">
@@ -42,7 +94,7 @@
     <form id="phoneImportForm" class="surface"><label for="phoneImportUrl">Ссылка ЦИАН или Авито</label><input id="phoneImportUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://www.cian.ru/rent/flat/…" required><button id="phoneImportSubmit" class="button primary" type="submit">Подготовить на Mac <span aria-hidden="true">↗</span></button><p class="quiet">Если площадка попросит проверку, пройдите её в окне Chrome на компьютере.</p></form>
     <div id="phoneJob" class="surface job-card hidden" role="status"><div class="job-heading"><span class="pulse-dot" aria-hidden="true"></span><h2 id="phoneJobTitle">Mac готовит объявление</h2></div><p id="phoneJobMessage"></p><button id="phoneJobOpen" class="button secondary hidden" type="button">Открыть готовую карточку</button><button id="phoneJobRetry" class="button secondary hidden" type="button">Проверить состояние</button></div>
   </section>
-  <section id="phoneSetupView" class="phone-view hidden">
+  <section id="phoneDesignView" class="phone-view hidden"><p class="quiet">Дизайн использует последнюю открытую карточку. Сначала выберите квартиру в разделе «Карточки».</p><div id="phoneDesignMount"></div></section><section id="phoneSetupView" class="phone-view hidden">
     <div class="eyebrow">ВСЁ ГОТОВО К РАБОТЕ</div><h1>Мой телефон</h1>
     <div class="surface"><h2>МОСТ на экране «Домой»</h2><p>Открывайте студию как отдельное приложение. Кнопка установки исчезнет при запуске с экрана «Домой».</p><div id="phoneInstall"></div></div>
     <div class="surface"><h2>Компьютер остаётся сервером</h2><p>Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Для обновления нужны включённый компьютер и доступ к его сети.</p><p id="phoneServerStatus" class="status-note"></p></div>
@@ -57,14 +109,484 @@
       <section class="surface text-surface"><div class="block-heading"><h2>Китайский заголовок</h2><button class="text-button" id="phoneCopyTitle" type="button">Копировать</button></div><p id="phoneTitleCopy" class="chinese-title" lang="zh-Hans"></p></section>
       <section class="surface text-surface"><div class="block-heading"><h2>Описание</h2><button class="text-button" id="phoneCopyBody" type="button">Копировать</button></div><p id="phoneBody" class="post-body" lang="zh-Hans"></p></section>
       <section class="surface text-surface"><div class="block-heading"><h2>Теги</h2><button class="text-button" id="phoneCopyTags" type="button">Копировать</button></div><p id="phoneTags" class="tags" lang="zh-Hans"></p></section>
-      <button id="phoneCopyAll" class="button primary copy-all" type="button">Скопировать публикацию целиком</button>
+      <section class="surface"><h2>Материалы объявления</h2><button id="phoneDesignCard" class="button secondary" type="button">Оформить intro, outro и PDF</button><div id="phoneFilesMount"></div></section><div id="phoneArchiveMount"></div><button id="phoneCopyAll" class="button primary copy-all" type="button">Скопировать публикацию целиком</button>
     </article>
   </section>
 </div>
 </main>
-<nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
+<nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="design"><span aria-hidden="true">◈</span>Дизайн</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
 <dialog id="phonePhotoViewer" class="phone-photo-viewer" aria-label="Сохранить фотографию"><div class="viewer-head"><h2>Сохранить в «Фото»</h2><button id="phoneViewerClose" class="icon-button" type="button" aria-label="Закрыть фото">×</button></div><img id="phoneViewerImage" alt="Фотография для сохранения"><p>Удерживайте изображение и выберите «Сохранить в Фото» или «Добавить в Фото» в меню iPhone.</p></dialog><div id="phoneToast" class="phone-toast hidden" role="status"></div>
-<script type="module">// Installation is detected from the running app, never inferred from a button tap.
+<script type="module">// Common artifact transfers. Desktop credentials stay in request headers.
+async function cardBlobDataUrl(blob){
+ return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Не удалось прочитать файл'));reader.readAsDataURL(blob);});
+}
+async function cardPhotoDataUrl(blob){
+ if(!['image/jpeg','image/png','image/webp'].includes(blob.type)||blob.size>12_000_000)throw Error('Фото недоступно для макета');
+ const bitmap=await createImageBitmap(blob);
+ try{const ratio=Math.min(1,1400/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*ratio);canvas.height=Math.round(bitmap.height*ratio);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.86);}finally{bitmap.close();}
+}
+function cardDownloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name||'redcn-document';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+function setupCardFiles({mount,getCardId,api,download,previewImage,toast}){
+ let revision=0;const title=document.createElement('h2'),note=document.createElement('p'),list=document.createElement('div'),refreshButton=document.createElement('button');mount.classList.add('card-files');title.textContent='Готовые материалы';note.textContent='Intro, outro, HTML и PDF сохраняются на Mac и доступны с подключённого телефона.';refreshButton.className='btn';refreshButton.type='button';refreshButton.textContent='Обновить материалы';mount.append(title,note,refreshButton,list);
+ async function refresh(){const version=++revision,id=getCardId();list.replaceChildren();if(!id){list.textContent='Сохраните карточку, затем создайте материалы в разделе «Дизайн».';return;}try{const result=await api('card-exports/'+id);if(version!==revision||getCardId()!==id)return;for(const asset of result.exports||[]){const row=document.createElement('div'),button=document.createElement('button'),meta=document.createElement('span');row.className='card-file-row';button.type='button';button.className='btn';button.textContent=asset.kind==='intro'?'Intro · PNG':asset.kind==='outro'?'Outro · PNG':asset.kind.toUpperCase();meta.textContent=asset.name+' · '+Math.ceil(asset.bytes/1024)+' КБ'+(asset.created?' · '+new Date(asset.created*1000).toLocaleString('ru-RU'):'');button.onclick=async()=>{button.disabled=true;try{await download(asset);}catch(error){toast(error.message);}finally{button.disabled=false;}};row.append(button,meta);if(asset.mime==='image/png'&&previewImage){const open=document.createElement('button');open.type='button';open.className='btn';open.textContent='Открыть в Фото';open.onclick=async()=>{try{await previewImage(asset);}catch(error){toast(error.message);}};row.append(open);}list.append(row);}if(!list.childNodes.length)list.textContent='Материалы ещё не созданы. Откройте «Дизайн», выберите оформление и сохраните нужный формат.';}catch(error){if(version===revision)list.textContent=error.message;}}
+ refreshButton.onclick=()=>refresh();return {refresh,clear(){revision++;list.replaceChildren();}};
+}
+
+const caArchiveStatuses = {active:'В работе',rented:'Сдана',archived:'В архиве'};
+const caAttachmentCategories = {contract:'Договор',floorplan:'Планировка',lidar:'LiDAR / 3D',other:'Другой файл'};
+const caAttachmentExtensions = new Set(['pdf','jpg','jpeg','png','webp','txt','docx','usdz','obj','glb','gltf','ply','stl','zip','dxf','ifc']);
+const caMaxAttachmentBytes = 40 * 1024 * 1024;
+
+function archiveValidateAttachmentFile(file) {
+  if (!file || typeof file.name !== 'string' || !file.name.trim()) throw new Error('Выберите файл.');
+  if (!Number.isSafeInteger(file.size) || file.size < 1) throw new Error('Файл пустой или его размер неизвестен.');
+  if (file.size > caMaxAttachmentBytes) throw new Error('Один файл может занимать не больше 40 МБ.');
+  const extension = file.name.split('.').at(-1).toLowerCase();
+  if (!caAttachmentExtensions.has(extension)) throw new Error('Поддерживаются PDF, фотографии, DOCX, TXT, ZIP и файлы 3D-планировок.');
+  return file;
+}
+
+function archiveFormatAttachmentBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) return 'Размер неизвестен';
+  if (bytes < 1024) return Math.round(bytes) + ' Б';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' КБ';
+  return (bytes / (1024 * 1024)).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' МБ';
+}
+
+function caReadBase64(file) {
+  return new Promise((resolve,reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string' || !result.includes(',')) reject(new Error('Не удалось прочитать файл.'));
+      else resolve(result.slice(result.indexOf(',') + 1));
+    };
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл. Выберите его повторно.'));
+    reader.onabort = () => reject(new Error('Чтение файла отменено.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function setupCardArchive({mount,getCardId,ensureCard,api,downloadAttachment,toast=()=>{}}) {
+  if (!mount || typeof api !== 'function' || typeof getCardId !== 'function') throw new Error('Не удалось открыть архив карточки.');
+  const make = (tag,text='',className='') => {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+  const button = (text,primary=false) => {
+    const node = make('button',text,'archive-button' + (primary?' archive-primary':''));
+    node.type = 'button';
+    return node;
+  };
+  const panel = make('section','','card-archive');
+  const heading = make('h2','Архив квартиры');
+  const privateBadge = make('span','Только для вас','archive-private');
+  const titleRow = make('div','','archive-title-row');
+  titleRow.append(heading,privateBadge);
+  const intro = make('p','Сохраните договор, планировку или скан квартиры для будущего заселения. Вложения и заметки остаются на вашем Mac и доступны подключённому телефону.','archive-help');
+  const status = make('p','','archive-status');
+  status.setAttribute('role','status');
+  status.setAttribute('aria-live','polite');
+  const retry = button('Повторить загрузку архива');
+  retry.hidden=true;
+  retry.setAttribute('aria-label','Повторить загрузку архива квартиры');
+  const form = make('form','','archive-form');
+  const statusLabel = make('label','Статус квартиры');
+  const statusSelect = make('select');
+  statusSelect.setAttribute('aria-label','Статус квартиры');
+  for (const [value,label] of Object.entries(caArchiveStatuses)) {
+    const option = make('option',label); option.value=value; statusSelect.append(option);
+  }
+  statusLabel.append(statusSelect);
+  const notesLabel = make('label','Личные заметки');
+  const notes = make('textarea');
+  notes.rows=4; notes.maxLength=20000;
+  notes.placeholder='Например: дата сдачи, особенности квартиры, что проверить перед следующим заселением';
+  notes.setAttribute('aria-label','Личные заметки квартиры');
+  notesLabel.append(notes);
+  const save = button('Сохранить статус и заметки',true);
+  save.type='submit';
+  const dirtyNote = make('p','','archive-dirty');
+  dirtyNote.setAttribute('aria-live','polite');
+  form.append(statusLabel,notesLabel,save,dirtyNote);
+
+  const upload = make('div','','archive-upload');
+  const uploadHeading = make('h3','Добавить файл');
+  const categoryLabel = make('label','Тип вложения');
+  const category = make('select');
+  category.setAttribute('aria-label','Тип вложения');
+  for (const [value,label] of Object.entries(caAttachmentCategories)) {
+    const option=make('option',label); option.value=value; category.append(option);
+  }
+  categoryLabel.append(category);
+  const fileLabel = make('label','Файл · до 40 МБ');
+  const fileInput = make('input');
+  fileInput.type='file';
+  fileInput.accept=[...caAttachmentExtensions].map(extension=>'.'+extension).join(',');
+  fileInput.setAttribute('aria-label','Файл для архива квартиры');
+  fileLabel.append(fileInput);
+  const uploadButton = button('Прикрепить файл');
+  uploadButton.disabled=true;
+  const formats = make('p','PDF, JPG, PNG, WEBP, DOCX, TXT, ZIP; USDZ, OBJ, GLB, GLTF, PLY, STL, DXF, IFC. LiDAR и 3D-файлы хранятся в исходном формате.','archive-help');
+  const confidentiality = make('p','Эти файлы не добавляются в рекламные фото, HTML и PDF-презентацию квартиры.','archive-confidentiality');
+  upload.append(uploadHeading,categoryLabel,fileLabel,uploadButton,formats,confidentiality);
+  const filesHeading = make('h3','Файлы квартиры');
+  const list = make('ul','','archive-file-list');
+  list.setAttribute('aria-label','Вложения к карточке');
+  const empty = make('p','Пока нет прикреплённых файлов.','archive-empty');
+  panel.append(titleRow,intro,status,retry,form,upload,filesHeading,list,empty);
+  mount.append(panel);
+
+  let activeId=null, viewEpoch=0, refreshSequence=0, destroyed=false, loaded=false;
+  let busy=false, dirty=false, metadataRevision=0, refreshing=false;
+  const currentId = () => getCardId() || null;
+  const isCurrent = (id,epoch) => !destroyed && epoch===viewEpoch && currentId()===id && activeId===id;
+
+  function setStatus(message,error=false) {
+    status.textContent=message;
+    status.classList.toggle('archive-error',error);
+  }
+  function setDirty(value) {
+    dirty=value;
+    dirtyNote.textContent=value?'Есть несохранённые изменения.':'';
+    syncControls();
+  }
+  function syncControls() {
+    const unavailable=!activeId && typeof ensureCard!=='function';
+    const metadataUnavailable=unavailable || !!activeId&&!loaded;
+    statusSelect.disabled=notes.disabled=save.disabled=busy || metadataUnavailable;
+    category.disabled=fileInput.disabled=busy || unavailable;
+    uploadButton.disabled=busy || unavailable || !fileInput.files?.length;
+    retry.disabled=busy || refreshing;
+  }
+  function setBusy(value) {
+    busy=value;
+    if(value){refreshSequence++;refreshing=false;}
+    panel.setAttribute('aria-busy',String(value));
+    syncControls();
+    for (const control of list.querySelectorAll('button')) control.disabled=value;
+  }
+  function reset(id) {
+    activeId=id; viewEpoch++; refreshSequence++; loaded=false;
+    metadataRevision++; busy=false;refreshing=false;retry.hidden=true;
+    statusSelect.value='active'; notes.value=''; fileInput.value='';
+    list.replaceChildren(); empty.hidden=false; setDirty(false); setBusy(false);
+    setStatus(id?'Загружаем архив квартиры…':'Сохраните карточку или прикрепите файл — квартира появится в архиве на Mac.');
+  }
+  function bindCurrent() {
+    const id=currentId();
+    if (id!==activeId) reset(id);
+    return id;
+  }
+  function renderFiles(attachments,id,epoch) {
+    list.replaceChildren();
+    empty.hidden=attachments.length>0;
+    for (const asset of attachments) {
+      const item=make('li','','archive-file');
+      const info=make('div','','archive-file-info');
+      const name=make('strong',asset.name||'Файл');
+      const date=asset.created ? new Date(Number(asset.created)*1000) : null;
+      const dateText=date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('ru-RU') : '';
+      const details=make('p',[caAttachmentCategories[asset.category]||'Файл',archiveFormatAttachmentBytes(asset.bytes),dateText].filter(Boolean).join(' · '),'archive-help');
+      info.append(name,details);
+      const actions=make('div','','archive-file-actions');
+      const download=button('Скачать');
+      download.setAttribute('aria-label','Скачать '+(asset.name||'файл'));
+      download.disabled=busy;
+      download.onclick=async () => {
+        if (!isCurrent(id,epoch) || busy) return;
+        download.disabled=true;
+        try {
+          if (typeof downloadAttachment!=='function') throw new Error('Загрузка недоступна. Откройте карточку на локальном сайте Mac.');
+          await downloadAttachment(asset,id);
+        } catch (error) {
+          if (isCurrent(id,epoch)) {setStatus(error.message,true);toast(error.message);}
+        } finally {if(isCurrent(id,epoch))download.disabled=busy;}
+      };
+      const remove=button('Удалить'); remove.classList.add('archive-remove');
+      remove.setAttribute('aria-label','Удалить '+(asset.name||'файл'));
+      const confirmation=make('div','','archive-remove-confirm');
+      confirmation.hidden=true;
+      const prompt=make('p','Удалить файл «'+(asset.name||'Файл')+'» из этой карточки?','archive-help');
+      const confirm=button('Да, удалить'),cancel=button('Отмена');
+      confirm.classList.add('archive-remove');
+      confirmation.append(prompt,confirm,cancel);
+      remove.onclick=()=>{if(!busy&&isCurrent(id,epoch)){confirmation.hidden=false;confirm.focus();}};
+      cancel.onclick=()=>{confirmation.hidden=true;remove.focus();};
+      confirm.onclick=async () => {
+        if (!isCurrent(id,epoch) || busy) return;
+        setBusy(true); setStatus('Удаляем вложение…');
+        try {
+          const result=await api('card-archive/'+id,{action:'remove',attachment_id:asset.id});
+          if(!isCurrent(id,epoch))return;
+          apply(result,id,epoch);setStatus('Файл удалён из этой карточки.');
+        } catch(error) {if(isCurrent(id,epoch)){setStatus(error.message,true);toast(error.message);}}
+        finally {if(isCurrent(id,epoch))setBusy(false);}
+      };
+      actions.append(download,remove); item.append(info,actions,confirmation); list.append(item);
+    }
+  }
+  function apply(data,id,epoch,{preserveDirty=true}={}) {
+    if (!isCurrent(id,epoch)) return;
+    loaded=true;
+    if (!preserveDirty || !dirty) {
+      statusSelect.value=Object.hasOwn(caArchiveStatuses,data.status)?data.status:'active';
+      notes.value=typeof data.notes==='string'?data.notes:'';
+      setDirty(false);
+    }
+    renderFiles(Array.isArray(data.attachments)?data.attachments:[],id,epoch);
+    retry.hidden=true;syncControls();
+  }
+  async function actionId() {
+    bindCurrent();
+    const startingEpoch=viewEpoch;
+    let id=activeId;
+    if (!id && typeof ensureCard==='function') {
+      const saved=await ensureCard();
+      id=typeof saved==='string'?saved:saved?.result_id;
+      if (destroyed || startingEpoch!==viewEpoch || !id || currentId()!==id) throw new Error('Карточка изменилась. Повторите действие для открытой квартиры.');
+      // A new ID refers to the same editor contents; preserve the user's pending notes.
+      const pendingNotes=notes.value,pendingStatus=statusSelect.value,pendingDirty=dirty;
+      reset(id); notes.value=pendingNotes; statusSelect.value=pendingStatus; setDirty(pendingDirty);
+    }
+    if (!id) throw new Error('Сначала сохраните карточку на Mac.');
+    return {id,epoch:viewEpoch};
+  }
+  statusSelect.onchange=notes.oninput=()=>{metadataRevision++;setDirty(true);};
+  form.onsubmit=async event => {
+    event.preventDefault(); if(busy)return;
+    bindCurrent();
+    if(activeId&&!loaded){setStatus('Сначала дождитесь загрузки архива. Если нет связи, нажмите «Повторить загрузку архива».',true);retry.hidden=false;return;}
+    let target=null;
+    const initialId=currentId(),initialEpoch=viewEpoch;
+    const belongs=()=>target?isCurrent(target.id,target.epoch):!destroyed&&initialEpoch===viewEpoch&&currentId()===initialId;
+    setBusy(true);
+    try {
+      target=await actionId();
+      if(!isCurrent(target.id,target.epoch))return;
+      const revision=metadataRevision;
+      const value={action:'update',status:statusSelect.value,notes:notes.value};
+      setBusy(true);setStatus('Сохраняем статус и заметки…');
+      const result=await api('card-archive/'+target.id,value);
+      if(!isCurrent(target.id,target.epoch))return;
+      if(metadataRevision===revision)setDirty(false);
+      apply(result,target.id,target.epoch);
+      setStatus('Статус и заметки сохранены на Mac.');toast('Архив квартиры сохранён.');
+    } catch(error) {if(belongs()){setStatus(error.message,true);toast(error.message);}}
+    finally {if(belongs())setBusy(false);}
+  };
+  fileInput.onchange=()=>{
+    try {if(fileInput.files?.[0])archiveValidateAttachmentFile(fileInput.files[0]);uploadButton.disabled=busy||!fileInput.files?.length;setStatus(fileInput.files?.[0]?'Файл выбран. Нажмите «Прикрепить файл».':'');}
+    catch(error){fileInput.value='';uploadButton.disabled=true;setStatus(error.message,true);}
+  };
+  uploadButton.onclick=async () => {
+    if(busy)return;
+    const file=fileInput.files?.[0]; let target=null;
+    const initialId=currentId(),initialEpoch=viewEpoch;
+    const belongs=()=>target?isCurrent(target.id,target.epoch):!destroyed&&initialEpoch===viewEpoch&&currentId()===initialId;
+    try {
+      archiveValidateAttachmentFile(file);
+      const selectedCategory=category.value;
+      setBusy(true);
+      target=await actionId();
+      if(!isCurrent(target.id,target.epoch))return;
+      setBusy(true);setStatus('Читаем «'+file.name+'»…');
+      const data=await caReadBase64(file);
+      if(!isCurrent(target.id,target.epoch))return;
+      setStatus('Сохраняем файл на Mac… Не закрывайте страницу.');
+      const result=await api('card-archive/'+target.id,{action:'attach',name:file.name,category:selectedCategory,data});
+      if(!isCurrent(target.id,target.epoch))return;
+      apply(result,target.id,target.epoch); fileInput.value='';
+      setStatus('Файл сохранён на Mac.');toast('Файл прикреплён к квартире.');
+    } catch(error) {if(belongs()){setStatus(error.message,true);toast(error.message);}}
+    finally {if(belongs())setBusy(false);}
+  };
+  async function refresh() {
+    if(destroyed)return;
+    const id=bindCurrent();
+    if(!id || busy)return;
+    const epoch=viewEpoch,sequence=++refreshSequence;
+    refreshing=true;syncControls();
+    if(!loaded)setStatus('Загружаем архив квартиры…');
+    try {
+      const data=await api('card-archive/'+id);
+      if(!isCurrent(id,epoch)||sequence!==refreshSequence)return;
+      const wasLoaded=loaded;
+      apply(data,id,epoch);
+      if(!wasLoaded)setStatus('Архив загружен. Изменения сохраняются кнопкой ниже.');
+    } catch(error) {if(isCurrent(id,epoch)&&sequence===refreshSequence){setStatus(error.message,true);retry.hidden=false;}}
+    finally {if(isCurrent(id,epoch)&&sequence===refreshSequence){refreshing=false;syncControls();}}
+  }
+  retry.onclick=()=>refresh();
+  function clear() {
+    // Called on logout / switching away: retain no private names or notes in the DOM.
+    reset(null); setStatus('Откройте карточку квартиры, чтобы увидеть её архив.');
+  }
+  function destroy() {destroyed=true;viewEpoch++;refreshSequence++;panel.remove();}
+  reset(currentId());
+  refresh();
+  return {refresh,clear,destroy};
+}
+
+/* Shared publication design. Generated HTML contains escaped text and embedded images only. */
+const PS_DESIGN_KEY='most-presentation-design-v1';
+const PRESENTATION_BLOCKS=['cover','title','facts','description','photos','location','contact'];
+const PS_BLOCK_NAMES={cover:'Обложка intro',title:'Название',facts:'Цена и параметры',description:'Описание',photos:'Фотографии',location:'Расположение / outro',contact:'Контакт и подпись'};
+const PS_PRESETS={editorial:{accent:'#bd4937',background:'#fffdf7',foreground:'#29352e',font:'sans'},minimal:{accent:'#35563f',background:'#ffffff',foreground:'#21352a',font:'sans'},night:{accent:'#dfad72',background:'#17251e',foreground:'#f4f4e9',font:'serif'}};
+const PS_FONT={sans:'Arial, "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif',serif:'Georgia, "Noto Serif CJK SC", "Songti SC", serif'};
+const psSafeString=(value,max=2000)=>typeof value==='string'?value.slice(0,max):'';
+const psNum=(value,min,max,fallback)=>Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;
+const psChoice=(value,values,fallback)=>values.includes(value)?value:fallback;
+const psColor=(value,fallback)=>/^#[a-f\d]{6}$/i.test(value||'')?value:fallback;
+function normalizeDesignTemplate(input={}){
+  if(!input||typeof input!=='object'||Array.isArray(input))input={};
+  const preset=psChoice(input.preset,Object.keys(PS_PRESETS),'editorial'),defaults=PS_PRESETS[preset];
+  const intro=input.intro&&typeof input.intro==='object'?input.intro:{},outro=input.outro&&typeof input.outro==='object'?input.outro:{};
+  const seen=new Set(),blocks=[];
+  for(const value of Array.isArray(input.blocks)?input.blocks:[]){if(value&&PRESENTATION_BLOCKS.includes(value.id)&&!seen.has(value.id)){seen.add(value.id);blocks.push({id:value.id,enabled:value.enabled!==false});}}
+  for(const id of PRESENTATION_BLOCKS)if(!seen.has(id))blocks.push({id,enabled:true});
+  return {version:1,preset,accent:psColor(input.accent,defaults.accent),background:psColor(input.background,defaults.background),foreground:psColor(input.foreground,defaults.foreground),font:psChoice(input.font,Object.keys(PS_FONT),defaults.font),paper:psChoice(input.paper,['A4','Letter'],'A4'),blocks,contact:psSafeString(input.contact,500),footer:psSafeString(input.footer,500)||'МОСТ · Подбор жилья в Москве',intro:{headline:psSafeString(intro.headline,600)||'{{title}}',subtitle:psSafeString(intro.subtitle,600)||'{{metro}} · {{area}} м²',layout:psChoice(intro.layout,['single','duo','trio'],'single'),position:psChoice(intro.position,['top','middle','bottom'],'bottom'),align:psChoice(intro.align,['left','center'],'left'),fontSize:psNum(intro.fontSize,36,100,66),overlay:psNum(intro.overlay,0,95,65),photoIndex:Math.round(psNum(intro.photoIndex,0,29,0)),showPrice:intro.showPrice!==false,showMetro:intro.showMetro!==false,showArea:intro.showArea!==false},outro:{heading:psSafeString(outro.heading,300)||'Расположение и детали',note:psSafeString(outro.note,1200)||'{{address}}',showMap:outro.showMap!==false}};
+}
+function presentationCardData(card={}){
+  const fields=card.fields||{},number=value=>value!==''&&value!=null&&Number.isFinite(Number(value))?Number(value):null;
+  const price=number(fields.price),area=number(fields.area),latitude=number(fields.latitude??card.listing?.latitude),longitude=number(fields.longitude??card.listing?.longitude);
+  const title=psSafeString(card.title||card.titles?.[0]||fields.name,1200)||'Без названия';
+  const hasCoordinates=latitude!==null&&longitude!==null&&Math.abs(latitude)<=90&&Math.abs(longitude)<=180;
+  return {title,body:psSafeString(card.body,40000),tags:psSafeString(card.tags,3000),price:price===null?'':price.toLocaleString('ru-RU'),area:area===null?'':String(area),metro:psSafeString(fields.metro,500),address:psSafeString(fields.address||fields.district||fields.complex,1000),rooms:psSafeString(String(fields.rooms||''),60),floor:psSafeString(String(fields.floor||''),60),route:psSafeString(fields.route||fields.transit,1500),latitude:hasCoordinates?latitude:null,longitude:hasCoordinates?longitude:null,mapUrl:hasCoordinates?'https://www.openstreetmap.org/?mlat='+latitude+'&mlon='+longitude+'#map=16/'+latitude+'/'+longitude:''};
+}
+function presentationCardKey(card={}){const fields=card.fields||{},edits=fields.photoEdits||{};return JSON.stringify({identity:card.identity||'',data:presentationCardData(card),source:fields.url||card.listing?.url||'',photos:fields.photos||card.listing?.images||[],listingImages:card.listing?.images||[],selection:fields.photoSelection||[],photoEdits:{order:edits.order||[],excluded:edits.excluded||[],crops:edits.crops||{}}});}
+function expandDesignText(text,card){const data=presentationCardData(card);return String(text||'').replace(/\{\{(title|price|area|metro|address|rooms|floor)\}\}/g,(_,key)=>data[key]);}
+function escapePresentationText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safePresentationImage(value){return typeof value==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[a-z\d+/=\s]+$/i.test(value)&&value.length<=18_000_000?value:'';}
+function buildPresentationHtml(card,input={},assets={}){
+  const t=normalizeDesignTemplate(input),d=presentationCardData(card),esc=escapePresentationText;
+  const photos=(assets.photos||[]).map(value=>safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url)).filter(Boolean).slice(0,6);
+  const cover=safePresentationImage(assets.intro),outro=safePresentationImage(assets.outro);
+  const facts=[d.price&&['Аренда',d.price+' ₽ / месяц'],d.area&&['Площадь',d.area+' м²'],d.rooms&&['Комнаты',d.rooms],d.metro&&['Метро',d.metro],d.floor&&['Этаж',d.floor]].filter(Boolean);
+  const photo=(src,alt,cls='')=>'<img class="'+cls+'" src="'+src+'" alt="'+esc(alt)+'">';
+  const location=d.address||d.mapUrl||d.route||outro;const attribution=psSafeString(assets.mapAttribution,300);
+  const sections={cover:cover?'<section class="cover">'+photo(cover,'Обложка объявления')+'</section>':'',title:'<section class="title"><p class="eyebrow">'+esc(t.footer)+'</p><h1>'+esc(d.title)+'</h1></section>',facts:facts.length?'<section class="facts">'+facts.map(([name,value])=>'<div><span>'+esc(name)+'</span><strong>'+esc(value)+'</strong></div>').join('')+'</section>':'',description:d.body?'<section class="description"><h2>Описание</h2><div class="copy">'+esc(d.body)+'</div>'+(d.tags?'<p class="tags">'+esc(d.tags)+'</p>':'')+'</section>':'',photos:photos.length?'<section class="photos"><h2>Фотографии</h2><div class="photo-grid">'+photos.map((src,index)=>'<figure>'+photo(src,'Фото квартиры '+(index+1))+'<figcaption>'+String(index+1).padStart(2,'0')+'</figcaption></figure>').join('')+'</div></section>':'',location:location?'<section class="location"><h2>'+esc(t.outro.heading)+'</h2>'+(outro?photo(outro,'Расположение и контакты','outro'):'')+(attribution?'<p class="muted">'+esc(attribution)+' · <a href="https://www.openstreetmap.org/copyright">Условия использования карты</a></p>':'')+(d.address?'<p>'+esc(d.address)+'</p>':'')+(d.route?'<p>'+esc(d.route)+'</p>':'')+(d.mapUrl?'<p>Координаты: '+esc(d.latitude+', '+d.longitude)+'<br><a href="'+d.mapUrl+'">Открыть точку на OpenStreetMap</a></p>':'<p class="muted">Координаты не указаны. Уточните расположение перед отправкой клиенту.</p>')+'</section>':'',contact:t.contact?'<section class="contact"><h2>Связаться с нами</h2><p>'+esc(t.contact)+'</p></section>':''};
+  return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(d.title)+'</title><style>@page{size:'+t.paper+';margin:14mm}*{box-sizing:border-box}html{background:'+t.background+';color:'+t.foreground+';font-family:'+PS_FONT[t.font]+'}body{margin:0;line-height:1.6;font-size:11pt;overflow-wrap:anywhere}main{max-width:182mm;margin:auto}h1{font-size:27pt;line-height:1.25;margin:10pt 0 20pt;overflow-wrap:anywhere}h2{font-size:15pt;line-height:1.35;margin:0 0 12pt;color:'+t.accent+'}p{margin:8pt 0;white-space:pre-wrap}section{margin:0 0 22pt;max-width:100%}img{max-width:100%;display:block;object-fit:cover}.cover img{width:100%;max-height:238mm;object-fit:contain}.cover{break-after:page}.eyebrow{font-size:9pt;color:'+t.accent+';letter-spacing:.5pt}.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt;border-top:2pt solid '+t.accent+';padding-top:14pt}.facts>div{border-bottom:1pt solid '+t.accent+'33;padding:6pt 0;break-inside:avoid}.facts span{display:block;font-size:9pt;opacity:.7}.facts strong{font-size:13pt;font-weight:600;line-height:1.4}.copy{white-space:pre-wrap;orphans:3;widows:3}.tags{color:'+t.accent+';font-size:10pt}.photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt}.photo-grid figure{margin:0;break-inside:avoid}.photo-grid img{width:100%;height:58mm;object-fit:cover}.photo-grid figcaption{font-size:8pt;opacity:.6;margin:3pt 0}.location,.contact{break-inside:avoid}.outro{width:100%;max-height:148mm;object-fit:contain;margin-bottom:12pt}a{color:'+t.accent+';overflow-wrap:anywhere}.muted{font-size:9pt;opacity:.65}footer{font-size:8pt;padding:12pt 0;border-top:1pt solid '+t.accent+';opacity:.7}@media screen{body{padding:22px}main{max-width:760px}.cover img{max-height:980px}.photo-grid img{height:210px}.outro{max-height:560px}}@media print{section{box-decoration-break:clone}.title{break-after:avoid}.description h2,.photos h2,.location h2{break-after:avoid}}</style></head><body><main>'+t.blocks.filter(block=>block.enabled).map(block=>sections[block.id]).join('')+'<footer>'+esc(t.footer)+'</footer></main></body></html>';
+}
+
+function psElement(tag,text='',className=''){const value=document.createElement(tag);if(text)value.textContent=text;if(className)value.className=className;return value;}
+function psDownloadBlob(name,blob){const url=URL.createObjectURL(blob),link=psElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function psLoadImage(url){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('Не удалось открыть фото для дизайна'));image.src=url;});}
+function psDrawCover(context,image,x,y,w,h){const scale=Math.max(w/image.width,h/image.height),sw=w/scale,sh=h/scale;context.save();context.beginPath();context.rect(x,y,w,h);context.clip();context.drawImage(image,(image.width-sw)/2,(image.height-sh)/2,sw,sh,x,y,w,h);context.restore();}
+function psWrapLines(context,text,width,maxLines=12){const output=[];for(const paragraph of String(text).split('\n')){let line='';for(const char of Array.from(paragraph)){if(context.measureText(line+char).width>width&&line){output.push(line);line=char;}else line+=char;}output.push(line);}if(output.length>maxLines){output.length=maxLines;let last=output[maxLines-1];while(last&&context.measureText(last+'…').width>width)last=last.slice(0,-1);output[maxLines-1]=last+'…';}return output;}
+function psPaintText(context,text,x,y,width,fontSize,colorValue,{align='left',maxLines=8,weight=600}={}){context.font=weight+' '+fontSize+'px '+PS_FONT.sans;context.fillStyle=colorValue;context.textAlign=align;context.textBaseline='top';const lines=psWrapLines(context,text,width,maxLines);lines.forEach((line,index)=>context.fillText(line,x,y+index*fontSize*1.25));return lines.length*fontSize*1.25;}
+async function renderPresentationImage(kind,card,input,photos=[],mapImage=''){
+  const t=normalizeDesignTemplate(input),d=presentationCardData(card),canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1440;const ctx=canvas.getContext('2d');
+  ctx.fillStyle=t.background;ctx.fillRect(0,0,1080,1440);const source=photos.filter(Boolean),start=source.length?Math.min(source.length-1,t.intro.photoIndex):0,ordered=source.length?source.map((_,index)=>source[(index+start)%source.length]):[];
+  const loaded=await Promise.all(ordered.slice(0,3).map(value=>psLoadImage(typeof value==='string'?value:value.dataUrl||value.url)));
+  if(kind==='intro'){
+    if(!loaded.length)throw new Error('Для intro загрузите хотя бы одну фотографию квартиры');
+    if(t.intro.layout==='single'||loaded.length===1)psDrawCover(ctx,loaded[0],0,0,1080,1440);
+    else if(t.intro.layout==='duo'||loaded.length===2){psDrawCover(ctx,loaded[0],0,0,1080,828);psDrawCover(ctx,loaded[1],0,838,1080,602);}
+    else {psDrawCover(ctx,loaded[0],0,0,1080,870);psDrawCover(ctx,loaded[1],0,880,535,560);psDrawCover(ctx,loaded[2],545,880,535,560);}
+    const overlay=t.intro.overlay/100,gradient=ctx.createLinearGradient(0,t.intro.position==='top'?850:420,0,t.intro.position==='top'?0:1440);gradient.addColorStop(0,'rgba(0,0,0,0)');gradient.addColorStop(1,'rgba(0,0,0,'+overlay+')');ctx.fillStyle=gradient;ctx.fillRect(0,0,1080,1440);
+    if(t.intro.position==='middle'){ctx.fillStyle='rgba(0,0,0,'+overlay*.75+')';ctx.fillRect(0,0,1080,1440);}
+    const x=t.intro.align==='center'?540:72,width=936,title=expandDesignText(t.intro.headline,card),subtitle=expandDesignText(t.intro.subtitle,card);
+    ctx.font='700 '+t.intro.fontSize+'px '+PS_FONT.sans;const titleLines=psWrapLines(ctx,title,width,5),estimated=titleLines.length*t.intro.fontSize*1.25+320;let y=t.intro.position==='top'?100:t.intro.position==='middle'?Math.max(120,(1440-estimated)/2):Math.max(100,1340-estimated);
+    ctx.fillStyle=t.accent;ctx.fillRect(t.intro.align==='center'?480:72,y-35,120,7);
+    y+=psPaintText(ctx,title,x,y,width,t.intro.fontSize,'#ffffff',{align:t.intro.align,maxLines:5,weight:700})+24;
+    y+=psPaintText(ctx,subtitle,x,y,width,32,'#ffffff',{align:t.intro.align,maxLines:3,weight:400})+24;
+    const chips=[t.intro.showPrice&&d.price&&d.price+' ₽ / месяц',t.intro.showMetro&&d.metro,t.intro.showArea&&d.area&&d.area+' м²'].filter(Boolean);
+    psPaintText(ctx,chips.join('  ·  '),x,y,width,30,'#ffffff',{align:t.intro.align,maxLines:3});
+    psPaintText(ctx,t.footer,72,1388,930,20,'#ffffff',{maxLines:1,weight:400});
+  }else{
+    if(loaded[0]){psDrawCover(ctx,loaded[0],0,0,1080,400);ctx.fillStyle='#00000055';ctx.fillRect(0,0,1080,400);psPaintText(ctx,t.outro.heading,64,245,950,56,'#ffffff',{maxLines:2});}
+    else psPaintText(ctx,t.outro.heading,64,80,950,56,t.foreground,{maxLines:2});
+    let y=loaded[0]?460:260;
+    y+=psPaintText(ctx,expandDesignText(t.outro.note,card),64,y,950,34,t.foreground,{maxLines:4,weight:500})+30;
+    if(t.outro.showMap){
+      const h=390;ctx.fillStyle=t.accent+'18';ctx.fillRect(64,y,952,h);
+      if(safePresentationImage(mapImage)){const map=await psLoadImage(mapImage);psDrawCover(ctx,map,64,y,952,h);}
+      else if(d.mapUrl){psPaintText(ctx,'Расположение квартиры',540,y+95,850,38,t.foreground,{align:'center',maxLines:2});psPaintText(ctx,d.latitude.toFixed(5)+', '+d.longitude.toFixed(5),540,y+185,850,30,t.foreground,{align:'center',maxLines:1});psPaintText(ctx,'Карта недоступна · ссылка есть в HTML и PDF',540,y+285,850,24,t.foreground,{align:'center',maxLines:2,weight:400});}
+      else{psPaintText(ctx,'Добавьте координаты квартиры',540,y+145,850,38,t.foreground,{align:'center',maxLines:2});psPaintText(ctx,'Расположение не определено',540,y+240,850,24,t.foreground,{align:'center',maxLines:2,weight:400});}
+      y+=h+28;
+    }
+    y+=psPaintText(ctx,d.route,64,y,950,29,t.foreground,{maxLines:4,weight:400})+28;
+    ctx.fillStyle=t.accent;ctx.fillRect(64,1240,952,3);psPaintText(ctx,t.contact||'Контакт можно настроить в шаблоне',64,1272,950,29,t.foreground,{maxLines:2,weight:500});psPaintText(ctx,t.footer,64,1388,950,20,t.foreground,{maxLines:1,weight:400});
+  }
+  return canvas;
+}
+
+function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloadExport,getExportBlob,toast=()=>{},getMapImage}={}){
+  if(!mount)return null;
+  let template=normalizeDesignTemplate(),photos=[],intro='',outro='',mapImage='',mapAttribution='',photoCardKey='',lastRendered=null,demo=false,revision=0,timer,busy=false,destroyed=false,templateTouched=false,proofUrl='';
+  try{template=normalizeDesignTemplate(JSON.parse(localStorage.getItem(PS_DESIGN_KEY)||'{}'));}catch{}
+  const shell=psElement('div','','presentation-studio'),heading=psElement('div','','heading'),headingBody=psElement('div');headingBody.append(psElement('div','ЕДИНЫЙ ДИЗАЙН ДЛЯ ОБЪЯВЛЕНИЙ','eyebrow'),psElement('h1','Дизайн и PDF'),psElement('p','Настройте шаблон один раз. Intro, outro и PDF используют фотографии и текст выбранной карточки.'));heading.append(headingBody);shell.append(heading);
+  const status=psElement('p','Выберите карточку в редакторе и обновите предпросмотр.','presentation-status');status.id='presentationStatus';status.setAttribute('role','status');
+  const toolbar=psElement('div','','presentation-toolbar'),refresh=button('Обновить из карточки','presentationRefresh'),sample=button('Демо дизайна','presentationDemo'),save=button('Сохранить общий шаблон','presentationSave','btn primary'),html=button('Скачать HTML','presentationHtml'),proof=button('Показать готовый PDF','presentationProof'),pdf=button('Скачать PDF','presentationPdf');toolbar.append(refresh,sample,save,html,proof,pdf);shell.append(toolbar,status);
+  const layout=psElement('div','','presentation-layout'),controls=psElement('div','','presentation-controls card'),preview=psElement('div','','presentation-previews');layout.append(controls,preview);shell.append(layout);mount.replaceChildren(shell);
+  const tabs=psElement('div','','presentation-tabs'),panels={},tabButtons={};for(const [id,label]of [['pdf','PDF / HTML'],['intro','Intro · обложка'],['outro','Outro · финал']]){const tab=button(label,'presentationTab'+id);tab.onclick=()=>selectTab(id);tabs.append(tab);tabButtons[id]=tab;const panel=psElement('div','','presentation-control-panel');panel.dataset.presentationPanel=id;panels[id]=panel;}controls.append(tabs,...Object.values(panels));
+  const frame=psElement('iframe','','presentation-frame');frame.id='presentationPreview';frame.title='Предпросмотр HTML и будущего PDF';frame.setAttribute('sandbox','');const frameWrap=psElement('section','','presentation-preview-card');frameWrap.append(psElement('div','Предпросмотр HTML · готовые страницы проверяются кнопкой «Показать готовый PDF»','presentation-preview-label'),frame);
+  const imagePreview=psElement('img','','presentation-image');imagePreview.id='presentationImagePreview';imagePreview.alt='Предпросмотр изображения объявления';const imageWrap=psElement('section','','presentation-preview-card hidden'),imageLabel=psElement('div','Intro · 1080 × 1440','presentation-preview-label'),imageEmpty=psElement('p','Загрузите фото квартиры и обновите предпросмотр.','presentation-empty'),imageDownload=button('Скачать PNG','presentationImageDownload');imageWrap.append(imageLabel,imagePreview,imageEmpty,imageDownload);preview.append(frameWrap,imageWrap);
+  const proofDialog=psElement('dialog','','presentation-proof-dialog'),proofHeading=psElement('h2','Готовый PDF'),proofTools=psElement('div','','presentation-proof-tools'),proofClose=button('Закрыть','presentationProofClose'),proofOpen=psElement('a','Открыть PDF отдельно','btn'),proofFrame=psElement('iframe','','presentation-proof-frame');proofDialog.id='presentationProofDialog';proofHeading.id='presentationProofTitle';proofDialog.setAttribute('aria-labelledby',proofHeading.id);proofFrame.id='presentationProofFrame';proofFrame.title='Созданный PDF со страницами для проверки';proofOpen.id='presentationProofOpen';proofOpen.target='_blank';proofOpen.rel='noopener';proofTools.append(proofHeading,proofClose);proofDialog.append(proofTools,psElement('p','Это созданный PDF с окончательными страницами. Если встроенный просмотр недоступен, откройте PDF отдельно.','muted'),proofOpen,proofFrame);shell.append(proofDialog);
+  function clearProof(){proofFrame.removeAttribute('src');proofOpen.removeAttribute('href');if(proofUrl)URL.revokeObjectURL(proofUrl);proofUrl='';}
+  proofClose.onclick=()=>proofDialog.close();proofDialog.addEventListener('close',clearProof);
+  const inputs={};
+  const field=(panel,key,label,{type='text',options,min,max,step,rows=3}={})=>{const wrapper=psElement('label',label),input=psElement(type==='textarea'?'textarea':options?'select':'input');input.id='presentation-'+key.replaceAll('.','-');if(type!=='textarea'&&!options)input.type=type;if(options)for(const [value,text]of options){const option=psElement('option',text);option.value=value;input.append(option);}if(type==='textarea')input.rows=rows;if(min!==undefined)input.min=min;if(max!==undefined)input.max=max;if(step!==undefined)input.step=step;wrapper.htmlFor=input.id;wrapper.append(input);panel.append(wrapper);inputs[key]=input;input.addEventListener(type==='color'||type==='range'?'input':'change',()=>{setPath(template,key,type==='checkbox'?input.checked:key==='intro.photoIndex'?Math.max(0,Number(input.value)-1):['number','range'].includes(type)?Number(input.value):input.value);template=normalizeDesignTemplate(template);persistLocal();queueRender();});return input;};
+  const top=panels.pdf;
+  const preset=field(top,'preset','Базовый стиль',{options:[['editorial','Редакционный · тёплый'],['minimal','Минимальный · светлый'],['night','Вечерний · тёмный']]});preset.onchange=()=>{const base=PS_PRESETS[preset.value];template=normalizeDesignTemplate({...template,...base,preset:preset.value});syncInputs();persistLocal();queueRender();};
+  const colorRow=psElement('div','','presentation-colors');top.append(colorRow);for(const[key,label]of [['accent','Акцент'],['background','Фон'],['foreground','Текст']])field(colorRow,key,label,{type:'color'});
+  field(top,'font','Шрифт PDF',{options:[['sans','Современный без засечек'],['serif','Классический с засечками']]});field(top,'paper','Формат страницы',{options:[['A4','A4 · 210 × 297 мм'],['Letter','Letter · 216 × 279 мм']]});field(top,'contact','Контакт',{type:'textarea',rows:2});field(top,'footer','Подпись / бренд');
+  const blocks=psElement('div','','presentation-blocks');blocks.id='presentationBlocks';top.append(psElement('h3','Состав и порядок блоков'),blocks);
+  const templateTools=psElement('div','','presentation-template-tools'),exportTemplate=button('Экспорт шаблона JSON','presentationTemplateExport'),importTemplate=button('Импорт шаблона','presentationTemplateImport'),file=psElement('input');file.type='file';file.accept='application/json,.json';file.hidden=true;templateTools.append(exportTemplate,importTemplate,file);top.append(templateTools,psElement('p','HTML и PDF используют один макет. Фотографии в экспорте встроены; договоры и личные вложения в него не попадают.','muted'));
+  field(panels.intro,'intro.headline','Текст обложки',{type:'textarea'});field(panels.intro,'intro.subtitle','Подзаголовок',{type:'textarea',rows:2});panels.intro.append(psElement('p','Поля: {{title}}, {{price}}, {{metro}}, {{area}}, {{address}}, {{rooms}}, {{floor}}. Они подставляются из каждой новой карточки.','muted'));
+  field(panels.intro,'intro.layout','Фотографии',{options:[['single','Одно фото'],['duo','Коллаж · два фото'],['trio','Коллаж · три фото']]});field(panels.intro,'intro.photoIndex','Первое фото · номер с 1',{type:'number',min:1,max:30});
+  field(panels.intro,'intro.position','Расположение текста',{options:[['bottom','Снизу'],['middle','По центру'],['top','Сверху']]});field(panels.intro,'intro.align','Выравнивание',{options:[['left','По левому краю'],['center','По центру']]});field(panels.intro,'intro.fontSize','Размер заголовка',{type:'range',min:36,max:100,step:2});field(panels.intro,'intro.overlay','Затемнение фото, %',{type:'range',min:0,max:95,step:5});for(const[key,label]of [['showPrice','Цена'],['showMetro','Метро'],['showArea','Площадь']])field(panels.intro,'intro.'+key,label,{type:'checkbox'});
+  field(panels.outro,'outro.heading','Заголовок outro');field(panels.outro,'outro.note','Подпись / адрес',{type:'textarea'});field(panels.outro,'outro.showMap','Показывать расположение',{type:'checkbox'});panels.outro.append(psElement('p','Точка берётся только из координат карточки. Если фрагмент карты недоступен, показываются адрес и координаты без выдуманной карты. Адрес и ссылка на карту остаются в HTML / PDF.','muted'));
+  let active='pdf';
+  function selectTab(id){active=id;for(const key of Object.keys(panels)){panels[key].classList.toggle('hidden',key!==id);tabButtons[key].classList.toggle('chosen',key===id);}frameWrap.classList.toggle('hidden',id!=='pdf');imageWrap.classList.toggle('hidden',id==='pdf');imageLabel.textContent=(id==='intro'?'Intro · обложка':'Outro · расположение')+' · 1080 × 1440';showImage();}
+  function button(text,id,cls='btn'){const value=psElement('button',text,cls);value.id=id;value.type='button';return value;}
+  function getPath(object,path){return path.split('.').reduce((value,key)=>value?.[key],object);}
+  function setPath(object,path,value){const keys=path.split('.'),last=keys.pop();keys.reduce((value,key)=>value[key],object)[last]=value;}
+  function persistLocal(){templateTouched=true;try{localStorage.setItem(PS_DESIGN_KEY,JSON.stringify(template));}catch{status.textContent='Шаблон изменён. Сохраните его на Mac или экспортируйте JSON.';}}
+  function syncInputs(){for(const[key,input]of Object.entries(inputs)){const value=getPath(template,key);if(input.type==='checkbox')input.checked=value;else input.value=key==='intro.photoIndex'?value+1:value;}drawBlocks();}
+  function drawBlocks(){blocks.replaceChildren();template.blocks.forEach((item,index)=>{const row=psElement('div','','presentation-block-row'),label=psElement('label',PS_BLOCK_NAMES[item.id]),check=psElement('input');check.type='checkbox';check.checked=item.enabled;check.onchange=()=>{item.enabled=check.checked;persistLocal();queueRender();};label.prepend(check);const up=button('↑','presentationBlockUp'+item.id),down=button('↓','presentationBlockDown'+item.id);up.setAttribute('aria-label','Переместить выше: '+PS_BLOCK_NAMES[item.id]);down.setAttribute('aria-label','Переместить ниже: '+PS_BLOCK_NAMES[item.id]);up.disabled=index===0;down.disabled=index===template.blocks.length-1;for(const[control,delta]of [[up,-1],[down,1]])control.onclick=()=>{const target=index+delta;[template.blocks[index],template.blocks[target]]=[template.blocks[target],template.blocks[index]];drawBlocks();persistLocal();queueRender();};row.append(label,up,down);blocks.append(row);});}
+  const demoCard={titles:['Светлая квартира для жизни в Москве'],body:'Пример оформления. Здесь появится ваше описание квартиры на китайском или русском языке.\n\nУдобная кухня, отдельная спальня и место для работы. Параметры и условия берутся из выбранной карточки.',tags:'#ДемонстрацияДизайна',fields:{price:80000,area:54,rooms:2,metro:'Юго-Западная',address:'Москва · демонстрационный пример'}};
+  function demoPhoto(){const c=document.createElement('canvas');c.width=1200;c.height=900;const x=c.getContext('2d');x.fillStyle='#ddd9cf';x.fillRect(0,0,1200,900);x.fillStyle='#eae6dc';x.fillRect(0,0,1200,600);x.fillStyle='#bec8b9';x.fillRect(90,80,360,420);x.fillStyle='#edf4ee';x.fillRect(110,100,320,380);x.strokeStyle='#a5b39e';x.lineWidth=10;x.strokeRect(110,100,320,380);x.beginPath();x.moveTo(270,100);x.lineTo(270,480);x.stroke();x.fillStyle='#9aa88f';x.fillRect(600,420,440,210);x.fillStyle='#aebba2';x.fillRect(560,570,520,140);x.fillStyle='#8e7258';x.fillRect(140,690,300,25);x.fillRect(170,715,18,130);x.fillRect(390,715,18,130);x.fillStyle='#58674f';x.font='28px Arial';x.fillText('ДЕМО ДИЗАЙНА · НЕ ФОТО КВАРТИРЫ',55,850);return c.toDataURL('image/png');}
+  const current=()=>demo?demoCard:getCard?.()||{};
+  function showImage(){const value=active==='intro'?intro:outro;imagePreview.classList.toggle('hidden',!value);imageEmpty.classList.toggle('hidden',!!value);imageDownload.disabled=!value;if(value)imagePreview.src=value;else imagePreview.removeAttribute('src');}
+  function queueRender(){clearTimeout(timer);timer=setTimeout(()=>render(false),250);}
+  async function render(reload=false){
+    const version=++revision,card=JSON.parse(JSON.stringify(current())),key=presentationCardKey(card),design=normalizeDesignTemplate(template);let mapFailed=false;
+    const valid=()=>version===revision&&!destroyed&&presentationCardKey(current())===key;
+    try{
+      if(reload){
+        status.textContent='Готовим фотографии и предпросмотр…';
+        const values=demo?[{dataUrl:demoPhoto()}]:await getPhotos?.()||[],safe=values.map(value=>safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url)).filter(Boolean).slice(0,6);
+        if(!valid())return false;photos=safe;inputs['intro.photoIndex'].max=Math.max(1,photos.length);photoCardKey=key;mapImage='';mapAttribution='';
+        if(!demo&&presentationCardData(card).mapUrl&&getMapImage)try{const mapResult=await getMapImage(card);if(!valid())return false;mapImage=safePresentationImage(typeof mapResult==='string'?mapResult:mapResult?.dataUrl);mapAttribution=typeof mapResult==='object'?psSafeString(mapResult?.attribution,300):'';}catch{mapFailed=true;}
+      }else if(photoCardKey!==key){photos=[];mapImage='';mapAttribution='';photoCardKey=key;}
+      const madeIntro=photos.length?(await renderPresentationImage('intro',card,design,photos)).toDataURL('image/png'):'',madeOutro=(await renderPresentationImage('outro',card,design,photos,mapImage)).toDataURL('image/png');
+      if(!valid())return false;
+      intro=madeIntro;outro=madeOutro;
+      lastRendered={key,card,template:design,intro,outro,html:buildPresentationHtml(card,design,{photos,intro,outro,mapAttribution})};frame.srcdoc=lastRendered.html;showImage();
+      status.textContent=demo?'Демонстрационный макет. Это учебные данные и схематичное изображение.':photos.length?'Предпросмотр обновлён · '+photos.length+' фото. Изменения дизайна ещё можно сохранить как общий шаблон.':'Предпросмотр без фото. Загрузите фотографии выбранной карточки и нажмите «Обновить из карточки».';
+      if(mapFailed)status.textContent+=' Карта пока недоступна; сохранены адрес и координаты.';return true;
+    }catch(error){if(version===revision){status.textContent=error.message;toast(error.message);}return false;}
+  }
+  async function savedSnapshot(snapshot){const resultId=await ensureCard();if(!resultId)throw new Error('Сначала сохраните карточку в редакторе');if(presentationCardKey(current())!==snapshot.key)throw new Error('Карточка изменилась. Обновите предпросмотр и повторите экспорт.');return resultId;}
+  async function action(run){if(busy)return;clearTimeout(timer);busy=true;for(const control of [refresh,sample,save,html,proof,pdf,imageDownload])control.disabled=true;try{await run();}catch(error){status.textContent=error.message;toast(error.message);}finally{busy=false;for(const control of [refresh,sample,save,html,proof,pdf])control.disabled=false;showImage();}}
+  refresh.onclick=()=>action(async()=>{demo=false;await render(true);});sample.onclick=()=>action(async()=>{demo=true;await render(true);});
+  save.onclick=()=>action(async()=>{persistLocal();if(api){const result=await api('design',{template});template=normalizeDesignTemplate(result.template||template);syncInputs();status.textContent='Общий шаблон сохранён на Mac и будет использоваться для следующих карточек.';}else status.textContent='Шаблон сохранён в этом браузере.';toast('Дизайн сохранён');});
+  exportTemplate.onclick=()=>psDownloadBlob('most-design-template.json',new Blob([JSON.stringify(template,null,2)],{type:'application/json'}));importTemplate.onclick=()=>file.click();file.onchange=()=>action(async()=>{const selected=file.files?.[0];try{if(!selected)return;if(selected.size>100000)throw new Error('Шаблон должен быть меньше 100 КБ');const value=JSON.parse(await selected.text());if(value.version!==1||!Array.isArray(value.blocks))throw new Error('Нужен шаблон МОСТ версии 1');template=normalizeDesignTemplate(value);syncInputs();persistLocal();await render(false);status.textContent='Шаблон импортирован. Сохраните его на Mac для всех карточек.';}finally{file.value='';}});
+  html.onclick=()=>action(async()=>{if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,output=snapshot.html;if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot);const asset=await api('card-export',{result_id:resultId,kind:'html',html:output,template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание HTML не подключено');status.textContent='HTML сохранён на Mac и доступен в карточке на телефоне.';}else{psDownloadBlob('most-card.html',new Blob([output],{type:'text/html;charset=utf-8'}));status.textContent='HTML сохранён: дизайн, текст и фото находятся внутри одного файла.';}});
+  pdf.onclick=()=>action(async()=>{if(demo)throw new Error('Для сохранения PDF выберите настоящую карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard)throw new Error('Автоматический PDF доступен на локальном сайте Mac');if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=await savedSnapshot(snapshot);status.textContent='Mac создаёт PDF из выбранного HTML-дизайна…';const asset=await api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание PDF не подключено');status.textContent='PDF готов и сохранён на Mac. Скачивание начато.';});
+  proof.onclick=()=>action(async()=>{if(demo)throw new Error('Для готового PDF выберите карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard||!getExportBlob)throw new Error('Просмотр готового PDF доступен на локальном сайте Mac');if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=await savedSnapshot(snapshot);status.textContent='Mac создаёт PDF для проверки страниц…';const asset=await api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',template:snapshot.template}),blob=await getExportBlob(asset);if(destroyed)return;if(!blob||typeof blob.arrayBuffer!=='function')throw new Error('Не удалось открыть созданный PDF');clearProof();proofUrl=URL.createObjectURL(blob);proofFrame.src=proofUrl;proofOpen.href=proofUrl;proofDialog.showModal();status.textContent='Готовый PDF открыт для проверки. Файл сохранён в карточке на Mac.';});
+  imageDownload.onclick=()=>action(async()=>{const kind=active==='intro'?'intro':'outro';if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,value=kind==='intro'?snapshot.intro:snapshot.outro;if(!value)throw new Error('Сначала обновите изображение');if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot);const asset=await api('card-export',{result_id:resultId,kind,data:value});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание изображения не подключено');status.textContent='Изображение сохранено на Mac и доступно в карточке на телефоне.';}else{const response=await fetch(value);psDownloadBlob('most-'+kind+'.png',await response.blob());}toast('Изображение готово');});
+  syncInputs();selectTab('pdf');render(false);
+  if(api)api('design').then(result=>{if(!destroyed&&!templateTouched&&result.template){template=normalizeDesignTemplate(result.template);syncInputs();persistLocal();queueRender();}}).catch(()=>{});
+  return {refresh:()=>{demo=false;return render(true);},template:()=>normalizeDesignTemplate(template),destroy:()=>{destroyed=true;revision++;clearTimeout(timer);if(proofDialog.open)proofDialog.close();clearProof();mount.replaceChildren();}};
+}
+
+// Installation is detected from the running app, never inferred from a button tap.
 function webAppInstalled({standalone=false,displayMode='browser',appInstalled=false}={}){
   return standalone===true||appInstalled===true||['standalone','fullscreen','minimal-ui'].includes(displayMode);
 }
@@ -136,6 +658,7 @@ function initializePwaInstall({container,phoneUrl='/phone/',registerWorker=true}
 
 
 const ph=id=>document.getElementById(id);
+let phoneArchiveUI=null,phoneFilesUI=null,phonePresentationUI=null;
 const phoneState={authEpoch:0,paired:false,csrf:'',cards:new Map(),cursor:null,hasMore:false,view:'cards',detail:null,detailId:null,media:[],photo:0,variant:'original',job:null,jobResult:null,lastSync:0,polling:false};
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
 const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
@@ -145,18 +668,18 @@ const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(v
 function phoneAsset(path){try{const url=new URL(path,location.origin);return url.origin===location.origin&&/^\/api\/phone\/(?:media\/|cards\/)/.test(url.pathname)?url.pathname+url.search:null;}catch{return null;}}
 function phoneToast(text){clearTimeout(phoneToastTimer);ph('phoneToast').textContent=text;ph('phoneToast').classList.remove('hidden');phoneToastTimer=setTimeout(()=>ph('phoneToast').classList.add('hidden'),5000);}
 function phoneConnection(online){ph('phoneConnection').textContent=online?'Mac на связи':'Нет связи с Mac';ph('phoneConnection').classList.toggle('offline',!online);ph('phoneServerStatus').textContent=online?'Компьютер отвечает. Обновления приходят автоматически.':'Проверьте, что Mac включён и телефон находится в его сети.';if(!online&&phoneState.lastSync)ph('phoneSync').textContent='Нет связи · последнее обновление в '+phoneTime(phoneState.lastSync)+'. Показаны ранее полученные карточки.';}
-function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);}}
+function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(paired&&!phonePresentationUI)phoneInitializeDesigner();if(!paired){phonePresentationUI?.destroy();phonePresentationUI=null;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);}}
 async function phoneApi(path,data){
   const epoch=phoneState.authEpoch;let response;
-  try{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal:AbortSignal.timeout(25000)});}catch{if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error('Mac не отвечает. Проверьте сеть и запущенную студию на компьютере.');}
+  try{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal:AbortSignal.timeout(path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:25000)});}catch{if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error('Mac не отвечает. Проверьте сеть и запущенную студию на компьютере.');}
   const value=await response.json().catch(()=>({error:'Компьютер вернул непонятный ответ.'}));
   if(path!=='pair'&&epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;throw error;}
-  if(response.status===401){phoneAuth(false);ph('phonePairStatus').textContent='Подключение истекло. Откройте новую ссылку с Mac.';}
+  if(response.status===401){phoneAuth(false);ph('phonePairStatus').textContent='Для этого окна нужен вход. На Mac нажмите «Телефон» и введите показанные там 8 цифр. После установки на экран «Домой» подключитесь здесь ещё раз.';}
   if(!response.ok){const error=Error(value.error||'Не удалось выполнить запрос.');error.status=response.status;throw error;}
   if(path!=='pair'&&epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;throw error;}
   phoneConnection(true);return value;
 }
-function phoneView(view){phoneState.view=view;for(const [key,id] of Object.entries({cards:'phoneCardsView',import:'phoneImportView',setup:'phoneSetupView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
+function phoneView(view){phoneState.view=view;if(view==='design')phonePresentationUI?.refresh();for(const [key,id] of Object.entries({cards:'phoneCardsView',import:'phoneImportView',setup:'phoneSetupView',design:'phoneDesignView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
 document.querySelectorAll('[data-phone-view]').forEach(button=>button.addEventListener('click',()=>{phoneView(button.dataset.phoneView);if(button.dataset.phoneView==='cards')phoneRefreshCards().catch(error=>phoneToast(error.message));}));
 function phoneRenderCards(){
   const query=ph('phoneSearch').value.toLocaleLowerCase('ru').trim();
@@ -175,7 +698,7 @@ function phoneRenderCards(){
 }
 async function phoneRefreshCards({reset=false}={}){
   if(!phoneState.paired||phoneState.polling)return;const epoch=phoneState.authEpoch;phoneState.polling=true;ph('phoneRefresh').disabled=true;
-  try{const after=!reset&&phoneState.cursor!==null?'?after='+encodeURIComponent(phoneState.cursor):'';const data=await phoneApi('cards'+after);for(const card of data.cards||[]){if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,card);}if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);phoneRenderCards();const changed=(data.cards||[]).find(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));if(changed&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(changed.id,{keepScroll:true});}
+  try{const after=!reset&&phoneState.cursor!==null?'?after='+encodeURIComponent(phoneState.cursor):'';const data=await phoneApi('cards'+after);for(const card of data.cards||[]){if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,card);}if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);phoneRenderCards();const changed=(data.cards||[]).find(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));if(changed&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(changed.id,{keepScroll:true});if(phoneState.view==='detail'&&phoneState.detail){phoneArchiveUI?.refresh();phoneFilesUI?.refresh();}}
   finally{if(epoch===phoneState.authEpoch){phoneState.polling=false;ph('phoneRefresh').disabled=false;phoneSchedulePoll();}}
 }
 function phoneSchedulePoll(){clearTimeout(phonePollTimer);if(phoneState.paired&&!document.hidden)phonePollTimer=setTimeout(()=>phoneRefreshCards().catch(()=>{}),5000);}
@@ -189,8 +712,8 @@ async function phonePair(code){
 }
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
 async function phoneOpenCard(id,{keepScroll=false}={}){
-  if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='original';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id);if(revision!==phoneDetailRevision)return;phoneState.detail=card;ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();window.scrollTo(0,keepScroll?oldScroll:0);}
+  if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='original';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
+  try{const card=await phoneApi('cards/'+id);if(revision!==phoneDetailRevision)return;phoneState.detail=card;ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
@@ -210,6 +733,7 @@ function phoneSelectPhoto(index,scroll=true){
   else{phoneShareFile=null;phoneShareRevision++;ph('phoneSharePhoto').textContent='Поделиться фото';}
 }
 ph('phonePhotoPrev').onclick=()=>phoneSelectPhoto((phoneState.photo-1+phoneState.media.length)%phoneState.media.length);ph('phonePhotoNext').onclick=()=>phoneSelectPhoto((phoneState.photo+1)%phoneState.media.length);
+let phoneExportViewerUrl=null;ph('phonePhotoViewer').addEventListener('close',()=>{if(phoneExportViewerUrl){URL.revokeObjectURL(phoneExportViewerUrl);phoneExportViewerUrl=null;}ph('phoneViewerImage').removeAttribute('src');});
 let phoneGalleryFrame=0;ph('phonePhotos').addEventListener('scroll',()=>{if(phoneGalleryFrame)return;phoneGalleryFrame=requestAnimationFrame(()=>{phoneGalleryFrame=0;const index=Math.round(ph('phonePhotos').scrollLeft/Math.max(1,ph('phonePhotos').clientWidth));if(index!==phoneState.photo)phoneSelectPhoto(index,false);});},{passive:true});
 ph('phoneOriginalVariant').onclick=()=>{phoneState.variant='original';phoneState.photo=0;phoneRenderMedia();};ph('phoneCropVariant').onclick=()=>{phoneState.variant='crop';phoneState.photo=0;phoneRenderMedia();};
 async function phonePrimeShare(path,row){
@@ -240,6 +764,15 @@ async function phoneStart(){
   try{const state=await phoneApi('state');if(!state.paired){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';return;}phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');await phoneRefreshCards({reset:true});const card=new URLSearchParams(location.search).get('card');if(card)await phoneOpenCard(card);}
   catch(error){if(error.status!==401)ph('phonePairStatus').textContent=error.message;ph('phoneConnection').textContent=error.status===401?'Нужно подключение':'Нет связи с Mac';}
 }
+
+async function phoneExportBlob(asset){const epoch=phoneState.authEpoch,url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/phone\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');const response=await fetch(url.pathname,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(90000)});if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(response.status===401){phoneAuth(false);throw Error('Введите текущий код с компьютера');}if(!response.ok){const value=await response.json().catch(()=>({}));throw Error(value.error||'Файл недоступен');}const blob=await response.blob();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;}
+async function phoneDownloadAsset(asset){cardDownloadBlob(await phoneExportBlob(asset),asset.name);phoneFilesUI?.refresh();}
+async function phonePresentationPhotos(){const id=phoneState.detailId,epoch=phoneState.authEpoch,photos=[];for(const original of (phoneState.detail?.media||[]).slice(0,6)){const selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;const response=await fetch(path,{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw Error('Фотография недоступна на Mac');const dataUrl=await cardPhotoDataUrl(await response.blob());if(epoch!==phoneState.authEpoch||id!==phoneState.detailId)throw Error('Выбрана другая карточка');photos.push({dataUrl});}return photos;}
+async function phoneEnsurePresentationCard(){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return phoneState.detail.id;}
+phoneArchiveUI=setupCardArchive({mount:ph('phoneArchiveMount'),getCardId:()=>phoneState.detailId,ensureCard:phoneEnsurePresentationCard,api:phoneApi,downloadAttachment:phoneDownloadAsset,toast:phoneToast});
+phoneFilesUI=setupCardFiles({mount:ph('phoneFilesMount'),getCardId:()=>phoneState.detailId,api:phoneApi,download:phoneDownloadAsset,previewImage:async asset=>{const blob=await phoneExportBlob(asset);if(blob.type!=='image/png')throw Error('Нужен PNG');if(phoneExportViewerUrl)URL.revokeObjectURL(phoneExportViewerUrl);phoneExportViewerUrl=URL.createObjectURL(blob);ph('phoneViewerImage').src=phoneExportViewerUrl;ph('phonePhotoViewer').showModal();},toast:phoneToast});
+function phoneInitializeDesigner(){phonePresentationUI=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api:phoneApi,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card)=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}),toast:phoneToast});}
+ph('phoneDesignCard').onclick=()=>phoneView('design');
 phoneStart();
 </script>
 </body>

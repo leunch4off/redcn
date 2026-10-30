@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 5,
-  "total": 225,
+  "version": 6,
+  "total": 242,
   "tasks": [
     {
       "id": "RCN-001",
@@ -675,8 +675,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/presentation-studio.test.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30"
+      ]
     },
     {
       "id": "RCN-051",
@@ -3266,6 +3271,293 @@
       "title": "Приёмка на физическом iPhone 14 Pro",
       "acceptance": "Пользователь на самом iPhone проверяет установку из Safari, запуск с иконки, системное меню Фото, клавиатуру и доступ к Mac в своей сети.",
       "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-226",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Обновляемый цифровой код подключения iPhone",
+      "acceptance": "На Mac видны 8 цифр, таймер и копирование; действующий код переживает перезагрузку страницы, после входа или истечения появляется новый.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py",
+        "web/phone-connection.mjs",
+        "tests/test_pairing_codes.py",
+        "tests/test_pairing_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-227",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Отдельный вход приложения с экрана «Домой»",
+      "acceptance": "Свежий standalone-контекст без Safari-cookie принимает текущий код; повторный запуск сохраняет сессию, сообщение объясняет место получения кода.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "web/phone.html",
+        "tests/test_pairing_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-228",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Общий редактор дизайна публикации",
+      "acceptance": "Оформление, цвета, шрифт, формат листа, состав и порядок блоков сохраняются на Mac и загружаются для следующей карточки; JSON переносит шаблон.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "cli/card_assets.py",
+        "tests/presentation-studio.test.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-229",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Настраиваемый outro с данными объекта",
+      "acceptance": "Финальный PNG 1080×1440 использует адрес, подпись, контакт и бренд выбранной карточки; оригиналы фото сохраняются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-230",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Карта по координатам для outro",
+      "acceptance": "Настоящий фрагмент OSM с отметкой, атрибуцией и кешем строится только по координатам; отсутствие карты не создаёт выдуманного расположения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_map.py",
+        "tests/test_listing_map.py",
+        "web/presentation-studio.mjs",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-231",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Самодостаточный HTML презентации",
+      "acceptance": "Файл содержит выбранные блоки, отредактированный текст и встроенные фото без личных вложений; сохраняется на Mac и скачивается.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "cli/card_assets.py",
+        "tests/test_card_api.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-232",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Автоматическое создание PDF на Mac",
+      "acceptance": "Тот же статический HTML печатается Chrome в PDF без ручного диалога, с фоном, китайским текстом и фото; файл доступен по авторизации.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "tests/test_card_assets.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-233",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Просмотр готовых страниц PDF",
+      "acceptance": "Кнопка создаёт PDF из текущего снимка макета и открывает настоящий файл внутри сайта с отдельным открытием; URL очищается после закрытия.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-234",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Статус сдачи и личные заметки квартиры",
+      "acceptance": "В работе, Сдана и В архиве сохраняются отдельно от рекламного текста; повторное открытие восстанавливает заметки и не затирает их при синхронизации.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/card-archive.mjs",
+        "tests/card-archive.test.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-235",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Договоры и планировки в досье квартиры",
+      "acceptance": "Файлы до 40 МиБ прикрепляются к постоянной карточке, скачиваются после авторизации, удаляются с подтверждением и не включаются в рекламные экспорты.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/card-archive.mjs",
+        "tests/test_card_api.py",
+        "tests/test_card_assets.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-236",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Хранение LiDAR и 3D-материалов квартиры",
+      "acceptance": "USDZ, OBJ, GLB/GLTF, PLY, STL и связанные форматы сохраняются и скачиваются без преобразования; досье связано с ID объекта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/card-archive.mjs",
+        "tests/test_card_api.py",
+        "tests/test_card_assets.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-237",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Готовые материалы и досье на телефоне",
+      "acceptance": "Подключённый iPhone получает HTML, PDF, intro/outro и личные вложения той же карточки; PNG открываются для системного сохранения в Фото.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "web/card-files.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-238",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Постоянная привязка досье и каталог Mac",
+      "acceptance": "Ссылка, черновик и библиотека сохраняют ID карточки; новый экспорт не создаёт другой объект, каталог Mac открывает подготовленные карточки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "cli/local_server.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-239",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Свободное размещение и изменение размеров блоков",
+      "acceptance": "Расширить редактор до перемещения блоков мышью и касанием с сеткой, размерами, выравниванием и отменой действий; сохранить печатную геометрию.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-240",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Просмотр и измерения LiDAR/3D внутри карточки",
+      "acceptance": "Реализовать отдельный безопасный просмотр поддерживаемых моделей, масштаб, единицы и измерения с проверкой реальных сканов.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-241",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Резервные копии досье и готовых файлов",
+      "acceptance": "Добавить проверяемый экспорт и восстановление всей карточки с вложениями, шаблонами и версиями материалов на другом Mac.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-242",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Клиентская копия досье с выбором доступа",
+      "acceptance": "Пользователь явно выбирает выдаваемые клиенту файлы; личные заметки и договоры других заселений остаются закрытыми.",
+      "priority": "P2",
       "depends_on": [
         "RCN-004"
       ],

@@ -2,10 +2,11 @@ import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
 const root=new URL('../',import.meta.url);
 const read=p=>readFile(new URL(p,root),'utf8');
 const [html,css,geoCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,sourceImport,factEvidence,content,engine,editor,historyCore,historyUI,insights,insightsUI,app,server]=await Promise.all(['web/index.html','web/styles.css','web/geo-catalog.mjs','web/qr-code.mjs','web/phone-connection.mjs','web/editor-state.mjs','web/furniture-photos.mjs','web/media-core.mjs','web/related.mjs','web/photo-ui.mjs','web/related-ui.mjs','web/source-import.mjs','web/fact-evidence.mjs','web/content-tools.mjs','web/engine.mjs','web/word-editor.mjs','web/history.mjs','web/history-ui.mjs','web/insights.mjs','web/insights-ui.mjs','web/app.js','worker/server.js'].map(read));
+const [cardFiles,cardArchive,presentationStudio,cardArchiveCss,presentationCss]=await Promise.all(['web/card-files.mjs','web/card-archive.mjs','web/presentation-studio.mjs','web/card-archive.css','web/presentation-studio.css'].map(read));
 const strip=s=>s.replace(/^import .*?;\n/gm,'').replace(/^export /gm,'');
-const combined=[geoCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,sourceImport,factEvidence,content,engine,editor,historyCore,historyUI,insights,insightsUI,app].map(strip).join('\n');
+const combined=[cardFiles,cardArchive,presentationStudio,geoCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,sourceImport,factEvidence,content,engine,editor,historyCore,historyUI,insights,insightsUI,app].map(strip).join('\n');
 // JSON escaping avoids breaking out of the JavaScript string that holds the page.
-const page=html.replace('<link rel="stylesheet" href="/styles.css">',()=>'<style>'+css+'</style>').replace('<script type="module" src="/app.js"></script>',()=>'<script type="module">'+combined.replace(/<\/script/gi,'<\\/script')+'</script>');
+const page=html.replace('<link rel="stylesheet" href="/styles.css">',()=>'<style>'+css+'\n'+cardArchiveCss+'\n'+presentationCss+'</style>').replace('<script type="module" src="/app.js"></script>',()=>'<script type="module">'+combined.replace(/<\/script/gi,'<\\/script')+'</script>');
 const plan=JSON.parse(await read('plan.json'));
 const research=JSON.parse(await read('data/research.json'));
 const seed=JSON.parse(await read('data/knowledge-seed.json'));
@@ -22,7 +23,7 @@ for(const [source,target] of [['plan.json','docs/plan.json'],['data/research.jso
 console.log('Built standalone GitHub Pages site in docs/');
 
 const [phoneHtml,phoneCss,phoneApp,pwaInstall]=await Promise.all(['web/phone.html','web/phone.css','web/phone.mjs','web/pwa-install.mjs'].map(read));
-const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[pwaInstall,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
+const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'\n'+cardArchiveCss+'\n'+presentationCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[cardFiles,cardArchive,presentationStudio,pwaInstall,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
 await writeFile(new URL('docs/phone.html',root),phonePage);
 await copyFile(new URL('web/manifest.webmanifest',root),new URL('docs/phone.webmanifest',root));
 await copyFile(new URL('web/sw.js',root),new URL('docs/phone-sw.js',root));

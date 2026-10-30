@@ -26,6 +26,15 @@ PAIR_TTL = 600
 SESSION_TTL = 30 * 86400
 COOKIE = 'redcn_phone'
 MAX_ZIP_BYTES = 120_000_000
+PAIR_ATTEMPT_WINDOW = 60
+PAIR_ATTEMPTS_PER_PEER = 6
+PAIR_ATTEMPTS_TOTAL = 30
+
+
+class PairingThrottled(ValueError):
+    def __init__(self,retry_after):
+        self.retry_after=max(1,int(math.ceil(retry_after)))
+        super().__init__(f'Слишком много попыток. Подождите {self.retry_after} сек. и введите актуальный код с Mac.')
 
 
 def lan_names():
@@ -51,7 +60,7 @@ def lan_names():
 class PairingState:
     def __init__(self,directory):
         self.path=Path(directory)/'phone-access.json';self.path.parent.mkdir(parents=True,exist_ok=True)
-        self.lock=threading.RLock()
+        self.lock=threading.RLock();self._pair_memory=None;self._pair_attempts=[]
         try:
             self.data=json.loads(self.path.read_text())
             if not isinstance(self.data.get('secret'),str) or not isinstance(self.data.get('sessions'),dict):raise ValueError()
@@ -66,18 +75,40 @@ class PairingState:
 
     def issue(self):
         with self.lock:
-            code=secrets.token_urlsafe(32);expires=time.time()+PAIR_TTL
-            self.data['pair']={'hash':hashlib.sha256(code.encode()).hexdigest(),'expires':expires};self._save()
+            code=secrets.token_urlsafe(32);manual=f'{secrets.randbelow(100_000_000):08d}';expires=time.time()+PAIR_TTL
+            self.data['pair']={'hash':hashlib.sha256(code.encode()).hexdigest(),'manualHash':hashlib.sha256(manual.encode()).hexdigest(),'expires':expires}
+            # Only hashes go to disk; the visible code and QR stay in process memory.
+            self._pair_memory=(code,manual,expires);self._save()
             return code,expires
 
-    def pair(self,code):
-        if not isinstance(code,str) or not re.fullmatch(r'[A-Za-z0-9_-]{40,80}',code):raise ValueError('Неверная ссылка подключения')
+    def current(self):
+        """Privileged desktop status; never returned by a public phone endpoint."""
         with self.lock:
             item=self.data.get('pair') or {}
-            if item.get('expires',0)<time.time() or not hmac.compare_digest(item.get('hash',''),hashlib.sha256(code.encode()).hexdigest()):raise ValueError('Ссылка истекла или уже использована. Получите новую на Mac.')
-            self.data['pair']=None
+            if not self._pair_memory or item.get('expires',0)<=time.time() or not hmac.compare_digest(item.get('hash',''),hashlib.sha256(self._pair_memory[0].encode()).hexdigest()):
+                self.issue()
+            return self._pair_memory
+
+    def pair(self,code,peer='local'):
+        with self.lock:
+            now=time.time();cutoff=now-PAIR_ATTEMPT_WINDOW
+            self._pair_attempts=[entry for entry in self._pair_attempts if entry[0]>cutoff]
+            peer_attempts=[stamp for stamp,address in self._pair_attempts if address==peer]
+            if len(peer_attempts)>=PAIR_ATTEMPTS_PER_PEER:
+                raise PairingThrottled(peer_attempts[0]+PAIR_ATTEMPT_WINDOW-now)
+            if len(self._pair_attempts)>=PAIR_ATTEMPTS_TOTAL:
+                raise PairingThrottled(self._pair_attempts[0][0]+PAIR_ATTEMPT_WINDOW-now)
+            self._pair_attempts.append((now,peer))
+            if not isinstance(code,str):raise ValueError('Введите 8 цифр с Mac или откройте новую QR-ссылку.')
+            code=code.strip();manual=re.sub(r'[\s-]','',code)
+            if re.fullmatch(r'[0-9]{8}',manual):value=manual;key='manualHash'
+            elif re.fullmatch(r'[A-Za-z0-9_-]{40,80}',code):value=code;key='hash'
+            else:raise ValueError('Введите 8 цифр с Mac или откройте новую QR-ссылку.')
+            item=self.data.get('pair') or {}
+            if item.get('expires',0)<=now or not hmac.compare_digest(item.get(key,''),hashlib.sha256(value.encode()).hexdigest()):raise ValueError('Код неверный, истёк или уже использован. На Mac нажмите «Телефон» и введите текущие 8 цифр.')
+            self.data['pair']=None;self._pair_memory=None
             token=secrets.token_urlsafe(32);digest=hashlib.sha256(token.encode()).hexdigest()
-            now=time.time();self.data['sessions']={key:value for key,value in self.data['sessions'].items() if value>now}
+            self.data['sessions']={key:value for key,value in self.data['sessions'].items() if value>now}
             self.data['sessions'][digest]=now+SESSION_TTL;self._save()
             return token
 
@@ -91,7 +122,7 @@ class PairingState:
     def revoke(self,token=None):
         with self.lock:
             if token:self.data['sessions'].pop(hashlib.sha256(token.encode()).hexdigest(),None)
-            else:self.data['sessions']={};self.data['pair']=None
+            else:self.data['sessions']={};self.data['pair']=None;self._pair_memory=None
             self._save()
 
 
@@ -277,7 +308,11 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     name,mime=files[path];file=redcn.ROOT/name
                     if not file.exists():self.respond(503,{'error':'Сначала соберите мобильную страницу: npm run build'});return
                     self.respond(200,file.read_bytes(),mime);return
-                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':1});return
+                if path.startswith('/api/phone/'):
+                    import card_api
+                    document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
+                    if document:self.respond(*document);return
+                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':2});return
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
                     self.respond(200,list_cards(directory,after));return
@@ -306,12 +341,17 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
             try:
                 if self.headers.get_content_type()!='application/json':raise ValueError('Нужен JSON')
                 size=int(self.headers.get('Content-Length','0'))
-                if not 1<=size<=100_000:raise ValueError('Превышен размер запроса')
+                import card_api
+                relative=path.removeprefix('/api/phone/')
+                limit=card_api.request_limit(relative) or 100_000
+                if not 1<=size<=limit:raise ValueError('Превышен размер запроса')
                 data=json.loads(self.rfile.read(size))
                 if not isinstance(data,dict):raise ValueError('Нужен JSON-объект')
                 if pair:
-                    token=state.pair(data.get('code'));cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
+                    token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     self.respond(200,{'paired':True,'csrfToken':state.csrf(token)},headers={'Set-Cookie':cookie});return
+                document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
+                if document:self.respond(*document);return
                 if path=='/api/phone/logout':
                     state.revoke(self.session);self.respond(200,{'ok':True},headers={'Set-Cookie':f'{COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'});return
                 if path=='/api/phone/import':
@@ -322,6 +362,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/prepare',path)
                 if match:self.respond(202,{'job_id':controller.prepare_card(match[1])});return
                 self.respond(404,{'error':'Не найдено'})
+            except PairingThrottled as error:self.respond(429,{'error':str(error),'retryAfter':error.retry_after},headers={'Retry-After':str(error.retry_after)})
             except (ValueError,TypeError,OSError) as error:self.respond(400,{'error':str(error)})
     server=ThreadingHTTPServer((bind,port),Handler);server.daemon_threads=True;server.pairing=state;server.allowed_hosts=allowed
     return server
@@ -331,7 +372,11 @@ class RelayManager:
     def __init__(self,directory,controller):self.directory=directory;self.controller=controller;self.server=None;self.thread=None;self.lock=threading.RLock();self.pair=None
     def status(self):
         with self.lock:
-            return {'enabled':self.server is not None,'port':self.server.server_port if self.server else None,'urls':self.urls() if self.server else [],'pairExpires':self.pair[1] if self.pair else None}
+            result={'enabled':self.server is not None,'port':self.server.server_port if self.server else None,'urls':self.urls() if self.server else [],'pairExpires':None,'pairCode':None,'pairUrls':[]}
+            if self.server:
+                code,manual,expires=self.server.pairing.current();self.pair=(code,expires)
+                result.update(pairCode=manual,pairExpires=expires,pairUrls=[url+'pair#'+code for url in result['urls']],serverTime=time.time())
+            return result
     def urls(self):
         names=self.server.allowed_hosts
         ordered=sorted([name for name in names if name not in ('127.0.0.1','localhost')],key=lambda name:(not name.endswith('.local'),name))
@@ -345,8 +390,8 @@ class RelayManager:
     def issue_pair(self):
         with self.lock:
             if self.server is None:raise ValueError('Сначала включите телефонный доступ')
-            self.pair=self.server.pairing.issue();code,expires=self.pair
-            return {**self.status(),'pairUrls':[url+'pair#'+code for url in self.urls()],'pairExpires':expires}
+            self.server.pairing.issue()
+            return self.status()
     def stop(self,revoke=False):
         with self.lock:
             if self.server:

@@ -11,12 +11,13 @@ import secrets
 import sqlite3
 import threading
 import time
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 import urllib.request
 import webbrowser
 
 import redcn
 import photo_store
+import card_api
 
 
 def store_history(directory, entry):
@@ -99,7 +100,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
-    identity = {'app':'redcn', 'protocol':5, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':6, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
@@ -170,7 +171,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_args): pass
 
-        def respond(self, status, value, content_type='application/json; charset=utf-8'):
+        def respond(self, status, value, content_type='application/json; charset=utf-8', headers=None):
             content = json.dumps(value, ensure_ascii=False).encode() if content_type.startswith('application/json') else value
             self.send_response(status)
             self.send_header('Content-Type',content_type)
@@ -179,6 +180,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Referrer-Policy','no-referrer')
             self.send_header('X-Frame-Options','DENY')
+            for key,val in (headers or {}).items():self.send_header(key,val)
             self.end_headers();self.wfile.write(content)
 
         def permitted(self, api=False):
@@ -199,10 +201,19 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 self.respond(200,identity);return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
+                try:
+                    document=card_api.dispatch(directory,path.removeprefix('/api/local/'),browser_channel=browser_channel)
+                    if document:self.respond(*document);return
+                except (ValueError,TypeError,OSError) as error:
+                    self.respond(400,{'error':str(error)});return
                 if path == '/api/local/phone':
                     self.respond(200,self.server.phone_relay.status());return
                 if path == '/api/local/history':
                     self.respond(200,{'entries':history_rows(directory)});return
+                if path == '/api/local/cards':
+                    from phone_relay import list_cards
+                    after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
+                    self.respond(200,list_cards(directory,after));return
                 if path.startswith('/api/local/media/'):
                     try:
                         content,mime,_=photo_store.asset(directory,path.rsplit('/',1)[-1])
@@ -230,7 +241,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if not page_path.exists():
                     self.respond(503,{'error':'Сначала выполните npm run build'});return
                 page = page_path.read_text(encoding='utf-8').replace('name="redcn-hosting" content="github-pages"','name="redcn-hosting" content="local"')
-                page = page.replace('<meta charset="utf-8">','<meta charset="utf-8"><base href="/"><meta name="redcn-browser-channel" content="'+browser_channel+'"><meta name="redcn-token" content="'+token+'">')
+                page = page.replace('<meta charset="utf-8">','<meta charset="utf-8"><base href="/"><meta name="redcn-browser-channel" content="'+browser_channel+'"><meta name="redcn-token" content="'+token+'">',1)
                 page = page.replace('GitHub Pages · данные локально','Локально · Chrome подключён')
                 self.respond(200,page.encode(),'text/html; charset=utf-8');return
             files = {'/plan.json':redcn.ROOT/'plan.json', '/research.json':redcn.ROOT/'data/research.json', '/knowledge-seed.json':redcn.ROOT/'data/knowledge-seed.json'}
@@ -243,11 +254,14 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             try:
                 if self.headers.get_content_type() != 'application/json': raise ValueError('Нужен JSON')
                 size = int(self.headers.get('Content-Length','0'))
-                limit=16_100_000 if urlsplit(self.path).path=='/api/local/photo' else 4_500_000 if urlsplit(self.path).path=='/api/local/history' else 1_000_000
+                relative=urlsplit(self.path).path.removeprefix('/api/local/')
+                limit=card_api.request_limit(relative) or (16_100_000 if relative=='photo' else 4_500_000 if relative=='history' else 1_000_000)
                 if not 1 <= size <= limit: raise ValueError('Превышен размер запроса')
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                document=card_api.dispatch(directory,relative,data,browser_channel=browser_channel)
+                if document:self.respond(*document);return
                 if path == '/api/local/photo':
                     if data.get('action','load')=='load':
                         result=photo_store.load_photo(directory,data.get('url',''),data.get('refresh') is True)
@@ -297,6 +311,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
     server.daemon_threads = True
     server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card
+    server.browser_channel=browser_channel
     from phone_relay import RelayManager
     server.phone_relay=RelayManager(directory,server)
     close=server.server_close
@@ -309,7 +324,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 def matching_server(directory, port, browser_channel):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *_args, **_kwargs): return None
-    expected = {'app':'redcn','protocol':5,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    expected = {'app':'redcn','protocol':6,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:
