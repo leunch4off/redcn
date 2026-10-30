@@ -9,3 +9,15 @@ const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
 const check=spawnSync(process.execPath,['--check','--input-type=module'],{input:script,encoding:'utf8'});assert.equal(check.status,0,check.stderr);
 for(const file of ['docs/plan.json','docs/research.json','docs/knowledge-seed.json'])JSON.parse(await readFile(new URL(file,root),'utf8'));
 await stat(new URL('docs/.nojekyll',root));console.log('Standalone Pages application and all public datasets are valid');
+
+const phone=await readFile(new URL('docs/phone.html',root),'utf8');
+assert(!/<script[^>]+src=/.test(phone),'Phone shell must be self-contained');
+assert(!phone.includes('name="redcn-token"'),'Public phone shell must not contain the desktop token');
+const phoneScript=phone.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];assert(phoneScript);
+const phoneCheck=spawnSync(process.execPath,['--check','--input-type=module'],{input:phoneScript,encoding:'utf8'});assert.equal(phoneCheck.status,0,phoneCheck.stderr);
+const manifest=JSON.parse(await readFile(new URL('docs/phone.webmanifest',root),'utf8'));
+assert.equal(manifest.start_url,'/phone/');assert.equal(manifest.display,'standalone');
+for(const [name,size] of [['apple-touch-icon.png',180],['icon-192.png',192],['icon-512.png',512]]){
+ const bytes=await readFile(new URL('docs/icons/'+name,root));assert.equal(bytes.readUInt32BE(16),size);assert.equal(bytes.readUInt32BE(20),size);
+}
+console.log('Phone shell, manifest and iPhone icons are valid');

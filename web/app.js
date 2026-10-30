@@ -1,3 +1,4 @@
+import {setupPhoneConnection} from './phone-connection.mjs';
 import {DICTIONARY,FEATURES,DEFAULT_PREFS,generateListing,extractFacts,analyzeListingSource,rubles} from './engine.mjs';
 import {TAG_CATALOG,listingEligible} from './content-tools.mjs';
 import {setupWordEditor} from './word-editor.mjs';
@@ -11,7 +12,7 @@ import {editorStartup} from './editor-state.mjs';
 
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
-let toastTimer;
+let toastTimer,relaySyncTimer,phoneConnection=null;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Не удалось сохранить: хранилище браузера заполнено или недоступно. Экспортируйте копию.');return false;}}
 const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission','phraseNotes','city','address','renovation','windows','bathroom','combinedWcs','separateWcs','buildingYear','buildingType','buildingSeries','floorType','entrances','heating','emergency','ceiling','balconies','loggias','prepayMonths','contractMonths','leaseTerm','registrationPolicy','childrenPolicy','petPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','sourceDescription','railways','lift','latitude','longitude'];
@@ -40,7 +41,7 @@ for(const group of Object.keys(groupNames)){
   }
 }
 function snapshot(){const value={isDemo,titleVariant,copyVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,photoEvidence:[...photoEvidence],photoFeatureBaseline:{...photoFeatureBaseline},featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
-function populate(value){editorRevision++;clearTimeout(toastTimer);$('toast').classList.add('hidden');localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};isDemo=v.isDemo===true;renderDemoNotice();sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();}
+function populate(value){clearTimeout(relaySyncTimer);editorRevision++;clearTimeout(toastTimer);$('toast').classList.add('hidden');localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};isDemo=v.isDemo===true;renderDemoNotice();sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
 function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
 function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge')insightsUI?.renderKnowledge();if(name==='analytics')insightsUI?.renderAnalytics();if(name==='history')historyUI?.render();}
@@ -53,7 +54,7 @@ function generate(){
   let result=generateListing(snapshot(),rules,prefs);if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');toast('Проверьте числовые поля');return;}
   let recent=read('most-copy-fingerprints',{}),key=$('url').value||$('name').value||'draft',known=recent[key]||[];const fingerprint=text=>{let h=2166136261;for(const c of text)h=Math.imul(h^c.codePointAt(0),16777619);return(h>>>0).toString(16);};for(let attempt=0;attempt<128&&known.includes(fingerprint(result.body));attempt++){advanceVariant();result=generateListing(snapshot(),rules,prefs);}recent[key]=[...known,fingerprint(result.body)].slice(-200);write('most-copy-fingerprints',Object.fromEntries(Object.entries(recent).slice(-30)));
   currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);
-  $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':(sourceAudit?.warnings?.length?sourceAudit.warnings.join(' · '):'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.');saveDraft();historyUI?.record('generate').catch(error=>toast('История не сохранена: '+error.message));captureKnowledge('example',$('outputTitle').value,$('output').value);
+  $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':(sourceAudit?.warnings?.length?sourceAudit.warnings.join(' · '):'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.');saveDraft();historyUI?.record('generate').catch(error=>toast('История не сохранена: '+error.message));captureKnowledge('example',$('outputTitle').value,$('output').value);syncPhoneCard();
 }
 function advanceVariant(){let counters=read('most-generation-counters',{});const v=snapshot(),key=v.url||v.name||v.source.slice(0,150)||'draft';const next=Math.max(titleVariant,copyVariant,Number(counters[key])||0)+1;titleVariant=copyVariant=next;counters[key]=next;write('most-generation-counters',Object.fromEntries(Object.entries(counters).slice(-200)));}
 $('generate').onclick=()=>{advanceVariant();generate();};
@@ -64,7 +65,7 @@ function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$(
 $('tagSearch').oninput=renderTagCatalog;
 for(const key of fields)$(key).addEventListener('input',()=>{editorRevision++;saveDraft();});
 for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',()=>{editorRevision++;if(photoFeatureBaseline[id])photoFeatureBaseline[id].checked=$('feature-'+id).checked;saveDraft();});
-for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',()=>{editorRevision++;saveDraft();});
+for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',()=>{editorRevision++;saveDraft();syncPhoneCard();});
 function extract(){
   if(!$('source').value.trim())return toast('Сначала вставьте текст объявления');
   captureKnowledge('example','Входящий текст объявления',$('source').value);
@@ -221,4 +222,16 @@ function applyPhotoFeatures(observation){
  photoEvidence=(observation.photoEvidence||[]).filter(row=>next.has(row.id));
  if((observation.features||[]).some(id=>blocked.has(id)))toast('Фото расходится с данными объявления. Проверьте противоречие в разборе источника.');
  generate();saveDraft();
+}
+
+phoneConnection=setupPhoneConnection({local:localHosting,api:localApi,toast,getProfile:()=>({rules,prefs,data:Object.fromEntries(['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','audience'].map(key=>[key,snapshot()[key]]))})});
+
+function syncPhoneCard(){
+ clearTimeout(relaySyncTimer);if(!localHosting||!phoneConnection?.enabled()||isDemo||!$('output').value.trim()||!(Number($('price').value)>0))return;
+ const revision=historyCurrent(),expected=editorRevision,resultId=localResultId;
+ relaySyncTimer=setTimeout(async()=>{try{
+  await phoneConnection.updateProfile();
+  const fields=revision.fields,result={fields,titles:[revision.title,...revision.titles.filter(t=>t!==revision.title)].slice(0,3),body:revision.body,tags:revision.tags,listing:{url:fields.url,text:fields.source,images:fields.photos,related:fields.relatedOffers}};
+  const saved=await localApi('save',{result_id:resultId,result});if(expected===editorRevision){showLocalLink(saved.result_id);$('localSaveStatus').textContent='Синхронизировано с телефоном '+new Date().toLocaleTimeString('ru-RU');}
+ }catch(error){toast('Карточка сохранена в браузере. Телефон не получил обновление: '+error.message);}},900);
 }

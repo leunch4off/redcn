@@ -1,4 +1,4 @@
-"""Loopback-only editor, background imports and durable local listing links."""
+"""Loopback editor plus an opt-in, paired LAN companion for the Mac."""
 import json
 import base64
 from datetime import datetime
@@ -62,7 +62,7 @@ def save_result(directory, result, result_id=None):
     connection = redcn.open_cache(directory)
     try:
         connection.execute('CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, updated REAL, payload TEXT)')
-        connection.execute('INSERT OR REPLACE INTO results VALUES (?,?,?)', (result_id, time.time(), json.dumps(result, ensure_ascii=False)))
+        connection.execute('INSERT OR REPLACE INTO results VALUES (?,max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),?)', (result_id, time.time(), json.dumps(result, ensure_ascii=False)))
         connection.commit()
     finally: connection.close()
     return result_id
@@ -77,17 +77,35 @@ def read_result(directory, result_id):
     finally: connection.close()
 
 
+def merge_prepared_media(directory,result_id,prepared):
+    from phone_relay import source_images
+    # Lock the read/merge/write so the completed download cannot save an old text snapshot.
+    connection=redcn.open_cache(directory)
+    try:
+        connection.execute('BEGIN IMMEDIATE')
+        row=connection.execute('SELECT payload FROM results WHERE id=?',(result_id,)).fetchone()
+        current=json.loads(row[0]) if row else None
+        if not current or source_images(current)!=source_images(prepared):raise ValueError('Фотографии карточки изменились. Повторите загрузку.')
+        current.update(media=prepared.get('media',[]),mediaStatus=prepared.get('mediaStatus','ready'))
+        connection.execute('UPDATE results SET updated=max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),payload=? WHERE id=?',(time.time(),json.dumps(current,ensure_ascii=False),result_id))
+        connection.commit();return current
+    except BaseException:
+        connection.rollback();raise
+    finally:connection.close()
+
+
 def create_server(directory, port=8765, browser_channel='chrome'):
     if browser_channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
-    identity = {'app':'redcn', 'protocol':4, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':5, 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def run_import(job_id, params, cancel):
         def report(message):
             with lock: jobs[job_id].update(message=message)
         connection = redcn.open_cache(directory)
+        result_id=None
         try:
             listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
             if cancel.is_set(): raise ValueError('Импорт отменён')
@@ -95,11 +113,59 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             fields = {**data, **listing.get('fields',{}), 'titleVariant':redcn.next_variant(connection,listing['url']), 'url':listing['url'], 'source':listing['text']}
             result = {**redcn.generate(listing['text'],fields,params.get('rules'),params.get('prefs')), 'listing':listing}
             if cancel.is_set(): raise ValueError('Импорт отменён')
+            from phone_relay import cache_photos
+            result['mediaStatus']='loading'
             result_id = save_result(directory, result)
+            cache_photos(directory,result,report,cancel)
+            merge_prepared_media(directory,result_id,result)
             with lock: jobs[job_id].update(state='done', message='Готово', result_id=result_id)
         except (OSError, ValueError, redcn.subprocess.SubprocessError) as error:
+            if result_id:
+                current=read_result(directory,result_id)
+                if current and current.get('mediaStatus')=='loading':
+                    current['mediaStatus']='cancelled' if cancel.is_set() else 'error'
+                    save_result(directory,current,result_id)
             with lock: jobs[job_id].update(state='error', message=str(error))
         finally: connection.close()
+
+    def start_import(params):
+        params=dict(params)
+        params['url']=redcn.normalize_url(params.get('url',''))
+        if params.get('loader','auto') not in ('auto','http','chrome'):raise ValueError('Неверный режим загрузки')
+        if params.get('browser_channel',browser_channel) not in ('chrome','chromium'):raise ValueError('Неверный браузер')
+        if type(params.get('timeout',180)) is not int or not 15<=params.get('timeout',180)<=600:raise ValueError('Ожидание: 15–600 секунд')
+        for field in ('rules','prefs','data'):
+            if field in params and not isinstance(params[field],dict):raise ValueError('Неверный формат '+field)
+        if not all(isinstance(k,str) and isinstance(v,str) for k,v in params.get('rules',{}).items()):raise ValueError('Словарь: строки RU → CN')
+        with lock:
+            if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущего импорта или отмените его')
+            while len(jobs)>=32:jobs.pop(next(iter(jobs)))
+            job_id,cancel=secrets.token_hex(16),threading.Event()
+            jobs[job_id]={'state':'running','message':'Начинаем загрузку…','cancel':cancel}
+        threading.Thread(target=run_import,args=(job_id,params,cancel),daemon=True).start()
+        return job_id
+
+    def job_status(job_id):
+        with lock:return {k:v for k,v in jobs.get(job_id,{}).items() if k!='cancel'}
+
+    def prepare_card(result_id):
+        from phone_relay import cache_photos
+        result=read_result(directory,result_id)
+        if not result or result.get('fields',{}).get('isDemo') is True:raise ValueError('Карточка не найдена')
+        with lock:
+            if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущей загрузки')
+            while len(jobs)>=32:jobs.pop(next(iter(jobs)))
+            job_id,cancel=secrets.token_hex(16),threading.Event()
+            jobs[job_id]={'state':'running','message':'Сохраняем фотографии на Mac…','cancel':cancel}
+        def run():
+            try:
+                cache_photos(directory,result,cancel=cancel)
+                if cancel.is_set():raise ValueError('Загрузка отменена')
+                merge_prepared_media(directory,result_id,result)
+                with lock:jobs[job_id].update(state='done',message='Фотографии готовы',result_id=result_id)
+            except (OSError,ValueError) as error:
+                with lock:jobs[job_id].update(state='error',message=str(error))
+        threading.Thread(target=run,daemon=True).start();return job_id
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_args): pass
@@ -133,6 +199,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 self.respond(200,identity);return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
+                if path == '/api/local/phone':
+                    self.respond(200,self.server.phone_relay.status());return
                 if path == '/api/local/history':
                     self.respond(200,{'entries':history_rows(directory)});return
                 if path.startswith('/api/local/media/'):
@@ -194,22 +262,23 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if path == '/api/local/history':
                     entry_id=store_history(directory,data.get('entry'))
                     self.respond(200,{'id':entry_id});return
+                if path == '/api/local/phone':
+                    action=data.get('action')
+                    if action=='enable':
+                        if any(key in data for key in ('rules','prefs','data')):self.server.phone_relay.save_profile(data)
+                        port=data.get('port',8767)
+                        if type(port) is not int or not 1<=port<=65535:raise ValueError('Порт телефона: 1–65535')
+                        result=self.server.phone_relay.enable(port)
+                    elif action=='profile':result=self.server.phone_relay.save_profile(data)
+                    elif action=='pair':result=self.server.phone_relay.issue_pair()
+                    elif action=='disable':result=self.server.phone_relay.disable()
+                    else:raise ValueError('Неверное действие телефонного доступа')
+                    self.respond(200,result);return
                 if path == '/api/local/import':
-                    data['url'] = redcn.normalize_url(data.get('url',''))
-                    if data.get('loader','auto') not in ('auto','http','chrome'): raise ValueError('Неверный режим загрузки')
-                    if data.get('browser_channel',browser_channel) not in ('chrome','chromium'): raise ValueError('Неверный браузер')
-                    if type(data.get('timeout',180)) is not int or not 15 <= data.get('timeout',180) <= 600: raise ValueError('Ожидание: 15–600 секунд')
-                    for field in ('rules','prefs','data'):
-                        if field in data and not isinstance(data[field],dict): raise ValueError('Неверный формат '+field)
-                    if not all(isinstance(k,str) and isinstance(v,str) for k,v in data.get('rules',{}).items()): raise ValueError('Словарь: строки RU → CN')
-                    with lock:
-                        active = sum(j['state']=='running' for j in jobs.values())
-                        if active: self.respond(409,{'error':'Дождитесь текущего импорта или отмените его'});return
-                        # Keep a bounded session history, while results stay on disk.
-                        while len(jobs) >= 32: jobs.pop(next(iter(jobs)))
-                        job_id, cancel = secrets.token_hex(16), threading.Event()
-                        jobs[job_id] = {'state':'running','message':'Начинаем загрузку…','cancel':cancel}
-                    threading.Thread(target=run_import,args=(job_id,data,cancel),daemon=True).start()
+                    try:job_id=start_import(data)
+                    except ValueError as error:
+                        if 'Дождитесь' in str(error):self.respond(409,{'error':str(error)});return
+                        raise
                     self.respond(202,{'job_id':job_id});return
                 if path == '/api/local/cancel':
                     with lock:
@@ -227,13 +296,20 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
     server.daemon_threads = True
+    server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card
+    from phone_relay import RelayManager
+    server.phone_relay=RelayManager(directory,server)
+    close=server.server_close
+    def close_all():
+        server.phone_relay.stop();close()
+    server.server_close=close_all
     return server
 
 
 def matching_server(directory, port, browser_channel):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *_args, **_kwargs): return None
-    expected = {'app':'redcn','protocol':4,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
+    expected = {'app':'redcn','protocol':5,'storage':hashlib.sha256(str(Path(directory).expanduser().resolve()).encode()).hexdigest(),'browser_channel':browser_channel}
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:
@@ -253,13 +329,30 @@ def bind_or_reuse(directory, port, browser_channel='chrome'):
     raise ValueError('Не найден свободный порт. Используйте --port 0 для автоматического выбора.')
 
 
-def serve(directory, port=8765, result_id=None, open_browser=True, browser_channel='chrome'):
+def enable_existing_phone(port,phone_port):
+    base='http://127.0.0.1:'+str(port)
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(base+'/',timeout=3) as response:page=response.read(10_000_000).decode('utf-8')
+    match=re.search(r'<meta name="redcn-token" content="([A-Za-z0-9_-]+)">',page)
+    if not match:raise ValueError('Обновите работающий redcn перед подключением телефона')
+    request=urllib.request.Request(base+'/api/local/phone',json.dumps({'action':'enable','port':phone_port}).encode(),headers={'Content-Type':'application/json','Origin':base,'X-Redcn-Token':match[1]})
+    with opener.open(request,timeout=5) as response:return json.loads(response.read(100_000))
+
+
+def serve(directory, port=8765, result_id=None, open_browser=True, browser_channel='chrome', phone=False, phone_port=8767):
     server, selected_port = bind_or_reuse(directory,port,browser_channel)
     link = f'http://127.0.0.1:{selected_port}'+('/listing/'+result_id if result_id else '/')
     if server is None:
         print('\nredcn уже работает: '+link+'\nОткрываем существующий сайт. Второй сервер не нужен.',flush=True)
+        if phone:
+            access=enable_existing_phone(selected_port,phone_port)
+            for pair_url in access['pairUrls']:print(pair_url,flush=True)
         if open_browser: webbrowser.open(link)
         return 0
+    if phone:
+        access=server.phone_relay.enable(phone_port)
+        print('Телефон в одной Wi-Fi сети · одноразовая ссылка на 10 минут:',flush=True)
+        for pair_url in access['pairUrls']:print(pair_url,flush=True)
     if port and port != selected_port: print(f'Порт {port} занят. Выбран порт {selected_port}.',flush=True)
     print('\nЛокальный redcn: '+link+'\nОставьте терминал открытым. Остановка: Ctrl+C.',flush=True)
     if open_browser: webbrowser.open(link)

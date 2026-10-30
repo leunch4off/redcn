@@ -302,6 +302,8 @@ def main(argv=None):
     parser.add_argument('--serve', action='store_true', help='Запустить локальный сайт и открыть его в браузере')
     parser.add_argument('--open', action='store_true', help='После генерации открыть сохранённую карточку на локальном сайте')
     parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--phone',action='store_true',help='Разрешить подключение телефона в локальной сети по одноразовой ссылке')
+    parser.add_argument('--phone-port',type=int,default=8767)
     parser.add_argument('--json', action='store_true', help='Машиночитаемый вывод')
     parser.add_argument('--output', type=Path, help='Сохранить результат в файл')
     parser.add_argument('--cache-dir', type=Path, default=Path.home() / '.cache' / 'redcn')
@@ -314,9 +316,10 @@ def main(argv=None):
     if (args.crop_photos or args.crop_bottom is not None) and not args.download_photos:parser.error('Кадрирование требует --download-photos DIRECTORY')
     if args.crop_bottom is not None and not 0 <= args.crop_bottom <= 40:parser.error('--crop-bottom: 0–40 процентов')
     if not 15 <= args.browser_timeout <= 600: parser.error('--browser-timeout: 15–600 секунд')
+    if not 1<=args.phone_port<=65535:parser.error('--phone-port: 1–65535')
     if args.serve:
         from local_server import serve
-        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel)
+        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel,phone=args.phone,phone_port=args.phone_port)
     read_json = lambda p: json.loads(p.read_text(encoding='utf-8')) if p else {}
     data, rules, prefs = read_json(args.data), read_json(args.rules), read_json(args.prefs)
     if not isinstance(data, dict) or not isinstance(rules, dict) or not isinstance(prefs, dict):
@@ -379,7 +382,7 @@ def main(argv=None):
             result_id = save_result(args.cache_dir, result)
             connection.close()
             connection = None
-            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel)
+            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel,phone=args.phone,phone_port=args.phone_port)
     finally:
         if connection: connection.close()
     return 0
