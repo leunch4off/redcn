@@ -2,33 +2,42 @@ import {setupPresentationStudio} from './presentation-studio.mjs';
 import {setupCardArchive} from './card-archive.mjs';
 import {setupCardFiles,cardDownloadBlob} from './card-files.mjs';
 import {setupPhoneConnection} from './phone-connection.mjs';
-import {DICTIONARY,FEATURES,DEFAULT_PREFS,generateListing,extractFacts,analyzeListingSource,rubles} from './engine.mjs';
+import {DICTIONARY,FEATURES,DEFAULT_PREFS,generateListing,extractFacts,analyzeListingSource,rubles,translateDraft,generationCapabilities} from './engine.mjs';
 import {TAG_CATALOG,listingEligible} from './content-tools.mjs';
 import {setupWordEditor} from './word-editor.mjs';
 import {setupInsights} from './insights-ui.mjs';
 import {setupHistory} from './history-ui.mjs';
 import {photoSources} from './media-core.mjs';
 import {setupPhotos} from './photo-ui.mjs';
-import {getGeoStats,searchGeo} from './geo-catalog.mjs';
+import {getGeoStats,searchGeo,GEO_CATALOG} from './geo-catalog.mjs';
 import {setupRelated} from './related-ui.mjs';
 import {editorStartup} from './editor-state.mjs';
+import {setupLanguageStudio} from './language-studio.mjs';
+import {getLexiconStats,setExtendedLexicon} from './ru-zh-translator.mjs';
 
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
-let toastTimer,relaySyncTimer,phoneConnection=null,editorCardEpoch=0,archiveUI=null,presentationUI=null,cardFilesUI=null;
+let toastTimer,relaySyncTimer,profileSyncTimer,phoneConnection=null,editorCardEpoch=0,archiveUI=null,presentationUI=null,cardFilesUI=null,languageUI=null;
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{toast('Не удалось сохранить: хранилище браузера заполнено или недоступно. Экспортируйте копию.');return false;}}
 const fields=['url','source','name','district','complex','districtZh','metro','walk','area','rooms','floor','floors','price','deposit','university','uniTime','uniMode','route','details','pickup','arrival','support','luggage','style','layout','kitchen','living','bedroomArea','occupants','transit','universities','highlight','description','utilities','rentFreeMonths','minMonths','separate','children','pets','shortTerm','registration','registrationMonths','registrationPeople','campus','region','audience','ready','newRenovation','seller','commission','phraseNotes','city','address','renovation','windows','bathroom','combinedWcs','separateWcs','buildingYear','buildingType','buildingSeries','floorType','entrances','heating','emergency','ceiling','balconies','loggias','prepayMonths','contractMonths','leaseTerm','registrationPolicy','childrenPolicy','petPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','sourceDescription','railways','lift','latitude','longitude'];
 const defaults={style:'compact',layout:'classic',utilities:'unknown',registration:'assist',support:true,uniMode:'步行',seller:'unknown',audience:'general'};
 const storedRules=read('most-rules',null);
-let rules=read('most-rules-version',0)>=2&&storedRules?storedRules:{...DICTIONARY,...storedRules};
-if(read('most-rules-version',0)<2&&write('most-rules',rules))write('most-rules-version',2);
-if(read('most-rules-version',0)<3){for(const key of ['Москва','СВАО','район Лианозово','р-н Лианозово','Лианозово','Алтуфьево','Угличская ул.','Угличская улица','Марк','Бескудниково','Евроремонт','На улицу и двор','совмещенный','Монолитный','Железобетонные','Индивидуальный проект','Центральное','в Лианозовском парке'])if(!Object.hasOwn(rules,key))rules[key]=DICTIONARY[key];if(write('most-rules',rules))write('most-rules-version',3);}
-if(read('most-rules-version',0)<4){for(const [key,value] of Object.entries(DICTIONARY))if(!Object.hasOwn(rules,key))rules[key]=value;if(write('most-rules',rules))write('most-rules-version',4);}
+let rules={...DICTIONARY,...(storedRules&&typeof storedRules==='object'&&!Array.isArray(storedRules)?storedRules:{})};
+if(read('most-rules-version',0)<5){
+  const staleDefaults={'Евроремонт':['欧式装修'],'евроремонт':['欧式装修'],
+    'совмещенный':['合用卫浴'],'совмещённый':['合用卫浴'],
+    'совмещенный санузел':['合用卫浴'],'совмещённый санузел':['合用卫浴'],
+    'раздельный':['干湿分离'],'раздельный санузел':['干湿分离']};
+  for(const [key,oldValues] of Object.entries(staleDefaults))if(oldValues.includes(rules[key])&&DICTIONARY[key])rules[key]=DICTIONARY[key];
+  if(write('most-rules',personalRules()))write('most-rules-version',5);
+}
+function personalRules(){return Object.fromEntries(Object.entries(rules).filter(([key,value])=>!Object.hasOwn(DICTIONARY,key)||value!==DICTIONARY[key]));}
+function saveRules(){if(!write('most-rules',personalRules()))return false;write('most-rules-version',5);queueProfileSync();wordEditor?.render();languageUI?.refreshLocalStats?.();return true;}
 let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
 let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
 let current=null,titleIndex=0,currentTitles=[],sourceAudit=null,featureCounts={},historyUI=null;
-let copyVariant=0,localResultId=null,localJob=null,isDemo=false,editorRevision=0;
+let copyVariant=0,tagVariant=0,localResultId=null,localJob=null,isDemo=false,editorRevision=0;
 let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null,photoUI=null,relatedUI=null,relatedOffers=[],photoEdits={},photoEvidence=[],photoFeatureBaseline={};
 const hosting=document.querySelector('meta[name="redcn-hosting"]')?.content;
 const localHosting=hosting==='local',staticHosting=hosting==='github-pages'||localHosting;
@@ -43,11 +52,11 @@ for(const group of Object.keys(groupNames)){
     const quantity=document.createElement('input');quantity.type='number';quantity.min='1';quantity.max='50';quantity.className='feature-qty';quantity.id='feature-qty-'+id;quantity.placeholder='шт.';quantity.setAttribute('aria-label','Количество: '+label);quantity.oninput=()=>{editorRevision++;if(photoFeatureBaseline[id])photoFeatureBaseline[id].count=quantity.value;if(quantity.value)featureCounts[id]=quantity.value;else delete featureCounts[id];saveDraft();};wrapper.append(input,document.createTextNode(label),quantity);$('featureGrid').append(wrapper);
   }
 }
-function snapshot(){const value={resultId:localResultId,isDemo,titleVariant,copyVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,photoEvidence:[...photoEvidence],photoFeatureBaseline:{...photoFeatureBaseline},featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
-function populate(value){clearTimeout(relaySyncTimer);editorCardEpoch++;editorRevision++;clearTimeout(toastTimer);$('toast').classList.add('hidden');localResultId=localHosting&&/^[a-f0-9]{32}$/.test(value?.resultId||'')?value.resultId:null;archiveUI?.clear();cardFilesUI?.clear();$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};isDemo=v.isDemo===true;renderDemoNotice();sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();if(localHosting&&localResultId){showLocalLink(localResultId);archiveUI?.refresh();cardFilesUI?.refresh();}}
+function snapshot(){const value={resultId:localResultId,isDemo,templateMode:'catalog',titleVariant,copyVariant,tagVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,photoEvidence:[...photoEvidence],photoFeatureBaseline:{...photoFeatureBaseline},featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
+function populate(value){languageUI?.clearDraft();clearTimeout(relaySyncTimer);editorCardEpoch++;editorRevision++;clearTimeout(toastTimer);$('toast').classList.add('hidden');localResultId=localHosting&&/^[a-f0-9]{32}$/.test(value?.resultId||'')?value.resultId:null;archiveUI?.clear();cardFilesUI?.clear();$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};isDemo=v.isDemo===true;renderDemoNotice();sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;tagVariant=Number(v.tagVariant??v.titleVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();if(localHosting&&localResultId){showLocalLink(localResultId);archiveUI?.refresh();cardFilesUI?.refresh();}}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
 function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
-function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library'){renderList();renderMacCards();}if(name==='presentation')refreshPresentation().catch(error=>toast(error.message));if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge'){ensureInsights().renderKnowledge();renderGeoCatalog();}if(name==='analytics')ensureInsights().renderAnalytics();if(name==='history')historyUI?.render();}
+function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library'){renderList();renderMacCards();}if(name==='presentation')refreshPresentation().catch(error=>toast(error.message));if(name==='rules'){renderRules();languageUI?.openDictionary();}if(name==='roadmap')loadRoadmap();if(name==='knowledge'){ensureInsights().renderKnowledge();renderGeoCatalog();}if(name==='analytics')ensureInsights().renderAnalytics();if(name==='history')historyUI?.render();}
 document.querySelectorAll('nav button').forEach(button=>button.onclick=()=>tab(button.dataset.tab));
 function renderTitles(){
   $('variants').replaceChildren();
@@ -59,10 +68,30 @@ function generate(){
   currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('output').value=result.body;$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);
   $('review').classList.toggle('error',result.unknown.length>0);$('review').textContent=result.unknown.length?'Нужен перевод в словаре: '+result.unknown.join(' · ')+'. Эти фразы пока остаются в исходном языке.':(sourceAudit?.warnings?.length?sourceAudit.warnings.join(' · '):'Текст готов. Проверьте цену, маршрут, регистрацию и услуги перед публикацией.');saveDraft();historyUI?.record('generate').catch(error=>toast('История не сохранена: '+error.message));captureKnowledge('example',$('outputTitle').value,$('output').value);syncPhoneCard();
 }
-function advanceVariant(){let counters=read('most-generation-counters',{});const v=snapshot(),key=v.url||v.name||v.source.slice(0,150)||'draft';const next=Math.max(titleVariant,copyVariant,Number(counters[key])||0)+1;titleVariant=copyVariant=next;counters[key]=next;write('most-generation-counters',Object.fromEntries(Object.entries(counters).slice(-200)));}
+function advanceVariant(part='all'){
+  let counters=read('most-generation-counters',{});const v=snapshot(),key=v.url||v.name||v.source.slice(0,150)||'draft';
+  const saved=counters[key],prior=typeof saved==='number'?{title:saved,body:saved,tags:saved}:saved||{};
+  const next={title:titleVariant,body:copyVariant,tags:tagVariant};
+  for(const kind of part==='all'?['title','body','tags']:[part])next[kind]=Math.max(next[kind],Number(prior[kind])||0)+1;
+  titleVariant=next.title;copyVariant=next.body;tagVariant=next.tags;counters[key]=next;
+  write('most-generation-counters',Object.fromEntries(Object.entries(counters).slice(-200)));
+}
 $('generate').onclick=()=>{advanceVariant();generate();};
-$('rewriteCopy').onclick=()=>{if($('output').value&&!confirm('Создать новую подачу по текущим полям? Ручные правки описания будут заменены.'))return;advanceVariant();generate();};
-$('rotateTitles').onclick=()=>{titleVariant++;const result=generateListing(snapshot(),rules,prefs);currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];$('tags').value=result.tags;renderTitles();renderTagReasons(result.tagSuggestions);saveDraft();historyUI?.record('generate').catch(error=>toast(error.message));toast('Новые заголовки и теги. Текст описания сохранён.');};
+function rewritePart(part,index){
+  if(!['title','body','tags'].includes(part))throw Error('Неизвестный раздел текста');
+  if(index===undefined)advanceVariant(part);
+  else if(part==='title')titleVariant=index;else if(part==='body')copyVariant=index;else tagVariant=index;
+  const result=generateListing(snapshot(),rules,prefs);
+  if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');return;}
+  if(part==='title'){currentTitles=result.titles;titleIndex=0;$('outputTitle').value=currentTitles[0];renderTitles();}
+  if(part==='body')$('output').value=result.body;
+  if(part==='tags'){$('tags').value=result.tags;renderTagReasons(result.tagSuggestions);}
+  editorRevision++;saveDraft();syncPhoneCard();historyUI?.record('generate').catch(error=>toast(error.message));
+  toast(({title:'Новые заголовки',body:'Новое описание',tags:'Новые теги'})[part]+'. Остальные тексты сохранены.');
+}
+$('rewriteCopy').onclick=()=>rewritePart('body');
+$('rotateTitles').onclick=()=>rewritePart('title');
+$('rotateTags').onclick=()=>rewritePart('tags');
 function renderTagReasons(suggestions=[]){$('tagReasons').replaceChildren();for(const item of suggestions){const div=document.createElement('div');div.className='tag-item';div.textContent='#'+item.tag+' — '+item.ru+' · '+item.reason;$('tagReasons').append(div);}}
 function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$('tagCatalog').replaceChildren();for(const [tag,ru] of TAG_CATALOG.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q))){const button=document.createElement('button');button.className='btn word-result';button.textContent='#'+tag+' — '+ru;button.onclick=()=>{const tags=new Set($('tags').value.split(/\s+/).filter(Boolean));tags.add('#'+tag);$('tags').value=[...tags].join(' ');saveDraft();};$('tagCatalog').append(button);}}
 $('tagSearch').oninput=renderTagCatalog;
@@ -121,15 +150,26 @@ function renderList(){
   });
 }
 $('search').oninput=renderList;$('libraryFilter').onchange=renderList;
+let ruleOffset=0;
 function renderRules(){
-  $('ruleList').replaceChildren();for(const [key,value] of Object.entries(rules)){
+  const q=$('ruleSearch').value.trim().toLowerCase(),all=$('ruleScope').value==='all';
+  const found=Object.entries(all?rules:personalRules()).filter(([key,value])=>(key+' '+value).toLowerCase().includes(q));
+  ruleOffset=Math.min(ruleOffset,Math.max(0,Math.ceil(found.length/40)-1)*40);
+  $('ruleList').replaceChildren();for(const [key,value] of found.slice(ruleOffset,ruleOffset+40)){
     const row=document.createElement('div'),a=document.createElement('input'),b=document.createElement('input'),remove=document.createElement('button');row.className='rule';a.value=key;a.readOnly=true;a.setAttribute('aria-label','Триггер '+key);b.value=value;b.setAttribute('aria-label','Перевод '+key);
-    b.onchange=()=>{rules[key]=b.value;write('most-rules',rules);};remove.textContent='×';remove.className='btn';remove.style.padding='5px';remove.setAttribute('aria-label','Удалить правило '+key);remove.onclick=()=>{delete rules[key];write('most-rules',rules);renderRules();};row.append(a,b,remove);$('ruleList').append(row);
+    b.onchange=()=>{if(!b.value.trim()){b.value=rules[key];return toast('Перевод не может быть пустым');}rules[key]=b.value;if(saveRules())renderRules();};
+    const custom=!Object.hasOwn(DICTIONARY,key)||value!==DICTIONARY[key];
+    remove.textContent=custom?'×':'•';remove.disabled=!custom;remove.className='btn';remove.style.padding='5px';remove.setAttribute('aria-label','Убрать личное правило '+key);remove.onclick=()=>{if(Object.hasOwn(DICTIONARY,key))rules[key]=DICTIONARY[key];else delete rules[key];if(saveRules())renderRules();};row.append(a,b,remove);$('ruleList').append(row);
   }
+  $('ruleCount').textContent=found.length?(all?'Активных правил: ':'Личных правил: ')+found.length+' · '+(ruleOffset+1)+'–'+Math.min(ruleOffset+40,found.length):'Личных замен пока нет. Встроенные переводы доступны в поиске полной базы выше.';
+  $('rulePrev').disabled=ruleOffset===0;$('ruleNext').disabled=ruleOffset+40>=found.length;
 }
-$('addRule').onclick=()=>{const key=$('trigger').value.trim(),value=$('translation').value.trim();if(!key||!value)return toast('Заполните триггер и перевод');rules[key]=value;if(write('most-rules',rules)){renderRules();$('trigger').value='';$('translation').value='';toast('Правило сохранено');}};
+$('ruleSearch').oninput=()=>{ruleOffset=0;renderRules();};$('ruleScope').onchange=()=>{ruleOffset=0;renderRules();};
+$('rulePrev').onclick=()=>{ruleOffset=Math.max(0,ruleOffset-40);renderRules();};$('ruleNext').onclick=()=>{ruleOffset+=40;renderRules();};
+function usePersonalRule(key,value){rules[key]=value;if(!saveRules())throw Error('Правило не сохранено');ruleOffset=0;$('ruleSearch').value=key;$('ruleScope').value=Object.hasOwn(personalRules(),key)?'custom':'all';renderRules();}
+$('addRule').onclick=()=>{const key=$('trigger').value.trim(),value=$('translation').value.trim();if(!key||!value)return toast('Заполните триггер и перевод');try{usePersonalRule(key,value);$('trigger').value='';$('translation').value='';toast('Правило сохранено');}catch(error){toast(error.message);}};
 for(const key of ['benefits','contact','brandTags'])$(key).value=prefs[key];
-$('saveSettings').onclick=()=>{const next={benefits:$('benefits').value,contact:$('contact').value,brandTags:$('brandTags').value};if(write('most-prefs',next)){prefs=next;toast('Преимущества и теги сохранены. Создайте текст заново, чтобы применить.');}};
+$('saveSettings').onclick=()=>{const next={benefits:$('benefits').value,contact:$('contact').value,brandTags:$('brandTags').value};if(write('most-prefs',next)){prefs=next;queueProfileSync();toast('Преимущества и теги сохранены. Создайте текст заново, чтобы применить.');}};
 function download(name,data){const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('export').onclick=async()=>download('cian-cn-rednote-backup.json',{version:2,objects,rules,prefs,wordCustom,history:await historyUI?.exportEntries(),...ensureInsights().exportData(),draft:read('most-draft',null)});
 $('restore').onclick=()=>$('file').click();
@@ -166,7 +206,7 @@ let roadmapDataClient=null;
 async function loadRoadmap(){try{const response=await fetch(staticHosting?'./plan.json':'/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
 function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataClient.tasks;const done=tasks.filter(t=>t.status==='done').length;$('roadmapSummary').replaceChildren(document.createTextNode(done+' / '+tasks.length+' выполнено · '+(tasks.length-done)+' в планах. '));if(roadmapDataClient.github_issue_url){const a=document.createElement('a');a.textContent='Roadmap на GitHub ↗';a.href=roadmapDataClient.github_issue_url;a.target='_blank';a.rel='noopener noreferrer';$('roadmapSummary').append(a);}const q=$('roadmapSearch').value.toLowerCase(),mode=$('roadmapFilter').value;$('roadmapList').replaceChildren();for(const task of tasks.filter(t=>(mode==='all'||t.status===mode)&&(t.id+' '+t.section+' '+t.title+' '+t.acceptance).toLowerCase().includes(q))){const card=document.createElement('article'),head=document.createElement('header'),p=document.createElement('p'),evidence=document.createElement('div');card.className='task '+task.status;head.textContent=(task.status==='done'?'✓ ':'○ ')+task.id+' · '+task.title;p.textContent=task.acceptance;evidence.className='evidence';evidence.textContent=task.priority+' · '+task.section+(task.evidence.length?' · '+task.evidence.join(' · '):' · Проверка ещё не завершена');card.append(head,p,evidence);$('roadmapList').append(card);}}
 $('roadmapSearch').oninput=renderRoadmap;$('roadmapFilter').onchange=renderRoadmap;
-function ensureInsights(){if(!insightsUI)insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{rules[ru]=cn;write('most-rules',rules);renderRules();}});return insightsUI;}
+function ensureInsights(){if(!insightsUI)insightsUI=setupInsights({read,write,toast,onRule:(ru,cn)=>{usePersonalRule(ru,cn);}});return insightsUI;}
 function captureKnowledge(type,title,text){const enabled=insightsUI?$('rememberContent').checked:read('most-remember',true);if(enabled&&text.trim())ensureInsights().capture({type,title,text,source:$('url').value,status:'unreviewed'});}
 if(staticHosting&&!localHosting){$('importStatus').textContent='GitHub Pages: вставьте текст или импортируйте JSON из Python CLI.';$('import').textContent='Импорт через CLI';}
 
@@ -227,7 +267,58 @@ function applyPhotoFeatures(observation){
  generate();saveDraft();
 }
 
-phoneConnection=setupPhoneConnection({local:localHosting,api:localApi,toast,getProfile:()=>({rules,prefs,data:Object.fromEntries(['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','audience'].map(key=>[key,snapshot()[key]]))})});
+phoneConnection=setupPhoneConnection({local:localHosting,api:localApi,toast,getProfile:()=>({rules:personalRules(),prefs,data:Object.fromEntries(['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','audience'].map(key=>[key,snapshot()[key]]))})});
+
+function queueProfileSync(){
+  clearTimeout(profileSyncTimer);if(!localHosting)return;
+  profileSyncTimer=setTimeout(()=>phoneConnection?.updateProfile()?.catch(error=>toast('Настройки сохранены в браузере. Не удалось передать их телефону: '+error.message)),350);
+}
+
+const languageRemoteData='https://raw.githubusercontent.com/leunch4off/redcn/feature/rcn-v8-knowledge-photos/data/';
+const languagePreviewOrigin=['localhost','127.0.0.1','[::1]','::1'].includes(location.hostname);
+let staticLanguageResource=null,staticLanguageRequest=null,staticLanguageForms=null,staticLanguagePairCount=null;
+const languageSearchFold=value=>String(value??'').normalize('NFC').toLowerCase().replaceAll('ё','е').trim();
+async function ensureStaticLanguageResource(){
+  if(staticLanguageResource)return staticLanguageResource;
+  if(!staticLanguageRequest)staticLanguageRequest=(async()=>{
+    const response=await fetch(languagePreviewOrigin?'/ru-zh-open-lexicon.json':languageRemoteData+'ru-zh-open-lexicon.json');
+    if(!response.ok)throw Error('Открытый словарь не загрузился: HTTP '+response.status);
+    const resource=await response.json();if(!Array.isArray(resource.entries))throw Error('Неверный формат открытого словаря');
+    resource.entries=resource.entries.filter(row=>Array.isArray(row)&&typeof row[0]==='string'&&typeof row[1]==='string');
+    staticLanguageResource=resource;staticLanguageForms=new Map((resource.forms||[]).map(([form,lemma])=>[languageSearchFold(form),languageSearchFold(lemma)]));
+    setExtendedLexicon(resource);
+    staticLanguagePairCount=new Set([...Object.entries(DICTIONARY),...resource.entries].map(([ru,zh])=>languageSearchFold(ru)+'\0'+zh)).size;
+    languageUI?.refreshStats();return resource;
+  })().catch(error=>{staticLanguageRequest=null;throw error;});
+  return staticLanguageRequest;
+}
+async function searchDesktopLanguage(query,{scope='all',offset=0,limit=40}={}){
+  const q=languageSearchFold(query),rows=[];let resource=null;
+  if(['all','open'].includes(scope))resource=await ensureStaticLanguageResource();
+  if(['all','custom'].includes(scope))for(const [ru,zh] of Object.entries(personalRules()))rows.push({ru,zh,sourceId:'custom',reviewed:true});
+  if(['all','rental'].includes(scope))for(const [ru,zh] of Object.entries(DICTIONARY))rows.push({ru,zh,sourceId:'rental-core',reviewed:true});
+  if(['all','geo'].includes(scope))for(const row of GEO_CATALOG.records)rows.push({...row,sourceId:row.source||'geo-catalog',reviewed:row.translationStatus==='reviewed'});
+  if(resource)for(const [ru,zh,sourceId,sourcePage] of resource.entries)rows.push({ru,zh,sourceId:sourceId||'wiktionary',sourcePage,reviewed:false});
+  const lemma=staticLanguageForms?.get(q),seen=new Set();
+  const found=rows.filter(row=>{const ru=languageSearchFold(row.ru),zh=languageSearchFold(row.zh);if(!ru.includes(q)&&!zh.includes(q)&&(!lemma||ru!==lemma))return false;const key=ru+'\0'+zh+'\0'+row.sourceId;if(seen.has(key))return false;seen.add(key);return true;});
+  found.sort((a,b)=>Number(languageSearchFold(b.ru)===q||languageSearchFold(b.zh)===q)-Number(languageSearchFold(a.ru)===q||languageSearchFold(a.zh)===q)||Number(b.sourceId==='custom')-Number(a.sourceId==='custom')||a.ru.localeCompare(b.ru,'ru'));
+  return {entries:found.slice(offset,offset+Math.min(40,limit)),total:found.length,offset};
+}
+function applyComposedText({part,text,sourceRu}){
+  if(!['title','body','tags'].includes(part)||typeof text!=='string'||!text.trim())throw Error('Выберите текст для применения');
+  if(part==='title'){currentTitles=[text,...currentTitles.filter(title=>title!==text)].slice(0,3);titleIndex=0;$('outputTitle').value=text;renderTitles();}
+  if(part==='body'){$('output').value=text;if(typeof sourceRu==='string'&&sourceRu.trim())$('description').value=sourceRu;}
+  if(part==='tags'){$('tags').value=text;renderTagReasons();}
+  editorRevision++;saveDraft();syncPhoneCard();historyUI?.record('generate').catch(error=>toast(error.message));
+}
+languageUI=setupLanguageStudio({
+  local:localHosting,api:async(path,data)=>{clearTimeout(profileSyncTimer);await phoneConnection?.updateProfile();return localApi(path,data);},
+  getRules:personalRules,onUseRule:usePersonalRule,toast,
+  onApplyText:applyComposedText,onApplyTemplate:(kind,index)=>rewritePart(kind==='description'?'body':kind,index),
+  translateLocal:text=>translateDraft(text,{rules,mode:'draft'}),searchLocal:searchDesktopLanguage,
+  capabilities:()=>({ ...generationCapabilities(),dictionary:{...getLexiconStats(),ruZhPairs:staticLanguagePairCount??undefined,curatedRules:Object.keys(DICTIONARY).length}}),
+  catalogBaseUrl:languagePreviewOrigin?'/data/template-catalog/':languageRemoteData+'template-catalog/',
+});
 
 function syncPhoneCard(){
  clearTimeout(relaySyncTimer);if(!localHosting||!phoneConnection?.enabled()||isDemo||!$('output').value.trim()||!(Number($('price').value)>0))return;

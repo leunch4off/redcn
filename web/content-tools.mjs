@@ -28,7 +28,7 @@ export const TAG_CATALOG = [
 ];
 
 export function suggestTags(v, rules, translateFn, routesFn) {
-  const seed=Math.abs(Number(v.titleVariant)||0), candidates=[];
+  const seed=Math.abs(Number(v.tagVariant??v.titleVariant)||0), candidates=[];
   const add=(tag,reason)=>{tag=tag.replace(/^#/,'');if(!candidates.some(x=>x.tag===tag))candidates.push({tag,reason,ru:TAG_CATALOG.find(x=>x[0]===tag)?.[1]||'Тег из указанного названия'});};
   add('莫斯科租房','Основная тема');add('莫斯科租房信息','Информация об объекте');
   const routes=routesFn(v.transit),universities=routesFn(v.universities);
@@ -52,6 +52,15 @@ export function suggestTags(v, rules, translateFn, routesFn) {
   if(v.region==='southwest'){const options=TAG_CATALOG.filter(x=>x[2]==='southwest');add(options[seed%options.length][0],'Район отмечен оператором');}
   if(v.ready)add('拎包入住','Готовность к заселению подтверждена отметкой');
   if(v.newRenovation)add('全新装修','Новый ремонт подтверждён отметкой');
+  const featureTags={desk:['带书桌','Подтверждён рабочий стол'],piano:['带钢琴','Подтверждено пианино'],
+    computer:['配有电脑','Подтверждён компьютер'],oven:['配有烤箱','Подтверждена духовка'],
+    washer:['配有洗衣机','Подтверждена стиральная машина'],dishwasher:['配有洗碗机','Подтверждена посудомоечная машина'],
+    ac:['配有空调','Подтверждён кондиционер'],closet:['独立衣帽间','Подтверждена гардеробная'],
+    pantry:['带储藏室','Подтверждена кладовая'],balcony:['带阳台','Подтверждён балкон']};
+  const selected=(v.features||[]).filter(id=>featureTags[id]);
+  if(selected.length){const id=selected[seed%selected.length],[tag,reason]=featureTags[id];add(tag,reason);}
+  if(v.pets&&!['no','conflict','negotiable'].includes(v.petPolicy))add('可带宠物','Разрешение на животных подтверждено источником или оператором');
+  if(v.children&&!['no','conflict'].includes(v.childrenPolicy))add('可带孩子','Разрешение на детей подтверждено источником или оператором');
   add(seed%2?'租房也要幸福':'莫斯科生活','Общий редакционный тег');
   return candidates;
 }

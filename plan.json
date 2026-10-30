@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 9,
-  "total": 254,
+  "version": 10,
+  "total": 264,
   "tasks": [
     {
       "id": "RCN-001",
@@ -3778,6 +3778,137 @@
         "docs/IMPORT-AND-AUTO-PHOTOS.md",
         "docs/VERIFICATION.md#v13-2026-10-30"
       ]
+    },
+    {
+      "id": "RCN-255",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Проверяемый корпус китайских фраз об аренде Москвы",
+      "acceptance": "405 пар с происхождением;14 прочитанных страниц5 доменов;исторические объявления не выдаются за действующие.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/chinese-rental-research.json",
+        "docs/CHINESE-RENTAL-SOURCES.md",
+        "tests/generation-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-256",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Большой RU–ZH словарь с лицензией и словоформами",
+      "acceptance": "89171 уникальная пара и35176 связей словоформ воспроизводимы;общие значения помечаются как непроверенные.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/ru-zh-open-lexicon.json",
+        "docs/OPEN-RU-ZH-LEXICON.md",
+        "tests/open-lexicon.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-257",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Материализованные каталоги китайских шаблонов",
+      "acceptance": "По262144 записей заголовков,описаний и наборов тегов;полный аудит хешей,уникальности и ограничений фактов.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/template-catalog/manifest.json",
+        "scripts/audit-template-catalog.mjs",
+        "tests/template-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-258",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Поиск полной базы без перегрузки интерфейса",
+      "acceptance": "Защищённый поиск,источники и страницы по40 записей;большая база не загружается при открытии редактора.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/language_service.py",
+        "web/language-studio.mjs",
+        "tests/test_language_service.py"
+      ]
+    },
+    {
+      "id": "RCN-259",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Независимые варианты заголовка,описания и тегов",
+      "acceptance": "Изменение одной части сохраняет остальные ручные правки,поля,медиа и постоянныйID;конфликт обновления возвращает409.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "web/phone.mjs",
+        "tests/test_language_service.py",
+        "tests/generation-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-260",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Перевод собственного русского черновика",
+      "acceptance": "Общий переводчик сайта иCLI,редактируемый предпросмотр и явное применение;неизвестные фразы и машинный перевод требуют проверки.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/ru-zh-translator.mjs",
+        "cli/language.mjs",
+        "web/language-studio.mjs",
+        "tests/ru-zh-translator.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-261",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Изолированный локальный машинный перевод",
+      "acceptance": "Отдельная nativeARM среда,официальныеRU→EN→ZH модели,ограничение времени,лицензионные уведомления и аудит чисел/словаря.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/nmt_worker.py",
+        "scripts/setup-translation-runtime.py",
+        "docs/LOCAL-TRANSLATION.md",
+        "tests/test_nmt_worker.py"
+      ]
+    },
+    {
+      "id": "RCN-262",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Независимая редактура китайским носителем",
+      "acceptance": "Проверить выборку реальных объявлений и переводов носителем,зафиксировать ошибки и правки без изменения подтверждённых фактов.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-263",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Оценка прямойRU→ZH модели на корпусе аренды",
+      "acceptance": "Сравнить качество,лицензию,память и скорость прямого перевода с текущим промежуточным английским на фиксированной выборке.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-264",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Пополнение словаря из одобренных исправлений",
+      "acceptance": "Оператор подтверждает пару;система хранит версию и источник,выявляет конфликты и не превращает машинный черновик в проверенный факт.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "planned",
+      "evidence": []
     }
   ],
   "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",

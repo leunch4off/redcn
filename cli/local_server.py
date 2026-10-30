@@ -19,6 +19,7 @@ import webbrowser
 import redcn
 import photo_store
 import card_api
+import language_service
 import http_delivery
 
 
@@ -275,6 +276,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
                 try:
+                    document=language_service.dispatch(directory,path.removeprefix('/api/local/'))
+                    if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/local/'),browser_channel=browser_channel)
                     if document:self.respond(*document);return
                 except (ValueError,TypeError,OSError) as error:
@@ -333,6 +336,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                document=language_service.dispatch(directory,relative,data)
+                if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,browser_channel=browser_channel)
                 if document:self.respond(*document);return
                 if path == '/api/local/photo':

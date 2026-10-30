@@ -1,9 +1,16 @@
 import {suggestTags} from './content-tools.mjs';
 import {readSourceHtml,sourceFieldFacts} from './source-import.mjs';
 import {normalizeRussian,detectFurniture,detectConditions} from './fact-evidence.mjs';
-import {translateGeo,GEO_CATALOG} from './geo-catalog.mjs';
+import {GEO_CATALOG} from './geo-catalog.mjs';
+import {RENTAL_RULES,translateRussian} from './ru-zh-translator.mjs';
+import {getTemplate,renderTemplate,catalogStats} from './template-catalog.mjs';
+import {COMMUNITY_RENTAL_RULES,COMMUNITY_RENTAL_META} from './community-phrases.mjs';
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
+const engineCommunityKey=value=>String(value).toLowerCase().replaceAll('ё','е');
+const engineCommunityMeanings=new Map(Object.entries(COMMUNITY_RENTAL_RULES).map(([ru,zh])=>[engineCommunityKey(ru),zh]));
 export const DICTIONARY = {
+  ...Object.fromEntries(Object.entries(RENTAL_RULES).map(([ru,zh])=>[ru,engineCommunityMeanings.get(engineCommunityKey(ru))||zh])),
+  ...COMMUNITY_RENTAL_RULES,
   'Москва':'莫斯科', 'СВАО':'东北行政区', 'район Лианозово':'利阿诺佐沃区', 'р-н Лианозово':'利阿诺佐沃区', 'Лианозово':'利阿诺佐沃', 'Алтуфьево':'阿尔图菲耶沃', 'Угличская ул.':'乌格利奇大街', 'Угличская улица':'乌格利奇大街', 'Марк':'马尔克', 'Бескудниково':'别斯库德尼科沃',
   'Саларьево парк':'萨拉里耶沃公园住宅区', 'Скандинавский':'斯堪的纳维亚住宅区',
   'Москвичка':'莫斯科人住宅区', 'Бунинские луга':'布宁草地住宅区',
@@ -29,7 +36,7 @@ export const DICTIONARY = {
   'рабочий стол':'书桌', 'письменный стол':'书桌', 'компьютер':'电脑', 'пианино':'钢琴', 'фортепиано':'钢琴',
   'вытяжка':'抽油烟机', 'духовой шкаф':'烤箱', 'варочная панель':'灶台', 'кладовая':'储藏室', 'стеллаж':'置物架',
   'можно с животными':'宠物入住可与房东协商', 'можно с питомцами':'宠物入住可与房东协商',
-  'краткосрочная аренда':'可协商短租', 'wi-fi':'Wi-Fi网络', 'Евроремонт':'欧式装修', 'На улицу и двор':'窗户朝向街道和庭院', 'совмещенный':'合用卫浴', 'Монолитный':'整体浇筑结构', 'Железобетонные':'钢筋混凝土', 'Индивидуальный проект':'独立设计', 'Центральное':'集中供暖', 'в Лианозовском парке':'位于利阿诺佐沃公园内（按房源描述）',
+  'краткосрочная аренда':'可协商短租', 'wi-fi':'Wi-Fi网络', 'Евроремонт':'现代装修', 'На улицу и двор':'窗户朝向街道和庭院', 'совмещенный':'卫生间与浴室合一', 'совмещённый':'卫生间与浴室合一', 'раздельный':'厕所与浴室分开', 'Монолитный':'整体浇筑结构', 'Железобетонные':'钢筋混凝土', 'Индивидуальный проект':'独立设计', 'Центральное':'集中供暖', 'в Лианозовском парке':'位于利阿诺佐沃公园内（按房源描述）',
 };
 
 export const FEATURES = [
@@ -40,7 +47,7 @@ export const FEATURES = [
   ['slidingWardrobe','推拉门衣柜','Шкаф-купе','bedroom',['шкаф-купе']],
   ['nightstands','床头柜','Прикроватные тумбы','bedroom',['прикроватные тумбы']],
   ['roomFurniture','房间家具','Мебель в комнатах','bedroom',['мебель в комнатах']],
-  ['desk','学习桌','Рабочий стол','bedroom',['письменный стол','рабочий стол','учебный стол']],
+  ['desk','书桌','Рабочий стол','bedroom',['письменный стол','рабочий стол','учебный стол']],
   ['sofa','客厅沙发','Диван','living',['диван','диваном']],
   ['armchair','单人扶手椅','Кресло','living',['кресло']],
   ['tvStand','电视柜','ТВ-тумба · без вывода о телевизоре','living',['тв-тумба']],
@@ -84,9 +91,23 @@ const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const catalogMetroNames=[...new Set(GEO_CATALOG.records.filter(row=>row.kind==='metro').map(row=>row.ru))].sort((a,b)=>b.length-a.length);
 const catalogMetroByName=new Map(catalogMetroNames.map(name=>[fold(name),name]));
 const catalogMetroExpression=new RegExp('(?<![а-яa-z])('+catalogMetroNames.map(name=>escape(name).replaceAll('ё','[ёе]')).join('|')+')(?![а-яa-z])','giu');
-export function translate(text, rules) {
-  return translateGeo(text,rules,{includeRussian:false});
+export function translate(text, rules=DICTIONARY) {
+  return translateRussian(text,{rules,mode:'safe',preservePunctuation:true}).text;
 }
+
+// Draft translation keeps uncertain terms visible for review; it never claims
+// that a dictionary lookup is a verified translation of an entire document.
+export function translateDraft(text,{rules=DICTIONARY,entries=[],mode='draft'}={}) {
+  return translateRussian(text,{rules,entries,mode});
+}
+export function generationCapabilities(){
+  return {templates:catalogStats(),curatedRules:Object.keys(DICTIONARY).length,
+    communityPhrases:COMMUNITY_RENTAL_META.entryCount,
+    customText:{offline:true,unknown:'review',manualRulesPriority:true},
+    variants:['titleVariant','copyVariant','tagVariant']};
+}
+const safeVariant=value=>{const n=Number(value);return Number.isFinite(n)?Math.abs(Math.trunc(n)):0;};
+
 
 export function rubles(value) { return Number(value).toLocaleString('zh-CN',{maximumFractionDigits:2}); }
 export function wan(value, digits=2) { return Number((Number(value)/10000).toFixed(digits))+'W'; }
@@ -94,7 +115,7 @@ function kind(v) {
   if (v.layout==='studio') return 'Studio';
   if (v.layout==='euro2') return '一室一厅';
   if (v.layout==='euro3') return '两室一厅';
-  return ({1:'独立一居',2:'独立两居',3:'三居室',4:'四居室'})[v.rooms] || (v.rooms?v.rooms+'居室':'整套公寓');
+  return ({1:'一居室',2:'两居室',3:'三居室',4:'四居室'})[v.rooms] || (v.rooms?v.rooms+'居室':'整套公寓');
 }
 const modes={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通',car:'驾车',unknown:'出行方式待确认','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};
 export function parseRoutes(raw) {
@@ -107,8 +128,8 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   v={...v};
   const sourceConditions=detectConditions(v.sourceDescription||v.sourceAudit?.description||'').facts;
   const sharingAllowed=Number(v.rooms)===2&&v.separate===true&&!['studio','euro2'].includes(v.layout);
-  const unknown=[],problems=[];
-  const zh=s=>{const t=translate(s,rules);if(/[а-яё]/i.test(t))unknown.push(String(s));return t;};
+  const unknown=[],problems=[],translationWarnings=[];
+  const zh=s=>{const t=translateRussian(s,{rules,mode:'safe'});unknown.push(...(t.unknown||[]));if(/[а-яё]/i.test(t.text)&&!t.unknown?.length)unknown.push(String(s));translationWarnings.push(...(t.warnings||[]));return t.text;};
   const positive=k=>Number(v[k])>0;
   for(const k of ['price','deposit','area','kitchen','living','bedroomArea','floor','floors','occupants','registrationPeople','registrationMonths']){
     if(v[k]!==undefined && v[k]!=='' && (!Number.isFinite(Number(v[k]))||Number(v[k])<0))problems.push('Проверьте значение: '+k);
@@ -129,8 +150,10 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     sharingAllowed&&positive('price')?['🚨莫斯科'+price+'整套'+layout, '2人分摊参考：人均'+wan(Number(v.price)/2),area].filter(Boolean).join('｜'):
       ['✈️莫斯科'+price+layout,metro?((main?.mode==='walk'&&Number(main.time)<=10)?'近':'')+metro:null,'协助抵达登记'].filter(Boolean).join('｜'),
   ];
-  const variation=Math.abs(Number(v.titleVariant)||0);
-  const copyVariation=Math.abs(Math.trunc(Number(v.copyVariant)||0));
+  const variation=safeVariant(v.titleVariant);
+  const copyVariation=safeVariant(v.copyVariant);
+  const tagVariation=safeVariant(v.tagVariant??v.titleVariant);
+  const templateMode=v.templateMode==='catalog';
   const hooks=[];if(featureSet.has('ac'))hooks.push('空调');if(featureSet.has('bed'))hooks.push('双人床');if(featureSet.has('closet'))hooks.push('衣帽间');if(featureSet.has('dishwasher'))hooks.push('洗碗机');
   if(variation%3===1)titles=[['🏡'+area+layout,metro||'莫斯科',hooks.join('＋')||'整套出租',price].filter(Boolean).join('｜'),...titles.slice(0,2)];
   if(variation%3===2)titles=[['✈️莫斯科'+price,area+layout,'协助抵达登记'].filter(Boolean).join('｜'),titles[2],titles[1]];
@@ -141,7 +164,9 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     const emojis=['🔥','🏡','✨','💗','✈️','🌿'];
     titles=titles.map((_,i)=>[emojis[(variation+i)%emojis.length]+'莫斯科'+price+layout,...ordered.slice(i).concat(ordered.slice(0,i)).slice(0,2)].filter(Boolean).join('｜'));
   }
-  const lines=[]; const push=(...s)=>lines.push(...s);
+  const lines=[],sections={location:[],facts:[],equipment:[],transport:[],conditions:[],service:[],contact:[]};let currentSection='facts';
+  const section=name=>{currentSection=name;};
+  const push=(...items)=>{lines.push(...items);sections[currentSection].push(...items);};
   let phraseSlot=0;
   const wording=(...choices)=>{const salt=++phraseSlot;const mixed=copyVariation===0?0:((Math.imul(copyVariation+salt*73,2654435761)>>>0)^Math.floor(copyVariation/(salt+1)))>>>0;return choices[mixed%choices.length];};
   const equipmentLabel=x=>{
@@ -149,9 +174,11 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     return x[1]+(Number.isFinite(count)&&count>1?'（'+(minimum?'至少':'')+count+'件）':'');
   };
   if(v.style==='story')push(wording('🇷🇺 想在莫斯科找一套适合自己生活节奏的住房？这套'+(area?area+'的':'')+layout+'可以了解一下！','🏡 在莫斯科寻找下一处住处？先看看这套'+(area?area+'的':'')+layout+'，再了解位置、配置和租赁条件。','🌿 莫斯科租房参考：这套'+(area?area+'的':'')+layout+'，位置与配置信息整理在下面。'),'');
+  section('location');
   if(v.address)push('📍 '+zh(v.address));
   else if(v.complex||v.districtZh)push('📍 莫斯科｜'+zh(v.complex||v.districtZh));
   if(v.campus)push('🎓 校区：'+zh(v.campus));
+  section('facts');
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
   else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');
   else if(v.layout==='studio')push('🏠 户型：开放式Studio');
@@ -163,15 +190,17 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.floor||v.floors)push('🏢 楼层：'+(v.floor||'待确认')+'/'+(v.floors||'待确认')+'层');
   if(v.renovation)push('✨ 装修：'+zh(v.renovation));
   if(v.windows)push('🪟 '+zh(v.windows));
-  if(v.bathroom)push('🛁 卫浴：'+zh(v.bathroom).replace(/^(\d+)\s+合用卫浴/,'$1间合用卫浴'));
+  if(v.bathroom)push('🛁 卫浴：'+zh(v.bathroom).replace(/^(\d+)\s*(?:个)?(卫生间与浴室合一|厕所与浴室分开)/,'$1处（$2）'));
   if(v.buildingYear)push('🏘 建成年份：'+v.buildingYear);
   if(v.ceiling)push('📏 层高：'+v.ceiling+'米');
+  section('conditions');
   if(positive('price'))push('💰 租金：'+price+'/月（'+rubles(v.price)+'₽）');
   if(v.deposit!==''&&v.deposit!==undefined)push('🔐 押金：'+(Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）'));
   if(v.commission!==''&&v.commission!==undefined)push('🤝 中介费：'+(Number(v.commission)===0?'无需支付中介费':v.commission+'%'));
   if(v.prepayMonths)push('📄 预付：'+v.prepayMonths+'个月');
   if(v.contractMonths)push('📅 描述所列合同期限：'+v.contractMonths+'个月');
   if(v.minMonths&&v.leaseTerm==='long')push('📅 卡片所列最低租期：'+v.minMonths+'个月'+(v.contractMonths&&Number(v.contractMonths)!==Number(v.minMonths)?'（与描述不一致，请确认）':''));
+  section('facts');
   if(highlight)push('',wording('🔥 最大亮点：','✨ 值得关注：','💡 房源亮点：')+highlight);
   if(v.rentFreeMonths&&Number(v.rentFreeMonths)>0)push('🎁 房东提供'+v.rentFreeMonths+'个月装修免租期，具体条件以合同为准。');
   if(v.description)push('',wording('🏡 公寓介绍：','🏡 走进这套公寓：','🏡 居住空间：'),zh(v.description));
@@ -182,17 +211,21 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     const descriptions=[intro,'这套'+intro,'先了解面积、租金与入住条件：'+intro,'房源资料整理如下：'+intro];
     push('',lead,wording(...descriptions));
   }
+  section('equipment');
   if(v.style!=='compact'){
     const groups=[['bedroom','🛏️ 独立卧室','休息区域配有'],['living','🛋️ 生活空间','生活区域配有'],['kitchen','🍳 厨房配置','厨房配有'],['bathroom','🛁 卫生间','卫生间配有'],['storage','👗 储物与阳台','收纳与附属设施包括']];
     for(const [key,title,intro] of groups){const f=FEATURES.filter(x=>x[3]===key&&featureSet.has(x[0]));if(!f.length)continue;push('',wording(title,title+'清单',title+'信息'));if(v.style==='story')push(wording(intro,'此区域配备','配置包括')+f.map(equipmentLabel).join('、')+'。');else push(...f.map(x=>wording('✅ ','✔️ ','▪️ ')+equipmentLabel(x)));}
   }else{const f=FEATURES.filter(x=>featureSet.has(x[0]));if(f.length){push('',wording('🛋 家具家电：','🛋 室内配置：','🛋 已配备：','🛋 家具清单：'));if(copyVariation%3===0)push(f.map(equipmentLabel).join(' · '));else if(copyVariation%3===1){for(const key of ['kitchen','bedroom','living','bathroom','storage']){const group=f.filter(x=>x[3]===key);if(group.length)push(group.map(equipmentLabel).join('、'));}}else push(...f.map(x=>wording('✅ ','✔️ ','▪️ ')+equipmentLabel(x)));}}
   const missing=(v.sourceAudit?.furniture||[]).filter(row=>row.status==='absent'&&(row.matches.some(m=>m.source==='Описание'&&m.status==='absent')||['tv','washer'].includes(row.id)));
   if(missing.length)push('','📌 房源注明未配备：'+missing.map(row=>FEATURES.find(f=>f[0]===row.id)?.[1]).filter(Boolean).join('、')+'。');
+  section('location');
   if(v.details)push('','🌳 周边与房屋亮点：',zh(v.details));
   const routeLine=r=>zh(r.name)+(r.time?'｜'+(modes[r.mode]||'公共交通')+'约'+r.time+'分钟':'｜时间待确认')+(r.line?'｜'+r.line.replace(/^([0-9]+)$/,'$1号线'):'');
+  section('transport');
   if(routes.length)push('',wording('🚇 交通：','🚇 地铁与出行：','🚇 位置与交通：'),...routes.map(r=>'▪️ '+routeLine(r)));
   if(v.route)push('🗺 '+zh(v.route));
   if(universities.length)push('','🎓 大学通勤参考：',...universities.map(r=>'▪️ '+routeLine(r)));
+  section('conditions');
   if(sharingAllowed&&positive('price')){
     push('','💸 合租预算参考：');
     for(const n of [2,4])push(n+'人：约'+wan(Number(v.price)/n)+'（'+rubles(Math.round(Number(v.price)/n))+'₽）/人/月');
@@ -201,12 +234,13 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   const utilities={included:'💡 租金包含各项费用。',meters:'💡 物业费已包含，仅水电按表计费。',extra:'💡 物业及水电等费用另付，具体金额请确认。'};
   if(utilities[v.utilities])push('',utilities[v.utilities]);
   if(v.shortTerm&&v.shortTermPolicy!=='no')push('📅 可协商短租'+(v.minMonths?'，'+v.minMonths+'个月起':'')+'，具体条件请咨询。');
-  if(v.children&&!['no','conflict'].includes(v.childrenPolicy)&&sourceConditions.childrenPolicy!=='no')push('👶 可带孩子');
-  if(v.pets&&!['no','conflict','negotiable'].includes(v.petPolicy)&&sourceConditions.petPolicy!=='no')push('🐾 可带宠物，具体条件请与房东确认');
+  if(v.children&&!['no','conflict'].includes(v.childrenPolicy)&&!['no','conflict'].includes(sourceConditions.childrenPolicy))push('👶 可带孩子');
+  if(v.pets&&!['no','conflict','negotiable'].includes(v.petPolicy)&&!['no','conflict','negotiable'].includes(sourceConditions.petPolicy))push('🐾 可带宠物，具体条件请与房东确认');
   if(v.smokingPolicy==='no')push('🚭 仅限不吸烟的租客');
   if(v.guestPolicy==='no')push('👥 房东要求不接待访客或聚会');
   if(v.subletPolicy==='no')push('📝 不得将公寓转租给他人');
   if(v.shortTermPolicy==='no')push('📅 不接受按日短租');
+  section('service');
   {
     let registration='抵达登记（临时居住登记）：提供办理协助';
     if(positive('registrationMonths'))registration+='（'+v.registrationMonths+'个月）';
@@ -216,6 +250,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.pickup)push('🚕 免费接送到入住地点'+(v.luggage?'，协助搬运行李':'')+'。');
   if(v.arrival)push('📋 免费协助了解抵达后的相关手续。');
   if(v.support&&prefs.benefits)push('','🇨🇳 我们的优势：',prefs.benefits);
+  section('contact');
   if(prefs.contact)push('','📩 联系我们：'+prefs.contact);
   else push('',wording('📩 欢迎中文咨询，了解房源详情并预约看房！','💌 想了解租赁条件或安排看房？欢迎用中文私信我们！','📨 欢迎中文留言咨询，我们协助了解房源并预约看房。'));
   const tags=['#莫斯科租房','#莫斯科留学','#莫斯科生活'];
@@ -223,10 +258,44 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   for(const r of routes)tags.push('#'+zh(r.name).replace(/[\s#]/g,''));
   for(const u of universities)tags.push('#'+zh(u.name).replace(/[\s#]/g,''));
   if(prefs.brandTags)tags.push(...prefs.brandTags.split(/\s+/).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t));
-  const tagSuggestions=suggestTags(v,rules,translate,parseRoutes);
+  let tagSuggestions=suggestTags({...v,tagVariant:tagVariation,
+    pets:!!v.pets&&!['no','conflict','negotiable'].includes(v.petPolicy)&&!['no','conflict','negotiable'].includes(sourceConditions.petPolicy),
+    children:!!v.children&&!['no','conflict'].includes(v.childrenPolicy)&&!['no','conflict'].includes(sourceConditions.childrenPolicy)},rules,translate,parseRoutes);
   const finalTags=tagSuggestions.map(x=>'#'+x.tag);
   if(prefs.brandTags)finalTags.push(...prefs.brandTags.split(/\s+/).filter(Boolean).map(t=>t.startsWith('#')?t:'#'+t));
-  return {titles,body:lines.join('\n'),tags:[...new Set(finalTags)].join(' '),tagSuggestions,unknown:[...new Set(unknown)],problems};
+  let body=lines.join('\n'),renderedTags=[...new Set(finalTags)].join(' '),templateInfo=null;
+  if(templateMode){
+    const titleContext={city:'莫斯科',layout,area,price:price?price+'/月':'',
+      metro:main?[metro,main.time?(modes[main.mode]||'公共交通')+'约'+main.time+'分钟':''].filter(Boolean).join(' '):'',
+      feature:FEATURES.filter(x=>featureSet.has(x[0])).slice(0,2).map(equipmentLabel).join('、')};
+    const titleIndexes=[variation,variation+1,variation+2];
+    titles=titleIndexes.map(index=>renderTemplate('title',index,titleContext));
+    const blockContext=Object.fromEntries(Object.entries(sections).map(([key,value])=>[key,value.join('\n').replace(/^\n+|\n+$/g,'')]));
+    body=renderTemplate('description',copyVariation,blockContext);
+    renderedTags=renderTemplate('tags',tagVariation,{tags:[...new Set(finalTags)]});
+    const byTag=new Map(tagSuggestions.map(row=>[row.tag,row]));
+    tagSuggestions=[...new Set((renderedTags.match(/#[^\s#]+/g)||[]).map(tag=>tag.slice(1)))].map(tag=>byTag.get(tag)||{tag,reason:finalTags.includes('#'+tag)?'Тег студии из настроек':'Общая тема аренды; редакционная формулировка',ru:'Редакционный тег аренды'});
+    templateInfo={version:1,mode:'catalog',titleId:getTemplate('title',variation).id,
+      titleIds:titleIndexes.map(index=>getTemplate('title',index).id),
+      descriptionId:getTemplate('description',copyVariation).id,tagId:getTemplate('tags',tagVariation).id,
+      indices:{title:variation,description:copyVariation,tags:tagVariation},counts:catalogStats()};
+  }
+  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],problems,templateInfo};
+}
+
+// Trigger dictionaries describe vocabulary, not evidence. A larger vocabulary
+// must not turn a negated or merely planned amenity into a listing highlight.
+function confirmedDetailTrigger(text,phrase){
+  const source=fold(text),needle=fold(phrase);let from=0,found=false,blocked=false,index;
+  while((index=source.indexOf(needle,from))!==-1){
+    const before=source.slice(Math.max(0,index-75),index).split(/[.!?;\n,]/).at(-1);
+    const after=source.slice(index+needle.length,index+needle.length+75).split(/[.!?;\n,]/)[0];
+    const beforeBlock=/(?:^|\s)(?:не|нет|без|отсутствует|не будет|планируется)\s*(?:[^\s]+\s+){0,2}$/.test(before);
+    const afterBlock=/^\s*(?:(?:только|пока|еще|скоро)\s+)?(?:нет|отсутств|не\s+(?:будет|предусмотр)|будет|будут|планиру|ожидается|запланирован)/.test(after);
+    if(beforeBlock||afterBlock)blocked=true;else found=true;
+    from=index+Math.max(needle.length,1);
+  }
+  return found&&!blocked;
 }
 
 export function extractFacts(text,rules=DICTIONARY) {
@@ -260,7 +329,7 @@ export function extractFacts(text,rules=DICTIONARY) {
   }
   routes.sort((a,b)=>a.at-b.at);
   if(routes.length){out.metro=routes[0].name;out.walk=routes[0].time;out.transit=routes.map(r=>[r.name,r.time,r.mode].join(' | ')).join('\n');}
-  const details=Object.keys(rules).filter(k=>k.length>5&&/магазин|ресторан|вид на|окна во|ремонт|двор|парк|лес|без мебели/.test(k)&&fold(t).includes(fold(k)));
+  const details=Object.keys(rules).filter(k=>k.length>5&&/магазин|ресторан|вид на|окна во|ремонт|двор|парк|лес|без мебели/.test(k)&&confirmedDetailTrigger(t,k));
   if(details.length)out.details=details.join(', ');
   if(/(?:можно|разрешено|допускается)\s+с детьми/i.test(t))out.children=true;
   if(/(?:можно|разрешено|обсужда[а-я]+)\s+(?:с\s+)?(?:животными|питомцами)/i.test(t))out.pets=true;

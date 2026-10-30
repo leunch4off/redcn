@@ -356,6 +356,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     self.respond(200,file.read_bytes(),mime);return
                 if path.startswith('/api/phone/'):
                     import card_api
+                    import language_service
+                    document=language_service.dispatch(directory,path.removeprefix('/api/phone/'))
+                    if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                     if document:self.respond(*document);return
                 if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':2,'activeJob':latest_job_info()});return
@@ -392,8 +395,10 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if self.headers.get_content_type()!='application/json':raise ValueError('Нужен JSON')
                 size=int(self.headers.get('Content-Length','0'))
                 import card_api
+                import language_service
                 relative=path.removeprefix('/api/phone/')
-                limit=card_api.request_limit(relative) or 100_000
+                language_route=relative=='translate' or re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)',relative)
+                limit=card_api.request_limit(relative) or (256_000 if language_route else 100_000)
                 if not 1<=size<=limit:raise ValueError('Превышен размер запроса')
                 data=json.loads(self.rfile.read(size))
                 if not isinstance(data,dict):raise ValueError('Нужен JSON-объект')
@@ -401,6 +406,8 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     if self.secure:cookie+='; Secure'
                     self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info()},headers={'Set-Cookie':cookie});return
+                document=language_service.dispatch(directory,relative,data)
+                if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                 if document:self.respond(*document);return
                 if path=='/api/phone/logout':
