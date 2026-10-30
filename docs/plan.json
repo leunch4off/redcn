@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 11,
-  "total": 272,
+  "version": 13,
+  "total": 286,
   "tasks": [
     {
       "id": "RCN-001",
@@ -3525,8 +3525,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/design-canvas-editor.mjs",
+        "tests/design-canvas-editor.test.mjs",
+        "tests/test_design_canvas_browser.py",
+        "docs/VERIFICATION.md#v16"
+      ]
     },
     {
       "id": "RCN-240",
@@ -4008,6 +4013,220 @@
       "acceptance": "Добавлять датированную статистику и подтверждённые отзывы; рейтинг популярности не строить по наличию китайской страницы или общему числу иностранцев.",
       "priority": "P1",
       "depends_on": [],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-273",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Китайский макет Ciliev в стиле референса M16",
+      "acceptance": "Горизонтальный A4: тёмный фон, белый текст и золотистые акценты, агент с аватаром, параметры и галерея; исходная личность M16 не переносится.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "web/publication-render.mjs",
+        "docs/CILIEV-DESIGN-REFERENCE.md"
+      ]
+    },
+    {
+      "id": "RCN-274",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Единая модель координат для PDF и социальных обложек",
+      "acceptance": "Версия 2 задаёт поверхности, узлы, привязки и стили; предпросмотр, HTML и PNG используют одну геометрию.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "tests/publication-core.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-275",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Intro из трёх фотографий с параметрами квартиры",
+      "acceptance": "Портретный PNG 1080×1920 повторяет композицию референса; фотографии и китайские значения берутся из выбранной карточки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-render.mjs",
+        "tests/publication-core.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-276",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Тёмный outro с картой и учебными маршрутами",
+      "acceptance": "Настоящая карта по координатам, отдельные карточки только подтверждённых поездок, китайские подписи и сохранённая атрибуция.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_map.py",
+        "web/publication-model.mjs",
+        "tests/test_listing_map.py"
+      ]
+    },
+    {
+      "id": "RCN-277",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Независимое перемещение внутренних подписей",
+      "acceptance": "Заголовки маршрутов, время, остановки и отдельные подписи/значения параметров представлены самостоятельными редактируемыми узлами.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "tests/test_design_canvas_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-278",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Личные логотип и аватар консультанта",
+      "acceptance": "Приватные изображения до 4 МиБ, сохранённый оригинал и очищенное превью; шаблон хранит ссылки, загрузка защищена прежней авторизацией.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "cli/publication_schema.py",
+        "tests/test_publication_backend.py"
+      ]
+    },
+    {
+      "id": "RCN-279",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Постоянные привязки полей и оформления",
+      "acceptance": "Текстовые поля переключаются между данными карточки и постоянной надписью; шрифт, цвета, размеры, прозрачность и порядок слоёв сохраняются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/design-canvas-editor.mjs",
+        "web/presentation-studio.mjs",
+        "tests/design-canvas-editor.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-280",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Миграция и восстановление общего макета",
+      "acceptance": "Старые шаблоны читаются без потери контактов, сохраняется резервная копия, JSON переносит модель; явная загрузка сохранённой версии сохраняет локальный черновик.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/test_ciliev_studio_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-281",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Защита дизайна от перезаписи другим устройством",
+      "acceptance": "Проверка expectedUpdated возвращает 409 при конфликте; исходная версия локального черновика сохраняется через перезагрузку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/presentation-studio.mjs",
+        "tests/test_publication_backend.py",
+        "tests/test_ciliev_studio_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-282",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Полный текст и фотографии в многостраничном PDF",
+      "acceptance": "Длинное описание продолжается на дополнительных листах, выбранные фото до 30 размещаются по страницам, шрифты и изображения ожидаются в ограниченный срок.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-render.mjs",
+        "cli/card_assets.py",
+        "tests/publication-core.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-283",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Ленивый дизайнер на телефоне",
+      "acceptance": "Крупный словарь и редактор загружаются отдельным модулем при открытии дизайна, без включения в первую загрузку ленты.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/phone-designer.mjs",
+        "web/phone.mjs",
+        "scripts/validate-pages.mjs"
+      ]
+    },
+    {
+      "id": "RCN-284",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Визуальная проверка готового комплекта Ciliev",
+      "acceptance": "Реальные HTML/PDF/intro/outro из одной карточки проверены по изображениям страниц, геометрии, китайским шрифтам и сохранению пользовательских данных.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/VERIFICATION.md#v16",
+        "tests/test_ciliev_studio_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-285",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Компактный макет без подтверждённых маршрутов",
+      "acceptance": "При отсутствии подтверждённых маршрутов автоматический макет убирает пустую маршрутную зону и может увеличить карту; явно заданные пользователем позиции сохраняются. Canvas, рамки выбора и HTML/PDF/PNG используют одинаковую результирующую геометрию; проверены случаи с нулём, одним и несколькими подтверждёнными маршрутами.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-274",
+        "RCN-276"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-286",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Проверенные подрезки в дизайнере Mac",
+      "acceptance": "Дизайнер Mac автоматически использует ручную производную либо проверенную OCR-копию из backend; ручные правки имеют приоритет. HTML/PDF/PNG и повторное открытие сохраняют одинаковый выбор кадров. Оригиналы доступны и не перезаписываются, сомнительная OCR-подрезка не применяется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-275",
+        "RCN-282"
+      ],
       "status": "planned",
       "evidence": []
     }

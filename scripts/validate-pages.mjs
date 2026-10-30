@@ -21,3 +21,12 @@ for(const [name,size] of [['apple-touch-icon.png',180],['icon-192.png',192],['ic
  const bytes=await readFile(new URL('docs/icons/'+name,root));assert.equal(bytes.readUInt32BE(16),size);assert.equal(bytes.readUInt32BE(20),size);
 }
 console.log('Phone shell, manifest and iPhone icons are valid');
+
+const phoneDesigner=await readFile(new URL('docs/phone-designer.mjs',root),'utf8');
+const designerCheck=spawnSync(process.execPath,['--check','--input-type=module'],{input:phoneDesigner,encoding:'utf8'});
+assert.equal(designerCheck.status,0,designerCheck.stderr);
+assert(phoneDesigner.includes('export {setupPresentationStudio}'));
+assert(!phoneDesigner.includes('name="redcn-token"'),'Public designer module must not contain a desktop token');
+assert(phoneScript.includes("import('/phone/designer.mjs')"),'Designer must load on demand');
+assert(!phoneScript.includes('UNIVERSITY_CATALOG ='),'Phone startup must not embed the large designer vocabulary');
+console.log('Lazy phone designer is valid and separate from startup');

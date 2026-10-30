@@ -8,6 +8,7 @@ import binascii
 import hashlib
 from html.parser import HTMLParser
 import json
+import math
 from pathlib import Path
 import re
 import secrets
@@ -20,8 +21,10 @@ import zipfile
 import io
 
 MAX_ATTACHMENT = 40 * 1024 * 1024
-MAX_HTML = 10 * 1024 * 1024
+MAX_HTML = 32 * 1024 * 1024
 MAX_TEMPLATE = 64 * 1024
+MAX_TEMPLATE_V2 = 256 * 1024
+MAX_DESIGN_IMAGE = 4 * 1024 * 1024
 _CATEGORIES = {'contract', 'floorplan', 'lidar', 'other'}
 _STATUSES = {'active', 'rented', 'archived'}
 _MIMES = {
@@ -35,6 +38,11 @@ _MIMES = {
 }
 _pdf_lock = threading.Lock()
 _file_lock = threading.RLock()
+_EXPECTED_UNSET = object()
+
+
+class DesignConflict(ValueError):
+    pass
 
 
 def _serialize_files(function):
@@ -66,6 +74,7 @@ def _db(directory):
     connection.execute('CREATE TABLE IF NOT EXISTS attachments (id TEXT PRIMARY KEY, card_id TEXT, name TEXT, category TEXT, mime TEXT, size INTEGER, created REAL, digest TEXT)')
     connection.execute('CREATE TABLE IF NOT EXISTS designs (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT, updated REAL)')
     connection.execute('CREATE TABLE IF NOT EXISTS exports (id TEXT PRIMARY KEY, card_id TEXT, kind TEXT, name TEXT, mime TEXT, size INTEGER, created REAL, digest TEXT)')
+    connection.execute('CREATE TABLE IF NOT EXISTS design_images (id TEXT PRIMARY KEY, role TEXT, name TEXT, mime TEXT, width INTEGER, height INTEGER, size INTEGER, created REAL, digest TEXT, original_digest TEXT, original_mime TEXT, original_size INTEGER)')
     return connection
 
 
@@ -132,9 +141,34 @@ def load_design(directory):
     return {'template': json.loads(row[0]) if row else None, 'updated': row[1] if row else None}
 
 
-def save_design(directory, template):
+def _save_design_payload(directory, encoded, expected_updated, asset_ids=()):
+    if expected_updated is not _EXPECTED_UNSET and expected_updated is not None and (type(expected_updated) not in (int, float) or not math.isfinite(expected_updated)):
+        raise ValueError('Неверная версия сохранённого дизайна')
+    with _db(directory) as connection:
+        connection.execute('BEGIN IMMEDIATE')
+        old = connection.execute('SELECT updated FROM designs WHERE id=1').fetchone()
+        current = old[0] if old else None
+        if expected_updated is not _EXPECTED_UNSET and expected_updated != current:
+            raise DesignConflict('Дизайн изменён на другом устройстве. Загрузите актуальную версию перед сохранением.')
+        for asset_id in filter(None, asset_ids):
+            if not connection.execute('SELECT 1 FROM design_images WHERE id=?', (asset_id,)).fetchone():
+                raise ValueError('Изображение бренда отсутствует. Загрузите его заново.')
+        stamp = max(time.time(), (current or 0)+0.000001)
+        connection.execute('INSERT OR REPLACE INTO designs VALUES (1,?,?)', (encoded, stamp))
+    return {'template': json.loads(encoded), 'updated': stamp}
+
+
+def save_design(directory, template, expected_updated=_EXPECTED_UNSET):
     if not isinstance(template, dict):
         raise ValueError('Шаблон должен быть JSON-объектом')
+    if type(template.get('version')) is int and template['version'] == 2:
+        from publication_schema import validate_publication_template
+        validated = validate_publication_template(template)
+        encoded = json.dumps(validated, ensure_ascii=False, allow_nan=False)
+        if len(encoded.encode('utf-8')) > MAX_TEMPLATE_V2:
+            raise ValueError('Шаблон превышает 256 КБ')
+        asset_ids = [validated['brand'].get(key) for key in ('logoAssetId', 'avatarAssetId')]
+        return _save_design_payload(directory, encoded, expected_updated, asset_ids)
     allowed = {'version', 'preset', 'accent', 'background', 'foreground', 'font', 'paper', 'blocks', 'contact', 'footer', 'intro', 'outro'}
     if set(template) - allowed:
         raise ValueError('Неизвестное поле шаблона')
@@ -187,10 +221,7 @@ def save_design(directory, template):
             if not isinstance(block, dict) or set(block) != {'id', 'enabled'} or not isinstance(block['id'], str) or block['id'] not in {'cover', 'title', 'facts', 'description', 'photos', 'location', 'contact'} or type(block['enabled']) is not bool or block['id'] in seen:
                 raise ValueError('Неверный блок шаблона')
             seen.add(block['id'])
-    stamp = time.time()
-    with _db(directory) as connection:
-        connection.execute('INSERT OR REPLACE INTO designs VALUES (1,?,?)', (encoded, stamp))
-    return {'template': json.loads(encoded), 'updated': stamp}
+    return _save_design_payload(directory, encoded, expected_updated)
 
 
 def _attachment(row):
@@ -311,7 +342,7 @@ def remove_attachment(directory, result_id, attachment_id):
         connection.execute('DELETE FROM attachments WHERE card_id=? AND id=?', (result_id, attachment_id))
         connection.execute('UPDATE card_archive SET updated=? WHERE id=?', (time.time(), result_id))
         # Physical content is removed only once its final private reference is gone.
-        refs = connection.execute('SELECT (SELECT COUNT(*) FROM attachments WHERE digest=?)+(SELECT COUNT(*) FROM exports WHERE digest=?)', (row[0], row[0])).fetchone()[0]
+        refs = connection.execute('SELECT (SELECT COUNT(*) FROM attachments WHERE digest=?)+(SELECT COUNT(*) FROM exports WHERE digest=?)+(SELECT COUNT(*) FROM design_images WHERE digest=? OR original_digest=?)', (row[0], row[0], row[0], row[0])).fetchone()[0]
         if not refs:
             path = _folder(directory) / row[0]
             if not path.is_symlink():
@@ -331,7 +362,7 @@ def attachment_asset(directory, result_id, attachment_id):
 
 
 _ALLOWED_TAGS = set('html head title meta body style main header footer section article div span p h1 h2 h3 h4 h5 h6 strong b em i small sup sub br hr img figure figcaption ul ol li dl dt dd table thead tbody tfoot tr td th colgroup col a'.split())
-_ALLOWED_ATTRS = set('class id style title lang dir colspan rowspan width height alt src href charset name content role'.split())
+_ALLOWED_ATTRS = set('class id style title lang dir colspan rowspan width height alt src href charset name content role data-node-id data-bind'.split())
 _IMAGE_PREFIX = re.compile(r'^data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/=\r\n]+)$', re.I)
 
 
@@ -351,6 +382,79 @@ def _image_data(value):
     import photo_store
     image = photo_store.open_photo(content)
     image.close()
+
+
+@_serialize_files
+def add_design_image(directory, data):
+    """Keep an original privately and expose only a bounded, metadata-free copy."""
+    if not isinstance(data, dict) or set(data)-{'data', 'name', 'role'}:
+        raise ValueError('Неверные поля изображения бренда')
+    role = data.get('role')
+    if role not in ('logo', 'avatar'):
+        raise ValueError('Вид изображения: logo/avatar')
+    name = _name(data.get('name'))
+    value = data.get('data')
+    if not isinstance(value, str) or len(value) > ((MAX_DESIGN_IMAGE+2)//3)*4+50:
+        raise ValueError('Изображение бренда превышает 4 МБ')
+    match = _IMAGE_PREFIX.fullmatch(value)
+    if not match:
+        raise ValueError('Нужен статичный PNG, JPEG или WebP')
+    try:
+        original = base64.b64decode(re.sub(r'\s+', '', match[2]), validate=True)
+    except (ValueError, binascii.Error) as error:
+        raise ValueError('Неверное изображение бренда') from error
+    if not original or len(original)>MAX_DESIGN_IMAGE:
+        raise ValueError('Изображение бренда превышает 4 МБ')
+    # Signature and decoded format must agree; MIME text alone is untrusted.
+    signature = ((match[1].lower()=='png' and original.startswith(b'\x89PNG\r\n\x1a\n')) or
+                 (match[1].lower()=='jpeg' and original.startswith(b'\xff\xd8\xff')) or
+                 (match[1].lower()=='webp' and original.startswith(b'RIFF') and original[8:12]==b'WEBP'))
+    if not signature:
+        raise ValueError('Формат не соответствует содержимому изображения')
+    import photo_store
+    try:
+        image = photo_store.open_photo(original)
+    except OSError as error:
+        raise ValueError('Не удалось прочитать изображение бренда') from error
+    try:
+        from PIL import Image
+        # A fresh image discards EXIF, location and ancillary source metadata.
+        image.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+        mode = 'RGBA' if image.mode in ('RGBA','LA') or 'transparency' in image.info else 'RGB'
+        clean = Image.new(mode, image.size)
+        clean.paste(image.convert(mode))
+        output = io.BytesIO()
+        clean.save(output, format='PNG', optimize=True)
+        content = output.getvalue()
+        width, height = clean.size
+        clean.close()
+    finally:
+        image.close()
+    if len(content)>MAX_DESIGN_IMAGE:
+        raise ValueError('Подготовленное изображение превышает 4 МБ')
+    with _db(directory) as connection:
+        if connection.execute('SELECT COUNT(*) FROM design_images').fetchone()[0]>=200:
+            raise ValueError('До 200 изображений бренда')
+        digest = _write(directory, content)
+        original_digest = _write(directory, original)
+        identifier = secrets.token_hex(16)
+        stamp = time.time()
+        connection.execute('INSERT INTO design_images VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            (identifier, role, name, 'image/png', width, height, len(content), stamp,
+             digest, original_digest, 'image/'+match[1].lower(), len(original)))
+    return design_image(directory, identifier)
+
+
+@_serialize_files
+def design_image(directory, asset_id):
+    _id(asset_id)
+    with _db(directory) as connection:
+        row = connection.execute('SELECT id,role,name,mime,width,height,size,created,digest FROM design_images WHERE id=?', (asset_id,)).fetchone()
+    if not row:
+        raise ValueError('Изображение бренда не найдено')
+    content = _read(directory, row[8])
+    return {**dict(zip(('id','role','name','mime','width','height','bytes','created'), row[:8])),
+            'dataUrl':'data:image/png;base64,'+base64.b64encode(content).decode()}
 
 
 def _css(value):
@@ -433,7 +537,7 @@ def validate_html(html):
     if not isinstance(html, str) or not html.strip() or '\x00' in html:
         raise ValueError('Нужен HTML-документ')
     if len(html.encode()) > MAX_HTML:
-        raise ValueError('HTML превышает 10 МБ')
+        raise ValueError('HTML превышает 32 МБ')
     if not re.search(r'<html(?:\s|>)', html, re.I) or not re.search(r'<body(?:\s|>)', html, re.I):
         raise ValueError('Нужен полный HTML-документ')
     parser = _StaticHTML()
@@ -463,7 +567,7 @@ def _render_pdf(html, browser_channel):
                     page.set_content(html, wait_until='load', timeout=30000)
                     # This fixed Playwright expression only waits for decoded data
                     # images and installed fonts; page-authored JavaScript stays off.
-                    page.evaluate('async () => { await document.fonts.ready; await Promise.all(Array.from(document.images, image => image.decode())); }')
+                    page.evaluate('async () => { let timer; try { await Promise.race([(async()=>{ await document.fonts.ready; await Promise.all(Array.from(document.images, image => image.decode())); })(), new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("Шрифты или изображения не подготовлены за 15 секунд")),15000);})]); } finally { clearTimeout(timer); } }')
                     content = page.pdf(format='A4', print_background=True, prefer_css_page_size=True)
                     context.close()
                 finally:
@@ -484,7 +588,7 @@ def _persist_export(directory, result_id, content, kind, mime):
     digest = _write(directory, content)
     export_id = secrets.token_hex(16)
     stamp = time.time()
-    name = 'most-' + result_id[:8] + ('-' + kind + '.png' if kind in ('intro', 'outro') else '.' + kind)
+    name = 'ciliev-' + result_id[:8] + ('-' + kind + '.png' if kind in ('intro', 'outro') else '.' + kind)
     with _db(directory) as connection:
         connection.execute('INSERT INTO exports VALUES (?,?,?,?,?,?,?,?)', (export_id, result_id, kind, name, mime, len(content), stamp, digest))
     return {'id': export_id, 'result_id': result_id, 'kind': kind, 'name': name, 'mime': mime, 'bytes': len(content), 'created': stamp}

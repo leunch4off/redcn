@@ -113,6 +113,14 @@
 
 .presentation-proof-dialog{width:min(1120px,96vw);height:min(94svh,1100px);max-width:96vw;max-height:94svh;padding:20px;border:1px solid #dce4d5;border-radius:16px;color:#29352e;background:#f6f8f2;overflow:auto}.presentation-proof-dialog::backdrop{background:#18271ebd}.presentation-proof-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px}.presentation-proof-tools h2{margin:0}.presentation-proof-dialog>a{display:inline-flex;align-items:center;min-height:44px;margin:12px 0;text-decoration:none}.presentation-proof-frame{display:block;width:100%;height:calc(94svh - 200px);min-height:280px;border:0;background:#d5dad0}.presentation-proof-tools .btn{min-height:44px}@media(max-width:650px){.presentation-proof-dialog{padding:14px;width:calc(100vw - 12px);max-width:calc(100vw - 12px);height:calc(100svh - 16px);max-height:calc(100svh - 16px);border-radius:13px}.presentation-proof-frame{height:calc(100svh - 210px)}.presentation-proof-tools h2{font-size:18px}.presentation-proof-dialog .muted{font-size:12px}}
 
+/* The publication editor uses its own navy canvas; operator controls stay readable. */
+.presentation-brand-settings>summary,.presentation-theme-settings>summary,.presentation-preview-card>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;font-size:13px;line-height:1.5;color:#3d5542}.presentation-brand-settings,.presentation-theme-settings{border-bottom:1px solid #dce4d5;padding:4px 0 14px}.presentation-theme-settings{margin-top:14px}.presentation-brand-files{display:grid;gap:14px;margin:18px 0}.presentation-brand-file{min-width:0;padding:12px;border:1px solid #dce4d5;border-radius:10px;background:#f7f9f3}.presentation-brand-file label{margin-top:0}.presentation-brand-file input[type=file]{font-size:12px;padding:8px;overflow:hidden}.presentation-brand-thumb{width:72px;height:72px;object-fit:contain;display:block;margin:10px 0;border-radius:50%;background:#07162b;border:1px solid #b79665}.presentation-brand-file .btn{font-size:12px;margin-top:8px}.presentation-canvas-mount{min-width:0;max-width:100%;margin-bottom:16px}.presentation-studio .presentation-previews>details{margin-top:16px}.presentation-studio .presentation-previews>details>summary{margin-bottom:12px}.presentation-studio .presentation-image[hidden]{display:none!important}.presentation-studio .presentation-colors{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.presentation-studio .presentation-colors label{margin-top:7px;font-size:11px}.presentation-studio .presentation-controls{max-height:calc(100svh - 36px)}.presentation-studio #presentationLegacyExport[hidden]{display:none!important}@media(max-width:850px){.presentation-studio .presentation-controls{max-height:none}}@media(max-width:650px){.presentation-brand-settings>summary,.presentation-theme-settings>summary,.presentation-preview-card>summary{font-size:14px}.presentation-brand-files{gap:12px}.presentation-brand-file input[type=file]{font-size:16px}.presentation-studio .presentation-colors label{font-size:12px}.presentation-brand-file .btn{min-height:44px;font-size:13px}.presentation-studio .presentation-frame{min-height:420px}.presentation-studio .presentation-layout{gap:14px}}
+@media(max-width:850px){.presentation-studio .presentation-previews{order:-1}.presentation-studio .presentation-controls{order:1}}
+
+.design-canvas-editor{border:1px solid #d7dfd0;border-radius:16px;padding:18px;background:#f6f8f2;margin:18px 0;color:#293a2b;min-width:0}.design-canvas-heading h3{margin:0 0 7px;font-size:20px}.design-canvas-heading p{margin:0 0 16px}.design-canvas-toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin-bottom:14px}.design-canvas-toolbar label{margin:0;font-size:12px;min-width:0}.design-canvas-toolbar label:has(select){flex:1 1 170px}.design-canvas-toolbar select{display:block;min-height:44px;font-size:16px;margin-top:6px;width:100%}.design-canvas-toolbar label:has(input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:44px}.design-canvas-toolbar input[type=checkbox]{width:20px;height:20px}.design-canvas-toolbar .btn{min-height:44px}.design-canvas-workbench{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}.design-canvas-workarea{min-width:0}.design-canvas-viewport{max-width:100%;min-width:0;overflow:auto;max-height:78vh;min-height:240px;padding:14px;background:#d8ded5;border:1px solid #cbd4c4;border-radius:12px;overscroll-behavior:contain}.design-canvas-page{position:relative;margin:0 auto;flex-shrink:0;box-shadow:0 5px 24px #10271633;background:#07162b;isolation:isolate}.design-canvas-page>canvas{display:block;width:100%;height:100%}.design-canvas-overlay{position:absolute;inset:0;touch-action:auto;z-index:1}.design-canvas-page.has-grid .design-canvas-overlay{background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:var(--dce-grid,16px) var(--dce-grid,16px)}.design-canvas-hit{position:absolute;min-width:4px;min-height:4px;border:1px solid transparent;cursor:move;touch-action:none;outline:none}.design-canvas-hit:hover{border-color:#65caeaa0}.design-canvas-hit:focus-visible{outline:2px solid #fae2a9;outline-offset:2px}.design-canvas-hit.is-selected{border:2px solid #55c5ec;background:#55c5ec08}.design-canvas-hit.is-locked{cursor:default}.design-canvas-resize{position:absolute;bottom:-6px;right:-6px;width:13px;height:13px;background:#fff;border:2px solid #229bc7;border-radius:3px;cursor:nwse-resize;touch-action:none;z-index:100}.design-canvas-inspector{position:static!important;width:auto!important;min-width:0!important;padding:14px!important;margin:0!important;background:white!important;border:1px solid #d6dfce!important;border-radius:12px!important;color:#293a2b!important;box-shadow:none!important;overflow:hidden}.design-canvas-inspector h4{margin:0 0 12px;font-size:15px;line-height:1.4}.design-canvas-inspector label{display:block;font-size:12px;font-weight:500;line-height:1.4;margin:12px 0 0}.design-canvas-inspector input:not([type=checkbox]):not([type=range]),.design-canvas-inspector select,.design-canvas-inspector textarea{display:block;width:100%;min-width:0;max-width:100%;font-size:16px;min-height:44px;padding:8px;margin-top:5px;border:1px solid #ccd6c4;border-radius:7px;background:#fcfdf9;box-sizing:border-box}.design-canvas-inspector textarea{line-height:1.5;resize:vertical}.design-canvas-inspector input[type=range]{width:100%;min-height:34px;margin-top:4px}.design-canvas-inspector input[type=color]{padding:4px!important;height:44px}.design-canvas-inspector label:has(input[type=checkbox]){display:flex;gap:10px;align-items:center;min-height:36px}.design-canvas-inspector input[type=checkbox]{width:20px;height:20px;margin:0}.design-canvas-fields{border:0;padding:0;margin:0;min-width:0}.design-canvas-fields:disabled{opacity:.4}.design-canvas-numbers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 8px}.design-canvas-actions{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.design-canvas-actions .btn{flex:1 1 100px;font-size:12px;min-height:40px;padding:7px}.design-canvas-actions:has([id^=designCanvasAlign-]) .btn{flex:1 1 30px;min-width:30px}.design-canvas-layers{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow:auto;padding:3px}.design-canvas-layers .btn{text-align:left;min-height:36px;font-size:12px;white-space:normal;overflow-wrap:anywhere}.design-canvas-layers [aria-pressed=true]{background:#e4f2f8;border-color:#58a6c1}.design-canvas-warnings{font-size:12px;line-height:1.5;color:#8b5423;margin:7px 0;overflow-wrap:anywhere}.design-canvas-workarea>.muted{font-size:11px;margin:10px 0 0;overflow-wrap:anywhere}@media(max-width:1050px){.design-canvas-workbench{grid-template-columns:minmax(0,1fr)}.design-canvas-inspector{max-width:100%;width:100%!important}.design-canvas-inspector .design-canvas-layers{max-height:180px}.design-canvas-viewport{max-height:70vh}}@media(max-width:650px){.design-canvas-editor{padding:12px;margin:14px -4px;border-radius:12px}.design-canvas-heading h3{font-size:18px}.design-canvas-toolbar{gap:8px}.design-canvas-toolbar label:has(select){flex-basis:140px}.design-canvas-toolbar .btn{flex:1 1 100px}.design-canvas-viewport{padding:10px;max-height:68svh;min-height:170px}.design-canvas-resize{width:20px;height:20px;bottom:-9px;right:-9px}.design-canvas-inspector{padding:12px!important}.design-canvas-actions .btn,.design-canvas-layers .btn{min-height:44px;font-size:13px}.design-canvas-inspector label{font-size:13px}.design-canvas-hit.is-selected{border-width:2px}}
+
+.design-canvas-toolbar input[type=color]{display:block;width:76px;max-width:100%;height:44px;padding:4px;margin-top:6px;border:1px solid #cbd4c4;border-radius:7px}.design-canvas-inspector input[type=range]{min-height:44px}.design-canvas-inspector label:has(input[type=checkbox]){min-height:44px}
+
 .language-studio{min-width:0;max-width:100%;margin:18px 0}.language-studio h2{margin:0 0 10px}.language-studio p{overflow-wrap:anywhere}.language-studio label{display:block;margin:16px 0 7px}.language-studio input,.language-studio select,.language-studio textarea{box-sizing:border-box;width:100%;min-width:0;font-size:16px}.language-studio textarea{resize:vertical;line-height:1.65}.language-studio .btn{min-height:44px;box-sizing:border-box;white-space:normal}.language-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.language-stat{padding:14px;border:1px solid var(--line,#e7e4de);border-radius:12px;display:flex;flex-direction:column;gap:5px}.language-stat strong{font-size:22px;line-height:1.2}.language-stat span{font-size:12px;line-height:1.4;color:var(--muted,#777)}.language-composition-count,.language-stats>.muted{grid-column:1/-1;margin:0}.language-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px}.language-actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.language-result{padding:15px 0;border-bottom:1px solid var(--line,#e7e4de)}.language-result>strong{font-size:15px;overflow-wrap:anywhere}.language-result>p[lang]{font-size:18px;line-height:1.6;margin:7px 0}.language-result>.muted{font-size:12px}.language-catalog{border-top:1px solid var(--line,#e7e4de);padding-top:18px;margin-top:18px}.language-studio summary{cursor:pointer;min-height:44px;display:list-item;line-height:1.6;font-weight:600}.language-template-preview{white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:var(--bg,#f8f7f4);border-radius:12px;font:inherit;font-size:15px;line-height:1.8;max-height:350px;overflow:auto}.language-composer{border:1px solid var(--line,#e7e4de);padding:16px;border-radius:14px}.language-review{padding:12px 14px;border-radius:10px;background:var(--bg,#f8f7f4);font-size:13px;line-height:1.7;overflow-wrap:anywhere}.language-composer>#languageTranslate,.language-composer>#languageApply{margin-top:12px;width:100%}.language-studio a[aria-busy=true]{opacity:.6;pointer-events:none}@media(max-width:700px){.language-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.language-grid{grid-template-columns:minmax(0,1fr)}.language-actions>.btn{flex:1 1 140px;display:flex;align-items:center;justify-content:center;text-align:center}.language-studio{padding:16px}.language-stat{padding:12px}.language-stat strong{font-size:21px}.language-template-preview{padding:12px;font-size:15px}.language-composer textarea{min-height:120px}}
 
 .university-suggestions{display:grid;gap:6px;margin-top:8px;max-height:320px;overflow:auto}.university-suggestion{display:block;text-align:left;min-height:44px;line-height:1.5;white-space:normal}.university-field-evidence{padding:10px;border:1px solid #dfe6d9;border-radius:10px}.university-source{display:block;overflow-wrap:anywhere;font-size:12px;line-height:1.6;margin:6px 0}.university-reference-row{padding:16px 0;border-top:1px solid #e2e8dc;overflow-wrap:anywhere}.university-reference-row h3{font-size:15px;line-height:1.5;margin:0 0 8px}.university-reference-row .btn{margin-top:10px;min-height:44px}.university-zh{font-size:16px;line-height:1.6;margin:8px 0}.university-paging{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}#universityReferenceStatus{line-height:1.7}#universityKnowledge input,#universityKnowledge select{font-size:16px;min-height:44px}@media(max-width:650px){.university-suggestions{max-height:260px}.university-suggestion{font-size:14px;min-height:44px}.university-paging .btn{flex:1 1 100px}.university-paging p{flex-basis:100%;order:-1}}
@@ -441,161 +449,6 @@ function setupCardArchive({mount,getCardId,ensureCard,api,downloadAttachment,toa
   reset(currentId());
   refresh();
   return {refresh,clear,destroy};
-}
-
-/* Shared publication design. Generated HTML contains escaped text and embedded images only. */
-const PS_DESIGN_KEY='most-presentation-design-v1';
-const PRESENTATION_BLOCKS=['cover','title','facts','description','photos','location','contact'];
-const PS_BLOCK_NAMES={cover:'Обложка intro',title:'Название',facts:'Цена и параметры',description:'Описание',photos:'Фотографии',location:'Расположение / outro',contact:'Контакт и подпись'};
-const PS_PRESETS={editorial:{accent:'#bd4937',background:'#fffdf7',foreground:'#29352e',font:'sans'},minimal:{accent:'#35563f',background:'#ffffff',foreground:'#21352a',font:'sans'},night:{accent:'#dfad72',background:'#17251e',foreground:'#f4f4e9',font:'serif'}};
-const PS_FONT={sans:'Arial, "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif',serif:'Georgia, "Noto Serif CJK SC", "Songti SC", serif'};
-const psSafeString=(value,max=2000)=>typeof value==='string'?value.slice(0,max):'';
-const psNum=(value,min,max,fallback)=>Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;
-const psChoice=(value,values,fallback)=>values.includes(value)?value:fallback;
-const psColor=(value,fallback)=>/^#[a-f\d]{6}$/i.test(value||'')?value:fallback;
-function normalizeDesignTemplate(input={}){
-  if(!input||typeof input!=='object'||Array.isArray(input))input={};
-  const preset=psChoice(input.preset,Object.keys(PS_PRESETS),'editorial'),defaults=PS_PRESETS[preset];
-  const intro=input.intro&&typeof input.intro==='object'?input.intro:{},outro=input.outro&&typeof input.outro==='object'?input.outro:{};
-  const seen=new Set(),blocks=[];
-  for(const value of Array.isArray(input.blocks)?input.blocks:[]){if(value&&PRESENTATION_BLOCKS.includes(value.id)&&!seen.has(value.id)){seen.add(value.id);blocks.push({id:value.id,enabled:value.enabled!==false});}}
-  for(const id of PRESENTATION_BLOCKS)if(!seen.has(id))blocks.push({id,enabled:true});
-  return {version:1,preset,accent:psColor(input.accent,defaults.accent),background:psColor(input.background,defaults.background),foreground:psColor(input.foreground,defaults.foreground),font:psChoice(input.font,Object.keys(PS_FONT),defaults.font),paper:psChoice(input.paper,['A4','Letter'],'A4'),blocks,contact:psSafeString(input.contact,500),footer:psSafeString(input.footer,500)||'МОСТ · Подбор жилья в Москве',intro:{headline:psSafeString(intro.headline,600)||'{{title}}',subtitle:psSafeString(intro.subtitle,600)||'{{metro}} · {{area}} м²',layout:psChoice(intro.layout,['single','duo','trio'],'single'),position:psChoice(intro.position,['top','middle','bottom'],'bottom'),align:psChoice(intro.align,['left','center'],'left'),fontSize:psNum(intro.fontSize,36,100,66),overlay:psNum(intro.overlay,0,95,65),photoIndex:Math.round(psNum(intro.photoIndex,0,29,0)),showPrice:intro.showPrice!==false,showMetro:intro.showMetro!==false,showArea:intro.showArea!==false},outro:{heading:psSafeString(outro.heading,300)||'Расположение и детали',note:psSafeString(outro.note,1200)||'{{address}}',showMap:outro.showMap!==false}};
-}
-function presentationCardData(card={}){
-  const fields=card.fields||{},number=value=>value!==''&&value!=null&&Number.isFinite(Number(value))?Number(value):null;
-  const price=number(fields.price),area=number(fields.area),latitude=number(fields.latitude??card.listing?.latitude),longitude=number(fields.longitude??card.listing?.longitude);
-  const title=psSafeString(card.title||card.titles?.[0]||fields.name,1200)||'Без названия';
-  const hasCoordinates=latitude!==null&&longitude!==null&&Math.abs(latitude)<=90&&Math.abs(longitude)<=180;
-  return {title,body:psSafeString(card.body,40000),tags:psSafeString(card.tags,3000),price:price===null?'':price.toLocaleString('ru-RU'),area:area===null?'':String(area),metro:psSafeString(fields.metro,500),address:psSafeString(fields.address||fields.district||fields.complex,1000),rooms:psSafeString(String(fields.rooms||''),60),floor:psSafeString(String(fields.floor||''),60),route:psSafeString(fields.route||fields.transit,1500),latitude:hasCoordinates?latitude:null,longitude:hasCoordinates?longitude:null,mapUrl:hasCoordinates?'https://www.openstreetmap.org/?mlat='+latitude+'&mlon='+longitude+'#map=16/'+latitude+'/'+longitude:''};
-}
-function presentationCardKey(card={}){const fields=card.fields||{},edits=fields.photoEdits||{};return JSON.stringify({identity:card.identity||'',data:presentationCardData(card),source:fields.url||card.listing?.url||'',photos:fields.photos||card.listing?.images||[],listingImages:card.listing?.images||[],selection:fields.photoSelection||[],photoEdits:{order:edits.order||[],excluded:edits.excluded||[],crops:edits.crops||{}}});}
-function expandDesignText(text,card){const data=presentationCardData(card);return String(text||'').replace(/\{\{(title|price|area|metro|address|rooms|floor)\}\}/g,(_,key)=>data[key]);}
-function escapePresentationText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function safePresentationImage(value){return typeof value==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[a-z\d+/=\s]+$/i.test(value)&&value.length<=18_000_000?value:'';}
-function buildPresentationHtml(card,input={},assets={}){
-  const t=normalizeDesignTemplate(input),d=presentationCardData(card),esc=escapePresentationText;
-  const photos=(assets.photos||[]).map(value=>safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url)).filter(Boolean).slice(0,6);
-  const cover=safePresentationImage(assets.intro),outro=safePresentationImage(assets.outro);
-  const facts=[d.price&&['Аренда',d.price+' ₽ / месяц'],d.area&&['Площадь',d.area+' м²'],d.rooms&&['Комнаты',d.rooms],d.metro&&['Метро',d.metro],d.floor&&['Этаж',d.floor]].filter(Boolean);
-  const photo=(src,alt,cls='')=>'<img class="'+cls+'" src="'+src+'" alt="'+esc(alt)+'">';
-  const location=d.address||d.mapUrl||d.route||outro;const attribution=psSafeString(assets.mapAttribution,300);
-  const sections={cover:cover?'<section class="cover">'+photo(cover,'Обложка объявления')+'</section>':'',title:'<section class="title"><p class="eyebrow">'+esc(t.footer)+'</p><h1>'+esc(d.title)+'</h1></section>',facts:facts.length?'<section class="facts">'+facts.map(([name,value])=>'<div><span>'+esc(name)+'</span><strong>'+esc(value)+'</strong></div>').join('')+'</section>':'',description:d.body?'<section class="description"><h2>Описание</h2><div class="copy">'+esc(d.body)+'</div>'+(d.tags?'<p class="tags">'+esc(d.tags)+'</p>':'')+'</section>':'',photos:photos.length?'<section class="photos"><h2>Фотографии</h2><div class="photo-grid">'+photos.map((src,index)=>'<figure>'+photo(src,'Фото квартиры '+(index+1))+'<figcaption>'+String(index+1).padStart(2,'0')+'</figcaption></figure>').join('')+'</div></section>':'',location:location?'<section class="location"><h2>'+esc(t.outro.heading)+'</h2>'+(outro?photo(outro,'Расположение и контакты','outro'):'')+(attribution?'<p class="muted">'+esc(attribution)+' · <a href="https://www.openstreetmap.org/copyright">Условия использования карты</a></p>':'')+(d.address?'<p>'+esc(d.address)+'</p>':'')+(d.route?'<p>'+esc(d.route)+'</p>':'')+(d.mapUrl?'<p>Координаты: '+esc(d.latitude+', '+d.longitude)+'<br><a href="'+d.mapUrl+'">Открыть точку на OpenStreetMap</a></p>':'<p class="muted">Координаты не указаны. Уточните расположение перед отправкой клиенту.</p>')+'</section>':'',contact:t.contact?'<section class="contact"><h2>Связаться с нами</h2><p>'+esc(t.contact)+'</p></section>':''};
-  return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(d.title)+'</title><style>@page{size:'+t.paper+';margin:14mm}*{box-sizing:border-box}html{background:'+t.background+';color:'+t.foreground+';font-family:'+PS_FONT[t.font]+'}body{margin:0;line-height:1.6;font-size:11pt;overflow-wrap:anywhere}main{max-width:182mm;margin:auto}h1{font-size:27pt;line-height:1.25;margin:10pt 0 20pt;overflow-wrap:anywhere}h2{font-size:15pt;line-height:1.35;margin:0 0 12pt;color:'+t.accent+'}p{margin:8pt 0;white-space:pre-wrap}section{margin:0 0 22pt;max-width:100%}img{max-width:100%;display:block;object-fit:cover}.cover img{width:100%;max-height:238mm;object-fit:contain}.cover{break-after:page}.eyebrow{font-size:9pt;color:'+t.accent+';letter-spacing:.5pt}.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt;border-top:2pt solid '+t.accent+';padding-top:14pt}.facts>div{border-bottom:1pt solid '+t.accent+'33;padding:6pt 0;break-inside:avoid}.facts span{display:block;font-size:9pt;opacity:.7}.facts strong{font-size:13pt;font-weight:600;line-height:1.4}.copy{white-space:pre-wrap;orphans:3;widows:3}.tags{color:'+t.accent+';font-size:10pt}.photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt}.photo-grid figure{margin:0;break-inside:avoid}.photo-grid img{width:100%;height:58mm;object-fit:cover}.photo-grid figcaption{font-size:8pt;opacity:.6;margin:3pt 0}.location,.contact{break-inside:avoid}.outro{width:100%;max-height:148mm;object-fit:contain;margin-bottom:12pt}a{color:'+t.accent+';overflow-wrap:anywhere}.muted{font-size:9pt;opacity:.65}footer{font-size:8pt;padding:12pt 0;border-top:1pt solid '+t.accent+';opacity:.7}@media screen{body{padding:22px}main{max-width:760px}.cover img{max-height:980px}.photo-grid img{height:210px}.outro{max-height:560px}}@media print{section{box-decoration-break:clone}.title{break-after:avoid}.description h2,.photos h2,.location h2{break-after:avoid}}</style></head><body><main>'+t.blocks.filter(block=>block.enabled).map(block=>sections[block.id]).join('')+'<footer>'+esc(t.footer)+'</footer></main></body></html>';
-}
-
-function psElement(tag,text='',className=''){const value=document.createElement(tag);if(text)value.textContent=text;if(className)value.className=className;return value;}
-function psDownloadBlob(name,blob){const url=URL.createObjectURL(blob),link=psElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-function psLoadImage(url){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('Не удалось открыть фото для дизайна'));image.src=url;});}
-function psDrawCover(context,image,x,y,w,h){const scale=Math.max(w/image.width,h/image.height),sw=w/scale,sh=h/scale;context.save();context.beginPath();context.rect(x,y,w,h);context.clip();context.drawImage(image,(image.width-sw)/2,(image.height-sh)/2,sw,sh,x,y,w,h);context.restore();}
-function psWrapLines(context,text,width,maxLines=12){const output=[];for(const paragraph of String(text).split('\n')){let line='';for(const char of Array.from(paragraph)){if(context.measureText(line+char).width>width&&line){output.push(line);line=char;}else line+=char;}output.push(line);}if(output.length>maxLines){output.length=maxLines;let last=output[maxLines-1];while(last&&context.measureText(last+'…').width>width)last=last.slice(0,-1);output[maxLines-1]=last+'…';}return output;}
-function psPaintText(context,text,x,y,width,fontSize,colorValue,{align='left',maxLines=8,weight=600}={}){context.font=weight+' '+fontSize+'px '+PS_FONT.sans;context.fillStyle=colorValue;context.textAlign=align;context.textBaseline='top';const lines=psWrapLines(context,text,width,maxLines);lines.forEach((line,index)=>context.fillText(line,x,y+index*fontSize*1.25));return lines.length*fontSize*1.25;}
-async function renderPresentationImage(kind,card,input,photos=[],mapImage=''){
-  const t=normalizeDesignTemplate(input),d=presentationCardData(card),canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1440;const ctx=canvas.getContext('2d');
-  ctx.fillStyle=t.background;ctx.fillRect(0,0,1080,1440);const source=photos.filter(Boolean),start=source.length?Math.min(source.length-1,t.intro.photoIndex):0,ordered=source.length?source.map((_,index)=>source[(index+start)%source.length]):[];
-  const loaded=await Promise.all(ordered.slice(0,3).map(value=>psLoadImage(typeof value==='string'?value:value.dataUrl||value.url)));
-  if(kind==='intro'){
-    if(!loaded.length)throw new Error('Для intro загрузите хотя бы одну фотографию квартиры');
-    if(t.intro.layout==='single'||loaded.length===1)psDrawCover(ctx,loaded[0],0,0,1080,1440);
-    else if(t.intro.layout==='duo'||loaded.length===2){psDrawCover(ctx,loaded[0],0,0,1080,828);psDrawCover(ctx,loaded[1],0,838,1080,602);}
-    else {psDrawCover(ctx,loaded[0],0,0,1080,870);psDrawCover(ctx,loaded[1],0,880,535,560);psDrawCover(ctx,loaded[2],545,880,535,560);}
-    const overlay=t.intro.overlay/100,gradient=ctx.createLinearGradient(0,t.intro.position==='top'?850:420,0,t.intro.position==='top'?0:1440);gradient.addColorStop(0,'rgba(0,0,0,0)');gradient.addColorStop(1,'rgba(0,0,0,'+overlay+')');ctx.fillStyle=gradient;ctx.fillRect(0,0,1080,1440);
-    if(t.intro.position==='middle'){ctx.fillStyle='rgba(0,0,0,'+overlay*.75+')';ctx.fillRect(0,0,1080,1440);}
-    const x=t.intro.align==='center'?540:72,width=936,title=expandDesignText(t.intro.headline,card),subtitle=expandDesignText(t.intro.subtitle,card);
-    ctx.font='700 '+t.intro.fontSize+'px '+PS_FONT.sans;const titleLines=psWrapLines(ctx,title,width,5),estimated=titleLines.length*t.intro.fontSize*1.25+320;let y=t.intro.position==='top'?100:t.intro.position==='middle'?Math.max(120,(1440-estimated)/2):Math.max(100,1340-estimated);
-    ctx.fillStyle=t.accent;ctx.fillRect(t.intro.align==='center'?480:72,y-35,120,7);
-    y+=psPaintText(ctx,title,x,y,width,t.intro.fontSize,'#ffffff',{align:t.intro.align,maxLines:5,weight:700})+24;
-    y+=psPaintText(ctx,subtitle,x,y,width,32,'#ffffff',{align:t.intro.align,maxLines:3,weight:400})+24;
-    const chips=[t.intro.showPrice&&d.price&&d.price+' ₽ / месяц',t.intro.showMetro&&d.metro,t.intro.showArea&&d.area&&d.area+' м²'].filter(Boolean);
-    psPaintText(ctx,chips.join('  ·  '),x,y,width,30,'#ffffff',{align:t.intro.align,maxLines:3});
-    psPaintText(ctx,t.footer,72,1388,930,20,'#ffffff',{maxLines:1,weight:400});
-  }else{
-    if(loaded[0]){psDrawCover(ctx,loaded[0],0,0,1080,400);ctx.fillStyle='#00000055';ctx.fillRect(0,0,1080,400);psPaintText(ctx,t.outro.heading,64,245,950,56,'#ffffff',{maxLines:2});}
-    else psPaintText(ctx,t.outro.heading,64,80,950,56,t.foreground,{maxLines:2});
-    let y=loaded[0]?460:260;
-    y+=psPaintText(ctx,expandDesignText(t.outro.note,card),64,y,950,34,t.foreground,{maxLines:4,weight:500})+30;
-    if(t.outro.showMap){
-      const h=390;ctx.fillStyle=t.accent+'18';ctx.fillRect(64,y,952,h);
-      if(safePresentationImage(mapImage)){const map=await psLoadImage(mapImage);psDrawCover(ctx,map,64,y,952,h);}
-      else if(d.mapUrl){psPaintText(ctx,'Расположение квартиры',540,y+95,850,38,t.foreground,{align:'center',maxLines:2});psPaintText(ctx,d.latitude.toFixed(5)+', '+d.longitude.toFixed(5),540,y+185,850,30,t.foreground,{align:'center',maxLines:1});psPaintText(ctx,'Карта недоступна · ссылка есть в HTML и PDF',540,y+285,850,24,t.foreground,{align:'center',maxLines:2,weight:400});}
-      else{psPaintText(ctx,'Добавьте координаты квартиры',540,y+145,850,38,t.foreground,{align:'center',maxLines:2});psPaintText(ctx,'Расположение не определено',540,y+240,850,24,t.foreground,{align:'center',maxLines:2,weight:400});}
-      y+=h+28;
-    }
-    y+=psPaintText(ctx,d.route,64,y,950,29,t.foreground,{maxLines:4,weight:400})+28;
-    ctx.fillStyle=t.accent;ctx.fillRect(64,1240,952,3);psPaintText(ctx,t.contact||'Контакт можно настроить в шаблоне',64,1272,950,29,t.foreground,{maxLines:2,weight:500});psPaintText(ctx,t.footer,64,1388,950,20,t.foreground,{maxLines:1,weight:400});
-  }
-  return canvas;
-}
-
-function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloadExport,getExportBlob,toast=()=>{},getMapImage}={}){
-  if(!mount)return null;
-  let template=normalizeDesignTemplate(),photos=[],intro='',outro='',mapImage='',mapAttribution='',photoCardKey='',lastRendered=null,demo=false,revision=0,timer,busy=false,destroyed=false,templateTouched=false,proofUrl='';
-  try{template=normalizeDesignTemplate(JSON.parse(localStorage.getItem(PS_DESIGN_KEY)||'{}'));}catch{}
-  const shell=psElement('div','','presentation-studio'),heading=psElement('div','','heading'),headingBody=psElement('div');headingBody.append(psElement('div','ЕДИНЫЙ ДИЗАЙН ДЛЯ ОБЪЯВЛЕНИЙ','eyebrow'),psElement('h1','Дизайн и PDF'),psElement('p','Настройте шаблон один раз. Intro, outro и PDF используют фотографии и текст выбранной карточки.'));heading.append(headingBody);shell.append(heading);
-  const status=psElement('p','Выберите карточку в редакторе и обновите предпросмотр.','presentation-status');status.id='presentationStatus';status.setAttribute('role','status');
-  const toolbar=psElement('div','','presentation-toolbar'),refresh=button('Обновить из карточки','presentationRefresh'),sample=button('Демо дизайна','presentationDemo'),save=button('Сохранить общий шаблон','presentationSave','btn primary'),html=button('Скачать HTML','presentationHtml'),proof=button('Показать готовый PDF','presentationProof'),pdf=button('Скачать PDF','presentationPdf');toolbar.append(refresh,sample,save,html,proof,pdf);shell.append(toolbar,status);
-  const layout=psElement('div','','presentation-layout'),controls=psElement('div','','presentation-controls card'),preview=psElement('div','','presentation-previews');layout.append(controls,preview);shell.append(layout);mount.replaceChildren(shell);
-  const tabs=psElement('div','','presentation-tabs'),panels={},tabButtons={};for(const [id,label]of [['pdf','PDF / HTML'],['intro','Intro · обложка'],['outro','Outro · финал']]){const tab=button(label,'presentationTab'+id);tab.onclick=()=>selectTab(id);tabs.append(tab);tabButtons[id]=tab;const panel=psElement('div','','presentation-control-panel');panel.dataset.presentationPanel=id;panels[id]=panel;}controls.append(tabs,...Object.values(panels));
-  const frame=psElement('iframe','','presentation-frame');frame.id='presentationPreview';frame.title='Предпросмотр HTML и будущего PDF';frame.setAttribute('sandbox','');const frameWrap=psElement('section','','presentation-preview-card');frameWrap.append(psElement('div','Предпросмотр HTML · готовые страницы проверяются кнопкой «Показать готовый PDF»','presentation-preview-label'),frame);
-  const imagePreview=psElement('img','','presentation-image');imagePreview.id='presentationImagePreview';imagePreview.alt='Предпросмотр изображения объявления';const imageWrap=psElement('section','','presentation-preview-card hidden'),imageLabel=psElement('div','Intro · 1080 × 1440','presentation-preview-label'),imageEmpty=psElement('p','Загрузите фото квартиры и обновите предпросмотр.','presentation-empty'),imageDownload=button('Скачать PNG','presentationImageDownload');imageWrap.append(imageLabel,imagePreview,imageEmpty,imageDownload);preview.append(frameWrap,imageWrap);
-  const proofDialog=psElement('dialog','','presentation-proof-dialog'),proofHeading=psElement('h2','Готовый PDF'),proofTools=psElement('div','','presentation-proof-tools'),proofClose=button('Закрыть','presentationProofClose'),proofOpen=psElement('a','Открыть PDF отдельно','btn'),proofFrame=psElement('iframe','','presentation-proof-frame');proofDialog.id='presentationProofDialog';proofHeading.id='presentationProofTitle';proofDialog.setAttribute('aria-labelledby',proofHeading.id);proofFrame.id='presentationProofFrame';proofFrame.title='Созданный PDF со страницами для проверки';proofOpen.id='presentationProofOpen';proofOpen.target='_blank';proofOpen.rel='noopener';proofTools.append(proofHeading,proofClose);proofDialog.append(proofTools,psElement('p','Это созданный PDF с окончательными страницами. Если встроенный просмотр недоступен, откройте PDF отдельно.','muted'),proofOpen,proofFrame);shell.append(proofDialog);
-  function clearProof(){proofFrame.removeAttribute('src');proofOpen.removeAttribute('href');if(proofUrl)URL.revokeObjectURL(proofUrl);proofUrl='';}
-  proofClose.onclick=()=>proofDialog.close();proofDialog.addEventListener('close',clearProof);
-  const inputs={};
-  const field=(panel,key,label,{type='text',options,min,max,step,rows=3}={})=>{const wrapper=psElement('label',label),input=psElement(type==='textarea'?'textarea':options?'select':'input');input.id='presentation-'+key.replaceAll('.','-');if(type!=='textarea'&&!options)input.type=type;if(options)for(const [value,text]of options){const option=psElement('option',text);option.value=value;input.append(option);}if(type==='textarea')input.rows=rows;if(min!==undefined)input.min=min;if(max!==undefined)input.max=max;if(step!==undefined)input.step=step;wrapper.htmlFor=input.id;wrapper.append(input);panel.append(wrapper);inputs[key]=input;input.addEventListener(type==='color'||type==='range'?'input':'change',()=>{setPath(template,key,type==='checkbox'?input.checked:key==='intro.photoIndex'?Math.max(0,Number(input.value)-1):['number','range'].includes(type)?Number(input.value):input.value);template=normalizeDesignTemplate(template);persistLocal();queueRender();});return input;};
-  const top=panels.pdf;
-  const preset=field(top,'preset','Базовый стиль',{options:[['editorial','Редакционный · тёплый'],['minimal','Минимальный · светлый'],['night','Вечерний · тёмный']]});preset.onchange=()=>{const base=PS_PRESETS[preset.value];template=normalizeDesignTemplate({...template,...base,preset:preset.value});syncInputs();persistLocal();queueRender();};
-  const colorRow=psElement('div','','presentation-colors');top.append(colorRow);for(const[key,label]of [['accent','Акцент'],['background','Фон'],['foreground','Текст']])field(colorRow,key,label,{type:'color'});
-  field(top,'font','Шрифт PDF',{options:[['sans','Современный без засечек'],['serif','Классический с засечками']]});field(top,'paper','Формат страницы',{options:[['A4','A4 · 210 × 297 мм'],['Letter','Letter · 216 × 279 мм']]});field(top,'contact','Контакт',{type:'textarea',rows:2});field(top,'footer','Подпись / бренд');
-  const blocks=psElement('div','','presentation-blocks');blocks.id='presentationBlocks';top.append(psElement('h3','Состав и порядок блоков'),blocks);
-  const templateTools=psElement('div','','presentation-template-tools'),exportTemplate=button('Экспорт шаблона JSON','presentationTemplateExport'),importTemplate=button('Импорт шаблона','presentationTemplateImport'),file=psElement('input');file.type='file';file.accept='application/json,.json';file.hidden=true;templateTools.append(exportTemplate,importTemplate,file);top.append(templateTools,psElement('p','HTML и PDF используют один макет. Фотографии в экспорте встроены; договоры и личные вложения в него не попадают.','muted'));
-  field(panels.intro,'intro.headline','Текст обложки',{type:'textarea'});field(panels.intro,'intro.subtitle','Подзаголовок',{type:'textarea',rows:2});panels.intro.append(psElement('p','Поля: {{title}}, {{price}}, {{metro}}, {{area}}, {{address}}, {{rooms}}, {{floor}}. Они подставляются из каждой новой карточки.','muted'));
-  field(panels.intro,'intro.layout','Фотографии',{options:[['single','Одно фото'],['duo','Коллаж · два фото'],['trio','Коллаж · три фото']]});field(panels.intro,'intro.photoIndex','Первое фото · номер с 1',{type:'number',min:1,max:30});
-  field(panels.intro,'intro.position','Расположение текста',{options:[['bottom','Снизу'],['middle','По центру'],['top','Сверху']]});field(panels.intro,'intro.align','Выравнивание',{options:[['left','По левому краю'],['center','По центру']]});field(panels.intro,'intro.fontSize','Размер заголовка',{type:'range',min:36,max:100,step:2});field(panels.intro,'intro.overlay','Затемнение фото, %',{type:'range',min:0,max:95,step:5});for(const[key,label]of [['showPrice','Цена'],['showMetro','Метро'],['showArea','Площадь']])field(panels.intro,'intro.'+key,label,{type:'checkbox'});
-  field(panels.outro,'outro.heading','Заголовок outro');field(panels.outro,'outro.note','Подпись / адрес',{type:'textarea'});field(panels.outro,'outro.showMap','Показывать расположение',{type:'checkbox'});panels.outro.append(psElement('p','Точка берётся только из координат карточки. Если фрагмент карты недоступен, показываются адрес и координаты без выдуманной карты. Адрес и ссылка на карту остаются в HTML / PDF.','muted'));
-  let active='pdf';
-  function selectTab(id){active=id;for(const key of Object.keys(panels)){panels[key].classList.toggle('hidden',key!==id);tabButtons[key].classList.toggle('chosen',key===id);}frameWrap.classList.toggle('hidden',id!=='pdf');imageWrap.classList.toggle('hidden',id==='pdf');imageLabel.textContent=(id==='intro'?'Intro · обложка':'Outro · расположение')+' · 1080 × 1440';showImage();}
-  function button(text,id,cls='btn'){const value=psElement('button',text,cls);value.id=id;value.type='button';return value;}
-  function getPath(object,path){return path.split('.').reduce((value,key)=>value?.[key],object);}
-  function setPath(object,path,value){const keys=path.split('.'),last=keys.pop();keys.reduce((value,key)=>value[key],object)[last]=value;}
-  function persistLocal(){templateTouched=true;try{localStorage.setItem(PS_DESIGN_KEY,JSON.stringify(template));}catch{status.textContent='Шаблон изменён. Сохраните его на Mac или экспортируйте JSON.';}}
-  function syncInputs(){for(const[key,input]of Object.entries(inputs)){const value=getPath(template,key);if(input.type==='checkbox')input.checked=value;else input.value=key==='intro.photoIndex'?value+1:value;}drawBlocks();}
-  function drawBlocks(){blocks.replaceChildren();template.blocks.forEach((item,index)=>{const row=psElement('div','','presentation-block-row'),label=psElement('label',PS_BLOCK_NAMES[item.id]),check=psElement('input');check.type='checkbox';check.checked=item.enabled;check.onchange=()=>{item.enabled=check.checked;persistLocal();queueRender();};label.prepend(check);const up=button('↑','presentationBlockUp'+item.id),down=button('↓','presentationBlockDown'+item.id);up.setAttribute('aria-label','Переместить выше: '+PS_BLOCK_NAMES[item.id]);down.setAttribute('aria-label','Переместить ниже: '+PS_BLOCK_NAMES[item.id]);up.disabled=index===0;down.disabled=index===template.blocks.length-1;for(const[control,delta]of [[up,-1],[down,1]])control.onclick=()=>{const target=index+delta;[template.blocks[index],template.blocks[target]]=[template.blocks[target],template.blocks[index]];drawBlocks();persistLocal();queueRender();};row.append(label,up,down);blocks.append(row);});}
-  const demoCard={titles:['Светлая квартира для жизни в Москве'],body:'Пример оформления. Здесь появится ваше описание квартиры на китайском или русском языке.\n\nУдобная кухня, отдельная спальня и место для работы. Параметры и условия берутся из выбранной карточки.',tags:'#ДемонстрацияДизайна',fields:{price:80000,area:54,rooms:2,metro:'Юго-Западная',address:'Москва · демонстрационный пример'}};
-  function demoPhoto(){const c=document.createElement('canvas');c.width=1200;c.height=900;const x=c.getContext('2d');x.fillStyle='#ddd9cf';x.fillRect(0,0,1200,900);x.fillStyle='#eae6dc';x.fillRect(0,0,1200,600);x.fillStyle='#bec8b9';x.fillRect(90,80,360,420);x.fillStyle='#edf4ee';x.fillRect(110,100,320,380);x.strokeStyle='#a5b39e';x.lineWidth=10;x.strokeRect(110,100,320,380);x.beginPath();x.moveTo(270,100);x.lineTo(270,480);x.stroke();x.fillStyle='#9aa88f';x.fillRect(600,420,440,210);x.fillStyle='#aebba2';x.fillRect(560,570,520,140);x.fillStyle='#8e7258';x.fillRect(140,690,300,25);x.fillRect(170,715,18,130);x.fillRect(390,715,18,130);x.fillStyle='#58674f';x.font='28px Arial';x.fillText('ДЕМО ДИЗАЙНА · НЕ ФОТО КВАРТИРЫ',55,850);return c.toDataURL('image/png');}
-  const current=()=>demo?demoCard:getCard?.()||{};
-  function showImage(){const value=active==='intro'?intro:outro;imagePreview.classList.toggle('hidden',!value);imageEmpty.classList.toggle('hidden',!!value);imageDownload.disabled=!value;if(value)imagePreview.src=value;else imagePreview.removeAttribute('src');}
-  function queueRender(){clearTimeout(timer);timer=setTimeout(()=>render(false),250);}
-  async function render(reload=false){
-    const version=++revision,card=JSON.parse(JSON.stringify(current())),key=presentationCardKey(card),design=normalizeDesignTemplate(template);let mapFailed=false;
-    const valid=()=>version===revision&&!destroyed&&presentationCardKey(current())===key;
-    try{
-      if(reload){
-        status.textContent='Готовим фотографии и предпросмотр…';
-        const values=demo?[{dataUrl:demoPhoto()}]:await getPhotos?.()||[],safe=values.map(value=>safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url)).filter(Boolean).slice(0,6);
-        if(!valid())return false;photos=safe;inputs['intro.photoIndex'].max=Math.max(1,photos.length);photoCardKey=key;mapImage='';mapAttribution='';
-        if(!demo&&presentationCardData(card).mapUrl&&getMapImage)try{const mapResult=await getMapImage(card);if(!valid())return false;mapImage=safePresentationImage(typeof mapResult==='string'?mapResult:mapResult?.dataUrl);mapAttribution=typeof mapResult==='object'?psSafeString(mapResult?.attribution,300):'';}catch{mapFailed=true;}
-      }else if(photoCardKey!==key){photos=[];mapImage='';mapAttribution='';photoCardKey=key;}
-      const madeIntro=photos.length?(await renderPresentationImage('intro',card,design,photos)).toDataURL('image/png'):'',madeOutro=(await renderPresentationImage('outro',card,design,photos,mapImage)).toDataURL('image/png');
-      if(!valid())return false;
-      intro=madeIntro;outro=madeOutro;
-      lastRendered={key,card,template:design,intro,outro,html:buildPresentationHtml(card,design,{photos,intro,outro,mapAttribution})};frame.srcdoc=lastRendered.html;showImage();
-      status.textContent=demo?'Демонстрационный макет. Это учебные данные и схематичное изображение.':photos.length?'Предпросмотр обновлён · '+photos.length+' фото. Изменения дизайна ещё можно сохранить как общий шаблон.':'Предпросмотр без фото. Загрузите фотографии выбранной карточки и нажмите «Обновить из карточки».';
-      if(mapFailed)status.textContent+=' Карта пока недоступна; сохранены адрес и координаты.';return true;
-    }catch(error){if(version===revision){status.textContent=error.message;toast(error.message);}return false;}
-  }
-  async function savedSnapshot(snapshot){const resultId=await ensureCard();if(!resultId)throw new Error('Сначала сохраните карточку в редакторе');if(presentationCardKey(current())!==snapshot.key)throw new Error('Карточка изменилась. Обновите предпросмотр и повторите экспорт.');return resultId;}
-  async function action(run){if(busy)return;clearTimeout(timer);busy=true;for(const control of [refresh,sample,save,html,proof,pdf,imageDownload])control.disabled=true;try{await run();}catch(error){status.textContent=error.message;toast(error.message);}finally{busy=false;for(const control of [refresh,sample,save,html,proof,pdf])control.disabled=false;showImage();}}
-  refresh.onclick=()=>action(async()=>{demo=false;await render(true);});sample.onclick=()=>action(async()=>{demo=true;await render(true);});
-  save.onclick=()=>action(async()=>{persistLocal();if(api){const result=await api('design',{template});template=normalizeDesignTemplate(result.template||template);syncInputs();status.textContent='Общий шаблон сохранён на Mac и будет использоваться для следующих карточек.';}else status.textContent='Шаблон сохранён в этом браузере.';toast('Дизайн сохранён');});
-  exportTemplate.onclick=()=>psDownloadBlob('most-design-template.json',new Blob([JSON.stringify(template,null,2)],{type:'application/json'}));importTemplate.onclick=()=>file.click();file.onchange=()=>action(async()=>{const selected=file.files?.[0];try{if(!selected)return;if(selected.size>100000)throw new Error('Шаблон должен быть меньше 100 КБ');const value=JSON.parse(await selected.text());if(value.version!==1||!Array.isArray(value.blocks))throw new Error('Нужен шаблон МОСТ версии 1');template=normalizeDesignTemplate(value);syncInputs();persistLocal();await render(false);status.textContent='Шаблон импортирован. Сохраните его на Mac для всех карточек.';}finally{file.value='';}});
-  html.onclick=()=>action(async()=>{if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,output=snapshot.html;if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot);const asset=await api('card-export',{result_id:resultId,kind:'html',html:output,template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание HTML не подключено');status.textContent='HTML сохранён на Mac и доступен в карточке на телефоне.';}else{psDownloadBlob('most-card.html',new Blob([output],{type:'text/html;charset=utf-8'}));status.textContent='HTML сохранён: дизайн, текст и фото находятся внутри одного файла.';}});
-  pdf.onclick=()=>action(async()=>{if(demo)throw new Error('Для сохранения PDF выберите настоящую карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard)throw new Error('Автоматический PDF доступен на локальном сайте Mac');if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=await savedSnapshot(snapshot);status.textContent='Mac создаёт PDF из выбранного HTML-дизайна…';const asset=await api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание PDF не подключено');status.textContent='PDF готов и сохранён на Mac. Скачивание начато.';});
-  proof.onclick=()=>action(async()=>{if(demo)throw new Error('Для готового PDF выберите карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard||!getExportBlob)throw new Error('Просмотр готового PDF доступен на локальном сайте Mac');if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=await savedSnapshot(snapshot);status.textContent='Mac создаёт PDF для проверки страниц…';const asset=await api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',template:snapshot.template}),blob=await getExportBlob(asset);if(destroyed)return;if(!blob||typeof blob.arrayBuffer!=='function')throw new Error('Не удалось открыть созданный PDF');clearProof();proofUrl=URL.createObjectURL(blob);proofFrame.src=proofUrl;proofOpen.href=proofUrl;proofDialog.showModal();status.textContent='Готовый PDF открыт для проверки. Файл сохранён в карточке на Mac.';});
-  imageDownload.onclick=()=>action(async()=>{const kind=active==='intro'?'intro':'outro';if(!await render(true))throw new Error('Предпросмотр изменился. Повторите экспорт.');const snapshot=lastRendered,value=kind==='intro'?snapshot.intro:snapshot.outro;if(!value)throw new Error('Сначала обновите изображение');if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot);const asset=await api('card-export',{result_id:resultId,kind,data:value});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание изображения не подключено');status.textContent='Изображение сохранено на Mac и доступно в карточке на телефоне.';}else{const response=await fetch(value);psDownloadBlob('most-'+kind+'.png',await response.blob());}toast('Изображение готово');});
-  syncInputs();selectTab('pdf');render(false);
-  if(api)api('design').then(result=>{if(!destroyed&&!templateTouched&&result.template){template=normalizeDesignTemplate(result.template);syncInputs();persistLocal();queueRender();}}).catch(()=>{});
-  return {refresh:()=>{clearTimeout(timer);demo=false;return render(true);},template:()=>normalizeDesignTemplate(template),destroy:()=>{destroyed=true;revision++;clearTimeout(timer);if(proofDialog.open)proofDialog.close();clearProof();mount.replaceChildren();}};
 }
 
 // Generated by scripts/update-moscow-geo.py. Edit the source catalog via the importer.
@@ -2153,7 +2006,7 @@ function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatu
  pe('photoDownloadCropOne').onclick=()=>{if(active?.cropBlob)downloadPhoto(photoFileName(items.indexOf(active),'image/jpeg',true),active.cropBlob);else toast('Сначала создайте кадрированную копию.');};
  pe('photoFiles').onchange=async()=>{try{const files=[...pe('photoFiles').files];const queue=active?[active]:items.filter(i=>!i.blob);if(files.length>queue.length)throw Error('Прикрепите не больше файлов, чем незагруженных фото; либо откройте нужное фото.');for(let n=0;n<files.length;n++){const file=files[n],item=queue[n],size=await dimensions(file);let serverId=null;if(local){const encoded=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});serverId=(await api('photo',{action:'attach',url:item.url,data:encoded})).id;}Object.assign(item,size,{blob:file,mime:file.type,error:'',message:'Оригинал прикреплён вручную',serverId,cropBlob:null,cropMeta:null,analysis:null,confirmed:{}});await cachePut(item);changed();emitFeatures();}render();if(active)show(active);toast('Оригиналы прикреплены в выбранном порядке.');}catch(error){toast(error.message);}finally{pe('photoFiles').value='';}};
  pe('photoAttach').onclick=()=>{active=null;pe('photoFiles').click();};pe('photoAttachOne').onclick=()=>pe('photoFiles').click();
- return {state,async presentationPhotos(){const token=epoch,selected=items.filter(item=>item.selected).slice(0,6),photos=[];for(const item of selected){await ensure(item);if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');const blob=item.cropBlob||item.blob;if(blob)photos.push({dataUrl:await cardPhotoDataUrl(blob)});}return photos;},setSources(urls,saved={}){epoch++;if(zipUrl){URL.revokeObjectURL(zipUrl);zipUrl=null;}pe('photoZipLink').classList.add('hidden');edits=saved||{};const safe=photoSources(urls),order=[...new Set([...(Array.isArray(edits.order)?edits.order:[]).filter(u=>safe.includes(u)),...safe])];items=order.map(url=>({url,selected:!edits.excluded?.includes(url),expectedMargins:edits.crops?.[url],analysis:edits.observations?.[url]?.analysis,confirmed:edits.observations?.[url]?.confirmed||{}}));active=null;render();const token=epoch;const start=()=>{if(token!==epoch||!pe('photoAutoLoad').checked)return;if(busy){setTimeout(start,250);return;}loadAll();};Promise.all(items.map(async item=>{const cached=await cacheGet(item.url);if(epoch===token&&cached?.blob)try{await ensure(item);}catch{}})).then(()=>{if(epoch===token){render();start();}});},refresh:render};
+ return {state,async presentationPhotos(){const token=epoch,selected=items.filter(item=>item.selected).slice(0,30),photos=[];for(const item of selected){await ensure(item);if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');const blob=item.cropBlob||item.blob;if(blob)photos.push({dataUrl:await cardPhotoDataUrl(blob)});}return photos;},setSources(urls,saved={}){epoch++;if(zipUrl){URL.revokeObjectURL(zipUrl);zipUrl=null;}pe('photoZipLink').classList.add('hidden');edits=saved||{};const safe=photoSources(urls),order=[...new Set([...(Array.isArray(edits.order)?edits.order:[]).filter(u=>safe.includes(u)),...safe])];items=order.map(url=>({url,selected:!edits.excluded?.includes(url),expectedMargins:edits.crops?.[url],analysis:edits.observations?.[url]?.analysis,confirmed:edits.observations?.[url]?.confirmed||{}}));active=null;render();const token=epoch;const start=()=>{if(token!==epoch||!pe('photoAutoLoad').checked)return;if(busy){setTimeout(start,250);return;}loadAll();};Promise.all(items.map(async item=>{const cached=await cacheGet(item.url);if(epoch===token&&cached?.blob)try{await ensure(item);}catch{}})).then(()=>{if(epoch===token){render();start();}});},refresh:render};
 }
 
 function setupRelated({getCurrent,getObjects,getSource,onOpen,onAdd,toast}){
@@ -2834,6 +2687,728 @@ function analyzeListingSource(input,rules=DICTIONARY){
 }
 
 
+// Publication-only address labels; provenance and editorial status are recorded
+// in docs/CILIEV-DESIGN-REFERENCE.md. Keep historical source names intact.
+const publicationAddressTerms={
+  'НАО (Новомосковский)':'新莫斯科行政区',
+  'Новомосковский административный округ':'新莫斯科行政区',
+  'Внуковское поселение':'弗努科沃乡镇（原行政名称）',
+  'поселение Внуковское':'弗努科沃乡镇（原行政名称）',
+  'улица Бориса Пастернака':'鲍里斯·帕斯捷尔纳克街',
+  'ул. Бориса Пастернака':'鲍里斯·帕斯捷尔纳克街'
+};
+
+// One logical-coordinate model drives the editor, raster cards and printed HTML.
+const PUBLICATION_SURFACES=['pdfOverview','pdfGallery','pdfLocation','intro','outro'];
+const PUBLICATION_BINDINGS=[
+  ['title','Название'],['body','Описание'],['brandName','Название агентства'],['agency','Подпись агентства'],['tagline','Слоган'],['agentName','Имя консультанта'],['agentRole','Должность'],['contact','Контакты'],['phone','Телефон'],['email','Почта'],['footer','Подвал'],['metro','Метро'],['metroLine','Линия метро'],['walk','Время до метро'],['price','Аренда'],['priceLarge','Цена крупно'],['priceUnit','Единица цены'],['area','Площадь'],['layout','Планировка'],['floor','Этаж'],['address','Адрес'],['city','Город'],['features','Мебель и техника'],['service','Регистрация'],['introFacts','Краткие параметры'],['mapTitle','Расположение'],['mapMetro','Подпись метро'],['routesTitle','Заголовок маршрутов'],['route1Title','Вуз 1'],['route1Time','Время до вуза 1'],['route1Stops','Маршрут 1'],['route2Title','Вуз 2'],['route2Time','Время до вуза 2'],['route2Stops','Маршрут 2'],['disclaimer','Примечание к маршрутам'],['mapAttribution','Авторство карты'],['facts','Таблица параметров'],['route1','Первая поездка'],['route2','Вторая поездка'],['map','Карта'],['logo','Логотип'],['avatar','Аватар консультанта'],...Array.from({length:30},(_,i)=>['photo'+(i+1),'Фото '+(i+1)])
+].concat(Array.from({length:6},(_,i)=>[['fact'+(i+1)+'Label','Параметр '+(i+1)+' · подпись'],['fact'+(i+1)+'Value','Параметр '+(i+1)+' · значение']]).flat(),Array.from({length:2},(_,r)=>Array.from({length:3},(_,s)=>['route'+(r+1)+'Stop'+(s+1),'Маршрут '+(r+1)+' · пункт '+(s+1)])).flat()).map(([id,label])=>({id,label}));
+const PUBLICATION_FONT_STACKS={sans:'"PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif',serif:'"Songti SC", "Noto Serif CJK SC", Georgia, serif'};
+const publicationBindingIds=new Set(PUBLICATION_BINDINGS.map(row=>row.id));
+const publicationTypes=['text','image','rect','line','logo','avatar','map','route','facts'];
+const publicationSafeString=(v,max=1000)=>typeof v==='string'?v.slice(0,max):'';
+const publicationNumber=(v,min,max,fallback)=>typeof v!=='boolean'&&v!==''&&v!=null&&Number.isFinite(Number(v))?Math.min(max,Math.max(min,Number(v))):fallback;
+const publicationColor=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:fallback;
+const publicationChoice=(v,values,fallback)=>values.includes(v)?v:fallback;
+const publicationId=(v,fallback)=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(v)?v:fallback;
+const publicationAssetId=v=>typeof v==='string'&&/^[a-f0-9]{32}$/.test(v)?v:'';
+const publicationThemeDefaults={pdf:{background:'#07162b',foreground:'#ffffff',accent:'#b79665',muted:'#9daac0',panel:'#0e223c',line:'#42516a'},social:{background:'#06152e',foreground:'#ffffff',accent:'#ef4b69',muted:'#a8b8d2',panel:'#0b2242',line:'#294568'}};
+const publicationStyle=(extra={})=>({fontSize:32,color:'#ffffff',fontFamily:'sans',align:'left',opacity:1,background:'#06152e',borderColor:'#294568',borderWidth:0,radius:0,fontWeight:600,objectFit:'cover',lineHeight:1.35,...extra});
+const publicationNode=(id,type,x,y,w,h,bind='',text='',style={})=>({id,type,x,y,w,h,bind,text,photoIndex:0,visible:true,locked:false,z:0,style:publicationStyle(style)});
+const publicationText=(id,x,y,w,h,bind='',text='',style={})=>publicationNode(id,'text',x,y,w,h,bind,text,style);
+const publicationLine=(id,x,y,w,color='#b79665',h=2)=>publicationNode(id,'line',x,y,w,h,'','',{color,background:color});
+
+function publicationFactNodes(node){
+  const nodes=[],height=node.h/6;
+  for(let index=0;index<6;index++){const slot=index+1,y=node.y+index*height,bind='fact'+slot;
+    nodes.push(publicationText('facts-row-'+slot+'-label',node.x,y+5,node.w*.35,height-14,bind+'Label','',{...node.style,color:'#9daac0',fontSize:Math.min(25,node.style.fontSize),fontWeight:400,borderWidth:0,radius:0}),publicationText('facts-row-'+slot+'-value',node.x+node.w*.38,y+5,node.w*.62,height-14,bind+'Value','',{...node.style,borderWidth:0,radius:0}),{...publicationLine('facts-row-'+slot+'-rule',node.x,y+height-1,node.w,node.style.borderColor,1),bind:bind+'Value'});
+  }
+  return nodes;
+}
+function publicationRouteNodes(node,accent){
+  const {x,y,w,h,bind}=node,pad=w<700?24:25,small=w<700,lineY=small?h-62:h*.56;
+  const nodes=[{...node,type:'rect'},publicationText(node.id+'-title',x+pad,y+pad,w-pad*2-(small?0:238),small?72:56,bind+'Title','',{...node.style,fontWeight:700,borderWidth:0,radius:0}),publicationText(node.id+'-time',x+(small?pad:w-258),y+(small?84:25),small?w-pad*2:233,42,bind+'Time','',{...node.style,fontSize:small?20:node.style.fontSize-2,align:small?'left':'right',borderWidth:0,radius:0}),{...publicationLine(node.id+'-track',x+pad,y+lineY,w-pad*2,accent,small?3:4),bind}];
+  for(let index=0;index<3;index++){const cx=pad+index*(w-pad*2)/2,r=small?5:6,sw=(w-pad*2)/3;
+    nodes.push(publicationNode(node.id+'-stop-'+(index+1)+'-dot','rect',x+cx-r,y+lineY-r,r*2,r*2,bind,'',{background:node.style.background,borderColor:'#ffffff',borderWidth:2,radius:r}),publicationText(node.id+'-stop-'+(index+1),x+Math.max(pad,Math.min(w-pad-sw,cx-sw/2)),y+lineY+18,sw,h-lineY-24,bind+'Stop'+(index+1),'',{...node.style,fontSize:small?16:Math.max(19,node.style.fontSize-7),fontWeight:600,align:index===0?'left':index===2?'right':'center',borderWidth:0,radius:0}));
+  }
+  return nodes;
+}
+
+function publicationBaseSurfaces(){
+  const pdfOverview={id:'pdfOverview',width:1584,height:1120,background:'#07162b',nodes:[
+    publicationText('agency',76,48,370,40,'agency','',{fontSize:21,color:'#aab6c9',fontWeight:500}),
+    publicationText('brand',600,35,384,55,'brandName','',{fontSize:42,color:'#b79665',align:'center',fontWeight:800}),
+    publicationText('tagline',1110,49,398,38,'tagline','',{fontSize:20,color:'#aab6c9',align:'right',fontWeight:500}),
+    publicationText('title',76,134,1020,122,'title','',{fontSize:53,fontWeight:800,lineHeight:1.18}),
+    publicationText('address',78,258,1040,52,'address','',{fontSize:23,color:'#9daac0',fontWeight:400}),
+    publicationText('price',1110,144,400,70,'price','',{fontSize:38,align:'right',fontWeight:700}),
+    publicationText('unit',1110,220,400,40,'priceUnit','',{fontSize:22,color:'#9daac0',align:'right',fontWeight:400}),
+    publicationLine('top-rule',76,332,1432),
+    publicationNode('agent-avatar','avatar',80,392,174,174,'avatar','',{radius:87,borderColor:'#b79665',borderWidth:2}),
+    publicationText('agent-name',80,596,438,55,'agentName','',{fontSize:31,fontWeight:700}),
+    publicationText('agent-role',80,652,438,42,'agentRole','',{fontSize:22,color:'#9daac0',fontWeight:400}),
+    publicationText('agent-phone',80,711,438,45,'phone','',{fontSize:26,color:'#b79665'}),
+    publicationText('agent-contact',80,767,438,95,'contact','',{fontSize:23,color:'#aab6c9',fontWeight:400}),
+    publicationNode('facts','facts',616,385,891,402,'facts','',{fontSize:26,color:'#ffffff',borderColor:'#42516a',borderWidth:1}),
+    publicationText('description-heading',616,834,891,42,'','房源介绍',{fontSize:27,color:'#b79665',fontWeight:700}),
+    publicationText('body',616,892,891,139,'body','',{fontSize:23,fontWeight:400,lineHeight:1.5}),
+    publicationLine('footer-rule',76,1050,1432,'#42516a',1),
+    publicationText('footer',76,1072,1432,28,'footer','',{fontSize:17,color:'#9daac0',fontWeight:400})
+  ]};
+  const pdfGallery={id:'pdfGallery',width:1584,height:1120,background:'#07162b',nodes:[
+    publicationText('agency',76,48,370,40,'agency','',{fontSize:21,color:'#aab6c9',fontWeight:500}),
+    publicationText('brand',600,35,384,55,'brandName','',{fontSize:42,color:'#b79665',align:'center',fontWeight:800}),
+    publicationText('gallery-heading',180,124,1224,72,'','房源影像',{fontSize:52,fontWeight:800,align:'center'}),
+    publicationText('gallery-title',160,211,1264,53,'title','',{fontSize:26,color:'#9daac0',align:'center',fontWeight:400}),
+    publicationNode('gallery-photo-1','image',76,294,346,421,'photo1'),
+    publicationNode('gallery-photo-2','image',438,294,708,421,'photo2'),
+    publicationNode('gallery-photo-3','image',1162,294,346,421,'photo3'),
+    publicationNode('gallery-photo-4','image',426,733,358,228,'photo4'),
+    publicationNode('gallery-photo-5','image',800,733,358,228,'photo5'),
+    publicationNode('gallery-price-box','rect',598,982,388,92,'','',{background:'#07162b',borderColor:'#b79665',borderWidth:1}),
+    publicationText('gallery-price',614,995,356,36,'price','',{fontSize:25,align:'center',fontWeight:700}),
+    publicationText('gallery-unit',614,1041,356,25,'priceUnit','',{fontSize:17,color:'#9daac0',align:'center',fontWeight:400})
+  ]};
+  const pdfLocation={id:'pdfLocation',width:1584,height:1120,background:'#07162b',nodes:[
+    publicationText('agency',76,48,370,40,'agency','',{fontSize:21,color:'#aab6c9',fontWeight:500}),
+    publicationText('brand',600,35,384,55,'brandName','',{fontSize:42,color:'#b79665',align:'center',fontWeight:800}),
+    publicationText('location-heading',76,137,1300,72,'','地理位置 / 大学通勤',{fontSize:51,fontWeight:800}),
+    publicationText('location-address',76,228,1432,65,'address','',{fontSize:25,color:'#9daac0',fontWeight:400}),
+    publicationNode('map','map',76,326,855,532,'map','',{radius:18,borderColor:'#42516a',borderWidth:1}),
+    publicationText('map-attribution',76,874,855,33,'mapAttribution','',{fontSize:17,color:'#9daac0',fontWeight:400}),
+    publicationText('routes-heading',987,327,520,55,'routesTitle','',{fontSize:29,fontWeight:700}),
+    publicationNode('route-1','route',987,411,520,214,'route1','',{fontSize:24,background:'#0e223c',borderColor:'#42516a',borderWidth:1,radius:16}),
+    publicationNode('route-2','route',987,650,520,214,'route2','',{fontSize:24,background:'#0e223c',borderColor:'#42516a',borderWidth:1,radius:16}),
+    publicationText('location-note',76,944,1432,52,'disclaimer','',{fontSize:19,color:'#9daac0',fontWeight:400}),
+    publicationLine('footer-rule',76,1030,1432,'#42516a',1),
+    publicationText('location-service',76,1053,1432,37,'service','',{fontSize:23,color:'#b79665',fontWeight:600})
+  ]};
+  const intro={id:'intro',width:1080,height:1920,background:'#06152e',nodes:[
+    publicationNode('hero-photo','image',0,0,1080,957,'photo1'),
+    publicationNode('small-photo-left','image',0,966,535,553,'photo2'),
+    publicationNode('small-photo-right','image',544,966,536,553,'photo3'),
+    publicationNode('brand-mark','logo',30,30,155,155,'logo','',{radius:78,borderColor:'#294568',borderWidth:2}),
+    publicationLine('intro-accent',50,1549,120,'#ef4b69',7),
+    publicationText('metro',50,1581,560,60,'metro','',{fontSize:43,fontWeight:800}),
+    publicationText('walk',654,1588,376,50,'walk','',{fontSize:30,color:'#a8b8d2',align:'right'}),
+    publicationText('price',45,1676,430,132,'priceLarge','',{fontSize:105,fontWeight:800,lineHeight:1.05}),
+    publicationText('price-unit',405,1711,370,65,'priceUnit','',{fontSize:45,fontWeight:700}),
+    publicationText('intro-brand',795,1713,235,60,'brandName','',{fontSize:38,align:'right',fontWeight:800}),
+    publicationText('facts',50,1821,984,42,'introFacts','',{fontSize:29,fontWeight:700}),
+    publicationNode('service-box','rect',51,1862,979,46,'','',{background:'#06152e',borderColor:'#ef4b69',borderWidth:2,radius:11}),
+    publicationText('service',65,1870,950,31,'service','',{fontSize:22,fontWeight:700})
+  ]};
+  // Exact reference proportions: map first, two route cards, service footer.
+  const outro={id:'outro',width:1080,height:1920,background:'#06152e',nodes:[
+    publicationLine('outro-accent',50,20,122,'#ef4b69',7),
+    publicationText('outro-title',52,55,784,62,'','地铁 / 大学通勤',{fontSize:44,fontWeight:800}),
+    publicationText('outro-brand',830,55,200,54,'brandName','',{fontSize:31,align:'right',fontWeight:800}),
+    publicationText('outro-address',51,134,978,47,'mapTitle','',{fontSize:28,color:'#a8b8d2'}),
+    publicationNode('outro-map','map',42,197,1001,666,'map','',{radius:29,borderColor:'#294568',borderWidth:1}),
+    publicationNode('map-callout','rect',71,227,498,67,'','',{background:'#06152e',borderColor:'#294568',borderWidth:1,radius:14}),
+    publicationText('map-callout-title',91,242,458,40,'mapTitle','',{fontSize:28,fontWeight:700}),
+    publicationNode('metro-callout','rect',550,314,460,91,'','',{background:'#06152e',borderColor:'#294568',borderWidth:1,radius:14}),
+    publicationText('metro-callout-title',570,328,421,66,'mapMetro','',{fontSize:26,fontWeight:700}),
+    publicationText('outro-attribution',51,884,984,31,'mapAttribution','',{fontSize:17,color:'#a8b8d2',fontWeight:500}),
+    publicationText('routes-title',50,941,984,63,'routesTitle','',{fontSize:39,fontWeight:800}),
+    publicationText('routes-subtitle',51,999,984,46,'','从住处出发 · 按已确认的路线信息',{fontSize:26,color:'#a8b8d2'}),
+    publicationNode('outro-route-1','route',50,1067,986,210,'route1','',{fontSize:29,background:'#0b2242',borderColor:'#294568',borderWidth:1,radius:26}),
+    publicationNode('outro-route-2','route',50,1306,986,210,'route2','',{fontSize:29,background:'#0b2242',borderColor:'#294568',borderWidth:1,radius:26}),
+    publicationText('outro-disclaimer',51,1553,984,60,'disclaimer','',{fontSize:22,color:'#a8b8d2',fontWeight:500}),
+    publicationLine('outro-footer-rule',50,1626,984,'#294568',1),
+    publicationNode('outro-brand-mark','logo',50,1660,135,135,'logo','',{radius:68,borderColor:'#294568',borderWidth:1}),
+    publicationText('outro-features',214,1674,820,113,'features','',{fontSize:29,fontWeight:700}),
+    publicationNode('outro-service-box','rect',50,1833,984,64,'','',{background:'#06152e',borderColor:'#ef4b69',borderWidth:2,radius:14}),
+    publicationText('outro-service',72,1850,942,38,'service','',{fontSize:27,fontWeight:700})
+  ]};
+  pdfOverview.nodes=pdfOverview.nodes.flatMap(node=>node.type==='facts'?publicationFactNodes(node):[node]);
+  pdfLocation.nodes=pdfLocation.nodes.flatMap(node=>node.type==='route'?publicationRouteNodes(node,'#b79665'):[node]);
+  outro.nodes=outro.nodes.flatMap(node=>node.type==='route'?publicationRouteNodes(node,'#ef4b69'):[node]);
+  return {pdfOverview,pdfGallery,pdfLocation,intro,outro};
+}
+
+function defaultPublicationDesign(){return {version:2,preset:'ciliev-elite',paper:'A4',orientation:'landscape',brand:{name:'ciliev',agency:'房地产',tagline:'莫斯科房产服务',agentName:'房产顾问',agentRole:'专属房产顾问',phone:'',email:'',contact:'',footer:'ciliev 房地产 · 莫斯科',logoAssetId:'',avatarAssetId:''},theme:JSON.parse(JSON.stringify(publicationThemeDefaults)),surfaces:publicationBaseSurfaces()};}
+
+function normalizePublicationDesign(input={}){
+  const source=input&&typeof input==='object'&&!Array.isArray(input)?input:{},base=defaultPublicationDesign();
+  const brand=source.brand&&typeof source.brand==='object'?source.brand:{};
+  for(const key of Object.keys(base.brand))base.brand[key]=key.endsWith('AssetId')?publicationAssetId(brand[key]):publicationSafeString(brand[key]??base.brand[key],['contact','footer'].includes(key)?1000:500);
+  base.preset=publicationChoice(source.preset,['ciliev-elite','ciliev-navy'],'ciliev-elite');base.paper=publicationChoice(source.paper,['A4','Letter'],'A4');
+  for(const group of ['pdf','social'])for(const key of Object.keys(base.theme[group]))base.theme[group][key]=publicationColor(source.theme?.[group]?.[key],base.theme[group][key]);
+  for(const [id,surface] of Object.entries(base.surfaces)){const group=id.startsWith('pdf')?'pdf':'social';surface.background=base.theme[group].background;for(const node of surface.nodes)for(const prop of ['color','background','borderColor'])for(const key of Object.keys(publicationThemeDefaults[group]))if(node.style[prop]===publicationThemeDefaults[group][key]){node.style[prop]=base.theme[group][key];break;}}
+  if(source.version===1){
+    for(const [from,to] of [['background','background'],['foreground','foreground'],['accent','accent']])base.theme.pdf[to]=publicationColor(source[from],base.theme.pdf[to]);
+    if(typeof source.contact==='string')base.brand.contact=source.contact.slice(0,1000);if(typeof source.footer==='string'&&source.footer!=='МОСТ · Подбор жилья в Москве')base.brand.footer=source.footer.slice(0,1000);
+    const disabled=new Set((source.blocks||[]).filter(row=>row?.enabled===false).map(row=>row.id));
+    for(const [id,surface] of Object.entries(base.surfaces)){
+      if(id.startsWith('pdf'))surface.background=base.theme.pdf.background;
+      for(const node of surface.nodes){if(id.startsWith('pdf')){node.style.color=node.style.color==='#b79665'?base.theme.pdf.accent:node.style.color==='#ffffff'?base.theme.pdf.foreground:node.style.color;node.style.fontFamily=source.font==='serif'?'serif':'sans';}
+        if(disabled.has('description')&&['body','description-heading'].includes(node.id)||disabled.has('facts')&&(node.type==='facts'||node.id.startsWith('facts-row-'))||disabled.has('contact')&&node.id.startsWith('agent-')||disabled.has('photos')&&id==='pdfGallery'||disabled.has('location')&&id==='pdfLocation')node.visible=false;
+      }
+    }
+    if(source.intro?.headline&&source.intro.headline!=='{{title}}'){const node=base.surfaces.intro.nodes.find(n=>n.id==='metro');node.bind='';node.text=publicationSafeString(source.intro.headline,600);}
+  }
+  for(const id of PUBLICATION_SURFACES){
+    const original=source.surfaces?.[id];if(!original||typeof original!=='object')continue;
+    const surface=base.surfaces[id];surface.width=publicationNumber(original.width,320,4096,surface.width);surface.height=publicationNumber(original.height,320,4096,surface.height);surface.background=publicationColor(original.background,id.startsWith('pdf')?base.theme.pdf.background:base.theme.social.background);
+    if(!Array.isArray(original.nodes))continue;
+    const seen=new Set();surface.nodes=original.nodes.slice(0,80).filter(n=>n&&typeof n==='object').map((n,index)=>{
+      const baseId=publicationId(n.id,'node-'+index);let nodeId=baseId,duplicate=0;while(seen.has(nodeId)){const suffix='-'+index+'-'+(++duplicate);nodeId=baseId.slice(0,80-suffix.length)+suffix;}seen.add(nodeId);
+      const s=n.style&&typeof n.style==='object'?n.style:{},type=publicationChoice(n.type,publicationTypes,'text'),def=publicationStyle();
+      const w=publicationNumber(n.w,4,surface.width,surface.width/2),h=publicationNumber(n.h,type==='line'?1:2,surface.height,100);
+      return {id:nodeId,type,x:publicationNumber(n.x,0,Math.max(0,surface.width-w),0),y:publicationNumber(n.y,0,Math.max(0,surface.height-h),0),w,h,bind:publicationBindingIds.has(n.bind)?n.bind:'',text:publicationSafeString(n.text,20000),photoIndex:Math.round(publicationNumber(n.photoIndex,0,29,0)),visible:n.visible!==false,locked:n.locked===true,z:Math.round(publicationNumber(n.z,-100,100,0)),style:{fontSize:publicationNumber(s.fontSize,10,200,def.fontSize),color:publicationColor(s.color,def.color),fontFamily:publicationChoice(s.fontFamily,['sans','serif'],def.fontFamily),align:publicationChoice(s.align,['left','center','right'],def.align),opacity:publicationNumber(s.opacity,0,1,1),background:publicationColor(s.background,def.background),borderColor:publicationColor(s.borderColor,def.borderColor),borderWidth:publicationNumber(s.borderWidth,0,20,0),radius:publicationNumber(s.radius,0,400,0),fontWeight:publicationChoice(Number(s.fontWeight),[400,500,600,700,800],600),objectFit:publicationChoice(s.objectFit,['cover','contain'],'cover'),lineHeight:publicationNumber(s.lineHeight,1,2.4,1.35)}};
+    });
+  }
+  return base;
+}
+
+function publicationPage(design,id){return normalizePublicationDesign(design).surfaces[PUBLICATION_SURFACES.includes(id)?id:'pdfOverview'];}
+const publicationNumeric=value=>value!==''&&value!=null&&typeof value!=='boolean'&&Number.isFinite(Number(value))?Number(value):null;
+const publicationZh=(value,rules)=>translate(publicationSafeString(String(value??''),40000),rules);
+const publicationMode={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通',car:'驾车',unknown:'出行方式待确认','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};
+
+function resolvePublicationData(card={},input={},assets={}){
+  const design=normalizePublicationDesign(input),f=card.fields&&typeof card.fields==='object'?card.fields:{},rules={...DICTIONARY,...publicationAddressTerms,...(assets.rules||{})},warnings=[];
+  const zh=value=>{const result=publicationZh(value,rules);if(/[А-Яа-яЁё]/.test(result))warnings.push('部分名称仍为俄文，请检查中文翻译。');return result;};
+  const price=publicationNumeric(f.price),area=publicationNumeric(f.area),floor=publicationNumeric(f.floor),floors=publicationNumeric(f.floors),lat=publicationNumeric(f.latitude??card.listing?.latitude),lon=publicationNumeric(f.longitude??card.listing?.longitude);
+  const coordinates=lat!==null&&lon!==null&&Math.abs(lat)<=85.0511287798066&&Math.abs(lon)<=180;
+  const layout=f.layout==='studio'?'开放式公寓':f.layout==='euro2'?'一室一厅':f.layout==='euro3'?'两室一厅':({1:'一居室',2:'两居室',3:'三居室',4:'四居室'})[String(f.rooms)]||(f.rooms?zh(f.rooms)+'居室':'公寓');
+  const metro=zh(f.metro||''),address=zh(f.address||f.district||f.complex||''),city=zh(f.city||'Москва');
+  const mapPlace=metro||address;
+  const mapTitle=mapPlace===city||(city&&mapPlace.startsWith(city)&&/^[\s,，·]/u.test(mapPlace.slice(city.length)))?mapPlace:[city,mapPlace].filter(Boolean).join(' · ');
+  const routeRows=String(f.universities||'').split('\n').map(value=>value.trim()).filter(Boolean).slice(0,10).map(value=>{const [name,time='',mode='',line='']=value.split('|').map(v=>v.trim());return {name,time,mode,line};});
+  if(!routeRows.length&&f.university)routeRows.push({name:String(f.university),time:String(f.uniTime||''),mode:String(f.uniMode||''),line:''});
+  const routes=routeRows.map(row=>{const university=resolveUniversity(row.name),campus=resolveCampus(row.name),personal=Object.keys(assets.rules||{}).some(key=>key.toLocaleLowerCase('ru').replaceAll('ё','е')===row.name.toLocaleLowerCase('ru').replaceAll('ё','е')),name=personal?zh(row.name):university?.zh||campus?.zh||zh(row.name);const time=/^\d{1,3}(?:\s*[-–—]\s*\d{1,3})?$/.test(row.time)?'约'+row.time.replace(/[–—]/g,'-')+'分钟':row.time?zh(row.time):'通勤时间待确认';return {title:name,time,stops:[metro||'住处',row.line?zh(row.line):publicationMode[row.mode]||'出行方式待确认',name],confirmedTime:!!row.time};});
+  const featureSet=new Set(Array.isArray(f.features)?f.features:[]);const features=FEATURES.filter(row=>featureSet.has(row[0])).map(row=>{const count=publicationNumeric(f.featureCounts?.[row[0]]);return(count!==null&&count>1?count+'件 ':'')+row[1];}).join(' / ');
+  const title=zh(card.title||card.titles?.[0]||f.name||f.complex||'房源详情'),body=zh(card.body||f.description||'');
+  const walk=f.walk!==''&&f.walk!=null?(/^[\d\s–—-]+$/.test(String(f.walk))?'步行'+String(f.walk).replace(/[–—]/g,'-')+'分钟':zh(f.walk)):'距离待确认';
+  const priceNumber=price===null?'':price.toLocaleString('zh-CN',{maximumFractionDigits:2});
+  const priceLarge=price===null?'租金待确认':price>=10000?Number((price/10000).toFixed(2))+'万':priceNumber;
+  const data={title,body,brandName:design.brand.name,agency:design.brand.agency,tagline:design.brand.tagline,agentName:design.brand.agentName,agentRole:design.brand.agentRole,phone:design.brand.phone,email:design.brand.email,contact:design.brand.contact||design.brand.email,footer:design.brand.footer,metro,metroLine:zh(f.metroLine||f.line||''),walk,price:priceNumber||'租金待确认',priceLarge,priceUnit:'卢布 / 月',area:area===null?'':String(area)+'㎡',layout,floor:floor===null?'':String(floor)+(floors!==null?' / '+floors:'')+'层',address,city,features,service:'抵达登记（临时居住登记）· 提供办理协助',introFacts:[layout,area!==null?String(area)+'㎡':''].filter(Boolean).join(' / '),mapTitle,mapMetro:[metro,walk].filter(Boolean).join('\n'),routesTitle:'大学通勤参考',route1Title:routes[0]?.title||'院校信息待确认',route1Time:routes[0]?.time||'',route1Stops:routes[0]?.stops.join(' → ')||'',route2Title:routes[1]?.title||'更多院校',route2Time:routes[1]?.time||'',route2Stops:routes[1]?.stops.join(' → ')||'',route1:routes[0]||null,route2:routes[1]||null,routes,facts:[['房屋类型',layout],['月租金',priceNumber?priceNumber+' 卢布':''],['面积',area!==null?String(area)+'㎡':''],['楼层',floor===null?'':String(floor)+(floors!==null?' / '+floors:'')+'层'],['地铁',metro],['家具家电',features]].filter(row=>row[1]),disclaimer:routes.some(row=>row.confirmedTime)?'通勤时间按已提供资料整理，具体以校区和实际路线为准。':'通勤时间及路线尚待确认。',mapAttribution:assets.mapAttribution?'地图数据 © OpenStreetMap 贡献者':coordinates?'地图数据 © OpenStreetMap 贡献者':'尚未确认房源坐标',latitude:coordinates?lat:null,longitude:coordinates?lon:null,mapUrl:coordinates?'https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=16/'+lat+'/'+lon:'',warnings:[...new Set(warnings)]};
+  const fixedFacts=[['房屋类型',layout],['月租金',priceNumber?priceNumber+' 卢布':''],['面积',area!==null?String(area)+'㎡':''],['楼层',data.floor],['地铁',metro],['家具家电',features]];
+  fixedFacts.forEach(([label,value],index)=>{data['fact'+(index+1)+'Label']=value?label:'';data['fact'+(index+1)+'Value']=value||'';});
+  for(let r=0;r<2;r++)for(let s=0;s<3;s++)data['route'+(r+1)+'Stop'+(s+1)]=routes[r]?.stops[s]||'';
+  return data;
+}
+
+function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:'');}
+
+
+const publicationEscape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const publicationImageValue=value=>typeof value==='string'?value:value?.dataUrl||'';
+function safePublicationImage(value){const text=publicationImageValue(value);return typeof text==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=\s]+$/i.test(text)&&text.length<=24_000_000?text.replace(/\s/g,''):'';}
+const publicationPhotoList=assets=>(Array.isArray(assets?.photos)?assets.photos:[]).map(safePublicationImage).filter(Boolean).slice(0,30);
+const publicationImageCache=new Map();
+function clearPublicationImageCache(){publicationImageCache.clear();}
+function publicationLoadImage(source){
+  if(!source||typeof Image==='undefined')return Promise.resolve(null);
+  if(publicationImageCache.has(source))return publicationImageCache.get(source);
+  const pending=new Promise(resolve=>{const image=new Image();let settled=false;const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);resolve(value);};const timer=setTimeout(()=>finish(null),10000);image.onload=()=>finish(image.naturalWidth>0?image:null);image.onerror=()=>finish(null);image.src=source;});
+  publicationImageCache.set(source,pending);while(publicationImageCache.size>42)publicationImageCache.delete(publicationImageCache.keys().next().value);return pending;
+}
+
+function publicationMeasureWidth(text,fontSize){let width=0;for(const c of text)width+=fontSize*(/\s/.test(c)?.3:/[\u0000-\u024f]/.test(c)?.56:1);return width;}
+function publicationWrapText(text,width,fontSize,measure=null){
+  const evaluate=measure||((value)=>publicationMeasureWidth(value,fontSize));const lines=[];
+  for(const paragraph of String(text??'').replace(/\r/g,'').split('\n')){
+    if(!paragraph){lines.push('');continue;}
+    let line='';for(const char of Array.from(paragraph)){if(line&&evaluate(line+char)>Math.max(1,width)){lines.push(line);line=char;}else line+=char;}lines.push(line);
+  }
+  return lines;
+}
+function publicationFit(text,node){let size=node.style.fontSize;const min=Math.min(size,Math.max(12,size*.58)),height=(lines,font)=>lines.length*font*node.style.lineHeight+(lines.length>1&&node.style.lineHeight<1.3?font*.25:0);while(size>min){const lines=publicationWrapText(text,node.w,size);if(height(lines,size)<=node.h+1)break;size-=1;}const lines=publicationWrapText(text,node.w,size);return {size,lines,overflow:height(lines,size)>node.h+2};}
+function publicationNodeImage(node,data,assets,photos){
+  if(node.type==='map')return data.latitude!==null&&data.longitude!==null?safePublicationImage(assets.mapImage||assets.map):'';
+  if(node.type==='avatar')return safePublicationImage(assets.avatar);
+  if(node.type==='logo')return safePublicationImage(assets.logo);
+  const match=/^photo(\d+)$/.exec(node.bind||'');const index=match?Number(match[1])-1:node.photoIndex||0;
+  // Gallery slots 1–5 flow with each page; explicit selections 6–30 stay
+  // attached to the same original photo in both canvas preview and export.
+  return (index<5?photos:publicationPhotoList(assets))[index]||'';
+}
+function publicationBoundEmpty(node,data){const route=/^route([12])(?:Title|Time|Stops|Stop[123])?$/.exec(node.bind||'');if(route&&!data['route'+route[1]])return true;if(/^fact[1-6](?:Label|Value)$/.test(node.bind||'')&&!data[node.bind])return true;return node.type==='route'&&!data[node.bind||'route1'];}
+function publicationSurfaceNodes(surface){return surface.nodes.filter(row=>row.visible).map((node,index)=>({...node,_order:index})).sort((a,b)=>a.z-b.z||a._order-b._order);}
+function publicationPageData(card,design,assets,surfaceId){const data=resolvePublicationData(card,design,assets);if(surfaceId==='pdfOverview'){const body=design.surfaces.pdfOverview.nodes.find(node=>node.bind==='body'&&node.visible);if(body)data.body=publicationDescriptionSlice(data.body,body)[0];}return data;}
+function publicationDescriptionSlice(text,node){
+  const chars=Array.from(String(text??'').replace(/\r/g,'')),capacity=Math.max(1,Math.floor(node.h/(node.style.fontSize*node.style.lineHeight)));let line='',lines=1,at=0;
+  for(;at<chars.length;at++){
+    const c=chars[at],nextLine=c==='\n'||line&&publicationMeasureWidth(line+c,node.style.fontSize)>node.w;
+    if(nextLine&&lines>=capacity){if(at===0)at=1;break;}
+    if(c==='\n'){lines++;line='';}else if(nextLine){lines++;line=c;}else line+=c;
+  }
+  return [chars.slice(0,at).join(''),chars.slice(at).join('')];
+}
+const publicationRounding=(ctx,x,y,w,h,r)=>{const radius=Math.max(0,Math.min(r,w/2,h/2));ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,radius);else{ctx.moveTo(x+radius,y);ctx.arcTo(x+w,y,x+w,y+h,radius);ctx.arcTo(x+w,y+h,x,y+h,radius);ctx.arcTo(x,y+h,x,y,radius);ctx.arcTo(x,y,x+w,y,radius);}ctx.closePath();};
+function publicationCanvasText(ctx,text,node,warnings){
+  const fit=publicationFit(text,node);ctx.fillStyle=node.style.color;ctx.font=node.style.fontWeight+' '+fit.size+'px '+PUBLICATION_FONT_STACKS[node.style.fontFamily];ctx.textBaseline='top';ctx.textAlign=node.style.align;
+  const lines=publicationWrapText(text,node.w,fit.size,value=>ctx.measureText(value).width);let size=fit.size;
+  while(lines.length*size*node.style.lineHeight>node.h+2&&size>12){size-=1;ctx.font=node.style.fontWeight+' '+size+'px '+PUBLICATION_FONT_STACKS[node.style.fontFamily];lines.splice(0,lines.length,...publicationWrapText(text,node.w,size,value=>ctx.measureText(value).width));}
+  if(lines.length*size*node.style.lineHeight>node.h+2)warnings.push({nodeId:node.id,code:'text-overflow',message:'文本超出文本框，请增大高度或调整字号。'});
+  const x=node.style.align==='center'?node.w/2:node.style.align==='right'?node.w:0;
+  lines.forEach((line,index)=>{if((index+1)*size*node.style.lineHeight<=node.h+size*.1)ctx.fillText(line,x,index*size*node.style.lineHeight);});
+}
+function publicationDrawPlaceholder(ctx,node,kind){ctx.fillStyle=node.style.background;ctx.fillRect(0,0,node.w,node.h);ctx.strokeStyle=node.style.borderColor;ctx.lineWidth=Math.max(1,node.style.borderWidth);ctx.strokeRect(0,0,node.w,node.h);ctx.fillStyle='#9daac0';ctx.font='500 '+Math.max(18,Math.min(32,node.w/15))+'px '+PUBLICATION_FONT_STACKS.sans;ctx.textAlign='center';ctx.textBaseline='middle';const message=kind==='map'?'位置待确认':kind==='image'?'房源照片':'';if(message)ctx.fillText(message,node.w/2,node.h/2);}
+function publicationDrawMonogram(ctx,node,avatar=false){const radius=Math.min(node.w,node.h)/2;ctx.fillStyle=node.style.background;ctx.beginPath();ctx.arc(node.w/2,node.h/2,radius,0,Math.PI*2);ctx.fill();ctx.strokeStyle=node.style.borderColor;ctx.lineWidth=Math.max(2,node.style.borderWidth);ctx.stroke();ctx.fillStyle=node.style.color;ctx.font='500 '+Math.min(node.w,node.h)*.52+'px '+PUBLICATION_FONT_STACKS.serif;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('C',node.w/2,node.h/2+radius*.05);if(!avatar){ctx.strokeStyle=node.style.color;ctx.lineWidth=Math.max(2,node.w*.016);ctx.strokeRect(node.w*.24,node.h*.22,node.w*.49,node.h*.56);ctx.beginPath();ctx.moveTo(node.w*.5,node.h*.25);ctx.lineTo(node.w*.5,node.h*.5);ctx.lineTo(node.w*.74,node.h*.5);ctx.stroke();}}
+function publicationDrawFacts(ctx,node,data,warnings,theme){
+  const rows=data.facts||[],height=node.h/Math.max(1,rows.length);rows.forEach(([label,value],index)=>{const y=index*height;ctx.strokeStyle=node.style.borderColor;ctx.lineWidth=Math.max(1,node.style.borderWidth);ctx.beginPath();ctx.moveTo(0,y+height-1);ctx.lineTo(node.w,y+height-1);ctx.stroke();ctx.save();ctx.translate(0,y+5);publicationCanvasText(ctx,label,{...node,id:node.id+'-label-'+index,w:node.w*.35,h:height-14,style:{...node.style,color:theme.muted,fontSize:Math.min(25,node.style.fontSize),fontWeight:400}},warnings);ctx.translate(node.w*.38,0);publicationCanvasText(ctx,value,{...node,id:node.id+'-value-'+index,w:node.w*.62,h:height-14,style:{...node.style,fontSize:node.style.fontSize}},warnings);ctx.restore();});
+}
+function publicationDrawRoute(ctx,node,route,theme,warnings){
+  publicationRounding(ctx,0,0,node.w,node.h,node.style.radius);ctx.fillStyle=node.style.background;ctx.fill();ctx.strokeStyle=node.style.borderColor;ctx.lineWidth=node.style.borderWidth;ctx.stroke();
+  const pad=node.w<700?24:25,small=node.w<700;ctx.save();ctx.translate(pad,pad);publicationCanvasText(ctx,route.title,{...node,id:node.id+'-title',w:node.w-pad*2-(small?0:238),h:small?72:56,style:{...node.style,fontSize:node.style.fontSize,fontWeight:700}},warnings);ctx.restore();
+  if(route.time){ctx.save();ctx.translate(small?pad:node.w-258,small?84:25);publicationCanvasText(ctx,route.time,{...node,id:node.id+'-time',w:small?node.w-pad*2:233,h:42,style:{...node.style,fontSize:small?20:node.style.fontSize-2,align:small?'left':'right'}},warnings);ctx.restore();}
+  const lineY=small?node.h-62:node.h*.56;ctx.strokeStyle=theme.accent;ctx.lineWidth=small?3:4;ctx.beginPath();ctx.moveTo(pad,lineY);ctx.lineTo(node.w-pad,lineY);ctx.stroke();
+  route.stops.slice(0,3).forEach((stop,index)=>{const x=pad+index*(node.w-pad*2)/2;ctx.fillStyle=node.style.background;ctx.strokeStyle='#ffffff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,lineY,small?5:6,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.save();const sw=(node.w-pad*2)/3;ctx.translate(Math.max(pad,Math.min(node.w-pad-sw,x-sw/2)),lineY+18);publicationCanvasText(ctx,stop,{...node,id:node.id+'-stop-'+index,w:sw,h:node.h-lineY-24,style:{...node.style,fontSize:small?16:Math.max(19,node.style.fontSize-7),fontWeight:600,align:index===0?'left':index===2?'right':'center'}},warnings);ctx.restore();});
+}
+
+async function renderPublicationPage(canvas,surfaceId,input,card={},assets={}){
+  const design=normalizePublicationDesign(input),surface=design.surfaces[surfaceId]||design.surfaces.pdfOverview,data=publicationPageData(card,design,assets,surface.id),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
+  canvas.width=surface.width;canvas.height=surface.height;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas 2D недоступен');ctx.fillStyle=surface.background;ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(const node of publicationSurfaceNodes(surface)){
+    if(publicationBoundEmpty(node,data)||surface.id==='pdfGallery'&&node.type==='image'&&!publicationNodeImage(node,data,assets,photos))continue;ctx.save();ctx.translate(node.x,node.y);ctx.globalAlpha=node.style.opacity;
+    if(node.type==='text'){if(node.style.borderWidth){publicationRounding(ctx,0,0,node.w,node.h,node.style.radius);ctx.lineWidth=node.style.borderWidth;ctx.strokeStyle=node.style.borderColor;ctx.stroke();}publicationCanvasText(ctx,publicationNodeText(node,data),node,warnings);}
+    else if(node.type==='rect'||node.type==='line'){publicationRounding(ctx,0,0,node.w,node.h,node.style.radius);ctx.fillStyle=node.type==='line'?node.style.color:node.style.background;ctx.fill();if(node.style.borderWidth){ctx.strokeStyle=node.style.borderColor;ctx.lineWidth=node.style.borderWidth;ctx.stroke();}}
+    else if(node.type==='facts')publicationDrawFacts(ctx,node,data,warnings,surface.id.startsWith('pdf')?design.theme.pdf:design.theme.social);
+    else if(node.type==='route'){ctx.translate(25,25);ctx.translate(-25,-25);publicationDrawRoute(ctx,node,data[node.bind||'route1'],surface.id.startsWith('pdf')?design.theme.pdf:design.theme.social,warnings);}
+    else {
+      const source=publicationNodeImage(node,data,assets,photos),image=await publicationLoadImage(source);
+      if(image){publicationRounding(ctx,0,0,node.w,node.h,node.style.radius);ctx.clip();const ratio=node.style.objectFit==='contain'?Math.min(node.w/image.width,node.h/image.height):Math.max(node.w/image.width,node.h/image.height);const w=image.width*ratio,h=image.height*ratio;ctx.drawImage(image,(node.w-w)/2,(node.h-h)/2,w,h);}
+      else if(['logo','avatar'].includes(node.type))publicationDrawMonogram(ctx,node,node.type==='avatar');
+      else {publicationDrawPlaceholder(ctx,node,node.type);if(source)warnings.push({nodeId:node.id,code:'image-unavailable',message:'图片未能解码，请检查源文件。'});}
+    }
+    ctx.restore();
+  }
+  return {warnings,data,width:surface.width,height:surface.height};
+}
+
+function publicationNodeCss(node,surface){const s=node.style,fit=publicationFit('',node);return 'left:'+node.x/surface.width*100+'%;top:'+node.y/surface.height*100+'%;width:'+node.w/surface.width*100+'%;height:'+node.h/surface.height*100+'%;opacity:'+s.opacity+';z-index:'+node.z+';border-radius:'+s.radius/surface.width*100+'cqw;color:'+s.color+';font-family:'+PUBLICATION_FONT_STACKS[s.fontFamily]+';font-weight:'+s.fontWeight+';text-align:'+s.align+';line-height:'+s.lineHeight+';font-size:'+fit.size/surface.width*100+'cqw;';}
+function publicationHtmlBox(node,surface,text,x,y,w,h,style={}){const block={...node,x:0,y:0,w,h,style:{...node.style,...style}},fit=publicationFit(text,block);return '<div class="pub-inner-text" style="left:'+x/node.w*100+'%;top:'+y/node.h*100+'%;width:'+w/node.w*100+'%;height:'+h/node.h*100+'%;font-size:'+fit.size/surface.width*100+'cqw;color:'+block.style.color+';font-weight:'+block.style.fontWeight+';line-height:'+block.style.lineHeight+';text-align:'+block.style.align+'">'+publicationEscape(text)+'</div>';}
+function publicationHtmlRoute(node,route,surface,theme){
+  if(!route)return '';const small=node.w<700,pad=small?24:25,lineY=small?node.h-62:node.h*.56;
+  let html=publicationHtmlBox(node,surface,route.title,pad,pad,node.w-pad*2-(small?0:238),small?72:56,{fontWeight:700});
+  if(route.time)html+=publicationHtmlBox(node,surface,route.time,small?pad:node.w-258,small?84:25,small?node.w-pad*2:233,42,{fontSize:small?20:node.style.fontSize-2,align:small?'left':'right'});
+  html+='<div style="position:absolute;left:'+pad/node.w*100+'%;top:'+lineY/node.h*100+'%;width:'+(node.w-pad*2)/node.w*100+'%;height:'+(small?3:4)/node.h*100+'%;background:'+theme.accent+'"></div>';
+  route.stops.slice(0,3).forEach((stop,index)=>{const x=pad+index*(node.w-pad*2)/2,r=small?5:6,sw=(node.w-pad*2)/3;
+    html+='<i style="position:absolute;left:'+(x-r)/node.w*100+'%;top:'+(lineY-r)/node.h*100+'%;width:'+r*2/node.w*100+'%;height:'+r*2/node.h*100+'%;border:'+2/surface.width*100+'cqw solid #fff;border-radius:50%;background:'+node.style.background+'"></i>';
+    html+=publicationHtmlBox(node,surface,stop,Math.max(pad,Math.min(node.w-pad-sw,x-sw/2)),lineY+18,sw,node.h-lineY-24,{fontSize:small?16:Math.max(19,node.style.fontSize-7),fontWeight:600,align:index===0?'left':index===2?'right':'center'});
+  });return html;
+}
+function publicationHtmlNode(node,surface,data,assets,photos,theme){
+  if(publicationBoundEmpty(node,data)||surface.id==='pdfGallery'&&node.type==='image'&&!publicationNodeImage(node,data,assets,photos))return '';let content='',css=publicationNodeCss(node,surface),extra='';
+  if(node.type==='text'){const text=publicationNodeText(node,data),fit=publicationFit(text,node);css+='font-size:'+fit.size/surface.width*100+'cqw;';content=publicationEscape(text);}
+  else if(node.type==='rect'||node.type==='line')css+='background:'+(node.type==='line'?node.style.color:node.style.background)+';';
+  else if(node.type==='facts'){const rows=data.facts||[],height=node.h/Math.max(1,rows.length);content=rows.map(([label,value],index)=>publicationHtmlBox(node,surface,label,0,index*height+5,node.w*.35,height-14,{color:theme.muted,fontSize:Math.min(25,node.style.fontSize),fontWeight:400})+publicationHtmlBox(node,surface,value,node.w*.38,index*height+5,node.w*.62,height-14)+'<div style="position:absolute;left:0;top:'+((index+1)*height-1)/node.h*100+'%;width:100%;height:1px;background:'+node.style.borderColor+'"></div>').join('');}
+  else if(node.type==='route'){css+='background:'+node.style.background+';';content=publicationHtmlRoute(node,data[node.bind||'route1'],surface,theme);extra=' route-card'+(node.w<700?' route-small':'');}
+  else{const source=publicationNodeImage(node,data,assets,photos);if(source)content='<img src="'+source+'" alt="'+(node.type==='map'?'房源位置':node.type==='avatar'?'房产顾问头像':node.type==='logo'?'ciliev':'房源照片')+'" style="object-fit:'+node.style.objectFit+'">';else if(node.type==='logo'||node.type==='avatar'){content='<div class="monogram '+(node.type==='logo'?'brand-monogram':'')+'" style="font-size:'+Math.min(node.w,node.h)*.52/surface.width*100+'cqw">C</div>';css+='background:'+node.style.background+';';}else{content='<span class="image-placeholder">'+(node.type==='map'?'位置待确认<br>请补充真实坐标':'房源照片')+'</span>';css+='background:'+node.style.background+';';}}
+  if(node.style.borderWidth)css+='border:'+node.style.borderWidth/surface.width*100+'cqw solid '+node.style.borderColor+';';
+  return '<div class="pub-node pub-'+node.type+extra+'" data-node-id="'+publicationEscape(node.id)+'" data-bind="'+publicationEscape(node.bind)+'" style="'+publicationEscape(css)+'">'+content+'</div>';
+}
+
+function publicationDocumentPages(card={},input={},assets={}){
+  const design=normalizePublicationDesign(input),data=resolvePublicationData(card,design,assets),photos=publicationPhotoList(assets),pages=[],overview=design.surfaces.pdfOverview,bodyNode=overview.nodes.find(n=>n.visible&&n.bind==='body');
+  let remaining='';if(bodyNode){const chunks=publicationDescriptionSlice(data.body,bodyNode);data.body=chunks[0];remaining=chunks[1];}
+  pages.push({surface:overview,data:{...data},photos});
+  if(remaining.length&&bodyNode){
+    const continuation=JSON.parse(JSON.stringify(overview));continuation.nodes=continuation.nodes.filter(n=>['agency','brand','tagline','title','footer','footer-rule'].includes(n.id)||n.bind==='body');const continuationBody=continuation.nodes.find(n=>n.bind==='body');Object.assign(continuationBody,{x:76,y:280,w:1432,h:740});const heading=continuation.nodes.find(n=>n.id==='title');if(heading){heading.bind='';heading.text='房源介绍';heading.h=100;}
+    while(remaining){const chunks=publicationDescriptionSlice(remaining,continuationBody);pages.push({surface:continuation,data:{...data,body:chunks[0]},photos});remaining=chunks[1];if(pages.length>40)throw Error('Описание требует слишком много страниц. Уменьшите шрифт или увеличьте текстовый блок.');}
+  }
+  if(photos.length){for(let at=0;at<photos.length;at+=5)pages.push({surface:design.surfaces.pdfGallery,data:{...data},photos:photos.slice(at,at+5)});}
+  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:design.surfaces.pdfLocation,data:{...data},photos});
+  return {design,data,pages};
+}
+
+function buildPublicationHtml(card={},input={},assets={}){
+  const document=publicationDocumentPages(card,input,assets),design=document.design,esc=publicationEscape,paper=design.paper==='Letter'?{w:279.4,h:215.9,name:'Letter'}:{w:297,h:210,name:'A4'};
+  const pages=document.pages.map(({surface,data,photos},index)=>'<section class="publication-page" aria-label="第'+(index+1)+'页" style="background:'+surface.background+';--page-ratio:'+surface.width+'/'+surface.height+'">'+publicationSurfaceNodes(surface).map(node=>publicationHtmlNode(node,surface,data,assets,photos,design.theme.pdf)).join('')+'<span class="page-number">'+String(index+1).padStart(2,'0')+' / '+String(document.pages.length).padStart(2,'0')+'</span></section>').join('');
+  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(document.data.title)+' · ciliev</title><style>@page{size:'+paper.name+' landscape;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:'+design.theme.pdf.background+';color:'+design.theme.pdf.foreground+';font-family:'+PUBLICATION_FONT_STACKS.sans+';-webkit-print-color-adjust:exact;print-color-adjust:exact}.publication-page{position:relative;container-type:inline-size;width:'+paper.w+'mm;height:'+paper.h+'mm;margin:0;overflow:hidden;break-after:page;page-break-after:always}.publication-page:last-child{break-after:auto;page-break-after:auto}.pub-node{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere}.pub-inner-text{position:absolute;white-space:pre-wrap;overflow:hidden;overflow-wrap:anywhere}.pub-node img{display:block;width:100%;height:100%}.image-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:'+design.theme.pdf.muted+';font-size:2cqw;text-align:center}.monogram{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;font:500 8cqw Georgia,serif;color:#fff}.brand-monogram{font-size:8cqw}.facts-table{height:100%;display:flex;flex-direction:column}.fact-row{flex:1;display:grid;grid-template-columns:35% 65%;align-items:center;gap:1cqw;min-height:0;border-bottom:1px solid '+design.theme.pdf.line+';font-size:1.55cqw;line-height:1.35}.fact-row span{color:'+design.theme.pdf.muted+';font-weight:400}.fact-row strong{font-weight:600;font-size:1.45cqw;max-height:100%;overflow:hidden}.route-card{padding:1.6cqw}.route-heading{display:flex;justify-content:space-between;gap:1cqw;min-height:2.6cqw;font-size:1.8cqw;line-height:1.25}.route-heading strong{max-width:72%;font-weight:700}.route-heading span{white-space:nowrap;text-align:right;font-size:1.6cqw}.route-line{height:.25cqw;position:relative;display:flex;justify-content:space-between;margin:3cqw .5cqw 1.5cqw}.route-line i{display:block;width:.8cqw;height:.8cqw;border:1.5px solid #fff;border-radius:50%;background:'+design.theme.pdf.panel+';transform:translateY(-35%)}.route-stops{display:flex;justify-content:space-between;gap:1cqw;font-size:1.15cqw}.route-stops span{width:33.333%}.route-stops span:nth-child(2){text-align:center}.route-stops span:last-child{text-align:right}.route-small .route-heading{display:block;font-size:1.5cqw;min-height:5cqw}.route-small .route-heading strong{display:block;max-width:100%}.route-small .route-heading span{display:block;text-align:left;font-size:1.2cqw;margin-top:.5cqw}.route-small .route-line{margin-top:1.5cqw}.route-small .route-stops{font-size:.95cqw}.page-number{position:absolute;bottom:1.8%;right:4.8%;font-size:.9cqw;letter-spacing:.12em;color:'+design.theme.pdf.muted+'}@media screen{body{padding:20px;background:#030b16}.publication-page{width:min('+paper.w+'mm,100%);height:auto;aspect-ratio:'+paper.w+'/'+paper.h+';margin:0 auto 20px;box-shadow:0 10px 40px #0008}}@media print{body{padding:0}.publication-page{margin:0;box-shadow:none}}</style></head><body>'+pages+'</body></html>';
+}
+
+
+const dceClone=value=>JSON.parse(JSON.stringify(value));
+const dceFinite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
+const dceClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+
+// Pointer movement is converted from the displayed page into its export units.
+function designCanvasDelta(start,current,bounds,surface){
+  const width=dceFinite(bounds?.width),height=dceFinite(bounds?.height);
+  if(width<=0||height<=0)return {x:0,y:0};
+  return {x:(dceFinite(current?.x)-dceFinite(start?.x))*dceFinite(surface?.width)/width,
+    y:(dceFinite(current?.y)-dceFinite(start?.y))*dceFinite(surface?.height)/height};
+}
+
+function moveDesignCanvasNodes(surface,ids,delta,{snap=0}={}){
+  const next=dceClone(surface),wanted=new Set(ids),nodes=next.nodes.filter(node=>wanted.has(node.id)&&!node.locked);
+  if(!nodes.length)return next;
+  const minX=Math.min(...nodes.map(n=>n.x)),minY=Math.min(...nodes.map(n=>n.y));
+  const maxX=Math.max(...nodes.map(n=>n.x+n.w)),maxY=Math.max(...nodes.map(n=>n.y+n.h));
+  let dx=dceFinite(delta.x),dy=dceFinite(delta.y);
+  if(snap>0){dx=Math.round((minX+dx)/snap)*snap-minX;dy=Math.round((minY+dy)/snap)*snap-minY;}
+  dx=dceClamp(dx,-minX,Math.max(-minX,next.width-maxX));dy=dceClamp(dy,-minY,Math.max(-minY,next.height-maxY));
+  for(const node of nodes){node.x+=dx;node.y+=dy;}
+  return next;
+}
+
+function resizeDesignCanvasNode(surface,id,delta,{snap=0,minSize=12}={}){
+  const next=dceClone(surface),node=next.nodes.find(n=>n.id===id);
+  if(!node||node.locked)return next;
+  let width=node.w+dceFinite(delta.x),height=node.h+dceFinite(delta.y);
+  if(snap>0){width=Math.round(width/snap)*snap;height=Math.round(height/snap)*snap;}
+  node.w=dceClamp(width,Math.min(node.type==='line'?4:minSize,next.width-node.x),next.width-node.x);
+  node.h=dceClamp(height,Math.min(node.type==='line'?2:minSize,next.height-node.y),next.height-node.y);
+  return next;
+}
+
+function alignDesignCanvasNodes(surface,ids,edge){
+  const next=dceClone(surface),wanted=new Set(ids),nodes=next.nodes.filter(n=>wanted.has(n.id)&&!n.locked);
+  if(!nodes.length)return next;
+  const left=nodes.length===1?0:Math.min(...nodes.map(n=>n.x)),top=nodes.length===1?0:Math.min(...nodes.map(n=>n.y));
+  const right=nodes.length===1?next.width:Math.max(...nodes.map(n=>n.x+n.w)),bottom=nodes.length===1?next.height:Math.max(...nodes.map(n=>n.y+n.h));
+  for(const node of nodes){
+    if(edge==='left')node.x=left;if(edge==='right')node.x=right-node.w;if(edge==='center')node.x=(left+right-node.w)/2;
+    if(edge==='top')node.y=top;if(edge==='bottom')node.y=bottom-node.h;if(edge==='middle')node.y=(top+bottom-node.h)/2;
+  }
+  return next;
+}
+
+function designCanvasHistory(initial,limit=40){
+  let current=dceClone(initial),past=[],future=[];
+  return {
+    value:()=>dceClone(current),canUndo:()=>past.length>0,canRedo:()=>future.length>0,
+    push(next){if(JSON.stringify(next)===JSON.stringify(current))return false;past.push(current);if(past.length>limit)past.shift();current=dceClone(next);future=[];return true;},
+    undo(){if(!past.length)return null;future.push(current);current=past.pop();return dceClone(current);},
+    redo(){if(!future.length)return null;past.push(current);current=future.pop();return dceClone(current);},
+    reset(next){current=dceClone(next);past=[];future=[];},
+  };
+}
+
+function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceChange,getCard=()=>({}),getAssets=()=>({}),renderPage=renderPublicationPage,toast=()=>{}}={}){
+  if(!mount||typeof getDesign!=='function')return {refresh:()=>{},setSurface:()=>{},destroy:()=>{},selectedNode:()=>null};
+  const change=onChange||setDesign||(()=>{}),surfaceNames={pdfOverview:'PDF · Объект и агент',pdfGallery:'PDF · Фотографии',pdfLocation:'PDF · Расположение',intro:'Intro · Обложка',outro:'Outro · Карта и маршруты'};
+  const typeNames={text:'Текст',image:'Фотография',rect:'Плашка',line:'Линия',logo:'Логотип',avatar:'Аватар',map:'Карта',route:'Маршрут',facts:'Характеристики'};
+  const bindingRows=Array.isArray(PUBLICATION_BINDINGS)?PUBLICATION_BINDINGS:[];
+  const bindingName=id=>bindingRows.find(row=>row.id===id)?.label||id;
+  const make=(tag,text='',attrs={})=>{const node=document.createElement(tag);if(text)node.textContent=text;for(const [key,value] of Object.entries(attrs))node.setAttribute(key,String(value));return node;};
+  const button=(text,id,action)=>{const node=make('button',text,{type:'button',class:'btn',id});node.onclick=action;return node;};
+  const select=(id,choices)=>{const node=make('select','',{id});for(const [value,text] of choices)node.append(make('option',text,{value}));return node;};
+  const field=(title,input)=>{const wrap=make('label',title);wrap.htmlFor=input.id;wrap.append(input);return wrap;};
+  const normal=()=>normalizePublicationDesign(getDesign());
+  let draft=normal(),surfaceId=Object.keys(draft.surfaces||{})[0]||'intro',selection=new Set(),history=designCanvasHistory(draft);
+  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null;
+  const host=make('section','',{class:'design-canvas-editor',id:'designCanvasEditor','aria-label':'Редактор расположения блоков'});
+  const title=make('div','',{class:'design-canvas-heading'});title.append(make('h3','Редактор макета'),make('p','Перемещайте блоки и меняйте их размеры. Текст из полей карточки подставляется заново для каждого объявления.',{class:'muted'}));
+  const toolbar=make('div','',{class:'design-canvas-toolbar'}),surfaces=select('designCanvasSurface',[]),zooms=select('designCanvasZoom',[['fit','По ширине'],['25','25%'],['50','50%'],['75','75%'],['100','100%']]);
+  const backgroundInput=make('input','',{type:'color',id:'designCanvasBackground'});
+  toolbar.append(field('Полотно',surfaces),field('Масштаб',zooms),field('Фон полотна',backgroundInput));
+  const undo=button('↶ Отменить','designCanvasUndo',()=>restore('undo')),redo=button('↷ Повторить','designCanvasRedo',()=>restore('redo'));
+  const grid=make('input','',{type:'checkbox',id:'designCanvasGrid'});grid.checked=showGrid;
+  const snapping=make('input','',{type:'checkbox',id:'designCanvasSnap'});snapping.checked=snap;
+  toolbar.append(undo,redo,field('Сетка',grid),field('Привязка',snapping));
+  const workbench=make('div','',{class:'design-canvas-workbench'}),left=make('div','',{class:'design-canvas-workarea'}),viewport=make('div','',{class:'design-canvas-viewport',id:'designCanvasViewport'});
+  const page=make('div','',{class:'design-canvas-page',id:'designCanvasPage'}),canvas=make('canvas','',{id:'designCanvasPreview','aria-label':'Точное изображение макета'}),overlay=make('div','',{class:'design-canvas-overlay',id:'designCanvasOverlay',role:'listbox','aria-label':'Блоки макета','aria-multiselectable':'true'});
+  page.append(canvas,overlay);viewport.append(page);left.append(viewport);
+  const readout=make('p','',{id:'designCanvasReadout',class:'muted'}),warnings=make('p','',{id:'designCanvasWarnings',class:'design-canvas-warnings',role:'status'});left.append(readout,warnings);
+  const side=make('div','',{class:'design-canvas-inspector',id:'designCanvasInspector',role:'complementary','aria-label':'Свойства выбранного блока'}),selectedName=make('h4','Выберите блок',{id:'designCanvasSelected'});
+  const commands=make('div','',{class:'design-canvas-actions'});
+  const addText=button('+ Текст','designCanvasAddText',()=>addNode('text')),addRect=button('+ Плашка','designCanvasAddRect',()=>addNode('rect')),addPhoto=button('+ Фото','designCanvasAddPhoto',()=>addNode('image'));
+  const duplicate=button('Копировать блок','designCanvasDuplicate',duplicateNodes),remove=button('Удалить','designCanvasDelete',removeNodes);
+  commands.append(addText,addPhoto,addRect,duplicate,remove);
+  const inspector=make('fieldset','',{class:'design-canvas-fields'}),coordinates=make('div','',{class:'design-canvas-numbers'}),controls={};
+  for(const [key,label] of [['x','X'],['y','Y'],['w','Ширина'],['h','Высота']]){const input=make('input','',{type:'number',id:'designCanvas-'+key,step:'1',min:'0',inputmode:'decimal'});controls[key]=input;coordinates.append(field(label,input));input.onchange=()=>editNode(node=>{node[key]=dceFinite(input.value,node[key]);clampNode(node);},'geometry');}
+  inspector.append(coordinates);
+  const binding=select('designCanvasBinding',[['','Свой текст'],...bindingRows.map(row=>[row.id,row.label])]),text=make('textarea','',{id:'designCanvasText',rows:4,maxlength:4000});
+  binding.onchange=()=>editNode(node=>{node.bind=binding.value;},'binding');
+  text.onchange=()=>{if(!selected()||selected().text===text.value)return;editNode(node=>{node.text=text.value;if(node.type==='text')node.bind='';},'text');};
+  inspector.append(field('Содержимое из карточки',binding),field('Свой текст',text));
+  const fontSize=make('input','',{type:'number',id:'designCanvasFontSize',min:10,max:200,step:1,inputmode:'numeric'}),font=select('designCanvasFont',[['sans','Без засечек'],['serif','С засечками']]),weight=select('designCanvasWeight',[['400','Обычный'],['500','Средний'],['600','Полужирный'],['700','Жирный'],['800','Очень жирный']]),align=select('designCanvasAlign',[['left','Слева'],['center','По центру'],['right','Справа']]);
+  const textColor=make('input','',{type:'color',id:'designCanvasColor'}),fill=make('input','',{type:'color',id:'designCanvasFill'}),opacity=make('input','',{type:'range',id:'designCanvasOpacity',min:0,max:1,step:0.05});
+  const visible=make('input','',{type:'checkbox',id:'designCanvasVisible'}),locked=make('input','',{type:'checkbox',id:'designCanvasLocked'}),objectFit=select('designCanvasFit',[['cover','Заполнить с кадрированием'],['contain','Показать целиком']]),photoIndex=make('input','',{type:'number',id:'designCanvasPhotoIndex',min:1,max:30,step:1});
+  const styleGrid=make('div','',{class:'design-canvas-numbers'});styleGrid.append(field('Размер шрифта',fontSize),field('Шрифт',font),field('Начертание',weight),field('Текст',align),field('Цвет текста / линии',textColor),field('Заливка',fill));inspector.append(styleGrid,field('Непрозрачность',opacity),field('Показывать блок',visible),field('Зафиксировать блок',locked),field('Изображение',objectFit),field('Номер фотографии',photoIndex));
+  fontSize.onchange=()=>editStyle('fontSize',dceClamp(dceFinite(fontSize.value,36),10,200));font.onchange=()=>editStyle('fontFamily',font.value);weight.onchange=()=>editStyle('fontWeight',Number(weight.value));align.onchange=()=>editStyle('align',align.value);textColor.onchange=()=>editStyle('color',textColor.value);fill.onchange=()=>editStyle('background',fill.value);opacity.onchange=()=>editStyle('opacity',Number(opacity.value));visible.onchange=()=>editNode(n=>{n.visible=visible.checked;},'visibility');locked.onchange=()=>editNode(n=>{n.locked=locked.checked;},'lock');objectFit.onchange=()=>editStyle('objectFit',objectFit.value);photoIndex.onchange=()=>editNode(n=>{n.photoIndex=dceClamp(Math.round(Number(photoIndex.value)||1)-1,0,29);n.bind='photo'+(n.photoIndex+1);},'photo');
+  const alignRow=make('div','',{class:'design-canvas-actions'});
+  for(const [key,label] of [['left','←'],['center','↔'],['right','→'],['top','↑'],['middle','↕'],['bottom','↓']]){const b=button(label,'designCanvasAlign-'+key,()=>{replaceSurface(alignDesignCanvasNodes(surface(),[...selection],key));commit('align');});b.title='Выровнять: '+({left:'слева',center:'по горизонтальному центру',right:'справа',top:'сверху',middle:'по вертикальному центру',bottom:'снизу'}[key]);b.setAttribute('aria-label',b.title);alignRow.append(b);}
+  const layerActions=make('div','',{class:'design-canvas-actions'});layerActions.append(button('На слой выше','designCanvasForward',()=>changeLayer(1)),button('На слой ниже','designCanvasBackward',()=>changeLayer(-1)));
+  const layers=make('div','',{class:'design-canvas-layers',id:'designCanvasLayers','aria-label':'Слои'});
+  side.append(selectedName,commands,inspector,alignRow,layerActions,make('h4','Слои'),layers,make('p','Стрелки — сдвиг на 1; Shift + стрелки — на 10. Ctrl/⌘ + Z — отмена. Shift + нажатие выбирает несколько блоков.',{class:'muted'}));
+  workbench.append(left,side);host.append(title,toolbar,workbench);mount.replaceChildren(host);
+
+  function surface(){return draft.surfaces[surfaceId];}
+  function selected(){return surface()?.nodes.find(node=>selection.has(node.id))||null;}
+  function nodeName(node){return node.label||node.name||(node.bind?bindingName(node.bind):typeNames[node.type]||'Блок');}
+  function clampNode(node){const s=surface();node.w=dceClamp(dceFinite(node.w,100),node.type==='line'?4:12,s.width);node.h=dceClamp(dceFinite(node.h,60),node.type==='line'?2:12,s.height);node.x=dceClamp(dceFinite(node.x),0,s.width-node.w);node.y=dceClamp(dceFinite(node.y),0,s.height-node.h);}
+  function replaceSurface(next){draft.surfaces[surfaceId]=next;}
+  function notify(reason){try{const result=change(dceClone(draft),{reason,surface:surfaceId});if(result?.catch)result.catch(error=>toast(error.message||'Не удалось обновить макет'));}catch(error){toast(error.message||'Не удалось обновить макет');}}
+  function commit(reason){draft=normalizePublicationDesign(draft);if(history.push(draft))notify(reason);refreshUI();}
+  function editNode(edit,reason='edit'){const node=selected();if(!node)return;edit(node);commit(reason);}
+  function editStyle(key,value){editNode(node=>{node.style={...(node.style||{}),[key]:value};},'style');}
+  function restore(direction){const value=history[direction]();if(!value)return;draft=value;selection=new Set([...selection].filter(id=>surface()?.nodes.some(n=>n.id===id)));notify(direction);refreshUI();}
+  function selectNode(node,event={},preserveElements=false){if(event.shiftKey){if(selection.has(node.id))selection.delete(node.id);else selection.add(node.id);}else if(!selection.has(node.id)||selection.size!==1)selection=new Set([node.id]);dimensions();refreshOverlay(!preserveElements);refreshInspector();}
+  function startGesture(event,node,kind){if(event.button!==undefined&&event.button!==0)return;if(!selection.has(node.id))selectNode(node,event,true);else if(event.shiftKey&&kind!=='resize'){selectNode(node,event,true);return;}event.currentTarget.closest?.('.design-canvas-hit')?.focus({preventScroll:true});if(node.locked)return;event.preventDefault();event.stopPropagation();const target=overlay;try{target.setPointerCapture?.(event.pointerId);}catch{}gesture={pointerId:event.pointerId,target,start:{x:event.clientX,y:event.clientY},bounds:page.getBoundingClientRect(),before:dceClone(surface()),kind,id:node.id,ids:[...selection]};}
+  function moveGesture(event){if(!gesture||event.pointerId!==gesture.pointerId)return;event.preventDefault();const delta=designCanvasDelta(gesture.start,{x:event.clientX,y:event.clientY},gesture.bounds,gesture.before);replaceSurface(gesture.kind==='resize'?resizeDesignCanvasNode(gesture.before,gesture.id,delta,{snap:snap?10:0}):moveDesignCanvasNodes(gesture.before,gesture.ids,delta,{snap:snap?10:0}));refreshOverlay(false);refreshInspector();queueRender();}
+  function finishGesture(event,cancelled=false){if(!gesture||event.pointerId!==gesture.pointerId)return;const previous=gesture;gesture=null;try{previous.target.releasePointerCapture?.(event.pointerId);}catch{}if(cancelled){replaceSurface(previous.before);refreshUI();return;}commit(previous.kind);}
+  overlay.addEventListener('pointermove',moveGesture);overlay.addEventListener('pointerup',event=>finishGesture(event));overlay.addEventListener('pointercancel',event=>finishGesture(event,true));
+  overlay.addEventListener('pointerdown',event=>{if(event.target===overlay){selection.clear();refreshOverlay();refreshInspector();}});
+  function refreshOverlay(rebuild=true){
+    const s=surface();if(!s)return;if(rebuild){const ids=new Set(s.nodes.map(node=>node.id));for(const child of [...overlay.children])if(!ids.has(child.dataset.nodeId))child.remove();}
+    for(const node of [...s.nodes].sort((a,b)=>(a.z||0)-(b.z||0))){
+      let box=[...overlay.children].find(el=>el.dataset.nodeId===node.id);
+      if(!box){box=make('div','',{class:'design-canvas-hit',role:'option',tabindex:0,'aria-label':nodeName(node)});box.dataset.nodeId=node.id;overlay.append(box);}box.onpointerdown=event=>startGesture(event,node,'move');box.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();selectNode(node,event);}};box.setAttribute('aria-label',nodeName(node));
+      box.classList.toggle('is-selected',selection.has(node.id));box.classList.toggle('is-hidden',node.visible===false);box.classList.toggle('is-locked',!!node.locked);box.setAttribute('aria-selected',String(selection.has(node.id)));box.style.left=node.x/s.width*100+'%';box.style.top=node.y/s.height*100+'%';box.style.width=node.w/s.width*100+'%';box.style.height=node.h/s.height*100+'%';box.style.zIndex=String((node.z||0)+1);box.style.pointerEvents=node.visible===false?'none':'auto';
+      let handle=box.querySelector('.design-canvas-resize');if(selection.has(node.id)&&!node.locked){if(!handle){handle=make('span','',{class:'design-canvas-resize','aria-label':'Изменить размер '+nodeName(node)});handle.onpointerdown=event=>startGesture(event,node,'resize');box.append(handle);}}else handle?.remove();
+    }
+  }
+  function refreshInspector(){
+    const node=selected();inspector.disabled=!node;selectedName.textContent=node?nodeName(node)+(selection.size>1?' · выбрано '+selection.size:''):'Выберите блок';duplicate.disabled=remove.disabled=!node;
+    for(const input of Object.values(controls))input.value=node?String(Math.round(node[input.id.split('-').at(-1)]*10)/10):'';
+    if(!node){layers.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));return;}
+    const style=node.style||{};if(node.bind&&![...binding.options].some(option=>option.value===node.bind))binding.append(make('option',bindingName(node.bind),{value:node.bind}));binding.value=node.bind||'';text.value=node.text||'';text.disabled=node.type!=='text';binding.disabled=!['text','facts','route','image'].includes(node.type);
+    fontSize.value=String(style.fontSize||36);font.value=style.fontFamily||'sans';weight.value=String(style.fontWeight||400);align.value=style.align||'left';textColor.value=/^#[a-f\d]{6}$/i.test(style.color||'')?style.color:'#ffffff';fill.value=/^#[a-f\d]{6}$/i.test(style.background||'')?style.background:'#07162b';opacity.value=String(style.opacity??1);visible.checked=node.visible!==false;locked.checked=!!node.locked;objectFit.value=style.objectFit||'cover';photoIndex.value=String((node.photoIndex||0)+1);photoIndex.disabled=node.type!=='image';objectFit.disabled=!['image','logo','avatar','map'].includes(node.type);
+    layers.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(selection.has(b.dataset.nodeId))));
+  }
+  function refreshLayers(){const focused=layers.contains(document.activeElement)?document.activeElement?.dataset.nodeId:null;layers.replaceChildren();for(const node of [...surface().nodes].sort((a,b)=>(b.z||0)-(a.z||0))){const b=button((node.visible===false?'◌ ':node.locked?'🔒 ':'')+nodeName(node),'',event=>selectNode(node,event));b.removeAttribute('id');b.dataset.nodeId=node.id;b.setAttribute('aria-pressed',String(selection.has(node.id)));layers.append(b);}if(focused)[...layers.children].find(node=>node.dataset.nodeId===focused)?.focus({preventScroll:true});}
+  function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
+  async function draw(){const epoch=++renderEpoch,s=surface();if(!s||destroyed)return;const design=dceClone(draft),card=dceClone(getCard()||{});const buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;try{const assets=await getAssets();const result=await renderPage(buffer,surfaceId,design,card,assets||{});if(destroyed||epoch!==renderEpoch)return;canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');}catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}}
+  function queueRender(){if(renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
+  function refreshUI(){if(destroyed)return;dimensions();backgroundInput.value=surface().background||'#07162b';refreshOverlay();refreshLayers();refreshInspector();undo.disabled=!history.canUndo();redo.disabled=!history.canRedo();queueRender();}
+  function addNode(type){const s=surface();if(s.nodes.length>=80)return toast('На одном полотне можно разместить до 80 блоков.');const ids=new Set(s.nodes.map(node=>node.id));let count=1,id;do{id='custom-'+type+'-'+count++;}while(ids.has(id));s.nodes.push({id,type,x:Math.min(60,s.width-120),y:Math.min(60,s.height-100),w:Math.min(type==='text'?500:420,s.width-60),h:type==='text'?100:220,text:type==='text'?'自定义文字':'',bind:type==='image'?'photo1':'',photoIndex:0,visible:true,z:Math.max(0,...s.nodes.map(n=>n.z||0))+1,style:{fontSize:42,color:'#ffffff',fontFamily:'sans',fontWeight:600,align:'left',opacity:1,background:type==='rect'?'#12345b':''}});selection=new Set([id]);commit('add');}
+  function duplicateNodes(){const s=surface(),copies=s.nodes.filter(node=>selection.has(node.id));if(s.nodes.length+copies.length>80)return toast('Недостаточно места: на одном полотне допускается до 80 блоков.');const ids=new Set(s.nodes.map(node=>node.id)),added=[];let z=Math.max(0,...s.nodes.map(n=>n.z||0));for(const original of copies){let i=1,id;do{id=original.id+'-copy-'+i++;}while(ids.has(id));ids.add(id);const node={...dceClone(original),id,z:++z,locked:false,x:Math.min(s.width-original.w,original.x+24),y:Math.min(s.height-original.h,original.y+24)};s.nodes.push(node);added.push(id);}selection=new Set(added);commit('duplicate');}
+  function removeNodes(){replaceSurface({...surface(),nodes:surface().nodes.filter(node=>!selection.has(node.id)||node.locked)});selection.clear();commit('delete');}
+  function changeLayer(step){const s=surface(),ordered=[...s.nodes].sort((a,b)=>(a.z||0)-(b.z||0));for(const node of (step>0?[...ordered].reverse():ordered)){if(!selection.has(node.id))continue;const index=ordered.indexOf(node),target=index+step;if(target<0||target>=ordered.length||selection.has(ordered[target].id))continue;[ordered[index],ordered[target]]=[ordered[target],ordered[index]];}ordered.forEach((node,index)=>{node.z=index;});commit('layer');}
+  function handleKeyboard(event){if(destroyed||!host.contains(document.activeElement)||/^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)||event.target.isContentEditable)return;const mod=event.metaKey||event.ctrlKey;if(mod&&event.key.toLowerCase()==='z'){event.preventDefault();restore(event.shiftKey?'redo':'undo');return;}if(mod&&event.key.toLowerCase()==='y'){event.preventDefault();restore('redo');return;}if(mod&&event.key.toLowerCase()==='d'){event.preventDefault();duplicateNodes();return;}if(event.key==='Delete'||event.key==='Backspace'){event.preventDefault();removeNodes();return;}const directions={ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0},ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1}};if(directions[event.key]&&selection.size){event.preventDefault();const direction=directions[event.key],distance=event.shiftKey?10:1;replaceSurface(moveDesignCanvasNodes(surface(),[...selection],{x:direction.x*distance,y:direction.y*distance}));commit('keyboard');}}
+  host.addEventListener('keydown',handleKeyboard);
+  surfaces.onchange=()=>{const id=surfaces.value;if(setSurface(id))onSurfaceChange?.(id);};zooms.onchange=()=>{zoom=zooms.value;dimensions();};grid.onchange=()=>{showGrid=grid.checked;dimensions();};snapping.onchange=()=>{snap=snapping.checked;};backgroundInput.onchange=()=>{surface().background=backgroundInput.value;commit('background');};
+  function surfaceOptions(){surfaces.replaceChildren();for(const [id,s] of Object.entries(draft.surfaces||{}))surfaces.append(make('option',surfaceNames[id]||s.label||id,{value:id}));}
+  function clearPreview(){canvas.width=surface().width;canvas.height=surface().height;const context=canvas.getContext('2d');context.fillStyle=surface().background||'#07162b';context.fillRect(0,0,canvas.width,canvas.height);warnings.textContent='Обновляем предпросмотр…';}
+  function setSurface(id){if(destroyed||!draft.surfaces[id])return false;if(gesture)finishGesture({pointerId:gesture.pointerId},true);surfaceId=id;surfaces.value=id;selection.clear();++renderEpoch;clearPreview();refreshUI();return true;}
+  function refresh({resetHistory=false}={}){if(destroyed)return;gesture=null;++renderEpoch;draft=normal();if(!draft.surfaces[surfaceId])surfaceId=Object.keys(draft.surfaces)[0];selection=new Set([...selection].filter(id=>surface()?.nodes.some(node=>node.id===id)));if(resetHistory)history.reset(draft);else if(JSON.stringify(draft)!==JSON.stringify(history.value()))history.push(draft);surfaceOptions();surfaces.value=surfaceId;clearPreview();refreshUI();}
+  surfaceOptions();surfaces.value=surfaceId;
+  if(typeof ResizeObserver==='function'){resizeObserver=new ResizeObserver(()=>dimensions());resizeObserver.observe(viewport);}else window.addEventListener('resize',dimensions);
+  refreshUI();
+  return {refresh,setSurface,selectedNode:()=>selected()?dceClone(selected()):null,design:()=>dceClone(draft),destroy(){destroyed=true;++renderEpoch;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
+}
+
+/* Shared publication design. Generated HTML contains escaped text and embedded images only. */
+const PS_DESIGN_KEY='most-presentation-design-v1';
+const PRESENTATION_BLOCKS=['cover','title','facts','description','photos','location','contact'];
+const PS_BLOCK_NAMES={cover:'Обложка intro',title:'Название',facts:'Цена и параметры',description:'Описание',photos:'Фотографии',location:'Расположение / outro',contact:'Контакт и подпись'};
+const PS_PRESETS={editorial:{accent:'#bd4937',background:'#fffdf7',foreground:'#29352e',font:'sans'},minimal:{accent:'#35563f',background:'#ffffff',foreground:'#21352a',font:'sans'},night:{accent:'#dfad72',background:'#17251e',foreground:'#f4f4e9',font:'serif'}};
+const PS_FONT={sans:'Arial, "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", sans-serif',serif:'Georgia, "Noto Serif CJK SC", "Songti SC", serif'};
+const psSafeString=(value,max=2000)=>typeof value==='string'?value.slice(0,max):'';
+const psNum=(value,min,max,fallback)=>Number.isFinite(Number(value))?Math.max(min,Math.min(max,Number(value))):fallback;
+const psChoice=(value,values,fallback)=>values.includes(value)?value:fallback;
+const psColor=(value,fallback)=>/^#[a-f\d]{6}$/i.test(value||'')?value:fallback;
+function normalizeLegacyDesignTemplate(input={}){
+  if(!input||typeof input!=='object'||Array.isArray(input))input={};
+  const preset=psChoice(input.preset,Object.keys(PS_PRESETS),'editorial'),defaults=PS_PRESETS[preset];
+  const intro=input.intro&&typeof input.intro==='object'?input.intro:{},outro=input.outro&&typeof input.outro==='object'?input.outro:{};
+  const seen=new Set(),blocks=[];
+  for(const value of Array.isArray(input.blocks)?input.blocks:[]){if(value&&PRESENTATION_BLOCKS.includes(value.id)&&!seen.has(value.id)){seen.add(value.id);blocks.push({id:value.id,enabled:value.enabled!==false});}}
+  for(const id of PRESENTATION_BLOCKS)if(!seen.has(id))blocks.push({id,enabled:true});
+  return {version:1,preset,accent:psColor(input.accent,defaults.accent),background:psColor(input.background,defaults.background),foreground:psColor(input.foreground,defaults.foreground),font:psChoice(input.font,Object.keys(PS_FONT),defaults.font),paper:psChoice(input.paper,['A4','Letter'],'A4'),blocks,contact:psSafeString(input.contact,500),footer:psSafeString(input.footer,500)||'МОСТ · Подбор жилья в Москве',intro:{headline:psSafeString(intro.headline,600)||'{{title}}',subtitle:psSafeString(intro.subtitle,600)||'{{metro}} · {{area}} м²',layout:psChoice(intro.layout,['single','duo','trio'],'single'),position:psChoice(intro.position,['top','middle','bottom'],'bottom'),align:psChoice(intro.align,['left','center'],'left'),fontSize:psNum(intro.fontSize,36,100,66),overlay:psNum(intro.overlay,0,95,65),photoIndex:Math.round(psNum(intro.photoIndex,0,29,0)),showPrice:intro.showPrice!==false,showMetro:intro.showMetro!==false,showArea:intro.showArea!==false},outro:{heading:psSafeString(outro.heading,300)||'Расположение и детали',note:psSafeString(outro.note,1200)||'{{address}}',showMap:outro.showMap!==false}};
+}
+function presentationCardData(card={}){
+  const fields=card.fields||{},number=value=>value!==''&&value!=null&&Number.isFinite(Number(value))?Number(value):null;
+  const price=number(fields.price),area=number(fields.area),latitude=number(fields.latitude??card.listing?.latitude),longitude=number(fields.longitude??card.listing?.longitude);
+  const title=psSafeString(card.title||card.titles?.[0]||fields.name,1200)||'Без названия';
+  const hasCoordinates=latitude!==null&&longitude!==null&&Math.abs(latitude)<=90&&Math.abs(longitude)<=180;
+  return {title,body:psSafeString(card.body,40000),tags:psSafeString(card.tags,3000),price:price===null?'':price.toLocaleString('ru-RU'),area:area===null?'':String(area),metro:psSafeString(fields.metro,500),address:psSafeString(fields.address||fields.district||fields.complex,1000),rooms:psSafeString(String(fields.rooms||''),60),floor:psSafeString(String(fields.floor||''),60),route:psSafeString(fields.route||fields.transit,1500),latitude:hasCoordinates?latitude:null,longitude:hasCoordinates?longitude:null,mapUrl:hasCoordinates?'https://www.openstreetmap.org/?mlat='+latitude+'&mlon='+longitude+'#map=16/'+latitude+'/'+longitude:''};
+}
+function presentationCardKey(card={}){const fields=card.fields||{},edits=fields.photoEdits||{};return JSON.stringify({identity:card.identity||'',data:presentationCardData(card),facts:Object.fromEntries(['layout','features','featureCounts','city','walk','metroLine','line','university','uniTime','uniMode','universities','campus','floors','description','complex','registration','children','pets'].map(key=>[key,fields[key]])),source:fields.url||card.listing?.url||'',photos:fields.photos||card.listing?.images||[],listingImages:card.listing?.images||[],selection:fields.photoSelection||[],photoEdits:{order:edits.order||[],excluded:edits.excluded||[],crops:edits.crops||{}}});}
+function expandDesignText(text,card){const data=presentationCardData(card);return String(text||'').replace(/\{\{(title|price|area|metro|address|rooms|floor)\}\}/g,(_,key)=>data[key]);}
+function escapePresentationText(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safePresentationImage(value){return typeof value==='string'&&/^data:image\/(?:png|jpeg|webp);base64,[a-z\d+/=\s]+$/i.test(value)&&value.length<=18_000_000?value:'';}
+function buildLegacyPresentationHtml(card,input={},assets={}){
+  const t=normalizeLegacyDesignTemplate(input),d=presentationCardData(card),esc=escapePresentationText;
+  const photos=(assets.photos||[]).map(value=>safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url)).filter(Boolean).slice(0,6);
+  const cover=safePresentationImage(assets.intro),outro=safePresentationImage(assets.outro);
+  const facts=[d.price&&['Аренда',d.price+' ₽ / месяц'],d.area&&['Площадь',d.area+' м²'],d.rooms&&['Комнаты',d.rooms],d.metro&&['Метро',d.metro],d.floor&&['Этаж',d.floor]].filter(Boolean);
+  const photo=(src,alt,cls='')=>'<img class="'+cls+'" src="'+src+'" alt="'+esc(alt)+'">';
+  const location=d.address||d.mapUrl||d.route||outro;const attribution=psSafeString(assets.mapAttribution,300);
+  const sections={cover:cover?'<section class="cover">'+photo(cover,'Обложка объявления')+'</section>':'',title:'<section class="title"><p class="eyebrow">'+esc(t.footer)+'</p><h1>'+esc(d.title)+'</h1></section>',facts:facts.length?'<section class="facts">'+facts.map(([name,value])=>'<div><span>'+esc(name)+'</span><strong>'+esc(value)+'</strong></div>').join('')+'</section>':'',description:d.body?'<section class="description"><h2>Описание</h2><div class="copy">'+esc(d.body)+'</div>'+(d.tags?'<p class="tags">'+esc(d.tags)+'</p>':'')+'</section>':'',photos:photos.length?'<section class="photos"><h2>Фотографии</h2><div class="photo-grid">'+photos.map((src,index)=>'<figure>'+photo(src,'Фото квартиры '+(index+1))+'<figcaption>'+String(index+1).padStart(2,'0')+'</figcaption></figure>').join('')+'</div></section>':'',location:location?'<section class="location"><h2>'+esc(t.outro.heading)+'</h2>'+(outro?photo(outro,'Расположение и контакты','outro'):'')+(attribution?'<p class="muted">'+esc(attribution)+' · <a href="https://www.openstreetmap.org/copyright">Условия использования карты</a></p>':'')+(d.address?'<p>'+esc(d.address)+'</p>':'')+(d.route?'<p>'+esc(d.route)+'</p>':'')+(d.mapUrl?'<p>Координаты: '+esc(d.latitude+', '+d.longitude)+'<br><a href="'+d.mapUrl+'">Открыть точку на OpenStreetMap</a></p>':'<p class="muted">Координаты не указаны. Уточните расположение перед отправкой клиенту.</p>')+'</section>':'',contact:t.contact?'<section class="contact"><h2>Связаться с нами</h2><p>'+esc(t.contact)+'</p></section>':''};
+  return '<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(d.title)+'</title><style>@page{size:'+t.paper+';margin:14mm}*{box-sizing:border-box}html{background:'+t.background+';color:'+t.foreground+';font-family:'+PS_FONT[t.font]+'}body{margin:0;line-height:1.6;font-size:11pt;overflow-wrap:anywhere}main{max-width:182mm;margin:auto}h1{font-size:27pt;line-height:1.25;margin:10pt 0 20pt;overflow-wrap:anywhere}h2{font-size:15pt;line-height:1.35;margin:0 0 12pt;color:'+t.accent+'}p{margin:8pt 0;white-space:pre-wrap}section{margin:0 0 22pt;max-width:100%}img{max-width:100%;display:block;object-fit:cover}.cover img{width:100%;max-height:238mm;object-fit:contain}.cover{break-after:page}.eyebrow{font-size:9pt;color:'+t.accent+';letter-spacing:.5pt}.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt;border-top:2pt solid '+t.accent+';padding-top:14pt}.facts>div{border-bottom:1pt solid '+t.accent+'33;padding:6pt 0;break-inside:avoid}.facts span{display:block;font-size:9pt;opacity:.7}.facts strong{font-size:13pt;font-weight:600;line-height:1.4}.copy{white-space:pre-wrap;orphans:3;widows:3}.tags{color:'+t.accent+';font-size:10pt}.photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10pt}.photo-grid figure{margin:0;break-inside:avoid}.photo-grid img{width:100%;height:58mm;object-fit:cover}.photo-grid figcaption{font-size:8pt;opacity:.6;margin:3pt 0}.location,.contact{break-inside:avoid}.outro{width:100%;max-height:148mm;object-fit:contain;margin-bottom:12pt}a{color:'+t.accent+';overflow-wrap:anywhere}.muted{font-size:9pt;opacity:.65}footer{font-size:8pt;padding:12pt 0;border-top:1pt solid '+t.accent+';opacity:.7}@media screen{body{padding:22px}main{max-width:760px}.cover img{max-height:980px}.photo-grid img{height:210px}.outro{max-height:560px}}@media print{section{box-decoration-break:clone}.title{break-after:avoid}.description h2,.photos h2,.location h2{break-after:avoid}}</style></head><body><main>'+t.blocks.filter(block=>block.enabled).map(block=>sections[block.id]).join('')+'<footer>'+esc(t.footer)+'</footer></main></body></html>';
+}
+
+function psElement(tag,text='',className=''){const value=document.createElement(tag);if(text)value.textContent=text;if(className)value.className=className;return value;}
+function psDownloadBlob(name,blob){const url=URL.createObjectURL(blob),link=psElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function psLoadImage(url){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('Не удалось открыть фото для дизайна'));image.src=url;});}
+function psDrawCover(context,image,x,y,w,h){const scale=Math.max(w/image.width,h/image.height),sw=w/scale,sh=h/scale;context.save();context.beginPath();context.rect(x,y,w,h);context.clip();context.drawImage(image,(image.width-sw)/2,(image.height-sh)/2,sw,sh,x,y,w,h);context.restore();}
+function psWrapLines(context,text,width,maxLines=12){const output=[];for(const paragraph of String(text).split('\n')){let line='';for(const char of Array.from(paragraph)){if(context.measureText(line+char).width>width&&line){output.push(line);line=char;}else line+=char;}output.push(line);}if(output.length>maxLines){output.length=maxLines;let last=output[maxLines-1];while(last&&context.measureText(last+'…').width>width)last=last.slice(0,-1);output[maxLines-1]=last+'…';}return output;}
+function psPaintText(context,text,x,y,width,fontSize,colorValue,{align='left',maxLines=8,weight=600}={}){context.font=weight+' '+fontSize+'px '+PS_FONT.sans;context.fillStyle=colorValue;context.textAlign=align;context.textBaseline='top';const lines=psWrapLines(context,text,width,maxLines);lines.forEach((line,index)=>context.fillText(line,x,y+index*fontSize*1.25));return lines.length*fontSize*1.25;}
+async function renderLegacyPresentationImage(kind,card,input,photos=[],mapImage=''){
+  const t=normalizeLegacyDesignTemplate(input),d=presentationCardData(card),canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1440;const ctx=canvas.getContext('2d');
+  ctx.fillStyle=t.background;ctx.fillRect(0,0,1080,1440);const source=photos.filter(Boolean),start=source.length?Math.min(source.length-1,t.intro.photoIndex):0,ordered=source.length?source.map((_,index)=>source[(index+start)%source.length]):[];
+  const loaded=await Promise.all(ordered.slice(0,3).map(value=>psLoadImage(typeof value==='string'?value:value.dataUrl||value.url)));
+  if(kind==='intro'){
+    if(!loaded.length)throw new Error('Для intro загрузите хотя бы одну фотографию квартиры');
+    if(t.intro.layout==='single'||loaded.length===1)psDrawCover(ctx,loaded[0],0,0,1080,1440);
+    else if(t.intro.layout==='duo'||loaded.length===2){psDrawCover(ctx,loaded[0],0,0,1080,828);psDrawCover(ctx,loaded[1],0,838,1080,602);}
+    else {psDrawCover(ctx,loaded[0],0,0,1080,870);psDrawCover(ctx,loaded[1],0,880,535,560);psDrawCover(ctx,loaded[2],545,880,535,560);}
+    const overlay=t.intro.overlay/100,gradient=ctx.createLinearGradient(0,t.intro.position==='top'?850:420,0,t.intro.position==='top'?0:1440);gradient.addColorStop(0,'rgba(0,0,0,0)');gradient.addColorStop(1,'rgba(0,0,0,'+overlay+')');ctx.fillStyle=gradient;ctx.fillRect(0,0,1080,1440);
+    if(t.intro.position==='middle'){ctx.fillStyle='rgba(0,0,0,'+overlay*.75+')';ctx.fillRect(0,0,1080,1440);}
+    const x=t.intro.align==='center'?540:72,width=936,title=expandDesignText(t.intro.headline,card),subtitle=expandDesignText(t.intro.subtitle,card);
+    ctx.font='700 '+t.intro.fontSize+'px '+PS_FONT.sans;const titleLines=psWrapLines(ctx,title,width,5),estimated=titleLines.length*t.intro.fontSize*1.25+320;let y=t.intro.position==='top'?100:t.intro.position==='middle'?Math.max(120,(1440-estimated)/2):Math.max(100,1340-estimated);
+    ctx.fillStyle=t.accent;ctx.fillRect(t.intro.align==='center'?480:72,y-35,120,7);
+    y+=psPaintText(ctx,title,x,y,width,t.intro.fontSize,'#ffffff',{align:t.intro.align,maxLines:5,weight:700})+24;
+    y+=psPaintText(ctx,subtitle,x,y,width,32,'#ffffff',{align:t.intro.align,maxLines:3,weight:400})+24;
+    const chips=[t.intro.showPrice&&d.price&&d.price+' ₽ / месяц',t.intro.showMetro&&d.metro,t.intro.showArea&&d.area&&d.area+' м²'].filter(Boolean);
+    psPaintText(ctx,chips.join('  ·  '),x,y,width,30,'#ffffff',{align:t.intro.align,maxLines:3});
+    psPaintText(ctx,t.footer,72,1388,930,20,'#ffffff',{maxLines:1,weight:400});
+  }else{
+    if(loaded[0]){psDrawCover(ctx,loaded[0],0,0,1080,400);ctx.fillStyle='#00000055';ctx.fillRect(0,0,1080,400);psPaintText(ctx,t.outro.heading,64,245,950,56,'#ffffff',{maxLines:2});}
+    else psPaintText(ctx,t.outro.heading,64,80,950,56,t.foreground,{maxLines:2});
+    let y=loaded[0]?460:260;
+    y+=psPaintText(ctx,expandDesignText(t.outro.note,card),64,y,950,34,t.foreground,{maxLines:4,weight:500})+30;
+    if(t.outro.showMap){
+      const h=390;ctx.fillStyle=t.accent+'18';ctx.fillRect(64,y,952,h);
+      if(safePresentationImage(mapImage)){const map=await psLoadImage(mapImage);psDrawCover(ctx,map,64,y,952,h);}
+      else if(d.mapUrl){psPaintText(ctx,'Расположение квартиры',540,y+95,850,38,t.foreground,{align:'center',maxLines:2});psPaintText(ctx,d.latitude.toFixed(5)+', '+d.longitude.toFixed(5),540,y+185,850,30,t.foreground,{align:'center',maxLines:1});psPaintText(ctx,'Карта недоступна · ссылка есть в HTML и PDF',540,y+285,850,24,t.foreground,{align:'center',maxLines:2,weight:400});}
+      else{psPaintText(ctx,'Добавьте координаты квартиры',540,y+145,850,38,t.foreground,{align:'center',maxLines:2});psPaintText(ctx,'Расположение не определено',540,y+240,850,24,t.foreground,{align:'center',maxLines:2,weight:400});}
+      y+=h+28;
+    }
+    y+=psPaintText(ctx,d.route,64,y,950,29,t.foreground,{maxLines:4,weight:400})+28;
+    ctx.fillStyle=t.accent;ctx.fillRect(64,1240,952,3);psPaintText(ctx,t.contact||'Контакт можно настроить в шаблоне',64,1272,950,29,t.foreground,{maxLines:2,weight:500});psPaintText(ctx,t.footer,64,1388,950,20,t.foreground,{maxLines:1,weight:400});
+  }
+  return canvas;
+}
+
+
+const PS_STUDIO_KEY='most-presentation-design-v2';
+const psLegacyInput=value=>!!value&&typeof value==='object'&&(value.version===1||value.version!==2&&['editorial','minimal','night'].includes(value.preset)||value.version!==2&&['blocks','intro','outro','footer','contact'].some(key=>Object.hasOwn(value,key)));
+// Explicit old-format consumers retain their ordering and styles. The interactive
+// studio always migrates through the new model and keeps its original backup.
+function normalizeDesignTemplate(input={}){return psLegacyInput(input)?normalizeLegacyDesignTemplate(input):normalizePublicationDesign(input);}
+function buildPresentationHtml(card,input={},assets={}){return psLegacyInput(input)?buildLegacyPresentationHtml(card,input,assets):buildPublicationHtml(card,normalizePublicationDesign(input),assets);}
+async function renderPresentationImage(kind,card,input={},photos=[],mapImage='',assets={}){
+  if(psLegacyInput(input))return renderLegacyPresentationImage(kind,card,input,photos,mapImage);
+  const design=normalizePublicationDesign(input),page=publicationPage(design,kind==='intro'?'intro':'outro'),canvas=document.createElement('canvas');
+  canvas.width=page.width;canvas.height=page.height;
+  await renderPublicationPage(canvas,kind==='intro'?'intro':'outro',design,card,{...assets,photos,mapImage});
+  return canvas;
+}
+const renderIntroImage=(card,template,assets={})=>renderPresentationImage('intro',card,template,assets.photos||[],assets.mapImage||'',assets);
+const renderOutroImage=(card,template,assets={})=>renderPresentationImage('outro',card,template,assets.photos||[],assets.mapImage||'',assets);
+
+async function psCompressedPhoto(value){
+  const source=safePresentationImage(typeof value==='string'?value:value?.dataUrl||value?.url);if(!source)return '';
+  const image=await psLoadImage(source),ratio=Math.min(1,1920/Math.max(image.naturalWidth||image.width,image.naturalHeight||image.height));
+  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*ratio));canvas.height=Math.max(1,Math.round(image.height*ratio));
+  const context=canvas.getContext('2d');context.fillStyle='#ffffff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
+  return canvas.toDataURL('image/jpeg',.9);
+}
+function psFileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Не удалось прочитать изображение'));reader.readAsDataURL(file);});}
+
+function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloadExport,getExportBlob,toast=()=>{},getMapImage,getRules}={}){
+  if(!mount)return null;
+  let template=defaultPublicationDesign(),photos=[],intro='',outro='',mapImage='',mapAttribution='',logo='',avatar='',photoCardKey='',lastRendered=null;
+  let demo=false,revision=0,designEpoch=0,timer,busy=false,destroyed=false,templateTouched=false,dirty=false,proofUrl='',serverUpdated=null,legacyBackup=null;
+  let active='pdf',pdfSurface='pdfOverview',editor=null,serverReady=Promise.resolve(),brandLoadEpoch=0,storedBaseline=false,remoteChanged=false,draftBackup=null;
+  const assetCache=new Map(),assetRoleEpoch={logo:0,avatar:0};let savedServerRules={};
+  try{
+    const stored=JSON.parse(localStorage.getItem(PS_STUDIO_KEY)||'null'),older=stored?null:JSON.parse(localStorage.getItem(PS_DESIGN_KEY)||'null');
+    if(stored){template=normalizePublicationDesign(stored.template||stored);dirty=stored.dirty===true;templateTouched=dirty;storedBaseline=Object.hasOwn(stored,'baseUpdated');if(storedBaseline)serverUpdated=stored.baseUpdated??null;}
+    else if(older){legacyBackup=older;template=normalizePublicationDesign(older);}
+    if(!legacyBackup)legacyBackup=JSON.parse(localStorage.getItem('most-presentation-design-legacy-backup-v1')||'null');
+    draftBackup=JSON.parse(localStorage.getItem('most-presentation-design-draft-backup-v2')||'null');
+  }catch{}
+  const shell=psElement('div','','presentation-studio'),heading=psElement('div','','heading'),headingBody=psElement('div');
+  headingBody.append(psElement('div','CILIEV · ЕДИНЫЙ МАКЕТ','eyebrow'),psElement('h1','Дизайн, canvas и PDF'),psElement('p','Перемещайте элементы на макете, настройте текст и сохраните общий шаблон. Новые карточки подставят свои фотографии и характеристики.'));
+  heading.append(headingBody);shell.append(heading);
+  const status=psElement('p','Выберите карточку и обновите предпросмотр.','presentation-status');status.id='presentationStatus';status.setAttribute('role','status');
+  const button=(text,id,cls='btn')=>{const value=psElement('button',text,cls);value.id=id;value.type='button';return value;};
+  const toolbar=psElement('div','','presentation-toolbar'),refresh=button('Обновить из карточки','presentationRefresh'),sample=button('Демо дизайна','presentationDemo'),save=button('Сохранить общий шаблон','presentationSave','btn primary'),html=button('Скачать HTML','presentationHtml'),proof=button('Показать готовый PDF','presentationProof'),pdf=button('Скачать PDF','presentationPdf');
+  toolbar.append(refresh,sample,save,html,proof,pdf);shell.append(toolbar,status);
+  const layout=psElement('div','','presentation-layout'),controls=psElement('div','','presentation-controls card'),preview=psElement('div','','presentation-previews');layout.append(controls,preview);shell.append(layout);mount.replaceChildren(shell);
+  const tabs=psElement('div','','presentation-tabs'),tabButtons={};for(const [id,label]of [['pdf','PDF / HTML'],['intro','Intro · обложка'],['outro','Outro · карта']]){const item=button(label,'presentationTab'+id);item.onclick=()=>selectTab(id);tabs.append(item);tabButtons[id]=item;}controls.append(tabs);
+  const settings=psElement('details','','presentation-brand-settings');settings.open=true;settings.append(psElement('summary','Агентство, консультант и цвета'));controls.append(settings);
+  const inputs={};
+  const getPath=(object,path)=>path.split('.').reduce((value,key)=>value?.[key],object);
+  const setPath=(object,path,value)=>{const keys=path.split('.'),last=keys.pop();keys.reduce((value,key)=>value[key],object)[last]=value;};
+  function field(parent,key,label,{type='text',options,rows=2,id}={}){
+    const wrapper=psElement('label',label),input=psElement(type==='textarea'?'textarea':options?'select':'input');input.id=id||'presentation-'+key.replaceAll('.','-');
+    if(type!=='textarea'&&!options)input.type=type;if(type==='textarea')input.rows=rows;
+    if(options)for(const [value,text]of options){const option=psElement('option',text);option.value=value;input.append(option);}
+    wrapper.htmlFor=input.id;wrapper.append(input);parent.append(wrapper);inputs[key]=input;
+    input.addEventListener(type==='color'?'input':'change',()=>{const previous=getPath(template,key);setPath(template,key,input.value);if(key.startsWith('theme.')){const [,group,colorKey]=key.split('.');applyThemeColor(template,group,colorKey,previous,input.value);}template=normalizePublicationDesign(template);persistLocal();queueRender();});return input;
+  }
+  const preset=field(settings,'preset','Цветовой вариант',{options:[['ciliev-elite','Ciliev Elite · PDF с золотом'],['ciliev-navy','Ciliev Navy · синий и коралловый']]});
+  function applyThemeColor(design,group,key,oldColor,newColor){for(const [id,page]of Object.entries(design.surfaces)){if((group==='pdf')!==id.startsWith('pdf'))continue;if(key==='background'&&page.background===oldColor)page.background=newColor;for(const node of page.nodes){for(const name of ['color','background','borderColor'])if(node.style[name]===oldColor)node.style[name]=newColor;}}}
+  preset.onchange=()=>{const next=normalizePublicationDesign(template),defaults=defaultPublicationDesign(),palette=preset.value==='ciliev-navy'?defaults.theme.social:defaults.theme.pdf;next.preset=preset.value;for(const [key,value]of Object.entries(palette))applyThemeColor(next,'pdf',key,next.theme.pdf[key],value);next.theme.pdf={...palette};
+    // A colour choice must retain the operator's positions, bindings and text.
+    template=normalizePublicationDesign(next);syncInputs();persistLocal();editor?.refresh();queueRender();};
+  field(settings,'brand.name','Бренд');field(settings,'brand.agency','Подпись агентства · 中文');field(settings,'brand.tagline','Слоган · 中文');
+  field(settings,'brand.agentName','Имя консультанта · 中文');field(settings,'brand.agentRole','Должность · 中文');field(settings,'brand.phone','Телефон');field(settings,'brand.email','Почта');
+  field(settings,'brand.contact','Контакт / WeChat',{type:'textarea',id:'presentation-contact'});field(settings,'brand.footer','Подвал · 中文');
+  const brandFiles=psElement('div','','presentation-brand-files');settings.append(brandFiles);
+  const uploadInputs={};
+  for(const [role,label]of [['logo','Логотип агентства'],['avatar','Аватар консультанта']]){
+    const block=psElement('div','','presentation-brand-file'),image=psElement('img');image.alt=label;image.className='presentation-brand-thumb';image.id='presentation-'+role+'Preview';image.hidden=true;
+    const pick=psElement('input');pick.type='file';pick.accept='image/png,image/jpeg,image/webp';pick.id='presentation-'+role+'Upload';const labelElement=psElement('label',label);labelElement.htmlFor=pick.id;
+    const remove=button('Убрать изображение','presentation-'+role+'Remove');remove.onclick=()=>{assetRoleEpoch[role]++;template.brand[role+'AssetId']='';if(role==='logo')logo='';else avatar='';image.hidden=true;image.removeAttribute('src');persistLocal();queueRender();};
+    pick.onchange=()=>action(async()=>{const selected=pick.files?.[0],epoch=++assetRoleEpoch[role];try{if(!selected)return;if(selected.size>4*1024*1024)throw new Error('Логотип или аватар: до 4 МиБ');if(!['image/png','image/jpeg','image/webp'].includes(selected.type))throw new Error('Используйте PNG, JPEG или WebP');if(!api)throw new Error('Загрузка общего логотипа доступна на Mac');const result=await api('design-images',{data:await psFileDataUrl(selected),name:selected.name,role});if(destroyed||epoch!==assetRoleEpoch[role])return;const url=safePresentationImage(result.dataUrl);if(!result.id||!url)throw new Error('Сервер не вернул изображение');assetCache.set(result.id,url);template.brand[role+'AssetId']=result.id;if(role==='logo')logo=url;else avatar=url;image.src=url;image.hidden=false;persistLocal();await render(false);status.textContent='Изображение добавлено. Сохраните общий шаблон, чтобы использовать его на других устройствах.';}finally{pick.value='';}});
+    block.append(labelElement,image,pick,remove);brandFiles.append(block);uploadInputs[role]={image,pick};
+  }
+  settings.append(psElement('p','Без личного фото используется фирменная аватарка ciliev. Контакты заполняются только из ваших настроек.','muted'));
+  const colors=psElement('details','','presentation-theme-settings');colors.append(psElement('summary','Цвета PDF и intro / outro'));controls.append(colors);
+  for(const [group,title]of [['pdf','PDF · тёмный фон и золото'],['social','Intro / outro · синий и коралловый']]){colors.append(psElement('h3',title));const row=psElement('div','','presentation-colors');colors.append(row);for(const [key,label]of [['background','Фон'],['foreground','Текст'],['accent','Акцент'],['muted','Вторичный'],['panel','Панели'],['line','Линии']])field(row,'theme.'+group+'.'+key,label,{type:'color'});}
+  const templateTools=psElement('div','','presentation-template-tools'),exportTemplate=button('Экспорт шаблона JSON','presentationTemplateExport'),importTemplate=button('Импорт шаблона','presentationTemplateImport'),reloadTemplate=button('Загрузить сохранённый шаблон','presentationTemplateReload'),draftExport=button('Скачать предыдущие правки','presentationDraftExport'),oldExport=button('Скачать прежний шаблон v1','presentationLegacyExport'),file=psElement('input');file.type='file';file.accept='application/json,.json';file.hidden=true;oldExport.hidden=!legacyBackup;draftExport.hidden=!draftBackup;reloadTemplate.hidden=!api;templateTools.append(exportTemplate,importTemplate,reloadTemplate,draftExport,oldExport,file);controls.append(templateTools,psElement('p','HTML и PDF создаются из одного макета. Исходные фото, договоры и личные вложения сохраняются отдельно.','muted'));
+  const canvasMount=psElement('section','','presentation-canvas-mount');canvasMount.id='presentationCanvasMount';preview.append(canvasMount);
+  const imagePreview=psElement('img','','presentation-image');imagePreview.id='presentationImagePreview';imagePreview.alt='Готовое изображение объявления';const imageWrap=psElement('details','','presentation-preview-card'),imageSummary=psElement('summary','Готовое изображение · 1080 × 1920'),imageEmpty=psElement('p','Выберите фотографии карточки и обновите макет.','presentation-empty'),imageDownload=button('Скачать PNG','presentationImageDownload');imageWrap.append(imageSummary,imagePreview,imageEmpty,imageDownload);
+  const frame=psElement('iframe','','presentation-frame');frame.id='presentationPreview';frame.title='Предпросмотр HTML и будущего PDF';frame.setAttribute('sandbox','');const frameWrap=psElement('details','','presentation-preview-card');frameWrap.id='presentationHtmlPreview';frameWrap.append(psElement('summary','Все страницы HTML / PDF'),frame);preview.append(frameWrap,imageWrap);
+  const proofDialog=psElement('dialog','','presentation-proof-dialog'),proofHeading=psElement('h2','Готовый PDF'),proofTools=psElement('div','','presentation-proof-tools'),proofClose=button('Закрыть','presentationProofClose'),proofOpen=psElement('a','Открыть PDF отдельно','btn'),proofFrame=psElement('iframe','','presentation-proof-frame');
+  proofDialog.id='presentationProofDialog';proofHeading.id='presentationProofTitle';proofDialog.setAttribute('aria-labelledby',proofHeading.id);proofFrame.id='presentationProofFrame';proofFrame.title='PDF с окончательными страницами';proofOpen.id='presentationProofOpen';proofOpen.target='_blank';proofOpen.rel='noopener';proofTools.append(proofHeading,proofClose);proofDialog.append(proofTools,psElement('p','Это созданный PDF. Если встроенный просмотр недоступен, откройте его отдельно.','muted'),proofOpen,proofFrame);shell.append(proofDialog);
+  function clearProof(){proofFrame.removeAttribute('src');proofOpen.removeAttribute('href');if(proofUrl)URL.revokeObjectURL(proofUrl);proofUrl='';}proofClose.onclick=()=>proofDialog.close();proofDialog.addEventListener('close',clearProof);
+  const demoCard={titles:['设计演示 · 非真实房源'],body:'此为设计演示。\n\n房源文字、照片与条件会随所选公寓自动替换。家具与家电以已确认的信息为准。',tags:'#设计演示',fields:{isDemo:true,price:75000,area:40,rooms:1,layout:'euro2',metro:'设计演示',metroLine:'非真实房源',walk:'15',city:'Москва',address:'莫斯科 · 设计演示',features:[]}};
+  function demoPhoto(){const c=document.createElement('canvas');c.width=1200;c.height=900;const x=c.getContext('2d');x.fillStyle='#d7cbbb';x.fillRect(0,0,1200,900);x.fillStyle='#eee5d7';x.fillRect(0,0,1200,600);x.fillStyle='#172c4b';x.fillRect(90,80,360,420);x.fillStyle='#a6bbc8';x.fillRect(110,100,320,380);x.fillStyle='#31425a';x.fillRect(600,420,440,210);x.fillStyle='#a39480';x.fillRect(560,570,520,140);x.fillStyle='#795e3d';x.fillRect(140,690,300,25);x.fillRect(170,715,18,130);x.fillRect(390,715,18,130);x.fillStyle='#172c4b';x.font='28px sans-serif';x.fillText('设计演示 · 非房源照片',55,850);return c.toDataURL('image/jpeg',.9);}
+  const current=()=>demo?demoCard:getCard?.()||{};
+  const rules=()=>getRules?.()||savedServerRules||{};
+  const assets=()=>({photos,mapImage,mapAttribution,logo,avatar,rules:{...rules()}});
+  function persistLocal({touched=true}={}){if(touched){templateTouched=true;dirty=true;designEpoch++;revision++;lastRendered=null;}try{localStorage.setItem(PS_STUDIO_KEY,JSON.stringify({version:2,template,dirty,baseUpdated:serverUpdated}));if(legacyBackup)localStorage.setItem('most-presentation-design-legacy-backup-v1',JSON.stringify(legacyBackup));if(draftBackup)localStorage.setItem('most-presentation-design-draft-backup-v2',JSON.stringify(draftBackup));}catch{if(!destroyed)status.textContent='Шаблон изменён. Сохраните его на Mac или экспортируйте JSON.';}}
+  function syncInputs(){for(const [key,input]of Object.entries(inputs))input.value=getPath(template,key)??'';oldExport.hidden=!legacyBackup;draftExport.hidden=!draftBackup;for(const role of ['logo','avatar']){const value=role==='logo'?logo:avatar,element=uploadInputs[role].image;element.hidden=!value;if(value)element.src=value;else element.removeAttribute('src');}}
+  function activeSurface(){return active==='pdf'?pdfSurface:active;}
+  function selectTab(id){active=id;for(const key of Object.keys(tabButtons)){tabButtons[key].classList.toggle('chosen',key===id);tabButtons[key].setAttribute('aria-pressed',String(key===id));}frameWrap.hidden=id!=='pdf';imageWrap.hidden=id==='pdf';if(id!=='pdf')imageWrap.open=true;imageSummary.textContent=(id==='intro'?'Intro · обложка':'Outro · карта')+' · 1080 × 1920';editor?.setSurface(activeSurface());showImage();}
+  function surfaceChanged(id){if(id.startsWith('pdf')){pdfSurface=id;active='pdf';}else active=id;for(const key of Object.keys(tabButtons)){tabButtons[key].classList.toggle('chosen',key===active);tabButtons[key].setAttribute('aria-pressed',String(key===active));}frameWrap.hidden=active!=='pdf';imageWrap.hidden=active==='pdf';if(active!=='pdf')imageWrap.open=true;imageSummary.textContent=(active==='intro'?'Intro · обложка':'Outro · карта')+' · 1080 × 1920';showImage();}
+  editor=setupDesignCanvasEditor({mount:canvasMount,getDesign:()=>template,getCard:current,getAssets:assets,onChange:next=>{template=normalizePublicationDesign(next);syncInputs();persistLocal();queueRender();},onSurfaceChange:surfaceChanged,toast});
+  function showImage(){const value=active==='intro'?intro:outro;imagePreview.hidden=!value;imageEmpty.hidden=!!value;imageDownload.disabled=busy||!value;if(value)imagePreview.src=value;else imagePreview.removeAttribute('src');}
+  function queueRender(){clearTimeout(timer);timer=setTimeout(()=>render(false),250);}
+  function clearCardAssetsForKey(key){if(photoCardKey===key)return;photos=[];mapImage='';mapAttribution='';intro='';outro='';photoCardKey=key;lastRendered=null;frame.removeAttribute('srcdoc');imagePreview.removeAttribute('src');showImage();}
+  async function loadBrandAssets(valid){const epoch=++brandLoadEpoch;const values={};for(const role of ['logo','avatar']){const id=template.brand[role+'AssetId'];if(!id){values[role]='';continue;}let value=assetCache.get(id);if(!value&&api){try{const result=await api('design-images/'+id);value=safePresentationImage(result.dataUrl);if(value)assetCache.set(id,value);}catch{value='';}}if(!valid()||epoch!==brandLoadEpoch)return false;values[role]=value||'';}logo=values.logo;avatar=values.avatar;syncInputs();return true;}
+  async function render(reload=false){
+    // The shared template can arrive while the caller is loading photographs.
+    // Settle that initial request before taking the asset revision, and cancel
+    // its queued lightweight repaint so it cannot supersede a slow refresh.
+    if(reload){try{await serverReady;}catch{}if(destroyed)return false;clearTimeout(timer);}
+    const version=++revision,epoch=designEpoch,card=JSON.parse(JSON.stringify(current())),key=presentationCardKey(card),ruleKey=JSON.stringify(rules()),design=normalizePublicationDesign(template);let mapFailed=false;clearCardAssetsForKey(key);
+    const valid=()=>version===revision&&epoch===designEpoch&&!destroyed&&presentationCardKey(current())===key&&JSON.stringify(rules())===ruleKey;
+    try{
+      if(reload){status.textContent='Готовим фотографии и предпросмотр…';const values=demo?(photos.length?photos:[{dataUrl:demoPhoto()}]):await getPhotos?.()||[];if(!valid())return false;const safe=[];for(const value of values.slice(0,30)){const encoded=await psCompressedPhoto(value);if(!valid())return false;if(encoded)safe.push(encoded);}photos=safe;photoCardKey=key;mapImage='';mapAttribution='';if(!demo&&presentationCardData(card).mapUrl&&getMapImage)try{const result=await getMapImage(card,design);if(!valid())return false;mapImage=safePresentationImage(typeof result==='string'?result:result?.dataUrl);mapAttribution=typeof result==='object'?psSafeString(result?.attribution,300):'';}catch{mapFailed=true;}}
+      else if(photoCardKey!==key){photos=[];mapImage='';mapAttribution='';photoCardKey=key;}
+      if(!await loadBrandAssets(valid)||!valid())return false;
+      const imageAssets=assets(),madeIntro=photos.length?(await renderPresentationImage('intro',card,design,photos,mapImage,imageAssets)).toDataURL('image/png'):'',madeOutro=(await renderPresentationImage('outro',card,design,photos,mapImage,imageAssets)).toDataURL('image/png');if(!valid())return false;
+      intro=madeIntro;outro=madeOutro;lastRendered={key,card,template:design,intro,outro,html:buildPublicationHtml(card,design,{...imageAssets,intro,outro})};frame.srcdoc=lastRendered.html;showImage();editor?.refresh();
+      status.textContent=demo?'Демонстрационный макет · не реальное предложение.':photos.length?'Предпросмотр обновлён · '+photos.length+' фото. '+(dirty?'Изменения шаблона ещё не сохранены на Mac.':'Общий шаблон применяется к данным карточки.'):'Предпросмотр без фото. Выберите фотографии карточки и обновите макет.';
+      if(mapFailed)status.textContent+=' Карта недоступна; адрес и координаты сохранены.';const warnings=resolvePublicationData(card,design,imageAssets).warnings||[];if(warnings.length)status.textContent+=' Проверьте перевод названий в готовом тексте.';if(remoteChanged)status.textContent+=' Общий шаблон на Mac изменён. Загрузите сохранённую версию перед следующей записью.';return true;
+    }catch(error){if(valid()){status.textContent=error.message;toast(error.message);}return false;}
+  }
+  async function savedSnapshot(snapshot){const resultId=await ensureCard();if(!resultId)throw new Error('Сначала сохраните карточку в редакторе');if(presentationCardKey(current())!==snapshot.key)throw new Error('Карточка изменилась. Обновите макет и повторите экспорт.');return resultId;}
+  async function action(run){if(busy||destroyed)return;clearTimeout(timer);busy=true;for(const control of [refresh,sample,save,html,proof,pdf,imageDownload])control.disabled=true;try{await run();}catch(error){if(!destroyed){status.textContent=error.message;toast(error.message);}}finally{busy=false;if(!destroyed){for(const control of [refresh,sample,save,html,proof,pdf])control.disabled=false;showImage();}}}
+  refresh.onclick=()=>action(async()=>{demo=false;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});await render(true);});sample.onclick=()=>action(async()=>{demo=true;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});await render(true);});
+  save.onclick=()=>action(async()=>{await serverReady;if(destroyed)return;clearTimeout(timer);const epoch=designEpoch,snapshot=normalizePublicationDesign(template);if(api){const result=await api('design',{template:snapshot,expectedUpdated:serverUpdated});if(destroyed)return;serverUpdated=result.updated??null;storedBaseline=true;remoteChanged=false;if(epoch===designEpoch){template=normalizePublicationDesign(result.template||snapshot);dirty=false;syncInputs();persistLocal({touched:false});await render(false);}status.textContent=epoch===designEpoch?'Общий шаблон сохранён на Mac и будет использоваться для следующих карточек.':'Шаблон сохранён на Mac; новые локальные правки ещё не сохранены.';}else{dirty=false;persistLocal({touched:false});status.textContent='Общий шаблон сохранён в этом браузере.';}toast('Дизайн сохранён');});
+  exportTemplate.onclick=()=>psDownloadBlob('ciliev-design-template.json',new Blob([JSON.stringify(normalizePublicationDesign(template),null,2)],{type:'application/json'}));oldExport.onclick=()=>{if(legacyBackup)psDownloadBlob('ciliev-original-design-v1.json',new Blob([JSON.stringify(legacyBackup,null,2)],{type:'application/json'}));};importTemplate.onclick=()=>file.click();
+  draftExport.onclick=()=>{if(draftBackup)psDownloadBlob('ciliev-previous-draft.json',new Blob([JSON.stringify(draftBackup,null,2)],{type:'application/json'}));};
+  reloadTemplate.onclick=()=>action(async()=>{if(!api)return;const result=await api('design');if(destroyed)return;if(!result.template)throw new Error('На Mac ещё нет сохранённого общего шаблона');if(dirty)draftBackup=normalizePublicationDesign(template);if(result.template.version===1)legacyBackup=result.template;template=normalizePublicationDesign(result.template);serverUpdated=result.updated??null;storedBaseline=true;remoteChanged=false;dirty=false;templateTouched=false;designEpoch++;revision++;assetRoleEpoch.logo++;assetRoleEpoch.avatar++;if(result.rules&&typeof result.rules==='object')savedServerRules=result.rules;syncInputs();persistLocal({touched:false});editor?.refresh({resetHistory:true});await render(false);status.textContent='Сохранённый шаблон загружен с Mac.'+(draftBackup?' Предыдущие локальные правки доступны отдельной кнопкой JSON.':'');});
+  file.onchange=()=>action(async()=>{const selected=file.files?.[0];try{if(!selected)return;if(selected.size>300000)throw new Error('Шаблон должен быть меньше 300 КБ');const value=JSON.parse(await selected.text());if(![1,2].includes(value.version)||value.version===1&&!Array.isArray(value.blocks)||value.version===2&&(!value.surfaces||typeof value.surfaces!=='object'))throw new Error('Нужен шаблон МОСТ v1 или Ciliev v2');if(value.version===1)legacyBackup=value;template=normalizePublicationDesign(value);assetRoleEpoch.logo++;assetRoleEpoch.avatar++;syncInputs();persistLocal();editor?.refresh({resetHistory:true});await render(false);status.textContent='Шаблон импортирован. Сохраните его на Mac для следующих карточек.';}finally{file.value='';}});
+  html.onclick=()=>action(async()=>{if(!await render(true))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered;if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot),asset=await api('card-export',{result_id:resultId,kind:'html',html:snapshot.html,template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание HTML не подключено');status.textContent='HTML сохранён на Mac и доступен с телефона.';}else{psDownloadBlob('ciliev-card.html',new Blob([snapshot.html],{type:'text/html;charset=utf-8'}));status.textContent='HTML сохранён со встроенными фотографиями.';}});
+  async function createPdf(){if(demo)throw new Error('Для PDF выберите настоящую карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard)throw new Error('Автоматический PDF доступен через сервер Mac');if(!await render(true))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=await savedSnapshot(snapshot);status.textContent='Mac создаёт PDF из текущего макета…';return api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',template:snapshot.template});}
+  pdf.onclick=()=>action(async()=>{const asset=await createPdf();if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание PDF не подключено');status.textContent='PDF сохранён на Mac. Скачивание начато.';});
+  proof.onclick=()=>action(async()=>{if(!getExportBlob)throw new Error('Просмотр PDF не подключён');const asset=await createPdf(),blob=await getExportBlob(asset);if(destroyed)return;if(!blob||typeof blob.arrayBuffer!=='function')throw new Error('Не удалось открыть созданный PDF');clearProof();proofUrl=URL.createObjectURL(blob);proofFrame.src=proofUrl;proofOpen.href=proofUrl;proofDialog.showModal();status.textContent='Готовый PDF открыт для проверки и сохранён в карточке.';});
+  imageDownload.onclick=()=>action(async()=>{const kind=active==='intro'?'intro':'outro';if(!await render(true))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered,value=kind==='intro'?snapshot.intro:snapshot.outro;if(!value)throw new Error('Сначала выберите фотографии карточки');if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot),asset=await api('card-export',{result_id:resultId,kind,data:value});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание изображения не подключено');status.textContent='Изображение сохранено на Mac и доступно с телефона.';}else{const response=await fetch(value);psDownloadBlob('ciliev-'+kind+'.png',await response.blob());}toast('Изображение готово');});
+  syncInputs();selectTab('pdf');render(false);
+  if(api)serverReady=api('design').then(result=>{if(destroyed)return;const currentUpdated=result.updated??null;remoteChanged=dirty&&storedBaseline&&serverUpdated!==currentUpdated;if(!dirty||!storedBaseline){serverUpdated=currentUpdated;storedBaseline=true;}if(result.rules&&typeof result.rules==='object')savedServerRules=result.rules;if(!templateTouched&&result.template){if(result.template.version===1)legacyBackup=result.template;template=normalizePublicationDesign(result.template);dirty=false;syncInputs();persistLocal({touched:false});editor?.refresh({resetHistory:true});}queueRender();}).catch(error=>{if(!destroyed)status.textContent='Не удалось загрузить общий шаблон. Ваши локальные правки сохранены. '+error.message;throw error;});
+  // The initial fetch may fail before a save is attempted; keep that rejection
+  // handled while retaining it for the explicit Save operation.
+  serverReady.catch(()=>{});
+  return {refresh:()=>{clearTimeout(timer);demo=false;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});return render(true);},template:()=>normalizePublicationDesign(template),destroy:()=>{destroyed=true;revision++;brandLoadEpoch++;assetRoleEpoch.logo++;assetRoleEpoch.avatar++;clearTimeout(timer);editor?.destroy();if(proofDialog.open)proofDialog.close();clearProof();assetCache.clear();clearPublicationImageCache();photos=[];logo=avatar=intro=outro=mapImage='';lastRendered=null;savedServerRules={};template=defaultPublicationDesign();legacyBackup=null;frame.removeAttribute('srcdoc');imagePreview.removeAttribute('src');for(const input of Object.values(inputs))input.value='';mount.replaceChildren();}};
+}
+
+
 function setupWordEditor({getRules,getCustom,saveCustom,onChange,toast}) {
   const el=id=>document.getElementById(id);let selected=null,undo=[],timer;
   const entries=()=>phraseEntries(getRules(),getCustom());
@@ -3467,7 +4042,7 @@ renderTagCatalog();renderTagReasons();counts();
 
 function renderPhotos(){photoUrls=photoSources(photoUrls);photoUI?.setSources(photoUrls,photoEdits);}
 $('importCli').onclick=()=>$('cliFile').click();
-$('cliFile').onchange=async()=>{try{const file=$('cliFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const value=JSON.parse(await file.text());if(!value.fields||typeof value.fields!=='object'||!Array.isArray(value.titles)||!value.titles.every(t=>typeof t==='string')||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Нужен JSON-результат Python CLI с fields/titles/body/tags');populate({...value.fields,photos:value.listing?.images||value.fields.photos||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();toast('Карточка из Python импортирована. Проверьте поля перед публикацией.');}catch(error){toast(error.message);}finally{$('cliFile').value='';}};
+$('cliFile').onchange=async()=>{try{const file=$('cliFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const value=JSON.parse(await file.text());if(!value.fields||typeof value.fields!=='object'||!Array.isArray(value.titles)||!value.titles.every(t=>typeof t==='string')||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Нужен JSON-результат Python CLI с fields/titles/body/tags');populate({...value.fields,photos:value.fields.photos||value.listing?.images||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();toast('Карточка из Python импортирована. Проверьте поля перед публикацией.');}catch(error){toast(error.message);}finally{$('cliFile').value='';}};
 let roadmapDataClient=null;
 async function loadRoadmap(){try{const response=await fetch(staticHosting?'./plan.json':'/api/roadmap',{cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(!Array.isArray(data.tasks))throw Error();roadmapDataClient=data;renderRoadmap();}catch{$('roadmapSummary').textContent='План не загрузился. Исходник: plan.json и GitHub issue Roadmap.';}}
 function renderRoadmap(){if(!roadmapDataClient)return;const tasks=roadmapDataClient.tasks;const done=tasks.filter(t=>t.status==='done').length;$('roadmapSummary').replaceChildren(document.createTextNode(done+' / '+tasks.length+' выполнено · '+(tasks.length-done)+' в планах. '));if(roadmapDataClient.github_issue_url){const a=document.createElement('a');a.textContent='Roadmap на GitHub ↗';a.href=roadmapDataClient.github_issue_url;a.target='_blank';a.rel='noopener noreferrer';$('roadmapSummary').append(a);}const q=$('roadmapSearch').value.toLowerCase(),mode=$('roadmapFilter').value;$('roadmapList').replaceChildren();for(const task of tasks.filter(t=>(mode==='all'||t.status===mode)&&(t.id+' '+t.section+' '+t.title+' '+t.acceptance).toLowerCase().includes(q))){const card=document.createElement('article'),head=document.createElement('header'),p=document.createElement('p'),evidence=document.createElement('div');card.className='task '+task.status;head.textContent=(task.status==='done'?'✓ ':'○ ')+task.id+' · '+task.title;p.textContent=task.acceptance;evidence.className='evidence';evidence.textContent=task.priority+' · '+task.section+(task.evidence.length?' · '+task.evidence.join(' · '):' · Проверка ещё не завершена');card.append(head,p,evidence);$('roadmapList').append(card);}}
@@ -3480,7 +4055,7 @@ if(staticHosting&&!localHosting){$('importStatus').textContent='GitHub Pages: в
 function noteEntries(){return $('phraseNotes').value.split('\n').map(line=>line.split('|').map(s=>s.trim())).filter(parts=>parts.length>=2&&parts[0]&&parts[1]).map(([zh,ru,...alternatives])=>({zh,ru,alternatives:alternatives.filter(Boolean)}));}
 $('phraseNotes').addEventListener('input',()=>wordEditor?.render());
 async function localApi(path,data){const response=await fetch('/api/local/'+path,{method:data?'POST':'GET',headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||'',...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})});const value=await response.json();if(!response.ok)throw Error(value.error||'Ошибка локального сервера');return value;}
-function applyGenerated(value){if(!value.fields||!Array.isArray(value.titles)||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Неверный результат');populate({...value.fields,photos:value.listing?.images||value.fields.photos||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);}
+function applyGenerated(value){if(!value.fields||!Array.isArray(value.titles)||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Неверный результат');populate({...value.fields,photos:value.fields.photos||value.listing?.images||[]});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);}
 function showLocalLink(id){const changed=localResultId!==id;localResultId=id;if(changed){archiveUI?.refresh();cardFilesUI?.refresh();}if(current){const item=objects.find(o=>o.id===current);if(item){item.resultId=id;write('most-objects',objects);}}$('localResult').classList.remove('hidden');$('resultLink').href='/listing/'+id;$('resultLink').textContent=location.origin+'/listing/'+id;try{const u=new URL($('url').value);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)){$('sourceLink').href=u.href;$('sourceLink').classList.remove('hidden');}else $('sourceLink').classList.add('hidden');}catch{$('sourceLink').classList.add('hidden');}}
 async function importLocal(){if(importing)return;importing=true;$('import').disabled=true;$('cancelImport').classList.remove('hidden');try{const old=snapshot(),data={};for(const key of ['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','phraseNotes'])data[key]=old[key];const start=await localApi('import',{url:$('url').value,loader:$('localLoader').value,browser_channel:$('localBrowser').value,timeout:Number($('localTimeout').value),refresh:$('localRefresh').checked,data,rules,prefs});localJob=start.job_id;while(true){const job=await localApi('jobs/'+localJob);$('importStatus').textContent=job.message;if(job.state==='error')throw Error(job.message);if(job.state==='done'){const result=await localApi('results/'+job.result_id);applyGenerated(result);showLocalLink(job.result_id);history.pushState({},'', '/listing/'+job.result_id);$('review').textContent='Карточка загружена. Проверьте факты, словарь и условия; время до вузов добавляется после проверки.';toast('Заголовки, описание и теги готовы. Ссылка карточки сохранена.');break;}await new Promise(resolve=>setTimeout(resolve,1000));}}catch(error){$('importStatus').textContent=error.message;}finally{importing=false;localJob=null;$('import').disabled=false;$('cancelImport').classList.add('hidden');}}
 $('cancelImport').onclick=async()=>{if(localJob)try{await localApi('cancel',{job_id:localJob});$('importStatus').textContent='Отмена импорта…';}catch(error){toast(error.message);}};
@@ -3606,7 +4181,7 @@ function ensurePresentation(){
  if(presentationUI)return presentationUI;
  let initialDesignRequest=null;
  const designApi=localHosting?(path,data)=>{const request=localApi(path,data);if(path==='design'&&!data)initialDesignRequest=request;return request;}:null;
- presentationUI=setupPresentationStudio({mount:$('presentationMount'),getCard:presentationCurrentCard,getPhotos:()=>photoUI?.presentationPhotos()||[],ensureCard:ensurePresentationCard,api:designApi,downloadExport:localDownloadAsset,getExportBlob:localExportBlob,getMapImage:localHosting?(card)=>localApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}):null,toast});
+ presentationUI=setupPresentationStudio({mount:$('presentationMount'),getRules:()=>rules,getCard:presentationCurrentCard,getPhotos:()=>photoUI?.presentationPhotos()||[],ensureCard:ensurePresentationCard,api:designApi,downloadExport:localDownloadAsset,getExportBlob:localExportBlob,getMapImage:localHosting?(card,options={})=>localApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}):null,toast});
  presentationReady=initialDesignRequest?initialDesignRequest.catch(()=>{}):Promise.resolve();
  return presentationUI;
 }

@@ -344,12 +344,12 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
             return True
         def do_GET(self):
             path=urlsplit(self.path).path
-            public=path in ('/phone','/phone/','/phone/pair','/phone/manifest.webmanifest','/phone/sw.js','/phone/icon-192.png','/phone/icon-512.png','/phone/apple-touch-icon.png','/phone/icons/icon-192.png','/phone/icons/icon-512.png','/phone/icons/apple-touch-icon.png')
+            public=path in ('/phone','/phone/','/phone/pair','/phone/manifest.webmanifest','/phone/sw.js','/phone/designer.mjs','/phone/icon-192.png','/phone/icon-512.png','/phone/apple-touch-icon.png','/phone/icons/icon-192.png','/phone/icons/icon-512.png','/phone/icons/apple-touch-icon.png')
             if not self.permitted(auth=not public):return
             try:
                 if public:
                     if path=='/phone':self.respond(302,b'','text/plain',{'Location':'/phone/'});return
-                    files={'/phone/':('docs/phone.html','text/html; charset=utf-8'),'/phone/pair':('docs/phone.html','text/html; charset=utf-8'),'/phone/manifest.webmanifest':('docs/phone.webmanifest','application/manifest+json'),'/phone/sw.js':('docs/phone-sw.js','text/javascript'),'/phone/icon-192.png':('docs/icons/icon-192.png','image/png'),'/phone/icon-512.png':('docs/icons/icon-512.png','image/png'),'/phone/apple-touch-icon.png':('docs/icons/apple-touch-icon.png','image/png')}
+                    files={'/phone/':('docs/phone.html','text/html; charset=utf-8'),'/phone/pair':('docs/phone.html','text/html; charset=utf-8'),'/phone/manifest.webmanifest':('docs/phone.webmanifest','application/manifest+json'),'/phone/sw.js':('docs/phone-sw.js','text/javascript'),'/phone/designer.mjs':('docs/phone-designer.mjs','text/javascript; charset=utf-8'),'/phone/icon-192.png':('docs/icons/icon-192.png','image/png'),'/phone/icon-512.png':('docs/icons/icon-512.png','image/png'),'/phone/apple-touch-icon.png':('docs/icons/apple-touch-icon.png','image/png')}
                     for icon in ('icon-192.png','icon-512.png','apple-touch-icon.png'):files['/phone/icons/'+icon]=('docs/icons/'+icon,'image/png')
                     name,mime=files[path];file=redcn.ROOT/name
                     if not file.exists():self.respond(503,{'error':'Сначала соберите мобильную страницу: npm run build'});return

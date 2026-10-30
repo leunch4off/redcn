@@ -5,10 +5,11 @@ const [html,css,geoCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,
 const [cardFiles,cardArchive,presentationStudio,cardArchiveCss,presentationCss]=await Promise.all(['web/card-files.mjs','web/card-archive.mjs','web/presentation-studio.mjs','web/card-archive.css','web/presentation-studio.css'].map(read));
 const [rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,languageStudio,languageCss]=await Promise.all(['web/rental-lexicon.mjs','web/community-phrases.mjs','web/ru-zh-translator.mjs','web/template-catalog.mjs','web/language-studio.mjs','web/language-studio.css'].map(read));
 const [universityCatalog,universityUI,universityCss]=await Promise.all(['web/university-catalog.mjs','web/university-ui.mjs','web/university-ui.css'].map(read));
+const [publicationModel,publicationRender,designCanvasEditor,designCanvasCss]=await Promise.all(['web/publication-model.mjs','web/publication-render.mjs','web/design-canvas-editor.mjs','web/design-canvas-editor.css'].map(read));
 const strip=s=>s.replace(/^import .*?;\n/gm,'').replace(/^export /gm,'');
-const combined=[cardFiles,cardArchive,presentationStudio,geoCatalog,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,sourceImport,factEvidence,content,engine,editor,historyCore,historyUI,insights,insightsUI,languageStudio,universityUI,app].map(strip).join('\n');
+const combined=[cardFiles,cardArchive,geoCatalog,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,sourceImport,factEvidence,content,engine,publicationModel,publicationRender,designCanvasEditor,presentationStudio,editor,historyCore,historyUI,insights,insightsUI,languageStudio,universityUI,app].map(strip).join('\n');
 // JSON escaping avoids breaking out of the JavaScript string that holds the page.
-const page=html.replace('<link rel="stylesheet" href="/styles.css">',()=>'<style>'+css+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+languageCss+'\n'+universityCss+'</style>').replace('<script type="module" src="/app.js"></script>',()=>'<script type="module">'+combined.replace(/<\/script/gi,'<\\/script')+'</script>');
+const page=html.replace('<link rel="stylesheet" href="/styles.css">',()=>'<style>'+css+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'\n'+languageCss+'\n'+universityCss+'</style>').replace('<script type="module" src="/app.js"></script>',()=>'<script type="module">'+combined.replace(/<\/script/gi,'<\\/script')+'</script>');
 const plan=JSON.parse(await read('plan.json'));
 const research=JSON.parse(await read('data/research.json'));
 const seed=JSON.parse(await read('data/knowledge-seed.json'));
@@ -25,8 +26,11 @@ for(const [source,target] of [['plan.json','docs/plan.json'],['data/research.jso
 console.log('Built standalone GitHub Pages site in docs/');
 
 const [phoneHtml,phoneCss,phoneApp,pwaInstall]=await Promise.all(['web/phone.html','web/phone.css','web/phone.mjs','web/pwa-install.mjs'].map(read));
-const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'\n'+cardArchiveCss+'\n'+presentationCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[cardFiles,cardArchive,presentationStudio,pwaInstall,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
+const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[cardFiles,cardArchive,pwaInstall,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
 await writeFile(new URL('docs/phone.html',root),phonePage);
+// The complete vocabulary and visual editor load only when opened on a phone.
+const phoneDesigner=[geoCatalog,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,content,engine,publicationModel,publicationRender,designCanvasEditor,presentationStudio].map(strip).join('\n')+'\nexport {setupPresentationStudio};\n';
+await writeFile(new URL('docs/phone-designer.mjs',root),phoneDesigner);
 await copyFile(new URL('web/manifest.webmanifest',root),new URL('docs/phone.webmanifest',root));
 await copyFile(new URL('web/sw.js',root),new URL('docs/phone-sw.js',root));
 await mkdir(new URL('docs/icons/',root),{recursive:true});

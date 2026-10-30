@@ -17,7 +17,20 @@ def dispatch(directory, path, data=None, *, namespace='local', browser_channel='
         return {**result,'attachments':[{**item,'url':prefix+'card-attachments/'+card_id+'/'+item['id']} for item in result['attachments']]}
     def json_result(value):return 200,value,'application/json; charset=utf-8',{}
     if path=='design':
-        return json_result(card_assets.load_design(directory) if data is None else card_assets.save_design(directory,data.get('template')))
+        try:
+            if data is None:
+                from phone_relay import load_profile
+                rules=load_profile(directory).get('rules',{})
+                personal={key:value for key,value in rules.items() if isinstance(key,str) and isinstance(value,str)} if isinstance(rules,dict) else {}
+                return json_result({**card_assets.load_design(directory),'rules':personal})
+            return json_result(card_assets.save_design(directory,data.get('template'),**({'expected_updated':data['expectedUpdated']} if 'expectedUpdated' in data else {})))
+        except card_assets.DesignConflict as error:
+            return 409,{'error':str(error)},'application/json; charset=utf-8',{}
+    if path=='design-images' and data is not None:
+        return json_result(card_assets.add_design_image(directory,data))
+    match=re.fullmatch(r'design-images/([a-f0-9]{32})',path)
+    if match and data is None:
+        return json_result(card_assets.design_image(directory,match[1]))
     match=re.fullmatch(r'card-archive/([a-f0-9]{32})',path)
     if match:
         card_id=match[1]
@@ -45,11 +58,13 @@ def dispatch(directory, path, data=None, *, namespace='local', browser_channel='
         return 200,content,mime,_download_header(name)
     if path=='listing-map' and data is not None:
         from listing_map import map_image
-        return json_result(map_image(directory,data.get('latitude'),data.get('longitude'),data.get('zoom',15)))
+        return json_result(map_image(directory,data.get('latitude'),data.get('longitude'),data.get('zoom',15),style=data.get('style','classic'),pin_color=data.get('pinColor')))
     return None
 
 
 def request_limit(path):
     if re.fullmatch(r'card-archive/[a-f0-9]{32}',path):return 56_100_000
-    if path=='card-export':return 14_100_000
+    if path=='card-export':return 45_100_000
+    if path=='design-images':return 5_650_000
+    if path=='design':return 300_000
     return None

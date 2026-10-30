@@ -18,7 +18,7 @@ test('coordinate links require actual valid coordinate pairs and zero is a valid
  assert.equal(presentationCardData({fields:{latitude:91,longitude:37}}).mapUrl,'');assert.equal(presentationCardData({fields:{latitude:'',longitude:37}}).mapUrl,'');assert.match(presentationCardData({fields:{latitude:0,longitude:0}}).mapUrl,/mlat=0&mlon=0/);assert.equal(presentationCardData({fields:{}}).price,'');assert.equal(expandDesignText('{{title}}: {{area}} / {{unknown}}',card),'明亮公寓 <script>alert(1)</script>: 54 / {{unknown}}');
 });
 test('template normalization is idempotent and safe image validator rejects active formats',()=>{
- const t=normalizeDesignTemplate();assert.deepEqual(normalizeDesignTemplate(t),t);assert.equal(safePresentationImage('data:image/svg+xml;base64,PHN2Zz4='),'');assert.equal(safePresentationImage('data:image/png;base64,<script>'),'');assert.equal(safePresentationImage('file:///private/secret'),'');assert.equal(normalizeDesignTemplate(null).version,1);
+ const t=normalizeDesignTemplate();assert.deepEqual(normalizeDesignTemplate(t),t);assert.equal(safePresentationImage('data:image/svg+xml;base64,PHN2Zz4='),'');assert.equal(safePresentationImage('data:image/png;base64,<script>'),'');assert.equal(safePresentationImage('file:///private/secret'),'');assert.equal(normalizeDesignTemplate(null).version,2);
 });
 
 test('card fingerprints reject changed text or photo selection while ignoring assigned storage id',()=>{
@@ -26,3 +26,18 @@ test('card fingerprints reject changed text or photo selection while ignoring as
 });
 
 test('presentation identity ignores cache hydration but detects object changes and crop edits',()=>{const baseline={...card,identity:7,fields:{...card.fields,photoEdits:{order:[],excluded:[],crops:{}}}};assert.equal(presentationCardKey(baseline),presentationCardKey({...baseline,fields:{...baseline.fields,resultId:'new-id',photoEvidence:[{id:'desk'}],photoEdits:{...baseline.fields.photoEdits,observations:{cached:true}}}}));assert.notEqual(presentationCardKey(baseline),presentationCardKey({...baseline,identity:8}));assert.notEqual(presentationCardKey(baseline),presentationCardKey({...baseline,fields:{...baseline.fields,photoEdits:{...baseline.fields.photoEdits,crops:{photo:{bottom:20}}}}}));});
+
+
+test('new default studio design produces Chinese Ciliev landscape pages with safe built-in branding',()=>{
+ const design=normalizeDesignTemplate();assert.equal(design.version,2);assert.equal(design.brand.name,'ciliev');assert.equal(design.theme.pdf.background,'#07162b');assert.equal(design.theme.pdf.accent,'#b79665');
+ const html=buildPresentationHtml(card,design,{photos:['data:image/png;base64,aGVsbG8=']});
+ assert.match(html,/<html lang="zh-CN">/);assert.match(html,/@page\{size:A4 landscape/);assert.match(html,/ciliev/);assert.match(html,/房地产/);assert.match(html,/房产顾问/);assert.ok(!/[А-Яа-яЁё]/.test(html));assert.ok(!html.includes('<script>'));assert.ok(!html.includes('Малафеев'));assert.ok(!html.includes('m16'));
+});
+test('explicit v1 callers keep their bounded legacy document while a fresh default uses v2',()=>{
+ const old=normalizeDesignTemplate({version:1,preset:'minimal',contact:'Custom contact',blocks:[{id:'description',enabled:false}]});assert.equal(old.version,1);assert.equal(old.contact,'Custom contact');assert.equal(old.blocks[0].enabled,false);
+ const html=buildPresentationHtml(card,old);assert.ok(!html.includes('<section class="description">'));assert.equal(normalizeDesignTemplate().version,2);
+});
+test('publication identity includes university commute and confirmed equipment changes',()=>{
+ const base={...card,fields:{...card.fields,features:['desk'],universities:'МГУ | 40 | metro',campus:''}};const key=presentationCardKey(base);
+ for(const patch of [{universities:'РУДН | 50 | bus'},{features:['desk','fridge']},{featureCounts:{desk:2}},{campus:'Новый кампус'}])assert.notEqual(presentationCardKey({...base,fields:{...base.fields,...patch}}),key);
+});

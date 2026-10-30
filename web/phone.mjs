@@ -1,4 +1,3 @@
-import {setupPresentationStudio} from './presentation-studio.mjs';
 import {setupCardArchive} from './card-archive.mjs';
 import {setupCardFiles,cardPhotoDataUrl,cardDownloadBlob} from './card-files.mjs';
 import {initializePwaInstall} from './pwa-install.mjs';
@@ -259,7 +258,7 @@ ph('phoneLoadRetry').onclick=()=>phoneStart();
 
 async function phoneExportBlob(asset){const epoch=phoneState.authEpoch,url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/phone\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');const response=await fetch(url.pathname,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(90000)});if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(response.status===401){phoneAuth(false);throw Error('Введите текущий код с компьютера');}if(!response.ok){const value=await response.json().catch(()=>({}));throw Error(value.error||'Файл недоступен');}const blob=await response.blob();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;}
 async function phoneDownloadAsset(asset){cardDownloadBlob(await phoneExportBlob(asset),asset.name);phoneFilesUI?.refresh();}
-async function phonePresentationPhotos(){const id=phoneState.detailId,epoch=phoneState.authEpoch,photos=[];for(const original of (phoneState.detail?.media||[]).slice(0,6)){const selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;const response=await fetch(path,{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw Error('Фотография недоступна на Mac');const dataUrl=await cardPhotoDataUrl(await response.blob());if(epoch!==phoneState.authEpoch||id!==phoneState.detailId)throw Error('Выбрана другая карточка');photos.push({dataUrl});}return photos;}
+async function phonePresentationPhotos(){const id=phoneState.detailId,epoch=phoneState.authEpoch,photos=[];for(const original of (phoneState.detail?.media||[]).slice(0,30)){const selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;const response=await fetch(path,{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw Error('Фотография недоступна на Mac');const dataUrl=await cardPhotoDataUrl(await response.blob());if(epoch!==phoneState.authEpoch||id!==phoneState.detailId)throw Error('Выбрана другая карточка');photos.push({dataUrl});}return photos;}
 async function phoneEnsurePresentationCard(){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return phoneState.detail.id;}
 function phoneInitializeCardTools(){if(phoneArchiveUI)return;
 phoneArchiveUI=setupCardArchive({mount:ph('phoneArchiveMount'),getCardId:()=>phoneState.detailId,ensureCard:phoneEnsurePresentationCard,api:phoneApi,downloadAttachment:phoneDownloadAsset,toast:phoneToast});
@@ -268,11 +267,20 @@ phoneFilesUI=setupCardFiles({mount:ph('phoneFilesMount'),getCardId:()=>phoneStat
 function phoneInitializeDesigner(){
   if(phoneDesignInitializing)return phoneDesignInitializing;
   if(phonePresentationUI)return Promise.resolve(phonePresentationUI);
-  const epoch=phoneState.authEpoch;let initialRead=null;
-  const api=(path,data)=>{const request=phoneApi(path,data);if(path==='design'&&!data)initialRead=request;return request;};
-  const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card)=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude}),toast:phoneToast});phonePresentationUI=studio;
-  const ready=(initialRead||Promise.resolve()).catch(()=>{}).then(()=>epoch===phoneState.authEpoch&&studio===phonePresentationUI?studio:null);
-  phoneDesignInitializing=ready;ready.finally(()=>{if(phoneDesignInitializing===ready)phoneDesignInitializing=null;});return ready;
+  const epoch=phoneState.authEpoch;
+  ph('phoneDesignMount').textContent='Загружаем редактор оформления…';
+  const ready=(async()=>{
+    const {setupPresentationStudio}=await import('/phone/designer.mjs');
+    if(epoch!==phoneState.authEpoch||!phoneState.paired)return null;
+    let initialRead=null;
+    const api=(path,data)=>{const request=phoneApi(path,data);if(path==='design'&&!data)initialRead=request;return request;};
+    const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});
+    phonePresentationUI=studio;
+    await (initialRead||Promise.resolve()).catch(()=>{});
+    return epoch===phoneState.authEpoch&&studio===phonePresentationUI?studio:null;
+  })();
+  phoneDesignInitializing=ready;
+  const finish=()=>{if(phoneDesignInitializing===ready)phoneDesignInitializing=null;};ready.then(finish,finish);return ready;
 }
 ph('phoneDesignCard').onclick=()=>phoneView('design');
 ph('phoneNetworkHelp').textContent=location.protocol==='https:'?'Внешняя HTTPS-ссылка работает через мобильный интернет; Mac должен оставаться включённым.':'Локальный адрес работает в одной сети с Mac. Для мобильного интернета используйте внешнюю HTTPS-ссылку из раздела «Телефон» на компьютере.';

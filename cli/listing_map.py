@@ -22,6 +22,7 @@ import urllib.request
 TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 USER_AGENT = 'MOST-Redcn/10.0 property-presentation (+https://github.com/leunch4off/redcn)'
 ATTRIBUTION = '© OpenStreetMap contributors'
+ATTRIBUTION_ZH = '地图数据 © OpenStreetMap 贡献者'
 COPYRIGHT_URL = 'https://www.openstreetmap.org/copyright'
 MAX_LATITUDE = 85.0511287798066
 FALLBACK_TTL = 7 * 24 * 60 * 60
@@ -29,6 +30,14 @@ MAX_TILE_BYTES = 1_000_000
 SOURCE_WIDTH, SOURCE_HEIGHT = 512, 342
 WIDTH, HEIGHT = 768, 512
 _map_lock = threading.Lock()
+MAP_STYLES = {
+    'classic': {'background':'#e9eee7', 'creditBackground':'#ffffff',
+                'creditText':'#203b2f', 'pin':'#bd4f35', 'ring':'#ffffff'},
+    'navy': {'background':'#071d3b', 'creditBackground':'#06172f',
+             'creditText':'#a8bdd1', 'pin':'#f34d70', 'ring':'#f8fbff'},
+    'gold': {'background':'#151b24', 'creditBackground':'#10161f',
+             'creditText':'#c9b696', 'pin':'#b79665', 'ring':'#f6efe2'},
+}
 
 
 def coordinates(latitude, longitude, zoom=15):
@@ -174,9 +183,84 @@ def _font(size):
     return ImageFont.load_default()
 
 
-def map_image(directory, latitude, longitude, zoom=15):
+def _attribution_font(size, prefer_chinese=False):
+    """Do not burn missing-glyph squares into an otherwise portable raster."""
+    if prefer_chinese:
+        from PIL import ImageFont
+        for candidate in ('/System/Library/Fonts/PingFang.ttc',
+                          '/System/Library/Fonts/STHeiti Light.ttc',
+                          '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+                          '/usr/share/fonts/truetype/noto/NotoSansSC-Regular.ttf'):
+            try:
+                return ImageFont.truetype(candidate, size), True
+            except OSError:
+                pass
+    return _font(size), False
+
+
+def _map_style(style, pin_color):
+    if not isinstance(style, str) or style not in MAP_STYLES:
+        raise ValueError('Стиль карты: classic, navy или gold')
+    if pin_color is not None and (not isinstance(pin_color, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', pin_color)):
+        raise ValueError('Цвет точки карты должен иметь формат #RRGGBB')
+    return MAP_STYLES[style], pin_color or MAP_STYLES[style]['pin']
+
+
+def _theme_map(image, style):
+    """Restyle this real raster viewport; never redraw or invent street geometry.
+
+    Water, vegetation, building fill and bright roads retain separate tones.
+    Original raster labels remain in their source language. Chinese callouts
+    are separate designer elements, not a claim of translated OSM street data.
+    The source tile cache remains byte-for-byte unmodified.
+    """
+    if style == 'classic':
+        return image
+    from PIL import Image
+    navy = style == 'navy'
+    palette = {
+        'land': (8, 31, 61) if navy else (23, 29, 37),
+        'water': (11, 43, 72) if navy else (27, 38, 49),
+        'green': (10, 45, 65) if navy else (31, 39, 40),
+        'building': (24, 59, 98) if navy else (55, 55, 53),
+        'road': (113, 149, 179) if navy else (177, 156, 119),
+        'highway': (138, 166, 191) if navy else (196, 164, 111),
+        'outline': (46, 80, 114) if navy else (90, 80, 65),
+        'label': (148, 174, 200) if navy else (199, 190, 172),
+    }
+    colors = []
+    pixels = image.convert('RGB').tobytes()
+    for red, green, blue in zip(pixels[0::3], pixels[1::3], pixels[2::3]):
+        bright = (red+green+blue)/3
+        spread = max(red,green,blue)-min(red,green,blue)
+        if bright < 135:
+            color = palette['label']
+        elif blue > red+7 and green > red+5:
+            color = palette['water']
+        elif green > red+5 and green > blue+8:
+            color = palette['green']
+        elif red > 238 and green < 226 and blue < 205:
+            color = palette['highway']
+        elif min(red,green,blue) >= 247:
+            color = palette['road']
+        elif bright >= 228:
+            color = palette['land']
+        elif red >= green and green >= blue and 160 <= bright <= 228:
+            color = palette['building']
+        elif spread < 18:
+            color = palette['outline']
+        else:
+            color = palette['building']
+        colors.append(color)
+    output = Image.new('RGB', image.size)
+    output.putdata(colors)
+    return output
+
+
+def map_image(directory, latitude, longitude, zoom=15, style='classic', pin_color=None):
     """Create an attributed 768x512 property viewport from at most nine tiles."""
     latitude, longitude, zoom = coordinates(latitude, longitude, zoom)
+    theme, pin_color = _map_style(style, pin_color)
     try:
         from PIL import Image, ImageDraw
     except ImportError as error:
@@ -186,7 +270,7 @@ def map_image(directory, latitude, longitude, zoom=15):
     first_x, last_x = left // 256, (left + SOURCE_WIDTH - 1) // 256
     first_y, last_y = top // 256, (top + SOURCE_HEIGHT - 1) // 256
     count = 2 ** zoom
-    view = Image.new('RGB', (SOURCE_WIDTH, SOURCE_HEIGHT), '#e9eee7')
+    view = Image.new('RGB', (SOURCE_WIDTH, SOURCE_HEIGHT), theme['background'])
     with _map_lock:
         opener = _opener()
         for tile_y in range(first_y, last_y + 1):
@@ -199,21 +283,23 @@ def map_image(directory, latitude, longitude, zoom=15):
                         view.paste(image.convert('RGB'), (tile_x * 256 - left, tile_y * 256 - top))
                 except OSError as error:
                     raise ValueError('Повреждённый фрагмент карты. Повторите загрузку.') from error
-    view = view.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
+    view = _theme_map(view, style).resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
     draw = ImageDraw.Draw(view)
     pin_x = round((center_x - left) * WIDTH / SOURCE_WIDTH)
     pin_y = round((center_y - top) * HEIGHT / SOURCE_HEIGHT)
-    draw.ellipse((pin_x - 23, pin_y - 23, pin_x + 23, pin_y + 23), fill='#ffffff', outline='#ffffff', width=3)
-    draw.ellipse((pin_x - 17, pin_y - 17, pin_x + 17, pin_y + 17), fill='#bd4f35')
+    draw.ellipse((pin_x - 23, pin_y - 23, pin_x + 23, pin_y + 23), fill=theme['ring'], outline=theme['ring'], width=3)
+    draw.ellipse((pin_x - 17, pin_y - 17, pin_x + 17, pin_y + 17), fill=pin_color)
     draw.ellipse((pin_x - 5, pin_y - 5, pin_x + 5, pin_y + 5), fill='#ffffff')
-    credit = ATTRIBUTION + ' · openstreetmap.org/copyright'
-    font = _font(14)
+    font, chinese = _attribution_font(14, prefer_chinese=style!='classic')
+    credit = (ATTRIBUTION_ZH if chinese else ATTRIBUTION) + ' · openstreetmap.org/copyright'
     # Burn attribution into the raster so PNG and PDF copies retain it.
-    draw.rectangle((0, HEIGHT - 32, WIDTH, HEIGHT), fill='#ffffff')
-    draw.text((12, HEIGHT - 25), credit, fill='#203b2f', font=font)
+    draw.rectangle((0, HEIGHT - 32, WIDTH, HEIGHT), fill=theme['creditBackground'])
+    draw.text((12, HEIGHT - 25), credit, fill=theme['creditText'], font=font)
     output = io.BytesIO()
     view.save(output, format='PNG', optimize=True)
     return {'dataUrl': 'data:image/png;base64,' + base64.b64encode(output.getvalue()).decode(),
-            'attribution': ATTRIBUTION, 'copyrightUrl': COPYRIGHT_URL,
+            'attribution': ATTRIBUTION, 'attributionZh': ATTRIBUTION_ZH, 'copyrightUrl': COPYRIGHT_URL,
             'sourceUrl': f'https://www.openstreetmap.org/?mlat={latitude:.7f}&mlon={longitude:.7f}#map={zoom}/{latitude:.7f}/{longitude:.7f}',
-            'latitude': latitude, 'longitude': longitude, 'zoom': zoom}
+            'latitude': latitude, 'longitude': longitude, 'zoom': zoom,
+            'style':style, 'pinColor':pin_color, 'labelLanguage':'source',
+            'attributionRasterLanguage':'zh' if chinese else 'en'}
