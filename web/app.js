@@ -7,6 +7,7 @@ import {photoSources} from './media-core.mjs';
 import {setupPhotos} from './photo-ui.mjs';
 import {getGeoStats,searchGeo} from './geo-catalog.mjs';
 import {setupRelated} from './related-ui.mjs';
+import {editorStartup} from './editor-state.mjs';
 
 const $=id=>document.getElementById(id);
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}};
@@ -23,7 +24,7 @@ if(read('most-rules-version',0)<4){for(const [key,value] of Object.entries(DICTI
 let objects=read('most-objects',[]);if(!Array.isArray(objects))objects=[];
 let prefs={...DEFAULT_PREFS,...read('most-prefs',{})};
 let current=null,titleIndex=0,currentTitles=[],sourceAudit=null,featureCounts={},historyUI=null;
-let copyVariant=0,localResultId=null,localJob=null;
+let copyVariant=0,localResultId=null,localJob=null,isDemo=false,editorRevision=0;
 let titleVariant=0,wordEditor=null,photoUrls=[],insightsUI=null,photoUI=null,relatedUI=null,relatedOffers=[],photoEdits={},photoEvidence=[],photoFeatureBaseline={};
 const hosting=document.querySelector('meta[name="redcn-hosting"]')?.content;
 const localHosting=hosting==='local',staticHosting=hosting==='github-pages'||localHosting;
@@ -35,11 +36,11 @@ for(const group of Object.keys(groupNames)){
   const heading=document.createElement('div');heading.className='feature-group';heading.textContent=groupNames[group];$('featureGrid').append(heading);
   for(const [id,,label,key] of FEATURES.filter(x=>x[3]===group)){
     const wrapper=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.id='feature-'+id;
-    const quantity=document.createElement('input');quantity.type='number';quantity.min='1';quantity.max='50';quantity.className='feature-qty';quantity.id='feature-qty-'+id;quantity.placeholder='шт.';quantity.setAttribute('aria-label','Количество: '+label);quantity.oninput=()=>{if(photoFeatureBaseline[id])photoFeatureBaseline[id].count=quantity.value;if(quantity.value)featureCounts[id]=quantity.value;else delete featureCounts[id];saveDraft();};wrapper.append(input,document.createTextNode(label),quantity);$('featureGrid').append(wrapper);
+    const quantity=document.createElement('input');quantity.type='number';quantity.min='1';quantity.max='50';quantity.className='feature-qty';quantity.id='feature-qty-'+id;quantity.placeholder='шт.';quantity.setAttribute('aria-label','Количество: '+label);quantity.oninput=()=>{editorRevision++;if(photoFeatureBaseline[id])photoFeatureBaseline[id].count=quantity.value;if(quantity.value)featureCounts[id]=quantity.value;else delete featureCounts[id];saveDraft();};wrapper.append(input,document.createTextNode(label),quantity);$('featureGrid').append(wrapper);
   }
 }
-function snapshot(){const value={titleVariant,copyVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,photoEvidence:[...photoEvidence],photoFeatureBaseline:{...photoFeatureBaseline},featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
-function populate(value){localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();}
+function snapshot(){const value={isDemo,titleVariant,copyVariant,photos:[...photoUrls],photoEdits:photoUI?.state()||photoEdits,relatedOffers:[...relatedOffers],sourceAudit,photoEvidence:[...photoEvidence],photoFeatureBaseline:{...photoFeatureBaseline},featureCounts:{...featureCounts}};for(const key of fields)value[key]=$(key).type==='checkbox'?$(key).checked:$(key).value;if(value.source?.length>50000)value.source=value.source.slice(0,50000);value.features=FEATURES.filter(x=>$('feature-'+x[0]).checked).map(x=>x[0]);return value;}
+function populate(value){editorRevision++;clearTimeout(toastTimer);$('toast').classList.add('hidden');localResultId=null;$('resultLink').removeAttribute('href');$('resultLink').textContent='Сохраните карточку, чтобы получить ссылку';$('sourceLink').classList.add('hidden');$('localResult').classList.toggle('hidden',!localHosting);wordEditor?.reset();const v={...defaults,...value};isDemo=v.isDemo===true;renderDemoNotice();sourceAudit=v.sourceAudit||null;photoEvidence=Array.isArray(v.photoEvidence)?v.photoEvidence:[];photoFeatureBaseline=v.photoFeatureBaseline&&typeof v.photoFeatureBaseline==='object'?v.photoFeatureBaseline:{};featureCounts=v.featureCounts||{};titleVariant=Number(v.titleVariant)||0;copyVariant=Number(v.copyVariant)||0;photoUrls=photoSources(v.photos);photoEdits=v.photoEdits||{};relatedOffers=Array.isArray(v.relatedOffers)?v.relatedOffers.slice(0,40):[];for(const key of fields){if($(key).type==='checkbox')$(key).checked=!!v[key];else $(key).value=v[key]??'';}for(const [id] of FEATURES){$('feature-'+id).checked=Array.isArray(v.features)&&v.features.includes(id);$('feature-qty-'+id).value=featureCounts[id]||'';}renderSourceAudit();renderPhotos();relatedUI?.render();}
 function counts(){const title=Array.from($('outputTitle').value).length,body=Array.from($('output').value+'\n'+$('tags').value).length;$('titleCount').textContent='Заголовок: '+title+' знаков';$('bodyCount').textContent='Описание и теги: '+body+' знаков';}
 function saveDraft(){write('most-draft',{version:2,id:current,fields:snapshot(),title:$('outputTitle').value,output:$('output').value,tags:$('tags').value,titles:currentTitles});counts();wordEditor?.render();}
 function tab(name){document.querySelectorAll('main>section').forEach(e=>e.classList.toggle('hidden',e.id!==name));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('crumb').textContent=document.querySelector('[data-tab="'+name+'"]').textContent.trim();if(name==='library')renderList();if(name==='rules')renderRules();if(name==='roadmap')loadRoadmap();if(name==='knowledge')insightsUI?.renderKnowledge();if(name==='analytics')insightsUI?.renderAnalytics();if(name==='history')historyUI?.render();}
@@ -61,9 +62,9 @@ $('rotateTitles').onclick=()=>{titleVariant++;const result=generateListing(snaps
 function renderTagReasons(suggestions=[]){$('tagReasons').replaceChildren();for(const item of suggestions){const div=document.createElement('div');div.className='tag-item';div.textContent='#'+item.tag+' — '+item.ru+' · '+item.reason;$('tagReasons').append(div);}}
 function renderTagCatalog(){const q=$('tagSearch').value.trim().toLowerCase();$('tagCatalog').replaceChildren();for(const [tag,ru] of TAG_CATALOG.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q))){const button=document.createElement('button');button.className='btn word-result';button.textContent='#'+tag+' — '+ru;button.onclick=()=>{const tags=new Set($('tags').value.split(/\s+/).filter(Boolean));tags.add('#'+tag);$('tags').value=[...tags].join(' ');saveDraft();};$('tagCatalog').append(button);}}
 $('tagSearch').oninput=renderTagCatalog;
-for(const key of fields)$(key).addEventListener('input',saveDraft);
-for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',()=>{if(photoFeatureBaseline[id])photoFeatureBaseline[id].checked=$('feature-'+id).checked;saveDraft();});
-for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',saveDraft);
+for(const key of fields)$(key).addEventListener('input',()=>{editorRevision++;saveDraft();});
+for(const [id] of FEATURES)$('feature-'+id).addEventListener('change',()=>{editorRevision++;if(photoFeatureBaseline[id])photoFeatureBaseline[id].checked=$('feature-'+id).checked;saveDraft();});
+for(const key of ['outputTitle','output','tags'])$(key).addEventListener('input',()=>{editorRevision++;saveDraft();});
 function extract(){
   if(!$('source').value.trim())return toast('Сначала вставьте текст объявления');
   captureKnowledge('example','Входящий текст объявления',$('source').value);
@@ -137,17 +138,20 @@ $('file').onchange=async()=>{
     write('most-rules-version',2);if(Array.isArray(data.wordCustom))write('most-word-custom',data.wordCustom);if(Array.isArray(data.knowledge))write('most-knowledge',data.knowledge);if(Array.isArray(data.metrics))write('most-metrics',data.metrics);if(data.draft)write('most-draft',data.draft);if(Array.isArray(data.history))await historyUI?.importEntries(data.history);location.reload();
   }catch{toast('Не удалось импортировать файл: проверьте формат резервной копии (до 32 МБ).');}finally{$('file').value='';}
 };
+$('demo').textContent='Загрузить учебный пример';
 $('demo').onclick=()=>{
-  populate({name:'Пример · Прокшино, 52 м²',complex:'Прокшино',area:'52',rooms:'2',floor:'11',floors:'17',price:'85000',deposit:'85000',kitchen:'11',occupants:'4',style:'detailed',layout:'classic',separate:true,metro:'Прокшино',walk:'12',
+  if(localHosting)history.replaceState({},'', '/');
+  populate({isDemo:true,name:'Пример · Прокшино, 52 м²',complex:'Прокшино',area:'52',rooms:'2',floor:'11',floors:'17',price:'85000',deposit:'85000',kitchen:'11',occupants:'4',style:'detailed',layout:'classic',separate:true,metro:'Прокшино',walk:'12',
     transit:'Прокшино | 12 | walk | 1\nФилатов Луг | 19 | walk | 1\nСаларьево | 7 | bus | 1',
     universities:'МГУ | 35–50 | public\nРУДН | 30–45 | public',
     highlight:'52㎡宽敞空间＋独立厨房＋双人学习区',description:'两个独立房间，厨房与居住区域分开。窗边设有学习桌，方便在家学习或远程办公。',
     features:['sofa','desk','fridge','oven','stove','bath'],utilities:'meters',registration:'assist',support:true});
-  current=null;generate();toast('Это демонстрационные данные, включая маршруты. Не реальное предложение.');
+  current=null;generate();toast('Учебный пример загружен.');
 };
-const draft=read('most-draft',null);
-if(draft?.version===2){populate(draft.fields||{});current=draft.id||null;$('outputTitle').value=draft.title||'';$('output').value=draft.output||'';$('tags').value=draft.tags||'';currentTitles=Array.isArray(draft.titles)?draft.titles:[];renderTitles();}
-else populate(draft||{});
+function renderDemoNotice(){const notice=$('demoNotice');notice.classList.toggle('hidden',!isDemo);notice.textContent=isDemo?'Учебный пример: цена, мебель и маршруты заданы для знакомства с редактором. Загрузите ссылку или вставьте своё объявление, чтобы работать с квартирой.':'';}
+const startup=editorStartup({local:localHosting,pathname:location.pathname,draft:read('most-draft',null)});
+populate(startup.fields);
+if(startup.draft){const draft=startup.draft;current=draft.id||null;$('outputTitle').value=draft.title||'';$('output').value=draft.output||'';$('tags').value=draft.tags||'';currentTitles=Array.isArray(draft.titles)?draft.titles:[];renderTitles();}
 wordEditor=setupWordEditor({getRules:()=>rules,getCustom:()=>[...wordCustom,...noteEntries()],saveCustom:value=>{wordCustom=value;write('most-word-custom',wordCustom);},onChange:saveDraft,toast});
 renderTagCatalog();renderTagReasons(generateListing(snapshot(),rules,prefs).tagSuggestions);counts();
 
@@ -172,7 +176,7 @@ async function importLocal(){if(importing)return;importing=true;$('import').disa
 $('cancelImport').onclick=async()=>{if(localJob)try{await localApi('cancel',{job_id:localJob});$('importStatus').textContent='Отмена импорта…';}catch(error){toast(error.message);}};
 async function persistLocal(revision=historyCurrent()){const fields=revision.fields,result={fields,titles:[revision.title,...revision.titles.filter(t=>t!==revision.title)].slice(0,3),body:revision.body,tags:revision.tags,listing:{url:fields.url,text:fields.source,images:fields.photos,related:fields.relatedOffers}};const saved=await localApi('save',{result_id:localResultId,result});showLocalLink(saved.result_id);history.replaceState({},'', '/listing/'+saved.result_id);$('localSaveStatus').textContent='Сохранено '+new Date().toLocaleTimeString('ru-RU');return saved;}
 $('saveLocal').onclick=async()=>{try{const revision=historyCurrent();await persistLocal(revision);const event=await historyUI?.record('save',revision);toast('Сохранено по ссылке'+(event?.snapshot?' · PNG готов':'')+(event?.warning?' · '+event.warning:''));}catch(error){toast(error.message);}};
-if(localHosting){$('localBrowser').value=read('most-local-browser',document.querySelector('meta[name="redcn-browser-channel"]')?.content||'chrome');$('localBrowser').onchange=()=>write('most-local-browser',$('localBrowser').value);$('localControls').classList.remove('hidden');$('localHelp').classList.add('hidden');$('importStatus').textContent='Локальный импорт: Chrome и кеш на 24 часа';$('import').textContent='Загрузить и создать';const match=location.pathname.match(/^\/listing\/([a-f0-9]{32})$/);if(match)localApi('results/'+match[1]).then(result=>{applyGenerated(result);showLocalLink(match[1]);}).catch(error=>toast(error.message));}
+if(localHosting){$('localBrowser').value=read('most-local-browser',document.querySelector('meta[name="redcn-browser-channel"]')?.content||'chrome');$('localBrowser').onchange=()=>write('most-local-browser',$('localBrowser').value);$('localControls').classList.remove('hidden');$('localHelp').classList.add('hidden');$('importStatus').textContent='Локальный импорт: Chrome и кеш на 24 часа';$('import').textContent='Загрузить и создать';if(startup.resultId){const loadRevision=editorRevision;$('importStatus').textContent='Загружаем сохранённую карточку…';localApi('results/'+startup.resultId).then(result=>{if(editorRevision!==loadRevision)return;applyGenerated(result);showLocalLink(startup.resultId);$('importStatus').textContent='Сохранённая карточка загружена.';}).catch(error=>{if(editorRevision===loadRevision){$('importStatus').textContent=error.message;toast(error.message);}});}}
 
 var fieldLabels=Object.fromEntries(fields.map(id=>[id,document.querySelector('label[for="'+id+'"]')?.textContent||id]));
 function renderSourceAudit(){
@@ -204,6 +208,7 @@ $('geoSearch').oninput=renderGeoCatalog;$('geoKind').onchange=renderGeoCatalog;r
 function applyPhotoFeatures(observation){
  const blocked=new Set((sourceAudit?.furniture||[]).filter(row=>['absent','planned','conflict'].includes(row.status)).map(row=>row.id));
  const next=new Set((observation.features||[]).filter(id=>!blocked.has(id))),previous=new Set(photoEvidence.map(row=>row.id));
+ if(!(observation.features||[]).length&&!previous.size)return;
  for(const id of new Set([...previous,...next])){
   const box=$('feature-'+id),input=$('feature-qty-'+id);if(!box||!input)continue;
   if(!Object.hasOwn(photoFeatureBaseline,id))photoFeatureBaseline[id]={checked:box.checked,count:featureCounts[id]??''};

@@ -120,6 +120,53 @@ class BrowserAcceptance(unittest.TestCase):
         self.assertIn('https://images.cdn-cian.ru/images/lazy-room.jpg', snapshot['images'])
         self.assertEqual(self.page.evaluate('scrollY'), 0)
 
+    def test_furniture_photos_follow_scroll_and_real_import_clears_example(self):
+        from PIL import Image
+        self.page.set_viewport_size({'width':1440, 'height':1000})
+        self.page.add_init_script("localStorage.setItem('most-photo-analyze','false');")
+        images = {}
+        for index, color in enumerate(['#e5b585', '#81aab9', '#93af80'], 1):
+            stream = io.BytesIO()
+            Image.new('RGB', (320, 220), color).save(stream, 'PNG')
+            url = f'https://images.cdn-cian.ru/images/furniture-follow-{index}.jpg'
+            images[url] = photo_store.attach_photo(self.storage.name, url, 'data:image/png;base64,' + base64.b64encode(stream.getvalue()).decode())
+        with patch.object(photo_store, 'load_photo', side_effect=lambda directory, url, *args, **kwargs: images[url]):
+            self.page.goto(self.url)
+            self.page.locator('#demo').click()
+            self.assertTrue(self.page.locator('#demoNotice').is_visible())
+            payload = {'fields':{'price':'80000','photos':list(images),'features':[]},'titles':['真实房源'],'body':'真实房源说明','tags':'#莫斯科租房'}
+            self.page.locator('#cliFile').set_input_files({'name':'real-listing.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})
+            self.page.wait_for_function("document.getElementById('photoStatus').textContent.startsWith('3 / 3')")
+            self.assertFalse(self.page.locator('#demoNotice').is_visible())
+            self.assertNotIn('демонстрационные данные', self.page.locator('#toast').inner_text())
+            self.assertEqual(self.page.locator('#output').input_value(), '真实房源说明')
+            self.page.evaluate("window.scrollTo(0,document.getElementById('furnitureSection').getBoundingClientRect().top+scrollY-100)")
+            dock = self.page.locator('#furniturePhotoDock')
+            dock.wait_for(state='visible')
+            self.page.wait_for_function("document.getElementById('furniturePhotoImage').naturalWidth>0")
+            dock_box = dock.bounding_box()
+            furniture_box = self.page.locator('#featureGrid').bounding_box()
+            self.assertGreater(dock_box['x'], furniture_box['x']+furniture_box['width'])
+            self.assertGreaterEqual(dock_box['y'], 0)
+            self.assertLess(dock_box['y'], 150)
+            first_counter = self.page.locator('#furniturePhotoCounter').inner_text()
+            self.page.evaluate('window.scrollBy(0,240)')
+            self.page.wait_for_function("old => document.getElementById('furniturePhotoCounter').textContent!==old", arg=first_counter)
+            self.page.locator('#furniturePhotoAuto').uncheck()
+            before_counter = self.page.locator('#furniturePhotoCounter').inner_text()
+            before_image = self.page.locator('#furniturePhotoImage').get_attribute('src')
+            self.page.locator('#furniturePhotoNext').click()
+            self.assertNotEqual(self.page.locator('#furniturePhotoCounter').inner_text(), before_counter)
+            self.assertNotEqual(self.page.locator('#furniturePhotoImage').get_attribute('src'), before_image)
+            selected_counter = self.page.locator('#furniturePhotoCounter').inner_text()
+            self.page.evaluate('window.scrollBy(0,160)')
+            self.page.wait_for_function("!document.getElementById('furniturePhotoDock').classList.contains('hidden')")
+            self.assertEqual(self.page.locator('#furniturePhotoCounter').inner_text(), selected_counter)
+            self.page.set_viewport_size({'width':900, 'height':1000})
+            self.page.evaluate("window.scrollTo(0,document.getElementById('furnitureSection').getBoundingClientRect().top+scrollY-30)")
+            self.page.wait_for_function('document.documentElement.scrollWidth<=innerWidth+1')
+            self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), 901)
+
 
 if __name__ == '__main__':
     unittest.main()
