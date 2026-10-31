@@ -831,7 +831,7 @@ const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasW
 Object.assign(furniturePatterns,{
  coffeeTable:'журнальн[а-я]*\\s+стол(?:ик[а-я]*|[а-я]*)',dresser:'комод[а-я]*',cabinet:'буфет[а-я]*|тумб[а-я]*',shoeCabinet:'обувниц[а-я]*|шкаф[а-я]*\\s+для\\s+обуви',ottoman:'пуф(?:ик)?[а-я]*|банкетк[а-я]*',bench:'скам(?:ья|ьи|ей|ью|ейк[а-я]*)',mirror:'зеркал[а-я]*',curtains:'штор[а-я]*',dryingRack:'сушилк[а-я]*\\s+для\\s+белья',iron:'утюг[а-я]*',vacuum:'пылесос[а-я]*',coffeeMachine:'кофемашин[а-я]*|кофевар[а-я]*',toaster:'тостер[а-я]*',router:'роутер[а-я]*|маршрутизатор[а-я]*',monitor:'монитор[а-я]*',speakers:'колонк[а-я]*|акустическ[а-я]*\\s+систем[а-я]*',waterHeater:'водонагревател[а-я]*|бойлер[а-я]*',waterFilter:'(?:фильтр[а-я]*|систем[а-я]*\\s+фильтрации)\\s+(?:для\\s+)?вод[а-я]*'
 });
-function detectFurniture(text,features,offer={}){
+function detectFurniture(text,features,offer={},origin='JSON'){
  const raw=String(text||''),t=normalizeRussian(raw),negative=[];
  for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует|не будет|не предусмотрен[а-я]*)\s+/gu)){
   const rest=t.slice(m.index+m[0].length),end=rest.search(/[);\n.!?]|(?:,?\s+)(?:но|зато|есть|имеется)(?![а-я])/u);
@@ -861,7 +861,7 @@ function detectFurniture(text,features,offer={}){
    matches.push({status,text:raw.slice(Math.max(0,m.index-24),m.index+m[0].length+38).trim(),source:'Описание',count:number||words[written],countKind:minimum?'minimum':'exact'});
   }
   if(id==='kitchenFurniture'&&/из мебели\s*:\s*кухня/.test(t))matches.push({status:'present',source:'Описание',text:'Из мебели: кухня…'});
-  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:'JSON '+key,text:key+' = '+offer[key]});
+  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:origin+' '+key,text:key+' = '+offer[key]});
   const states=new Set(matches.map(m=>m.status));let status=states.has('absent')&&states.has('present')?'conflict':states.has('present')?'present':states.has('planned')?'planned':states.has('absent')?'absent':'unknown';
   const counted=matches.find(m=>m.count&&m.status==='present');
   return {id,label,status,matches,count:counted?.count||'',countKind:counted?.countKind||'exact'};
@@ -1453,15 +1453,15 @@ function analyzeListingSource(input,rules=DICTIONARY){
   const conditionText=(source.description||'')+'\n'+(source.records||[]).filter(r=>['OfferFactItem','FeaturesItem'].includes(r.name)).map(r=>r.text).join('\n');
   const conditions=detectConditions(conditionText);
   for(const [key,flag,policy] of [['petsAllowed','pets','petPolicy'],['childrenAllowed','children','childrenPolicy']]){
-    const permission=source.offer?.bargainTerms?.[key];
+    const permission=(source.permissions||source.offer?.bargainTerms||{})[key];
     if(typeof permission!=='boolean')continue;
     const contradictory=conditions.facts[policy]==='no'&&permission===true||conditions.facts[policy]==='yes'&&permission===false;
     conditions.facts[policy]=contradictory?'conflict':permission?'yes':'no';
     conditions.facts[flag]=permission&&!contradictory;
-    conditions.evidence.push({field:flag,value:conditions.facts[flag],source:'JSON bargainTerms.'+key,text:key+' = '+permission});
+    conditions.evidence.push({field:flag,value:conditions.facts[flag],source:source.permissions?'Параметры '+source.platform:'JSON bargainTerms.'+key,text:key+' = '+permission});
     if(contradictory)conditions.warnings.push('Противоречие разрешения: '+key+'. Положительная формулировка исключена из описания.');
   }
-  const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.offer||{});
+  const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.equipment||source.offer||{},source.equipment?'Параметры '+source.platform:'JSON');
   const facts={...simple.facts,...structured.facts,...conditions.facts,source:source.text||source.description||'',sourceDescription:source.description||'',features:furniture.filter(r=>r.status==='present').map(r=>r.id),featureCounts:Object.fromEntries(furniture.filter(r=>r.count).map(r=>[r.id,r.count])),photos:source.images||[],relatedOffers:source.related||[]};
   // Recommendations and page navigation may mention another university.
   // Prefer the apartment's own description when that section was identified.

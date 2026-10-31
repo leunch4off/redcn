@@ -9,7 +9,7 @@ const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasW
 Object.assign(furniturePatterns,{
  coffeeTable:'журнальн[а-я]*\\s+стол(?:ик[а-я]*|[а-я]*)',dresser:'комод[а-я]*',cabinet:'буфет[а-я]*|тумб[а-я]*',shoeCabinet:'обувниц[а-я]*|шкаф[а-я]*\\s+для\\s+обуви',ottoman:'пуф(?:ик)?[а-я]*|банкетк[а-я]*',bench:'скам(?:ья|ьи|ей|ью|ейк[а-я]*)',mirror:'зеркал[а-я]*',curtains:'штор[а-я]*',dryingRack:'сушилк[а-я]*\\s+для\\s+белья',iron:'утюг[а-я]*',vacuum:'пылесос[а-я]*',coffeeMachine:'кофемашин[а-я]*|кофевар[а-я]*',toaster:'тостер[а-я]*',router:'роутер[а-я]*|маршрутизатор[а-я]*',monitor:'монитор[а-я]*',speakers:'колонк[а-я]*|акустическ[а-я]*\\s+систем[а-я]*',waterHeater:'водонагревател[а-я]*|бойлер[а-я]*',waterFilter:'(?:фильтр[а-я]*|систем[а-я]*\\s+фильтрации)\\s+(?:для\\s+)?вод[а-я]*'
 });
-export function detectFurniture(text,features,offer={}){
+export function detectFurniture(text,features,offer={},origin='JSON'){
  const raw=String(text||''),t=normalizeRussian(raw),negative=[];
  for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует|не будет|не предусмотрен[а-я]*)\s+/gu)){
   const rest=t.slice(m.index+m[0].length),end=rest.search(/[);\n.!?]|(?:,?\s+)(?:но|зато|есть|имеется)(?![а-я])/u);
@@ -39,7 +39,7 @@ export function detectFurniture(text,features,offer={}){
    matches.push({status,text:raw.slice(Math.max(0,m.index-24),m.index+m[0].length+38).trim(),source:'Описание',count:number||words[written],countKind:minimum?'minimum':'exact'});
   }
   if(id==='kitchenFurniture'&&/из мебели\s*:\s*кухня/.test(t))matches.push({status:'present',source:'Описание',text:'Из мебели: кухня…'});
-  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:'JSON '+key,text:key+' = '+offer[key]});
+  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:origin+' '+key,text:key+' = '+offer[key]});
   const states=new Set(matches.map(m=>m.status));let status=states.has('absent')&&states.has('present')?'conflict':states.has('present')?'present':states.has('planned')?'planned':states.has('absent')?'absent':'unknown';
   const counted=matches.find(m=>m.count&&m.status==='present');
   return {id,label,status,matches,count:counted?.count||'',countKind:counted?.countKind||'exact'};

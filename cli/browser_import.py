@@ -7,37 +7,10 @@ from job_progress import emit
 
 _browser_lock = threading.Lock()
 
-# Read rendered listing blocks first. Remove recommendation cards from the fallback.
-SNAPSHOT = r'''() => {
-  const body = document.body?.innerText || '';
-  const selectors = '[data-name="OfferSummaryInfoItem"], [data-name="ObjectFactoidsItem"], [data-name="OfferFactItem"], [data-name="FeaturesItem"], [data-name="OfferSummaryInfoGroup"], [data-name="OfferTitleNew"], [data-name="OfferTitle"], [data-name="OfferDescription"], [data-name="Description"], [data-name="PriceInfo"], [data-name="GeneralInfoSection"], [data-name="Geo"], [data-name="Underground"], [data-marker="item-view/item-params"], [data-marker="item-view/item-description"], [data-marker="item-view/item-price"], h1';
-  const unrelated = '[data-name*="Similar"],[data-name*="Recommend"],[data-marker*="recommend"],[data-marker*="similar"]';
-  const fields = [...document.querySelectorAll(selectors)].filter(e=>!e.closest(unrelated));
-  const blocks = fields.map(e=>e.innerText?.trim()).filter(Boolean);
-  const sourceRoot = document.querySelector('main') || document.body;
-  const root = sourceRoot ? sourceRoot.cloneNode(true) : document.createElement('div');
-  root.querySelectorAll('script,style,nav,header,footer,[data-name*="Similar"],[data-name*="Recommendation"],[data-marker*="recommend"],[data-marker*="similar"]').forEach(e=>e.remove());
-  root.querySelectorAll('p,div,li,section,br,dt,dd').forEach(e=>e.append('\n'));
-  // Only the apartment gallery is used: recommendation thumbnails are unrelated
-  // apartments. Lazy attributes and srcset often contain the full-size image.
-  const gallery = [...document.querySelectorAll('[data-name="OfferGallery"], [data-name="Gallery"], [data-marker*="gallery"]')].filter(e=>!e.closest(unrelated));
-  const images = [];
-  const add = s => {if(s && !/^(?:data|blob|javascript):/i.test(s)) images.push(s);};
-  for(const box of gallery)for(const e of box.querySelectorAll('img,source,a[href]')){
-    add(e.getAttribute('data-original'));add(e.getAttribute('data-src'));
-    for(const a of ['data-srcset','srcset'])for(const part of (e.getAttribute(a)||'').split(','))add(part.trim().split(/\s+/)[0]);
-    if(e.tagName==='A'){
-      const href=e.getAttribute('href')||'';if(/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(href))add(href);
-    }else{add(e.currentSrc);add(e.getAttribute('src'));}
-  }
-  for(const e of document.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]'))add(e.content);
-  return {title: document.title, body: body.slice(0,12000),
-    text: [...new Set(blocks)].join('\n'), fallback: (root.innerText || root.textContent || '').slice(0,40000),
-    sourceHtml: fields.map(e=>e.outerHTML).join('\n').slice(0,1500000),
-    metadata: [...document.querySelectorAll('script[type="application/ld+json"],script:not([src]),meta[property="og:image"],meta[property="og:description"],meta[property="og:title"]')].filter(e=>e.tagName!=='SCRIPT'||e.type==='application/ld+json'||e.textContent.includes("_cianConfig['frontend-offer-card']")).map(e=>e.outerHTML).join('\n'),
-    relatedHtml: [...document.querySelectorAll('[data-name*="Similar"], [data-name*="Recommend"], [data-marker*="similar"], [data-marker*="recommend"]')].map(e=>e.outerHTML).join('\n').slice(0,1500000),
-    images: [...new Set(images)].slice(0,120)};
-}'''
+from browser_dom import source_scripts
+from source_adapters import adapter_for
+
+SNAPSHOT, SECTION_PROBE = source_scripts(adapter_for('https://www.cian.ru/'))
 
 # A bounded scroll triggers ordinary lazy loading without opening galleries,
 # clicking consent/verification controls or running any source-supplied code.
@@ -54,37 +27,6 @@ SCROLL_TOP = '() => window.scrollTo(0, 0)'
 # Inspect only known listing blocks. No gallery clicks, consent clicks or
 # recommendation cards are involved. Scrolling to the block triggers ordinary
 # IntersectionObserver/image lazy loading; readiness is checked immediately.
-SECTION_PROBE = r'''({section,scroll=false,index=0}) => {
-  const groups = {
-    gallery:['[data-name="OfferGallery"]','[data-name="Gallery"]','[data-marker*="gallery"]'],
-    description:['[data-name="OfferDescription"]','[data-name="Description"]','[data-marker="item-view/item-description"]'],
-    characteristics:['[data-name="GeneralInfoSection"]','[data-name="FeaturesItem"]','[data-name="OfferSummaryInfoGroup"]','[data-marker="item-view/item-params"]','[data-name="OfferFactItem"]','[data-name="ObjectFactoidsItem"]']
-  };
-  const unrelated='[data-name*="Similar"],[data-name*="Recommend"],[data-marker*="recommend"],[data-marker*="similar"]';
-  const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
-  const find=kind=>{
-    const nodes=[...document.querySelectorAll(groups[kind].join(','))].filter(e=>visible(e)&&!e.closest(unrelated));
-    // A gallery wrapper already includes its nested carousel. Empty detail
-    // children remain in the readiness check: a loaded heading must not hide
-    // furniture rows which are still waiting for their own viewport trigger.
-    return kind==='gallery'?nodes.filter(e=>!nodes.some(other=>other!==e&&other.contains(e))):nodes;
-  };
-  const nodes=find(section),target=nodes[index];
-  if(scroll&&target)target.scrollIntoView({block:section==='gallery'?'start':'center',inline:'nearest',behavior:'instant'});
-  const value=target?.innerText?.trim()||'';
-  const imgs=target?[...target.querySelectorAll('img')]:[];
-  const inView=imgs.filter(e=>{const box=e.getBoundingClientRect();return visible(e)&&box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth;});
-  const loaded=inView.filter(e=>e.complete&&e.naturalWidth>0).length;
-  const candidates=new Set(imgs.flatMap(e=>[e.currentSrc,e.getAttribute('src'),e.getAttribute('data-original'),e.getAttribute('data-src')]).filter(s=>s&&!/^(?:data|blob|javascript):/i.test(s))).size;
-  const textReady=e=>{const text=e.innerText?.trim()||'';return !!text&&!/^(?:загружаем|загрузка|loading)[.\s…]*$/i.test(text);};
-  const targetReady=section==='gallery'?loaded>0&&loaded===inView.length:!!target&&textReady(target);
-  const nextPendingIndex=section==='gallery'?-1:nodes.findIndex(e=>!textReady(e));
-  const ready=section==='gallery'?targetReady:nodes.length>0&&nextPendingIndex<0;
-  return {found:!!target,ready:!!target&&ready,targetReady,nextPendingIndex,index,
-    recognized:Object.keys(groups).some(kind=>find(kind).length),
-    blocks:nodes.length,visibleImages:inView.length,loadedVisibleImages:loaded,
-    pendingVisibleImages:inView.length-loaded,imageCandidates:candidates,textLength:value.length};
-}'''
 SECTION_FRAME = '''() => new Promise(resolve => {
   let done=false;
   const finish=()=>{if(!done){done=true;resolve();}};
@@ -94,7 +36,8 @@ SECTION_FRAME = '''() => new Promise(resolve => {
 
 
 def capture_sections(page, initial, deadline, validate_url, status=None, cancel=None,
-                     budget=6, section_wait=1.5, poll_ms=80):
+                     budget=6, section_wait=1.5, poll_ms=80,
+                     snapshot_script=SNAPSHOT, section_probe=SECTION_PROBE):
     """Visit gallery → description → characteristics without a fixed ready wait.
 
     A section is ready as soon as its actual content is present. A decoded image
@@ -127,7 +70,7 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                 if page.is_closed():
                     raise ValueError('Окно Chrome закрыто до завершения импорта')
                 validate_url(page.url, resolve=False)
-                state = page.evaluate(SECTION_PROBE, {'section':section, 'scroll':not moved, 'index':target_index})
+                state = page.evaluate(section_probe, {'section':section, 'scroll':not moved, 'index':target_index})
                 reads += 1
                 if state.get('found') and not moved:
                     moved = True
@@ -137,8 +80,8 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                         # The 80ms fallback also works in background/minimized tabs
                         # where animation frames may be suspended by Chrome.
                         page.evaluate(SECTION_FRAME)
-                        state = page.evaluate(SECTION_PROBE, {'section':section, 'index':target_index})
-                current = usable_snapshot(page.evaluate(SNAPSHOT))
+                        state = page.evaluate(section_probe, {'section':section, 'index':target_index})
+                current = usable_snapshot(page.evaluate(snapshot_script))
                 ready, challenge, unavailable = listing_ready(current)
                 if challenge:
                     challenged_at = time.monotonic()
@@ -151,7 +94,7 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                             raise ValueError('Окно Chrome закрыто до завершения импорта')
                         validate_url(page.url, resolve=False)
                         page.wait_for_timeout(min(500, max(1, int((deadline-time.monotonic())*1000))))
-                        current = usable_snapshot(page.evaluate(SNAPSHOT))
+                        current = usable_snapshot(page.evaluate(snapshot_script))
                         ready, challenge, unavailable = listing_ready(current)
                     if challenge:
                         raise ValueError('Время ручной проверки Chrome истекло. Повторите импорт.')
@@ -209,7 +152,7 @@ def usable_snapshot(snapshot):
 
 
 def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=None,
-                     max_scrolls=24, budget=12, stage_budget=None):
+                     max_scrolls=24, budget=12, stage_budget=None, snapshot_script=SNAPSHOT):
     """Capture a single owned tab while lazy content appears; stop on a stable bottom.
 
     The import's original deadline always wins. Images are accumulated because
@@ -234,7 +177,7 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
             position = page.evaluate(SCROLL)
             scrolls += 1
             page.wait_for_timeout(min(350, max(1, int((end-time.monotonic())*1000))))
-            current = usable_snapshot(page.evaluate(SNAPSHOT))
+            current = usable_snapshot(page.evaluate(snapshot_script))
             ready, challenge, unavailable = listing_ready(current)
             if challenge:
                 emit(report,'Источник запросил проверку при прокрутке. Пройдите её вручную; Chrome остаётся открыт.',stage='challenge',awaitingUser=True)
@@ -247,7 +190,7 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
                         raise ValueError('Окно Chrome закрыто до завершения импорта')
                     validate_url(page.url, resolve=False)
                     page.wait_for_timeout(500)
-                    current = usable_snapshot(page.evaluate(SNAPSHOT))
+                    current = usable_snapshot(page.evaluate(snapshot_script))
                     ready, challenge, unavailable = listing_ready(current)
                 if challenge:
                     raise ValueError('Время ручной проверки Chrome истекло. Повторите импорт.')
@@ -291,6 +234,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
         from playwright.sync_api import sync_playwright, Error, TimeoutError as BrowserTimeout
     except ImportError as error:
         raise ValueError('Для Chrome установите: python3 -m venv .venv && .venv/bin/python -m pip install -r cli/requirements-browser.txt\nЗатем: .venv/bin/python cli/redcn.py --browser --open') from error
+    snapshot_script, section_probe = source_scripts(adapter_for(url))
     report = status
     if channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     if scroll_strategy not in ('sections','page'): raise ValueError('Прокрутка Chrome: sections или page')
@@ -342,7 +286,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         raise ValueError('Chrome не смог подключиться к источнику. Проверьте доступность ссылки в обычном браузере либо используйте --input. Настройки сертификатов не изменяются.')
                     validate_url(current_url, resolve=False)
                     try:
-                        snapshot = page.evaluate(SNAPSHOT)
+                        snapshot = page.evaluate(snapshot_script)
                     except Error as error:
                         message = str(error).lower()
                         if 'execution context was destroyed' in message or 'cannot find context' in message:
@@ -366,11 +310,12 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         emit(report,'Проверка браузера завершена. Продолжаем чтение блоков квартиры…',stage='navigate',awaitingUser=False)
                         challenge_reported=False
                     if not challenge and scroll_strategy=='sections' and not section_attempted:
-                        section_state = page.evaluate(SECTION_PROBE, {'section':'gallery'})
+                        section_state = page.evaluate(section_probe, {'section':'gallery'})
                         if section_state.get('recognized'):
                             section_attempted = True
                             snapshot, section_capture = capture_sections(page, snapshot, deadline,
-                                validate_url, status=report, cancel=cancel)
+                                validate_url, status=report, cancel=cancel,
+                                snapshot_script=snapshot_script, section_probe=section_probe)
                             ready, challenge, unavailable = listing_ready(snapshot)
                     current = snapshot['text'] or snapshot['fallback']
                     stable = stable + 1 if ready and current == last else 0
@@ -396,7 +341,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                             remaining = max(1, 12-(section_capture or {}).get('activeSeconds', 0))
                             emit(report, 'Некоторые блоки не распознаны или ещё загружаются. Проверяем страницу ограниченной прокруткой.', stage='scroll')
                             snapshot, capture = capture_scrolled(page, snapshot, deadline, validate_url,
-                                status=report, cancel=cancel, budget=remaining, stage_budget=12)
+                                status=report, cancel=cancel, budget=remaining, stage_budget=12, snapshot_script=snapshot_script)
                             capture['strategy'] = scroll_strategy
                             if section_capture:
                                 capture['sections'] = section_capture['sections']

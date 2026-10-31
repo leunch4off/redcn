@@ -145,12 +145,12 @@ class ListingHTML(HTMLParser):
 
 def parse_html(markup, base_url):
     if len(markup.encode('utf-8')) > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
-    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card', markup):
+    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card|data-marker=["\x27]item-view/(?:title-info|main-gallery|item-params|item-description|item-price)', markup):
         from node_runtime import resolve_node, NodeRuntimeError
         try: node = resolve_node()
         except NodeRuntimeError: node = None
         if node:
-            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs')],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
+            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs'),base_url],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
             if parsed.returncode: raise ValueError('Ошибка разбора HTML: '+parsed.stderr[:300])
             result = json.loads(parsed.stdout)
             if result.get('text'):
@@ -214,8 +214,13 @@ def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=
     url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
     if row and not refresh and time.time() - row[0] < 86400:
-        emit(status,'Берём уже прочитанное объявление из кеша Mac; Chrome не требуется.',stage='extract')
-        return {**json.loads(row[1]), 'cached': True}
+        from source_adapters import adapter_for
+        cached = json.loads(row[1])
+        version = adapter_for(url).get('parserVersion')
+        if not version or cached.get('parserVersion') == version:
+            emit(status,'Берём уже прочитанное объявление из кеша Mac; Chrome не требуется.',stage='extract')
+            return {**cached, 'cached': True}
+        emit(status,'Правила разбора источника обновились. Перечитаем страницу вместо старого неполного кеша.',stage='extract')
     result = None
     if loader != 'chrome':
         try:

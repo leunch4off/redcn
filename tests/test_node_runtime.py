@@ -113,7 +113,7 @@ class GeneratorRuntimeTests(unittest.TestCase):
                 patch.object(redcn.subprocess,'run',return_value=completed) as run:
             result=redcn.parse_html('<div data-name="Description">Квартира</div>','https://cian.ru/1')
         self.assertEqual(result['text'],'Квартира 52 м²')
-        self.assertEqual(run.call_args.args[0],['/absolute/node',str(redcn.ROOT/'cli/analyze-source.mjs')])
+        self.assertEqual(run.call_args.args[0],['/absolute/node',str(redcn.ROOT/'cli/analyze-source.mjs'),'https://cian.ru/1'])
 
 
 if __name__ == '__main__':unittest.main()

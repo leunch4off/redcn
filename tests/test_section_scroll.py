@@ -276,7 +276,7 @@ class SectionBrowserAcceptance(unittest.TestCase):
             return {'images':[]}
         started=time.monotonic()
         try:
-            with tempfile.TemporaryDirectory() as folder,patch.object(api,'sync_playwright') as mocked:
+            with tempfile.TemporaryDirectory() as folder,patch.object(api,'sync_playwright') as mocked,patch.object(browser_import,'adapter_for',return_value=browser_import.adapter_for(URL)):
                 mocked.return_value.__enter__.return_value=playwright
                 result=browser_import.load_browser(origin+'/',Path(folder),parse,
                     lambda url,**_kwargs:url,timeout=10)

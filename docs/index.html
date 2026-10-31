@@ -2491,13 +2491,36 @@ function setupRelated({getCurrent,getObjects,getSource,onOpen,onAdd,toast}){
  return {render};
 }
 
+// Inert, bounded HTML utilities. Never evaluate page scripts or hydration state.
+function listingDecode(value){return String(value||'').replace(/&(#x[\da-f]+|#\d+|nbsp|amp|quot|apos|lt|gt);/gi,(_,key)=>{if(key[0]==='#'){const n=parseInt(key.slice(key[1].toLowerCase()==='x'?2:1),key[1].toLowerCase()==='x'?16:10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):'';}return {nbsp:' ',amp:'&',quot:'"',apos:"'",lt:'<',gt:'>'}[key.toLowerCase()];});}
+const listingClean=value=>listingDecode(value).replace(/[ \t\r\f\u00a0]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{2,}/g,'\n').trim();
+const listingExcluded=node=>/similar|recommend|seller-info|item-view-contacts|messenger/i.test((node.attrs['data-marker']||'')+' '+(node.attrs['data-name']||''))||['nav','header','footer','form','ymaps'].includes(node.tag);
+function listingDescendants(node){const out=[],todo=[...node.children].reverse();while(todo.length){const n=todo.pop();if(typeof n==='string'||listingExcluded(n))continue;out.push(n);todo.push(...n.children.slice().reverse());}return out;}
+function listingText(node){const parts=[],todo=[node];let length=0;while(todo.length&&length<50000){const n=todo.pop();if(typeof n==='string'){parts.push(n);length+=n.length;continue;}if(listingExcluded(n)||n.tag==='button')continue;if(/^(div|p|li|h[1-6]|dt|dd|br)$/.test(n.tag))parts.push('\n');todo.push(...n.children.slice().reverse());}return listingClean(parts.join(''));}
+function listingDocument(input){
+ if(typeof input!=='string'||input.length>8_000_000)throw Error('HTML должен быть текстом размером до 8 МБ');
+ const html=input.replace(/<!--[\s\S]*?-->/g,'').replace(/<(script|style|noscript|template)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,'');
+ const root={tag:'root',attrs:{},children:[]},stack=[root],nodes=[];
+ const empty=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+ for(const token of html.matchAll(/<(?:[^"'<>]|"[^"]*"|'[^']*')*>|[^<]+/g)){
+  const value=token[0];if(value[0]!=='<'){stack[stack.length-1].children.push(value);continue;}
+  const end=value.match(/^<\/([\w:-]+)/);if(end){let index=stack.length-1;while(index>0&&stack[index].tag!==end[1].toLowerCase())index--;if(index>0)stack.length=index;continue;}
+  const start=value.match(/^<([\w:-]+)/);if(!start)continue;
+  const attrs={};for(const a of value.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=listingDecode(a[2]??a[3]??a[4]);
+  const parent=stack[stack.length-1],node={tag:start[1].toLowerCase(),attrs,children:[],parent};parent.children.push(node);nodes.push(node);
+  if(nodes.length>100000)throw Error('Слишком много элементов HTML');
+  if(!empty.has(node.tag)&&!value.endsWith('/>'))stack.push(node);
+ }
+ return {root,nodes:nodes.filter(n=>{for(let p=n;p;p=p.parent)if(listingExcluded(p))return false;return true;})};
+}
+
 // Only data-name / id / data-marker and literal JSON data are read. No page code runs.
 const SOURCE_NAMES=new Set(['Description','OfferDescription','OfferTitleNew','OfferTitle','ObjectFactoidsItem','OfferSummaryInfoItem','FeaturesItem','FeaturesLayout','PriceInfo','OfferFactItem','AddressItem','AddressContainer','UndergroundItem','HomeownerInfo','HomeownerLayout','NoFeeLabelContainer']);
 const sourceDecode=s=>String(s||'').replace(/&(#x[\da-f]+|#\d+|nbsp|amp|quot|apos|lt|gt);/gi,(_,key)=>{if(key[0]==='#'){const n=key[1].toLowerCase()==='x'?parseInt(key.slice(2),16):parseInt(key.slice(1),10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):'';}return ({nbsp:' ',amp:'&',quot:'"',apos:"'",lt:'<',gt:'>'})[key.toLowerCase()];});
 const sourceClean=s=>sourceDecode(s).replace(/[ \t\r\f\u00a0]+/g,' ').replace(/\n\s*\n/g,'\n').trim();
 const sourceVoid=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
 
-function readSourceHtml(input) {
+function readCianHtml(input) {
   if(typeof input!=='string'||input.length>8_000_000)throw Error('HTML должен быть текстом размером до 8 МБ');
   const at=input.search(/<!doctype\s+html|<html\b/i),html=at>=0?input.slice(at):input;
   const records=[],ld=[],offers=[],images=[],stack=[],seen=new Set();let title='';
@@ -2518,7 +2541,6 @@ function readSourceHtml(input) {
     const start=value.match(/^<([\w:-]+)/);if(!start)continue;const tag=start[1].toLowerCase(),attrs={};
     for(const a of value.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=sourceDecode(a[2]??a[3]??a[4]);
     let name=attrs['data-name']||'';if(attrs.id==='description')name='Description';if(tag==='title')name='title';if(tag==='h1'&&!name)name='OfferTitle';
-    if(attrs['data-marker']?.includes('item-description'))name='Description';if(attrs['data-marker']?.includes('item-price'))name='PriceInfo';if(attrs['data-marker']?.includes('item-params'))name='OfferSummaryInfoItem';
     const excluded=stack.some(n=>n.excluded)||/similar|recommend/i.test((attrs['data-name']||'')+' '+(attrs['data-marker']||''));
     if(tag==='a'&&attrs.href&&!excluded)for(const node of stack)if(node.name==='UndergroundItem'&&!node.href)node.href=attrs.href;
     if(tag==='meta'&&/^(og:image|twitter:image)$/i.test(attrs.property||attrs.name||''))images.push(attrs.content);
@@ -2538,10 +2560,10 @@ function readSourceHtml(input) {
   const url=ld.find(x=>typeof x?.offers?.url==='string')?.offers.url||(offer?.cianId?'https://www.cian.ru/rent/flat/'+offer.cianId+'/':'');
   // Keep a strict allowlist: no phones, account IDs, tokens, tracking or site config.
   const selected={};if(offer)for(const key of ['cianId','description','geo','isByHomeowner','totalArea','livingArea','kitchenArea','roomsCount','floorNumber','building','loggiasCount','balconiesCount','windowsViewType','separateWcsCount','combinedWcsCount','repairType','bargainTerms','hasFridge','hasDishwasher','hasWasher','hasFurniture','hasKitchenFurniture','hasConditioner','hasTv','hasInternet','hasBathtub','hasShower','hasLift'])if(offer[key]!==undefined)selected[key]=offer[key];
-  return {version:1,title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
+  return {version:1,platform:'cian',title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
 }
 
-function sourceFieldFacts(source) {
+function cianFieldFacts(source) {
   const facts={},evidence=[],warnings=[],o=source.offer||{},records=source.records||[];
   const set=(field,value,where,raw)=>{if(value===undefined||value===null||value==='')return;facts[field]=typeof value==='number'?String(value):value;evidence.push({field,value:facts[field],source:where,text:String(raw??value).slice(0,700)});};
   for(const [field,key] of Object.entries({area:'totalArea',living:'livingArea',kitchen:'kitchenArea',rooms:'roomsCount',floor:'floorNumber',balconies:'balconiesCount',loggias:'loggiasCount',combinedWcs:'combinedWcsCount',separateWcs:'separateWcsCount'}))if(o[key]!==undefined)set(field,String(Number(o[key])),'JSON offer.'+key,o[key]);
@@ -2567,6 +2589,128 @@ function sourceFieldFacts(source) {
   return {facts,evidence,warnings};
 }
 
+
+// Avito-specific selectors/labels stay here; generated CSS names are never used.
+const AVITO_GROUPS={'О квартире':'apartment','Условия аренды':'rental','Правила':'rules','О доме':'building','Расположение':'location','Особенности':'highlights','Описание':'description'};
+const avitoMark=node=>node.attrs['data-marker']||'';
+const avitoHeading=node=>listingDescendants(node).find(n=>/^h[1-3]$/.test(n.tag));
+const avitoNumber=text=>String(text||'').match(/\d[\d \u00a0]*(?:[.,]\d+)?/)?.[0]?.replace(/[ \u00a0]/g,'').replace(',','.');
+function avitoUrl(value){try{const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password||u.port||!/(^|\.)avito\.ru$/i.test(u.hostname))return '';u.search='';u.hash='';return u.href;}catch{return '';}}
+
+function readAvitoHtml(input,{url=''}={}){
+ const {nodes}=listingDocument(input),records=[],groups=[],images=[],seen=new Set();
+ const add=(name,text,extra={})=>{text=listingClean(text);const key=name+'|'+text;if(text&&!seen.has(key)){seen.add(key);records.push({name,text,href:'',...extra});}};
+ const marker=(name)=>nodes.filter(n=>avitoMark(n)===name);
+ const title=listingText(marker('item-view/title-info')[0]||nodes.find(n=>n.tag==='h1')||{tag:'div',attrs:{},children:[]});
+ add('OfferTitle',title);
+ const priceNodes=marker('item-view/item-price');
+ for(const n of priceNodes.length?priceNodes:marker('item-view/item-price-container'))add('PriceInfo',listingText(n),{section:'price'});
+ if(!records.some(r=>r.name==='PriceInfo'))for(const n of nodes.filter(n=>n.attrs.id==='item-price'||n.attrs.itemprop==='price'))add('PriceInfo',n.attrs.content||listingText(n),{section:'price'});
+ for(const n of marker('item-view/item-description'))add('Description',listingText(n),{section:'description'});
+ const groupNodes=new Set(marker('item-view/item-params'));
+ for(const n of nodes.filter(n=>/^h[1-3]$/.test(n.tag))){if(AVITO_GROUPS[listingText(n)]&&n.parent)groupNodes.add(n.parent);}
+ for(const node of groupNodes){
+  const heading=avitoHeading(node),label=heading?listingText(heading):'',section=AVITO_GROUPS[label]||'parameters';
+  const descendants=listingDescendants(node);
+  // Header containers can be larger than a semantic section. Never capture a
+  // whole page or a parent with multiple different section headings.
+  if(descendants.filter(n=>/^h[1-3]$/.test(n.tag)&&AVITO_GROUPS[listingText(n)]).length>1)continue;
+  const text=listingText(node);if(!text)continue;
+  const signature=section+'|'+text;if(groups.some(g=>g.signature===signature))continue;
+  const rows=descendants.filter(n=>n.tag==='li'||/^item-view\/item-params\//.test(avitoMark(n))).map(listingText).filter(Boolean);
+  groups.push({section,label,text,rows,signature});
+  if(section==='description')add('Description',text.replace(/^Описание\s*/,''),{section});
+  else if(section==='location'){
+   const withoutMap=node.children.filter(n=>typeof n!=='string'&&n!==heading&&avitoMark(n)!=='item-map-wrapper');
+   const locationNodes=withoutMap.flatMap(n=>[n,...listingDescendants(n)]);
+   // The shortest explicit text ending in minutes is one transit entry.
+   const routes=locationNodes.filter(n=>/\d+\s*(?:[–—-]\s*\d+)?\s*мин\.?$/.test(listingText(n))&&!listingDescendants(n).some(child=>/\d+\s*(?:[–—-]\s*\d+)?\s*мин\.?$/.test(listingText(child))&&/[а-я]/i.test(listingText(child).replace(/мин\.?$/,''))));
+   for(const route of routes){const raw=listingText(route).replace(/\n/g,' '),m=raw.match(/^(.*?)\s*(\d+(?:\s*[–—-]\s*\d+)?)\s*мин\.?$/);if(!m||!m[1].trim())continue;
+    const icons=[route,...listingDescendants(route)],walking=icons.some(n=>n.attrs['data-icon-name']==='walkingroute'||/пешком|walking/i.test(n.attrs['aria-label']||''));
+    add('UndergroundItem',m[1].trim()+' '+m[2].replace(/\s/g,'')+' мин.',{section,mode:walking?'walk':'unknown'});
+   }
+   const address=locationNodes.find(n=>n.attrs.itemprop==='address')||locationNodes.find(n=>n.tag==='span'&&/^(?:Москва|Московская обл)/i.test(listingText(n))&&!listingDescendants(n).length);
+   if(address)add('AddressItem',listingText(address),{section});
+   add('Location',withoutMap.map(listingText).join('\n'),{section});
+  }else if(section==='highlights')add('Highlights',text,{section});
+  else for(const row of rows.length?rows:[text])add(section==='rules'?'Rules':section==='apartment'&&/^(?:Мебель|Техника|Интернет и ТВ)\s*:/.test(row)?'FeaturesItem':'OfferSummaryInfoItem',row,{section});
+ }
+ for(const n of marker('item-map-wrapper')){
+  const lat=Number(n.attrs['data-map-lat']),lon=Number(n.attrs['data-map-lon']);
+  if(n.attrs['data-map-lat']&&n.attrs['data-map-lon']&&Number.isFinite(lat)&&Math.abs(lat)<=90&&Number.isFinite(lon)&&Math.abs(lon)<=180)add('Coordinates',lat+'|'+lon,{section:'location'});
+ }
+ for(const gallery of marker('item-view/main-gallery'))for(const n of listingDescendants(gallery)){
+  if(!['img','source','a'].includes(n.tag))continue;
+  for(const key of ['data-original','data-src'])if(n.attrs[key])images.push(n.attrs[key]);
+  for(const key of ['data-srcset','srcset'])for(const part of (n.attrs[key]||'').split(','))if(part.trim())images.push(part.trim().split(/\s+/)[0]);
+  if(n.tag!=='a'&&n.attrs.src)images.push(n.attrs.src);
+  if(n.tag==='a'&&/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(n.attrs.href||''))images.push(n.attrs.href);
+ }
+ // OG/share images may be composites or recommendation content. Use only the
+ // primary gallery; an empty gallery is reported rather than filled with avatars.
+ const canonical=nodes.find(n=>n.tag==='link'&&(n.attrs.rel||'').toLowerCase()==='canonical');
+ const sourceUrl=avitoUrl(url)||avitoUrl(canonical?.attrs.href||'');
+ const description=records.find(r=>r.name==='Description')?.text||'';
+ if(description&&!groups.some(g=>g.section==='description'))groups.push({section:'description',label:'Описание',text:description,rows:[]});
+ const selected=records.filter(r=>!['Coordinates'].includes(r.name));
+ const safeGroups=groups.map(({signature,...g})=>g);
+ const source={version:1,platform:'avito',title,description,url:sourceUrl,text:listingClean(selected.map(r=>r.text).join('\n')).slice(0,50000),images:photoSources(images,sourceUrl),related:[],records,offer:null,sections:safeGroups,stats:{records:records.length,jsonStates:0,duplicateDocuments:(input.match(/<!doctype\s+html/gi)||[]).length,adapter:'avito-v1'}};
+ const extracted=avitoFieldFacts(source);source.permissions=extracted.permissions;source.equipment=extracted.equipment;
+ return source;
+}
+
+function avitoFieldFacts(source){
+ const facts={},evidence=[],warnings=[],permissions={},equipment={},records=source.records||[];
+ const put=(field,value,row)=>{if(value===undefined||value===null||value==='')return;if(facts[field]!==undefined&&String(facts[field])!==String(value)){warnings.push('Авито: разные значения поля '+field+'; требуется проверка.');return;}facts[field]=value;evidence.push({field,value,source:'Авито · '+(row?.section||row?.name||'HTML'),text:String(row?.text??value).slice(0,700)});};
+ const number=(field,value,row)=>{const n=avitoNumber(value);if(n!==undefined)put(field,n,row);};
+ const fields={'Количество комнат':'rooms','Общая площадь':'area','Площадь кухни':'kitchen','Жилая площадь':'living','Тип дома':'buildingType','Год постройки':'buildingYear','Этажей в доме':'floors','Санузел':'bathroom','Ремонт':'renovation','Парковка':'parking','Балкон или лоджия':'balconyType','Тип комнат':'roomType','Количество жильцов':'occupants','Мебель':'furnitureText','Техника':'equipmentText','Интернет и ТВ':'internetText','Пассажирский лифт':'passengerLifts','Грузовой лифт':'freightLifts','Высота потолков':'ceiling'};
+ for(const row of records){
+  const text=row.text.replace(/\s+/g,' ').trim();
+  if(row.name==='PriceInfo')number('price',text,row);
+  if(row.name==='OfferTitle'){
+   const rooms=text.match(/(?:^|\s)(\d+)\s*-?\s*к[. -]/i),area=text.match(/(\d+(?:[.,]\d+)?)\s*м[²2]/i),floor=text.match(/(\d+)\s*\/\s*(\d+)\s*эт/i);
+   if(rooms)put('rooms',rooms[1],row);if(area)put('area',area[1].replace(',','.'),row);if(floor){put('floor',floor[1],row);put('floors',floor[2],row);}if(/студи/i.test(text))put('layout','studio',row);
+  }
+  if(row.name==='AddressItem'){put('address',text,row);if(/^Москва\b/u.test(text)||text.startsWith('Москва,'))put('city','Москва',row);}
+  if(row.name==='Coordinates'){const [lat,lon]=text.split('|');put('latitude',lat,row);put('longitude',lon,row);}
+  if(!['OfferSummaryInfoItem','Rules','FeaturesItem'].includes(row.name))continue;
+  const m=text.match(/^([^:]+):\s*(.*)$/);if(!m)continue;const key=m[1].trim(),value=m[2].trim();
+  const field=fields[key];if(field){if(['rooms','area','kitchen','living','buildingYear','floors','occupants','passengerLifts','freightLifts','ceiling'].includes(field))number(field,value,row);else put(field,value,row);}
+  if(key==='Этаж'){const f=value.match(/(\d+)\s*(?:из|\/)\s*(\d+)/);if(f){put('floor',f[1],row);put('floors',f[2],row);}}
+  if(key==='Залог')number('deposit',value,row);
+  if(key==='Комиссия'){if(/%/.test(value)||/^(?:нет|без комиссии)$/i.test(value))put('commission',/нет|без/i.test(value)?'0':avitoNumber(value),row);else{facts.commission='';number('commissionAmount',value,row);warnings.push('Авито: комиссия указана суммой, а не процентом.');}}
+  if(key==='Тип комнат'&&/изолир/i.test(value))put('separate',true,row);
+  if(key==='Можно с детьми'||key==='Можно с питомцем'||key==='Можно с животными'||key==='Можно курить'){
+   const policy=/^(?:нет|нельзя|запрещено)$/i.test(value)?false:/^(?:да|можно|разрешено)$/i.test(value)?true:null;
+   const which=key==='Можно с детьми'?'children':key==='Можно курить'?'smoking':'pets';if(policy!==null){put(which==='pets'?'petPolicy':which+'Policy',policy?'yes':'no',row);if(which!=='smoking'){permissions[which==='pets'?'petsAllowed':'childrenAllowed']=policy;put(which,policy,row);}}else{put(which==='pets'?'petPolicy':which+'Policy',/соглас|обсужд/i.test(value)?'negotiable':'unknown',row);if(which!=='smoking')put(which,false,row);}
+  }
+  if(key==='Мебель'&&/(?:^|,\s*)кухня(?:,|$)/i.test(value))equipment.hasKitchenFurniture=true;
+  if(key==='Техника')for(const [pattern,flag] of [[/холодильник/i,'hasFridge'],[/стиральн/i,'hasWasher'],[/посудомоеч/i,'hasDishwasher'],[/телевизор/i,'hasTv'],[/кондиционер/i,'hasConditioner']])if(pattern.test(value)&&!/^нет|^без\b/i.test(value))equipment[flag]=true;
+  if(key==='Интернет и ТВ'&&/wi[ -]?fi|интернет/i.test(value)&&!/^нет|^без\b/i.test(value))equipment.hasInternet=true;
+ }
+ const meters=records.find(r=>/^По сч[её]тчикам\s*:/.test(r.text)),other=records.find(r=>/^Другие ЖКУ\s*:/.test(r.text));
+ if(other&&/:\s*включено/i.test(other.text))put('utilities',meters&&/отдельно/i.test(meters.text)?'meters':'included',other);
+ else if(other&&/отдельно|не включено/i.test(other.text))put('utilities','extra',other);
+ const routes=records.filter(r=>r.name==='UndergroundItem').map(r=>{const m=r.text.match(/^(.*?)\s+(\d+(?:[–—-]\d+)?)\s*мин/);return m?{name:m[1],time:m[2],mode:r.mode||'unknown'}:null;}).filter(Boolean);
+ if(routes.length){put('metro',routes[0].name,{name:'UndergroundItem'});put('transit',[...new Set(routes.map(r=>[r.name,r.time,r.mode,''].join(' | ')))].join('\n'),{name:'UndergroundItem'});if(routes[0].mode==='walk')put('walk',routes[0].time,{name:'UndergroundItem'});else facts.walk='';if(routes.some(r=>r.mode==='unknown'))warnings.push('Авито: у части маршрутов не подписан способ пути.');}
+ if(source.description)put('sourceDescription',source.description,{name:'Description'});
+ if(source.url)put('url',source.url,{name:'URL'});if(facts.address)put('name',facts.address,{name:'AddressItem'});
+ if(!source.images?.length)warnings.push('Авито: фото основного альбома пока не найдены; нужна загрузка галереи в Chrome.');
+ return {facts,evidence,warnings,permissions,equipment};
+}
+
+// Dispatch only. Platform markup and business labels live in separate adapters.
+function sourcePlatform(input,url=''){
+ if(url)try{const host=new URL(url).hostname;if(/(^|\.)avito\.ru$/i.test(host))return 'avito';if(/(^|\.)cian\.ru$/i.test(host))return 'cian';}catch{}
+ const avito=input.search(/data-marker\s*=\s*["']item-view\/(?:title-info|item-params|main-gallery|item-description)["']/i),cian=input.search(/data-name\s*=\s*["'](?:OfferTitleNew|OfferTitle|Description|OfferDescription|OfferSummaryInfoItem)["']|_cianConfig\[/i);
+ return avito>=0&&(cian<0||avito<cian)?'avito':'cian';
+}
+function readSourceHtml(input,{url=''}={}){
+ if(typeof input!=='string'||input.length>8_000_000)throw Error('HTML должен быть текстом размером до 8 МБ');
+ return sourcePlatform(input,url)==='avito'?readAvitoHtml(input,{url}):readCianHtml(input);
+}
+function sourceFieldFacts(source){return source.platform==='avito'?avitoFieldFacts(source):cianFieldFacts(source);}
+
 function normalizeRussian(text){const map={a:'а',b:'в',c:'с',e:'е',h:'н',k:'к',m:'м',o:'о',p:'р',t:'т',x:'х',y:'у'};return String(text||'').toLowerCase().replace(/ё/g,'е').replace(/[a-zа-я]+/g,word=>/[а-я]/.test(word)?word.replace(/[abcehkmoptxy]/g,c=>map[c]):word);}
 const furniturePatterns={
  bed:'двуспальн[а-я]*\\s+кроват[а-я]*|двойн[а-я]*\\s+кроват[а-я]*',bedAny:'кроват(?:ь|и|ью|ей)',wardrobe:'шкаф(?:ы|а|ом|ов)?',slidingWardrobe:'шкаф(?:а|ы|ов)?[ -]?купе',desk:'(?:письменн|рабоч|учебн)[а-я]*\\s+стол[а-я]*',
@@ -2577,7 +2721,7 @@ const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasW
 Object.assign(furniturePatterns,{
  coffeeTable:'журнальн[а-я]*\\s+стол(?:ик[а-я]*|[а-я]*)',dresser:'комод[а-я]*',cabinet:'буфет[а-я]*|тумб[а-я]*',shoeCabinet:'обувниц[а-я]*|шкаф[а-я]*\\s+для\\s+обуви',ottoman:'пуф(?:ик)?[а-я]*|банкетк[а-я]*',bench:'скам(?:ья|ьи|ей|ью|ейк[а-я]*)',mirror:'зеркал[а-я]*',curtains:'штор[а-я]*',dryingRack:'сушилк[а-я]*\\s+для\\s+белья',iron:'утюг[а-я]*',vacuum:'пылесос[а-я]*',coffeeMachine:'кофемашин[а-я]*|кофевар[а-я]*',toaster:'тостер[а-я]*',router:'роутер[а-я]*|маршрутизатор[а-я]*',monitor:'монитор[а-я]*',speakers:'колонк[а-я]*|акустическ[а-я]*\\s+систем[а-я]*',waterHeater:'водонагревател[а-я]*|бойлер[а-я]*',waterFilter:'(?:фильтр[а-я]*|систем[а-я]*\\s+фильтрации)\\s+(?:для\\s+)?вод[а-я]*'
 });
-function detectFurniture(text,features,offer={}){
+function detectFurniture(text,features,offer={},origin='JSON'){
  const raw=String(text||''),t=normalizeRussian(raw),negative=[];
  for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует|не будет|не предусмотрен[а-я]*)\s+/gu)){
   const rest=t.slice(m.index+m[0].length),end=rest.search(/[);\n.!?]|(?:,?\s+)(?:но|зато|есть|имеется)(?![а-я])/u);
@@ -2607,7 +2751,7 @@ function detectFurniture(text,features,offer={}){
    matches.push({status,text:raw.slice(Math.max(0,m.index-24),m.index+m[0].length+38).trim(),source:'Описание',count:number||words[written],countKind:minimum?'minimum':'exact'});
   }
   if(id==='kitchenFurniture'&&/из мебели\s*:\s*кухня/.test(t))matches.push({status:'present',source:'Описание',text:'Из мебели: кухня…'});
-  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:'JSON '+key,text:key+' = '+offer[key]});
+  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:origin+' '+key,text:key+' = '+offer[key]});
   const states=new Set(matches.map(m=>m.status));let status=states.has('absent')&&states.has('present')?'conflict':states.has('present')?'present':states.has('planned')?'planned':states.has('absent')?'absent':'unknown';
   const counted=matches.find(m=>m.count&&m.status==='present');
   return {id,label,status,matches,count:counted?.count||'',countKind:counted?.countKind||'exact'};
@@ -3199,15 +3343,15 @@ function analyzeListingSource(input,rules=DICTIONARY){
   const conditionText=(source.description||'')+'\n'+(source.records||[]).filter(r=>['OfferFactItem','FeaturesItem'].includes(r.name)).map(r=>r.text).join('\n');
   const conditions=detectConditions(conditionText);
   for(const [key,flag,policy] of [['petsAllowed','pets','petPolicy'],['childrenAllowed','children','childrenPolicy']]){
-    const permission=source.offer?.bargainTerms?.[key];
+    const permission=(source.permissions||source.offer?.bargainTerms||{})[key];
     if(typeof permission!=='boolean')continue;
     const contradictory=conditions.facts[policy]==='no'&&permission===true||conditions.facts[policy]==='yes'&&permission===false;
     conditions.facts[policy]=contradictory?'conflict':permission?'yes':'no';
     conditions.facts[flag]=permission&&!contradictory;
-    conditions.evidence.push({field:flag,value:conditions.facts[flag],source:'JSON bargainTerms.'+key,text:key+' = '+permission});
+    conditions.evidence.push({field:flag,value:conditions.facts[flag],source:source.permissions?'Параметры '+source.platform:'JSON bargainTerms.'+key,text:key+' = '+permission});
     if(contradictory)conditions.warnings.push('Противоречие разрешения: '+key+'. Положительная формулировка исключена из описания.');
   }
-  const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.offer||{});
+  const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.equipment||source.offer||{},source.equipment?'Параметры '+source.platform:'JSON');
   const facts={...simple.facts,...structured.facts,...conditions.facts,source:source.text||source.description||'',sourceDescription:source.description||'',features:furniture.filter(r=>r.status==='present').map(r=>r.id),featureCounts:Object.fromEntries(furniture.filter(r=>r.count).map(r=>[r.id,r.count])),photos:source.images||[],relatedOffers:source.related||[]};
   // Recommendations and page navigation may mention another university.
   // Prefer the apartment's own description when that section was identified.
