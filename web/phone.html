@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eff2eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="МОСТ">
+<meta name="referrer" content="no-referrer">
+<title>МОСТ · Карточки с компьютера</title>
+<link rel="manifest" href="/phone/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/phone/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="/phone/phone.css">
+</head>
+<body>
+<header class="phone-header"><a class="phone-brand" href="/phone/" aria-label="МОСТ · Главная">МОСТ<span>↗</span></a><span id="phoneConnection" class="connection" role="status">Подключаемся</span></header>
+<main class="phone-main">
+<section id="phoneLoading" class="phone-loading" aria-label="Подробности подключения">
+  <details id="phoneLoadDetails" open>
+    <summary><span id="phoneLoadTitle" role="status">Проверяем подключение</span><span id="phoneLoadElapsed" class="load-elapsed">0,0 с</span></summary>
+    <div class="load-content"><p id="phoneLoadHost" class="load-host"></p>
+      <ol class="load-steps">
+        <li id="phoneLoadPage" data-state="done"><span class="load-mark" aria-hidden="true">✓</span><span><strong>Страница открыта</strong><small id="phoneLoadPageNote">Интерфейс получен браузером</small></span></li>
+        <li id="phoneLoadConnection" data-state="active"><span class="load-mark" aria-hidden="true">…</span><span><strong>Связь с Mac</strong><small id="phoneLoadConnectionNote">Ждём ответ сервера</small></span></li>
+        <li id="phoneLoadSession" data-state="waiting"><span class="load-mark" aria-hidden="true">·</span><span><strong>Вход на телефон</strong><small id="phoneLoadSessionNote">Проверим действующую сессию</small></span></li>
+        <li id="phoneLoadCards" data-state="waiting"><span class="load-mark" aria-hidden="true">·</span><span><strong>Карточки</strong><small id="phoneLoadCardsNote">Загрузим после входа</small></span></li>
+      </ol>
+      <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
+      <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v19</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+    </div>
+  </details>
+</section>
+<section id="phonePair" class="pair-screen">
+  <div class="eyebrow">КОМПЬЮТЕР СОБИРАЕТ · ТЕЛЕФОН ПУБЛИКУЕТ</div>
+  <h1>Ваши объявления.<br>Теперь под рукой.</h1>
+  <p class="lead">Готовые китайские тексты и фотографии приходят сюда с вашего Mac.</p>
+  <div class="pair-card"><div class="pair-symbol" aria-hidden="true">⌁</div><h2>Соединить с компьютером</h2><p>На Mac откройте сайт → «Телефон». Там показан обновляемый код из 8 цифр. Введите его здесь. <span id="phoneNetworkHelp">Локальная ссылка работает в одной сети; внешняя HTTPS-ссылка — через мобильный интернет.</span></p><form id="phonePairForm"><label for="phonePairCode">8 цифр с экрана Mac</label><input id="phonePairCode" type="text" inputmode="numeric" enterkeyhint="go" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="1234 5678" aria-describedby="phonePairHelp" required><button id="phonePairSubmit" class="button primary" type="submit">Подключить телефон <span aria-hidden="true">↗</span></button></form><p id="phonePairStatus" class="status-note" role="status"></p><button id="phoneReconnect" class="button secondary hidden" type="button">Проверить связь ещё раз</button><p id="phonePairHelp" class="quiet">После установки на экран «Домой» может понадобиться отдельный вход. Откройте установленное приложение и введите текущие 8 цифр из раздела «Телефон» на Mac. Если код использован или истёк, на компьютере появится новый.</p></div>
+  <p class="quiet">Карточки открываются после подключения. Mac должен оставаться включённым.</p>
+</section>
+<div id="phoneWorkspace" class="hidden">
+  <section id="phoneCardsView" class="phone-view">
+    <div class="section-title"><div><div class="eyebrow">ВАША МОБИЛЬНАЯ СТУДИЯ</div><h1>Объявления</h1></div><button id="phoneRefresh" class="icon-button" type="button" aria-label="Обновить карточки">↻</button></div>
+    <p id="phoneSync" class="sync-note" role="status">Ждём карточки с Mac</p><div id="phoneInstallTop" class="install-banner"></div>
+    <div class="search-wrap"><label class="visually-hidden" for="phoneSearch">Поиск по карточкам</label><input id="phoneSearch" type="search" placeholder="Метро, название, цена…" enterkeyhint="search"></div>
+    <div id="phoneCards" class="cards-list"></div>
+    <div id="phoneEmpty" class="empty-state hidden"><span aria-hidden="true">▧</span><h2>Здесь появятся квартиры</h2><p>Загрузите объявление на Mac или отправьте ссылку с телефона. Компьютер подготовит карточку и фотографии.</p><button class="button primary" type="button" data-phone-view="import">Отправить ссылку</button></div>
+    <button id="phoneMore" class="button secondary hidden" type="button">Показать ещё</button>
+  </section>
+  <section id="phoneWatchView" class="phone-view hidden"><div id="phoneWatchMount"></div></section><section id="phoneImportView" class="phone-view hidden">
+    <div class="eyebrow">ПОДГОТОВКА НА КОМПЬЮТЕРЕ</div><h1>Добавить квартиру</h1><p class="lead">Отправьте ссылку. Mac откроет объявление, соберёт данные и подготовит китайский текст.</p>
+    <form id="phoneImportForm" class="surface"><label for="phoneImportUrl">Ссылка ЦИАН или Авито</label><input id="phoneImportUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://www.cian.ru/rent/flat/…" required><button id="phoneImportSubmit" class="button primary" type="submit">Подготовить на Mac <span aria-hidden="true">↗</span></button><p class="quiet">Если площадка попросит проверку, пройдите её в окне Chrome на компьютере.</p></form>
+    <div id="phoneImportDiagnostics"></div><div id="phoneJob" class="surface job-card hidden"><div class="job-heading"><span class="pulse-dot" aria-hidden="true"></span><h2 id="phoneJobTitle" role="status">Mac готовит объявление</h2></div><p id="phoneJobMessage" role="status"></p><div class="job-timing"><span id="phoneJobElapsed">Прошло 0 с</span><span id="phoneJobStageTime"></span></div><p id="phoneJobEstimate" class="job-estimate"></p><progress id="phoneJobCount" class="hidden" aria-label="Фотографии текущего этапа"></progress><details id="phoneJobDetails" open><summary>Этапы обработки на Mac</summary><ol id="phoneJobSteps" class="job-steps"></ol></details><p class="quiet">Chrome читает объявление, затем Mac создаёт текст и автоматически готовит фото. Телефон можно оставить открытым.</p><button id="phoneJobOpen" class="button secondary hidden" type="button">Открыть готовую карточку</button><button id="phoneJobRetry" class="button secondary hidden" type="button">Проверить состояние</button><button id="phoneJobRestart" class="button secondary hidden" type="button">Повторить обработку</button></div>
+  </section>
+  <section id="phoneDesignView" class="phone-view hidden"><p class="quiet">Дизайн использует последнюю открытую карточку. Сначала выберите квартиру в разделе «Карточки».</p><div id="phoneDesignMount"></div></section><section id="phoneSetupView" class="phone-view hidden">
+    <div class="eyebrow">ВСЁ ГОТОВО К РАБОТЕ</div><h1>Мой телефон</h1>
+    <div class="surface"><h2>МОСТ на экране «Домой»</h2><p>Открывайте студию как отдельное приложение. Кнопка установки исчезнет при запуске с экрана «Домой».</p><div id="phoneInstall"></div></div>
+    <div class="surface"><h2>Компьютер остаётся сервером</h2><p id="phoneNetworkDescription">Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Для обновления нужны включённый компьютер и доступ к его сети.</p><p id="phoneServerStatus" class="status-note"></p></div>
+    <div class="surface"><h2>Фотографии на iPhone</h2><p>В карточке нажмите «Поделиться фото» и выберите сохранение изображения в системном меню. Если меню недоступно, откройте фото и удерживайте его для сохранения.</p><p class="quiet">iPhone подтверждает сохранение в «Фото». Сайт не может записывать изображения в медиатеку без вашего действия. ZIP сохраняется в «Файлы».</p></div>
+  </section>
+  <section id="phoneDetailView" class="phone-view hidden">
+    <div class="detail-nav"><button id="phoneBack" class="text-button" type="button">← Все объявления</button><span id="phoneDetailStamp" class="quiet"></span></div>
+    <div id="phoneDetailLoading" class="surface" role="status">Открываем карточку с Mac…</div>
+    <article id="phoneDetail" class="hidden">
+      <div class="detail-heading"><div id="phoneDetailFacts" class="facts-row"></div><h1 id="phoneDetailTitle"></h1></div>
+      <section class="surface photo-surface"><div class="block-heading"><h2>Фотографии</h2><span id="phonePhotoCount"></span></div><div class="variant-switch" id="phonePhotoVariants"><button id="phoneCropVariant" class="active" type="button" aria-pressed="true">Готовые фото</button><button id="phoneOriginalVariant" type="button" aria-pressed="false">Оригиналы</button></div><div id="phonePhotos" class="phone-gallery" aria-label="Фотографии квартиры"></div><div class="gallery-nav"><button id="phonePhotoPrev" class="icon-button" type="button" aria-label="Предыдущее фото">←</button><span id="phonePhotoPosition"></span><button id="phonePhotoNext" class="icon-button" type="button" aria-label="Следующее фото">→</button></div><p id="phoneMediaStatus" class="status-note" role="status"></p><button id="phonePreparePhotos" class="button secondary hidden" type="button">Подготовить фотографии на Mac</button><button id="phoneAnalyzeFurniture" class="button secondary" type="button">Новое описание по всем фото</button><p class="quiet">Mac проверит мебель и технику и пересоберёт текст по полям карточки. Правки, сделанные во время анализа, сохранятся.</p><div id="phonePhotoInventory"></div><div class="photo-buttons"><button id="phoneSharePhoto" class="button primary" type="button">Поделиться фото</button><a id="phoneDownloadPhoto" class="button secondary" download>Скачать фото</a></div><div class="photo-links"><a id="phoneOpenPhoto" target="_blank" rel="noopener noreferrer">Открыть фото ↗</a><a id="phoneDownloadZip" download>Все фото · ZIP</a></div><p id="phoneShareHelp" class="quiet">«Поделиться фото» открывает системное меню. Для «Фото» выберите сохранение изображения.</p></section>
+      <section class="surface text-surface"><div class="block-heading"><h2>Китайский заголовок</h2><button class="text-button" id="phoneCopyTitle" type="button">Копировать</button></div><button id="phoneRewriteTitle" class="writing-button" type="button">↻ Другой заголовок</button><p id="phoneTitleCopy" class="chinese-title" lang="zh-Hans"></p></section>
+      <section class="surface text-surface"><div class="block-heading"><h2>Описание</h2><button class="text-button" id="phoneCopyBody" type="button">Копировать</button></div><button id="phoneRewriteBody" class="writing-button" type="button">↻ Другое описание</button><p id="phoneBody" class="post-body" lang="zh-Hans"></p></section>
+      <section class="surface text-surface"><div class="block-heading"><h2>Теги</h2><button class="text-button" id="phoneCopyTags" type="button">Копировать</button></div><button id="phoneRewriteTags" class="writing-button" type="button">↻ Другие теги</button><p id="phoneTags" class="tags" lang="zh-Hans"></p></section>
+      <section class="surface writing-studio"><h2>Текст и новая подача</h2><button id="phoneRewriteAll" class="button secondary" type="button">✨ Новая подача всего поста</button><p class="quiet">Заголовок, описание и теги создаются по фактам этой квартиры. Кнопка всего поста заменяет текущие правки текста.</p><p id="phoneWritingStatus" class="status-note" role="status"></p><details id="phoneLanguageStudio"><summary>Своё описание: с русского на китайский</summary><p id="phoneLanguageStats" class="language-stats">Словарь и варианты шаблонов учитываются отдельно.</p><label for="phoneLanguagePart">Куда сохранить результат</label><select id="phoneLanguagePart"><option value="body">Описание</option><option value="title">Заголовок</option><option value="tags">Теги</option></select><label for="phoneRussianDraft">Ваш текст по-русски</label><textarea id="phoneRussianDraft" rows="5" maxlength="10000" placeholder="Например: квартира 48 м², есть холодильник и рабочий стол. Животные разрешены."></textarea><button id="phoneTranslateDraft" class="button secondary" type="button">Перевести на китайский</button><label for="phoneChineseDraft">Китайский текст · можно отредактировать</label><textarea id="phoneChineseDraft" rows="6" maxlength="20000" lang="zh-Hans" placeholder="Здесь появится перевод"></textarea><p id="phoneTranslationReview" class="translation-review" role="status">Неизвестные фразы будут показаны для проверки.</p><button id="phoneApplyDraft" class="button primary" type="button" disabled>Сохранить текст в карточку</button><p class="quiet">Перевод сначала появляется здесь. Сохранение меняет выбранный текст этой карточки.</p></details></section>
+      <section class="surface"><div id="phoneRoutesMount"></div></section><section class="surface"><h2>Материалы объявления</h2><button id="phoneDesignCard" class="button secondary" type="button">Оформить intro, outro и PDF</button><div id="phoneFilesMount"></div></section><div id="phoneArchiveMount"></div><button id="phoneCopyAll" class="button primary copy-all" type="button">Скопировать публикацию целиком</button>
+    </article>
+  </section>
+</div>
+</main>
+<nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="watch"><span aria-hidden="true">◉</span>Новое</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="design"><span aria-hidden="true">◈</span>Дизайн</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
+<dialog id="phonePhotoViewer" class="phone-photo-viewer" aria-label="Сохранить фотографию"><div class="viewer-head"><h2>Сохранить в «Фото»</h2><button id="phoneViewerClose" class="icon-button" type="button" aria-label="Закрыть фото">×</button></div><img id="phoneViewerImage" alt="Фотография для сохранения"><p>Удерживайте изображение и выберите «Сохранить в Фото» или «Добавить в Фото» в меню iPhone.</p></dialog><div id="phoneToast" class="phone-toast hidden" role="status"></div>
+<script src="/phone/phone-bootstrap.js"></script>
+<script type="module" src="/phone/phone.mjs"></script>
+</body>
+</html>

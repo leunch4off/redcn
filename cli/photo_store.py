@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import warnings
 
 import redcn
@@ -20,6 +21,9 @@ _ocr_lock = threading.Lock()
 _photo_locks = {}
 _guard = threading.Lock()
 MAX_PIXELS = 40_000_000
+AUTO_CROP_POLICY = 'verified-edge-v1'
+AUTO_CROP_SECONDS = 12
+_auto_crop_lock = threading.Lock()
 
 
 def pillow():
@@ -118,23 +122,47 @@ def crop_rect(width,height,margins):
     return x,y,right,bottom
 
 
-def recognize(image,directory):
+def _check_photo_cancel(cancel):
+    if cancel is not None and cancel.is_set():
+        raise ValueError('Загрузка отменена')
+
+
+def _ocr_timeout(deadline, maximum):
+    if deadline is None:return maximum
+    remaining=deadline-time.monotonic()
+    if remaining<=0:raise ValueError('Лимит автоматической проверки фото исчерпан; оригинал сохранён')
+    return min(maximum,remaining)
+
+
+def recognize(image,directory,*,cancel=None,deadline=None):
     """Only recognized strings and boxes are returned. No data leaves the machine."""
+    _check_photo_cancel(cancel)
     folder=Path(directory)/'ocr';folder.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(dir=folder) as temp:
         path=Path(temp)/'photo.png';image.convert('RGB').save(path)
         if sys.platform=='darwin' and Path('/usr/bin/swiftc').exists():
             source=Path(__file__).with_name('recognize-photo.swift');digest=hashlib.sha256(source.read_bytes()).hexdigest()[:16];binary=folder/('vision-'+digest)
-            with _ocr_lock:
+            acquired=_ocr_lock.acquire(timeout=_ocr_timeout(deadline,120))
+            if not acquired:raise ValueError('OCR занят; оригинал сохранён')
+            try:
+                _check_photo_cancel(cancel)
                 if not binary.exists():
-                    compiled=subprocess.run(['/usr/bin/swiftc',str(source),'-o',str(binary)],capture_output=True,timeout=120)
-                    if compiled.returncode:raise ValueError('Не удалось собрать локальный OCR Vision; доступна ручная граница кадра')
-            result=subprocess.run([str(binary),str(path)],capture_output=True,text=True,timeout=30)
+                    with tempfile.NamedTemporaryFile(dir=folder,prefix=binary.name+'.',delete=False) as output:temporary=Path(output.name)
+                    try:
+                        compiled=subprocess.run(['/usr/bin/swiftc',str(source),'-o',str(temporary)],capture_output=True,timeout=_ocr_timeout(deadline,120))
+                        if compiled.returncode:raise ValueError('Не удалось собрать локальный OCR Vision; доступна ручная граница кадра')
+                        temporary.chmod(0o700);temporary.replace(binary)
+                    finally:temporary.unlink(missing_ok=True)
+            finally:_ocr_lock.release()
+            _check_photo_cancel(cancel)
+            result=subprocess.run([str(binary),str(path)],capture_output=True,text=True,timeout=_ocr_timeout(deadline,30))
+            _check_photo_cancel(cancel)
             if result.returncode:raise ValueError('Vision не смог прочитать фото; доступна ручная граница кадра')
             return json.loads(result.stdout),'Apple Vision'
         executable=shutil.which('tesseract')
         if not executable:raise ValueError('OCR не установлен: на Mac нужен Swift/Vision; на Linux/Windows — Tesseract. Можно задать отступ вручную.')
-        result=subprocess.run([executable,str(path),'stdout','-l','eng','--psm','11','tsv'],capture_output=True,text=True,timeout=30)
+        result=subprocess.run([executable,str(path),'stdout','-l','eng','--psm','11','tsv'],capture_output=True,text=True,timeout=_ocr_timeout(deadline,30))
+        _check_photo_cancel(cancel)
         if result.returncode:raise ValueError('OCR Tesseract завершился ошибкой')
         rows=[]
         for line in result.stdout.splitlines()[1:]:
@@ -146,25 +174,53 @@ def recognize(image,directory):
 
 
 def watermark_boxes(rows,allow_id_footer=False):
+    # OCR may split a brand into several adjacent words. Join only nearby
+    # tokens on the same line, keeping their measured union as evidence.
+    safe_rows=[]
+    for row in rows if isinstance(rows,list) else []:
+        if not isinstance(row,dict):continue
+        try:
+            numbers={k:float(row[k]) for k in ('x','y','width','height','confidence')}
+            if not all(math.isfinite(v) for v in numbers.values()):continue
+            safe_rows.append({**row,**numbers})
+        except (KeyError,TypeError,ValueError):continue
+    rows=safe_rows
+    joined=[]
+    for first in rows:
+        try:
+            line=[row for row in rows if abs(float(row['y'])-float(first['y']))<=max(float(first['height']),float(row['height']))*.35]
+            line.sort(key=lambda row:float(row['x']))
+            for start in range(len(line)):
+                group=[line[start]]
+                for row in line[start+1:start+4]:
+                    previous=group[-1]
+                    if float(row['x'])-(float(previous['x'])+float(previous['width']))>max(float(row['height']),float(previous['height']))*1.8:break
+                    group.append(row)
+                    x=min(float(v['x']) for v in group);y=min(float(v['y']) for v in group)
+                    joined.append({'text':' '.join(str(v.get('text','')) for v in group),'confidence':min(float(v.get('confidence',0)) for v in group),'x':x,'y':y,'width':max(float(v['x'])+float(v['width']) for v in group)-x,'height':max(float(v['y'])+float(v['height']) for v in group)-y})
+        except (KeyError,TypeError,ValueError):continue
     result=[]
-    for row in rows:
+    for row in [*rows,*joined]:
         text=re.sub(r'[^a-zа-я]','',str(row.get('text','')).lower()).translate(str.maketrans({'с':'c','і':'i','а':'a','н':'h'}))
         original=str(row.get('text','')).lower()
         footer=allow_id_footer and re.search(r'\bid\s*[:#]?\s*\d{4,}',original) and float(row.get('x',0))>.45 and float(row.get('y',0))>.65 and float(row.get('confidence',0))>=.8
         if not (re.search(r'ци[аa][нh]|c[i1l][aа][nп]|сian',original) or 'cian' in text or footer):continue
         if float(row.get('confidence',0))<.45:continue
-        box={k:float(row[k]) for k in ('x','y','width','height')}
-        if not all(math.isfinite(v) and 0<=v<=1 for v in box.values()):continue
+        try:box={k:float(row[k]) for k in ('x','y','width','height')}
+        except (KeyError,TypeError,ValueError):continue
+        if not all(math.isfinite(v) and 0<=v<=1 for v in box.values()) or box['width']<=0 or box['height']<=0 or box['x']+box['width']>1.00001 or box['y']+box['height']>1.00001:continue
         if footer:
             # CIAN's pin + brand sit above its ID line; scale the exclusion
             # zone with the measured text height instead of fixed pixels.
             box['y']=max(0,box['y']-3.3*box['height']);box['height']=min(1-box['y'],box['height']*2)
-        result.append({**box,'text':row['text'],'confidence':row.get('confidence'),'method':'cian-id-footer' if footer else 'brand-text'})
+        candidate={**box,'text':row['text'],'confidence':row.get('confidence'),'method':'cian-id-footer' if footer else 'brand-text'}
+        if not any(all(abs(candidate[k]-other[k])<.001 for k in ('x','y','width','height')) for other in result):result.append(candidate)
     return result
 
 
-def detect_photo_marks(image,directory,allow_id_footer=False):
-    rows,engine=recognize(image,directory);boxes=watermark_boxes(rows,allow_id_footer)
+def detect_photo_marks(image,directory,allow_id_footer=False,*,cancel=None,deadline=None):
+    options={'cancel':cancel,'deadline':deadline} if cancel is not None or deadline is not None else {}
+    rows,engine=recognize(image,directory,**options);boxes=watermark_boxes(rows,allow_id_footer)
     if boxes:return boxes,engine
     # A low-contrast footer can disappear in whole-image OCR. Inspect it at
     # higher resolution, with two contrast treatments, then map boxes back.
@@ -173,7 +229,7 @@ def detect_photo_marks(image,directory,allow_id_footer=False):
     variants=[ImageEnhance.Contrast(ImageOps.autocontrast(footer)).enhance(2),ImageOps.autocontrast(ImageChops.subtract(footer,footer.filter(ImageFilter.GaussianBlur(9)),scale=1,offset=128))]
     for variant in variants:
         enlarged=variant.resize((variant.width*2,variant.height*2))
-        try:found,_=recognize(enlarged,directory)
+        try:found,_=recognize(enlarged,directory,**options)
         finally:enlarged.close();variant.close()
         mapped=[{**row,'y':(y+float(row['y'])*(image.height-y))/image.height,'height':float(row['height'])*(image.height-y)/image.height} for row in found]
         boxes=watermark_boxes(mapped,allow_id_footer)
@@ -187,25 +243,31 @@ def propose_crop(width,height,boxes):
     # Padding covers the pin/icon adjacent to or above the OCR text.
     for box in boxes:
         x,y,w,h=(box[k] for k in ('x','y','width','height'))
-        vertical_pad=max(.02,h*.8);horizontal_pad=max(.035,w*.25)
+        # ID footer boxes already include the icon above the text. Avoid
+        # adding the icon height a second time; keep a small safety gap.
+        vertical_pad=max(.008,h*.3) if box.get('method')=='cian-id-footer' else max(.025,h*1.25)
+        horizontal_pad=max(.035,w*.25)
         choices={'bottom':(1-y+vertical_pad)*100,'top':(y+h+vertical_pad)*100,'right':(1-x+horizontal_pad)*100,'left':(x+w+horizontal_pad)*100}
         edge,value=min(choices.items(),key=lambda v:v[1])
         if value>28:return {'status':'review','message':'Метка далеко от края: автоматическая обрезка уберёт слишком много кадра. Нужна проверка.','boxes':boxes}
         margins[edge]=max(margins[edge],round(value,4))
     try: rect=crop_rect(width,height,margins)
     except ValueError as error:return {'status':'review','message':str(error),'boxes':boxes}
-    return {'status':'detected','margins':margins,'rect':rect,'boxes':boxes}
+    return {'status':'detected','margins':margins,'rect':rect,'boxes':boxes,'method':'normalized-ocr-edge','retainedArea':round((rect[2]-rect[0])*(rect[3]-rect[1])/(width*height),4)}
 
 
-def crop_photo(directory,digest,margins=None):
+def crop_photo(directory,digest,margins=None,*,cancel=None,deadline=None,min_confidence=0):
+    _check_photo_cancel(cancel)
     content,_,original=asset(directory,digest)
     if original.get('kind')!='original':raise ValueError('Обрезка выполняется только из оригинала')
     image=open_photo(content)
     try:
         engine=None;boxes=[];allow_id_footer=bool(re.match(r'https://(?:[\w-]+\.)*(?:cian\.ru|cdn-cian\.ru|ciancdn\.ru)/',original.get('sourceUrl','')))
         if margins is None:
-            try: boxes,engine=detect_photo_marks(image,directory,allow_id_footer)
-            except (OSError,ValueError,subprocess.SubprocessError) as error:return {'status':'review','message':str(error),'originalId':digest}
+            options={'cancel':cancel,'deadline':deadline} if cancel is not None or deadline is not None else {}
+            try: boxes,engine=detect_photo_marks(image,directory,allow_id_footer,**options)
+            except (OSError,ValueError,subprocess.SubprocessError) as error:return {'status':'review','message':str(error),'originalId':digest,'retryable':True}
+            boxes=[box for box in boxes if float(box.get('confidence',0))>=min_confidence]
             proposal=propose_crop(image.width,image.height,boxes)
             if proposal['status']!='detected':return {**proposal,'ocr':engine,'originalId':digest}
             margins=proposal['margins']
@@ -213,10 +275,91 @@ def crop_photo(directory,digest,margins=None):
         rect=crop_rect(image.width,image.height,margins);cropped=image.crop(rect).convert('RGB')
         verification='manual';remaining=[]
         if engine:
-            try: rows,_=recognize(cropped,directory);remaining=watermark_boxes(rows,allow_id_footer);verification='mark-remains' if remaining else 'ocr-checked'
+            try: rows,_=recognize(cropped,directory,**options);remaining=watermark_boxes(rows,allow_id_footer);verification='mark-remains' if remaining else 'ocr-checked'
             except (OSError,ValueError,subprocess.SubprocessError):verification='not-checked'
         buffer=io.BytesIO();cropped.save(buffer,'JPEG',quality=95,subsampling=0)
-        metadata=_save(directory,buffer.getvalue(),'image/jpeg',{'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification})
+        metadata=_save(directory,buffer.getvalue(),'image/jpeg',{'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification,'cropMethod':'normalized-ocr-edge' if engine else 'manual','retainedArea':round(cropped.width*cropped.height/(image.width*image.height),4)})
         cropped.close()
         return {**metadata,'status':'review' if verification in ('mark-remains','not-checked') else 'cropped','boxes':boxes,'remaining':remaining,'message': 'В копии ещё распознаётся метка: проверьте кадр.' if remaining else 'Копия кадрирована; оригинал сохранён.'}
     finally:image.close()
+
+
+def auto_crop_photo(directory,digest,*,cancel=None,max_seconds=AUTO_CROP_SECONDS,deadline=None):
+    """Reuse a checked decision or attempt one bounded, reversible edge crop.
+
+    Empty/uncertain detections keep the original. Failed OCR is retryable and is
+    not remembered as a negative finding. No unverified derivative is selected.
+    """
+    _check_photo_cancel(cancel)
+    if isinstance(max_seconds,bool) or not isinstance(max_seconds,(int,float)) or not 0<max_seconds<=60:
+        raise ValueError('Лимит обработки фотографии: от 0 до 60 секунд')
+    if not isinstance(digest,str) or not re.fullmatch(r'[a-f0-9]{64}',digest):raise ValueError('Неверный ID фотографии')
+    policy=AUTO_CROP_POLICY+'-'+hashlib.sha256(Path(__file__).with_name('recognize-photo.swift').read_bytes()).hexdigest()[:12]
+    end=min(time.monotonic()+max_seconds,deadline) if deadline is not None else time.monotonic()+max_seconds
+    while not _auto_crop_lock.acquire(timeout=min(.2,max(.001,end-time.monotonic()))):
+        _check_photo_cancel(cancel)
+        if time.monotonic()>=end:return {'originalId':digest,'status':'review','autoStatus':'skipped','reason':'time-budget','cached':False}
+    try:
+        with _connection(directory) as db:
+            db.execute('CREATE TABLE IF NOT EXISTS auto_crop_decisions (original_id TEXT,policy TEXT,decision TEXT,PRIMARY KEY(original_id,policy))')
+            row=db.execute('SELECT decision FROM auto_crop_decisions WHERE original_id=? AND policy=?',(digest,policy)).fetchone()
+            manual_rows=db.execute('SELECT metadata FROM assets WHERE instr(metadata,?)>0 ORDER BY rowid DESC',(digest,)).fetchall()
+        # An operator's explicit crop has priority over a later automatic pass.
+        for raw, in manual_rows:
+            try:
+                meta=json.loads(raw)
+                if meta.get('kind')=='crop' and meta.get('originalId')==digest and meta.get('verification')=='manual':
+                    asset(directory,meta['id'])
+                    return {**meta,'originalId':digest,'status':'cropped','autoStatus':'manual','cached':True}
+            except (OSError,ValueError,KeyError,TypeError):continue
+        if row:
+            try:
+                decision=json.loads(row[0])
+                # A missing/corrupt derivative must not become a cached success.
+                if decision.get('autoStatus')=='cropped':
+                    meta=asset(directory,decision['id'])[2]
+                    if meta.get('verification')!='ocr-checked' or meta.get('originalId')!=digest:raise ValueError('Копия не проверена')
+                return {**decision,'cached':True}
+            except (OSError,ValueError,KeyError,TypeError):pass
+        _check_photo_cancel(cancel)
+        if time.monotonic()>=end:return {'originalId':digest,'status':'review','autoStatus':'skipped','reason':'time-budget','cached':False}
+        decision=crop_photo(directory,digest,cancel=cancel,deadline=end,min_confidence=.8)
+        _check_photo_cancel(cancel)
+        verified=decision.get('status')=='cropped' and decision.get('verification')=='ocr-checked'
+        auto_status='cropped' if verified else 'unavailable' if decision.get('retryable') or decision.get('verification')=='not-checked' else 'review' if decision.get('boxes') else 'unchanged'
+        decision={**decision,'autoStatus':auto_status,'policy':policy,'originalId':digest,'cached':False}
+        if not decision.get('boxes') and auto_status=='unchanged':decision['message']='Уверенная метка не обнаружена; оригинал сохранён без изменений.'
+        if auto_status not in ('unavailable','skipped'):
+            with _connection(directory) as db:
+                db.execute('INSERT OR REPLACE INTO auto_crop_decisions VALUES (?,?,?)',(digest,policy,json.dumps(decision,ensure_ascii=False)))
+        return decision
+    finally:_auto_crop_lock.release()
+
+
+def analyze_photo(directory,digest,*,cancel=None,deadline=None):
+    """Analyze the verified original; suggested objects never become facts here."""
+    import vision_photo
+    _check_photo_cancel(cancel)
+    if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
+    content,mime,original=asset(directory,digest)
+    if original.get('kind')!='original':raise ValueError('Распознавание выполняется по оригиналу')
+    folder=Path(directory)/'vision';folder.mkdir(parents=True,exist_ok=True)
+    from photo_ai_settings import load_config
+    config=load_config(directory)
+    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
+    cache=folder/(digest+'-'+source_hash+'.json')
+    if cache.exists():
+        try:
+            saved=json.loads(cache.read_text())
+            if saved.get('originalId')==digest and saved.get('status')=='review' and not saved.get('fallback'):
+                return {**saved,'cached':True}
+        except (OSError,ValueError):pass
+    image=open_photo(content)
+    try:result={**vision_photo.analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
+    finally:image.close()
+    _check_photo_cancel(cancel)
+    if result.get('status')=='review' and not result.get('fallback'):
+        with tempfile.NamedTemporaryFile(mode='w',dir=folder,encoding='utf-8',delete=False) as stream:
+            temp=Path(stream.name);temp.chmod(0o600);json.dump(result,stream,ensure_ascii=False)
+        temp.replace(cache)
+    return result

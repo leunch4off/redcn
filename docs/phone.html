@@ -1,0 +1,1357 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eff2eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="МОСТ">
+<meta name="referrer" content="no-referrer">
+<title>МОСТ · Карточки с компьютера</title>
+<link rel="manifest" href="/phone/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/phone/icons/apple-touch-icon.png">
+<style>:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#27352b;background:#f4f5ef;font-synthesis:none;-webkit-text-size-adjust:100%;--green:#38533d;--muted:#78816f;--line:#dfe5d8}*{box-sizing:border-box}body{margin:0;min-width:280px}button,input{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:var(--green)}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #9bb48d;outline-offset:3px}.hidden{display:none!important}.phone-header{position:sticky;top:0;z-index:20;padding:calc(env(safe-area-inset-top) + 15px) 22px 15px;background:#f4f5eff5;backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e4e7dc}.phone-brand{font-size:25px;font-weight:800;letter-spacing:-1.7px;text-decoration:none;color:#2d3c30}.phone-brand span{color:#ba5746;margin-left:2px}.connection{font-size:11px;padding:7px 10px;border-radius:99px;background:#e7eddf;color:#506346;max-width:175px;text-align:center}.connection.offline{background:#f4e7d9;color:#906643}.phone-main{max-width:640px;margin:auto;padding:28px 20px calc(108px + env(safe-area-inset-bottom));overflow-wrap:anywhere}.eyebrow{font-size:9px;letter-spacing:1.5px;line-height:1.7;color:#85917b;margin-bottom:13px}h1{font-size:32px;font-weight:560;letter-spacing:-1.1px;line-height:1.17;margin:0 0 15px}h2{font-size:16px;letter-spacing:-.2px;margin:0 0 10px}p{font-size:14px;line-height:1.65;margin:0;color:#6e7b65}.lead{font-size:15px;line-height:1.7;margin-bottom:24px;color:#75806d}.quiet{font-size:12px;line-height:1.65;color:#87917e}.surface,.pair-card{background:#fff;border:1px solid var(--line);border-radius:19px;padding:20px;margin:18px 0}.pair-card{padding:24px 20px;margin-top:30px}.pair-symbol{font-size:37px;color:#648658;line-height:1;margin-bottom:20px}.pair-card p{margin-bottom:18px}label{display:block;font-size:12px;font-weight:550;margin:19px 0 9px;color:#5f7057}input{display:block;width:100%;min-width:0;min-height:50px;border:1px solid #d8e0d0;background:#fbfcf8;border-radius:12px;padding:13px 14px;font-size:16px;color:#2e402f;outline:none}input:focus{border-color:#8ca67f}.button{display:flex;justify-content:center;align-items:center;gap:12px;min-height:50px;width:100%;border:1px solid #ced9c6;border-radius:12px;padding:13px 16px;text-decoration:none;text-align:center;font-size:14px;font-weight:550;line-height:1.3}.button span{margin-left:auto}.primary{background:var(--green);border-color:var(--green);color:white}.secondary{background:#f6f8f1;color:#4e6544}.button:disabled,.icon-button:disabled{opacity:.5;cursor:default}form .button{margin-top:14px}form .quiet{margin-top:15px}.status-note{font-size:12px;line-height:1.65;color:#778967;margin-top:12px}.status-note.error{color:#a26542}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.section-title h1{margin-bottom:6px}.section-title .eyebrow{margin-bottom:10px}.icon-button{display:inline-grid;place-items:center;min-width:44px;min-height:44px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:50%;font-size:21px;color:#5a7450}.sync-note{font-size:11px;line-height:1.6;color:#8b9582;margin:4px 0 18px}.search-wrap{margin:20px 0}.search-wrap input{background:#ebefe4;border-color:#ebefe4;border-radius:14px;padding-left:16px}.cards-list{display:grid;gap:17px}.listing-card{display:block;width:100%;border:1px solid var(--line);background:white;border-radius:19px;text-align:left;overflow:hidden;padding:0;color:inherit}.listing-cover{position:relative;height:210px;background:#e8ede1}.listing-cover img{width:100%;height:100%;object-fit:cover;display:block}.cover-placeholder{height:100%;display:grid;place-items:center;color:#a1ae94;font-size:42px}.photo-badge{position:absolute;bottom:11px;right:12px;font-size:10px;background:#ffffffeb;padding:6px 9px;border-radius:99px;color:#53664c}.listing-info{padding:17px 17px 18px}.listing-info h3{font-size:16px;font-weight:550;line-height:1.5;margin:9px 0 11px;word-break:break-word}.listing-price{font-size:21px;font-weight:650;letter-spacing:-.5px}.listing-price small{font-size:11px;font-weight:400;color:#8a9681;margin-left:5px;letter-spacing:0}.listing-meta{display:flex;gap:7px;flex-wrap:wrap;font-size:11px;color:#7a8c6f}.listing-meta span{background:#f0f4e9;border-radius:5px;padding:4px 7px}.listing-updated{font-size:10px;color:#98a08f;margin-top:11px}.empty-state{text-align:center;padding:35px 14px}.empty-state>span{font-size:43px;color:#9bae8d}.empty-state h2{margin-top:20px}.empty-state p{margin-bottom:20px}.phone-tabs{position:fixed;z-index:30;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:4px;background:#fdfef9f7;border-top:1px solid #dce4d4;backdrop-filter:blur(14px);padding:7px max(10px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}.phone-tabs button{width:min(20%,180px);min-width:0;flex:1;min-height:53px;background:transparent;border:0;border-radius:12px;font-size:10px;line-height:1.4;color:#8a9880;padding:5px 8px}.phone-tabs button span{display:block;font-size:22px;line-height:1.3;margin-bottom:2px}.phone-tabs button.active{color:#425f35;background:#edf3e6}.phone-toast{position:fixed;z-index:100;left:20px;right:20px;bottom:calc(90px + env(safe-area-inset-bottom));padding:14px 17px;border-radius:13px;background:#344a38;color:white;font-size:13px;line-height:1.55;box-shadow:0 8px 30px #263d3224}.detail-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:22px}.text-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:0;background:transparent;color:#5a784f;padding:8px 0;font-size:12px;font-weight:550;white-space:nowrap}.detail-nav .quiet{font-size:10px;text-align:right}.detail-heading h1{font-size:25px;line-height:1.45;font-weight:550;letter-spacing:-.4px}.facts-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}.facts-row span{font-size:11px;border-radius:6px;padding:5px 8px;background:#e9efe0;color:#69815a}.block-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.block-heading h2{margin:0}.block-heading>span{font-size:11px;color:#8c9b80}.photo-surface{padding:16px;overflow:hidden}.variant-switch{display:flex;background:#eef3e6;padding:3px;border-radius:10px;margin:15px 0}.variant-switch button{flex:1;min-height:38px;background:transparent;border:0;border-radius:8px;font-size:12px;color:#849279}.variant-switch button.active{background:white;color:#48673c;box-shadow:0 1px 4px #5061430d}.phone-gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;border-radius:12px;background:#edf1e6;min-height:100px;touch-action:pan-x pan-y}.phone-gallery::-webkit-scrollbar{display:none}.phone-slide{flex:0 0 100%;width:100%;scroll-snap-align:start;margin:0}.phone-slide img{display:block;width:100%;height:290px;object-fit:contain;-webkit-touch-callout:default}.gallery-nav{display:flex;align-items:center;justify-content:center;gap:24px;margin:11px 0}.gallery-nav span{font-size:12px;color:#869779;min-width:40px;text-align:center}.gallery-nav .icon-button{min-width:39px;min-height:39px;font-size:17px}.photo-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}.photo-buttons .button{font-size:12px;padding:12px 8px}.photo-links{display:flex;justify-content:space-between;gap:12px;margin:15px 0;font-size:11px}.photo-links a{min-height:30px;display:inline-flex;align-items:center}.photo-surface .quiet{font-size:10px}.chinese-title{font-size:18px;line-height:1.75;color:#3f5338}.post-body{font-size:15px;line-height:1.95;color:#4d5e45;white-space:pre-wrap;word-break:break-word}.tags{font-size:13px;line-height:1.9;color:#749362;white-space:pre-wrap}.text-surface .text-button{min-height:35px;font-size:11px}.copy-all{margin:20px 0}.job-heading{display:flex;gap:10px;align-items:center;margin-bottom:12px}.job-heading h2{margin:0}.pulse-dot{width:8px;height:8px;flex:none;border-radius:50%;background:#88a673;box-shadow:0 0 0 5px #eef4e7}.job-card .button{margin-top:15px}#phoneMore{margin-top:20px}.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}@media(min-width:650px){.phone-main{padding-top:38px}.cards-list{grid-template-columns:1fr 1fr}.listing-cover{height:175px}.phone-header{padding-left:calc((100% - 600px)/2);padding-right:calc((100% - 600px)/2)}.phone-toast{max-width:520px;left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 40px)}}@media(max-width:350px){.phone-main{padding-left:14px;padding-right:14px}h1{font-size:29px}.surface{padding:16px}.photo-surface{padding:12px}.phone-slide img{height:240px}.photo-buttons{grid-template-columns:1fr}}@media(prefers-reduced-motion:no-preference){.phone-gallery{scroll-behavior:smooth}}
+
+.install-banner{margin:0 0 18px}.install-banner:has(button[hidden]){display:none}
+
+.phone-photo-viewer{box-sizing:border-box;width:calc(100vw - 24px);max-width:640px;max-height:92svh;border:1px solid #dfe5d8;border-radius:20px;background:#fffef9;padding:16px;color:#27352b}.phone-photo-viewer::backdrop{background:#1e2d23cf}.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}.viewer-head h2{margin:0}.phone-photo-viewer img{display:block;width:100%;max-height:65svh;object-fit:contain;-webkit-touch-callout:default;user-select:auto}.phone-photo-viewer p{font-size:13px;line-height:1.6;margin-top:16px}
+
+#phonePairCode{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:.1em}#phonePairHelp{margin-top:16px}
+
+.phone-loading{background:#fff;border:1px solid var(--line);border-radius:16px;margin:0 0 25px;overflow:hidden}.phone-loading summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;padding:14px 16px;cursor:pointer;font-size:13px;font-weight:550;list-style:none}.phone-loading summary::-webkit-details-marker{display:none}.phone-loading summary::before{content:'⌄';font-size:16px;color:#7e9270}.phone-loading details[open] summary::before{content:'⌃'}.phone-loading summary>span:first-child{flex:1}.load-elapsed{font-size:12px;font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap;color:#829176}.load-content{padding:0 16px 16px}.load-host{font-size:12px;line-height:1.6;color:#7a8970;overflow-wrap:anywhere;border-top:1px solid #edf0e7;padding-top:12px}.load-steps{list-style:none;margin:16px 0;padding:0;display:grid;gap:13px}.load-steps li{display:flex;align-items:flex-start;gap:10px;color:#8b9782}.load-mark{flex:none;display:grid;place-items:center;width:23px;height:23px;border:1px solid #e1e7d9;border-radius:50%;font-size:13px;line-height:1;background:#f8faf5}.load-steps strong{display:block;font-size:13px;font-weight:550;line-height:1.6}.load-steps small{display:block;font-size:12px;line-height:1.6;color:#87967a}.load-steps [data-state=done] .load-mark{background:#edf4e6;border-color:#d8e5cb;color:#5a7846}.load-steps [data-state=active]{color:#38533d}.load-steps [data-state=active] .load-mark{border-color:#8fa67e;background:#edf4e6}.load-steps [data-state=error] .load-mark,.load-steps [data-state=action] .load-mark{color:#9b6141;border-color:#e6c9ad;background:#fcf0e5}.phone-loading[data-result=error]{border-color:#dfc5ad}.load-content .quiet{font-size:12px}.load-content .button{margin-top:14px;min-height:44px;font-size:12px}
+
+.phone-tabs button{width:min(25%,160px)}.card-files{margin-top:24px;overflow-wrap:anywhere}.card-files h2{font-size:16px}.card-files p{font-size:12px;margin-bottom:12px}.card-files .btn,.card-file-row .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 15px;border:1px solid #d4ddcb;border-radius:10px;background:#f6f8f1;color:#4a6540;min-height:44px;font:inherit;font-size:13px;text-decoration:none}.card-file-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid #e4e8dd;padding:14px 0;min-width:0}.card-file-row span{flex:1;min-width:100px;font-size:11px;overflow-wrap:anywhere}
+
+.job-card{overflow-wrap:anywhere}.job-timing{display:flex;gap:8px 18px;flex-wrap:wrap;margin:16px 0 10px;font-size:13px;font-variant-numeric:tabular-nums;color:#45603c}.job-estimate{font-size:13px;line-height:1.7;color:#65745a}.job-card progress{width:100%;height:8px;accent-color:#34543a;margin:5px 0 18px}.job-card details{border-top:1px solid var(--line);margin:18px 0}.job-card summary{padding:14px 0;min-height:44px;font-size:13px;cursor:pointer}.job-steps{list-style:none;padding:0;margin:0 0 18px;display:grid;gap:12px}.job-steps li{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.6;color:#829176}.job-steps .job-step-mark{display:grid;place-items:center;flex:none;width:23px;height:23px;border-radius:50%;background:#f0f3e9;border:1px solid #e0e7d6;font-size:12px}.job-steps strong{font-size:13px;font-weight:550;display:block}.job-steps small{display:block;font-size:12px;font-variant-numeric:tabular-nums}.job-steps [data-state=active],.job-steps [data-state=running]{color:#34543a}.job-steps [data-state=active] .job-step-mark,.job-steps [data-state=running] .job-step-mark{border-color:#91ab7c}.job-steps [data-state=done]{color:#5a7548}.job-steps [data-state=error],.job-steps [data-state=waitingManual]{color:#9b6141}.job-card[data-job-state=error]{border-color:#dfc5ad}#phoneJobRestart{margin-top:10px}
+
+.writing-button{min-height:44px;max-width:100%;padding:10px 14px;border:1px solid #d9e2ce;border-radius:12px;background:#f5f8ee;color:#4d6940;font:inherit;font-size:13px;text-align:left;cursor:pointer;margin:0 0 10px}.writing-button:disabled{opacity:.5;cursor:wait}.writing-studio{overflow-wrap:anywhere}.writing-studio h2{font-size:18px}.writing-studio .button{margin:10px 0;min-height:44px;font-size:14px;white-space:normal}.writing-studio details{border-top:1px solid var(--line);margin-top:18px;padding-top:4px}.writing-studio summary{min-height:44px;padding:14px 0;font-size:14px;line-height:1.6;cursor:pointer}.writing-studio label{display:block;font-size:13px;line-height:1.6;margin:18px 0 8px}.writing-studio textarea,.writing-studio select{box-sizing:border-box;width:100%;max-width:100%;min-width:0;border:1px solid #dfe5d6;border-radius:12px;padding:12px;background:#fffef9;color:#35482f;font:inherit;font-size:16px;line-height:1.7}.writing-studio textarea{resize:vertical;min-height:110px}.writing-studio select{min-height:48px}.writing-studio .quiet,.writing-studio .language-stats,.writing-studio .translation-review{font-size:12px;line-height:1.75}.language-stats{padding:12px;background:#f4f7ee;border-radius:10px;color:#6c7e5f}.translation-review{white-space:pre-wrap;color:#697b5d;margin:12px 0}.translation-review[data-state=review]{color:#94613e}.translation-review[data-state=error],#phoneWritingStatus[data-state=error]{color:#a04f3e}#phoneWritingStatus{font-size:13px;line-height:1.7;white-space:pre-wrap}
+
+.connection-diagnostic{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;user-select:text;padding:12px;background:#fff;border-radius:12px}#phoneDiagnostics{margin-top:14px}#phoneDiagnostics summary{min-height:44px;padding:10px 0;cursor:pointer}
+
+.card-archive{--archive-ink:#334638;--archive-muted:#75816f;--archive-line:#dfe5d8;box-sizing:border-box;min-width:0;margin:20px 0;padding:24px;border:1px solid var(--archive-line);border-radius:18px;background:#fffefb;color:var(--archive-ink);overflow-wrap:anywhere}
+.card-archive *{box-sizing:border-box}
+.card-archive .archive-title-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-archive h2{font-size:19px;line-height:1.4;margin:0}
+.card-archive h3{font-size:15px;line-height:1.5;margin:22px 0 12px}
+.card-archive .archive-private{display:inline-block;font-size:11px;line-height:1.4;padding:6px 9px;background:#ecf0e6;color:#627455;border-radius:99px}
+.card-archive p{font-size:13px;line-height:1.65;margin:8px 0;color:var(--archive-muted)}
+.card-archive .archive-status{min-height:23px;color:#527047}
+.card-archive .archive-status.archive-error{color:#a15139}
+.card-archive .archive-form{display:grid;gap:12px}
+.card-archive label{display:block;font-size:12px;font-weight:550;line-height:1.5;color:#63735b;margin:0}
+.card-archive input,.card-archive select,.card-archive textarea{display:block;width:100%;min-width:0;max-width:100%;min-height:46px;border:1px solid #d6dfce;border-radius:10px;padding:11px 12px;margin-top:7px;font:inherit;font-size:16px;line-height:1.5;background:#fbfcf7;color:#334638}
+.card-archive textarea{resize:vertical;min-height:120px}
+.card-archive input[type=file]{font-size:13px;background:#f5f7ef;white-space:normal;overflow-wrap:anywhere;padding:9px}
+.card-archive input[type=file]::file-selector-button{font:inherit;padding:8px 9px;margin-right:10px;border:0;border-radius:6px;background:#e3ebd9;color:#47603b}
+.card-archive .archive-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:11px 15px;border:1px solid #d4ddcb;border-radius:10px;background:#f6f8f1;color:#4a6540;font:inherit;font-size:13px;line-height:1.4;text-align:center;cursor:pointer;white-space:normal}
+.card-archive .archive-button.archive-primary{background:#38533d;border-color:#38533d;color:#fff}
+.card-archive .archive-button[hidden]{display:none!important}
+.card-archive .archive-button.archive-remove{color:#9c5b46;border-color:#eadacf;background:#fffaf5}
+.card-archive .archive-button:disabled,.card-archive input:disabled,.card-archive select:disabled,.card-archive textarea:disabled{opacity:.55;cursor:default}
+.card-archive .archive-button:focus-visible,.card-archive input:focus-visible,.card-archive select:focus-visible,.card-archive textarea:focus-visible{outline:3px solid #a0b98e;outline-offset:3px}
+.card-archive .archive-dirty{margin:0;color:#9b7644;font-size:12px;min-height:18px}
+.card-archive .archive-upload{display:grid;gap:12px;margin-top:14px;border-top:1px solid var(--archive-line);padding-top:3px}
+.card-archive .archive-upload h3{margin-bottom:0}
+.card-archive .archive-confidentiality{padding:11px 12px;border-left:3px solid #bbcbb0;background:#f2f6ec;border-radius:0 8px 8px 0;font-size:12px;color:#66745d;margin:0}
+.card-archive .archive-file-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.card-archive .archive-file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px;border:1px solid var(--archive-line);border-radius:12px;background:#fafbf6;min-width:0}
+.card-archive .archive-file-info{min-width:0;align-self:center}
+.card-archive .archive-file-info strong{font-size:13px;line-height:1.6;font-weight:600;word-break:break-word}
+.card-archive .archive-file-info p{font-size:11px;margin:3px 0 0}
+.card-archive .archive-file-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.card-archive .archive-file-actions .archive-button{font-size:12px;padding:10px 11px}
+.card-archive .archive-remove-confirm{grid-column:1/-1;padding-top:8px;border-top:1px solid #e5e9df}
+.card-archive .archive-remove-confirm[hidden],.card-archive .archive-empty[hidden]{display:none!important}
+.card-archive .archive-remove-confirm .archive-button{margin:7px 7px 0 0}
+.card-archive .archive-empty{padding:15px 0}
+@media(max-width:600px){.card-archive{padding:18px;border-radius:17px;margin:18px 0}.card-archive h2{font-size:17px}.card-archive .archive-file{grid-template-columns:minmax(0,1fr)}.card-archive .archive-file-actions{display:grid;grid-template-columns:1fr 1fr}.card-archive .archive-form>.archive-button,.card-archive .archive-upload>.archive-button{width:100%}.card-archive .archive-button{min-height:46px}.card-archive .archive-private{font-size:10px}}
+
+/* Component base is shared by desktop editor and standalone phone shell. */
+.presentation-studio,.presentation-studio *{box-sizing:border-box}.presentation-studio [hidden],.presentation-studio .hidden{display:none!important}.presentation-studio .heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:26px 0 22px}.presentation-studio .heading>div{min-width:0}.presentation-studio h1{font-size:30px;line-height:1.2;letter-spacing:-.7px;margin:0 0 12px;color:#293b2c;overflow-wrap:anywhere}.presentation-studio .heading p{font-size:14px;line-height:1.65;color:#718066;margin:0}.presentation-studio .eyebrow{font-size:10px;letter-spacing:1.4px;margin:0 0 12px;color:#829173}.presentation-studio .muted{font-size:12px;line-height:1.65;color:#75836a;margin:0}.presentation-studio .btn{display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:44px;max-width:100%;padding:11px 14px;border:1px solid #d4decc;border-radius:9px;background:#ffffff;color:#4d6444;font:inherit;font-size:13px;line-height:1.4;text-align:center;text-decoration:none;white-space:normal;overflow-wrap:anywhere;cursor:pointer;touch-action:manipulation}.presentation-studio .btn.primary{background:#36563b;border-color:#36563b;color:#ffffff;font-weight:600}.presentation-studio .btn:disabled{opacity:.5;cursor:default}.presentation-studio .btn:focus-visible,.presentation-studio input:focus-visible,.presentation-studio textarea:focus-visible,.presentation-studio select:focus-visible{outline:3px solid #a7bd9766;outline-offset:2px}.presentation-studio .presentation-controls{background:#ffffff;border:1px solid #dce4d4;border-radius:13px}.presentation-studio label{display:block;margin:15px 0 8px;color:#5a7050;font-size:12px;font-weight:500;line-height:1.5}.presentation-studio input,.presentation-studio textarea,.presentation-studio select{display:block;min-width:0;max-width:100%;width:100%;min-height:44px;margin-top:7px;padding:10px 11px;border:1px solid #d9e1d1;border-radius:8px;background:#fcfdf9;color:#2d402b;font:inherit;font-size:14px;line-height:1.5}.presentation-studio textarea{resize:vertical}.presentation-studio input[type=checkbox]{display:inline-block;flex:0 0 auto;width:20px;max-width:20px;height:20px;min-height:20px;padding:0;margin:0;accent-color:#496c42}.presentation-studio input[type=range]{min-height:44px;border:0;background:transparent}.presentation-studio input[type=color]{height:44px;padding:4px;cursor:pointer}.presentation-studio .presentation-block-row label{margin:0}.presentation-studio .presentation-block-row .btn{min-height:44px}.presentation-studio .presentation-proof-tools h2{font-size:18px;color:#293b2c}
+@media(max-width:650px){.presentation-studio .heading{margin:22px 0 20px}.presentation-studio h1{font-size:27px;line-height:1.2}.presentation-studio .heading p{font-size:13px}.presentation-studio input,.presentation-studio textarea,.presentation-studio select{font-size:16px;min-height:48px;padding:11px;border-radius:10px}.presentation-studio input[type=checkbox]{width:22px;max-width:22px;height:22px;min-height:22px;padding:0}.presentation-studio input[type=range]{padding:8px 0}.presentation-studio input[type=color]{padding:4px}.presentation-studio .btn{min-height:44px;border-radius:10px}.presentation-studio .presentation-proof-tools{gap:8px}.presentation-studio .presentation-proof-tools .btn{flex:0 0 auto;max-width:45%}}
+.presentation-studio{min-width:0}.presentation-toolbar{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:14px}.presentation-status{margin:8px 0 20px;padding:12px 15px;border:1px solid #dce4d5;border-radius:10px;color:#53634b;background:#f4f7ef;font-size:13px;overflow-wrap:anywhere}.presentation-layout{display:grid;grid-template-columns:minmax(265px,330px) minmax(0,1fr);gap:24px;align-items:start}.presentation-controls{padding:20px;min-width:0;position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}.presentation-tabs{display:grid;grid-template-columns:1fr;gap:6px;margin-bottom:20px}.presentation-tabs .btn{text-align:left;font-size:13px}.presentation-tabs .chosen{background:#eaf0e4;border-color:#9aaf8c;color:#324c30;font-weight:600}.presentation-controls h3{margin:25px 0 12px;font-size:13px;color:#52644a}.presentation-controls textarea{font-size:13px}.presentation-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.presentation-colors input{height:44px;padding:4px}.presentation-control-panel>label:has(input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:44px}.presentation-control-panel input[type=checkbox]{width:18px;height:18px;accent-color:#496c42}.presentation-block-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid #e5eade}.presentation-block-row label{display:flex;align-items:center;gap:8px;margin:0;font-size:12px}.presentation-block-row .btn{padding:5px;min-height:44px}.presentation-template-tools{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 14px}.presentation-template-tools .btn{font-size:11px;padding:8px 9px}.presentation-previews{min-width:0}.presentation-preview-card{min-width:0;background:#e8ebe3;padding:18px;border:1px solid #dce3d4;border-radius:14px}.presentation-preview-label{font-size:11px;letter-spacing:.5px;margin:0 0 13px;color:#66775c}.presentation-frame{display:block;background:#fff;width:100%;height:900px;min-height:600px;border:0;box-shadow:0 4px 16px #25392218;border-radius:3px}.presentation-image{display:block;width:100%;height:auto;max-height:80vh;object-fit:contain;object-position:center top;margin:auto}.presentation-empty{padding:90px 28px;text-align:center;min-height:300px;background:#f7f8f3;border:1px dashed #b7c7ab;border-radius:10px}.presentation-preview-card>.btn{display:block;margin:16px auto 0;min-width:160px}.presentation-controls input[type=range]{padding:8px 0;accent-color:#4c6944}.presentation-controls .btn:disabled{opacity:.45;cursor:default}
+@media(max-width:1150px){.presentation-layout{grid-template-columns:minmax(240px,290px) minmax(0,1fr);gap:16px}.presentation-controls{padding:16px}.presentation-preview-card{padding:12px}.presentation-frame{height:780px}}
+@media(max-width:850px){.presentation-layout{grid-template-columns:minmax(0,1fr)}.presentation-controls{position:static;max-height:none}.presentation-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}.presentation-tabs .btn{text-align:center;white-space:normal}.presentation-frame{height:850px}.presentation-image{max-height:none}.presentation-preview-card{padding:10px}}
+@media(max-width:650px){.presentation-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.presentation-toolbar .btn{font-size:12px;min-height:48px}.presentation-toolbar .primary{grid-column:1/-1}.presentation-tabs{gap:5px}.presentation-tabs .btn{font-size:12px;padding:8px 5px}.presentation-control-panel>label{font-size:13px}.presentation-controls textarea{font-size:16px}.presentation-block-row{grid-template-columns:minmax(0,1fr) 44px 44px;gap:7px;min-height:56px}.presentation-block-row .btn{min-height:44px}.presentation-block-row label{font-size:13px;min-height:44px}.presentation-controls input[type=checkbox]{width:22px;height:22px}.presentation-controls label:has(input[type=checkbox]){min-height:44px}.presentation-template-tools .btn{font-size:13px;flex:1}.presentation-frame{height:650px;min-height:480px}.presentation-colors input{min-height:48px}.presentation-status{font-size:12px;padding:12px}.presentation-preview-label{font-size:10px;line-height:1.5}.presentation-layout{gap:10px}.presentation-empty{padding:70px 20px}.presentation-image{width:100%}}
+
+.presentation-proof-dialog{width:min(1120px,96vw);height:min(94svh,1100px);max-width:96vw;max-height:94svh;padding:20px;border:1px solid #dce4d5;border-radius:16px;color:#29352e;background:#f6f8f2;overflow:auto}.presentation-proof-dialog::backdrop{background:#18271ebd}.presentation-proof-tools{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px}.presentation-proof-tools h2{margin:0}.presentation-proof-dialog>a{display:inline-flex;align-items:center;min-height:44px;margin:12px 0;text-decoration:none}.presentation-proof-frame{display:block;width:100%;height:calc(94svh - 200px);min-height:280px;border:0;background:#d5dad0}.presentation-proof-tools .btn{min-height:44px}@media(max-width:650px){.presentation-proof-dialog{padding:14px;width:calc(100vw - 12px);max-width:calc(100vw - 12px);height:calc(100svh - 16px);max-height:calc(100svh - 16px);border-radius:13px}.presentation-proof-frame{height:calc(100svh - 210px)}.presentation-proof-tools h2{font-size:18px}.presentation-proof-dialog .muted{font-size:12px}}
+
+/* The publication editor uses its own navy canvas; operator controls stay readable. */
+.presentation-brand-settings>summary,.presentation-theme-settings>summary,.presentation-preview-card>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;font-size:13px;line-height:1.5;color:#3d5542}.presentation-brand-settings,.presentation-theme-settings{border-bottom:1px solid #dce4d5;padding:4px 0 14px}.presentation-theme-settings{margin-top:14px}.presentation-brand-files{display:grid;gap:14px;margin:18px 0}.presentation-brand-file{min-width:0;padding:12px;border:1px solid #dce4d5;border-radius:10px;background:#f7f9f3}.presentation-brand-file label{margin-top:0}.presentation-brand-file input[type=file]{font-size:12px;padding:8px;overflow:hidden}.presentation-brand-thumb{width:72px;height:72px;object-fit:contain;display:block;margin:10px 0;border-radius:50%;background:#07162b;border:1px solid #b79665}.presentation-brand-file .btn{font-size:12px;margin-top:8px}.presentation-canvas-mount{min-width:0;max-width:100%;margin-bottom:16px}.presentation-studio .presentation-previews>details{margin-top:16px}.presentation-studio .presentation-previews>details>summary{margin-bottom:12px}.presentation-studio .presentation-image[hidden]{display:none!important}.presentation-studio .presentation-colors{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.presentation-studio .presentation-colors label{margin-top:7px;font-size:11px}.presentation-studio .presentation-controls{max-height:calc(100svh - 36px)}.presentation-studio #presentationLegacyExport[hidden]{display:none!important}@media(max-width:850px){.presentation-studio .presentation-controls{max-height:none}}@media(max-width:650px){.presentation-brand-settings>summary,.presentation-theme-settings>summary,.presentation-preview-card>summary{font-size:14px}.presentation-brand-files{gap:12px}.presentation-brand-file input[type=file]{font-size:16px}.presentation-studio .presentation-colors label{font-size:12px}.presentation-brand-file .btn{min-height:44px;font-size:13px}.presentation-studio .presentation-frame{min-height:420px}.presentation-studio .presentation-layout{gap:14px}}
+@media(max-width:850px){.presentation-studio .presentation-previews{order:-1}.presentation-studio .presentation-controls{order:1}}
+
+.design-canvas-editor{border:1px solid #d7dfd0;border-radius:16px;padding:18px;background:#f6f8f2;margin:18px 0;color:#293a2b;min-width:0}.design-canvas-heading h3{margin:0 0 7px;font-size:20px}.design-canvas-heading p{margin:0 0 16px}.design-canvas-toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin-bottom:14px}.design-canvas-toolbar label{margin:0;font-size:12px;min-width:0}.design-canvas-toolbar label:has(select){flex:1 1 170px}.design-canvas-toolbar select{display:block;min-height:44px;font-size:16px;margin-top:6px;width:100%}.design-canvas-toolbar label:has(input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:44px}.design-canvas-toolbar input[type=checkbox]{width:20px;height:20px}.design-canvas-toolbar .btn{min-height:44px}.design-canvas-workbench{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}.design-canvas-workarea{min-width:0}.design-canvas-viewport{max-width:100%;min-width:0;overflow:auto;max-height:78vh;min-height:240px;padding:14px;background:#d8ded5;border:1px solid #cbd4c4;border-radius:12px;overscroll-behavior:contain}.design-canvas-page{position:relative;margin:0 auto;flex-shrink:0;box-shadow:0 5px 24px #10271633;background:#07162b;isolation:isolate}.design-canvas-page>canvas{display:block;width:100%;height:100%}.design-canvas-overlay{position:absolute;inset:0;touch-action:auto;z-index:1}.design-canvas-page.has-grid .design-canvas-overlay{background-image:linear-gradient(#ffffff0a 1px,transparent 1px),linear-gradient(90deg,#ffffff0a 1px,transparent 1px);background-size:var(--dce-grid,16px) var(--dce-grid,16px)}.design-canvas-hit{position:absolute;min-width:4px;min-height:4px;border:1px solid transparent;cursor:move;touch-action:none;outline:none}.design-canvas-hit:hover{border-color:#65caeaa0}.design-canvas-hit:focus-visible{outline:2px solid #fae2a9;outline-offset:2px}.design-canvas-hit.is-selected{border:2px solid #55c5ec;background:#55c5ec08}.design-canvas-hit.is-locked{cursor:default}.design-canvas-resize{position:absolute;bottom:-6px;right:-6px;width:13px;height:13px;background:#fff;border:2px solid #229bc7;border-radius:3px;cursor:nwse-resize;touch-action:none;z-index:100}.design-canvas-inspector{position:static!important;width:auto!important;min-width:0!important;padding:14px!important;margin:0!important;background:white!important;border:1px solid #d6dfce!important;border-radius:12px!important;color:#293a2b!important;box-shadow:none!important;overflow:hidden}.design-canvas-inspector h4{margin:0 0 12px;font-size:15px;line-height:1.4}.design-canvas-inspector label{display:block;font-size:12px;font-weight:500;line-height:1.4;margin:12px 0 0}.design-canvas-inspector input:not([type=checkbox]):not([type=range]),.design-canvas-inspector select,.design-canvas-inspector textarea{display:block;width:100%;min-width:0;max-width:100%;font-size:16px;min-height:44px;padding:8px;margin-top:5px;border:1px solid #ccd6c4;border-radius:7px;background:#fcfdf9;box-sizing:border-box}.design-canvas-inspector textarea{line-height:1.5;resize:vertical}.design-canvas-inspector input[type=range]{width:100%;min-height:34px;margin-top:4px}.design-canvas-inspector input[type=color]{padding:4px!important;height:44px}.design-canvas-inspector label:has(input[type=checkbox]){display:flex;gap:10px;align-items:center;min-height:36px}.design-canvas-inspector input[type=checkbox]{width:20px;height:20px;margin:0}.design-canvas-fields{border:0;padding:0;margin:0;min-width:0}.design-canvas-fields:disabled{opacity:.4}.design-canvas-numbers{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 8px}.design-canvas-actions{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.design-canvas-actions .btn{flex:1 1 100px;font-size:12px;min-height:40px;padding:7px}.design-canvas-actions:has([id^=designCanvasAlign-]) .btn{flex:1 1 30px;min-width:30px}.design-canvas-layers{display:flex;flex-direction:column;gap:5px;max-height:240px;overflow:auto;padding:3px}.design-canvas-layers .btn{text-align:left;min-height:36px;font-size:12px;white-space:normal;overflow-wrap:anywhere}.design-canvas-layers [aria-pressed=true]{background:#e4f2f8;border-color:#58a6c1}.design-canvas-warnings{font-size:12px;line-height:1.5;color:#8b5423;margin:7px 0;overflow-wrap:anywhere}.design-canvas-workarea>.muted{font-size:11px;margin:10px 0 0;overflow-wrap:anywhere}@media(max-width:1050px){.design-canvas-workbench{grid-template-columns:minmax(0,1fr)}.design-canvas-inspector{max-width:100%;width:100%!important}.design-canvas-inspector .design-canvas-layers{max-height:180px}.design-canvas-viewport{max-height:70vh}}@media(max-width:650px){.design-canvas-editor{padding:12px;margin:14px -4px;border-radius:12px}.design-canvas-heading h3{font-size:18px}.design-canvas-toolbar{gap:8px}.design-canvas-toolbar label:has(select){flex-basis:140px}.design-canvas-toolbar .btn{flex:1 1 100px}.design-canvas-viewport{padding:10px;max-height:68svh;min-height:170px}.design-canvas-resize{width:20px;height:20px;bottom:-9px;right:-9px}.design-canvas-inspector{padding:12px!important}.design-canvas-actions .btn,.design-canvas-layers .btn{min-height:44px;font-size:13px}.design-canvas-inspector label{font-size:13px}.design-canvas-hit.is-selected{border-width:2px}}
+
+.design-canvas-toolbar input[type=color]{display:block;width:76px;max-width:100%;height:44px;padding:4px;margin-top:6px;border:1px solid #cbd4c4;border-radius:7px}.design-canvas-inspector input[type=range]{min-height:44px}.design-canvas-inspector label:has(input[type=checkbox]){min-height:44px}
+
+.university-route-editor{margin:18px 0;padding:16px;border:1px solid var(--line,#cbd5e1);border-radius:14px}.university-route-editor h3{margin-top:0}.university-route-entry{margin:12px 0;padding:12px;border:1px solid var(--line,#cbd5e1);border-radius:10px}.university-route-entry>summary{cursor:pointer;overflow-wrap:anywhere;font-weight:650}.university-route-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.university-route-fields label{display:grid;gap:5px;font-size:.9rem;min-width:0;overflow-wrap:anywhere}.university-route-fields input,.university-route-fields select,.university-route-fields textarea{width:100%;max-width:100%;min-width:0;box-sizing:border-box;font:inherit}.university-route-fields textarea{resize:vertical}.university-route-preview-row{padding:12px 0;border-bottom:1px solid var(--line,#cbd5e1);overflow-wrap:anywhere}.university-route-preview-row a{display:inline-block;margin:4px 12px 4px 0}.university-route-warning{color:#a95c19}.university-route-editor>.btn{margin-top:12px}@media(max-width:600px){.university-route-editor{padding:12px}.university-route-fields{grid-template-columns:minmax(0,1fr)}.university-route-preview-row a{display:block;margin:9px 0}.university-route-fields input,.university-route-fields select,.university-route-fields textarea{font-size:16px}}
+
+.phone-route-controller{min-width:0;max-width:100%;margin:14px 0}.phone-route-controller>summary{min-height:44px;cursor:pointer;font-weight:650;overflow-wrap:anywhere}.phone-route-controller p{overflow-wrap:anywhere}.phone-route-controller-actions{display:flex;flex-wrap:wrap;gap:8px}.phone-route-controller-actions .btn{min-height:44px;flex:1 1 160px;max-width:100%;box-sizing:border-box}
+
+.listing-watch{min-width:0;max-width:100%;margin:18px 0;padding:20px;border:1px solid var(--line,#d9ded7);border-radius:16px;background:var(--panel,#fff)}.listing-watch *{box-sizing:border-box}.listing-watch p,.listing-watch h2,.listing-watch h3{overflow-wrap:anywhere}.listing-watch-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}.listing-watch-heading h2{margin:3px 0 8px}.listing-watch-count{display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:6px 10px;border-radius:999px;background:var(--accent,#315c43);color:#fff;font-weight:700}.listing-watch .muted{line-height:1.6}.listing-watch-settings{border-top:1px solid var(--line,#d9ded7);border-bottom:1px solid var(--line,#d9ded7);margin:14px 0;padding:8px 0}.listing-watch-settings summary{cursor:pointer;min-height:44px;line-height:1.5;padding:10px 0;font-weight:600}.listing-watch-settings form>label{display:block;margin:12px 0}.listing-watch input[type=url],.listing-watch select{display:block;width:100%;min-width:0;max-width:100%;font:inherit;font-size:16px;border:1px solid var(--line,#cbd5cd);border-radius:9px;padding:10px;background:var(--bg,#f8faf7);color:inherit}.listing-watch input[type=url]{margin-top:7px}.listing-watch .listing-watch-toggle{display:flex;align-items:center;gap:10px;line-height:1.5}.listing-watch-toggle input{flex:0 0 20px;width:20px;height:20px;margin:0}.listing-watch-settings .btn{min-height:44px;max-width:100%}.listing-watch-config-note{font-size:13px;line-height:1.5;min-height:20px}.listing-watch-status{font-weight:600;line-height:1.6;margin:15px 0 8px}.listing-watch-timing,.listing-watch-coverage{font-size:12px;margin:7px 0}.listing-watch-toolbar{display:flex;flex-wrap:wrap;gap:9px;align-items:stretch;margin:16px 0}.listing-watch-toolbar select{flex:1 1 180px;width:auto}.listing-watch .btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;white-space:normal;overflow-wrap:anywhere;text-align:center;text-decoration:none;max-width:100%;cursor:pointer}.listing-watch-list{display:grid;gap:12px;min-width:0}.listing-watch-item{min-width:0;padding:15px;border:1px solid var(--line,#d9ded7);border-radius:12px}.listing-watch-item h3{margin:0 0 9px;font-size:17px;line-height:1.5}.listing-watch-meta{display:flex;flex-wrap:wrap;gap:8px 13px;align-items:center;font-size:14px;line-height:1.5}.listing-watch-new{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--accent,#315c43);border:1px solid currentColor;border-radius:999px;padding:3px 7px}.listing-watch-date{font-size:13px;line-height:1.6;margin:8px 0}.listing-watch-item-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.listing-watch>.btn:last-child{margin-top:14px;width:100%}@media(max-width:650px){.listing-watch{padding:14px;border-radius:12px}.listing-watch-heading{align-items:flex-start}.listing-watch-heading h2{font-size:23px}.listing-watch-toolbar{gap:8px}.listing-watch-toolbar select{flex-basis:100%;width:100%}.listing-watch-toolbar>.btn{flex:1 1 140px}.listing-watch-item{padding:12px}.listing-watch-item-actions>.btn{flex:1 1 145px}.listing-watch-settings form>.btn{width:100%}.listing-watch-count{flex-shrink:0}}
+
+.import-audit{margin:14px 0;padding:15px;border:1px solid #435069;border-radius:14px;background:#0c1a2e;color:#eef3fb;font:14px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}.import-audit summary{font-weight:700;cursor:pointer}.import-audit-note{color:#aebbd0}.import-audit-status{white-space:pre-wrap}.import-audit-actions{display:flex;gap:8px;flex-wrap:wrap}.import-audit-actions button{padding:10px 12px;min-height:44px;border:1px solid #536580;border-radius:10px;background:#162a45;color:#fff;cursor:pointer}.import-audit-actions button:disabled{opacity:.55}.import-audit-actions [hidden]{display:none}.import-audit-checks{padding-left:24px;font-size:13px}.import-audit-checks:empty{display:none}
+</style>
+</head>
+<body>
+<header class="phone-header"><a class="phone-brand" href="/phone/" aria-label="МОСТ · Главная">МОСТ<span>↗</span></a><span id="phoneConnection" class="connection" role="status">Подключаемся</span></header>
+<main class="phone-main">
+<section id="phoneLoading" class="phone-loading" aria-label="Подробности подключения">
+  <details id="phoneLoadDetails" open>
+    <summary><span id="phoneLoadTitle" role="status">Проверяем подключение</span><span id="phoneLoadElapsed" class="load-elapsed">0,0 с</span></summary>
+    <div class="load-content"><p id="phoneLoadHost" class="load-host"></p>
+      <ol class="load-steps">
+        <li id="phoneLoadPage" data-state="done"><span class="load-mark" aria-hidden="true">✓</span><span><strong>Страница открыта</strong><small id="phoneLoadPageNote">Интерфейс получен браузером</small></span></li>
+        <li id="phoneLoadConnection" data-state="active"><span class="load-mark" aria-hidden="true">…</span><span><strong>Связь с Mac</strong><small id="phoneLoadConnectionNote">Ждём ответ сервера</small></span></li>
+        <li id="phoneLoadSession" data-state="waiting"><span class="load-mark" aria-hidden="true">·</span><span><strong>Вход на телефон</strong><small id="phoneLoadSessionNote">Проверим действующую сессию</small></span></li>
+        <li id="phoneLoadCards" data-state="waiting"><span class="load-mark" aria-hidden="true">·</span><span><strong>Карточки</strong><small id="phoneLoadCardsNote">Загрузим после входа</small></span></li>
+      </ol>
+      <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
+      <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v19</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+    </div>
+  </details>
+</section>
+<section id="phonePair" class="pair-screen">
+  <div class="eyebrow">КОМПЬЮТЕР СОБИРАЕТ · ТЕЛЕФОН ПУБЛИКУЕТ</div>
+  <h1>Ваши объявления.<br>Теперь под рукой.</h1>
+  <p class="lead">Готовые китайские тексты и фотографии приходят сюда с вашего Mac.</p>
+  <div class="pair-card"><div class="pair-symbol" aria-hidden="true">⌁</div><h2>Соединить с компьютером</h2><p>На Mac откройте сайт → «Телефон». Там показан обновляемый код из 8 цифр. Введите его здесь. <span id="phoneNetworkHelp">Локальная ссылка работает в одной сети; внешняя HTTPS-ссылка — через мобильный интернет.</span></p><form id="phonePairForm"><label for="phonePairCode">8 цифр с экрана Mac</label><input id="phonePairCode" type="text" inputmode="numeric" enterkeyhint="go" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" placeholder="1234 5678" aria-describedby="phonePairHelp" required><button id="phonePairSubmit" class="button primary" type="submit">Подключить телефон <span aria-hidden="true">↗</span></button></form><p id="phonePairStatus" class="status-note" role="status"></p><button id="phoneReconnect" class="button secondary hidden" type="button">Проверить связь ещё раз</button><p id="phonePairHelp" class="quiet">После установки на экран «Домой» может понадобиться отдельный вход. Откройте установленное приложение и введите текущие 8 цифр из раздела «Телефон» на Mac. Если код использован или истёк, на компьютере появится новый.</p></div>
+  <p class="quiet">Карточки открываются после подключения. Mac должен оставаться включённым.</p>
+</section>
+<div id="phoneWorkspace" class="hidden">
+  <section id="phoneCardsView" class="phone-view">
+    <div class="section-title"><div><div class="eyebrow">ВАША МОБИЛЬНАЯ СТУДИЯ</div><h1>Объявления</h1></div><button id="phoneRefresh" class="icon-button" type="button" aria-label="Обновить карточки">↻</button></div>
+    <p id="phoneSync" class="sync-note" role="status">Ждём карточки с Mac</p><div id="phoneInstallTop" class="install-banner"></div>
+    <div class="search-wrap"><label class="visually-hidden" for="phoneSearch">Поиск по карточкам</label><input id="phoneSearch" type="search" placeholder="Метро, название, цена…" enterkeyhint="search"></div>
+    <div id="phoneCards" class="cards-list"></div>
+    <div id="phoneEmpty" class="empty-state hidden"><span aria-hidden="true">▧</span><h2>Здесь появятся квартиры</h2><p>Загрузите объявление на Mac или отправьте ссылку с телефона. Компьютер подготовит карточку и фотографии.</p><button class="button primary" type="button" data-phone-view="import">Отправить ссылку</button></div>
+    <button id="phoneMore" class="button secondary hidden" type="button">Показать ещё</button>
+  </section>
+  <section id="phoneWatchView" class="phone-view hidden"><div id="phoneWatchMount"></div></section><section id="phoneImportView" class="phone-view hidden">
+    <div class="eyebrow">ПОДГОТОВКА НА КОМПЬЮТЕРЕ</div><h1>Добавить квартиру</h1><p class="lead">Отправьте ссылку. Mac откроет объявление, соберёт данные и подготовит китайский текст.</p>
+    <form id="phoneImportForm" class="surface"><label for="phoneImportUrl">Ссылка ЦИАН или Авито</label><input id="phoneImportUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://www.cian.ru/rent/flat/…" required><button id="phoneImportSubmit" class="button primary" type="submit">Подготовить на Mac <span aria-hidden="true">↗</span></button><p class="quiet">Если площадка попросит проверку, пройдите её в окне Chrome на компьютере.</p></form>
+    <div id="phoneImportDiagnostics"></div><div id="phoneJob" class="surface job-card hidden"><div class="job-heading"><span class="pulse-dot" aria-hidden="true"></span><h2 id="phoneJobTitle" role="status">Mac готовит объявление</h2></div><p id="phoneJobMessage" role="status"></p><div class="job-timing"><span id="phoneJobElapsed">Прошло 0 с</span><span id="phoneJobStageTime"></span></div><p id="phoneJobEstimate" class="job-estimate"></p><progress id="phoneJobCount" class="hidden" aria-label="Фотографии текущего этапа"></progress><details id="phoneJobDetails" open><summary>Этапы обработки на Mac</summary><ol id="phoneJobSteps" class="job-steps"></ol></details><p class="quiet">Chrome читает объявление, затем Mac создаёт текст и автоматически готовит фото. Телефон можно оставить открытым.</p><button id="phoneJobOpen" class="button secondary hidden" type="button">Открыть готовую карточку</button><button id="phoneJobRetry" class="button secondary hidden" type="button">Проверить состояние</button><button id="phoneJobRestart" class="button secondary hidden" type="button">Повторить обработку</button></div>
+  </section>
+  <section id="phoneDesignView" class="phone-view hidden"><p class="quiet">Дизайн использует последнюю открытую карточку. Сначала выберите квартиру в разделе «Карточки».</p><div id="phoneDesignMount"></div></section><section id="phoneSetupView" class="phone-view hidden">
+    <div class="eyebrow">ВСЁ ГОТОВО К РАБОТЕ</div><h1>Мой телефон</h1>
+    <div class="surface"><h2>МОСТ на экране «Домой»</h2><p>Открывайте студию как отдельное приложение. Кнопка установки исчезнет при запуске с экрана «Домой».</p><div id="phoneInstall"></div></div>
+    <div class="surface"><h2>Компьютер остаётся сервером</h2><p id="phoneNetworkDescription">Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Для обновления нужны включённый компьютер и доступ к его сети.</p><p id="phoneServerStatus" class="status-note"></p></div>
+    <div class="surface"><h2>Фотографии на iPhone</h2><p>В карточке нажмите «Поделиться фото» и выберите сохранение изображения в системном меню. Если меню недоступно, откройте фото и удерживайте его для сохранения.</p><p class="quiet">iPhone подтверждает сохранение в «Фото». Сайт не может записывать изображения в медиатеку без вашего действия. ZIP сохраняется в «Файлы».</p></div>
+  </section>
+  <section id="phoneDetailView" class="phone-view hidden">
+    <div class="detail-nav"><button id="phoneBack" class="text-button" type="button">← Все объявления</button><span id="phoneDetailStamp" class="quiet"></span></div>
+    <div id="phoneDetailLoading" class="surface" role="status">Открываем карточку с Mac…</div>
+    <article id="phoneDetail" class="hidden">
+      <div class="detail-heading"><div id="phoneDetailFacts" class="facts-row"></div><h1 id="phoneDetailTitle"></h1></div>
+      <section class="surface photo-surface"><div class="block-heading"><h2>Фотографии</h2><span id="phonePhotoCount"></span></div><div class="variant-switch" id="phonePhotoVariants"><button id="phoneCropVariant" class="active" type="button" aria-pressed="true">Готовые фото</button><button id="phoneOriginalVariant" type="button" aria-pressed="false">Оригиналы</button></div><div id="phonePhotos" class="phone-gallery" aria-label="Фотографии квартиры"></div><div class="gallery-nav"><button id="phonePhotoPrev" class="icon-button" type="button" aria-label="Предыдущее фото">←</button><span id="phonePhotoPosition"></span><button id="phonePhotoNext" class="icon-button" type="button" aria-label="Следующее фото">→</button></div><p id="phoneMediaStatus" class="status-note" role="status"></p><button id="phonePreparePhotos" class="button secondary hidden" type="button">Подготовить фотографии на Mac</button><button id="phoneAnalyzeFurniture" class="button secondary" type="button">Новое описание по всем фото</button><p class="quiet">Mac проверит мебель и технику и пересоберёт текст по полям карточки. Правки, сделанные во время анализа, сохранятся.</p><div id="phonePhotoInventory"></div><div class="photo-buttons"><button id="phoneSharePhoto" class="button primary" type="button">Поделиться фото</button><a id="phoneDownloadPhoto" class="button secondary" download>Скачать фото</a></div><div class="photo-links"><a id="phoneOpenPhoto" target="_blank" rel="noopener noreferrer">Открыть фото ↗</a><a id="phoneDownloadZip" download>Все фото · ZIP</a></div><p id="phoneShareHelp" class="quiet">«Поделиться фото» открывает системное меню. Для «Фото» выберите сохранение изображения.</p></section>
+      <section class="surface text-surface"><div class="block-heading"><h2>Китайский заголовок</h2><button class="text-button" id="phoneCopyTitle" type="button">Копировать</button></div><button id="phoneRewriteTitle" class="writing-button" type="button">↻ Другой заголовок</button><p id="phoneTitleCopy" class="chinese-title" lang="zh-Hans"></p></section>
+      <section class="surface text-surface"><div class="block-heading"><h2>Описание</h2><button class="text-button" id="phoneCopyBody" type="button">Копировать</button></div><button id="phoneRewriteBody" class="writing-button" type="button">↻ Другое описание</button><p id="phoneBody" class="post-body" lang="zh-Hans"></p></section>
+      <section class="surface text-surface"><div class="block-heading"><h2>Теги</h2><button class="text-button" id="phoneCopyTags" type="button">Копировать</button></div><button id="phoneRewriteTags" class="writing-button" type="button">↻ Другие теги</button><p id="phoneTags" class="tags" lang="zh-Hans"></p></section>
+      <section class="surface writing-studio"><h2>Текст и новая подача</h2><button id="phoneRewriteAll" class="button secondary" type="button">✨ Новая подача всего поста</button><p class="quiet">Заголовок, описание и теги создаются по фактам этой квартиры. Кнопка всего поста заменяет текущие правки текста.</p><p id="phoneWritingStatus" class="status-note" role="status"></p><details id="phoneLanguageStudio"><summary>Своё описание: с русского на китайский</summary><p id="phoneLanguageStats" class="language-stats">Словарь и варианты шаблонов учитываются отдельно.</p><label for="phoneLanguagePart">Куда сохранить результат</label><select id="phoneLanguagePart"><option value="body">Описание</option><option value="title">Заголовок</option><option value="tags">Теги</option></select><label for="phoneRussianDraft">Ваш текст по-русски</label><textarea id="phoneRussianDraft" rows="5" maxlength="10000" placeholder="Например: квартира 48 м², есть холодильник и рабочий стол. Животные разрешены."></textarea><button id="phoneTranslateDraft" class="button secondary" type="button">Перевести на китайский</button><label for="phoneChineseDraft">Китайский текст · можно отредактировать</label><textarea id="phoneChineseDraft" rows="6" maxlength="20000" lang="zh-Hans" placeholder="Здесь появится перевод"></textarea><p id="phoneTranslationReview" class="translation-review" role="status">Неизвестные фразы будут показаны для проверки.</p><button id="phoneApplyDraft" class="button primary" type="button" disabled>Сохранить текст в карточку</button><p class="quiet">Перевод сначала появляется здесь. Сохранение меняет выбранный текст этой карточки.</p></details></section>
+      <section class="surface"><div id="phoneRoutesMount"></div></section><section class="surface"><h2>Материалы объявления</h2><button id="phoneDesignCard" class="button secondary" type="button">Оформить intro, outro и PDF</button><div id="phoneFilesMount"></div></section><div id="phoneArchiveMount"></div><button id="phoneCopyAll" class="button primary copy-all" type="button">Скопировать публикацию целиком</button>
+    </article>
+  </section>
+</div>
+</main>
+<nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="watch"><span aria-hidden="true">◉</span>Новое</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="design"><span aria-hidden="true">◈</span>Дизайн</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
+<dialog id="phonePhotoViewer" class="phone-photo-viewer" aria-label="Сохранить фотографию"><div class="viewer-head"><h2>Сохранить в «Фото»</h2><button id="phoneViewerClose" class="icon-button" type="button" aria-label="Закрыть фото">×</button></div><img id="phoneViewerImage" alt="Фотография для сохранения"><p>Удерживайте изображение и выберите «Сохранить в Фото» или «Добавить в Фото» в меню iPhone.</p></dialog><div id="phoneToast" class="phone-toast hidden" role="status"></div>
+<script>/* Independent ES5 startup guard: it must run even when the module cannot parse. */
+(function () {
+  'use strict';
+  var version = 'v19', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
+  var moduleStarted = false, probeTimer = 0, probing = false;
+  function el(id) { return document.getElementById(id); }
+  function text(id, value) { var node = el(id); if (node) node.textContent = value; }
+  function show(id) { var node = el(id); if (node) node.classList.remove('hidden'); }
+  function browser() {
+    var ua = navigator.userAgent || '', ios = /(?:CPU (?:iPhone )?OS|iPhone OS) ([\d_]+)/.exec(ua), safari = /Version\/([\d.]+)/.exec(ua);
+    return (ios ? 'iOS ' + ios[1].replace(/_/g, '.') : 'браузер') + (safari ? ' · Safari ' + safari[1] : '') + (navigator.standalone ? ' · с экрана Домой' : '');
+  }
+  function update() {
+    var stages = {script: 'Запуск скрипта', initialization: 'Инициализация', connection: 'Связь с Mac', session: 'Проверка сессии', cards: 'Карточки', ready: 'Готово'}, phases = {request: 'ожидаем заголовки', body: 'читаем данные', complete: 'ответ получен'};
+    text('phoneDiagnosticText', 'Версия ' + version + '\n' + browser() + '\nЭтап: ' + (stages[stage] || stage) + ' (' + stage + ')'  + (route ? ' · запрос: ' + route : '') + (phase ? ' · ' + (phases[phase] || phase) : '') + '\nВремя: ' + ((Date.now() - started) / 1000).toFixed(1) + ' с' + (http ? '\nHTTP: ' + http : '') + (code ? '\nКод: ' + code : '') + (errorType ? '\nJavaScript: ' + errorType + (line ? ', строка ' + line : '') : '') + (probe ? '\nПроверка сервера: ' + probe : '') + (navigator.onLine === false ? '\nБраузер сообщает: нет интернета' : ''));
+  }
+  function fail(reason, message) {
+    if (done) return;
+    done = true; clearTimeout(timer); code = reason; update();
+    try { var stopped = document.createEvent('Event'); stopped.initEvent('redcn-phone-start-failed', false, false); window.dispatchEvent(stopped); } catch (ignore) {}
+    var loading = el('phoneLoading'); if (loading) loading.setAttribute('data-result', 'error');
+    var details = el('phoneLoadDetails'); if (details) details.open = true;
+    text('phoneConnection', 'Подключение остановлено'); text('phoneLoadTitle', 'Не удалось завершить подключение');
+    text('phoneLoadElapsed', ((Date.now() - started) / 1000).toFixed(1) + ' с');
+    text('phoneLoadHelp', message); show('phoneLoadRetry'); if (el('phoneDiagnostics')) el('phoneDiagnostics').open = true;
+    var retry = el('phoneLoadRetry'); if (retry) { retry.disabled = false; retry.onclick = reload; }
+    var rowId = stage === 'cards' ? 'Cards' : stage === 'session' ? 'Session' : stage === 'script' ? 'Page' : 'Connection';
+    var row = el('phoneLoad' + rowId); if (row) { row.setAttribute('data-state', 'error'); var mark = row.querySelector('.load-mark'); if (mark) mark.textContent = '!'; }
+    text('phoneLoad' + rowId + 'Note', message);
+  }
+  function probeServer() {
+    if (probing) return; probing = true;
+    var xhr, ended = false;
+    function finish(value) { if (ended) return; ended = true; probing = false; clearTimeout(probeTimer); probe = value; update(); }
+    probe = 'проверяем отдельным запросом (до 4 с)'; update();
+    try {
+      xhr = new XMLHttpRequest(); xhr.open('GET', '/api/phone/state', true); xhr.setRequestHeader('Cache-Control', 'no-cache');
+      xhr.onload = function () {
+        var status = xhr.status, value = null;
+        try { value = JSON.parse(xhr.responseText); } catch (ignore) {}
+        if (status === 401) finish('Mac ответил HTTP 401 · для этого окна нужен код');
+        else if (status === 200 && value && typeof value.paired === 'boolean') finish('Mac ответил HTTP 200 · ' + (value.paired ? 'сессия действует' : 'нужен код'));
+        else finish('HTTP ' + status + (value ? ' · ответ приложения не распознан' : ' · вместо JSON получена другая страница'));
+      };
+      xhr.onerror = function () { finish('ответ не получен · сетевая ошибка, точная причина браузером не раскрыта'); };
+      probeTimer = setTimeout(function () { finish('ответ не получен за 4 с · проверьте сеть, внешний адрес и сервер на Mac'); try { xhr.abort(); } catch (ignore) {} }, 4000);
+      xhr.send();
+    } catch (ignore) { finish('независимая проверка недоступна в этом браузере'); }
+  }
+  function arm() {
+    clearTimeout(timer); var current = ++attempt;
+    timer = setTimeout(function () { if (current !== attempt || done) return; fail(moduleStarted ? 'BOOT_STALLED' : 'BOOT_NOT_STARTED', moduleStarted ? 'Приложение не завершило подключение за 10 секунд. Ниже указан последний выполненный этап.' : 'Скрипт приложения не запустился за 10 секунд. Возможна несовместимость браузера или блокировка загрузки.'); probeServer(); }, 10000);
+  }
+  function reload() {
+    // Keep the session and destination. Never clear cookies or private data.
+    try { if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistration('/phone/').then(function (registration) { if (registration) registration.update().catch(function () {}); }).catch(function () {}); } catch (ignore) {}
+    var parts = location.search.slice(1).split('&').filter(function (part) { return part && !/^reload=/.test(part); });
+    parts.push('reload=' + Date.now()); location.replace(location.pathname + '?' + parts.join('&') + location.hash);
+  }
+  window.redcnPhoneBoot = {
+    started: function () { moduleStarted = true; stage = 'initialization'; update(); },
+    begin: function () { done = false; started = Date.now(); stage = 'connection'; route = ''; phase = ''; http = 0; code = ''; errorType = ''; line = 0; probe = ''; arm(); update(); },
+    request: function (path, step, status) { if (done) return; var name = path.split('?')[0]; if (!/^(state|pair|cards)$/.test(name)) return; route = name; stage = name === 'cards' ? 'cards' : 'session'; phase = step; http = status || 0; update(); },
+    finish: function (result, info) { done = true; clearTimeout(timer); info = info || {}; code = info.code || (result === 'ready' ? 'READY' : result === 'code' ? 'SESSION_REQUIRED' : 'CONNECTION_ERROR'); if (result === 'ready') stage = 'ready'; if (info.status) http = info.status; update(); }
+  };
+  window.addEventListener('error', function (event) {
+    if (done || (!event.message && !(event.target && event.target.tagName === 'SCRIPT'))) return;
+    var name = event.error && event.error.name; errorType = /^(TypeError|SyntaxError|ReferenceError|RangeError|Error)$/.test(name || '') ? name : 'ScriptError'; line = Number(event.lineno) || 0;
+    fail('SCRIPT_ERROR', 'Браузер остановил запуск JavaScript. Версия, тип ошибки и проверка связи показаны ниже.'); probeServer();
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    if (done) return; var name = event.reason && event.reason.name; errorType = /^(TypeError|SyntaxError|ReferenceError|RangeError|Error)$/.test(name || '') ? name : 'PromiseError';
+    fail('SCRIPT_REJECTION', 'Запуск приложения прерван необработанной ошибкой. Ниже показаны этап и проверка связи.'); probeServer();
+  });
+  var copy = el('phoneDiagnosticCopy'); if (copy) copy.onclick = function () {
+    var value = el('phoneDiagnosticText').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(function () { text('phoneDiagnosticCopy', 'Скопировано'); }, function () { text('phoneDiagnosticCopy', 'Выделите текст диагностики ниже'); });
+    else { var selection = window.getSelection(), range = document.createRange(); range.selectNodeContents(el('phoneDiagnosticText')); selection.removeAllRanges(); selection.addRange(range); text('phoneDiagnosticCopy', 'Текст выделен · выберите «Скопировать»'); }
+  };
+  var retry = el('phoneLoadRetry'); if (retry) retry.onclick = reload;
+  window.addEventListener('pageshow', function () { if (!done && Date.now() - started > 10000) { fail('BOOT_STALLED', 'Подключение не завершилось после возврата в приложение. Повторите загрузку.'); probeServer(); } });
+  update(); arm();
+}());
+</script>
+<script type="module">// A request owns its timer and abort listener, including response-body reads.
+// Older Safari has AbortController but no static AbortSignal timeout/any APIs.
+function rdAbortReason(){const error=Error('The request was cancelled.');error.name='AbortError';return error;}
+function rdTimeoutReason(){const error=Error('The request timed out.');error.name='TimeoutError';return error;}
+
+async function withRequestDeadline(milliseconds,operation,{signal:externalSignal}={}){
+  if(typeof milliseconds!=='number'||!Number.isFinite(milliseconds)||milliseconds<0||milliseconds>2147483647)throw RangeError('Invalid request deadline.');
+  if(typeof operation!=='function')throw TypeError('A request operation is required.');
+  if(externalSignal!=null&&(typeof externalSignal.addEventListener!=='function'||typeof externalSignal.removeEventListener!=='function'))throw TypeError('Invalid cancellation signal.');
+  let controller=null;try{if(typeof AbortController==='function')controller=new AbortController();}catch{}
+  let timer=null,disposed=false,aborted=false,timedOut=false,reason,listening=false,rejectAbort;
+  const cancellation=new Promise((_,reject)=>{rejectAbort=reject;});
+  const detach=()=>{if(listening){externalSignal.removeEventListener('abort',onExternalAbort);listening=false;}};
+  const clearTimer=()=>{if(timer!==null){clearTimeout(timer);timer=null;}};
+  function abort(value,timeout=false){
+    if(disposed||aborted)return;aborted=true;timedOut=timeout;reason=value;clearTimer();detach();
+    // Reject our promise first: old WebKit may replace the controller's reason
+    // with a generic AbortError while it aborts a fetch or response body.
+    rejectAbort(reason);
+    if(controller)try{controller.abort(reason);}catch{try{controller.abort();}catch{}}
+  }
+  function onExternalAbort(){abort(externalSignal.reason===undefined?rdAbortReason():externalSignal.reason);}
+  const scope={signal:controller?.signal||externalSignal||undefined,get aborted(){return aborted;},get timedOut(){return timedOut;},get reason(){return reason;},throwIfAborted(){if(aborted)throw reason;}};
+  try{
+    if(externalSignal?.aborted)onExternalAbort();
+    else{
+      if(externalSignal){listening=true;externalSignal.addEventListener('abort',onExternalAbort,{once:true});if(externalSignal.aborted)onExternalAbort();}
+      if(!aborted)timer=setTimeout(()=>abort(rdTimeoutReason(),true),Math.ceil(milliseconds));
+    }
+    const result=Promise.resolve().then(()=>{scope.throwIfAborted();return operation(scope.signal,scope);});
+    return await Promise.race([cancellation,result]);
+  }finally{disposed=true;clearTimer();detach();}
+}
+
+// Positive photo observations only. Keep these object terms aligned with
+// cli/local_photo_ai.py; no model loading, network or generator dependency.
+const PHOTO_OBJECT_TERMS=Object.freeze({
+  "bedAny": "кроват|bed|床",
+  "mattress": "матрас|mattress|床垫",
+  "wardrobe": "шкаф|wardrobe|armoire|衣柜",
+  "slidingWardrobe": "купе|sliding|推拉",
+  "nightstands": "тумб|nightstand|bedside|床头柜",
+  "desk": "стол|desk|书桌",
+  "sofa": "диван|sofa|couch|沙发",
+  "armchair": "кресл|armchair|recliner|扶手椅",
+  "tvStand": "тумб|stand|电视柜",
+  "tv": "телевиз|\\btv\\b|television|电视",
+  "computer": "компьют|моноблок|ноутбук|computer|laptop|电脑",
+  "projector": "проектор|projector|投影",
+  "piano": "пианино|фортепиано|роял|piano|钢琴",
+  "ac": "кондиционер|air.?condition|\\bac\\b|空调",
+  "fridge": "холодильник|fridge|refrigerator|冰箱",
+  "stove": "плит|варочн|cooktop|stove|hob|炉|灶",
+  "oven": "духов|духовк|oven|烤箱",
+  "hood": "вытяжк|hood|extractor|油烟机",
+  "sink": "мойк|раковин|sink|水槽",
+  "microwave": "микроволн|свч|microwave|微波炉",
+  "dishwasher": "посудомо|dishwasher|洗碗机",
+  "kettle": "чайник|kettle|水壶",
+  "table": "стол|table|餐桌",
+  "chairs": "стул|стуль|chair|椅",
+  "kitchenFurniture": "кухон|шкаф|cabinet|橱柜",
+  "washer": "стираль|washing|washer|洗衣机",
+  "dryer": "сушиль|dryer|烘干机",
+  "bath": "ванн|bath|浴缸",
+  "shower": "душ|shower|淋浴",
+  "washbasin": "раковин|умывальник|basin|sink|洗手盆",
+  "shelves": "полк|полок|стеллаж|shel|rack|架",
+  "coffeeTable": "журнальн|кофейн|coffee.?table|茶几",
+  "dresser": "комод|dresser|chest.?of.?drawers|斗柜",
+  "cabinet": "тумб|буфет|шкафчик|cabinet|sideboard|边柜",
+  "shoeCabinet": "обувниц|обувн|shoe|鞋柜",
+  "ottoman": "пуф|ottoman|pouf|软凳",
+  "bench": "скам|лавк|bench|长凳",
+  "mirror": "зеркал|mirror|镜",
+  "curtains": "штор|занавес|гардин|curtain|drape|窗帘",
+  "dryingRack": "сушилк|бель|drying.?rack|clothes.?rack|晾衣架",
+  "iron": "утюг|\\biron\\b|熨斗",
+  "vacuum": "пылесос|vacuum|吸尘器",
+  "coffeeMachine": "кофемаш|кофеварк|coffee.?machine|coffee.?maker|咖啡机",
+  "toaster": "тостер|toaster|烤面包机",
+  "router": "роутер|маршрутизатор|router|路由器",
+  "monitor": "монитор|monitor|显示器",
+  "speakers": "колон|динамик|speaker|音箱",
+  "waterHeater": "водонагрев|бойлер|water.?heater|boiler|热水器",
+  "waterFilter": "фильтр|water.?filter|净水器"
+});
+const PHOTO_REVIEW_ONLY=Object.freeze(['bed','internet','closet','pantry','balcony','loggia','homeCinema','roomFurniture']);
+const PHOTO_FEATURE_IDS=Object.freeze([...new Set([...Object.keys(PHOTO_OBJECT_TERMS),...PHOTO_REVIEW_ONLY])]);
+const photoPolicyReviewOnly=new Set(PHOTO_REVIEW_ONLY);
+// Python's \w and \b are Unicode-aware; JavaScript's are ASCII-only with /u.
+// These policy patterns put paired boundaries around words. Consume the
+// character before the word instead of using lookbehind: Safari before 16.4
+// rejects lookbehind while this module initializes, before phoneStart can run.
+// Only .test() uses these expressions, so the consumed prefix is immaterial.
+const photoPolicyWord='[\\p{L}\\p{N}_]';
+const photoPolicyUnicode=pattern=>pattern.split('\\w').join(photoPolicyWord)
+  .replace(/\\b([\s\S]*?)\\b/g,(_,word)=>'(?:^|[^\\p{L}\\p{N}_])(?:'+word+')(?!'+photoPolicyWord+')')
+  .split('(?<![а-яё])').join('(?:^|[^а-яё])');
+const PHOTO_NON_DIRECT_PATTERN="\\b(?:no|not|absent|missing|cannot|without|unseen|hidden|inferred|assum\\w*|probab\\w*|perhaps|maybe|might|possibly|uncertain|unclear|likely|suggests?|could|will|planned|planning|plans?|intend\\w*|upcoming|future|pending|scheduled|going\\s+to)\\b|(?<![а-яё])(?:не|нет|без|возможно|вероятно|скрыт\\w*|предполож\\w*|долж\\w*|скорее|похож\\w*|кажется|сомн\\w*|отсутств\\w*|будет|будут|буду|будем|будете|будешь|планир\\w*|запланир\\w*|планах|намерен\\w*|собира(?:ется|ются|емся|юсь)|предстоит|скоро|купят|докупят|установят|привезут|доставят|появится|появятся)(?![а-яё])|没有|沒有|未见|未見|看不到|不可见|不可見|不确定|不確定|可能|推测|推測|隐藏|隱藏|将|將|计划|計劃|准备|準備|打算|待安装|待安裝|待购|待購|待添置|尚未|还未|還未";
+const photoPolicyNonDirect=new RegExp(photoPolicyUnicode(PHOTO_NON_DIRECT_PATTERN),'iu');
+const photoPolicyObjects=new Map(Object.entries(PHOTO_OBJECT_TERMS).map(([id,expression])=>[id,new RegExp(photoPolicyUnicode(expression),'iu')]));
+const photoPolicyHash=value=>typeof value==='string'&&value.length===64&&/^[a-f0-9]{64}$/u.test(value);
+function photoPolicyLocalModel(value){
+  return typeof value==='string'&&value.length>=1&&value.length<=128&&/^[A-Za-z0-9]/u.test(value)&&!/[^A-Za-z0-9_.:/-]/u.test(value)&&!/cloud|:\/\//iu.test(value);
+}
+function photoPolicyDirectPart(part,row){
+  if(!part||typeof part!=='object'||Array.isArray(part)||part.kind!=='model-visual-observation'||part.provider!=='ollama'||part.source!=='local-photo'||part.originalId!==row.originalId||part.photoId!==row.originalId||part.directlyVisible!==true||part.confidence!==row.confidence||!photoPolicyLocalModel(part.model))return false;
+  if(typeof part.text!=='string')return false;
+  const text=part.text.trim();if(text.length<8||text.length>600)return false;
+  const length=[...text].length;
+  return length>=8&&length<=300&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/u.test(text)&&!photoPolicyNonDirect.test(text)&&photoPolicyObjects.get(row.id).test(text);
+}
+
+/** Strict acceptance of one directly visible, local, original-bound object.
+ * Missing observations prove nothing; repeated views and counts are handled
+ * by the caller. Structural categories and double-bed width require a human.
+ */
+function isAutomaticPhotoObservation(row){
+  return !!row&&typeof row==='object'&&!Array.isArray(row)&&photoPolicyObjects.has(row.id)&&!photoPolicyReviewOnly.has(row.id)&&row.status==='auto-visible'&&row.autoEligible===true&&typeof row.confidence==='number'&&Number.isFinite(row.confidence)&&row.confidence>=.9&&row.confidence<=1&&photoPolicyHash(row.originalId)&&row.photoId===row.originalId&&Array.isArray(row.evidence)&&row.evidence.slice(0,8).some(part=>photoPolicyDirectPart(part,row));
+}
+
+// Common artifact transfers. Desktop credentials stay in request headers.
+async function cardBlobDataUrl(blob){
+ return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Не удалось прочитать файл'));reader.readAsDataURL(blob);});
+}
+async function cardPhotoDataUrl(blob){
+ if(!['image/jpeg','image/png','image/webp'].includes(blob.type)||blob.size>12_000_000)throw Error('Фото недоступно для макета');
+ const bitmap=await createImageBitmap(blob);
+ try{const ratio=Math.min(1,1400/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*ratio);canvas.height=Math.round(bitmap.height*ratio);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.86);}finally{bitmap.close();}
+}
+function cardDownloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name||'redcn-document';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+function setupCardFiles({mount,getCardId,api,download,previewImage,toast}){
+ let revision=0;const title=document.createElement('h2'),note=document.createElement('p'),list=document.createElement('div'),refreshButton=document.createElement('button');mount.classList.add('card-files');title.textContent='Готовые материалы';note.textContent='Intro, outro, HTML и PDF сохраняются на Mac и доступны с подключённого телефона.';refreshButton.className='btn';refreshButton.type='button';refreshButton.textContent='Обновить материалы';mount.append(title,note,refreshButton,list);
+ async function refresh(){const version=++revision,id=getCardId();list.replaceChildren();if(!id){list.textContent='Сохраните карточку, затем создайте материалы в разделе «Дизайн».';return;}try{const result=await api('card-exports/'+id);if(version!==revision||getCardId()!==id)return;for(const asset of result.exports||[]){const row=document.createElement('div'),button=document.createElement('button'),meta=document.createElement('span');row.className='card-file-row';button.type='button';button.className='btn';button.textContent=asset.kind==='intro'?'Intro · PNG':asset.kind==='outro'?'Outro · PNG':asset.kind.toUpperCase();meta.textContent=asset.name+' · '+Math.ceil(asset.bytes/1024)+' КБ'+(asset.created?' · '+new Date(asset.created*1000).toLocaleString('ru-RU'):'');button.onclick=async()=>{button.disabled=true;try{await download(asset);}catch(error){toast(error.message);}finally{button.disabled=false;}};row.append(button,meta);if(asset.mime==='image/png'&&previewImage){const open=document.createElement('button');open.type='button';open.className='btn';open.textContent='Открыть в Фото';open.onclick=async()=>{try{await previewImage(asset);}catch(error){toast(error.message);}};row.append(open);}list.append(row);}if(!list.childNodes.length)list.textContent='Материалы ещё не созданы. Откройте «Дизайн», выберите оформление и сохраните нужный формат.';}catch(error){if(version===revision)list.textContent=error.message;}}
+ refreshButton.onclick=()=>refresh();return {refresh,clear(){revision++;list.replaceChildren();}};
+}
+
+const caArchiveStatuses = {active:'В работе',rented:'Сдана',archived:'В архиве'};
+const caAttachmentCategories = {contract:'Договор',floorplan:'Планировка',lidar:'LiDAR / 3D',other:'Другой файл'};
+const caAttachmentExtensions = new Set(['pdf','jpg','jpeg','png','webp','txt','docx','usdz','obj','glb','gltf','ply','stl','zip','dxf','ifc']);
+const caMaxAttachmentBytes = 40 * 1024 * 1024;
+
+function archiveValidateAttachmentFile(file) {
+  if (!file || typeof file.name !== 'string' || !file.name.trim()) throw new Error('Выберите файл.');
+  if (!Number.isSafeInteger(file.size) || file.size < 1) throw new Error('Файл пустой или его размер неизвестен.');
+  if (file.size > caMaxAttachmentBytes) throw new Error('Один файл может занимать не больше 40 МБ.');
+  const extension = file.name.split('.').at(-1).toLowerCase();
+  if (!caAttachmentExtensions.has(extension)) throw new Error('Поддерживаются PDF, фотографии, DOCX, TXT, ZIP и файлы 3D-планировок.');
+  return file;
+}
+
+function archiveFormatAttachmentBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) return 'Размер неизвестен';
+  if (bytes < 1024) return Math.round(bytes) + ' Б';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' КБ';
+  return (bytes / (1024 * 1024)).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' МБ';
+}
+
+function caReadBase64(file) {
+  return new Promise((resolve,reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string' || !result.includes(',')) reject(new Error('Не удалось прочитать файл.'));
+      else resolve(result.slice(result.indexOf(',') + 1));
+    };
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл. Выберите его повторно.'));
+    reader.onabort = () => reject(new Error('Чтение файла отменено.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function setupCardArchive({mount,getCardId,ensureCard,api,downloadAttachment,toast=()=>{}}) {
+  if (!mount || typeof api !== 'function' || typeof getCardId !== 'function') throw new Error('Не удалось открыть архив карточки.');
+  const make = (tag,text='',className='') => {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+  const button = (text,primary=false) => {
+    const node = make('button',text,'archive-button' + (primary?' archive-primary':''));
+    node.type = 'button';
+    return node;
+  };
+  const panel = make('section','','card-archive');
+  const heading = make('h2','Архив квартиры');
+  const privateBadge = make('span','Только для вас','archive-private');
+  const titleRow = make('div','','archive-title-row');
+  titleRow.append(heading,privateBadge);
+  const intro = make('p','Сохраните договор, планировку или скан квартиры для будущего заселения. Вложения и заметки остаются на вашем Mac и доступны подключённому телефону.','archive-help');
+  const status = make('p','','archive-status');
+  status.setAttribute('role','status');
+  status.setAttribute('aria-live','polite');
+  const retry = button('Повторить загрузку архива');
+  retry.hidden=true;
+  retry.setAttribute('aria-label','Повторить загрузку архива квартиры');
+  const form = make('form','','archive-form');
+  const statusLabel = make('label','Статус квартиры');
+  const statusSelect = make('select');
+  statusSelect.setAttribute('aria-label','Статус квартиры');
+  for (const [value,label] of Object.entries(caArchiveStatuses)) {
+    const option = make('option',label); option.value=value; statusSelect.append(option);
+  }
+  statusLabel.append(statusSelect);
+  const notesLabel = make('label','Личные заметки');
+  const notes = make('textarea');
+  notes.rows=4; notes.maxLength=20000;
+  notes.placeholder='Например: дата сдачи, особенности квартиры, что проверить перед следующим заселением';
+  notes.setAttribute('aria-label','Личные заметки квартиры');
+  notesLabel.append(notes);
+  const save = button('Сохранить статус и заметки',true);
+  save.type='submit';
+  const dirtyNote = make('p','','archive-dirty');
+  dirtyNote.setAttribute('aria-live','polite');
+  form.append(statusLabel,notesLabel,save,dirtyNote);
+
+  const upload = make('div','','archive-upload');
+  const uploadHeading = make('h3','Добавить файл');
+  const categoryLabel = make('label','Тип вложения');
+  const category = make('select');
+  category.setAttribute('aria-label','Тип вложения');
+  for (const [value,label] of Object.entries(caAttachmentCategories)) {
+    const option=make('option',label); option.value=value; category.append(option);
+  }
+  categoryLabel.append(category);
+  const fileLabel = make('label','Файл · до 40 МБ');
+  const fileInput = make('input');
+  fileInput.type='file';
+  fileInput.accept=[...caAttachmentExtensions].map(extension=>'.'+extension).join(',');
+  fileInput.setAttribute('aria-label','Файл для архива квартиры');
+  fileLabel.append(fileInput);
+  const uploadButton = button('Прикрепить файл');
+  uploadButton.disabled=true;
+  const formats = make('p','PDF, JPG, PNG, WEBP, DOCX, TXT, ZIP; USDZ, OBJ, GLB, GLTF, PLY, STL, DXF, IFC. LiDAR и 3D-файлы хранятся в исходном формате.','archive-help');
+  const confidentiality = make('p','Эти файлы не добавляются в рекламные фото, HTML и PDF-презентацию квартиры.','archive-confidentiality');
+  upload.append(uploadHeading,categoryLabel,fileLabel,uploadButton,formats,confidentiality);
+  const filesHeading = make('h3','Файлы квартиры');
+  const list = make('ul','','archive-file-list');
+  list.setAttribute('aria-label','Вложения к карточке');
+  const empty = make('p','Пока нет прикреплённых файлов.','archive-empty');
+  panel.append(titleRow,intro,status,retry,form,upload,filesHeading,list,empty);
+  mount.append(panel);
+
+  let activeId=null, viewEpoch=0, refreshSequence=0, destroyed=false, loaded=false;
+  let busy=false, dirty=false, metadataRevision=0, refreshing=false;
+  const currentId = () => getCardId() || null;
+  const isCurrent = (id,epoch) => !destroyed && epoch===viewEpoch && currentId()===id && activeId===id;
+
+  function setStatus(message,error=false) {
+    status.textContent=message;
+    status.classList.toggle('archive-error',error);
+  }
+  function setDirty(value) {
+    dirty=value;
+    dirtyNote.textContent=value?'Есть несохранённые изменения.':'';
+    syncControls();
+  }
+  function syncControls() {
+    const unavailable=!activeId && typeof ensureCard!=='function';
+    const metadataUnavailable=unavailable || !!activeId&&!loaded;
+    statusSelect.disabled=notes.disabled=save.disabled=busy || metadataUnavailable;
+    category.disabled=fileInput.disabled=busy || unavailable;
+    uploadButton.disabled=busy || unavailable || !fileInput.files?.length;
+    retry.disabled=busy || refreshing;
+  }
+  function setBusy(value) {
+    busy=value;
+    if(value){refreshSequence++;refreshing=false;}
+    panel.setAttribute('aria-busy',String(value));
+    syncControls();
+    for (const control of list.querySelectorAll('button')) control.disabled=value;
+  }
+  function reset(id) {
+    activeId=id; viewEpoch++; refreshSequence++; loaded=false;
+    metadataRevision++; busy=false;refreshing=false;retry.hidden=true;
+    statusSelect.value='active'; notes.value=''; fileInput.value='';
+    list.replaceChildren(); empty.hidden=false; setDirty(false); setBusy(false);
+    setStatus(id?'Загружаем архив квартиры…':'Сохраните карточку или прикрепите файл — квартира появится в архиве на Mac.');
+  }
+  function bindCurrent() {
+    const id=currentId();
+    if (id!==activeId) reset(id);
+    return id;
+  }
+  function renderFiles(attachments,id,epoch) {
+    list.replaceChildren();
+    empty.hidden=attachments.length>0;
+    for (const asset of attachments) {
+      const item=make('li','','archive-file');
+      const info=make('div','','archive-file-info');
+      const name=make('strong',asset.name||'Файл');
+      const date=asset.created ? new Date(Number(asset.created)*1000) : null;
+      const dateText=date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('ru-RU') : '';
+      const details=make('p',[caAttachmentCategories[asset.category]||'Файл',archiveFormatAttachmentBytes(asset.bytes),dateText].filter(Boolean).join(' · '),'archive-help');
+      info.append(name,details);
+      const actions=make('div','','archive-file-actions');
+      const download=button('Скачать');
+      download.setAttribute('aria-label','Скачать '+(asset.name||'файл'));
+      download.disabled=busy;
+      download.onclick=async () => {
+        if (!isCurrent(id,epoch) || busy) return;
+        download.disabled=true;
+        try {
+          if (typeof downloadAttachment!=='function') throw new Error('Загрузка недоступна. Откройте карточку на локальном сайте Mac.');
+          await downloadAttachment(asset,id);
+        } catch (error) {
+          if (isCurrent(id,epoch)) {setStatus(error.message,true);toast(error.message);}
+        } finally {if(isCurrent(id,epoch))download.disabled=busy;}
+      };
+      const remove=button('Удалить'); remove.classList.add('archive-remove');
+      remove.setAttribute('aria-label','Удалить '+(asset.name||'файл'));
+      const confirmation=make('div','','archive-remove-confirm');
+      confirmation.hidden=true;
+      const prompt=make('p','Удалить файл «'+(asset.name||'Файл')+'» из этой карточки?','archive-help');
+      const confirm=button('Да, удалить'),cancel=button('Отмена');
+      confirm.classList.add('archive-remove');
+      confirmation.append(prompt,confirm,cancel);
+      remove.onclick=()=>{if(!busy&&isCurrent(id,epoch)){confirmation.hidden=false;confirm.focus();}};
+      cancel.onclick=()=>{confirmation.hidden=true;remove.focus();};
+      confirm.onclick=async () => {
+        if (!isCurrent(id,epoch) || busy) return;
+        setBusy(true); setStatus('Удаляем вложение…');
+        try {
+          const result=await api('card-archive/'+id,{action:'remove',attachment_id:asset.id});
+          if(!isCurrent(id,epoch))return;
+          apply(result,id,epoch);setStatus('Файл удалён из этой карточки.');
+        } catch(error) {if(isCurrent(id,epoch)){setStatus(error.message,true);toast(error.message);}}
+        finally {if(isCurrent(id,epoch))setBusy(false);}
+      };
+      actions.append(download,remove); item.append(info,actions,confirmation); list.append(item);
+    }
+  }
+  function apply(data,id,epoch,{preserveDirty=true}={}) {
+    if (!isCurrent(id,epoch)) return;
+    loaded=true;
+    if (!preserveDirty || !dirty) {
+      statusSelect.value=Object.hasOwn(caArchiveStatuses,data.status)?data.status:'active';
+      notes.value=typeof data.notes==='string'?data.notes:'';
+      setDirty(false);
+    }
+    renderFiles(Array.isArray(data.attachments)?data.attachments:[],id,epoch);
+    retry.hidden=true;syncControls();
+  }
+  async function actionId() {
+    bindCurrent();
+    const startingEpoch=viewEpoch;
+    let id=activeId;
+    if (!id && typeof ensureCard==='function') {
+      const saved=await ensureCard();
+      id=typeof saved==='string'?saved:saved?.result_id;
+      if (destroyed || startingEpoch!==viewEpoch || !id || currentId()!==id) throw new Error('Карточка изменилась. Повторите действие для открытой квартиры.');
+      // A new ID refers to the same editor contents; preserve the user's pending notes.
+      const pendingNotes=notes.value,pendingStatus=statusSelect.value,pendingDirty=dirty;
+      reset(id); notes.value=pendingNotes; statusSelect.value=pendingStatus; setDirty(pendingDirty);
+    }
+    if (!id) throw new Error('Сначала сохраните карточку на Mac.');
+    return {id,epoch:viewEpoch};
+  }
+  statusSelect.onchange=notes.oninput=()=>{metadataRevision++;setDirty(true);};
+  form.onsubmit=async event => {
+    event.preventDefault(); if(busy)return;
+    bindCurrent();
+    if(activeId&&!loaded){setStatus('Сначала дождитесь загрузки архива. Если нет связи, нажмите «Повторить загрузку архива».',true);retry.hidden=false;return;}
+    let target=null;
+    const initialId=currentId(),initialEpoch=viewEpoch;
+    const belongs=()=>target?isCurrent(target.id,target.epoch):!destroyed&&initialEpoch===viewEpoch&&currentId()===initialId;
+    setBusy(true);
+    try {
+      target=await actionId();
+      if(!isCurrent(target.id,target.epoch))return;
+      const revision=metadataRevision;
+      const value={action:'update',status:statusSelect.value,notes:notes.value};
+      setBusy(true);setStatus('Сохраняем статус и заметки…');
+      const result=await api('card-archive/'+target.id,value);
+      if(!isCurrent(target.id,target.epoch))return;
+      if(metadataRevision===revision)setDirty(false);
+      apply(result,target.id,target.epoch);
+      setStatus('Статус и заметки сохранены на Mac.');toast('Архив квартиры сохранён.');
+    } catch(error) {if(belongs()){setStatus(error.message,true);toast(error.message);}}
+    finally {if(belongs())setBusy(false);}
+  };
+  fileInput.onchange=()=>{
+    try {if(fileInput.files?.[0])archiveValidateAttachmentFile(fileInput.files[0]);uploadButton.disabled=busy||!fileInput.files?.length;setStatus(fileInput.files?.[0]?'Файл выбран. Нажмите «Прикрепить файл».':'');}
+    catch(error){fileInput.value='';uploadButton.disabled=true;setStatus(error.message,true);}
+  };
+  uploadButton.onclick=async () => {
+    if(busy)return;
+    const file=fileInput.files?.[0]; let target=null;
+    const initialId=currentId(),initialEpoch=viewEpoch;
+    const belongs=()=>target?isCurrent(target.id,target.epoch):!destroyed&&initialEpoch===viewEpoch&&currentId()===initialId;
+    try {
+      archiveValidateAttachmentFile(file);
+      const selectedCategory=category.value;
+      setBusy(true);
+      target=await actionId();
+      if(!isCurrent(target.id,target.epoch))return;
+      setBusy(true);setStatus('Читаем «'+file.name+'»…');
+      const data=await caReadBase64(file);
+      if(!isCurrent(target.id,target.epoch))return;
+      setStatus('Сохраняем файл на Mac… Не закрывайте страницу.');
+      const result=await api('card-archive/'+target.id,{action:'attach',name:file.name,category:selectedCategory,data});
+      if(!isCurrent(target.id,target.epoch))return;
+      apply(result,target.id,target.epoch); fileInput.value='';
+      setStatus('Файл сохранён на Mac.');toast('Файл прикреплён к квартире.');
+    } catch(error) {if(belongs()){setStatus(error.message,true);toast(error.message);}}
+    finally {if(belongs())setBusy(false);}
+  };
+  async function refresh() {
+    if(destroyed)return;
+    const id=bindCurrent();
+    if(!id || busy)return;
+    const epoch=viewEpoch,sequence=++refreshSequence;
+    refreshing=true;syncControls();
+    if(!loaded)setStatus('Загружаем архив квартиры…');
+    try {
+      const data=await api('card-archive/'+id);
+      if(!isCurrent(id,epoch)||sequence!==refreshSequence)return;
+      const wasLoaded=loaded;
+      apply(data,id,epoch);
+      if(!wasLoaded)setStatus('Архив загружен. Изменения сохраняются кнопкой ниже.');
+    } catch(error) {if(isCurrent(id,epoch)&&sequence===refreshSequence){setStatus(error.message,true);retry.hidden=false;}}
+    finally {if(isCurrent(id,epoch)&&sequence===refreshSequence){refreshing=false;syncControls();}}
+  }
+  retry.onclick=()=>refresh();
+  function clear() {
+    // Called on logout / switching away: retain no private names or notes in the DOM.
+    reset(null); setStatus('Откройте карточку квартиры, чтобы увидеть её архив.');
+  }
+  function destroy() {destroyed=true;viewEpoch++;refreshSequence++;panel.remove();}
+  reset(currentId());
+  refresh();
+  return {refresh,clear,destroy};
+}
+
+// Installation is detected from the running app, never inferred from a button tap.
+function webAppInstalled({standalone=false,displayMode='browser',appInstalled=false}={}){
+  return standalone===true||appInstalled===true||['standalone','fullscreen','minimal-ui'].includes(displayMode);
+}
+
+function pwaInstallPlatform({userAgent='',platform='',maxTouchPoints=0}={}){
+  return /iPad|iPhone|iPod/i.test(userAgent)||platform==='MacIntel'&&maxTouchPoints>1?'ios':'other';
+}
+
+function initializePwaInstall({container,phoneUrl='/phone/',registerWorker=true}={}){
+  if(typeof document==='undefined')return null;
+  const host=typeof container==='string'?document.querySelector(container):container;
+  if(!host)return null;
+  if(host.pwaInstaller)return host.pwaInstaller;
+  const styleId='most-pwa-install-style';
+  if(!document.getElementById(styleId)){
+    const style=document.createElement('style');style.id=styleId;style.textContent=`
+      .pwa-install-button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;padding:12px 16px;border:1px solid #cbd7c8;border-radius:14px;background:#f0f6ec;color:#294632;font:600 15px/1.35 system-ui;touch-action:manipulation;cursor:pointer}
+      .pwa-install-button[hidden]{display:none!important}.pwa-install-button:focus-visible,.pwa-install-dialog button:focus-visible{outline:3px solid #8eac79;outline-offset:3px}
+      .pwa-install-dialog{box-sizing:border-box;max-width:420px;width:calc(100% - 28px);max-height:calc(100dvh - 40px);overflow:auto;border:1px solid #d6dfd0;border-radius:24px;padding:24px;background:#fffef9;color:#25372b;box-shadow:0 24px 80px #15231f40;font:15px/1.6 system-ui}
+      .pwa-install-dialog::backdrop{background:#16231cca;backdrop-filter:blur(5px)}.pwa-install-dialog h2{margin:0 0 12px;font:650 22px/1.2 system-ui;letter-spacing:-.5px}.pwa-install-dialog p{margin:12px 0;color:#69766a;font-size:14px;line-height:1.55}.pwa-install-dialog ol{padding-left:24px;margin:18px 0}.pwa-install-dialog li{padding:6px 0}.pwa-install-dialog button{display:block;width:100%;min-height:48px;margin-top:20px;border:0;border-radius:13px;padding:12px;background:#34543a;color:white;font:600 16px/1.4 system-ui;cursor:pointer}.pwa-install-dialog a{color:#315d39}.pwa-install-dialog .pwa-install-note{padding:12px;border-radius:12px;background:#f1f5ec;font-size:12px;color:#586a50}
+      @media(max-width:650px){.pwa-install-dialog{margin:auto auto max(14px,env(safe-area-inset-bottom));border-radius:24px;padding:22px;max-height:calc(100dvh - env(safe-area-inset-top) - 30px)}}
+    `;document.head.append(style);
+  }
+  const button=document.createElement('button');button.type='button';button.className='pwa-install-button';button.dataset.pwaInstall='';button.textContent='＋ Установить на экран «Домой»';
+  const dialog=document.createElement('dialog');dialog.className='pwa-install-dialog';dialog.setAttribute('aria-label','Установка МОСТ на экран Домой');
+  const heading=document.createElement('h2'),intro=document.createElement('p'),steps=document.createElement('ol'),note=document.createElement('p'),close=document.createElement('button');
+  heading.textContent='МОСТ на экране «Домой»';close.type='button';close.textContent='Понятно';note.className='pwa-install-note';
+  dialog.append(heading,intro,steps,note,close);host.append(button);document.body.append(dialog);
+  const modes=['standalone','fullscreen','minimal-ui'].map(mode=>({mode,query:window.matchMedia('(display-mode: '+mode+')')}));
+  let deferred=null,appInstalled=false;
+  function installed(){return webAppInstalled({standalone:navigator.standalone===true,displayMode:modes.find(row=>row.query.matches)?.mode||'browser',appInstalled});}
+  function refresh(){button.hidden=installed();if(button.hidden&&dialog.open)dialog.close();}
+  function instructions(){
+    steps.replaceChildren();const ios=pwaInstallPlatform(navigator)==='ios';
+    const target=new URL(phoneUrl,location.origin);const onPhonePage=location.pathname.startsWith(target.pathname);
+    intro.textContent=ios?'Добавьте сайт как приложение — он будет открываться с отдельной иконки.':'Если браузер предлагает установку приложения, выберите её в меню браузера.';
+    const values=ios?[
+      'Откройте мобильную страницу МОСТ в Safari на iPhone.',
+      'Нажмите «Поделиться» — квадрат со стрелкой вверх. В некоторых версиях Safari сначала откройте меню страницы.',
+      'Выберите «На экран Домой». Если есть переключатель «Открывать как веб-приложение», оставьте его включённым.',
+      'Нажмите «Добавить» и запустите МОСТ с новой иконки.'
+    ]:['Откройте мобильную страницу МОСТ.', 'В меню браузера выберите «Установить приложение» или «Добавить на главный экран».', 'После установки откройте МОСТ с новой иконки.'];
+    for(const value of values){const item=document.createElement('li');item.textContent=value;steps.append(item);}
+    if(!onPhonePage){const link=document.createElement('a');link.href=target.href;link.textContent='Открыть мобильную страницу';const item=document.createElement('li');item.append(link);steps.prepend(item);}
+    note.textContent='В приложении, открытом с иконки, кнопка установки исчезнет. Если iPhone запросит подключение к Mac заново, используйте новый код с компьютера.';
+    if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
+  }
+  async function install(){
+    if(installed()){refresh();return;}
+    if(!deferred){instructions();return;}
+    const prompt=deferred;deferred=null;
+    try{await prompt.prompt();await prompt.userChoice;}catch{instructions();}
+    // appinstalled/display-mode are the evidence of installation. A dismissed
+    // prompt, accepted promise or opened guide alone never hides this button.
+    refresh();
+  }
+  function beforeInstall(event){event.preventDefault();deferred=event;refresh();}
+  function didInstall(){appInstalled=true;deferred=null;refresh();}
+  function closeDialog(){dialog.close();button.focus();}
+  button.addEventListener('click',install);close.addEventListener('click',closeDialog);
+  dialog.addEventListener('click',event=>{if(event.target===dialog){const bounds=dialog.getBoundingClientRect();if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)closeDialog();}});
+  window.addEventListener('beforeinstallprompt',beforeInstall);window.addEventListener('appinstalled',didInstall);window.addEventListener('pageshow',refresh);document.addEventListener('visibilitychange',refresh);
+  for(const row of modes)row.query.addEventListener?.('change',refresh);
+  refresh();
+  if(registerWorker&&window.isSecureContext&&'serviceWorker' in navigator&&location.pathname.startsWith('/phone/'))navigator.serviceWorker.register('/phone/sw.js',{scope:'/phone/',updateViaCache:'none'}).catch(()=>{});
+  const result={button,dialog,refresh,destroy(){window.removeEventListener('beforeinstallprompt',beforeInstall);window.removeEventListener('appinstalled',didInstall);window.removeEventListener('pageshow',refresh);document.removeEventListener('visibilitychange',refresh);for(const row of modes)row.query.removeEventListener?.('change',refresh);button.remove();dialog.remove();delete host.pwaInstaller;}};
+  host.pwaInstaller=result;return result;
+}
+
+// The monitor stores links and dates; a full import is always an explicit action.
+const lwText=(value,limit=400)=>typeof value==='string'?value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').slice(0,limit):'';
+const lwCianHost=host=>host==='cian.ru'||host==='www.cian.ru';
+
+function safeWatchOfferUrl(value){
+  try{
+    const url=new URL(String(value??''));
+    if(url.protocol!=='https:'||!lwCianHost(url.hostname)||url.username||url.password||url.port&&url.port!=='443')return '';
+    const match=url.pathname.match(/^\/(rent|sale)\/flat\/(\d{1,20})\/?$/);
+    return match?'https://www.cian.ru/'+match[1]+'/flat/'+match[2]+'/':'';
+  }catch{return '';}
+}
+
+function safeWatchSearchUrl(value){
+  try{
+    const url=new URL(String(value??'').trim());
+    if(url.protocol!=='https:'||!lwCianHost(url.hostname)||url.username||url.password||url.port&&url.port!=='443')return '';
+    if(url.pathname!=='/cat.php'&&!/^\/snyat(?:[-/][^?#]*)?\/?$/u.test(url.pathname))return '';
+    url.hash='';return url.href;
+  }catch{return '';}
+}
+
+function lwDateParts(value){
+  if(typeof value==='number'){
+    if(!Number.isFinite(value)||value<0||value>8_640_000_000_000)return null;
+    const date=new Date(value<100_000_000_000?value*1000:value);
+    return Number.isFinite(date.getTime())?{date,hasTime:true}:null;
+  }
+  if(typeof value!=='string')return null;
+  const match=value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/u);if(!match)return null;
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+  const calendar=new Date(Date.UTC(year,month-1,day,12));
+  if(calendar.getUTCFullYear()!==year||calendar.getUTCMonth()!==month-1||calendar.getUTCDate()!==day)return null;
+  if(value.length===10)return {date:calendar,hasTime:false};
+  // A missing timezone must not silently become the viewer's local timezone.
+  if(!/(?:Z|[+-]\d{2}:\d{2})$/iu.test(value))return {date:calendar,hasTime:false};
+  const date=new Date(value);return Number.isFinite(date.getTime())?{date,hasTime:true}:null;
+}
+
+function formatWatchDate(value){
+  const parsed=lwDateParts(value);if(!parsed)return 'Дата не указана';
+  return new Intl.DateTimeFormat('ru-RU',{timeZone:'Europe/Moscow',day:'2-digit',month:'2-digit',year:'numeric',...(parsed.hasTime?{hour:'2-digit',minute:'2-digit'}:{})}).format(parsed.date)+(parsed.hasTime?' МСК':'');
+}
+
+function normalizeWatchItem(input={}){
+  const row=input&&typeof input==='object'?input:{};
+  const id=typeof row.id==='string'&&/^[a-zA-Z0-9:_-]{1,100}$/.test(row.id)?row.id:'';
+  const published=lwDateParts(row.publishedAt)?row.publishedAt:null;
+  const currency=lwText(row.currency||row.priceCurrency,8).toUpperCase(),unit=({RUB:'₽',RUR:'₽',USD:'$',EUR:'€'})[currency]||(/^[A-Z]{3}$/.test(currency)?currency:'');
+  const price=typeof row.price==='number'&&Number.isFinite(row.price)&&row.price>=0?new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(row.price)+(unit?' '+unit:''):lwText(row.price,100);
+  return {id,url:safeWatchOfferUrl(row.url),title:lwText(row.title,400)||'Объявление ЦИАН',price,area:typeof row.area==='number'&&Number.isFinite(row.area)&&row.area>0?row.area+' м²':lwText(row.area,80),metro:lwText(row.metro,150),publishedAt:published,publishedLabel:lwText(row.publishedLabel,160),publicationDateSource:lwText(row.publicationDateSource,80),firstSeen:lwDateParts(row.firstSeen)?row.firstSeen:null,lastSeen:lwDateParts(row.lastSeen)?row.lastSeen:null,read:row.read===true,isNew:row.isNew===true};
+}
+
+function setupListingWatch({mount,api,onScan,toast=()=>{}}={}){
+  if(!mount)return {refresh:async()=>false,destroy:()=>{}};
+  const make=(tag,text='',className='')=>{const element=document.createElement(tag);element.textContent=text;if(className)element.className=className;return element;};
+  const button=(text,action,className='btn')=>{const element=make('button',text,className);element.type='button';element.onclick=action;return element;};
+  const shell=make('section','','listing-watch'),heading=make('div','','listing-watch-heading'),headingText=make('div'),count=make('span','0','listing-watch-count');
+  headingText.append(make('div','ЦИАН · МОНИТОРИНГ','eyebrow'),make('h2','Новые объявления'));
+  count.setAttribute('aria-label','Непрочитанных объявлений');heading.append(headingText,count);
+  const note=make('p','Раз в час Mac проверяет выбранный поиск. В «Новые» попадают ссылки, впервые найденные после начального снимка. Полный разбор запускается вами отдельно.','muted');
+  const details=make('details','','listing-watch-settings'),summary=make('summary','Настроить поиск и обновление');
+  const form=make('form'),sourceLabel=make('label','Ссылка на поиск ЦИАН'),source=make('input');source.type='url';source.inputMode='url';source.autocomplete='off';source.placeholder='https://www.cian.ru/cat.php?...';source.setAttribute('aria-label','Ссылка на поиск ЦИАН');source.maxLength=4000;sourceLabel.append(source);
+  const enabledLabel=make('label','','listing-watch-toggle'),enabled=make('input');enabled.type='checkbox';enabled.setAttribute('aria-label','Проверять поиск каждый час');enabledLabel.append(enabled,document.createTextNode('Проверять каждый час, пока Mac включён'));
+  const adapterLabel=make('label','Способ чтения'),adapter=make('select');adapter.setAttribute('aria-label','Способ чтения ЦИАН');
+  for(const [value,title]of [['html','Страница поиска'],['api','API поиска · экспериментально'],['chrome','Обычный Chrome']]){const option=make('option',title);option.value=value;adapter.append(option);}adapterLabel.append(adapter);
+  const settingsHelp=make('p','Первый успешный снимок создаёт основу сравнения: старые объявления не будут названы новыми. Проверяется ограниченная часть выдачи, поэтому это не полный каталог ЦИАН.','muted');
+  const save=button('Сохранить настройки',()=>saveConfig(),'btn primary'),configNote=make('p','','listing-watch-config-note');configNote.setAttribute('aria-live','polite');
+  form.append(sourceLabel,enabledLabel,adapterLabel,settingsHelp,save,configNote);form.onsubmit=event=>{event.preventDefault();saveConfig();};details.append(summary,form);
+  const status=make('p','Откройте раздел, чтобы получить состояние мониторинга.','listing-watch-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+  const timing=make('p','','muted listing-watch-timing'),coverage=make('p','','muted listing-watch-coverage');
+  const toolbar=make('div','','listing-watch-toolbar'),category=make('select');category.setAttribute('aria-label','Категория найденных объявлений');
+  for(const [value,title]of [['new','Новые · непрочитанные'],['all','Все найденные']]){const option=make('option',title);option.value=value;category.append(option);}
+  const refreshButton=button('Обновить список',()=>refresh()),check=button('Проверить сейчас',()=>checkNow()),readShown=button('Прочитать показанные',()=>readItems(currentItems.filter(row=>!row.read).map(row=>row.id)));
+  toolbar.append(category,refreshButton,check,readShown);
+  const list=make('div','','listing-watch-list'),empty=make('p','Список ещё не загружен.','muted'),more=button('Показать ещё',()=>loadMore());more.hidden=true;list.append(empty);shell.append(heading,note,details,status,timing,coverage,toolbar,list,more);mount.replaceChildren(shell);
+  let destroyed=false,epoch=0,timer=null,dirty=false,mutation=false,loaded=false,nextBefore=null,currentItems=[],lastStatus=null;
+  const scanning=new Set();
+  const change=()=>{dirty=true;configNote.textContent='Настройки изменены. Сохраните их на Mac.';};source.oninput=change;enabled.onchange=change;adapter.onchange=change;
+  function setBusy(value){mutation=value;save.disabled=readShown.disabled=source.disabled=enabled.disabled=adapter.disabled=value||!api;check.disabled=value||!api||!lastStatus?.config?.searchUrl;refreshButton.disabled=!api;}
+  function cancelPoll(){clearTimeout(timer);timer=null;}
+  function schedule(){
+    cancelPoll();if(destroyed||!loaded||document.visibilityState==='hidden'||!mount.getClientRects().length)return;
+    timer=setTimeout(()=>refresh({automatic:true}),lastStatus?.state==='checking'?3000:60000);
+  }
+  function renderStatus(value){
+    const data=value?.status||value||{};lastStatus=data;const config=data.config||{};
+    count.textContent=String(Math.max(0,Number(data.unreadCount)||0));
+    if(!dirty){source.value=lwText(config.searchUrl,4000);enabled.checked=config.enabled===true;adapter.value=['html','api','chrome'].includes(config.adapter)?config.adapter:'html';}
+    const states={disabled:'Автоматическая проверка выключена.',idle:'Мониторинг ожидает следующую проверку.',checking:'Mac проверяет выдачу ЦИАН…',error:'Последняя проверка завершилась ошибкой.',needs_attention:'Источник требует внимания. Откройте поиск и проверьте доступ.'};
+    status.textContent=states[data.state]||'Состояние мониторинга получено.';
+    if(data.error)status.textContent+=' '+lwText(data.error,600);
+    if(config.searchUrl&&!data.baselineComplete)status.textContent+=' Первый успешный снимок ещё не создан.';
+    timing.textContent=[data.lastRun!=null?'Последняя попытка: '+formatWatchDate(data.lastRun):'Проверок пока не было',data.lastSuccess!=null?'Успешно: '+formatWatchDate(data.lastSuccess):'',data.nextRun!=null&&config.enabled?'Следующая: '+formatWatchDate(data.nextRun):''].filter(Boolean).join(' · ');
+    const scope=lwText(data.coverageNote||data.coverageMessage||(data.coverage==='first-2-pages'?'первые две страницы выбранного поиска':data.coverage),500);coverage.textContent=(scope?'Охват: '+scope+'. ':'')+'Дата размещения из источника и дата первого обнаружения показаны отдельно.';
+    check.disabled=mutation||!api||!config.searchUrl;details.open=details.open||!config.searchUrl;
+  }
+  function renderItems(){
+    list.replaceChildren();
+    if(!currentItems.length){const message=!lastStatus?.baselineComplete?'После первого снимка здесь появятся объявления, найденные следующими проверками.':category.value==='new'?'Новых непрочитанных ссылок пока нет.':'В выбранном поиске пока нет сохранённых ссылок.';list.append(make('p',message,'muted'));}
+    for(const row of currentItems){
+      const card=make('article','','listing-watch-item');card.dataset.watchId=row.id;
+      const title=make('h3',row.title),tags=make('div','','listing-watch-meta');
+      if(row.isNew&&!row.read)tags.append(make('span','Новое обнаружение','listing-watch-new'));
+      if(row.price)tags.append(make('strong',row.price));if(row.area)tags.append(make('span',row.area));if(row.metro)tags.append(make('span',row.metro));card.append(title,tags);
+      const published=row.publishedAt!==null?'Размещено в ЦИАН: '+formatWatchDate(row.publishedAt):row.publishedLabel?'Отметка ЦИАН при последней проверке'+(row.lastSeen!==null?' ('+formatWatchDate(row.lastSeen)+')':'')+': '+row.publishedLabel:'Дата размещения ЦИАН не указана';
+      card.append(make('p',published,'listing-watch-date'),make('p','Впервые найдено нами: '+formatWatchDate(row.firstSeen),'muted listing-watch-date'));
+      const actions=make('div','','listing-watch-item-actions');
+      if(row.url){const link=make('a','Открыть источник','btn');link.href=row.url;link.target='_blank';link.rel='noopener noreferrer';actions.append(link);}
+      const scan=button(scanning.has(row.id)?'Передаём в импорт…':'Сканировать объявление',()=>scanItem(row),'btn primary');scan.disabled=!row.url||typeof onScan!=='function'||scanning.has(row.id);actions.append(scan);
+      if(!row.read){const read=button('Прочитано',()=>readItems([row.id]));read.disabled=mutation||!row.id;actions.append(read);}card.append(actions);list.append(card);
+    }
+    more.hidden=nextBefore==null;more.disabled=mutation;readShown.disabled=mutation||!currentItems.some(row=>row.id&&!row.read)||!api;
+  }
+  const itemPath=before=>'listing-watch/items?category='+encodeURIComponent(category.value)+'&limit=50'+(before!=null?'&before='+encodeURIComponent(String(before)):'');
+  function applyItems(value,append=false){
+    const rows=Array.isArray(value?.items)?value.items:[];const normalized=rows.map(normalizeWatchItem).filter(row=>row.id);
+    currentItems=[...new Map([...(append?currentItems:[]),...normalized].map(row=>[row.id,row])).values()];
+    nextBefore=value?.hasMore&&value?.nextBefore!=null?value.nextBefore:null;renderItems();
+  }
+  async function refresh({automatic=false}={}){
+    if(destroyed||!api)return false;cancelPoll();
+    if(automatic&&(document.visibilityState==='hidden'||!mount.getClientRects().length))return false;
+    const request=++epoch;refreshButton.disabled=true;if(!loaded)status.textContent='Получаем состояние и новые ссылки…';
+    try{
+      const [state,rows]=await Promise.all([api('listing-watch'),api(itemPath())]);if(destroyed||request!==epoch)return false;
+      loaded=true;renderStatus(state);applyItems(rows);return true;
+    }catch(error){if(!destroyed&&request===epoch){status.textContent=lwText(error?.message,600)||'Не удалось получить мониторинг.';if(!automatic)toast(status.textContent);}return false;}
+    finally{if(!destroyed&&request===epoch){refreshButton.disabled=false;schedule();}}
+  }
+  async function mutate(run){
+    if(destroyed||mutation||!api)return false;cancelPoll();setBusy(true);
+    try{await run();return true;}catch(error){if(!destroyed){status.textContent=lwText(error?.message,600)||'Операция не завершена.';toast(status.textContent);}return false;}
+    finally{if(!destroyed){setBusy(false);renderItems();schedule();}}
+  }
+  async function saveConfig(){
+    const searchUrl=source.value.trim()?safeWatchSearchUrl(source.value):'';
+    if(source.value.trim()&&!searchUrl||enabled.checked&&!searchUrl){configNote.textContent='Нужна HTTPS-ссылка на поиск квартир ЦИАН, а не на отдельное объявление.';return false;}
+    const value={enabled:enabled.checked,searchUrl,intervalMinutes:60,adapter:adapter.value};
+    return mutate(async()=>{const result=await api('listing-watch',value);if(destroyed)return;dirty=false;configNote.textContent='Настройки сохранены на Mac.';renderStatus(result);await refresh();});
+  }
+  async function checkNow(){return mutate(async()=>{const result=await api('listing-watch/check',{});if(destroyed)return;renderStatus(result);await refresh();});}
+  async function readItems(ids){const selected=[...new Set(ids.filter(id=>typeof id==='string'&&id))];if(!selected.length)return false;return mutate(async()=>{await api('listing-watch/read',{ids:selected});await refresh();});}
+  async function loadMore(){
+    if(nextBefore==null||mutation||!api||destroyed)return false;const request=++epoch,before=nextBefore;more.disabled=true;
+    try{const value=await api(itemPath(before));if(destroyed||request!==epoch)return false;applyItems(value,true);return true;}
+    catch(error){if(!destroyed&&request===epoch)toast(lwText(error?.message,500)||'Не удалось загрузить следующую страницу.');return false;}
+    finally{if(!destroyed&&request===epoch){more.disabled=false;schedule();}}
+  }
+  async function scanItem(row){
+    if(destroyed||!row.url||typeof onScan!=='function'||scanning.has(row.id))return;scanning.add(row.id);renderItems();
+    try{await onScan(row.url);}catch(error){if(!destroyed)toast(lwText(error?.message,500)||'Не удалось открыть импорт.');}
+    finally{scanning.delete(row.id);if(!destroyed)renderItems();}
+  }
+  const visibleAgain=()=>{if(loaded&&!destroyed&&document.visibilityState!=='hidden'&&mount.getClientRects().length)refresh({automatic:true});};
+  document.addEventListener('visibilitychange',visibleAgain);
+  category.onchange=()=>{nextBefore=null;refresh();};setBusy(false);
+  if(!api){status.textContent='Мониторинг работает через запущенный сервер Mac.';details.open=false;category.disabled=true;more.disabled=true;}
+  return {refresh,destroy(){if(destroyed)return;destroyed=true;++epoch;cancelPoll();document.removeEventListener('visibilitychange',visibleAgain);mount.replaceChildren();currentItems=[];scanning.clear();}};
+}
+
+// Temporary, authenticated diagnostics. This widget never starts an import.
+function setupImportDiagnostics({mount,api,getBundle,toast=()=>{}}={}){
+ if(!mount)return null;
+ let destroyed=false,revision=0,timer=0,busy=false,state=null;
+ const make=(tag,text='',className='')=>{const element=document.createElement(tag);element.textContent=text;if(className)element.className=className;return element;};
+ const panel=make('details','','import-audit'),summary=make('summary','Диагностика · 10 ручных проверок'),note=make('p','Записываются этапы загрузки, прокрутки и чтения. После десяти запусков сбор выключается и Mac создаёт tg.zip.','import-audit-note'),status=make('p','','import-audit-status'),actions=make('div','','import-audit-actions'),arm=make('button','Начать 10 проверок'),refreshButton=make('button','Обновить'),download=make('button','Скачать tg.zip'),checks=make('ol','','import-audit-checks');
+ for(const button of [arm,refreshButton,download])button.type='button';
+ actions.append(arm,refreshButton,download);panel.append(summary,note,status,actions,checks);mount.replaceChildren(panel);download.hidden=true;
+ const visible=()=>!document.hidden&&mount.getClientRects().length>0;
+ function schedule(){clearTimeout(timer);if(!destroyed&&visible()&&state&&['armed','finishing'].includes(state.state))timer=setTimeout(()=>refresh(),5000);}
+ function draw(value){
+  state=value;const completed=Number(value.completed)||0,target=Number(value.target)||10;
+  summary.textContent='Диагностика · '+completed+' / '+target+' проверок';
+  const labels={idle:'Сбор ещё не запущен.',armed:'Следующие ручные запуски ЦИАН записываются.',finishing:'Все проверки приняты. Ожидаем окончания активных запусков.',complete:'Сбор завершён. Обычный импорт продолжает работать.',paused:'Сбор приостановлен.'};
+  status.textContent=(labels[value.state]||'Проверяем состояние.')+(value.inFlight?' Сейчас выполняется: '+value.inFlight+'.':'')+(value.bundleError?' Архив не создан: '+value.bundleError:'');
+  arm.disabled=busy||['armed','finishing'].includes(value.state);arm.textContent=value.state==='paused'?'Продолжить сбор':value.state==='complete'?'Новая серия из 10 проверок':'Начать 10 проверок';
+  download.hidden=!value.bundleReady;download.disabled=busy;checks.replaceChildren();
+  for(const row of value.checks||[]){const item=make('li'),labels={running:'выполняется',success:'готово',error:'ошибка',cancelled:'отменено',interrupted:'прервано'};item.textContent='№'+row.number+' · '+(labels[row.outcome]||row.outcome)+' · '+Math.round(Number(row.elapsedSeconds)||0)+' с';checks.append(item);}
+ }
+ async function refresh(){
+  const current=++revision;clearTimeout(timer);
+  try{const value=await api('import-diagnostics');if(destroyed||current!==revision)return;draw(value);}
+  catch(error){if(!destroyed&&current===revision)status.textContent=error.message;}
+  finally{if(!destroyed&&current===revision)schedule();}
+ }
+ arm.onclick=async()=>{if(busy)return;busy=true;arm.disabled=true;const current=++revision;try{const value=await api('import-diagnostics',{action:'arm',target:10});if(!destroyed&&current===revision)draw(value);}catch(error){if(!destroyed)status.textContent=error.message;}finally{busy=false;if(!destroyed){if(state)draw(state);schedule();}}};
+ refreshButton.onclick=()=>refresh();
+ download.onclick=async()=>{if(busy||!getBundle)return;busy=true;download.disabled=true;try{const blob=await getBundle();if(destroyed)return;const url=URL.createObjectURL(blob),link=make('a');link.href=url;link.download='tg.zip';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('tg.zip подготовлен к скачиванию');}catch(error){if(!destroyed)status.textContent=error.message;}finally{busy=false;if(!destroyed)download.disabled=false;}};
+ panel.ontoggle=()=>{if(panel.open)refresh();};
+ const visibility=()=>{if(document.hidden)clearTimeout(timer);else if(visible())refresh();};document.addEventListener('visibilitychange',visibility);
+ return{refresh,destroy(){destroyed=true;revision++;clearTimeout(timer);document.removeEventListener('visibilitychange',visibility);mount.replaceChildren();}};
+}
+
+const prClone=value=>JSON.parse(JSON.stringify(value));
+const prId=card=>typeof card?.id==='string'&&/^[a-f0-9]{32}$/.test(card.id)?card.id:'';
+const prStamp=card=>typeof card?.updated==='number'&&Number.isFinite(card.updated)&&card.updated>=0?card.updated:null;
+const prFieldsKey=entry=>JSON.stringify(['universityRoutes','universities','university','campus','uniTime','uniMode','route','latitude','longitude','address','city','metro'].map(key=>entry?.card?.fields?.[key]));
+
+function createPhoneRouteDraftStore(){
+  const entries=new Map();
+  const fields=entry=>({...entry.card.fields,...(entry.draft!==null?{universityRoutes:prClone(entry.draft)}:{})});
+  function receive(card){
+    const id=prId(card);if(!id)return null;let entry=entries.get(id);const stamp=prStamp(card);
+    if(!entry){entry={id,card:prClone(card),baseUpdated:stamp,draft:null,dirty:false,revision:0,saving:false,rebasing:false,conflict:false,error:'',remote:null};entries.set(id,entry);return entry;}
+    if(stamp===null||entry.baseUpdated!==null&&stamp<entry.baseUpdated)return entry;
+    if(entry.dirty||entry.saving){if(stamp!==entry.baseUpdated&&(!entry.remote||stamp>=prStamp(entry.remote))){entry.remote=prClone(card);entry.conflict=true;}}
+    else{entry.card=prClone(card);entry.baseUpdated=stamp;entry.remote=null;entry.conflict=false;}
+    return entry;
+  }
+  function edit(id,routes){const entry=entries.get(id);if(!entry||!Array.isArray(routes))return null;if(entry.dirty&&JSON.stringify(entry.draft)===JSON.stringify(routes))return entry;entry.draft=prClone(routes);entry.dirty=true;entry.revision++;entry.error='';return entry;}
+  function begin(id,routes){const entry=entries.get(id);if(!entry||!entry.dirty||entry.saving||entry.rebasing||entry.baseUpdated===null)return null;edit(id,routes);entry.saving=true;entry.error='';return {id,entry,revision:entry.revision,routes:prClone(entry.draft),expectedUpdated:entry.baseUpdated};}
+  function accept(snapshot,card){
+    const entry=entries.get(snapshot.id);if(entry!==snapshot.entry)return null;
+    if(prId(card)!==entry.id||prStamp(card)===null||prStamp(card)<snapshot.expectedUpdated)throw Error('Неверная версия ответа Mac.');
+    const latest=entry.remote&&prStamp(entry.remote)>prStamp(card)?entry.remote:card;
+    entry.card=prClone(latest);entry.baseUpdated=prStamp(card);entry.saving=false;entry.error='';
+    if(entry.revision===snapshot.revision){entry.dirty=false;entry.draft=null;entry.baseUpdated=prStamp(latest);}
+    entry.remote=prStamp(latest)>entry.baseUpdated?prClone(latest):null;entry.conflict=!!entry.remote;return entry;
+  }
+  function fail(snapshot,error){const entry=entries.get(snapshot.id);if(entry!==snapshot.entry)return null;entry.saving=false;entry.error=String(error?.message||'Не удалось сохранить. Черновик оставлен.').slice(0,500);entry.conflict=entry.conflict||error?.status===409;return entry;}
+  function rebase(id,card){const entry=entries.get(id);if(!entry||prId(card)!==id||prStamp(card)===null)throw Error('Не получена версия карточки.');const latest=entry.remote&&prStamp(entry.remote)>prStamp(card)?entry.remote:card;if(entry.baseUpdated!==null&&prStamp(latest)<entry.baseUpdated)throw Error('Mac вернул старую версию.');entry.card=prClone(latest);entry.baseUpdated=prStamp(latest);entry.remote=null;entry.conflict=false;entry.error='';return entry;}
+  return {receive,edit,begin,accept,fail,rebase,fields,get:id=>entries.get(id),clear:()=>entries.clear()};
+}
+
+function setupPhoneUniversityRoutes({mount,getCard=()=>null,api,onSaved=()=>{},toast=()=>{},loadModule=()=>import('/phone/routes.mjs')}={}){
+  if(!mount)return {cardChanged:()=>{},clear:()=>{},destroy:()=>{}};
+  const make=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
+  const store=createPhoneRouteDraftStore(),details=make('details','','phone-route-controller'),summary=make('summary','Вузы, маршруты и карты'),status=make('p','','muted'),body=make('div'),actions=make('div','','phone-route-controller-actions'),save=make('button','Сохранить маршруты','btn primary'),rebase=make('button','Обновить версию, сохранив мой черновик','btn');
+  save.type=rebase.type='button';status.setAttribute('role','status');status.setAttribute('aria-live','polite');actions.append(save,rebase);details.append(summary,status,body,actions);mount.replaceChildren(details);
+  let active='',authEpoch=0,viewEpoch=0,destroyed=false,widget=null,widgetId='',moduleReady=null,loading=false,renderedKey='',loadError='';
+  function update(message=''){
+    if(destroyed)return;const entry=store.get(active);save.disabled=!api||!entry?.dirty||entry.saving||entry.rebasing||entry.baseUpdated===null;rebase.hidden=!entry?.conflict;rebase.disabled=!api||entry?.saving||entry?.rebasing;
+    status.textContent=message||(!entry?'Откройте карточку квартиры.':loading?'Загружаем форму маршрутов…':loadError?loadError:entry.saving?'Сохраняем на Mac…':entry.rebasing?'Получаем версию Mac…':entry.error?entry.error:entry.conflict?'На Mac новая версия. Ваш черновик сохранён.':entry.dirty?'Маршруты изменены. Сохраните их отдельно.':widget?'Маршруты берутся из этой карточки.':'Откройте блок для настройки маршрутов.');
+  }
+  function removeWidget(){widget?.destroy();widget=null;widgetId='';renderedKey='';body.replaceChildren();}
+  async function open(){
+    if(destroyed||!details.open)return;const entry=store.get(active);if(!entry)return;
+    if(widget&&widgetId===active||loading)return;const id=active,auth=authEpoch,view=++viewEpoch;loading=true;loadError='';update();
+    try{
+      if(!moduleReady)moduleReady=Promise.resolve().then(loadModule).catch(error=>{moduleReady=null;throw error;});
+      const module=await moduleReady;if(destroyed||auth!==authEpoch||view!==viewEpoch||active!==id||!details.open)return;
+      if(typeof module.setupUniversityRoutes!=='function')throw Error('Форма маршрутов недоступна.');removeWidget();
+      widget=module.setupUniversityRoutes({mount:body,getFields:()=>store.fields(entry),onChange:rows=>{if(!destroyed&&auth===authEpoch&&view===viewEpoch&&active===id){store.edit(id,rows);update();}}});widgetId=id;renderedKey=prFieldsKey(entry);
+    }catch(error){if(!destroyed&&auth===authEpoch&&view===viewEpoch&&active===id)loadError=String(error?.message||'Не удалось открыть маршруты.');}
+    finally{if(!destroyed&&auth===authEpoch&&view===viewEpoch){loading=false;update();}}
+  }
+  function cardChanged(card){
+    if(destroyed)return;const id=prId(card),changed=id!==active;const entry=id?store.receive(card):null;
+    if(changed){active=id;++viewEpoch;loading=false;loadError='';removeWidget();}
+    if(entry&&widgetId===id&&!entry.dirty&&!entry.saving&&renderedKey!==prFieldsKey(entry)){widget.refresh(store.fields(entry));renderedKey=prFieldsKey(entry);}
+    update();if(details.open&&entry&&!widget&&!loading)open();
+  }
+  save.onclick=async()=>{
+    if(destroyed||!api||widgetId!==active)return;const snapshot=store.begin(active,widget.value());if(!snapshot)return;const auth=authEpoch;update();
+    try{
+      const value=await api('cards/'+snapshot.id+'/routes',{routes:snapshot.routes,expectedUpdated:snapshot.expectedUpdated});if(destroyed||auth!==authEpoch)return;
+      const entry=store.accept(snapshot,value?.card||value);if(!entry||active!==snapshot.id)return;
+      if(!entry.dirty&&widgetId===entry.id){widget.refresh(store.fields(entry));renderedKey=prFieldsKey(entry);}onSaved(prClone(entry.card));update(entry.dirty?'Сохранено. Более новые правки остаются в черновике.':'Маршруты сохранены на Mac.');
+    }catch(error){if(!destroyed&&auth===authEpoch){store.fail(snapshot,error);if(active===snapshot.id){update();toast(String(error?.message||'Черновик сохранён в этом окне.'));}}}
+  };
+  rebase.onclick=async()=>{
+    const id=active,entry=store.get(id),auth=authEpoch,view=viewEpoch;if(destroyed||!api||!entry?.conflict||entry.saving||entry.rebasing)return;entry.rebasing=true;let message='';update();
+    try{const value=await api('cards/'+id);if(destroyed||auth!==authEpoch||view!==viewEpoch||active!==id||store.get(id)!==entry)return;store.rebase(id,value?.card||value);onSaved(prClone(entry.card));message='Новая версия получена. Проверьте маршруты и нажмите «Сохранить».';}
+    catch(error){if(!destroyed&&auth===authEpoch&&active===id){entry.error=String(error?.message||'Не удалось получить версию.');update();}}
+    finally{if(store.get(id)===entry)entry.rebasing=false;if(!destroyed&&auth===authEpoch&&active===id)update(message);}
+  };
+  details.ontoggle=()=>{if(details.open)open();else{++viewEpoch;loading=false;removeWidget();update();}};
+  function clear(){++authEpoch;++viewEpoch;active='';loading=false;loadError='';removeWidget();store.clear();details.open=false;update();}
+  cardChanged(getCard());
+  return {cardChanged,clear,destroy(){if(destroyed)return;clear();destroyed=true;details.ontoggle=null;mount.replaceChildren();}};
+}
+
+
+window.redcnPhoneBoot?.started();
+const ph=id=>document.getElementById(id);
+let phoneArchiveUI=null,phoneFilesUI=null,phonePresentationUI=null,phoneDesignInitializing=null,phoneStarting=false;
+let phoneWatchUI=null,phoneImportAuditUI=null,phoneRoutesUI=null;
+const phoneFeedViews=new Map();let phoneFeedSignature='';
+const phoneState={authEpoch:0,paired:false,csrf:'',cards:new Map(),cursor:null,hasMore:false,view:'cards',detail:null,detailId:null,media:[],photo:0,variant:'prepared',job:null,jobResult:null,lastSync:0,polling:false};
+let phoneJobProgressTimer=0,phoneJobLatest=null,phoneJobLast=null;
+const phoneWriting={revision:0,draftRevision:0,busy:false,capabilities:null,loading:null};
+let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
+const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
+const phoneTime=value=>phoneDate(value)?.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})||'';
+const phoneCardCount=count=>count+' '+(count%100>=11&&count%100<=14?'карточек':count%10===1?'карточка':count%10>=2&&count%10<=4?'карточки':'карточек');
+const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(value).toLocaleString('ru-RU')+' ₽':'';
+// This is a trace of completed requests, not a percentage estimate. It stays in
+// memory and deliberately excludes pairing fragments and all listing contents.
+const phoneLoad={revision:0,started:0,timer:0,finished:false};
+window.addEventListener('redcn-phone-start-failed',()=>clearInterval(phoneLoad.timer));
+function phoneLoadStep(stage,state,note){const row=ph('phoneLoad'+stage);row.dataset.state=state;row.querySelector('.load-mark').textContent={done:'✓',active:'…',waiting:'·',error:'!',action:'!'}[state];ph('phoneLoad'+stage+'Note').textContent=note;}
+function phoneLoadClock(){ph('phoneLoadElapsed').textContent=((performance.now()-phoneLoad.started)/1000).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+' с';}
+function phoneLoadBegin(){
+  window.redcnPhoneBoot?.begin();
+  const revision=++phoneLoad.revision;clearInterval(phoneLoad.timer);phoneLoad.started=performance.now();phoneLoad.finished=false;ph('phoneLoading').dataset.result='loading';ph('phoneLoadTitle').textContent='Проверяем подключение';ph('phoneLoadDetails').open=true;ph('phoneLoadRetry').classList.add('hidden');ph('phoneLoadRetry').disabled=true;
+  ph('phoneLoadHost').textContent=(location.protocol==='https:'?'Внешний HTTPS-адрес: ':'Локальный адрес: ')+location.host;
+  const navigation=typeof performance.getEntriesByType==='function'?performance.getEntriesByType('navigation')[0]:null;if(navigation?.responseEnd>0)ph('phoneLoadPageNote').textContent='Получена за '+(navigation.responseEnd/1000).toLocaleString('ru-RU',{maximumFractionDigits:1})+' с после открытия адреса';
+  phoneLoadStep('Connection','active','Ждём ответ сервера');phoneLoadStep('Session','waiting','Проверим действующую сессию или код');phoneLoadStep('Cards','waiting','Загрузим после входа');ph('phoneLoadHelp').textContent='Первое подключение проверяется до 9 секунд. Фотографии загружаются по мере просмотра.';phoneLoadClock();phoneLoad.timer=setInterval(phoneLoadClock,250);return revision;
+}
+function phoneLoadAccepted(revision){if(revision!==phoneLoad.revision||phoneLoad.finished)return;phoneLoadStep('Connection','done','Mac ответил на запрос');phoneLoadStep('Session','done','Вход подтверждён');phoneLoadStep('Cards','active','Получаем список с компьютера');ph('phoneLoadTitle').textContent='Загружаем карточки';}
+function phoneLoadFinish(revision,result='ready',error=null,stage='Connection'){
+  if(revision!==phoneLoad.revision||phoneLoad.finished)return;window.redcnPhoneBoot?.finish(result,{code:error?.code,status:error?.status});clearInterval(phoneLoad.timer);phoneLoadClock();phoneLoad.finished=true;ph('phoneLoading').dataset.result=result;ph('phoneLoadRetry').disabled=false;
+  if(result==='ready'){phoneLoadStep('Cards','done',phoneCardCount(phoneState.cards.size)+' получено. Обложки загружаются по мере просмотра.');ph('phoneLoadTitle').textContent='Карточки готовы';ph('phoneLoadHelp').textContent='Данные получены с Mac. Список обновляется автоматически; полноразмерные фото открываются в карточке.';ph('phoneLoadDetails').open=false;return;}
+  if(result==='code'){phoneLoadStep('Connection','done','Mac доступен');phoneLoadStep('Session','action','Нужны 8 цифр из раздела «Телефон» на Mac');phoneLoadStep('Cards','waiting','Доступны после ввода кода');ph('phoneLoadTitle').textContent='Mac отвечает · нужен код';ph('phoneLoadHelp').textContent='Введите код ниже. В установленном приложении вход может потребоваться отдельно.';ph('phoneLoadDetails').open=false;return;}
+  if(error?.status&&stage==='Connection'&&!error.proxy){phoneLoadStep('Connection','done','Сервер ответил · HTTP '+error.status);stage='Session';}
+  phoneLoadStep(stage,'error',error?.message||'Ответ не получен');ph('phoneLoadTitle').textContent=stage==='Cards'?'Не удалось получить карточки':'Не удалось подключиться';ph('phoneLoadHelp').textContent=navigator.onLine===false?'Телефон сейчас без интернета. Включите Wi-Fi или мобильные данные и повторите загрузку.':location.protocol==='https:'?'Проверьте интернет на телефоне, включённый Mac и внешний доступ в разделе «Телефон» на компьютере. При смене внешнего адреса откройте новую ссылку.':'Проверьте, что Mac включён, сервер запущен, а телефон подключён к той же сети. Для работы с улицы нужен внешний HTTPS-адрес.';ph('phoneLoadRetry').classList.remove('hidden');ph('phoneLoadDetails').open=true;ph('phoneDiagnostics').open=true;
+}
+function phoneAsset(path){try{const url=new URL(path,location.origin);return url.origin===location.origin&&/^\/api\/phone\/(?:media\/|previews\/|cards\/)/.test(url.pathname)?url.pathname+url.search:null;}catch{return null;}}
+function phoneToast(text){clearTimeout(phoneToastTimer);ph('phoneToast').textContent=text;ph('phoneToast').classList.remove('hidden');phoneToastTimer=setTimeout(()=>ph('phoneToast').classList.add('hidden'),5000);}
+function phoneConnection(online){ph('phoneConnection').textContent=online?'Mac на связи':'Нет связи с Mac';ph('phoneConnection').classList.toggle('offline',!online);ph('phoneServerStatus').textContent=online?'Компьютер отвечает. Обновления приходят автоматически.':(location.protocol==='https:'?'Проверьте интернет на телефоне и внешний доступ на включённом Mac.':'Проверьте, что Mac включён и телефон находится в его локальной сети. Для работы с улицы откройте внешнюю HTTPS-ссылку.');if(!online&&phoneState.lastSync)ph('phoneSync').textContent='Нет связи · последнее обновление в '+phoneTime(phoneState.lastSync)+'. Показаны ранее полученные карточки.';}
+function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobStageTime','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
+// The first usable feed has a shared budget; PDF and attachment work keep their
+// longer operation deadlines and cannot make initial navigation wait for them.
+async function phoneApi(path,data,{deadline=0}={}){
+  const epoch=phoneState.authEpoch;
+  const normalTimeout=path==='translate'||/^cards\/[a-f0-9]{32}\/(?:rewrite|edit-text)$/.test(path)?65000:path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:8000;
+  const timeout=deadline?Math.min(normalTimeout,Math.max(1,Math.ceil(deadline-performance.now()))):normalTimeout;
+  let response,value,phase='request';window.redcnPhoneBoot?.request(path,phase);
+  try{await withRequestDeadline(timeout,async(signal,scope)=>{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});phase='body';window.redcnPhoneBoot?.request(path,phase,response.status);try{value=await response.json();}catch(error){scope.throwIfAborted();value=null;}});}
+  catch(cause){if(epoch===phoneState.authEpoch)phoneConnection(false);const timedOut=cause?.name==='TimeoutError',error=Error(timedOut?(phase==='body'?'Сервер прислал заголовки, но данные ответа не загрузились за отведённое время.':'Ответ сервера не получен за 8 секунд. Сеть, внешний адрес или сервер могут быть недоступны.'):navigator.onLine===false?'Телефон без интернета. Включите Wi-Fi или мобильные данные.':'Браузер не смог выполнить запрос к Mac. Точную сетевую причину браузер не сообщил.');error.code=timedOut?'REQUEST_TIMEOUT':navigator.onLine===false?'NETWORK_OFFLINE':'NETWORK_ERROR';error.status=response?.status;throw error;}
+  if(epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;error.staleAuth=true;throw error;}
+  if(response.status===401){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';ph('phoneReconnect').classList.add('hidden');ph('phonePairStatus').textContent='Для этого окна нужен вход. На Mac нажмите «Телефон» и введите показанные там 8 цифр. После установки на экран «Домой» подключитесь здесь ещё раз.';}
+  if(!response.ok){const gateway=[502,503,504].includes(response.status),message=gateway?(location.protocol==='https:'?'Внешний адрес':'Сервер')+' вернул HTTP '+response.status+'. Соединение с приложением недоступно; проверьте сервер и внешний доступ на Mac.':typeof value?.error==='string'?value.error:response.status===401?'Для этого окна нужен вход. Введите текущие 8 цифр с Mac.':'Сервер вернул HTTP '+response.status+' без ответа приложения. Повторите запрос или проверьте внешний адрес.';const error=Error(message);error.code=response.status===401?'SESSION_REQUIRED':gateway?'GATEWAY_ERROR':'HTTP_ERROR';error.status=response.status;error.proxy=gateway||(!value&&response.status!==401);if(error.proxy)phoneConnection(false);if(response.status===401)error.authEpoch=phoneState.authEpoch;throw error;}
+  if(!value||typeof value!=='object'||Array.isArray(value)){const error=Error('Адрес вернул HTTP '+response.status+', но данные приложения не получены. Проверьте адрес и внешний доступ на Mac.');error.code='RESPONSE_NOT_JSON';error.status=response.status;error.proxy=true;phoneConnection(false);throw error;}
+  window.redcnPhoneBoot?.request(path,'complete',response.status);phoneConnection(true);return value;
+}
+function phoneView(view){phoneState.view=view;if(view==='watch'&&phoneState.paired)phoneInitializeWatch().refresh();if(view==='import'&&phoneState.paired)phoneInitializeAudit().refresh();if(view==='design')phoneInitializeDesigner().then(studio=>{if(studio&&phoneState.paired&&phoneState.view==='design')studio.refresh();}).catch(error=>phoneToast(error.message));for(const [key,id] of Object.entries({cards:'phoneCardsView',watch:'phoneWatchView',import:'phoneImportView',setup:'phoneSetupView',design:'phoneDesignView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
+document.querySelectorAll('[data-phone-view]').forEach(button=>button.addEventListener('click',()=>{phoneView(button.dataset.phoneView);if(button.dataset.phoneView==='cards')phoneRefreshCards().catch(error=>phoneToast(error.message));}));
+function phoneCardView(card){
+  let view=phoneFeedViews.get(card.id);
+  if(!view){
+    const button=document.createElement('button');button.type='button';button.className='listing-card';button.dataset.cardId=card.id;button.onclick=()=>phoneOpenCard(card.id);
+    const cover=document.createElement('div');cover.className='listing-cover';const badge=document.createElement('span');badge.className='photo-badge';cover.append(badge);
+    const info=document.createElement('div');info.className='listing-info';const price=document.createElement('div');price.className='listing-price';
+    const title=document.createElement('h3'),meta=document.createElement('div'),stamp=document.createElement('div');meta.className='listing-meta';stamp.className='listing-updated';info.append(price,title,meta,stamp);button.append(cover,info);
+    view={button,cover,badge,price,title,meta,stamp,source:undefined,image:null};phoneFeedViews.set(card.id,view);
+  }
+  const signature=JSON.stringify(card);if(view.signature===signature)return view.button;view.signature=signature;
+  view.button.setAttribute('aria-label','Открыть '+(card.title||'карточку квартиры'));
+  const source=phoneAsset(card.coverUrl);
+  if(source!==view.source){
+    if(view.image)view.image.remove();view.source=source;
+    if(source){const img=document.createElement('img');img.src=source;img.alt='Фото квартиры';img.loading=phoneFeedViews.size===1?'eager':'lazy';img.decoding='async';img.width=400;img.height=210;if(phoneFeedViews.size===1)img.fetchPriority='high';view.image=img;}
+    else{const empty=document.createElement('div');empty.className='cover-placeholder';empty.textContent='▧';view.image=empty;}
+    view.cover.prepend(view.image);
+  }
+  view.badge.textContent=Number(card.photoCount)>0?card.photoCount+' фото':card.mediaStatus==='loading'?'Фото готовятся':'Без фотографий';
+  view.price.textContent=phoneMoney(card.price)||'Цена в карточке';if(phoneMoney(card.price)){const period=document.createElement('small');period.textContent='/ месяц';view.price.append(period);}
+  view.title.textContent=card.title||'Квартира в Москве';view.meta.replaceChildren();if(card.metro){const station=document.createElement('span');station.textContent='🚇 '+card.metro;view.meta.append(station);}
+  view.stamp.textContent=phoneTime(card.updated)?'Обновлено в '+phoneTime(card.updated):'С компьютера';return view.button;
+}
+function phoneRenderCards(){
+  const query=ph('phoneSearch').value.toLocaleLowerCase('ru').trim();
+  const rows=[...phoneState.cards.values()].sort((a,b)=>(phoneDate(b.updated)?.getTime()||0)-(phoneDate(a.updated)?.getTime()||0)).filter(card=>[card.title,card.price,card.metro].join(' ').toLocaleLowerCase('ru').includes(query));
+  const signature=JSON.stringify([query,phoneState.hasMore,rows]);if(signature===phoneFeedSignature)return;phoneFeedSignature=signature;
+  ph('phoneEmpty').classList.toggle('hidden',phoneState.cards.size>0||!!query);ph('phoneMore').classList.toggle('hidden',!phoneState.hasMore);
+  const container=ph('phoneCards');
+  if(!rows.length){container.replaceChildren();if(query){const note=document.createElement('p');note.className='surface';note.textContent='По этому запросу карточек пока нет.';container.append(note);}return;}
+  const nodes=rows.map(phoneCardView),wanted=new Set(nodes);
+  for(const child of [...container.children])if(!wanted.has(child))child.remove();
+  for(let index=0;index<nodes.length;index++)if(container.children[index]!==nodes[index])container.insertBefore(nodes[index],container.children[index]||null);
+}
+async function phoneRefreshCards({reset=false,deadline=0}={}){
+  if(!phoneState.paired||phoneState.polling)return;const epoch=phoneState.authEpoch;phoneState.polling=true;ph('phoneRefresh').disabled=true;if(!phoneState.cards.size)ph('phoneSync').textContent='Загружаем карточки с Mac…';
+  try{const after=!reset&&phoneState.cursor!==null?'?after='+encodeURIComponent(phoneState.cursor):'';const data=await phoneApi('cards'+after,undefined,{deadline});for(const card of data.cards||[]){if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,card);}if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);phoneRenderCards();const changed=(data.cards||[]).find(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));if(changed&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(changed.id,{keepScroll:true});if(phoneState.view==='detail'&&phoneState.detail){phoneArchiveUI?.refresh();phoneFilesUI?.refresh();}}
+  catch(error){if(epoch===phoneState.authEpoch&&!phoneState.cards.size)ph('phoneSync').textContent=error.message;throw error;}
+  finally{if(epoch===phoneState.authEpoch){phoneState.polling=false;ph('phoneRefresh').disabled=false;phoneSchedulePoll();}}
+}
+function phoneSchedulePoll(){clearTimeout(phonePollTimer);if(phoneState.paired&&!document.hidden)phonePollTimer=setTimeout(()=>phoneRefreshCards().catch(()=>{}),5000);}
+ph('phoneRefresh').onclick=()=>phoneRefreshCards({reset:true}).catch(error=>phoneToast(error.message));ph('phoneMore').onclick=()=>phoneRefreshCards().catch(error=>phoneToast(error.message));ph('phoneSearch').oninput=phoneRenderCards;
+async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
+  try{if(code.includes('#'))code=new URL(code).hash.slice(1);}catch{}
+  const epoch=++phoneState.authEpoch,load=loading||phoneLoadBegin();
+  ph('phonePairSubmit').disabled=true;ph('phonePairStatus').textContent='Соединяем телефон с Mac…';ph('phonePairStatus').classList.remove('error');ph('phoneReconnect').classList.add('hidden');
+  try{const state=await phoneApi('pair',{code},{deadline});if(epoch!==phoneState.authEpoch)return;phoneLoadAccepted(load);ph('phonePairCode').value='';phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');phoneState.cursor=null;await phoneRefreshCards({reset:true,deadline});phoneLoadFinish(load);phoneResumeJob(state.activeJob);ph('phonePairStatus').textContent='';}
+  catch(error){if(epoch!==phoneState.authEpoch&&error.authEpoch!==phoneState.authEpoch)return;phoneLoadFinish(load,error.status===401?'code':'error',error,phoneState.paired?'Cards':'Connection');if(epoch===phoneState.authEpoch){ph('phonePairStatus').textContent=error.message;ph('phonePairStatus').classList.add('error');ph('phoneReconnect').classList.toggle('hidden',phoneState.paired);}}
+  finally{if(epoch===phoneState.authEpoch)ph('phonePairSubmit').disabled=false;}
+}
+ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
+async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
+  if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneResetWriting();phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='prepared';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=card;phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
+  catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
+}
+ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
+function phoneRenderMedia(){
+  const card=phoneState.detail;if(!card)return;
+  const all=Array.isArray(card.media)?card.media:[],crops=all.filter(row=>row.crop&&phoneAsset(row.crop.url)),prepared=phoneState.variant==='prepared';
+  phoneState.media=(prepared?all.map(row=>row.crop&&phoneAsset(row.crop.url)?{...row.crop,sourceUrl:row.sourceUrl}:row):all).filter(row=>phoneAsset(row.url));phoneState.photo=Math.min(phoneState.photo,Math.max(0,phoneState.media.length-1));
+  ph('phonePhotoVariants').classList.toggle('hidden',!all.length);for(const [variant,id] of [['original','phoneOriginalVariant'],['prepared','phoneCropVariant']]){const selected=phoneState.variant===variant;ph(id).classList.toggle('active',selected);ph(id).setAttribute('aria-pressed',String(selected));}
+  ph('phonePhotos').replaceChildren();for(const [index,row] of phoneState.media.entries()){const figure=document.createElement('figure');figure.className='phone-slide';const image=document.createElement('img');image.src=phoneAsset(row.url);image.alt='Фотография квартиры '+(index+1);image.loading=index?'lazy':'eager';figure.append(image);ph('phonePhotos').append(figure);}
+  const count=phoneState.media.length,expected=Number(card.photoCount??card.fields?.photos?.length??count),processing=card.photoProcessing||{};
+  ph('phoneAnalyzeFurniture').classList.toggle('hidden',expected===0);phoneRenderPhotoInventory(card);
+  ph('phonePhotoCount').textContent=count+' фото';ph('phonePreparePhotos').classList.toggle('hidden',expected===0||(count>=expected&&!(Number(processing.failed)>0||Number(processing.skipped)>0)));
+  ph('phonePreparePhotos').textContent=count>=expected?'Повторить подготовку фото на Mac':'Подготовить фотографии на Mac';
+  ph('phoneMediaStatus').textContent=!count?(expected===0?'В объявлении нет фотографий.':'Mac ещё готовит фотографии.'):(prepared?'Готовые фото: '+crops.length+' обрезано автоматически или проверено. Остальные сохранены целиком.':'Показаны исходные фотографии без изменений.')+(expected>count?' Загружено '+count+' из '+expected+'.':'')+(Number(processing.review)>0?' '+processing.review+' фото оставлено целиком: безопасная обрезка не подтверждена.':'')+(Number(processing.failed)>0?' Автообрезка пока недоступна для '+processing.failed+' фото; оригиналы сохранены.':'')+(Number(processing.skipped)>0?' Ещё '+processing.skipped+' фото сохранено без изменений по лимиту обработки.':'');
+  const zip='/api/phone/cards/'+card.id+'.zip?variant='+phoneState.variant;ph('phoneDownloadZip').href=zip;ph('phoneDownloadZip').classList.toggle('hidden',!count);ph('phoneDownloadZip').download='most-'+card.id+'-'+phoneState.variant+'.zip';ph('phonePhotos').scrollLeft=ph('phonePhotos').clientWidth*phoneState.photo;phoneSelectPhoto(phoneState.photo,false);
+}
+function phoneRenderPhotoInventory(card){
+ const mount=ph('phonePhotoInventory'),inventory=card.photoInventory,wasOpen=mount.querySelector('details')?.open===true;mount.replaceChildren();
+ if(!inventory)return;
+ const panel=document.createElement('details'),summary=document.createElement('summary'),note=document.createElement('p');panel.open=wasOpen;
+ const checked=Number(inventory.checked)||0,total=Number(inventory.total)||0;
+ summary.textContent='Мебель и техника · проверено '+checked+' / '+total+' фото';
+ note.className='quiet';note.textContent=inventory.state==='disabled'?'Локальная модель ещё не включена на Mac.':inventory.state==='partial'?'Часть фото не проверена. Неопознанные предметы остаются неизвестными.':'Фото обработаны. Оценка модели не гарантирует полноту списка или работоспособность техники.';
+ if(inventory.message)note.textContent+=' '+inventory.message;
+ if(inventory.truncated)note.textContent+=' В этой проверке лимит '+inventory.coverageLimit+' фото из '+inventory.totalAvailable+'.';
+ panel.append(summary,note);
+ for(const [index,photo] of (inventory.photos||[]).entries()){
+  const row=document.createElement('p'),button=document.createElement('button'),text=document.createElement('span');button.type='button';button.className='button secondary';button.textContent='Фото '+(index+1);
+  const mediaIndex=phoneState.media.findIndex(item=>item.sourceUrl===photo.sourceUrl);button.disabled=mediaIndex<0;button.onclick=()=>phoneSelectPhoto(mediaIndex);
+  const candidates=Array.isArray(photo.candidates)?photo.candidates:[];
+  text.textContent=' '+(photo.status==='duplicate'?'Повторный ракурс того же файла':candidates.length?candidates.map(item=>item.label+(item.autoEligible?' · видно на фото':' · проверьте')).join('; '):photo.status==='review'?'Уверенных находок нет; это не означает отсутствие мебели.':'Анализ не завершён.');
+  row.append(button,text);panel.append(row);
+ }
+ mount.append(panel);
+}
+function phoneSelectPhoto(index,scroll=true){
+  const count=phoneState.media.length;phoneState.photo=count?Math.max(0,Math.min(count-1,index)):0;const row=phoneState.media[phoneState.photo],source=phoneAsset(row?.url),download=phoneAsset(row?.downloadUrl)||source;ph('phonePhotoPosition').textContent=count?(phoneState.photo+1)+' / '+count:'Нет фото';ph('phonePhotoPrev').disabled=count<2;ph('phonePhotoNext').disabled=count<2;ph('phoneDownloadPhoto').classList.toggle('hidden',!source);ph('phoneOpenPhoto').classList.toggle('hidden',!source);ph('phoneSharePhoto').disabled=!source;
+  if(source){ph('phoneDownloadPhoto').href=download;ph('phoneDownloadPhoto').download='most-photo-'+(phoneState.photo+1)+'.'+(row.mime==='image/png'?'png':row.mime==='image/webp'?'webp':'jpg');ph('phoneOpenPhoto').href=source;if(scroll)ph('phonePhotos').scrollTo({left:ph('phonePhotos').clientWidth*phoneState.photo,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});phonePrimeShare(source,row);}
+  else{phoneShareFile=null;phoneShareRevision++;ph('phoneSharePhoto').textContent='Поделиться фото';}
+}
+ph('phonePhotoPrev').onclick=()=>phoneSelectPhoto((phoneState.photo-1+phoneState.media.length)%phoneState.media.length);ph('phonePhotoNext').onclick=()=>phoneSelectPhoto((phoneState.photo+1)%phoneState.media.length);
+let phoneExportViewerUrl=null;ph('phonePhotoViewer').addEventListener('close',()=>{if(phoneExportViewerUrl){URL.revokeObjectURL(phoneExportViewerUrl);phoneExportViewerUrl=null;}ph('phoneViewerImage').removeAttribute('src');});
+let phoneGalleryFrame=0;ph('phonePhotos').addEventListener('scroll',()=>{if(phoneGalleryFrame)return;phoneGalleryFrame=requestAnimationFrame(()=>{phoneGalleryFrame=0;const index=Math.round(ph('phonePhotos').scrollLeft/Math.max(1,ph('phonePhotos').clientWidth));if(index!==phoneState.photo)phoneSelectPhoto(index,false);});},{passive:true});
+ph('phoneOriginalVariant').onclick=()=>{phoneState.variant='original';phoneState.photo=0;phoneRenderMedia();};ph('phoneCropVariant').onclick=()=>{phoneState.variant='prepared';phoneState.photo=0;phoneRenderMedia();};
+async function phonePrimeShare(path,row){
+  const supported=window.isSecureContext&&typeof navigator.share==='function'&&typeof navigator.canShare==='function';
+  if(!supported){phoneShareFile=null;phoneSharePath=path;ph('phoneSharePhoto').textContent='Сохранить в «Фото»';ph('phoneSharePhoto').disabled=false;ph('phoneShareHelp').textContent='Откройте фото, удерживайте изображение и выберите сохранение. ZIP сохраняется в «Файлы».';return;}
+  if(phoneSharePath===path&&phoneShareFile){ph('phoneSharePhoto').textContent='Поделиться фото';ph('phoneSharePhoto').disabled=false;return;}
+  const revision=++phoneShareRevision;phoneSharePath=path;phoneShareFile=null;ph('phoneSharePhoto').textContent='Готовим фото…';ph('phoneSharePhoto').disabled=true;
+  try{const blob=await withRequestDeadline(25000,async signal=>{const response=await fetch(path,{credentials:'same-origin',cache:'no-store',signal});if(!response.ok)throw Error('Фото недоступно');return response.blob();});if(blob.size>12_000_000||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Формат фото недоступен');const file=new File([blob],'most-photo.'+(row.mime==='image/png'?'png':row.mime==='image/webp'?'webp':'jpg'),{type:blob.type});if(!navigator.canShare({files:[file]}))throw Error('Обмен файлами недоступен');if(revision!==phoneShareRevision)return;phoneShareFile=file;ph('phoneSharePhoto').textContent='Поделиться фото';ph('phoneShareHelp').textContent='В системном меню выберите сохранение изображения в «Фото».';}
+  catch{if(revision===phoneShareRevision){phoneShareFile=null;ph('phoneSharePhoto').textContent='Открыть для сохранения';ph('phoneShareHelp').textContent='Удерживайте открытое изображение и выберите сохранение в «Фото».';}}
+  finally{if(revision===phoneShareRevision)ph('phoneSharePhoto').disabled=false;}
+}
+function phoneShowImage(){const source=phoneAsset(phoneState.media[phoneState.photo]?.url);if(!source)return;ph('phoneViewerImage').src=source;ph('phonePhotoViewer').showModal();}
+ph('phoneOpenPhoto').onclick=event=>{event.preventDefault();phoneShowImage();};ph('phoneViewerClose').onclick=()=>ph('phonePhotoViewer').close();
+ph('phoneSharePhoto').onclick=async()=>{const row=phoneState.media[phoneState.photo],source=phoneAsset(row?.url);if(!source)return;if(phoneShareFile){try{await navigator.share({files:[phoneShareFile]});}catch(error){if(error.name!=='AbortError')phoneToast('Не удалось открыть меню. Используйте «Открыть фото» для сохранения.');}}else{phoneShowImage();}};
+function phoneWritingButtons(){
+  const disabled=phoneWriting.busy||!phoneState.paired||!phoneState.detailId;
+  for(const id of ['phoneRewriteTitle','phoneRewriteBody','phoneRewriteTags','phoneRewriteAll'])ph(id).disabled=disabled;
+  ph('phoneTranslateDraft').disabled=disabled||!ph('phoneRussianDraft').value.trim();
+  ph('phoneApplyDraft').disabled=disabled||!ph('phoneChineseDraft').value.trim();
+}
+function phoneResetWriting(){
+  phoneWriting.revision++;phoneWriting.draftRevision++;phoneWriting.busy=false;if(!phoneState.paired){phoneWriting.capabilities=null;phoneWriting.loading=null;}
+  ph('phoneRussianDraft').value='';ph('phoneChineseDraft').value='';ph('phoneChineseDraft').maxLength=20000;ph('phoneLanguagePart').value='body';ph('phoneLanguageStudio').open=false;
+  ph('phoneTranslationReview').textContent='Неизвестные фразы будут показаны для проверки.';ph('phoneTranslationReview').dataset.state='';
+  ph('phoneWritingStatus').textContent='';ph('phoneWritingStatus').dataset.state='';phoneWritingButtons();
+}
+function phoneWritingBegin(message){
+  if(phoneWriting.busy||!phoneState.paired||!phoneState.detailId||!phoneState.detail)return null;
+  const request={id:phoneState.detailId,epoch:phoneState.authEpoch,revision:++phoneWriting.revision};phoneWriting.busy=true;phoneWritingButtons();ph('phoneWritingStatus').textContent=message;ph('phoneWritingStatus').dataset.state='';return request;
+}
+function phoneWritingCurrent(request){return request&&request.epoch===phoneState.authEpoch&&request.id===phoneState.detailId&&request.revision===phoneWriting.revision;}
+function phoneWritingEnd(request){if(request?.revision===phoneWriting.revision){phoneWriting.busy=false;phoneWritingButtons();}}
+function phoneApplyWrittenCard(card,request){
+  if(!phoneWritingCurrent(request))return false;if(card?.id!==request.id)throw Error('Ответ относится к другой карточке. Обновите объявление.');
+  const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=card;phoneUpdateRouteTools();
+  const title=card.titles?.[0]||card.title||card.fields?.name||'Квартира в Москве';ph('phoneDetailTitle').textContent=title;ph('phoneTitleCopy').textContent=card.titles?.[0]||card.title||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);
+  const summary=phoneState.cards.get(card.id);if(summary){phoneState.cards.set(card.id,{...summary,title,updated:card.updated});phoneRenderCards();}
+  if(phoneState.view==='detail')window.scrollTo(0,oldScroll);return true;
+}
+async function phoneRewrite(part){
+  const request=phoneWritingBegin(part==='all'?'Создаём новую подачу по фактам квартиры…':'Подбираем новый вариант по фактам квартиры…');if(!request)return;
+  try{const card=await phoneApi('cards/'+request.id+'/rewrite',{part});if(!phoneApplyWrittenCard(card,request))return;ph('phoneWritingStatus').textContent=part==='all'?'Новая подача сохранена в карточке.':'Новый вариант сохранён. Остальные части текста оставлены как были.';phoneToast('Текст обновлён.');}
+  catch(error){if(phoneWritingCurrent(request)){ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
+  finally{phoneWritingEnd(request);}
+}
+for(const [part,id] of [['title','phoneRewriteTitle'],['body','phoneRewriteBody'],['tags','phoneRewriteTags'],['all','phoneRewriteAll']])ph(id).onclick=()=>phoneRewrite(part);
+function phoneLanguageCount(value){const number=typeof value==='number'?value:Number(value?.count??value?.total??value?.size);return Number.isFinite(number)&&number>=0?number.toLocaleString('ru-RU'):null;}
+function phoneRenderLanguageStats(value){
+  const catalog=value?.templates||{},dictionary=value?.dictionary||{};
+  const title=phoneLanguageCount(catalog.title??catalog.titles??catalog.titleCount),body=phoneLanguageCount(catalog.body??catalog.descriptions??catalog.bodyCount),tags=phoneLanguageCount(catalog.tags??catalog.tagSets??catalog.tagCount),entries=phoneLanguageCount(dictionary.ruZhPairs??dictionary.entries??dictionary.entryCount);
+  const lines=[];if(entries)lines.push('База перевода: '+entries+' записей.');if(title&&body&&tags)lines.push('Шаблоны: '+title+' заголовков, '+body+' описаний, '+tags+' наборов тегов.');
+  lines.push('Композиции шаблонов и словарные записи считаются отдельно. Доступные варианты зависят от подтверждённых фактов квартиры.');ph('phoneLanguageStats').textContent=lines.join(' ');
+}
+async function phoneLoadLanguageStats(){
+  if(phoneWriting.capabilities){phoneRenderLanguageStats(phoneWriting.capabilities);return;}
+  if(phoneWriting.loading)return phoneWriting.loading;const epoch=phoneState.authEpoch;ph('phoneLanguageStats').textContent='Получаем сводку словаря и шаблонов…';
+  const pending=phoneApi('language').then(value=>{if(epoch!==phoneState.authEpoch)return;phoneWriting.capabilities=value;phoneRenderLanguageStats(value);}).catch(error=>{if(epoch===phoneState.authEpoch)ph('phoneLanguageStats').textContent='Не удалось получить сводку базы. '+error.message;}).finally(()=>{if(phoneWriting.loading===pending)phoneWriting.loading=null;});phoneWriting.loading=pending;return pending;
+}
+ph('phoneLanguageStudio').addEventListener('toggle',()=>{if(ph('phoneLanguageStudio').open&&phoneState.paired)phoneLoadLanguageStats();});
+for(const id of ['phoneRussianDraft','phoneChineseDraft'])ph(id).addEventListener('input',()=>{phoneWriting.draftRevision++;phoneWritingButtons();});
+ph('phoneLanguagePart').onchange=()=>{phoneWriting.draftRevision++;ph('phoneChineseDraft').maxLength=ph('phoneLanguagePart').value==='title'?240:ph('phoneLanguagePart').value==='tags'?3000:20000;phoneWritingButtons();};
+ph('phoneTranslateDraft').onclick=async()=>{
+  const text=ph('phoneRussianDraft').value.trim();if(!text)return;const request=phoneWritingBegin('Переводим ваш русский текст…');if(!request)return;const draftRevision=phoneWriting.draftRevision;
+  try{const result=await phoneApi('translate',{text,part:ph('phoneLanguagePart').value});if(!phoneWritingCurrent(request))return;if(draftRevision!==phoneWriting.draftRevision){ph('phoneWritingStatus').textContent='Черновик изменился во время перевода. Нажмите перевод ещё раз.';return;}if(typeof result.text!=='string')throw Error('Перевод не получен. Повторите запрос.');
+    ph('phoneChineseDraft').value=result.text;const unknown=(Array.isArray(result.unknown)?result.unknown:[]).map(item=>typeof item==='string'?item:String(item?.text??item?.source??'')).filter(Boolean),warnings=(Array.isArray(result.warnings)?result.warnings:[]).filter(value=>typeof value==='string');
+    const review=[];if(unknown.length)review.push('Требуют проверки: '+unknown.slice(0,12).join(' · ')+(unknown.length>12?' · ещё '+(unknown.length-12):''));if(warnings.length)review.push(warnings.slice(0,4).join(' '));
+    ph('phoneTranslationReview').textContent=review.length?review.join('\n'):'Перевод готов. Проверьте формулировки и сохраните выбранную часть карточки.';ph('phoneTranslationReview').dataset.state=review.length?'review':'ready';ph('phoneWritingStatus').textContent='Перевод показан в черновике.';
+  }catch(error){if(phoneWritingCurrent(request)){ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
+  finally{phoneWritingEnd(request);}
+};
+ph('phoneApplyDraft').onclick=async()=>{
+  const text=ph('phoneChineseDraft').value.trim(),part=ph('phoneLanguagePart').value,sourceRu=ph('phoneRussianDraft').value.trim();if(!text)return;const request=phoneWritingBegin('Сохраняем ваш текст в карточке…');if(!request)return;
+  try{const card=await phoneApi('cards/'+request.id+'/edit-text',{part,text,...(sourceRu?{sourceRu}:{})});if(!phoneApplyWrittenCard(card,request))return;ph('phoneWritingStatus').textContent='Ваш текст сохранён в карточке.';phoneToast('Текст сохранён.');}
+  catch(error){if(phoneWritingCurrent(request)){ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
+  finally{phoneWritingEnd(request);}
+};
+async function phoneCopy(text){if(!text)return phoneToast('В этом поле пока нет текста.');try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);}else{const field=document.createElement('textarea');field.value=text;field.style.position='fixed';field.style.top='0';field.style.left='-10000px';document.body.append(field);field.focus();field.select();field.setSelectionRange(0,text.length);const success=document.execCommand('copy');field.remove();if(!success)throw Error('copy');}phoneToast('Скопировано. Можно вставить в публикацию.');}catch{phoneToast('Удерживайте текст, выберите «Выбрать всё», затем «Скопировать».');}}
+ph('phoneCopyTitle').onclick=()=>phoneCopy(phoneState.detail?.titles?.[0]||'');ph('phoneCopyBody').onclick=()=>phoneCopy(phoneState.detail?.body||'');ph('phoneCopyTags').onclick=()=>phoneCopy(phoneState.detail?.tags||'');ph('phoneCopyAll').onclick=()=>phoneCopy([phoneState.detail?.titles?.[0],phoneState.detail?.body,phoneState.detail?.tags].filter(Boolean).join('\n\n'));
+function phoneJobDuration(value){const total=Math.max(0,Math.round(Number(value)||0)),minutes=Math.floor(total/60),seconds=total%60;return minutes?minutes+' мин '+seconds+' с':seconds+' с';}
+function phoneJobClock(){
+  if(!phoneJobLatest)return;const {progress:p,state,received,partial}=phoneJobLatest,running=state==='running',delta=running?(performance.now()-received)/1000:0,elapsed=(Number(p.elapsedSeconds)||0)+delta,stageTime=(Number(p.stageElapsedSeconds)||0)+delta;
+  ph('phoneJobElapsed').textContent=(running?'Прошло ':'Затрачено ')+phoneJobDuration(elapsed);ph('phoneJobStageTime').textContent=p.label&&p.stage!=='done'?p.label+' · '+phoneJobDuration(stageTime)+(running&&Number(p.maxTotalSeconds)>0?' · лимит '+phoneJobDuration(p.maxTotalSeconds):''):'';
+  const samples=Number(p.sampleCount)||0,average=Number(p.estimateSeconds),hasAverage=p.estimateSource==='history'&&samples>0&&Number.isFinite(average)&&average>0;
+  const profile=p.profile==='import:cache'?' для данных из кеша':String(p.profile||'').startsWith('prepare')?' для подготовки фото':'';
+  if(p.awaitingUser){ph('phoneJobEstimate').textContent='Ожидаем вашу проверку в Chrome на Mac. Время ручного подтверждения предсказать нельзя.';return;}
+  if(!hasAverage){ph('phoneJobEstimate').textContent=partial?'Среднее ещё не рассчитано. Неполная подготовка фото не включается в измерения.':'Среднее ещё не рассчитано'+profile+': собираем время завершённых операций. Текущий этап показан ниже.';return;}
+  const range=Array.isArray(p.historyRangeSeconds)&&p.historyRangeSeconds.length===2?' Диапазон '+phoneJobDuration(p.historyRangeSeconds[0])+'–'+phoneJobDuration(p.historyRangeSeconds[1])+'.':'';
+  const prefix='Среднее'+profile+': '+phoneJobDuration(average)+' по '+samples+' завершённым операциям.';
+  ph('phoneJobEstimate').textContent=prefix+(partial?' Неполная подготовка фото не включена в среднее.':'')+(running?(elapsed>average?' Сейчас дольше обычного; обработка продолжается.':' Ориентировочно осталось '+phoneJobDuration(average-elapsed)+'.'):'')+range;
+}
+function phoneRenderJobProgress(result){
+  const p=result.progress||{};phoneJobLatest={progress:p,state:result.state,partial:result.partial===true,received:performance.now()};ph('phoneJob').dataset.jobState=result.state||'running';
+  const total=Number(p.total),completed=Number(p.completed),hasCount=Number.isFinite(total)&&total>0&&Number.isFinite(completed);ph('phoneJobCount').classList.toggle('hidden',!hasCount);if(hasCount){ph('phoneJobCount').max=total;ph('phoneJobCount').value=Math.min(total,Math.max(0,completed));}
+  ph('phoneJobSteps').replaceChildren();for(const step of p.stages||[]){const row=document.createElement('li');row.dataset.state=step.state;const mark=document.createElement('span');mark.className='job-step-mark';mark.textContent=step.state==='done'?'✓':step.state==='error'?'!':step.state==='waitingManual'?'!':'…';const text=document.createElement('span'),title=document.createElement('strong'),note=document.createElement('small');title.textContent=step.label||step.id;note.textContent=phoneJobDuration(step.elapsedSeconds)+(Number.isFinite(step.completed)&&Number(step.total)>0?' · '+step.completed+' из '+step.total:'');text.append(title,note);row.append(mark,text);ph('phoneJobSteps').append(row);}
+  ph('phoneJobDetails').classList.toggle('hidden',!p.stages?.length);phoneJobClock();clearInterval(phoneJobProgressTimer);if(result.state==='running'&&!document.hidden)phoneJobProgressTimer=setInterval(phoneJobClock,500);
+}
+function phoneResumeJob(info){if(!info?.id||!['running','done','error'].includes(info.state)||phoneState.job)return;if(info.sourceUrl&&!ph('phoneImportUrl').value)ph('phoneImportUrl').value=info.sourceUrl;phoneSetJob(info.id,info.kind||'import',info.cardId);if(info.state==='running')phoneView('import');}
+function phoneSetJob(id,kind='import',cardId=null){phoneState.job={id,kind,cardId:cardId||phoneState.detailId};phoneJobLast=phoneState.job;phoneState.jobResult=null;ph('phoneJobRestart').textContent='Повторить обработку';ph('phoneJob').classList.remove('hidden');ph('phoneJobTitle').textContent=kind==='prepare'?'Mac готовит фотографии':'Mac готовит объявление';ph('phoneJobMessage').textContent='Запрос отправлен на компьютер.';for(const id of ['phoneJobOpen','phoneJobRetry','phoneJobRestart'])ph(id).classList.add('hidden');ph('phoneImportSubmit').disabled=true;phoneRenderJobProgress({state:'running',progress:{elapsedSeconds:0,stageElapsedSeconds:0}});phoneCheckJob();}
+async function phoneCheckJob(){
+  clearTimeout(phoneJobTimer);const job=phoneState.job;if(!job||document.hidden)return;
+  try{const result=await phoneApi('jobs/'+encodeURIComponent(job.id));if(phoneState.job!==job)return;ph('phoneJobMessage').textContent=result.message||result.progress?.message||'Компьютер обрабатывает объявление…';ph('phoneJobRetry').classList.add('hidden');phoneRenderJobProgress(result);if(job.kind==='prepare')ph('phoneMediaStatus').textContent=result.message||'Mac готовит фотографии…';
+    if(result.state==='done'){phoneState.jobResult=result.result_id;ph('phoneJobTitle').textContent=result.partial?'Карточка готова · фото подготовлены частично':'Готово на Mac';if(result.partial&&result.result_id){phoneJobLast={...job,kind:'prepare',cardId:result.result_id};ph('phoneJobRestart').textContent='Повторить подготовку фото';ph('phoneJobRestart').classList.remove('hidden');}ph('phoneJobOpen').classList.toggle('hidden',!result.result_id);ph('phoneImportSubmit').disabled=false;phoneState.job=null;await phoneRefreshCards({reset:true});if(job.kind==='prepare'&&result.result_id===phoneState.detailId)await phoneOpenCard(result.result_id,{keepScroll:true});}
+    else if(result.state==='error'){ph('phoneJobTitle').textContent='Не удалось завершить обработку';ph('phoneImportSubmit').disabled=false;ph('phoneJobRestart').classList.remove('hidden');phoneState.job=null;}
+    else{ph('phoneJobTitle').textContent=result.progress?.awaitingUser?'Нужна проверка в Chrome на Mac':result.progress?.label||'Mac готовит объявление';phoneJobTimer=setTimeout(phoneCheckJob,1800);}
+  }catch(error){if(phoneState.job!==job)return;ph('phoneJobMessage').textContent=error.message+' Проверка состояния не отменяет работу на Mac.';ph('phoneJobRetry').classList.remove('hidden');clearInterval(phoneJobProgressTimer);}
+}
+ph('phoneJobOpen').onclick=()=>{if(phoneState.jobResult)phoneOpenCard(phoneState.jobResult);};ph('phoneJobRetry').onclick=()=>{ph('phoneJobRetry').classList.add('hidden');phoneCheckJob();};
+ph('phoneJobRestart').onclick=async()=>{if(phoneJobLast?.kind==='prepare'&&phoneJobLast.cardId){ph('phoneJobRestart').disabled=true;try{const result=await phoneApi('cards/'+phoneJobLast.cardId+'/prepare',{});phoneSetJob(result.job_id,'prepare',phoneJobLast.cardId);}catch(error){phoneToast(error.message);}finally{ph('phoneJobRestart').disabled=false;}}else ph('phoneImportForm').requestSubmit();};
+ph('phoneImportForm').onsubmit=async event=>{event.preventDefault();let url;try{const parsed=new URL(ph('phoneImportUrl').value);if(parsed.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(parsed.hostname)||parsed.username||parsed.password||parsed.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');url=parsed.href;}catch(error){phoneToast(error.message==='Invalid URL'?'Проверьте ссылку объявления.':error.message);return;}try{await phoneImportListing(url);}catch(error){phoneToast(error.message);}};
+ph('phoneAnalyzeFurniture').onclick=async()=>{if(!phoneState.detailId)return;if(phoneState.job){phoneToast('Дождитесь текущей обработки на Mac.');return;}const button=ph('phoneAnalyzeFurniture');button.disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/analyze',{});phoneSetJob(result.job_id,'prepare');phoneToast('Mac проверяет мебель и технику на всех доступных фото.');}catch(error){phoneToast(error.message);}finally{button.disabled=false;}};
+ph('phonePreparePhotos').onclick=async()=>{if(!phoneState.detailId)return;ph('phonePreparePhotos').disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/prepare',{});phoneSetJob(result.job_id,'prepare');ph('phoneMediaStatus').textContent='Mac загружает фотографии…';phoneToast('Mac загружает фото. Они появятся в карточке после подготовки.');}catch(error){phoneToast(error.message);}finally{ph('phonePreparePhotos').disabled=false;}};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);}else if(phoneState.paired){phoneRefreshCards().catch(()=>{});if(phoneState.job)phoneCheckJob();}});window.addEventListener('online',()=>{if(phoneState.paired)phoneRefreshCards().catch(()=>{});});
+// Installation help is optional; a browser limitation here must not block cards.
+try{initializePwaInstall({container:ph('phoneInstall')});initializePwaInstall({container:ph('phoneInstallTop'),registerWorker:false});}catch{ph('phoneServerStatus').textContent='Подсказка установки недоступна в этом браузере. Карточки можно открыть на сайте.';}
+async function phoneStart(){
+  if(phoneStarting)return;phoneStarting=true;const epoch=phoneState.authEpoch,deadline=performance.now()+9000;let load;
+  try{
+    load=phoneLoadBegin();ph('phoneReconnect').disabled=true;
+    let pairCode='';if(location.hash.length>1){try{pairCode=decodeURIComponent(location.hash.slice(1)).trim();}catch{pairCode=location.hash.slice(1).trim();}history.replaceState({},'',location.pathname+location.search);}
+    if(pairCode){ph('phonePairCode').value=pairCode;await phonePair(pairCode,{deadline,loading:load});return;}
+    const state=await phoneApi('state',undefined,{deadline});if(epoch!==phoneState.authEpoch)return;
+    if(!state.paired){phoneAuth(false);phoneLoadFinish(load,'code');ph('phoneConnection').textContent='Нужно подключение';return;}
+    phoneLoadAccepted(load);phoneState.csrf=state.csrfToken||'';phoneAuth(true);phoneView('cards');ph('phoneReconnect').classList.add('hidden');await phoneRefreshCards({reset:true,deadline});phoneLoadFinish(load);phoneResumeJob(state.activeJob);const card=new URLSearchParams(location.search).get('card');if(card)await phoneOpenCard(card,{deadline});
+  }catch(error){if(epoch!==phoneState.authEpoch&&error.authEpoch!==phoneState.authEpoch)return;phoneLoadFinish(load,error.status===401?'code':'error',error,phoneState.paired?'Cards':'Connection');if(epoch!==phoneState.authEpoch)return;if(error.status!==401){ph('phonePairStatus').textContent=error.message;ph('phoneReconnect').classList.remove('hidden');}ph('phoneConnection').textContent=error.status===401?'Нужно подключение':'Нет связи с Mac';}
+  finally{phoneStarting=false;ph('phoneReconnect').disabled=false;}
+}
+ph('phoneReconnect').onclick=()=>phoneStart();
+ph('phoneLoadRetry').onclick=()=>phoneStart();
+
+async function phoneExportBlob(asset){const epoch=phoneState.authEpoch,url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/phone\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');return withRequestDeadline(90000,async(signal,scope)=>{const response=await fetch(url.pathname,{credentials:'same-origin',cache:'no-store',signal});scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(response.status===401){phoneAuth(false);throw Error('Введите текущий код с компьютера');}if(!response.ok){const value=await response.json().catch(()=>({}));scope.throwIfAborted();throw Error(value.error||'Файл недоступен');}const blob=await response.blob();scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;});}
+async function phoneDownloadAsset(asset){cardDownloadBlob(await phoneExportBlob(asset),asset.name);phoneFilesUI?.refresh();}
+async function phonePresentationPhotos(){const id=phoneState.detailId,epoch=phoneState.authEpoch,photos=[];for(const original of (phoneState.detail?.media||[]).slice(0,30)){const selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;const response=await fetch(path,{credentials:'same-origin',cache:'no-store'});if(!response.ok)throw Error('Фотография недоступна на Mac');const dataUrl=await cardPhotoDataUrl(await response.blob());if(epoch!==phoneState.authEpoch||id!==phoneState.detailId)throw Error('Выбрана другая карточка');photos.push({dataUrl});}return photos;}
+async function phoneEnsurePresentationCard(){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return phoneState.detail.id;}
+function phoneInitializeCardTools(){if(phoneArchiveUI)return;
+phoneArchiveUI=setupCardArchive({mount:ph('phoneArchiveMount'),getCardId:()=>phoneState.detailId,ensureCard:phoneEnsurePresentationCard,api:phoneApi,downloadAttachment:phoneDownloadAsset,toast:phoneToast});
+phoneFilesUI=setupCardFiles({mount:ph('phoneFilesMount'),getCardId:()=>phoneState.detailId,api:phoneApi,download:phoneDownloadAsset,previewImage:async asset=>{const blob=await phoneExportBlob(asset);if(blob.type!=='image/png')throw Error('Нужен PNG');if(phoneExportViewerUrl)URL.revokeObjectURL(phoneExportViewerUrl);phoneExportViewerUrl=URL.createObjectURL(blob);ph('phoneViewerImage').src=phoneExportViewerUrl;ph('phonePhotoViewer').showModal();},toast:phoneToast});
+}
+function phoneInitializeDesigner(){
+  if(phoneDesignInitializing)return phoneDesignInitializing;
+  if(phonePresentationUI)return Promise.resolve(phonePresentationUI);
+  const epoch=phoneState.authEpoch;
+  ph('phoneDesignMount').textContent='Загружаем редактор оформления…';
+  const ready=(async()=>{
+    const {setupPresentationStudio}=await import('/phone/designer.mjs');
+    if(epoch!==phoneState.authEpoch||!phoneState.paired)return null;
+    let initialRead=null;
+    const api=(path,data)=>{const request=phoneApi(path,data);if(path==='design'&&!data)initialRead=request;return request;};
+    const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});
+    phonePresentationUI=studio;
+    await (initialRead||Promise.resolve()).catch(()=>{});
+    return epoch===phoneState.authEpoch&&studio===phonePresentationUI?studio:null;
+  })();
+  phoneDesignInitializing=ready;
+  const finish=()=>{if(phoneDesignInitializing===ready)phoneDesignInitializing=null;};ready.then(finish,finish);return ready;
+}
+ph('phoneDesignCard').onclick=()=>phoneView('design');
+ph('phoneNetworkHelp').textContent=location.protocol==='https:'?'Внешняя HTTPS-ссылка работает через мобильный интернет; Mac должен оставаться включённым.':'Локальный адрес работает в одной сети с Mac. Для мобильного интернета используйте внешнюю HTTPS-ссылку из раздела «Телефон» на компьютере.';
+ph('phoneNetworkDescription').textContent=location.protocol==='https:'?'Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки через интернет. Нужны включённый Mac и работающий внешний доступ.':'Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Локальная ссылка требует общей сети; внешняя HTTPS-ссылка работает через мобильный интернет.';
+
+async function phoneImportListing(url){
+ ph('phoneImportUrl').value=url;ph('phoneImportSubmit').disabled=true;
+ try{const result=await phoneApi('import',{url,loader:'chrome',timeout:180});phoneSetJob(result.job_id);return result;}
+ catch(error){ph('phoneImportSubmit').disabled=false;throw error;}
+}
+function phoneInitializeWatch(){
+ if(!phoneWatchUI)phoneWatchUI=setupListingWatch({mount:ph('phoneWatchMount'),api:phoneApi,toast:phoneToast,onScan:async url=>{phoneView('import');await phoneImportListing(url);}});
+ return phoneWatchUI;
+}
+function phoneInitializeAudit(){
+ if(!phoneImportAuditUI)phoneImportAuditUI=setupImportDiagnostics({mount:ph('phoneImportDiagnostics'),api:phoneApi,toast:phoneToast,getBundle:()=>{const epoch=phoneState.authEpoch;return withRequestDeadline(30000,async(signal,scope)=>{const r=await fetch('/api/phone/import-diagnostics/tg.zip',{credentials:'same-origin',cache:'no-store',signal});scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');if(r.status===401){phoneAuth(false);throw Error('Введите текущий код с Mac');}if(!r.ok){const v=await r.json().catch(()=>({}));scope.throwIfAborted();throw Error(v.error||'Архив ещё не готов');}const blob=await r.blob();scope.throwIfAborted();if(epoch!==phoneState.authEpoch)throw Error('Подключение изменилось');return blob;});}});
+ return phoneImportAuditUI;
+}
+function phoneUpdateRouteTools(){
+ if(!phoneState.paired||!phoneState.detail?.id)return;
+ if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=card;ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
+ phoneRoutesUI.cardChanged(phoneState.detail);
+}
+phoneStart();
+</script>
+</body>
+</html>

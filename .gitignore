@@ -11,3 +11,5 @@ __pycache__/
 output/
 .venv/
 *.sqlite3
+
+.venv-translate/

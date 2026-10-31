@@ -33,7 +33,9 @@ class ChallengeError(ValueError):
 
 def normalize_url(raw):
     """Accept a pasted Markdown link or terminal line, without weakening host checks."""
-    raw = html.unescape(str(raw)).strip()
+    # Raw query parameters such as &region must not be decoded as the legacy
+    # HTML entity &reg (®). Decode only complete escaped ampersands from paste.
+    raw = re.sub(r'&(?:amp|#0*38|#x0*26);', '&', str(raw).strip(), flags=re.I)
     markdown = re.search(r'\[[^\]]*\]\((https://[^\s)]+)\)', raw)
     match = markdown or re.search(r'https://[^\s<>\[\]"\u201c\u201d]+', raw)
     if not match:
@@ -143,10 +145,12 @@ class ListingHTML(HTMLParser):
 
 def parse_html(markup, base_url):
     if len(markup.encode('utf-8')) > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
-    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card', markup):
-        node = shutil.which('node')
+    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card|data-marker=["\x27]item-view/(?:title-info|main-gallery|item-params|item-description|item-price)', markup):
+        from node_runtime import resolve_node, NodeRuntimeError
+        try: node = resolve_node()
+        except NodeRuntimeError: node = None
         if node:
-            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs')],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
+            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs'),base_url],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
             if parsed.returncode: raise ValueError('Ошибка разбора HTML: '+parsed.stderr[:300])
             result = json.loads(parsed.stdout)
             if result.get('text'):
@@ -202,27 +206,37 @@ def open_cache(directory):
     return connection
 
 
-def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None, browser_channel='chrome'):
+def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None, browser_channel='chrome', browser_scroll='sections'):
+    from job_progress import emit
+    if browser_scroll not in ('sections', 'page'):
+        raise ValueError('Режим прокрутки Chrome: sections или page')
     # Resolve only on a network miss; cached pages remain available offline.
     url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
     if row and not refresh and time.time() - row[0] < 86400:
-        return {**json.loads(row[1]), 'cached': True}
+        from source_adapters import adapter_for
+        cached = json.loads(row[1])
+        version = adapter_for(url).get('parserVersion')
+        if not version or cached.get('parserVersion') == version:
+            emit(status,'Берём уже прочитанное объявление из кеша Mac; Chrome не требуется.',stage='extract')
+            return {**cached, 'cached': True}
+        emit(status,'Правила разбора источника обновились. Перечитаем страницу вместо старого неполного кеша.',stage='extract')
     result = None
     if loader != 'chrome':
         try:
-            if status: status('Загрузка объявления по HTTP…')
+            emit(status,'Загружаем исходную страницу объявления по HTTP…',stage='navigate',maxTotalSeconds=30)
             content, _ = fetch_bytes(url)
+            emit(status,'Страница получена. Читаем описание, цену, площадь и фотографии…',stage='extract')
             result = parse_html(content.decode('utf-8', errors='replace'), url)
             if not re.search(r'\d[\d\s\xa0,.]*\s*(?:м²|м2|кв\.?\s*м|㎡)', result['text'], re.I) or not re.search(r'\d[\d\s\xa0]*\s*(?:₽|руб)', result['text'], re.I):
                 result = None
                 raise ValueError('HTTP-страница не содержит площади и цены; возможно, нужен JavaScript. Используйте Chrome или --input.')
         except (OSError, ValueError) as error:
             if loader == 'http': raise
-            if status: status('HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180])
+            emit(status,'HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180],stage='browser')
     if result is None:
         from browser_import import load_browser
-        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel)
+        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel, scroll_strategy=browser_scroll)
     connection.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (url, time.time(), json.dumps(result, ensure_ascii=False)))
     connection.commit()
     return {**result, 'cached': False}
@@ -246,13 +260,19 @@ def eligible(seller, commission):
 
 
 def generate(text, data=None, rules=None, prefs=None):
-    node = shutil.which('node')
-    if not node:
-        raise ValueError('Нужен Node.js 22+: сайт и CLI используют один генератор, без расхождения правил.')
-    result = subprocess.run([node, str(ROOT / 'cli/generate.mjs')], input=json.dumps({'text': text, 'data': data or {}, 'rules': rules or {}, 'prefs': prefs or {}}, ensure_ascii=False), text=True, encoding='utf-8', capture_output=True, check=False)
+    from node_runtime import resolve_node
+    node = resolve_node()
+    try:
+        result = subprocess.run([node, str(ROOT / 'cli/generate.mjs')], input=json.dumps({'text': text, 'data': data or {}, 'rules': rules or {}, 'prefs': prefs or {}}, ensure_ascii=False), text=True, encoding='utf-8', capture_output=True, check=False, timeout=30)
+    except subprocess.TimeoutExpired:
+        raise ValueError('Генератор не ответил за 30 секунд. Повторите подготовку объявления.') from None
+    except OSError:
+        raise ValueError('Не удалось запустить найденный Node.js. Проверьте его установку и перезапустите сервер.') from None
     if result.returncode:
         raise ValueError(result.stderr.strip() or 'Ошибка генерации')
-    return json.loads(result.stdout)
+    try: return json.loads(result.stdout)
+    except ValueError:
+        raise ValueError('Генератор вернул некорректный ответ. Повторите подготовку объявления.') from None
 
 
 def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=None):
@@ -299,9 +319,12 @@ def main(argv=None):
     parser.add_argument('--browser', action='store_true', help='Сразу открыть видимый Google Chrome')
     parser.add_argument('--browser-channel', choices=['chrome','chromium'], default='chrome', help='Google Chrome или совместимый браузер Playwright Chromium')
     parser.add_argument('--browser-timeout', type=int, default=180, help='Ожидание страницы / ручной проверки, 15–600 секунд')
+    parser.add_argument('--browser-scroll', choices=['sections','page'], default='sections', help='sections: сразу фото, описание и характеристики; page: последовательная прокрутка всей страницы')
     parser.add_argument('--serve', action='store_true', help='Запустить локальный сайт и открыть его в браузере')
     parser.add_argument('--open', action='store_true', help='После генерации открыть сохранённую карточку на локальном сайте')
     parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--phone',action='store_true',help='Разрешить подключение телефона в локальной сети по одноразовой ссылке')
+    parser.add_argument('--phone-port',type=int,default=8767)
     parser.add_argument('--json', action='store_true', help='Машиночитаемый вывод')
     parser.add_argument('--output', type=Path, help='Сохранить результат в файл')
     parser.add_argument('--cache-dir', type=Path, default=Path.home() / '.cache' / 'redcn')
@@ -314,9 +337,10 @@ def main(argv=None):
     if (args.crop_photos or args.crop_bottom is not None) and not args.download_photos:parser.error('Кадрирование требует --download-photos DIRECTORY')
     if args.crop_bottom is not None and not 0 <= args.crop_bottom <= 40:parser.error('--crop-bottom: 0–40 процентов')
     if not 15 <= args.browser_timeout <= 600: parser.error('--browser-timeout: 15–600 секунд')
+    if not 1<=args.phone_port<=65535:parser.error('--phone-port: 1–65535')
     if args.serve:
         from local_server import serve
-        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel)
+        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel,phone=args.phone,phone_port=args.phone_port)
     read_json = lambda p: json.loads(p.read_text(encoding='utf-8')) if p else {}
     data, rules, prefs = read_json(args.data), read_json(args.rules), read_json(args.prefs)
     if not isinstance(data, dict) or not isinstance(rules, dict) or not isinstance(prefs, dict):
@@ -340,7 +364,7 @@ def main(argv=None):
                 if connection.execute('SELECT 1 FROM seen WHERE url=?', (url,)).fetchone():
                     result.append({'url': url, 'status': 'seen'});continue
                 try:
-                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
+                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel, browser_scroll=args.browser_scroll)
                     generated = generate(listing['text'], {**listing.get('fields',{}), 'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
                     row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
@@ -361,7 +385,7 @@ def main(argv=None):
                 text = args.input.read_text(encoding='utf-8')
             else:
                 url = args.url or input('Ссылка на объявление ЦИАН / Авито: ').strip()
-                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
+                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel, browser_scroll=args.browser_scroll)
                 text = listing['text']
             key = listing.get('url') if listing else hashlib.sha256(text.encode()).hexdigest()
             result = generate(text, {**(listing.get('fields',{}) if listing else {}), 'titleVariant':next_variant(connection,key), **data, 'source':text, **({'url':key} if listing else {})}, rules, prefs)
@@ -379,7 +403,7 @@ def main(argv=None):
             result_id = save_result(args.cache_dir, result)
             connection.close()
             connection = None
-            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel)
+            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel,phone=args.phone,phone_port=args.phone_port)
     finally:
         if connection: connection.close()
     return 0

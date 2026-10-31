@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "items": [
     {
       "type": "term",
@@ -98,6 +98,195 @@
       "ru": "Совместная аренда",
       "cn": "合租",
       "source": "https://liuxue.xdf.cn/blog/baolingrong/blog/5381773.shtml",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "Юго-Западная",
+      "ru": "Юго-Западная",
+      "cn": "西南站",
+      "text": "Полное название станции. В объявлениях сохраняем русский оригинал для поиска на карте.",
+      "source": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "status": "reviewed"
+    },
+    {
+      "type": "term",
+      "title": "月租",
+      "ru": "месячная аренда",
+      "cn": "月租",
+      "text": "Обозначение ежемесячной платы, без вывода о коммунальных платежах.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "独立两居",
+      "ru": "двухкомнатная квартира",
+      "cn": "独立两居",
+      "text": "Не означает две спальни автоматически.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "步行",
+      "ru": "пешком",
+      "cn": "步行",
+      "text": "Время берётся отдельно для каждой станции.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "餐桌",
+      "ru": "обеденный стол",
+      "cn": "餐桌",
+      "text": "Подтверждать по тексту, плашкам или фото.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "餐椅",
+      "ru": "обеденные стулья",
+      "cn": "餐椅",
+      "text": "Количество по видимым предметам, без сложения одинаковых стульев на разных фото.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "书桌",
+      "ru": "письменный / рабочий стол",
+      "cn": "书桌",
+      "text": "Не подменять кухонным столом.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "抽油烟机",
+      "ru": "кухонная вытяжка",
+      "cn": "抽油烟机",
+      "text": "Не доказывает наличие другой техники.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "烤箱",
+      "ru": "духовой шкаф",
+      "cn": "烤箱",
+      "text": "Встроенная духовка не доказывает наличие холодильника или СВЧ.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "灶台",
+      "ru": "варочная панель",
+      "cn": "灶台",
+      "text": "Указывать при отдельном подтверждении.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "水槽",
+      "ru": "кухонная мойка",
+      "cn": "水槽",
+      "text": "Подтверждать отдельно от санузла.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "微波炉",
+      "ru": "микроволновая печь",
+      "cn": "微波炉",
+      "text": "Не выводить из наличия духовки.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "冰箱",
+      "ru": "холодильник",
+      "cn": "冰箱",
+      "text": "Наличие только по подтверждённому факту.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "衣柜",
+      "ru": "шкаф для одежды",
+      "cn": "衣柜",
+      "text": "Кухонные шкафы не являются гардеробной.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "独立衣帽间",
+      "ru": "гардеробная",
+      "cn": "独立衣帽间",
+      "text": "Отдельное помещение, а не любой шкаф.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "储藏室",
+      "ru": "кладовая",
+      "cn": "储藏室",
+      "text": "Отдельный подтверждённый признак.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "置物架",
+      "ru": "стеллаж / полки",
+      "cn": "置物架",
+      "text": "Высоту не определять по перспективе фото.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "电脑",
+      "ru": "компьютер",
+      "cn": "电脑",
+      "text": "Монитор и ТВ различать, сомнения оставлять для проверки.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "钢琴",
+      "ru": "пианино / фортепиано",
+      "cn": "钢琴",
+      "text": "Определять как отдельный предмет.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "投影仪",
+      "ru": "проектор",
+      "cn": "投影仪",
+      "text": "Не обещает домашний кинотеатр без подтверждения.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
+      "status": "unreviewed"
+    },
+    {
+      "type": "term",
+      "title": "抵达登记（临时居住登记）",
+      "ru": "виза прибытия (временная регистрация)",
+      "cn": "抵达登记（临时居住登记）",
+      "text": "Стандартная услуга студии: помощь с оформлением; не обещание выдачи въездной визы.",
+      "source": "https://github.com/leunch4off/redcn/blob/main/docs/COPY-POLICY.md",
       "status": "unreviewed"
     }
   ]
