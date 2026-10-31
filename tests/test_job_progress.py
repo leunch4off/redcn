@@ -21,6 +21,20 @@ URL = 'https://www.cian.ru/rent/flat/321415127/'
 
 
 class MeasuredProgressTests(unittest.TestCase):
+    def test_photo_ai_means_do_not_reuse_fast_text_only_history(self):
+        with tempfile.TemporaryDirectory() as folder:
+            history=job_progress.DurationHistory(folder)
+            history.record('import:cache',2,{'generate':2})
+            history.record('prepare',5,{'photos':5})
+            self.assertIsNone(history.estimate('import:vision')['estimateSeconds'])
+            self.assertIsNone(history.estimate('prepare:vision')['estimateSeconds'])
+            history.record('import:vision',80,{'vision':70,'generate':10})
+            history.record('prepare:vision',60,{'vision':60})
+            self.assertEqual(history.estimate('import:vision')['estimateSeconds'],80)
+            self.assertEqual(history.estimate('prepare:vision')['estimateSeconds'],60)
+            self.assertEqual(history.estimate('import:cache')['estimateSeconds'],2)
+            self.assertEqual(history.estimate('prepare')['estimateSeconds'],5)
+
     def test_emit_supports_old_callback_without_hiding_callback_errors(self):
         old = []
         job_progress.emit(old.append, 'Загрузка', stage='navigate')

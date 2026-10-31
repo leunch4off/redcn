@@ -28,6 +28,7 @@
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v19</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -75,6 +76,7 @@
 </main>
 <nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="watch"><span aria-hidden="true">◉</span>Новое</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="design"><span aria-hidden="true">◈</span>Дизайн</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
 <dialog id="phonePhotoViewer" class="phone-photo-viewer" aria-label="Сохранить фотографию"><div class="viewer-head"><h2>Сохранить в «Фото»</h2><button id="phoneViewerClose" class="icon-button" type="button" aria-label="Закрыть фото">×</button></div><img id="phoneViewerImage" alt="Фотография для сохранения"><p>Удерживайте изображение и выберите «Сохранить в Фото» или «Добавить в Фото» в меню iPhone.</p></dialog><div id="phoneToast" class="phone-toast hidden" role="status"></div>
+<script src="/phone/phone-bootstrap.js"></script>
 <script type="module" src="/phone/phone.mjs"></script>
 </body>
 </html>

@@ -55,9 +55,14 @@ export const PHOTO_REVIEW_ONLY=Object.freeze(['bed','internet','closet','pantry'
 export const PHOTO_FEATURE_IDS=Object.freeze([...new Set([...Object.keys(PHOTO_OBJECT_TERMS),...PHOTO_REVIEW_ONLY])]);
 const photoPolicyReviewOnly=new Set(PHOTO_REVIEW_ONLY);
 // Python's \w and \b are Unicode-aware; JavaScript's are ASCII-only with /u.
+// These policy patterns put paired boundaries around words. Consume the
+// character before the word instead of using lookbehind: Safari before 16.4
+// rejects lookbehind while this module initializes, before phoneStart can run.
+// Only .test() uses these expressions, so the consumed prefix is immaterial.
 const photoPolicyWord='[\\p{L}\\p{N}_]';
-const photoPolicyBoundary='(?:(?<='+photoPolicyWord+')(?!'+photoPolicyWord+')|(?<!'+photoPolicyWord+')(?='+photoPolicyWord+'))';
-const photoPolicyUnicode=pattern=>pattern.replaceAll('\\w',photoPolicyWord).replaceAll('\\b',photoPolicyBoundary);
+const photoPolicyUnicode=pattern=>pattern.split('\\w').join(photoPolicyWord)
+  .replace(/\\b([\s\S]*?)\\b/g,(_,word)=>'(?:^|[^\\p{L}\\p{N}_])(?:'+word+')(?!'+photoPolicyWord+')')
+  .split('(?<![а-яё])').join('(?:^|[^а-яё])');
 export const PHOTO_NON_DIRECT_PATTERN="\\b(?:no|not|absent|missing|cannot|without|unseen|hidden|inferred|assum\\w*|probab\\w*|perhaps|maybe|might|possibly|uncertain|unclear|likely|suggests?|could|will|planned|planning|plans?|intend\\w*|upcoming|future|pending|scheduled|going\\s+to)\\b|(?<![а-яё])(?:не|нет|без|возможно|вероятно|скрыт\\w*|предполож\\w*|долж\\w*|скорее|похож\\w*|кажется|сомн\\w*|отсутств\\w*|будет|будут|буду|будем|будете|будешь|планир\\w*|запланир\\w*|планах|намерен\\w*|собира(?:ется|ются|емся|юсь)|предстоит|скоро|купят|докупят|установят|привезут|доставят|появится|появятся)(?![а-яё])|没有|沒有|未见|未見|看不到|不可见|不可見|不确定|不確定|可能|推测|推測|隐藏|隱藏|将|將|计划|計劃|准备|準備|打算|待安装|待安裝|待购|待購|待添置|尚未|还未|還未";
 const photoPolicyNonDirect=new RegExp(photoPolicyUnicode(PHOTO_NON_DIRECT_PATTERN),'iu');
 const photoPolicyObjects=new Map(Object.entries(PHOTO_OBJECT_TERMS).map(([id,expression])=>[id,new RegExp(photoPolicyUnicode(expression),'iu')]));

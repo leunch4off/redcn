@@ -27,7 +27,9 @@ class WorkspaceBrowserAcceptance(unittest.TestCase):
         phone_fixture.local_server.save_result(self.directory,self.result,self.card_id)
         self.desktop_thread=threading.Thread(target=self.controller.serve_forever,daemon=True)
         self.desktop_thread.start();self.desktop='http://127.0.0.1:'+str(self.controller.server_port)
-        self.page.add_init_script("localStorage.setItem('most-photo-analyze','false');localStorage.setItem('most-photo-autoload','false')")
+        # Test preferences belong to the app, not its intentionally sandboxed
+        # static PDF preview frames (which have no localStorage permission).
+        self.page.add_init_script("if(window===window.top){localStorage.setItem('most-photo-analyze','false');localStorage.setItem('most-photo-autoload','false')}")
         self.route_requests=[]
         self.page.on('request',lambda request:self.route_requests.append(request.url) if request.url.split('?',1)[0].endswith('/phone/routes.mjs') else None)
         # Opening the design tab must not request public map tiles in this test.

@@ -4521,12 +4521,13 @@
       "acceptance": "Основные API-запросы телефона и чтение тела ответа получают собственный конечный срок и отмену без обязательных AbortSignal.timeout/any. Проверены отсутствие статических методов, поздний ответ, отмена внешним сигналом и освобождение таймера; физический iPhone проверяется отдельно.",
       "priority": "P0",
       "depends_on": [],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/request-deadline.mjs",
         "web/phone.mjs",
         "tests/request-deadline.test.mjs",
-        "tests/test_phone_timeout_browser.py"
+        "tests/test_phone_timeout_browser.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4536,11 +4537,12 @@
       "acceptance": "Китайский текст перечисляет подтверждённые положительные предметы; отсутствие холодильника, дивана или кровати не превращается в рекламную строку. Исходные отрицания и конфликты остаются в аудите и сами по себе не превращаются в наличие. Неизвестное оснащение не угадывается по духовке или виду кухни.",
       "priority": "P0",
       "depends_on": [],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/engine.mjs",
         "web/fact-evidence.mjs",
-        "tests/photo-facts-generation.test.mjs"
+        "tests/photo-facts-generation.test.mjs",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4552,14 +4554,16 @@
       "depends_on": [
         "RCN-305"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/photo-observation-policy.mjs",
         "web/fact-evidence.mjs",
         "cli/generate.mjs",
         "cli/photo_generation.py",
         "tests/photo-facts-generation.test.mjs",
-        "tests/test_photo_ai_adapter.py"
+        "tests/test_photo_ai_adapter.py",
+        "tests/test_photo_inventory_browser.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4571,13 +4575,14 @@
       "depends_on": [
         "RCN-306"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/fact-evidence.mjs",
         "web/photo-observation-policy.mjs",
         "cli/local_photo_ai.py",
         "tests/photo-facts-generation.test.mjs",
-        "tests/test_local_photo_ai.py"
+        "tests/test_local_photo_ai.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4589,13 +4594,14 @@
       "depends_on": [
         "RCN-307"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "cli/local_photo_ai.py",
         "cli/vision_photo.py",
         "tests/test_local_photo_ai.py",
         "tests/test_photo_ai_adapter.py",
-        "docs/PHOTO-VISION-RESEARCH.md"
+        "docs/PHOTO-VISION-RESEARCH.md",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4607,12 +4613,14 @@
       "depends_on": [
         "RCN-308"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "cli/photo_ai_settings.py",
         "cli/workspace_api.py",
         "tests/test_photo_ai_settings.py",
-        "tests/test_workspace_api.py"
+        "tests/test_workspace_api.py",
+        "tests/test_photo_generation.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4625,12 +4633,13 @@
         "RCN-308",
         "RCN-309"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "cli/listing_photo_inventory.py",
         "cli/photo_store.py",
         "cli/job_progress.py",
-        "tests/test_listing_photo_inventory.py"
+        "tests/test_listing_photo_inventory.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4643,13 +4652,15 @@
         "RCN-306",
         "RCN-310"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "cli/photo_generation.py",
         "cli/local_server.py",
         "cli/phone_relay.py",
         "tests/test_listing_photo_inventory.py",
-        "tests/test_photo_ai_adapter.py"
+        "tests/test_photo_ai_adapter.py",
+        "tests/test_photo_generation.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4661,13 +4672,16 @@
       "depends_on": [
         "RCN-311"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "cli/local_server.py",
         "cli/phone_relay.py",
         "web/photo-ui.mjs",
         "web/phone.mjs",
-        "tests/test_listing_photo_inventory.py"
+        "tests/test_listing_photo_inventory.py",
+        "tests/test_photo_generation.py",
+        "tests/test_photo_inventory_browser.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4680,12 +4694,14 @@
         "RCN-310",
         "RCN-312"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/phone.mjs",
         "cli/phone_relay.py",
         "tests/test_phone_timeout_browser.py",
-        "tests/test_listing_photo_inventory.py"
+        "tests/test_listing_photo_inventory.py",
+        "tests/test_photo_inventory_browser.py",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4695,13 +4711,14 @@
       "acceptance": "Заголовки и описания воспроизводимо чередуют 20 семейств: цена, транспорт, оснащение, абзац, список и другие подачи с совместимыми compact/detailed/story. Все переданные факты, условия и сервис сохраняются; факты чужого города и разрешения из примеров не переносятся. Старые 262144 ID каждого типа и NDJSON остаются совместимыми; новые runtime-оформления имеют отдельные метаданные.",
       "priority": "P1",
       "depends_on": [],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/template-catalog.mjs",
         "web/engine.mjs",
         "tests/listing-styles.test.mjs",
         "tests/template-catalog.test.mjs",
-        "docs/LISTING-STYLES-RU.md"
+        "docs/LISTING-STYLES-RU.md",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4711,12 +4728,13 @@
       "acceptance": "Полное пользовательское правило и готовое китайское название проверяются раньше частей. Частичный перевод сохраняет неизвестные слова и русский оригинал со статусом проверки. Сокращение, опечатка и похожий слог не исправляются автоматически в другую станцию; данные линий и время поездки не выдумываются.",
       "priority": "P1",
       "depends_on": [],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "web/metro-names.mjs",
         "web/engine.mjs",
         "tests/metro-names.test.mjs",
-        "docs/METRO-CHINESE-RU.md"
+        "docs/METRO-CHINESE-RU.md",
+        "docs/VERIFICATION.md"
       ]
     },
     {
@@ -4731,7 +4749,7 @@
         "RCN-314",
         "RCN-315"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "scripts/build.mjs",
         "scripts/dev.mjs",
@@ -4739,7 +4757,8 @@
         "web/sw.js",
         "docs/phone-sw.js",
         "worker/index.js",
-        "worker/server.js"
+        "worker/server.js",
+        "docs/VERIFICATION.md"
       ]
     },
     {

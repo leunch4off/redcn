@@ -28,7 +28,8 @@ await writeFile(new URL('docs/.nojekyll',root),'');
 for(const [source,target] of [['plan.json','docs/plan.json'],['data/research.json','docs/research.json'],['data/knowledge-seed.json','docs/knowledge-seed.json']])await copyFile(new URL(source,root),new URL(target,root));
 console.log('Built standalone GitHub Pages site in docs/');
 
-const [phoneHtml,phoneCss,phoneApp,pwaInstall]=await Promise.all(['web/phone.html','web/phone.css','web/phone.mjs','web/pwa-install.mjs'].map(read));
+const [phoneSource,phoneCss,phoneApp,pwaInstall,phoneBootstrap]=await Promise.all(['web/phone.html','web/phone.css','web/phone.mjs','web/pwa-install.mjs','web/phone-bootstrap.js'].map(read));
+const phoneHtml=phoneSource.replace('<script src="/phone/phone-bootstrap.js"></script>',()=>'<script>'+phoneBootstrap.replace(/<\/script/gi,'<\\/script')+'</script>');
 const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'\n'+universityRoutesCss+'\n'+listingWatchCss+'\n'+importDiagnosticsCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[requestDeadline,photoObservationPolicy,cardFiles,cardArchive,pwaInstall,listingWatch,importDiagnostics,phoneRoutesController,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
 await writeFile(new URL('docs/phone.html',root),phonePage);
 // The complete vocabulary and visual editor load only when opened on a phone.

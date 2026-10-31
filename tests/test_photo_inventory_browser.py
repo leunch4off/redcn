@@ -39,7 +39,7 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
         phone_fixture.PhoneBrowserAcceptance.setUp(self)
         self.desktop_thread=threading.Thread(target=self.controller.serve_forever,daemon=True)
         self.desktop_thread.start();self.desktop='http://127.0.0.1:'+str(self.controller.server_port)
-        self.page.add_init_script("localStorage.setItem('most-photo-analyze','false');localStorage.setItem('most-photo-autoload','false')")
+        self.page.add_init_script("if(window===window.top){localStorage.setItem('most-photo-analyze','false');localStorage.setItem('most-photo-autoload','false')}")
         def cached_image(route):
             asset=next(item for item in self.assets if item['sourceUrl']==route.request.url)
             content,mime,_=phone_fixture.photo_store.asset(self.directory,asset['id'])

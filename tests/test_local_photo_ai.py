@@ -218,6 +218,10 @@ class ProviderTests(unittest.TestCase):
         self.assertFalse(payload['stream'])
         self.assertEqual(payload['options']['temperature'], 0)
         self.assertEqual(payload['options']['num_ctx'], 4096)
+        self.assertEqual(payload['options']['num_predict'], 1536)
+        self.assertIs(payload['format']['properties']['objects']['items']['properties']['visible']['const'],True)
+        self.assertEqual(payload['format']['properties']['unknownIds']['maxItems'],0)
+        self.assertNotIn('"properties"',payload['messages'][0]['content'],'Do not duplicate the entire schema in the context budget')
         self.assertEqual(payload['keep_alive'], 0)
         self.assertNotIn('Authorization', seen[-1][2])
         self.assertNotIn('tools', payload)
@@ -293,6 +297,13 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(result['status'], 'timeout', result)
         self.assertLess(elapsed, .6)
         self.assertEqual(result['candidates'], [])
+
+    def test_truncated_even_otherwise_valid_inventory_never_becomes_photo_facts(self):
+        with server(chat={'done':True,'done_reason':'length','message':{'content':json.dumps(inventory(item()))}}) as (endpoint,_,_):
+            result=self.analyze(endpoint)
+        self.assertEqual(result['status'],'invalid')
+        self.assertEqual(result['candidates'],[])
+        self.assertIn('обрезан',result['message'])
 
     def test_inflight_cancel_is_prompt_and_serial_slot_is_not_queued(self):
         cancel = threading.Event()

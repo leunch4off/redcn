@@ -21,7 +21,7 @@ STAGES = (
     ('crop', 'Автоматическое кадрирование'), ('vision','Мебель и техника на фото'), ('save', 'Сохранение карточки'),
 )
 LABELS = dict(STAGES)
-PROFILES = ('import:auto', 'import:chrome', 'import:http', 'import:cache', 'prepare')
+PROFILES = ('import:auto', 'import:chrome', 'import:http', 'import:cache', 'prepare', 'import:vision', 'prepare:vision')
 
 
 def emit(report, message, **fields):

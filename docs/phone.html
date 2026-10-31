@@ -27,6 +27,8 @@
 
 .writing-button{min-height:44px;max-width:100%;padding:10px 14px;border:1px solid #d9e2ce;border-radius:12px;background:#f5f8ee;color:#4d6940;font:inherit;font-size:13px;text-align:left;cursor:pointer;margin:0 0 10px}.writing-button:disabled{opacity:.5;cursor:wait}.writing-studio{overflow-wrap:anywhere}.writing-studio h2{font-size:18px}.writing-studio .button{margin:10px 0;min-height:44px;font-size:14px;white-space:normal}.writing-studio details{border-top:1px solid var(--line);margin-top:18px;padding-top:4px}.writing-studio summary{min-height:44px;padding:14px 0;font-size:14px;line-height:1.6;cursor:pointer}.writing-studio label{display:block;font-size:13px;line-height:1.6;margin:18px 0 8px}.writing-studio textarea,.writing-studio select{box-sizing:border-box;width:100%;max-width:100%;min-width:0;border:1px solid #dfe5d6;border-radius:12px;padding:12px;background:#fffef9;color:#35482f;font:inherit;font-size:16px;line-height:1.7}.writing-studio textarea{resize:vertical;min-height:110px}.writing-studio select{min-height:48px}.writing-studio .quiet,.writing-studio .language-stats,.writing-studio .translation-review{font-size:12px;line-height:1.75}.language-stats{padding:12px;background:#f4f7ee;border-radius:10px;color:#6c7e5f}.translation-review{white-space:pre-wrap;color:#697b5d;margin:12px 0}.translation-review[data-state=review]{color:#94613e}.translation-review[data-state=error],#phoneWritingStatus[data-state=error]{color:#a04f3e}#phoneWritingStatus{font-size:13px;line-height:1.7;white-space:pre-wrap}
 
+.connection-diagnostic{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;user-select:text;padding:12px;background:#fff;border-radius:12px}#phoneDiagnostics{margin-top:14px}#phoneDiagnostics summary{min-height:44px;padding:10px 0;cursor:pointer}
+
 .card-archive{--archive-ink:#334638;--archive-muted:#75816f;--archive-line:#dfe5d8;box-sizing:border-box;min-width:0;margin:20px 0;padding:24px;border:1px solid var(--archive-line);border-radius:18px;background:#fffefb;color:var(--archive-ink);overflow-wrap:anywhere}
 .card-archive *{box-sizing:border-box}
 .card-archive .archive-title-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
@@ -107,6 +109,7 @@
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v19</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -154,6 +157,91 @@
 </main>
 <nav id="phoneTabs" class="phone-tabs hidden" aria-label="Разделы телефона"><button type="button" class="active" data-phone-view="cards"><span aria-hidden="true">▤</span>Карточки</button><button type="button" data-phone-view="watch"><span aria-hidden="true">◉</span>Новое</button><button type="button" data-phone-view="import"><span aria-hidden="true">＋</span>Добавить</button><button type="button" data-phone-view="design"><span aria-hidden="true">◈</span>Дизайн</button><button type="button" data-phone-view="setup"><span aria-hidden="true">⌘</span>Мой телефон</button></nav>
 <dialog id="phonePhotoViewer" class="phone-photo-viewer" aria-label="Сохранить фотографию"><div class="viewer-head"><h2>Сохранить в «Фото»</h2><button id="phoneViewerClose" class="icon-button" type="button" aria-label="Закрыть фото">×</button></div><img id="phoneViewerImage" alt="Фотография для сохранения"><p>Удерживайте изображение и выберите «Сохранить в Фото» или «Добавить в Фото» в меню iPhone.</p></dialog><div id="phoneToast" class="phone-toast hidden" role="status"></div>
+<script>/* Independent ES5 startup guard: it must run even when the module cannot parse. */
+(function () {
+  'use strict';
+  var version = 'v19', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
+  var moduleStarted = false, probeTimer = 0, probing = false;
+  function el(id) { return document.getElementById(id); }
+  function text(id, value) { var node = el(id); if (node) node.textContent = value; }
+  function show(id) { var node = el(id); if (node) node.classList.remove('hidden'); }
+  function browser() {
+    var ua = navigator.userAgent || '', ios = /(?:CPU (?:iPhone )?OS|iPhone OS) ([\d_]+)/.exec(ua), safari = /Version\/([\d.]+)/.exec(ua);
+    return (ios ? 'iOS ' + ios[1].replace(/_/g, '.') : 'браузер') + (safari ? ' · Safari ' + safari[1] : '') + (navigator.standalone ? ' · с экрана Домой' : '');
+  }
+  function update() {
+    var stages = {script: 'Запуск скрипта', initialization: 'Инициализация', connection: 'Связь с Mac', session: 'Проверка сессии', cards: 'Карточки', ready: 'Готово'}, phases = {request: 'ожидаем заголовки', body: 'читаем данные', complete: 'ответ получен'};
+    text('phoneDiagnosticText', 'Версия ' + version + '\n' + browser() + '\nЭтап: ' + (stages[stage] || stage) + ' (' + stage + ')'  + (route ? ' · запрос: ' + route : '') + (phase ? ' · ' + (phases[phase] || phase) : '') + '\nВремя: ' + ((Date.now() - started) / 1000).toFixed(1) + ' с' + (http ? '\nHTTP: ' + http : '') + (code ? '\nКод: ' + code : '') + (errorType ? '\nJavaScript: ' + errorType + (line ? ', строка ' + line : '') : '') + (probe ? '\nПроверка сервера: ' + probe : '') + (navigator.onLine === false ? '\nБраузер сообщает: нет интернета' : ''));
+  }
+  function fail(reason, message) {
+    if (done) return;
+    done = true; clearTimeout(timer); code = reason; update();
+    try { var stopped = document.createEvent('Event'); stopped.initEvent('redcn-phone-start-failed', false, false); window.dispatchEvent(stopped); } catch (ignore) {}
+    var loading = el('phoneLoading'); if (loading) loading.setAttribute('data-result', 'error');
+    var details = el('phoneLoadDetails'); if (details) details.open = true;
+    text('phoneConnection', 'Подключение остановлено'); text('phoneLoadTitle', 'Не удалось завершить подключение');
+    text('phoneLoadElapsed', ((Date.now() - started) / 1000).toFixed(1) + ' с');
+    text('phoneLoadHelp', message); show('phoneLoadRetry'); if (el('phoneDiagnostics')) el('phoneDiagnostics').open = true;
+    var retry = el('phoneLoadRetry'); if (retry) { retry.disabled = false; retry.onclick = reload; }
+    var rowId = stage === 'cards' ? 'Cards' : stage === 'session' ? 'Session' : stage === 'script' ? 'Page' : 'Connection';
+    var row = el('phoneLoad' + rowId); if (row) { row.setAttribute('data-state', 'error'); var mark = row.querySelector('.load-mark'); if (mark) mark.textContent = '!'; }
+    text('phoneLoad' + rowId + 'Note', message);
+  }
+  function probeServer() {
+    if (probing) return; probing = true;
+    var xhr, ended = false;
+    function finish(value) { if (ended) return; ended = true; probing = false; clearTimeout(probeTimer); probe = value; update(); }
+    probe = 'проверяем отдельным запросом (до 4 с)'; update();
+    try {
+      xhr = new XMLHttpRequest(); xhr.open('GET', '/api/phone/state', true); xhr.setRequestHeader('Cache-Control', 'no-cache');
+      xhr.onload = function () {
+        var status = xhr.status, value = null;
+        try { value = JSON.parse(xhr.responseText); } catch (ignore) {}
+        if (status === 401) finish('Mac ответил HTTP 401 · для этого окна нужен код');
+        else if (status === 200 && value && typeof value.paired === 'boolean') finish('Mac ответил HTTP 200 · ' + (value.paired ? 'сессия действует' : 'нужен код'));
+        else finish('HTTP ' + status + (value ? ' · ответ приложения не распознан' : ' · вместо JSON получена другая страница'));
+      };
+      xhr.onerror = function () { finish('ответ не получен · сетевая ошибка, точная причина браузером не раскрыта'); };
+      probeTimer = setTimeout(function () { finish('ответ не получен за 4 с · проверьте сеть, внешний адрес и сервер на Mac'); try { xhr.abort(); } catch (ignore) {} }, 4000);
+      xhr.send();
+    } catch (ignore) { finish('независимая проверка недоступна в этом браузере'); }
+  }
+  function arm() {
+    clearTimeout(timer); var current = ++attempt;
+    timer = setTimeout(function () { if (current !== attempt || done) return; fail(moduleStarted ? 'BOOT_STALLED' : 'BOOT_NOT_STARTED', moduleStarted ? 'Приложение не завершило подключение за 10 секунд. Ниже указан последний выполненный этап.' : 'Скрипт приложения не запустился за 10 секунд. Возможна несовместимость браузера или блокировка загрузки.'); probeServer(); }, 10000);
+  }
+  function reload() {
+    // Keep the session and destination. Never clear cookies or private data.
+    try { if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistration('/phone/').then(function (registration) { if (registration) registration.update().catch(function () {}); }).catch(function () {}); } catch (ignore) {}
+    var parts = location.search.slice(1).split('&').filter(function (part) { return part && !/^reload=/.test(part); });
+    parts.push('reload=' + Date.now()); location.replace(location.pathname + '?' + parts.join('&') + location.hash);
+  }
+  window.redcnPhoneBoot = {
+    started: function () { moduleStarted = true; stage = 'initialization'; update(); },
+    begin: function () { done = false; started = Date.now(); stage = 'connection'; route = ''; phase = ''; http = 0; code = ''; errorType = ''; line = 0; probe = ''; arm(); update(); },
+    request: function (path, step, status) { if (done) return; var name = path.split('?')[0]; if (!/^(state|pair|cards)$/.test(name)) return; route = name; stage = name === 'cards' ? 'cards' : 'session'; phase = step; http = status || 0; update(); },
+    finish: function (result, info) { done = true; clearTimeout(timer); info = info || {}; code = info.code || (result === 'ready' ? 'READY' : result === 'code' ? 'SESSION_REQUIRED' : 'CONNECTION_ERROR'); if (result === 'ready') stage = 'ready'; if (info.status) http = info.status; update(); }
+  };
+  window.addEventListener('error', function (event) {
+    if (done || (!event.message && !(event.target && event.target.tagName === 'SCRIPT'))) return;
+    var name = event.error && event.error.name; errorType = /^(TypeError|SyntaxError|ReferenceError|RangeError|Error)$/.test(name || '') ? name : 'ScriptError'; line = Number(event.lineno) || 0;
+    fail('SCRIPT_ERROR', 'Браузер остановил запуск JavaScript. Версия, тип ошибки и проверка связи показаны ниже.'); probeServer();
+  });
+  window.addEventListener('unhandledrejection', function (event) {
+    if (done) return; var name = event.reason && event.reason.name; errorType = /^(TypeError|SyntaxError|ReferenceError|RangeError|Error)$/.test(name || '') ? name : 'PromiseError';
+    fail('SCRIPT_REJECTION', 'Запуск приложения прерван необработанной ошибкой. Ниже показаны этап и проверка связи.'); probeServer();
+  });
+  var copy = el('phoneDiagnosticCopy'); if (copy) copy.onclick = function () {
+    var value = el('phoneDiagnosticText').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(function () { text('phoneDiagnosticCopy', 'Скопировано'); }, function () { text('phoneDiagnosticCopy', 'Выделите текст диагностики ниже'); });
+    else { var selection = window.getSelection(), range = document.createRange(); range.selectNodeContents(el('phoneDiagnosticText')); selection.removeAllRanges(); selection.addRange(range); text('phoneDiagnosticCopy', 'Текст выделен · выберите «Скопировать»'); }
+  };
+  var retry = el('phoneLoadRetry'); if (retry) retry.onclick = reload;
+  window.addEventListener('pageshow', function () { if (!done && Date.now() - started > 10000) { fail('BOOT_STALLED', 'Подключение не завершилось после возврата в приложение. Повторите загрузку.'); probeServer(); } });
+  update(); arm();
+}());
+</script>
 <script type="module">// A request owns its timer and abort listener, including response-body reads.
 // Older Safari has AbortController but no static AbortSignal timeout/any APIs.
 function rdAbortReason(){const error=Error('The request was cancelled.');error.name='AbortError';return error;}
@@ -245,9 +333,14 @@ const PHOTO_REVIEW_ONLY=Object.freeze(['bed','internet','closet','pantry','balco
 const PHOTO_FEATURE_IDS=Object.freeze([...new Set([...Object.keys(PHOTO_OBJECT_TERMS),...PHOTO_REVIEW_ONLY])]);
 const photoPolicyReviewOnly=new Set(PHOTO_REVIEW_ONLY);
 // Python's \w and \b are Unicode-aware; JavaScript's are ASCII-only with /u.
+// These policy patterns put paired boundaries around words. Consume the
+// character before the word instead of using lookbehind: Safari before 16.4
+// rejects lookbehind while this module initializes, before phoneStart can run.
+// Only .test() uses these expressions, so the consumed prefix is immaterial.
 const photoPolicyWord='[\\p{L}\\p{N}_]';
-const photoPolicyBoundary='(?:(?<='+photoPolicyWord+')(?!'+photoPolicyWord+')|(?<!'+photoPolicyWord+')(?='+photoPolicyWord+'))';
-const photoPolicyUnicode=pattern=>pattern.replaceAll('\\w',photoPolicyWord).replaceAll('\\b',photoPolicyBoundary);
+const photoPolicyUnicode=pattern=>pattern.split('\\w').join(photoPolicyWord)
+  .replace(/\\b([\s\S]*?)\\b/g,(_,word)=>'(?:^|[^\\p{L}\\p{N}_])(?:'+word+')(?!'+photoPolicyWord+')')
+  .split('(?<![а-яё])').join('(?:^|[^а-яё])');
 const PHOTO_NON_DIRECT_PATTERN="\\b(?:no|not|absent|missing|cannot|without|unseen|hidden|inferred|assum\\w*|probab\\w*|perhaps|maybe|might|possibly|uncertain|unclear|likely|suggests?|could|will|planned|planning|plans?|intend\\w*|upcoming|future|pending|scheduled|going\\s+to)\\b|(?<![а-яё])(?:не|нет|без|возможно|вероятно|скрыт\\w*|предполож\\w*|долж\\w*|скорее|похож\\w*|кажется|сомн\\w*|отсутств\\w*|будет|будут|буду|будем|будете|будешь|планир\\w*|запланир\\w*|планах|намерен\\w*|собира(?:ется|ются|емся|юсь)|предстоит|скоро|купят|докупят|установят|привезут|доставят|появится|появятся)(?![а-яё])|没有|沒有|未见|未見|看不到|不可见|不可見|不确定|不確定|可能|推测|推測|隐藏|隱藏|将|將|计划|計劃|准备|準備|打算|待安装|待安裝|待购|待購|待添置|尚未|还未|還未";
 const photoPolicyNonDirect=new RegExp(photoPolicyUnicode(PHOTO_NON_DIRECT_PATTERN),'iu');
 const photoPolicyObjects=new Map(Object.entries(PHOTO_OBJECT_TERMS).map(([id,expression])=>[id,new RegExp(photoPolicyUnicode(expression),'iu')]));
@@ -930,6 +1023,7 @@ function setupPhoneUniversityRoutes({mount,getCard=()=>null,api,onSaved=()=>{},t
 }
 
 
+window.redcnPhoneBoot?.started();
 const ph=id=>document.getElementById(id);
 let phoneArchiveUI=null,phoneFilesUI=null,phonePresentationUI=null,phoneDesignInitializing=null,phoneStarting=false;
 let phoneWatchUI=null,phoneImportAuditUI=null,phoneRoutesUI=null;
@@ -945,21 +1039,23 @@ const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(v
 // This is a trace of completed requests, not a percentage estimate. It stays in
 // memory and deliberately excludes pairing fragments and all listing contents.
 const phoneLoad={revision:0,started:0,timer:0,finished:false};
+window.addEventListener('redcn-phone-start-failed',()=>clearInterval(phoneLoad.timer));
 function phoneLoadStep(stage,state,note){const row=ph('phoneLoad'+stage);row.dataset.state=state;row.querySelector('.load-mark').textContent={done:'✓',active:'…',waiting:'·',error:'!',action:'!'}[state];ph('phoneLoad'+stage+'Note').textContent=note;}
 function phoneLoadClock(){ph('phoneLoadElapsed').textContent=((performance.now()-phoneLoad.started)/1000).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+' с';}
 function phoneLoadBegin(){
+  window.redcnPhoneBoot?.begin();
   const revision=++phoneLoad.revision;clearInterval(phoneLoad.timer);phoneLoad.started=performance.now();phoneLoad.finished=false;ph('phoneLoading').dataset.result='loading';ph('phoneLoadTitle').textContent='Проверяем подключение';ph('phoneLoadDetails').open=true;ph('phoneLoadRetry').classList.add('hidden');ph('phoneLoadRetry').disabled=true;
   ph('phoneLoadHost').textContent=(location.protocol==='https:'?'Внешний HTTPS-адрес: ':'Локальный адрес: ')+location.host;
-  const navigation=performance.getEntriesByType('navigation')[0];if(navigation?.responseEnd>0)ph('phoneLoadPageNote').textContent='Получена за '+(navigation.responseEnd/1000).toLocaleString('ru-RU',{maximumFractionDigits:1})+' с после открытия адреса';
+  const navigation=typeof performance.getEntriesByType==='function'?performance.getEntriesByType('navigation')[0]:null;if(navigation?.responseEnd>0)ph('phoneLoadPageNote').textContent='Получена за '+(navigation.responseEnd/1000).toLocaleString('ru-RU',{maximumFractionDigits:1})+' с после открытия адреса';
   phoneLoadStep('Connection','active','Ждём ответ сервера');phoneLoadStep('Session','waiting','Проверим действующую сессию или код');phoneLoadStep('Cards','waiting','Загрузим после входа');ph('phoneLoadHelp').textContent='Первое подключение проверяется до 9 секунд. Фотографии загружаются по мере просмотра.';phoneLoadClock();phoneLoad.timer=setInterval(phoneLoadClock,250);return revision;
 }
 function phoneLoadAccepted(revision){if(revision!==phoneLoad.revision||phoneLoad.finished)return;phoneLoadStep('Connection','done','Mac ответил на запрос');phoneLoadStep('Session','done','Вход подтверждён');phoneLoadStep('Cards','active','Получаем список с компьютера');ph('phoneLoadTitle').textContent='Загружаем карточки';}
 function phoneLoadFinish(revision,result='ready',error=null,stage='Connection'){
-  if(revision!==phoneLoad.revision||phoneLoad.finished)return;clearInterval(phoneLoad.timer);phoneLoadClock();phoneLoad.finished=true;ph('phoneLoading').dataset.result=result;ph('phoneLoadRetry').disabled=false;
+  if(revision!==phoneLoad.revision||phoneLoad.finished)return;window.redcnPhoneBoot?.finish(result,{code:error?.code,status:error?.status});clearInterval(phoneLoad.timer);phoneLoadClock();phoneLoad.finished=true;ph('phoneLoading').dataset.result=result;ph('phoneLoadRetry').disabled=false;
   if(result==='ready'){phoneLoadStep('Cards','done',phoneCardCount(phoneState.cards.size)+' получено. Обложки загружаются по мере просмотра.');ph('phoneLoadTitle').textContent='Карточки готовы';ph('phoneLoadHelp').textContent='Данные получены с Mac. Список обновляется автоматически; полноразмерные фото открываются в карточке.';ph('phoneLoadDetails').open=false;return;}
   if(result==='code'){phoneLoadStep('Connection','done','Mac доступен');phoneLoadStep('Session','action','Нужны 8 цифр из раздела «Телефон» на Mac');phoneLoadStep('Cards','waiting','Доступны после ввода кода');ph('phoneLoadTitle').textContent='Mac отвечает · нужен код';ph('phoneLoadHelp').textContent='Введите код ниже. В установленном приложении вход может потребоваться отдельно.';ph('phoneLoadDetails').open=false;return;}
   if(error?.status&&stage==='Connection'&&!error.proxy){phoneLoadStep('Connection','done','Сервер ответил · HTTP '+error.status);stage='Session';}
-  phoneLoadStep(stage,'error',error?.message||'Ответ не получен');ph('phoneLoadTitle').textContent=stage==='Cards'?'Не удалось получить карточки':'Не удалось подключиться';ph('phoneLoadHelp').textContent=navigator.onLine===false?'Телефон сейчас без интернета. Включите Wi-Fi или мобильные данные и повторите загрузку.':location.protocol==='https:'?'Проверьте интернет на телефоне, включённый Mac и внешний доступ в разделе «Телефон» на компьютере. При смене внешнего адреса откройте новую ссылку.':'Проверьте, что Mac включён, сервер запущен, а телефон подключён к той же сети. Для работы с улицы нужен внешний HTTPS-адрес.';ph('phoneLoadRetry').classList.remove('hidden');ph('phoneLoadDetails').open=true;
+  phoneLoadStep(stage,'error',error?.message||'Ответ не получен');ph('phoneLoadTitle').textContent=stage==='Cards'?'Не удалось получить карточки':'Не удалось подключиться';ph('phoneLoadHelp').textContent=navigator.onLine===false?'Телефон сейчас без интернета. Включите Wi-Fi или мобильные данные и повторите загрузку.':location.protocol==='https:'?'Проверьте интернет на телефоне, включённый Mac и внешний доступ в разделе «Телефон» на компьютере. При смене внешнего адреса откройте новую ссылку.':'Проверьте, что Mac включён, сервер запущен, а телефон подключён к той же сети. Для работы с улицы нужен внешний HTTPS-адрес.';ph('phoneLoadRetry').classList.remove('hidden');ph('phoneLoadDetails').open=true;ph('phoneDiagnostics').open=true;
 }
 function phoneAsset(path){try{const url=new URL(path,location.origin);return url.origin===location.origin&&/^\/api\/phone\/(?:media\/|previews\/|cards\/)/.test(url.pathname)?url.pathname+url.search:null;}catch{return null;}}
 function phoneToast(text){clearTimeout(phoneToastTimer);ph('phoneToast').textContent=text;ph('phoneToast').classList.remove('hidden');phoneToastTimer=setTimeout(()=>ph('phoneToast').classList.add('hidden'),5000);}
@@ -971,14 +1067,14 @@ async function phoneApi(path,data,{deadline=0}={}){
   const epoch=phoneState.authEpoch;
   const normalTimeout=path==='translate'||/^cards\/[a-f0-9]{32}\/(?:rewrite|edit-text)$/.test(path)?65000:path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:8000;
   const timeout=deadline?Math.min(normalTimeout,Math.max(1,Math.ceil(deadline-performance.now()))):normalTimeout;
-  let response,value;
-  try{await withRequestDeadline(timeout,async(signal,scope)=>{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});try{value=await response.json();}catch(error){scope.throwIfAborted();value=null;}});}
-  catch(error){if(epoch===phoneState.authEpoch)phoneConnection(false);throw Error(error?.name==='TimeoutError'?'Mac не ответил за несколько секунд. Нажмите «Обновить» или проверьте подключение.':navigator.onLine===false?'Телефон без интернета. Включите Wi-Fi или мобильные данные.':'Не удалось связаться с Mac. Проверьте интернет на телефоне и запущенную студию на компьютере.');}
+  let response,value,phase='request';window.redcnPhoneBoot?.request(path,phase);
+  try{await withRequestDeadline(timeout,async(signal,scope)=>{response=await fetch('/api/phone/'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:{...(data?{'Content-Type':'application/json','X-Phone-CSRF':phoneState.csrf}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});phase='body';window.redcnPhoneBoot?.request(path,phase,response.status);try{value=await response.json();}catch(error){scope.throwIfAborted();value=null;}});}
+  catch(cause){if(epoch===phoneState.authEpoch)phoneConnection(false);const timedOut=cause?.name==='TimeoutError',error=Error(timedOut?(phase==='body'?'Сервер прислал заголовки, но данные ответа не загрузились за отведённое время.':'Ответ сервера не получен за 8 секунд. Сеть, внешний адрес или сервер могут быть недоступны.'):navigator.onLine===false?'Телефон без интернета. Включите Wi-Fi или мобильные данные.':'Браузер не смог выполнить запрос к Mac. Точную сетевую причину браузер не сообщил.');error.code=timedOut?'REQUEST_TIMEOUT':navigator.onLine===false?'NETWORK_OFFLINE':'NETWORK_ERROR';error.status=response?.status;throw error;}
   if(epoch!==phoneState.authEpoch){const error=Error('Подключение изменилось. Повторите действие.');error.status=401;error.staleAuth=true;throw error;}
   if(response.status===401){phoneAuth(false);ph('phoneConnection').textContent='Нужно подключение';ph('phoneReconnect').classList.add('hidden');ph('phonePairStatus').textContent='Для этого окна нужен вход. На Mac нажмите «Телефон» и введите показанные там 8 цифр. После установки на экран «Домой» подключитесь здесь ещё раз.';}
-  if(!response.ok){const gateway=[502,503,504].includes(response.status),message=gateway?(location.protocol==='https:'?'Внешний адрес':'Сервер')+' вернул HTTP '+response.status+'. Соединение с приложением недоступно; проверьте сервер и внешний доступ на Mac.':typeof value?.error==='string'?value.error:response.status===401?'Для этого окна нужен вход. Введите текущие 8 цифр с Mac.':'Сервер вернул HTTP '+response.status+' без ответа приложения. Повторите запрос или проверьте внешний адрес.';const error=Error(message);error.status=response.status;error.proxy=gateway||(!value&&response.status!==401);if(error.proxy)phoneConnection(false);if(response.status===401)error.authEpoch=phoneState.authEpoch;throw error;}
-  if(!value||typeof value!=='object'||Array.isArray(value)){const error=Error('Адрес вернул HTTP '+response.status+', но данные приложения не получены. Проверьте адрес и внешний доступ на Mac.');error.status=response.status;error.proxy=true;phoneConnection(false);throw error;}
-  phoneConnection(true);return value;
+  if(!response.ok){const gateway=[502,503,504].includes(response.status),message=gateway?(location.protocol==='https:'?'Внешний адрес':'Сервер')+' вернул HTTP '+response.status+'. Соединение с приложением недоступно; проверьте сервер и внешний доступ на Mac.':typeof value?.error==='string'?value.error:response.status===401?'Для этого окна нужен вход. Введите текущие 8 цифр с Mac.':'Сервер вернул HTTP '+response.status+' без ответа приложения. Повторите запрос или проверьте внешний адрес.';const error=Error(message);error.code=response.status===401?'SESSION_REQUIRED':gateway?'GATEWAY_ERROR':'HTTP_ERROR';error.status=response.status;error.proxy=gateway||(!value&&response.status!==401);if(error.proxy)phoneConnection(false);if(response.status===401)error.authEpoch=phoneState.authEpoch;throw error;}
+  if(!value||typeof value!=='object'||Array.isArray(value)){const error=Error('Адрес вернул HTTP '+response.status+', но данные приложения не получены. Проверьте адрес и внешний доступ на Mac.');error.code='RESPONSE_NOT_JSON';error.status=response.status;error.proxy=true;phoneConnection(false);throw error;}
+  window.redcnPhoneBoot?.request(path,'complete',response.status);phoneConnection(true);return value;
 }
 function phoneView(view){phoneState.view=view;if(view==='watch'&&phoneState.paired)phoneInitializeWatch().refresh();if(view==='import'&&phoneState.paired)phoneInitializeAudit().refresh();if(view==='design')phoneInitializeDesigner().then(studio=>{if(studio&&phoneState.paired&&phoneState.view==='design')studio.refresh();}).catch(error=>phoneToast(error.message));for(const [key,id] of Object.entries({cards:'phoneCardsView',watch:'phoneWatchView',import:'phoneImportView',setup:'phoneSetupView',design:'phoneDesignView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
 document.querySelectorAll('[data-phone-view]').forEach(button=>button.addEventListener('click',()=>{phoneView(button.dataset.phoneView);if(button.dataset.phoneView==='cards')phoneRefreshCards().catch(error=>phoneToast(error.message));}));
@@ -1161,7 +1257,7 @@ function phoneJobClock(){
   if(!phoneJobLatest)return;const {progress:p,state,received,partial}=phoneJobLatest,running=state==='running',delta=running?(performance.now()-received)/1000:0,elapsed=(Number(p.elapsedSeconds)||0)+delta,stageTime=(Number(p.stageElapsedSeconds)||0)+delta;
   ph('phoneJobElapsed').textContent=(running?'Прошло ':'Затрачено ')+phoneJobDuration(elapsed);ph('phoneJobStageTime').textContent=p.label&&p.stage!=='done'?p.label+' · '+phoneJobDuration(stageTime)+(running&&Number(p.maxTotalSeconds)>0?' · лимит '+phoneJobDuration(p.maxTotalSeconds):''):'';
   const samples=Number(p.sampleCount)||0,average=Number(p.estimateSeconds),hasAverage=p.estimateSource==='history'&&samples>0&&Number.isFinite(average)&&average>0;
-  const profile=p.profile==='import:cache'?' для данных из кеша':p.profile==='prepare'?' для подготовки фото':'';
+  const profile=p.profile==='import:cache'?' для данных из кеша':String(p.profile||'').startsWith('prepare')?' для подготовки фото':'';
   if(p.awaitingUser){ph('phoneJobEstimate').textContent='Ожидаем вашу проверку в Chrome на Mac. Время ручного подтверждения предсказать нельзя.';return;}
   if(!hasAverage){ph('phoneJobEstimate').textContent=partial?'Среднее ещё не рассчитано. Неполная подготовка фото не включается в измерения.':'Среднее ещё не рассчитано'+profile+': собираем время завершённых операций. Текущий этап показан ниже.';return;}
   const range=Array.isArray(p.historyRangeSeconds)&&p.historyRangeSeconds.length===2?' Диапазон '+phoneJobDuration(p.historyRangeSeconds[0])+'–'+phoneJobDuration(p.historyRangeSeconds[1])+'.':'';
@@ -1190,11 +1286,12 @@ ph('phoneImportForm').onsubmit=async event=>{event.preventDefault();let url;try{
 ph('phoneAnalyzeFurniture').onclick=async()=>{if(!phoneState.detailId)return;if(phoneState.job){phoneToast('Дождитесь текущей обработки на Mac.');return;}const button=ph('phoneAnalyzeFurniture');button.disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/analyze',{});phoneSetJob(result.job_id,'prepare');phoneToast('Mac проверяет мебель и технику на всех доступных фото.');}catch(error){phoneToast(error.message);}finally{button.disabled=false;}};
 ph('phonePreparePhotos').onclick=async()=>{if(!phoneState.detailId)return;ph('phonePreparePhotos').disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/prepare',{});phoneSetJob(result.job_id,'prepare');ph('phoneMediaStatus').textContent='Mac загружает фотографии…';phoneToast('Mac загружает фото. Они появятся в карточке после подготовки.');}catch(error){phoneToast(error.message);}finally{ph('phonePreparePhotos').disabled=false;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);}else if(phoneState.paired){phoneRefreshCards().catch(()=>{});if(phoneState.job)phoneCheckJob();}});window.addEventListener('online',()=>{if(phoneState.paired)phoneRefreshCards().catch(()=>{});});
-initializePwaInstall({container:ph('phoneInstall')});
-initializePwaInstall({container:ph('phoneInstallTop'),registerWorker:false});
+// Installation help is optional; a browser limitation here must not block cards.
+try{initializePwaInstall({container:ph('phoneInstall')});initializePwaInstall({container:ph('phoneInstallTop'),registerWorker:false});}catch{ph('phoneServerStatus').textContent='Подсказка установки недоступна в этом браузере. Карточки можно открыть на сайте.';}
 async function phoneStart(){
-  if(phoneStarting)return;phoneStarting=true;const epoch=phoneState.authEpoch,deadline=performance.now()+9000,load=phoneLoadBegin();ph('phoneReconnect').disabled=true;
+  if(phoneStarting)return;phoneStarting=true;const epoch=phoneState.authEpoch,deadline=performance.now()+9000;let load;
   try{
+    load=phoneLoadBegin();ph('phoneReconnect').disabled=true;
     let pairCode='';if(location.hash.length>1){try{pairCode=decodeURIComponent(location.hash.slice(1)).trim();}catch{pairCode=location.hash.slice(1).trim();}history.replaceState({},'',location.pathname+location.search);}
     if(pairCode){ph('phonePairCode').value=pairCode;await phonePair(pairCode,{deadline,loading:load});return;}
     const state=await phoneApi('state',undefined,{deadline});if(epoch!==phoneState.authEpoch)return;

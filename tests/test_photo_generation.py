@@ -19,6 +19,7 @@ import local_photo_ai
 import local_server
 import photo_ai_settings
 import photo_generation
+import photo_store
 import redcn
 import test_phone_relay as relay_acceptance
 
@@ -303,6 +304,17 @@ class PhotoAIHTTPBoundaryTests(unittest.TestCase):
                     self.request(path, data)
                 self.assertEqual(caught.exception.code, 401)
             prepare.assert_not_called()
+
+    def test_disabled_ai_rejects_analysis_before_loading_or_rewriting_card(self):
+        self.pair();card_id=self.add_card()
+        original=local_server.read_result(self.directory,card_id)
+        with patch.object(photo_store,'load_photo') as load:
+            with self.assertRaises(urllib.error.HTTPError) as caught:
+                self.request('/api/phone/cards/'+card_id+'/analyze',{})
+            self.assertEqual(caught.exception.code,400)
+            load.assert_not_called()
+        self.assertEqual(local_server.read_result(self.directory,card_id),original)
+        self.assertIsNone(self.controller.latest_job())
 
     def test_config_and_analyze_require_csrf_same_origin_and_valid_local_model_config(self):
         self.pair(); card_id = self.add_card()

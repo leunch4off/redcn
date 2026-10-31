@@ -36,7 +36,7 @@ STAGES = frozenset(('preflight', 'browser', 'navigate', 'challenge', 'scroll',
                     'extract', 'generate', 'photos', 'crop', 'vision', 'save'))
 SECTIONS = frozenset(('gallery', 'description', 'characteristics'))
 PROFILES = frozenset(('import:auto', 'import:chrome', 'import:http',
-                      'import:cache', 'prepare'))
+                      'import:cache', 'prepare', 'import:vision', 'prepare:vision'))
 OUTCOMES = frozenset(('success', 'error', 'cancelled', 'interrupted'))
 _ID = re.compile(r'^[a-f0-9]{32}$')
 _STATES = frozenset(('armed', 'paused', 'finishing', 'complete'))

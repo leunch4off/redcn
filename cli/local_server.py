@@ -163,7 +163,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             connection = redcn.open_cache(directory)
             listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
             with lock:
-                jobs[job_id]['tracker'].set_profile('import:cache' if listing.get('cached') else
+                from photo_ai_settings import load_config
+                jobs[job_id]['tracker'].set_profile('import:vision' if load_config(directory)['enabled'] else 'import:cache' if listing.get('cached') else
                     'import:chrome' if listing.get('loader')=='chrome' else 'import:'+params.get('loader','auto'))
             if cancel.is_set(): raise ValueError('Импорт отменён')
             report('Объявление прочитано. Формируем китайский заголовок и описание…',stage='generate')
@@ -214,6 +215,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         if type(params.get('timeout',180)) is not int or not 15<=params.get('timeout',180)<=600:raise ValueError('Ожидание: 15–600 секунд')
         for field in ('rules','prefs','data'):
             if field in params and not isinstance(params[field],dict):raise ValueError('Неверный формат '+field)
+        from photo_ai_settings import load_config
+        profile_key='import:vision' if load_config(directory)['enabled'] else 'import:'+params.get('loader','auto')
         if not all(isinstance(k,str) and isinstance(v,str) for k,v in params.get('rules',{}).items()):raise ValueError('Словарь: строки RU → CN')
         with lock:
             if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущего импорта или отмените его')
@@ -221,7 +224,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             job_id,cancel=secrets.token_hex(16),threading.Event()
             jobs[job_id]={'state':'running','message':'Начинаем загрузку…','cancel':cancel,
                          'kind':'import','sourceUrl':params['url'],
-                         'tracker':JobProgress(timing_history,'import:'+params.get('loader','auto'))}
+                         'tracker':JobProgress(timing_history,profile_key)}
             try:audit_tokens[job_id] = workspace.diagnostics.begin(job_id, params['url'], manual=True)
             except (OSError, ValueError, sqlite3.Error):pass
         threading.Thread(target=run_import,args=(job_id,params,cancel),daemon=True).start()
@@ -244,13 +247,17 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         from phone_relay import cache_photos
         result=read_result(directory,result_id)
         if not result or result.get('fields',{}).get('isDemo') is True:raise ValueError('Карточка не найдена')
+        if analyze:
+            from photo_ai_settings import load_config
+            if not load_config(directory)['enabled']:
+                raise ValueError('Автоматический анализ фото пока не включён на Mac. Текст карточки сохранён; мебель можно уточнить вручную в редакторе.')
         with lock:
             if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущей загрузки')
             while len(jobs)>=32:jobs.pop(next(iter(jobs)))
             job_id,cancel=secrets.token_hex(16),threading.Event()
             jobs[job_id]={'state':'running','message':'Сохраняем фотографии на Mac…','cancel':cancel,
                          'kind':'prepare','cardId':result_id,
-                         'tracker':JobProgress(timing_history,'prepare')}
+                         'tracker':JobProgress(timing_history,'prepare:vision' if analyze else 'prepare')}
         def run():
             success=False
             learn=False
