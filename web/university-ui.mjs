@@ -1,4 +1,4 @@
-import {UNIVERSITY_CATALOG,searchUniversities,resolveUniversity,resolveCampus,universityStats} from './university-catalog.mjs';
+import {UNIVERSITY_CATALOG,searchUniversities,resolveUniversity,resolveCampus,universityStats,universityCampusAvailability,verifiedCampusPoint} from './university-catalog.mjs';
 
 // Reference suggestions do not geocode or change apartment/route facts.
 export function setupUniversityUI({local=false,api,onSelect=()=>{},toast=()=>{}}={}){
@@ -8,16 +8,27 @@ export function setupUniversityUI({local=false,api,onSelect=()=>{},toast=()=>{}}
   const button=(text,action)=>{const element=make('button',text,'btn');element.type='button';element.onclick=action;return element;};
   const sourceMap=new Map(UNIVERSITY_CATALOG.sources.map(row=>[row.id,row]));
   const schoolMap=new Map(UNIVERSITY_CATALOG.universities.map(row=>[row.id,row]));
+  const campusMap=new Map(UNIVERSITY_CATALOG.campuses.map(row=>[row.id,row]));
   const suggestions=new Map();let fieldEpoch=0,knowledgeEpoch=0,timer=null,offset=0,total=0,knowledgeLoaded=false;
   const status=byId('universityReferenceStatus'),query=byId('universitySearch'),kind=byId('universityKind'),results=byId('universityResults'),paging=byId('universityPageStatus'),previous=byId('universityPrev'),next=byId('universityNext');
   function evidence(row){
     const fragment=document.createDocumentFragment();
     const types={teaching_campus:'Учебный кампус',teaching_building:'Учебный корпус',main_address:'Основной / контактный адрес; учебный статус уточните у вуза',administrative:'Административный адрес',contact_address:'Контактный адрес; учебный статус уточните у вуза',student_center:'Студенческий центр',dormitory:'Адрес общежития'};
+    if(row.locationType==='faculty_contact')types.faculty_contact='Контактный адрес факультета · расписание занятий уточняется';if(row.locationType==='historical_faculty_address')types.historical_faculty_address='Исторический адрес факультета · не выбирать для текущей поездки';
+    const availability=universityCampusAvailability(row);
+    if(row.locationLifecycle)fragment.append(make('p',(availability.selectable?'Текущий опубликованный адрес':availability.status==='former-address'?'Прежний адрес подразделения':row.locationLifecycle?.closureScope==='building'?'Корпус закрыт по отдельному источнику':'Подразделение закрыто по отдельному источнику')+' · проверено '+availability.checkedAt,'muted'),make('p',availability.noteRu,'muted'));
+    const point=verifiedCampusPoint(row);
+    if(point)fragment.append(make('p','Опубликованная точка конкретного корпуса: '+point.latitude+', '+point.longitude,'muted'),make('p','Область точности — точка выбранного адресного объекта. Метрическая погрешность: '+(point.evidence.accuracyMeters===null?'не опубликована':point.evidence.accuracyMeters+' м')+'. Конкретный доступный вход не подтверждён. Проверено '+point.evidence.checkedAt+'.','muted'));
     if(row.locationType)fragment.append(make('p',types[row.locationType]||row.locationType,'muted'));
     if(row.translationStatus==='editorial')fragment.append(make('p','Китайское название — редакционный перевод, проверьте по источнику.','muted'));
     if(row.chinaEvidence){
       const kinds={'official-enrollment':'Официальное упоминание студентов КНР','official-student-testimonials':'Истории китайских студентов на сайте вуза','official-chinese-page':'Официальная китайская страница','official-international-admissions':'Международный приём; наличие студентов КНР не установлено','institution-social-channel':'Официальный канал вуза'};
       const details=make('details','','university-evidence');details.append(make('summary','Основание включения: '+(kinds[row.chinaEvidence.type]||row.chinaEvidence.type)),make('p',row.chinaEvidence.note||'См. указанные источники.','muted'));fragment.append(details);
+    }
+    if(row.academicUnitHistory?.length){
+      const history=make('details','','university-unit-history');history.append(make('summary','Проверка закрытых подразделений'));
+      for(const unit of row.academicUnitHistory){history.append(make('h4',unit.ru),make('p',unit.noteRu,'muted'),make('p','Дата документа: '+unit.documentDate+' · проверено '+unit.checkedAt,'muted'));for(const id of unit.sourceIds){const source=sourceMap.get(id);if(source){const link=make('a','Первичный акт о подразделении','university-source');link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';history.append(link);}}}
+      fragment.append(history);
     }
     if(row.chinaStudentEvidence){
       const history=row.chinaStudentEvidence,details=make('details','','university-evidence university-china-data');details.append(make('summary','Китайские студенты · исторические данные и личные истории'),make('p','Публикации относятся к разным годам и не имеют общего знаменателя. Эти числа не используются как рейтинг популярности.','muted'));
@@ -38,6 +49,7 @@ export function setupUniversityUI({local=false,api,onSelect=()=>{},toast=()=>{}}
     return fragment;
   }
   function choose(row){
+    if(!universityCampusAvailability(row).selectable)return toast('Этот адрес исторический или закрыт. Выберите актуальный адрес подразделения.');
     if(row.kind==='campus'||row.universityId){
       const parent=schoolMap.get(row.universityId);if(!parent)return toast('Не найден вуз этого кампуса; проверьте справочник.');
       university.value=parent.ru;campus.value=row.ru;
@@ -81,7 +93,7 @@ export function setupUniversityUI({local=false,api,onSelect=()=>{},toast=()=>{}}
       const card=make('article','','university-reference-row');card.dataset.referenceId=row.id;card.dataset.referenceKind=row.kind||(row.universityId?'campus':'university');card.append(make('h3',row.ru),make('p',row.zh,'university-zh'));
       if(row.universityId){const parent=schoolMap.get(row.universityId);if(parent)card.append(make('p',parent.ru,'muted'));}
       const action=row.universityId?(row.locationType==='teaching_campus'?'Выбрать этот кампус':'Выбрать этот адрес'):'Выбрать этот вуз';
-      card.append(evidence(row),button(action,()=>choose(row)));results.append(card);
+      const availability=universityCampusAvailability(row),pick=button(action,()=>choose(row));pick.disabled=!availability.selectable;card.append(evidence(row),pick);if(!availability.selectable&&campusMap.has(availability.currentCampusId))card.append(button('Выбрать актуальный адрес факультета',()=>choose(campusMap.get(availability.currentCampusId))));results.append(card);
     }
     if(!rows.length)results.append(make('p','Совпадений нет. Попробуйте сокращение, русское или китайское название.','muted'));
   }
@@ -90,7 +102,7 @@ export function setupUniversityUI({local=false,api,onSelect=()=>{},toast=()=>{}}
     try{
       const q=query.value.trim(),filter=kind.value;let data;
       if(local&&api&&q)data=await api('universities/search',{query:q,kind:filter,offset,limit:40});
-      else{const all=searchUniversities(q,{limit:10000,includeCampuses:true}).filter(row=>filter==='all'||(row.kind|| (row.universityId?'campus':'university'))===filter);data={entries:all.slice(at,at+40),total:all.length,offset:at};}
+      else{const all=searchUniversities(q,{limit:10000,includeCampuses:true,includeInactive:true}).filter(row=>filter==='all'||(row.kind|| (row.universityId?'campus':'university'))===filter);data={entries:all.slice(at,at+40),total:all.length,offset:at};}
       if(epoch!==knowledgeEpoch)return;
       total=Number(data.total)||0;renderRows(data.entries||[]);
       paging.textContent=total?`Найдено ${number(total)} · ${number(at+1)}–${number(Math.min(at+40,total))}`:'Совпадений нет';

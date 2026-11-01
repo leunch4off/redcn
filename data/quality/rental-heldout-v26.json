@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "id": "rental-real-fact-extracts-v26-six",
+  "source": "User-authorized actual listing source clauses, anonymized independent fact extracts; no addresses, URLs, contacts or card IDs",
+  "annotation": {
+    "author": "Codex AI-assisted independent fact annotation",
+    "nativeSpeakerReview": false,
+    "trainingUseAllowed": false,
+    "checksFrozenBeforeInference": true,
+    "sourceStationEvidence": "literal occurrence in original listing.text and fields.source, not inferred nearest station or route"
+  },
+  "limitations": [
+    "These are six real-listing-derived fact extracts, not six independently native-edited complete advertisements.",
+    "Parsed fields and previously generated Chinese text are not used as truth; source conflicts are listed and excluded from generation when unresolved.",
+    "No physical equipment verification, actual availability or owner promises are established by this linguistic evaluation."
+  ],
+  "cases": [
+    {
+      "id": "heldout-01",
+      "sourceRu": "Аренда 70000 рублей в месяц. Есть диван, кресло, кровать, прикроватные тумбы, ТВ-тумба и 2 шкафа-купе. Холодильника, обеденного стола и стульев нет в комплектации. Владелец не оформляет временную регистрацию. Курение и субаренда запрещены. В исходнике названы станции Лианозово и Алтуфьево; время в дороге не подтверждено.",
+      "referenceZh": "月租70000卢布。配有沙发、扶手椅、床、床头柜、电视柜和2个推拉门衣柜。配置不包括冰箱、餐桌和椅子。房东不办理临时居住登记。禁止吸烟和转租。原文提及Лианозово和Алтуфьево站，通勤时间尚未确认。",
+      "generationFactsZh": "月租70000卢布。配有沙发、扶手椅、床、床头柜、电视柜和2个推拉门衣柜。配置不包括冰箱、餐桌和椅子。禁止吸烟和转租。原文提及Лианозово和Алтуфьево站，通勤时间尚未确认。",
+      "fields": {
+        "price": "70000",
+        "metro": "Лианозово"
+      },
+      "observedStations": [
+        {
+          "ru": "Лианозово",
+          "aliases": [
+            "Лианозово",
+            "利阿诺佐沃"
+          ]
+        },
+        {
+          "ru": "Алтуфьево",
+          "aliases": [
+            "Алтуфьево",
+            "阿尔图菲耶沃"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "93b9b1cf68a7c664aafefce86428186580177035ff3c1ad6daf70947128ab49c",
+      "conflicts": [],
+      "annotationNotes": [
+        "Owner registration refusal is a separate source condition, not a claim that agency assistance is unavailable."
+      ]
+    },
+    {
+      "id": "heldout-02",
+      "sourceRu": "Аренда 80000 рублей в месяц, залог 80000 рублей. В описании указаны 2 изолированные комнаты, площадь 60 м² и 15 этаж из 17 этажей. Есть гардеробная, стиральная машина, посудомоечная машина, телевизор, холодильник и 2 лоджии. Вода и электричество оплачиваются дополнительно. Можно с детьми. В исходнике названы станции Рассказовка и Переделкино.",
+      "referenceZh": "月租80000卢布，押金80000卢布。原文描述2个独立房间、面积60㎡，位于15楼，共17层。配有衣帽间、洗衣机、洗碗机、电视、冰箱和2个封闭式阳台。水电费另付。可带孩子入住。原文提及Рассказовка和Переделкино站。",
+      "generationFactsZh": "月租80000卢布，押金80000卢布。2个独立房间，位于15楼，共17层。配有衣帽间、洗衣机、洗碗机、电视、冰箱和2个封闭式阳台。水电费另付。可带孩子入住。原文提及Рассказовка和Переделкино站。",
+      "fields": {
+        "price": "80000",
+        "metro": "Рассказовка"
+      },
+      "observedStations": [
+        {
+          "ru": "Рассказовка",
+          "aliases": [
+            "Рассказовка",
+            "拉斯卡佐夫卡"
+          ]
+        },
+        {
+          "ru": "Переделкино",
+          "aliases": [
+            "Переделкино",
+            "佩列杰尔金诺"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "162ab212e34990a0a3a38d6583dcc17e6f469915e3760233b7ac7cbb6aca7181",
+      "conflicts": [
+        "Area conflict: descriptive text says60m2; parsed header field64m2. Area omitted from generation; translation preserves the explicitly quoted descriptive clause."
+      ],
+      "annotationNotes": []
+    },
+    {
+      "id": "heldout-03",
+      "sourceRu": "Аренда 68000 рублей в месяц. Залог 68000 рублей можно внести за 2 месяца. Есть отдельная спальня, кухня-гостиная, двуспальная кровать, диван, гардеробная и холодильник. Коммунальные услуги и интернет включены; дополнительных платежей по счётчикам нет. В исходнике названы станции Рассказовка и Переделкино.",
+      "referenceZh": "月租68000卢布。押金68000卢布，可分2个月支付。设有独立卧室、厨房客厅、双人床、沙发、衣帽间和冰箱。公用事业费及网络已包含，无需另付表计费用。原文提及Рассказовка和Переделкино站。",
+      "generationFactsZh": "月租68000卢布。押金68000卢布，可分2个月支付。设有独立卧室、厨房客厅、双人床、沙发、衣帽间和冰箱。公用事业费及网络已包含，无需另付表计费用。原文提及Рассказовка和Переделкино站。",
+      "fields": {
+        "price": "68000",
+        "metro": "Рассказовка"
+      },
+      "observedStations": [
+        {
+          "ru": "Рассказовка",
+          "aliases": [
+            "Рассказовка",
+            "拉斯卡佐夫卡"
+          ]
+        },
+        {
+          "ru": "Переделкино",
+          "aliases": [
+            "Переделкино",
+            "佩列杰尔金诺"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "dcee85234f9baf6f3cdcca5ca591af2439cca4a4ae1562eba67c108cbe52187d",
+      "conflicts": [],
+      "annotationNotes": [
+        "Gender-specific tenant restriction is excluded from both generated-ad input and this evaluation extract; no discriminatory advertisement is produced."
+      ]
+    },
+    {
+      "id": "heldout-04",
+      "sourceRu": "Аренда 65000 рублей в месяц, залог 67000 рублей. Есть шкаф-купе со встроенной двуспальной кроватью, диван, микроволновая печь, электрический чайник, стиральная машина, кондиционер и фильтр питьевой воды. В исходном тексте указаны около 15 минут пешком или 5 минут на автобусе до метро. Упомянуты станции Рассказовка и Переделкино.",
+      "referenceZh": "月租65000卢布，押金67000卢布。配有内置双人床的推拉门衣柜、沙发、微波炉、电热水壶、洗衣机、空调和饮用水过滤器。原文称到地铁步行约15分钟或乘公交5分钟。原文提及Рассказовка和Переделкино站。",
+      "generationFactsZh": "月租65000卢布，押金67000卢布。配有内置双人床的推拉门衣柜、沙发、微波炉、电热水壶、洗衣机、空调和饮用水过滤器。原文提及Рассказовка和Переделкино站；通勤时间待核实。",
+      "fields": {
+        "price": "65000",
+        "metro": "Рассказовка"
+      },
+      "observedStations": [
+        {
+          "ru": "Рассказовка",
+          "aliases": [
+            "Рассказовка",
+            "拉斯卡佐夫卡"
+          ]
+        },
+        {
+          "ru": "Переделкино",
+          "aliases": [
+            "Переделкино",
+            "佩列杰尔金诺"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "d8eb62010cd873b5bde4341daa054b947818453e6d553bb8536d4692a4ac8972",
+      "conflicts": [
+        "Source text15min walking; generated legacybody17min. Both are unverified routes; generation omits a time assertion."
+      ],
+      "annotationNotes": []
+    },
+    {
+      "id": "heldout-05",
+      "sourceRu": "Аренда 42000 рублей в месяц, залог 42000 рублей. Есть холодильник, душевая кабина и кухонная мебель. Вода оплачивается по счётчику. Курение и проживание с животными запрещены. Владелец не оформляет временную регистрацию. В исходнике названы станции Рассказовка и Переделкино.",
+      "referenceZh": "月租42000卢布，押金42000卢布。配有冰箱、淋浴间和厨房家具。水费按表计费。禁止吸烟和携带宠物入住。房东不办理临时居住登记。原文提及Рассказовка和Переделкино站。",
+      "generationFactsZh": "月租42000卢布，押金42000卢布。配有冰箱、淋浴间和厨房家具。水费按表计费。禁止吸烟。原文提及Рассказовка和Переделкино站。",
+      "fields": {
+        "price": "42000",
+        "metro": "Рассказовка"
+      },
+      "observedStations": [
+        {
+          "ru": "Рассказовка",
+          "aliases": [
+            "Рассказовка",
+            "拉斯卡佐夫卡"
+          ]
+        },
+        {
+          "ru": "Переделкино",
+          "aliases": [
+            "Переделкино",
+            "佩列杰尔金诺"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "4faf5037af32a4ff807fcbfc357ee0c91a006c2ab653c538507253d85c5f2c1a",
+      "conflicts": [],
+      "annotationNotes": [
+        "Familial-status restriction excluded; refusal of owner registration is not converted to free agency registration; negative pet policy is not advertised."
+      ]
+    },
+    {
+      "id": "heldout-06",
+      "sourceRu": "Аренда 92000 рублей в месяц, залог 92000 рублей. Есть гардеробная, 2 санузла, индукционная плита, посудомоечная машина, духовой шкаф, микроволновая печь, стиральная машина и холодильник. Можно с детьми. В исходнике названы станции Рассказовка и Переделкино.",
+      "referenceZh": "月租92000卢布，押金92000卢布。配有衣帽间、2间卫浴、电磁炉、洗碗机、烤箱、微波炉、洗衣机和冰箱。可带孩子入住。原文提及Рассказовка和Переделкино站。",
+      "generationFactsZh": "月租92000卢布，押金92000卢布。配有衣帽间、2间卫浴、电磁炉、洗碗机、烤箱、微波炉、洗衣机和冰箱。可带孩子入住。原文提及Рассказовка和Переделкино站。",
+      "fields": {
+        "price": "92000",
+        "metro": "Рассказовка"
+      },
+      "observedStations": [
+        {
+          "ru": "Рассказовка",
+          "aliases": [
+            "Рассказовка",
+            "拉斯卡佐夫卡"
+          ]
+        },
+        {
+          "ru": "Переделкино",
+          "aliases": [
+            "Переделкино",
+            "佩列杰尔金诺"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "d8df66e8a406028b1c36a90c26af947292a6250a93663f480855dec48f5db7a5",
+      "conflicts": [],
+      "annotationNotes": []
+    }
+  ]
+}

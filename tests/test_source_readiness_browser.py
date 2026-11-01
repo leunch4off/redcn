@@ -80,7 +80,7 @@ class SourceReadinessBrowserAcceptance(unittest.TestCase):
         thread = threading.Thread(target=self.controller.serve_forever, daemon=True)
         thread.start()
         try:
-            self.page.goto('http://127.0.0.1:' + str(self.controller.server_port))
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port))
             self.page.locator('#url').fill('https://www.cian.ru/rent/flat/300691182/')
             self.page.locator('#import').click()
             self.page.wait_for_function("document.querySelector('#importStatus').textContent.includes('Сбор исходной страницы частичный')")
@@ -107,7 +107,7 @@ class SourceReadinessBrowserAcceptance(unittest.TestCase):
         thread = threading.Thread(target=self.controller.serve_forever, daemon=True)
         thread.start()
         try:
-            self.page.goto('http://127.0.0.1:' + str(self.controller.server_port) + '/listing/' + self.card_id)
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id))
             self.page.wait_for_function("document.querySelector('#importStatus').textContent.includes('Сохранённая карточка загружена')")
             self.assertIn('Сбор исходной страницы частичный', self.page.locator('#review').inner_text())
             self.page.locator('#area').fill('60')

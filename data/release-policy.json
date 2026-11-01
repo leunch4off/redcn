@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "projectId": "appgprj_6ae36aadbaac819184b0a832deae799e",
+  "repository": "leunch4off/redcn",
+  "branch": "feature/rcn-v8-knowledge-photos",
+  "trustedActor": "leunch4off",
+  "attestationIssue": 6,
+  "workflowPath": ".github/workflows/verification.yml",
+  "requiredJobs": ["verify", "python (0)", "python (1)", "python (2)", "python (3)", "mac-portability", "sites-release-artifact"],
+  "artifactNamePrefix": "redcn-sites-",
+  "maxArtifactBytes": 33554432,
+  "localMacFirst": true,
+  "publishAudience": "owner-private",
+  "instructions": "docs/VERIFIED-SITES-PIPELINE-v26.md",
+  "neverPublishFrom": ["fork", "failed-or-pending-CI", "missing-owner-local-Mac-attestation", "changed-Site-identity", "changed-Site-audience"],
+  "credentials": "Fresh native Sites write credential only; stdin/session memory, never GitHub secrets, source, logs or schedule prompts."
+}

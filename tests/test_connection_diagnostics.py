@@ -117,8 +117,7 @@ class DiagnosticsLocalApi(unittest.TestCase):
         self.server = local_server.create_server(Path(self.temp.name), 0)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True); self.thread.start()
         self.base = 'http://127.0.0.1:' + str(self.server.server_port)
-        with urllib.request.urlopen(self.base) as response:
-            self.token = re.search(r'name="redcn-token" content="([^"]+)"', response.read().decode())[1]
+        self.token = self.server.desktop_access.token
 
     def tearDown(self):
         self.server.shutdown(); self.server.server_close(); self.thread.join(); self.temp.cleanup()

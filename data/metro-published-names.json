@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "verifiedAt": "2026-11-01",
+  "coverage": "Bounded published-name evidence; corporate and community names are not operator-certified nomenclature.",
+  "sources": [
+    {
+      "id": "nps-zh-zheleznodorozhnaya",
+      "url": "https://npsgk.ru/ch/news/kompanii-natsproektstroya-ustanovili-vse-prolety-mosta-konkorsa-na-stantsii-zheleznodorozhnoy-mtsd-4/",
+      "publisher": "ГК Нацпроектстрой / Natsproektstroy",
+      "title": "Китайская публикация подрядчика о станции Железнодорожная МЦД-4",
+      "publishedAt": "2026-06-10",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "primary-contractor-publication",
+      "scope": "Published Chinese proper name only; not operator nomenclature or present service.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "nps-zh-petrovsko",
+      "url": "https://npsgk.ru/ch/news/kompanii-nps-zavershili-stroitelstvo-stantsii-petrovsko-razumovskaya-mtsd-1/",
+      "publisher": "ГК Нацпроектстрой / Natsproektstroy",
+      "title": "Китайская публикация подрядчика о Петровско-Разумовской МЦД-1",
+      "publishedAt": "2025-12-26",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "primary-contractor-publication",
+      "scope": "Alternative published Chinese name only; existing reviewed or community choice is preserved.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "zhwiki-metro-lines-2026",
+      "url": "https://zh.wikipedia.org/wiki/莫斯科地铁",
+      "publisher": "Chinese Wikipedia contributors",
+      "title": "Китайское community-название Рублёво-Архангельской линии",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "community-authored-nomenclature",
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "scope": "Line-name spelling only. Community line colors, counts and service claims are not imported."
+    }
+  ],
+  "stations": [
+    {
+      "ru": "Железнодорожная",
+      "zh": "热列兹诺多罗日纳亚",
+      "lineIds": [
+        "136"
+      ],
+      "sourceId": "nps-zh-zheleznodorozhnaya",
+      "authority": "contractor-published-name-not-operator"
+    },
+    {
+      "ru": "Петровско-Разумовская",
+      "zh": "彼得罗夫斯科-拉祖莫夫",
+      "lineIds": [
+        "131"
+      ],
+      "sourceId": "nps-zh-petrovsko",
+      "authority": "contractor-published-name-not-operator"
+    }
+  ],
+  "lines": [
+    {
+      "ru": "Рублёво-Архангельская",
+      "zh": "鲁布廖夫-阿尔汉格尔斯克线",
+      "sourceId": "zhwiki-metro-lines-2026",
+      "authority": "community-name-not-operator"
+    }
+  ],
+  "aliasReview": [
+    {
+      "ru": "Площадь трёх вокзалов",
+      "formerName": "Каланчёвская",
+      "decision": "No Chinese name joined from the old Kalanchyovskaya spelling without a dated rename source; keep unresolved."
+    },
+    {
+      "ru": "Москва-Сити",
+      "formerName": "Тестовская",
+      "decision": "Do not equate D1 and D4 records or copy coordinates by shared new name; published name aliases require line-specific review."
+    },
+    {
+      "ru": "Крюково",
+      "candidateAlias": "Зеленоград-Крюково",
+      "decision": "The HH spelling is retained. An alias is not a verified station rename or Chinese translation."
+    }
+  ]
+}

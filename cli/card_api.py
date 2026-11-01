@@ -7,8 +7,13 @@ def _download_header(name):
     return {'Content-Disposition': 'attachment; filename="redcn-document"; filename*=UTF-8\'\'' + quote(name, safe='')}
 
 
-def dispatch(directory, path, data=None, *, namespace='local', browser_channel='chrome'):
+def dispatch(directory, path, data=None, *, namespace='local', browser_channel='chrome', actor=None):
     """Return (status, value, MIME, headers), or None for unrelated routes."""
+    from photo_instance_api import dispatch as instance_dispatch
+    instances = instance_dispatch(directory, path, data, namespace=namespace,
+                                  actor=actor or ('Mac owner' if namespace == 'local' else 'paired editor'))
+    if instances:
+        return instances
     import card_assets
     prefix='/api/'+namespace+'/'
     def asset(item):return {**item,'url':prefix+'exports/'+item['id']}
@@ -84,6 +89,7 @@ def dispatch(directory, path, data=None, *, namespace='local', browser_channel='
 
 
 def request_limit(path):
+    if re.fullmatch(r'photo-instances/[a-f0-9]{32}', path):return 400_000
     if path=='dossier-import':return 179_000_000
     if re.fullmatch(r'dossier-client/[a-f0-9]{32}',path):return 16_000
     if re.fullmatch(r'card-archive/[a-f0-9]{32}',path):return 56_100_000

@@ -54,7 +54,8 @@ def open_photo(content):
 
 def _connection(directory):
     directory=Path(directory);directory.mkdir(parents=True,exist_ok=True)
-    connection=sqlite3.connect(directory/'media.sqlite3',timeout=15)
+    from workspace_ownership import owned_path
+    connection=sqlite3.connect(owned_path(directory,'media.sqlite3'),timeout=15)
     connection.execute('CREATE TABLE IF NOT EXISTS assets (id TEXT PRIMARY KEY, mime TEXT, metadata TEXT)')
     connection.execute('CREATE TABLE IF NOT EXISTS photo_urls (url TEXT PRIMARY KEY, id TEXT)')
     connection.execute('CREATE TABLE IF NOT EXISTS crop_links (original_id TEXT,asset_id TEXT,verification TEXT,metadata TEXT,created REAL,PRIMARY KEY(original_id,asset_id,verification))')
@@ -75,8 +76,9 @@ def _merge_original_metadata(previous,current):
 
 
 def _save(directory,content,mime,metadata):
-    digest=hashlib.sha256(content).hexdigest();folder=Path(directory)/'media';folder.mkdir(parents=True,exist_ok=True)
-    path=folder/digest
+    from workspace_ownership import owned_path
+    digest=hashlib.sha256(content).hexdigest();folder=owned_path(directory,'media');folder.mkdir(parents=True,exist_ok=True)
+    path=owned_path(directory,Path('media')/digest)
     if not path.exists():
         with tempfile.NamedTemporaryFile(dir=folder,delete=False) as f: f.write(content);temp=Path(f.name)
         temp.replace(path)
@@ -102,7 +104,8 @@ def asset(directory,digest):
     if not isinstance(digest,str) or not re.fullmatch(r'[a-f0-9]{64}',digest): raise ValueError('Неверный ID фотографии')
     with _connection(directory) as db: row=db.execute('SELECT mime,metadata FROM assets WHERE id=?',(digest,)).fetchone()
     if not row: raise ValueError('Фотография ещё не загружена')
-    content=(Path(directory)/'media'/digest).read_bytes()
+    from workspace_ownership import owned_path
+    content=owned_path(directory,Path('media')/digest).read_bytes()
     if hashlib.sha256(content).hexdigest()!=digest: raise ValueError('Сохранённый файл повреждён; загрузите оригинал повторно')
     return content,row[0],json.loads(row[1])
 

@@ -111,7 +111,7 @@ class LocalServerTests(unittest.TestCase):
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
         self.base=f'http://127.0.0.1:{self.server.server_port}'
         self.page=urllib.request.urlopen(self.base+'/').read().decode()
-        self.token=re.search(r'name="redcn-token" content="([^"]+)"',self.page)[1]
+        self.token=self.server.desktop_access.token
 
     def tearDown(self):
         self.server.shutdown();self.server.server_close();self.thread.join();self.temp.cleanup()
@@ -130,7 +130,7 @@ class LocalServerTests(unittest.TestCase):
     def test_repeat_start_reuses_running_server_and_saved_link(self):
         with patch.object(local_server.webbrowser,'open') as opened,patch.object(local_server,'create_server',wraps=local_server.create_server) as create,patch.object(local_server.ThreadingHTTPServer,'serve_forever',side_effect=AssertionError('A repeated start must not serve a second controller')) as duplicate:
             self.assertEqual(local_server.serve(self.directory,self.server.server_port,result_id='a'*32),0)
-            opened.assert_called_once_with(self.base+'/listing/'+'a'*32)
+            opened.assert_called_once_with(self.server.desktop_access.launch_url(self.server.server_port,'a'*32))
             self.assertEqual(create.call_count,1)
             duplicate.assert_not_called()
         self.assertFalse(local_server.matching_server(self.directory/'different-data',self.server.server_port,'chrome'))
@@ -138,7 +138,7 @@ class LocalServerTests(unittest.TestCase):
 
     def test_controller_identity_accepts_optional_release_but_rejects_mismatched_protocol(self):
         identity=self.request('/api/local/health',token=False)
-        self.assertEqual(identity['release'],'v25')
+        self.assertEqual(identity['release'],'v26')
         self.assertTrue(local_server.matching_server(self.directory,self.server.server_port,'chrome'))
         for metadata in ({key:value for key,value in identity.items() if key!='release'}, {**identity,'release':'future-compatible-release','optionalStatus':'ready'}, {**identity,'protocol':99}):
             with self.subTest(metadata=metadata),patch.object(local_server.urllib.request,'build_opener') as opener:

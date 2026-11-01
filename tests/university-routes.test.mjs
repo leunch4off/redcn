@@ -86,3 +86,24 @@ test('map hyperlink queries omit pasted telephone numbers without changing sourc
   const local=new URL(universityStopLinks({name:'Остановка 8 (999) 123-45-67'}).yandex).searchParams.get('text');assert(!local.includes('999'));
   assert.equal(new URL(universityStopLinks({latitude:55.712345,longitude:37.523456}).google).searchParams.get('query'),'55.712345,37.523456');
 });
+
+test('selected door points survive normalization and drive exported map links without replacing saved building coordinates',()=>{
+ const a={latitude:55.7,longitude:37.5,name:'Вход дома',kind:'building-entrance',availability:'available',checkedAt:'2026-11-01',sourceUrl:'https://example.org/door'},b={...a,latitude:55.71,longitude:37.51,name:'Выход метро',kind:'metro-exit'};
+ const fields={latitude:55.6,longitude:37.4,universityRoutes:[{name:'Тестовый корпус',address:'Тестовый адрес',latitude:55.8,longitude:37.6,originPoint:a,destinationPoint:b,useEntrances:true,mode:'walk'}]},route=resolveUniversityRoutes(fields)[0];
+ assert.equal(route.origin.latitude,55.7);assert.equal(route.destination.latitude,55.71);assert.equal(route.destinationPointSource,'selected-point');assert.match(route.links.yandex,/55\.7%2C37\.5/);assert.equal(fields.latitude,55.6);assert.equal(normalizeUniversityRoutes(fields)[0].originPoint.name,'Вход дома');
+});
+
+test('expired provider receipt becomes stale and remains explicitly a network estimate',()=>{
+ const calculation={provider:'valhalla-fossgis-demo',calculatedAt:'2026-11-01T10:00:00Z',expiresAt:'2026-11-01T10:10:00Z',durationSeconds:700,distanceKm:1.1,travelTimeKind:'network-estimate',responseSha256:'a'.repeat(64)},row={name:'Корпус',method:'provider',sourceUrl:'https://valhalla1.openstreetmap.de/route',checkedAt:'2026-11-01',time:'12',calculation};
+ const result=resolveUniversityRoutes({universityRoutes:[row]},{now:'2026-11-01T10:11:00Z'})[0];assert.equal(result.verification.stale,true);assert.equal(result.verification.verified,false);assert.equal(result.verification.estimated,true);assert.ok(result.warnings.some(s=>s.includes('Срок маршрутного расчёта истёк')));
+});
+
+test('former campus cannot re-enter routing through manually supplied coordinates',()=>{
+ const result=resolveUniversityRoutes({latitude:55.7,longitude:37.5,universityRoutes:[{name:'ВШЭ',campusId:'hse-economics-former-shabolovka',latitude:55.72,longitude:37.61,originPoint:{latitude:55.7,longitude:37.5},destinationPoint:{latitude:55.72,longitude:37.61},mode:'walk',routeDistanceKm:1,time:'12'}]})[0];
+ assert.equal(result.confirmedDestination,false);assert.equal(result.distanceKm,null);assert.equal(result.links.google,'');assert.equal(result.destination.address,'');assert.ok(result.warnings.some(s=>s.includes('прежний')));
+});
+
+test('a partial selected point cannot silently fall back to an address or catalogue centre',()=>{
+ const row={name:'МГУ',campusId:'msu-physics',mode:'walk',time:'12',routeDistanceKm:1,destinationPoint:{latitude:55.7,longitude:''}},route=resolveUniversityRoutes({latitude:55.6,longitude:37.5,universityRoutes:[row]})[0];
+ assert.equal(route.confirmedDestination,false);assert.equal(route.distanceKm,null);assert.equal(route.links.google,'');assert.equal(route.destination.address,'');assert.ok(route.warnings.some(s=>s.includes('не полностью')));
+});

@@ -79,7 +79,8 @@
       "city": "Москва",
       "sourceIds": [
         "uni-src-hse-cn",
-        "uni-src-hse-campus"
+        "uni-src-hse-campus",
+        "unit-hse-international-business-liquidation"
       ],
       "chinaEvidence": {
         "type": "official-student-testimonials",
@@ -89,7 +90,24 @@
         "note": "На официальной китайской странице приёма опубликованы истории китайских студентов; общего числа и рейтинга популярности нет."
       },
       "translationStatus": "official",
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "academicUnitHistory": [
+        {
+          "id": "hse-former-institute-international-business",
+          "ru": "Институт международного бизнеса факультета мировой экономики и мировой политики ВШЭ",
+          "zh": "高等经济大学世界经济与世界政治系原国际商务研究所",
+          "translationStatus": "editorial",
+          "status": "closed",
+          "closureScope": "academic-unit-only",
+          "checkedAt": "2026-11-01",
+          "documentDate": "2011-12-23",
+          "effectiveClosureDate": null,
+          "sourceIds": [
+            "unit-hse-international-business-liquidation"
+          ],
+          "noteRu": "Отдельное подразделение ликвидировано бессрочным приказом. Действующий факультет, университет и его здания не объявляются закрытыми; адрес и точная дата фактической ликвидации здесь не устанавливаются."
+        }
+      ]
     },
     {
       "id": "rudn",
@@ -3788,7 +3806,10 @@
         "accuracyStatus": "not-published",
         "publishedPrecision": "6 decimal places",
         "entranceVerified": false,
-        "note": "Опубликованная точка карты лаборатории физфака, строение 2. Страница содержит старые публикации; адрес корпуса отдельно подтверждён текущей контактной страницей факультета. Доступность входа и точность не установлены."
+        "note": "Опубликованная точка карты лаборатории физфака, строение 2. Страница содержит старые публикации; адрес корпуса отдельно подтверждён текущей контактной страницей факультета. Доступность входа и точность не установлены.",
+        "boundCampusId": "msu-physics",
+        "boundAddressRu": "Москва, Ленинские горы, д. 1, стр. 2",
+        "accuracyScope": "published-building-point"
       }
     },
     {
@@ -3826,7 +3847,10 @@
         "accuracyStatus": "not-published",
         "publishedPrecision": "1 arcsecond",
         "entranceVerified": false,
-        "note": "Исходные координаты 55°42′4″ с.ш.,37°32′33″ в.д. переведены из градусов/минут/секунд. Разрядность не означает известную точность или точку входа. Старые маршруты троллейбуса не импортируются."
+        "note": "Исходные координаты 55°42′4″ с.ш.,37°32′33″ в.д. переведены из градусов/минут/секунд. Разрядность не означает известную точность или точку входа. Старые маршруты троллейбуса не импортируются.",
+        "boundCampusId": "msu-sternberg",
+        "boundAddressRu": "Москва, Университетский проспект, д. 13",
+        "accuracyScope": "published-building-point"
       }
     },
     {
@@ -3863,7 +3887,10 @@
         "accuracyStatus": "not-published",
         "publishedPrecision": "6 decimal places",
         "entranceVerified": false,
-        "note": "Точка для навигатора опубликована организаторами конференции МАИ для корпуса 6. Это не корпус 30 и не доказательство места занятий любого факультета. Первичный индексированный текст проверен, полный HTTP-ответ недоступен."
+        "note": "Точка для навигатора опубликована организаторами конференции МАИ для корпуса 6. Это не корпус 30 и не доказательство места занятий любого факультета. Первичный индексированный текст проверен, полный HTTP-ответ недоступен.",
+        "boundCampusId": "mai-corps6",
+        "boundAddressRu": "Москва, Волоколамское шоссе, д. 4, корп. 6",
+        "accuracyScope": "published-building-point"
       },
       "locationEvidenceScope": "conference-venue"
     },
@@ -3901,7 +3928,10 @@
         "accuracyStatus": "not-published",
         "publishedPrecision": "0.001 arcminute",
         "entranceVerified": false,
-        "note": "Исходные координаты N55°47,039′ E037°28,914′ относятся к учебному адресу Народного Ополчения 32, а не юридическому Авиамоторная 8А. Точность и конкретный доступный вход не подтверждены."
+        "note": "Исходные координаты N55°47,039′ E037°28,914′ относятся к учебному адресу Народного Ополчения 32, а не юридическому Авиамоторная 8А. Точность и конкретный доступный вход не подтверждены.",
+        "boundCampusId": "mtusi-opolcheniya32",
+        "boundAddressRu": "Москва, ул. Народного Ополчения, д. 32",
+        "accuracyScope": "published-building-point"
       }
     },
     {
@@ -3966,6 +3996,423 @@
       ],
       "proximityVerified": false,
       "aliasesStatus": "editorial-search-aliases"
+    },
+    {
+      "id": "hse-chemistry-vavilova",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — факультет химии, Вавилова",
+      "zh": "高等经济大学化学系·瓦维洛夫街",
+      "aliases": [
+        "ВШЭ химия",
+        "ВШЭ факультет химии"
+      ],
+      "addressRu": "Москва, ул. Вавилова, д. 7",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-structure-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Официальная структура перечисляет именно этот факультетский адрес. Координаты, вход и распределение всех занятий не опубликованы в использованном фрагменте."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-biology-profsoyuz",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — факультет биологии, Профсоюзная",
+      "zh": "高等经济大学生物系·工会街",
+      "aliases": [
+        "ВШЭ биология Профсоюзная"
+      ],
+      "addressRu": "Москва, ул. Профсоюзная, д. 33, корп. 4",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-structure-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Официальная структура перечисляет именно этот факультетский адрес. Координаты, вход и распределение всех занятий не опубликованы в использованном фрагменте."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-biology-miklukho",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — факультет биологии, Миклухо-Маклая",
+      "zh": "高等经济大学生物系·米克卢霍-马克莱街",
+      "aliases": [
+        "ВШЭ биология Миклухо-Маклая"
+      ],
+      "addressRu": "Москва, ул. Миклухо-Маклая, д. 16/10, корп. 3",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-structure-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Официальная структура перечисляет именно этот факультетский адрес. Координаты, вход и распределение всех занятий не опубликованы в использованном фрагменте."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-urban-myasnitskaya",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — городское развитие, Мясницкая",
+      "zh": "高等经济大学城市与区域发展系·米亚斯尼茨卡娅街",
+      "aliases": [
+        "ВШЭ городское развитие Мясницкая"
+      ],
+      "addressRu": "Москва, ул. Мясницкая, д. 13, стр. 4",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-structure-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Официальная структура перечисляет именно этот факультетский адрес. Координаты, вход и распределение всех занятий не опубликованы в использованном фрагменте."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-urban-basmannaya",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — городское развитие, Старая Басманная",
+      "zh": "高等经济大学城市与区域发展系·老巴斯曼街",
+      "aliases": [
+        "ВШЭ городское развитие Старая Басманная"
+      ],
+      "addressRu": "Москва, ул. Старая Басманная, д. 21/4, стр. 1",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-structure-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Официальная структура перечисляет именно этот факультетский адрес. Координаты, вход и распределение всех занятий не опубликованы в использованном фрагменте."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-physics-basmannaya",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — факультет физики, Старая Басманная",
+      "zh": "高等经济大学物理系·老巴斯曼街",
+      "aliases": [
+        "ВШЭ физика Старая Басманная"
+      ],
+      "addressRu": "Москва, ул. Старая Басманная, д. 21/4, стр. 5",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-structure-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Официальная структура перечисляет именно этот факультетский адрес. Координаты, вход и распределение всех занятий не опубликованы в использованном фрагменте."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-structure-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-economics-pokrovsky",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — факультет экономических наук, Покровский бульвар",
+      "zh": "高等经济大学经济科学系·波克罗夫斯基林荫道",
+      "aliases": [
+        "ВШЭ экономфак",
+        "ВШЭ факультет экономических наук"
+      ],
+      "addressRu": "Москва, Покровский бульвар, д. 11",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "faculty_contact",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-economics-contact"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-economics-contact"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Текущая контактная страница: Покровский бульвар 11, кабинет Т-614. Точный аудиторийный корпус конкретной программы уточняется отдельно."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-economics-contact"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "hse-economics-former-shabolovka",
+      "kind": "campus",
+      "universityId": "hse",
+      "ru": "ВШЭ — бывший временный адрес экономического факультета на Шаболовке",
+      "zh": "高等经济大学经济系历史临时地址·沙博洛夫卡街（已非当前地址）",
+      "aliases": [
+        "ВШЭ экономфак Шаболовка",
+        "Факультет экономики ВШЭ Шаболовка"
+      ],
+      "addressRu": "Москва, ул. Шаболовка, д. 26–28",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "historical_faculty_address",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-hse-history-2012",
+        "faculty-hse-economics-contact"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-hse-history-2012",
+          "faculty-hse-economics-contact"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page-and-search-excerpt-comparison",
+        "scope": "faculty-address",
+        "note": "Сопоставлены историческое сообщение о временном переезде 2012 года и текущая контактная страница. Точная дата обратного переезда не устанавливалась; комплекс зданий не объявляется закрытым."
+      },
+      "locationLifecycle": {
+        "status": "former-address",
+        "currentCampusId": "hse-economics-pokrovsky",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-hse-history-2012",
+          "faculty-hse-economics-contact"
+        ],
+        "physicalAccessVerified": false,
+        "buildingClosed": false,
+        "moveDate": null,
+        "method": "historical-current-address-comparison",
+        "noteRu": "Это прежний временный адрес факультета, а не текущая точка назначения. Дата обратного переезда неизвестна; другие подразделения продолжают использовать Шаболовку, поэтому закрытие здания не утверждается."
+      }
+    },
+    {
+      "id": "msu-law-building13",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — юридический факультет, четвёртый учебный корпус",
+      "zh": "莫斯科国立大学法学院·第四教学楼",
+      "aliases": [
+        "МГУ юрфак",
+        "МГУ юридический факультет",
+        "Юрфак МГУ корпус 13"
+      ],
+      "addressRu": "Москва, Ленинские горы, д. 1, стр. 13",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-msu-law-contact",
+        "faculty-msu-law-history-2026"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-msu-law-contact",
+          "faculty-msu-law-history-2026"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Контакты факультета и Школы права указывают строение 13, четвёртый учебный корпус. Сообщение приёма 2026 подтверждает переезд в 2013 году. Точка входа не геокодировалась."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-msu-law-contact",
+          "faculty-msu-law-history-2026"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
+    },
+    {
+      "id": "msu-world-politics-building51",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — факультет мировой политики, первый гуманитарный корпус",
+      "zh": "莫斯科国立大学世界政治系·第一人文教学楼",
+      "aliases": [
+        "МГУ ФМП",
+        "Факультет мировой политики МГУ",
+        "ФМП МГУ 1 ГУМ"
+      ],
+      "addressRu": "Москва, Ленинские горы, д. 1, стр. 51",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "faculty-msu-world-politics-contact"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "type": "official-university",
+        "sourceIds": [
+          "faculty-msu-world-politics-contact"
+        ],
+        "checkedAt": "2026-11-01",
+        "method": "institution-page",
+        "scope": "faculty-address",
+        "note": "Контактная страница факультета указывает первый гуманитарный корпус, пятый этаж. Есть словесное описание входа со стороны памятника; числовая точка входа и её доступность не устанавливались."
+      },
+      "locationLifecycle": {
+        "status": "current-listed",
+        "checkedAt": "2026-11-01",
+        "sourceIds": [
+          "faculty-msu-world-politics-contact"
+        ],
+        "physicalAccessVerified": false,
+        "noteRu": "Адрес подразделения опубликован учреждением; расписание конкретной программы и физический доступ проверяются отдельно."
+      }
     }
   ],
   "sources": [
@@ -6290,6 +6737,171 @@
       "verifiedAt": "2026-11-01",
       "evidenceType": "official-university",
       "directFetchStatus": "Primary published text inspected; no byte-level complete-response hash asserted."
+    },
+    {
+      "id": "faculty-hse-structure-2026",
+      "url": "https://www.hse.ru/sveden/struct/",
+      "title": "НИУ ВШЭ — адреса факультетских подразделений в официальной структуре",
+      "publisher": "www.hse.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "hse",
+      "supports": [
+        "campus-address",
+        "location-history"
+      ],
+      "campusIds": [
+        "hse-chemistry-vavilova",
+        "hse-biology-profsoyuz",
+        "hse-biology-miklukho",
+        "hse-urban-myasnitskaya",
+        "hse-urban-basmannaya",
+        "hse-physics-basmannaya"
+      ],
+      "note": "Проверены отдельные адреса химии, биологии, городского развития и физики; это не свидетельство места всех занятий и не полный реестр ВШЭ.",
+      "directFetchStatus": "Public institution text inspected; no complete-body response hash asserted.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "faculty-hse-economics-contact",
+      "url": "https://economics.hse.ru/contacts",
+      "title": "ВШЭ — актуальный контактный адрес факультета экономических наук",
+      "publisher": "economics.hse.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "hse",
+      "supports": [
+        "campus-address",
+        "location-history"
+      ],
+      "campusIds": [
+        "hse-economics-pokrovsky",
+        "hse-economics-former-shabolovka"
+      ],
+      "note": "Факультет указывает Покровский бульвар 11, кабинет Т-614. Это контактный адрес, не универсальный корпус всех программ.",
+      "directFetchStatus": "Public institution text inspected; no complete-body response hash asserted.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "faculty-hse-history-2012",
+      "url": "https://lld.hse.ru/news/life/53362360.html",
+      "title": "ВШЭ — временный переезд экономического факультета и МИЭФ на Шаболовку",
+      "publisher": "lld.hse.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "hse",
+      "supports": [
+        "campus-address",
+        "location-history"
+      ],
+      "campusIds": [
+        "hse-economics-former-shabolovka"
+      ],
+      "note": "Историческая публикация 2012 года описывает временное размещение на Шаболовке 26–28 при реконструкции Покровского бульвара. Сейчас её нельзя выдавать за текущий адрес экономического факультета.",
+      "directFetchStatus": "Public institution text inspected; no complete-body response hash asserted.",
+      "publishedAt": "2012-05-25",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "faculty-msu-law-contact",
+      "url": "https://www.law.msu.ru/pages/kontakty_sh",
+      "title": "МГУ — юридический факультет, четвёртый учебный корпус",
+      "publisher": "www.law.msu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "msu",
+      "supports": [
+        "campus-address",
+        "location-history"
+      ],
+      "campusIds": [
+        "msu-law-building13"
+      ],
+      "note": "",
+      "directFetchStatus": "Public institution text inspected; no complete-body response hash asserted.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "faculty-msu-law-history-2026",
+      "url": "https://www.law.msu.ru/news/priem_2026_pochemu_yurfak_mgu__2026-06-29_18_33-11371",
+      "title": "МГУ — приём 2026: переезд юридического факультета в 2013 году",
+      "publisher": "www.law.msu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "msu",
+      "supports": [
+        "campus-address",
+        "location-history"
+      ],
+      "campusIds": [
+        "msu-law-building13"
+      ],
+      "note": "Текущая публикация приёма 2026 отдельно подтверждает переезд факультета в новое здание в 2013 году; предыдущий адрес не выводится по догадке.",
+      "directFetchStatus": "Public institution text inspected; no complete-body response hash asserted.",
+      "publishedAt": "2026-06-29",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "faculty-msu-world-politics-contact",
+      "url": "https://fmp.msu.ru/contact",
+      "title": "МГУ — факультет мировой политики, адрес и схема входа",
+      "publisher": "fmp.msu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "msu",
+      "supports": [
+        "campus-address",
+        "location-history"
+      ],
+      "campusIds": [
+        "msu-world-politics-building51"
+      ],
+      "note": "",
+      "directFetchStatus": "Public institution text inspected; no complete-body response hash asserted.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "unit-hse-international-business-liquidation",
+      "url": "https://hum.hse.ru/docs/47713112.html",
+      "title": "Приказ ВШЭ о ликвидации Института международного бизнеса ФМЭиМП",
+      "publisher": "НИУ ВШЭ",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "publishedAt": "2011-12-23",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "hse",
+      "supports": [
+        "academic-unit-closure"
+      ],
+      "note": "Проверена открытая карточка бессрочного приказа 6.18.1-06/2312-04. Объект — отдельный институт внутри факультета, а не факультет/вуз/здание. Дата физического закрытия или адрес не выводятся из карточки приказа.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
     }
   ],
   "unavailablePages": [
@@ -6303,5 +6915,12 @@
       "status": "unread",
       "reason": "HTTPError:HTTP Error 503: Service Unavailable"
     }
-  ]
+  ],
+  "facultyAddressCoverage": {
+    "checkedAt": "2026-11-01",
+    "scope": "Incremental faculty-address and relocation checks; not all departments of all universities.",
+    "currentAdded": 9,
+    "formerAddressesAdded": 1,
+    "closurePolicy": "A move does not close a building. Unverified closure reports remain separate; closed is permitted only with explicit institution evidence."
+  }
 }

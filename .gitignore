@@ -13,3 +13,8 @@ output/
 *.sqlite3
 
 .venv-translate/
+desktop-owner.json
+
+# Runtime cloud capabilities/recovery keys must never enter public source.
+cloud-backup-credentials.json
+redcn-cloud-recovery-key.json

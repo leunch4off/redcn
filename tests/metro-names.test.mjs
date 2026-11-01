@@ -33,7 +33,11 @@ test('known untranslated names get conservative whole-word partials with their e
 
 test('a fully literal component combination is marked as literal, not promoted to a canonical Chinese station',()=>{
   const result=resolveMetroName('Лесной Городок');assert.equal(result.label,'Лесной Городок（字面：森林小镇）');assert.equal(result.complete,false);assert(!result.label.includes('森林 小镇'));
-  assert.equal(translateMetroName('Железнодорожная'),'Железнодорожная（字面：铁路）');
+  const other=resolveMetroName('Красный строитель');assert.equal(other.label,'Красный строитель（字面：红建设者）');assert.equal(other.source,'partial');assert.equal(other.translationStatus,'editorial-component');assert.equal(other.complete,false);assert.equal(other.needsReview,true);
+});
+
+test('a newly attested contractor spelling precedes literal components and retains its limited provenance',()=>{
+  const result=resolveMetroName('Железнодорожная');assert.equal(result.label,'热列兹诺多罗日纳亚');assert.equal(result.complete,true);assert.equal(result.source,'geo-catalog');assert.equal(result.translationStatus,'published-primary-name');assert.match(result.translationSource,/^https:\/\/npsgk\.ru\/ch\/news\//);assert.deepEqual(result.parts,[]);
 });
 
 test('unknown proper names, larger words and Roman-number identities are preserved',()=>{

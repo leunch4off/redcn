@@ -138,22 +138,25 @@ def service_authorization(fields, *, now=None):
 def safe_service_view(card):
     """Review-only derived view. Export checks must use the original card."""
     output=copy.deepcopy(card);fields=output.get('fields') if isinstance(output.get('fields'),dict) else output
-    def clean(value):
+    def clean(value, *, title=False):
         if not isinstance(value,str):return value
         try:assert_service_claims({'fields':fields,'body':value});return value
         except ServiceClaimReview:pass
         # Hide the whole obsolete benefits block, including non-free promises.
         value=re.sub(r'(?:🇨🇳\s*)?我们的优势\s*[:：][\s\S]*?(?=\n\s*\n|$)','',value)
         parts=[]
-        for clause in re.split(r'\n|(?<=[。.!?；;])',value):
+        # A decimal point is data, not a sentence boundary. Split explicit
+        # title separators as well, so removing an obsolete free-service
+        # promise cannot remove the rent, layout and station beside it.
+        for clause in re.split(r'\n|[|｜]|(?<=[。!?；;])|(?<!\d)\.|\.(?!\d)',value):
             if not clause.strip():continue
             try:assert_service_claims({'fields':fields,'body':clause});parts.append(clause.strip())
             except ServiceClaimReview:
                 if re.search(_REG,clause,re.I) and not _REG_FREE.search(clause):parts.append('抵达登记（临时居住登记）：提供办理协助。')
-        return '\n'.join(parts)
+        return ('｜' if title else '\n').join(parts)
     for name in ('title','body','tags'):
-        if name in output:output[name]=clean(output[name])
-    if isinstance(output.get('titles'),list):output['titles']=[clean(value) for value in output['titles']]
+        if name in output:output[name]=clean(output[name],title=name=='title')
+    if isinstance(output.get('titles'),list):output['titles']=[clean(value,title=True) for value in output['titles']]
     for name in ('description','details','highlight'):
         if name in fields:fields[name]=clean(fields[name])
     return output

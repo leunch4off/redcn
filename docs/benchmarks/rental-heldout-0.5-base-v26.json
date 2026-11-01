@@ -1,0 +1,965 @@
+{
+  "version": 1,
+  "phase": "base",
+  "caseSha256": "28151056728a0b836486fdf33959f2746e289e0d990295009adb4f9522d7a001",
+  "trainingDatasetSha256": "87dad80a60e162e926017cf6b081e6514859bfd36c3a7efc4676bb470737e41d",
+  "baseSha256": "ddffab9cbc7bf6dde941c6724841eeca8981fcfa81ca20ff8efff1396326d153",
+  "adapterSha256": null,
+  "independence": {
+    "exactTextOverlap": false,
+    "semanticOverlapAutomaticallyExcluded": false,
+    "caseSourceSeparateFromAuthoredTrainingSituations": true
+  },
+  "scriptSha256": "50bda66221d6fe04da895aaa8f807a792d6e3429537dfced1e4210cf60358f19",
+  "checkerSha256": {
+    "rental_heldout_quality.py": "90a93957f323470f3bda3dbcc1c14cbf444c5558ee67750d3da999de5c8640c6",
+    "text_quality.py": "68b5555fa6a0e8eef0dde78e81de6045982427083ccccde10ac26ef57208f8b8",
+    "local_content.py": "490257bf987b88448ad768c6990d048b410ea357ee3d28d3278c1a6441c7e0a2"
+  },
+  "annotation": {
+    "author": "Codex AI-assisted independent fact annotation",
+    "nativeSpeakerReview": false,
+    "trainingUseAllowed": false,
+    "checksFrozenBeforeInference": true,
+    "sourceStationEvidence": "literal occurrence in original listing.text and fields.source, not inferred nearest station or route"
+  },
+  "summary": {
+    "ru-zh": {
+      "requested": 6,
+      "measured": 6,
+      "checksPassed": 0
+    },
+    "zh-ru": {
+      "requested": 6,
+      "measured": 6,
+      "checksPassed": 0
+    },
+    "listing": {
+      "requested": 18,
+      "measured": 18,
+      "checksPassed": 0
+    }
+  },
+  "originality": [
+    {
+      "caseId": "heldout-01",
+      "parseableVariants": 1,
+      "uniqueNormalizedTitles": 1,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-02",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 1,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-03",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 1,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-04",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 1,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-05",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 1,
+      "uniqueNormalizedBodies": 2,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-06",
+      "parseableVariants": 2,
+      "uniqueNormalizedTitles": 1,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    }
+  ],
+  "rows": [
+    {
+      "id": "heldout-01-ru-zh",
+      "caseId": "heldout-01",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "70000 元/月。有沙发、椅子、床、衣柜、电视柜和两个抽屉。冰箱、冰箱柜和床没有在配件中。房东没有办理临时登记。吸烟和吸烟室被禁止。在行程中提到的车站有：丽昂路站和阿特费尔站；行驶路线未被证实。",
+      "seconds": 0.799197833002836,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "Изменено наличие, отрицание или условие: bed",
+          "Изменено наличие, отрицание или условие: chairs",
+          "Изменено наличие, отрицание или условие: fridge",
+          "В переводе пропущен предмет или условие: table",
+          "В переводе не сохранено условие или неопределённость",
+          "Пропущены наблюдавшиеся станции: Лианозово, Алтуфьево"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 78,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "bed",
+          "chairs",
+          "fridge",
+          "registration",
+          "sofa",
+          "table",
+          "tvStand",
+          "wardrobe"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": false
+      }
+    },
+    {
+      "id": "heldout-01-zh-ru",
+      "caseId": "heldout-01",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Мартокин 70000卢布. Соблюе сиденье, стулья и кровати. Соблюе сиденье и кровати, но не сидеть.房东 не принимает временный прожиточный счет. Нельзя пить и перепродавать. Примечание: Льна-Олесяв и Алтуфьево - станции посещения, неформальное время пребывания не установлено.",
+      "seconds": 0.6984110839985078,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Числа перевода отличаются от оригинала",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты",
+          "Изменено наличие, отрицание или условие: chairs",
+          "В переводе пропущен предмет или условие: table",
+          "В переводе пропущен предмет или условие: sofa",
+          "В переводе пропущен предмет или условие: registration",
+          "В переводе пропущен предмет или условие: tvStand",
+          "В переводе пропущен предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: wardrobe",
+          "В переводе не сохранено условие или неопределённость",
+          "Пропущены наблюдавшиеся станции: Лианозово"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 4,
+          "cyrillic": 211,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [
+          "2"
+        ],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "bed",
+          "chairs",
+          "fridge",
+          "registration",
+          "sofa",
+          "table",
+          "tvStand",
+          "wardrobe"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": false
+      }
+    },
+    {
+      "id": "heldout-01-listing-1",
+      "caseId": "heldout-01",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"verifiedText\": \"月租70000卢布。配有沙发、扶手椅、床、床头柜、电视柜和2个推拉门衣柜。配置不包括冰箱、餐桌和椅子。禁止吸烟和转租。原文提及Лианозово和Алтуфьево站，通勤时间尚未确认。\",\n  \"style\": \"先说预算和已确认的配置；不用表情；用一个自然短段落。\",\n  \"recentTitlesToAvoid\": [],\n  \"previousTextToAvoid\": \"\",\n  \"variation\": \"heldout-01-listing-1\"\n}",
+      "seconds": 1.3370479580007668,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Некорректный JSON title/body"
+        ],
+        "jsonShapeCorrect": false
+      }
+    },
+    {
+      "id": "heldout-01-listing-2",
+      "caseId": "heldout-01",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租70000卢布。配有沙发、扶手椅、床、床头柜、电视柜和2个推拉门衣柜。配置不包括冰箱、餐桌和椅子。禁止吸烟和转租。\"\n}",
+      "seconds": 0.5169589170000108,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-01-listing-3",
+      "caseId": "heldout-01",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\"verifiedText\": \"月租70000卢布。配有沙发、扶手椅、床、床头柜、电视柜和2个推拉门衣柜。配置不包括冰箱、餐桌和椅子。禁止吸烟和转租。\", \"body\": \"莫斯科房源简述，月租70000卢布，配有沙发、扶手椅、床、床头柜、电视柜和2个推拉门衣柜，配置不包括冰箱、餐桌和椅子，禁止吸烟和转租。\"}",
+      "seconds": 0.768403792000754,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Некорректный JSON title/body"
+        ],
+        "jsonShapeCorrect": false
+      }
+    },
+    {
+      "id": "heldout-02-ru-zh",
+      "caseId": "heldout-02",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "80000 元/月，月租80000元。在描述中提到的2个房间是隔离的，面积60平方米，17层的15层，由17层组成。房间内有洗衣机、洗碗机、洗浴器、冰箱和两个储物柜。水电费用另外支付。可以带孩子。在摘要中提到的站点有：火车站站和前门站。",
+      "seconds": 0.643000457999733,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Числа перевода отличаются от оригинала",
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе пропущен предмет или условие: tv",
+          "В переводе пропущен предмет или условие: walkInCloset",
+          "Пропущены наблюдавшиеся станции: Рассказовка, Переделкино"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 83,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [
+          "17"
+        ],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "children",
+          "dishwasher",
+          "fridge",
+          "tv",
+          "walkInCloset",
+          "washer"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": false
+      }
+    },
+    {
+      "id": "heldout-02-zh-ru",
+      "caseId": "heldout-02",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Мартисль 80000卢布, счёта 80000卢布. Предоставляется 2-комнатный套房, площадь 60 кв. м, расположено на 15-м этаже, с 17 этажами. В套房中有衣帽間,洗衣机和洗碗機，以及一個封闭的陽台。水費另付。可以帶孩子入住。Рассказовка и Переделкино стоят.",
+      "seconds": 0.7347945420005999,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Модель не вернула полный перевод на выбранном языке",
+          "Числа перевода отличаются от оригинала",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты",
+          "В переводе пропущен предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: washer",
+          "В переводе пропущен предмет или условие: dishwasher",
+          "В переводе пропущен предмет или условие: tv",
+          "В переводе пропущен предмет или условие: children",
+          "В переводе пропущен предмет или условие: walkInCloset"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 40,
+          "cyrillic": 103,
+          "latin": 0,
+          "passed": false
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [
+          "2"
+        ],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "children",
+          "dishwasher",
+          "fridge",
+          "tv",
+          "walkInCloset",
+          "washer"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": true
+      }
+    },
+    {
+      "id": "heldout-02-listing-1",
+      "caseId": "heldout-02",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简评\",\n  \"body\": \"月租80000卢布，押金80000卢布。2个独立房间，位于15楼，共17层。配有衣帽间、洗衣机、洗碗机、电视、冰箱和2个封闭式阳台。水电费另付。可带孩子入住。\"\n}",
+      "seconds": 0.5897297500014247,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-02-listing-2",
+      "caseId": "heldout-02",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简评\",\n  \"body\": \"月租80000卢布，押金80000卢布。2个独立房间，位于15楼，共17层。配有衣帽间、洗衣机、洗碗机、电视、冰箱和2个封闭式阳台。水电费另付。可带孩子入住。\"\n}",
+      "seconds": 0.6489482910001243,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-02-listing-3",
+      "caseId": "heldout-02",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简评\",\n  \"body\": \"月租80000卢布，押金80000卢布。2个独立房间，位于15楼，共17层。配有衣帽间、洗衣机、洗碗机、电视、冰箱和2个封闭式阳台。水电费另付。可带孩子入住。\"\n}",
+      "seconds": 0.6329098749993136,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-03-ru-zh",
+      "caseId": "heldout-03",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "68000 元/月。可以分期支付2个月。有单独的卧室、厨房和客厅、双人床、沙发和衣柜和冰箱。包括公共费用和电话费在内的公共费用已包括；无需额外支付账单。在起步中，名称包括站名：火车站站和前门站。",
+      "seconds": 0.5039552499983984,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Числа перевода отличаются от оригинала",
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "Добавлен неподтверждённый предмет или условие: wardrobe",
+          "В переводе пропущен предмет или условие: walkInCloset",
+          "Пропущены наблюдавшиеся станции: Рассказовка, Переделкино"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 78,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [
+          "68000"
+        ],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "bed",
+          "fridge",
+          "sofa",
+          "walkInCloset",
+          "wardrobe"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": false
+      }
+    },
+    {
+      "id": "heldout-03-zh-ru",
+      "caseId": "heldout-03",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Мартокоп 68000卢布。押金68000卢布，可分2个月支付。设有独立卧室、厨房客厅、双人床、沙发、衣帽间和冰箱。公用事业费及网络已包含，无需另付表计费用。原文提及Рассказовка和Переделкино站。",
+      "seconds": 0.5310537920013303,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Модель не вернула полный перевод на выбранном языке",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты",
+          "В переводе пропущен предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: bed",
+          "В переводе пропущен предмет или условие: sofa",
+          "В переводе пропущен предмет или условие: walkInCloset",
+          "В переводе не сохранено отрицание"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 58,
+          "cyrillic": 30,
+          "latin": 0,
+          "passed": false
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "bed",
+          "fridge",
+          "sofa",
+          "walkInCloset"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": true
+      }
+    },
+    {
+      "id": "heldout-03-listing-1",
+      "caseId": "heldout-03",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租68000卢布。押金68000卢布，可分2个月支付。设有独立卧室、厨房客厅、双人床、沙发、衣帽间和冰箱。公用事业费及网络已包含，无需另付表计费用。\"\n}",
+      "seconds": 0.5636578329977056,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-03-listing-2",
+      "caseId": "heldout-03",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租68000卢布。押金68000卢布，可分2个月支付。设有独立卧室、厨房客厅、双人床、沙发、衣帽间和冰箱。公用事业费及网络已包含，无需另付表计费用。\"\n}",
+      "seconds": 0.5913051669995184,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-03-listing-3",
+      "caseId": "heldout-03",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租68000卢布。押金68000卢布，可分2个月支付。设有独立卧室、厨房客厅、双人床、沙发、衣帽间和冰箱。公用事业费及网络已包含，无需另付表计费用。\"\n}",
+      "seconds": 0.60615616600262,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-04-ru-zh",
+      "caseId": "heldout-04",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "65000 元/月，67000 元/月。有嵌入式双人床、沙发、微波炉、电冰箱、洗衣机和空调。原文本中提到的车站有：站前站和前德列站。原文本中提到的车站有：站前站和前德列站。",
+      "seconds": 0.6582001249989844,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Числа перевода отличаются от оригинала",
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "Добавлен неподтверждённый предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: bus",
+          "В переводе пропущен предмет или условие: metro",
+          "В переводе пропущен предмет или условие: walk",
+          "В переводе пропущен предмет или условие: wardrobe",
+          "Пропущены наблюдавшиеся станции: Рассказовка, Переделкино"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 61,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [
+          "15",
+          "5"
+        ],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "aircon",
+          "bed",
+          "bus",
+          "fridge",
+          "metro",
+          "microwave",
+          "sofa",
+          "walk",
+          "wardrobe",
+          "washer"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": false
+      }
+    },
+    {
+      "id": "heldout-04-zh-ru",
+      "caseId": "heldout-04",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Мартокод 65000卢布, счёта 67000卢布. Свобода для двух человек с поднятым дверьм衣柜, сиденье, магнитофоном, микроволновой печи, холодильником и душевой кабиной. Примечание: Текст указывает на Рассказовка и Переделкино.",
+      "seconds": 0.6825003749981988,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Модель не вернула полный перевод на выбранном языке",
+          "Числа перевода отличаются от оригинала",
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты",
+          "Добавлен неподтверждённый предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: washer",
+          "В переводе пропущен предмет или условие: sofa",
+          "В переводе пропущен предмет или условие: bus",
+          "В переводе пропущен предмет или условие: bed",
+          "В переводе пропущен предмет или условие: metro",
+          "В переводе пропущен предмет или условие: walk",
+          "В переводе пропущен предмет или условие: aircon",
+          "В переводе пропущен предмет или условие: wardrobe"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 6,
+          "cyrillic": 162,
+          "latin": 0,
+          "passed": false
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [
+          "15",
+          "5"
+        ],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [
+          "2"
+        ],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "aircon",
+          "bed",
+          "bus",
+          "fridge",
+          "metro",
+          "microwave",
+          "sofa",
+          "walk",
+          "wardrobe",
+          "washer"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": true
+      }
+    },
+    {
+      "id": "heldout-04-listing-1",
+      "caseId": "heldout-04",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租65000卢布，押金67000卢布。配有内置双人床的推拉门衣柜、沙发、微波炉、电热水壶、洗衣机、空调和饮用水过滤器。\"\n}",
+      "seconds": 0.5213330829974439,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-04-listing-2",
+      "caseId": "heldout-04",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租65000卢布，押金67000卢布。配有内置双人床的推拉门衣柜、沙发、微波炉、电热水壶、洗衣机、空调和饮用水过滤器。\"\n}",
+      "seconds": 0.5308571249988745,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-04-listing-3",
+      "caseId": "heldout-04",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简述\",\n  \"body\": \"月租65000卢布，押金67000卢布。配有内置双人床的推拉门衣柜、沙发、微波炉、电热水壶、洗衣机、空调和饮用水过滤器。\"\n}",
+      "seconds": 0.5341267500007234,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-05-ru-zh",
+      "caseId": "heldout-05",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "42000 元/月，42000 元。有冰箱、洗浴器和厨房家具。水由秤计费。吸烟和住宿与家畜有关。房东未办理临时居住证。入口名称中提到的车站有：Рассказовка和Переделкино。",
+      "seconds": 0.5022870829998283,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе пропущен предмет или условие: pets",
+          "В переводе пропущен предмет или условие: registration",
+          "В переводе не сохранено отрицание"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 51,
+          "cyrillic": 22,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "fridge",
+          "pets",
+          "registration"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": true
+      }
+    },
+    {
+      "id": "heldout-05-zh-ru",
+      "caseId": "heldout-05",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Мартисль 42000卢布, счёта 42000卢布. Содержит холодильник, душевую ванну и кухню. Стойка посещается по часовой ставке. Нельзя пить и содержать питомца.房东 не принимает временный проживание. Согласно информации, Рассказовка и Переделкино.",
+      "seconds": 0.6350108749975334,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Модель не вернула полный перевод на выбранном языке",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты",
+          "Добавлен неподтверждённый предмет или условие: bathtub",
+          "В переводе пропущен предмет или условие: registration"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 6,
+          "cyrillic": 179,
+          "latin": 0,
+          "passed": false
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "bathtub",
+          "fridge",
+          "pets",
+          "registration"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": true
+      }
+    },
+    {
+      "id": "heldout-05-listing-1",
+      "caseId": "heldout-05",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简评\",\n  \"body\": \"莫斯科的房源非常不错，位于月租42000卢布的公寓，配有冰箱、淋浴间和厨房家具。水费按表计费。禁止吸烟。\"\n}",
+      "seconds": 0.464583875000244,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-05-listing-2",
+      "caseId": "heldout-05",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简评\",\n  \"body\": \"月租42000卢布，押金42000卢布。配有冰箱、淋浴间和厨房家具。水费按表计费。禁止吸烟。\"\n}",
+      "seconds": 0.46527387500100303,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-05-listing-3",
+      "caseId": "heldout-05",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源简评\",\n  \"body\": \"月租42000卢布，押金42000卢布。配有冰箱、淋浴间和厨房家具。水费按表计费。禁止吸烟。\"\n}",
+      "seconds": 0.47121462500217604,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-06-ru-zh",
+      "caseId": "heldout-06",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "92000 元/月，92000 元。有洗衣房、2个卫生间、抽屉柜、洗碗机、洗烘一体机、洗衣服机和冰箱。可以带孩子。在起步站称为：火车南站和火车北站。",
+      "seconds": 0.4661187920028169,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе пропущен предмет или условие: washer",
+          "В переводе пропущен предмет или условие: oven",
+          "В переводе пропущен предмет или условие: hob",
+          "В переводе пропущен предмет или условие: microwave",
+          "В переводе пропущен предмет или условие: walkInCloset",
+          "Пропущены наблюдавшиеся станции: Рассказовка, Переделкино"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 49,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "children",
+          "dishwasher",
+          "fridge",
+          "hob",
+          "microwave",
+          "oven",
+          "walkInCloset",
+          "washer"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": false
+      }
+    },
+    {
+      "id": "heldout-06-zh-ru",
+      "caseId": "heldout-06",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Мартокоп 92000卢布, счёта 92000卢布. Свежая одежда, 2 кухни с телевизором, электроплитой, магнитофоном, чайной тарелкой и магнитощупом. Доступны для детей. Примечание: Рассказовка и Переделкино - это станции.",
+      "seconds": 0.6639285000019299,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты",
+          "Добавлен неподтверждённый предмет или условие: tv",
+          "В переводе пропущен предмет или условие: washer",
+          "В переводе пропущен предмет или условие: oven",
+          "В переводе пропущен предмет или условие: dishwasher",
+          "В переводе пропущен предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: microwave",
+          "В переводе пропущен предмет или условие: walkInCloset"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 4,
+          "cyrillic": 153,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "children",
+          "dishwasher",
+          "fridge",
+          "hob",
+          "microwave",
+          "oven",
+          "tv",
+          "walkInCloset",
+          "washer"
+        ],
+        "automaticSemanticVerification": false,
+        "stationNamesPreserved": true
+      }
+    },
+    {
+      "id": "heldout-06-listing-1",
+      "caseId": "heldout-06",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源\",\n  \"body\": \"月租92000卢布，押金92000卢布。配有衣帽间、2间卫浴、电磁炉、洗碗机、烤箱、微波炉、洗衣机和冰箱。可带孩子入住。\"\n}",
+      "seconds": 0.5137185829989903,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-06-listing-2",
+      "caseId": "heldout-06",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\n  \"title\": \"莫斯科房源\",\n  \"body\": \"月租92000卢布，押金92000卢布。配有衣帽间、2间卫浴、电磁炉、洗碗机、烤箱、微波炉、洗衣机和冰箱。可带孩子入住。\"\n}",
+      "seconds": 0.5642441250020056,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Не сохранено ни одно наблюдавшееся имя станции"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "heldout-06-listing-3",
+      "caseId": "heldout-06",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\"verifiedText\": \"月租92000卢布，押金92000卢布。配有衣帽间、2间卫浴、电磁炉、洗碗机、烤箱、微波炉、洗衣机和冰箱。可带孩子入住。\", \"style\": \"先写位置资料，再写配置和预算；像克制的房源笔记，避免复用上次句式。\", \"recentTitlesToAvoid\": [\"莫斯科房源\", \"莫斯科房源\"], \"previousTextToAvoid\": \"月租92000卢布，押金92000卢布。配有衣帽间、2间卫浴、电磁炉、洗碗机、烤箱、微波炉、洗衣机和冰箱。可带孩子入住。\", \"variation\": \"heldout-06-listing-3\"}",
+      "seconds": 1.116175375002058,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Некорректный JSON title/body"
+        ],
+        "jsonShapeCorrect": false
+      }
+    }
+  ],
+  "seconds": 22.766906041000766,
+  "automaticPromotion": false,
+  "nativeSpeakerReviewCompleted": false,
+  "realListingAvailabilityVerified": false,
+  "limits": [
+    "These are six real-listing-derived fact extracts, not six independently native-edited complete advertisements.",
+    "Parsed fields and previously generated Chinese text are not used as truth; source conflicts are listed and excluded from generation when unresolved.",
+    "No physical equipment verification, actual availability or owner promises are established by this linguistic evaluation.",
+    "Known-fact checks and text-surface variation do not establish complete semantic or native editorial quality."
+  ]
+}

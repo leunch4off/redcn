@@ -159,6 +159,48 @@ def official_records(path, kind):
     return rows, raw
 
 
+def validate_official_export_metadata(url, as_of):
+    parsed=urllib.parse.urlsplit(url)
+    hosts={'data.mos.ru','data-new.mos.ru','api.data.mos.ru','transport.mos.ru','mosmetro.ru','www.mosmetro.ru','fias.nalog.ru','fias-public-service.nalog.ru'}
+    secret_keys={'key','apikey','token','accesstoken','refreshtoken','auth','authorization','password','passwd','secret','signature','sig','bearer'}
+    query_keys={re.sub(r'[^a-z0-9]','',key.casefold()) for key,_ in urllib.parse.parse_qsl(parsed.query,keep_blank_values=True)}
+    if parsed.scheme!='https' or parsed.hostname not in hosts or parsed.username or parsed.password or parsed.fragment or query_keys.intersection(secret_keys):
+        raise ValueError('Use a public primary export reference URL without credentials, authentication parameters or fragment')
+    if not isinstance(as_of,str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',as_of) or dt.date.fromisoformat(as_of)>dt.date.today():
+        raise ValueError('Official export needs a valid publisher date, not in the future')
+
+
+def merge_official_records(existing, incoming, source_id, as_of):
+    """Add dated registry-name evidence without replacing the richer snapshot.
+
+    Equal names are not equal platforms or station-line memberships. In
+    particular an official name-only export must not erase HH coordinates,
+    Chinese provenance, interchange rows or OSM stop identities.
+    """
+    by_name = {}
+    by_id = {row['id']: row for row in existing}
+    for row in existing:
+        by_name.setdefault((row['kind'], norm(row['ru'])), []).append(row)
+    merged = list(existing)
+    for row in incoming:
+        if row['id'] in by_id and (by_id[row['id']]['kind'], norm(by_id[row['id']]['ru'])) != (row['kind'], norm(row['ru'])):
+            raise ValueError('Registry ID changed name/kind; review the possible rename before merging: '+row['id'])
+        matches = by_name.get((row['kind'], norm(row['ru'])), [])
+        if not matches:
+            added = dict(row, source=source_id)
+            merged.append(added)
+            by_id[row['id']] = added
+            by_name.setdefault((row['kind'], norm(row['ru'])), []).append(added)
+            matches = [added]
+        for target in matches:
+            evidence = target.setdefault('officialRegistryEvidence', [])
+            fact = {'sourceId': source_id, 'sourceRecordId': row['id'], 'asOf': as_of,
+                    'scope': 'normalized-name-presence-only'}
+            if fact not in evidence:
+                evidence.append(fact)
+    return merged
+
+
 def source(identifier, url, raw, coverage, **extra):
     return {'id': identifier, 'url': url, 'fetchedAt': dt.datetime.now(dt.timezone.utc).isoformat(),
         'sha256': hashlib.sha256(raw).hexdigest(), 'coverage': coverage, **extra}
@@ -232,6 +274,34 @@ def apply_official_line_catalog(catalog, path=None):
         return re.sub(r'\s+линия$', '', norm(value))
     matched_lines={fact['key']:[line for line in catalog['lines'] if line_key(line['ru'])==line_key(fact['ru'])] for fact in evidence['lines']}
     line_facts={fact['key']:fact for fact in evidence['lines']}
+    official_lines=[]
+    for fact in evidence['lines']:
+        for identifier in fact.get('numberSourceIds',[])+fact.get('colorSourceIds',[]):
+            if identifier not in sources:
+                raise ValueError('Unknown line-number/color source')
+        record={**fact,'checkedAt':evidence['asOf'],'rgbStatus':'snapshot-not-verified'}
+        if fact['key']=='rublevo-arkhangelskaya':
+            current=next((line for line in matched_lines[fact['key']] if line.get('officialColorName')),None)
+            if current:
+                record.update(officialColorName=current['officialColorName'],colorSourceIds=current['officialEvidence']['sourceIds'])
+        official_lines.append(record)
+        for line in matched_lines[fact['key']]:
+            if fact.get('number'):
+                line.update(officialNumber=fact['number'],numberEvidence={'sourceIds':fact['numberSourceIds'],'checkedAt':evidence['asOf']})
+            if fact.get('officialColorName'):
+                line.update(officialColorName=fact['officialColorName'],colorNameEvidence={'sourceIds':fact['colorSourceIds'],'checkedAt':evidence['asOf']},colorStatus='snapshot-rgb-not-officially-verified')
+    retired=[]
+    for fact in evidence.get('retiredMemberships',[]):
+        if any(identifier not in sources for identifier in fact['sourceIds']):
+            raise ValueError('Unknown retired-membership source')
+        retired.append(dict(fact))
+        for row in catalog['records']:
+            if row['kind']=='metro' and norm(row['ru'])==norm(fact['ru']):
+                for identifier in row.get('lines',[]):
+                    line=next((line for line in catalog['lines'] if line['id']==identifier),None)
+                    if line and line_key(line['ru'])==line_key(fact['lineNameRu']):
+                        row['membershipStatus']='historical-line-membership'
+                        row['membershipRetirementEvidence']=dict(fact)
     assertions=[]
     for fact in evidence['stationLineAssertions']:
         if any(identifier not in sources for identifier in fact['sourceIds']):
@@ -253,7 +323,41 @@ def apply_official_line_catalog(catalog, path=None):
                 line.update(zh=fact['zh'],translationStatus='official-legend',officialNameEvidence=dict(fact))
         names[:]=[item for item in names if not(item['scope']=='printed-line-name-only' and line_key(item['ru'])==line_key(fact['ru']))]
         names.append(dict(fact))
-    catalog.update(sources=list(sources.values()),officialStationLineAssertions=assertions,officialNamesCoverage={'complete':False,'scope':'Explicit published names with source and verification date; community, studio and untranslated entries remain separate.'})
+    catalog.update(sources=list(sources.values()),officialStationLineAssertions=assertions,officialLineCatalog=official_lines,retiredMetroMemberships=retired,officialNamesCoverage={'complete':False,'scope':'Explicit published names with source and verification date; community, studio and untranslated entries remain separate.'})
+    return catalog
+
+
+def apply_published_name_evidence(catalog, path=None):
+    """Professional/community spelling evidence is never operator certification."""
+    path=Path(path or ROOT/'data/metro-published-names.json')
+    if not path.exists():
+        return catalog
+    evidence=json.loads(path.read_text(encoding='utf-8'))
+    if evidence.get('version')!=1:
+        raise ValueError('Unsupported published-name supplement')
+    sources={row['id']:row for row in catalog.get('sources',[])}
+    supplied={row['id']:row for row in evidence['sources']}
+    for source in supplied.values():
+        url=urllib.parse.urlsplit(source['url'])
+        if url.scheme!='https' or url.hostname not in ('npsgk.ru','zh.wikipedia.org') or url.username or url.password or source['verifiedAt']!=evidence['verifiedAt']:
+            raise ValueError('Unknown published-name source or date')
+    sources.update(supplied)
+    for fact in evidence['stations']:
+        source=supplied[fact['sourceId']]
+        for row in catalog['records']:
+            if row['kind']!='metro' or norm(row['ru'])!=norm(fact['ru']) or not set(fact['lineIds']).intersection(row.get('lines',[])):
+                continue
+            item={'zh':fact['zh'],'sourceId':fact['sourceId'],'sourceUrl':source['url'],'checkedAt':evidence['verifiedAt'],'authority':fact['authority'],'operatorCertified':False}
+            alternatives=row.setdefault('alternativeChineseNames',[])
+            if item not in alternatives:
+                alternatives.append(item)
+            if not row.get('zh'):
+                row.update(zh=fact['zh'],translationStatus='published-primary-name',translationSource=source['url'],translationVerifiedAt=evidence['verifiedAt'],translationAuthority=fact['authority'])
+    for fact in evidence['lines']:
+        for line in catalog['lines']:
+            if norm(line['ru'])==norm(fact['ru']) and not line.get('officialNameEvidence'):
+                line.update(zh=fact['zh'],translationStatus='community',communityNameEvidence={'sourceId':fact['sourceId'],'checkedAt':evidence['verifiedAt'],'authority':fact['authority'],'operatorCertified':False})
+    catalog.update(sources=list(sources.values()),publishedNameAliasReview=evidence.get('aliasReview',[]),publishedStationNameFacts=evidence['stations'])
     return catalog
 
 
@@ -304,9 +408,10 @@ def main(argv=None):
         if path:
             if not args.official_source_url or not args.official_as_of:
                 parser.error('Official exports require --official-source-url and --official-as-of')
+            validate_official_export_metadata(args.official_source_url,args.official_as_of)
             places, raw = official_records(path, kind)
-            rows = [r for r in rows if r['kind'] != kind] + places
-            identifier = 'mos-export-' + kind
+            identifier = 'mos-export-' + kind + '-' + hashlib.sha256(raw).hexdigest()[:16]
+            rows = merge_official_records(rows, places, identifier, args.official_as_of)
             sources[identifier] = source(identifier, args.official_source_url, raw, 'All recognized names in supplied export; completeness is not inferred', publisher='Moscow open data portal', asOf=args.official_as_of)
     if not rows:
         parser.error('Supply --hh-file/--osm-file or download flags for an initial catalog')
@@ -326,6 +431,7 @@ def main(argv=None):
         updatedAt=dt.datetime.now(dt.timezone.utc).isoformat() if changed or not catalog.get('updatedAt') else catalog['updatedAt'], coverage='Source snapshots; official exhaustive Moscow registry not asserted')
     apply_official_evidence(catalog)
     apply_official_line_catalog(catalog)
+    apply_published_name_evidence(catalog)
     module = render_module(catalog)
     atomic_write(output, json.dumps(catalog, ensure_ascii=False, indent=2) + '\n')
     atomic_write(ROOT / 'web/geo-catalog.mjs', module)

@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
@@ -23,7 +24,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: node scripts/check-secrets.mjs
-      - run: python -m pip install -r cli/requirements-browser.txt -r cli/requirements-media.txt openpyxl
+      - run: python -m pip install -r cli/requirements-browser.txt -r cli/requirements-media.txt -r cli/requirements-cloud.txt openpyxl
       - run: python -m playwright install --with-deps chrome
       - run: npm run build
       - run: npm test
@@ -41,6 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
@@ -49,7 +51,55 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-      - run: python -m pip install -r cli/requirements-browser.txt -r cli/requirements-media.txt openpyxl
+      - run: python -m pip install -r cli/requirements-browser.txt -r cli/requirements-media.txt -r cli/requirements-cloud.txt openpyxl
       - run: python -m playwright install --with-deps chrome
       - run: npm run build
       - run: python scripts/run-python-partition.py --part ${{ matrix.part }} --parts 4
+
+  mac-portability:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r cli/requirements-media.txt
+      - name: Restore source Mac fixture on a fresh hosted Mac
+        run: python scripts/portable-mac-proof.py verify --fixture tests/fixtures/macos-portability --require-github-macos --receipt-output "$RUNNER_TEMP/redcn-portability-destination.json"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: redcn-other-mac-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/redcn-portability-destination.json
+          if-no-files-found: error
+          retention-days: 14
+  sites-release-artifact:
+    needs: [verify, python, mac-portability]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      REDCN_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.REDCN_SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm run build
+      - run: python scripts/sites-release-artifact.py --source-sha "$REDCN_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/redcn-sites-release"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: redcn-sites-${{ env.REDCN_SOURCE_SHA }}
+          path: ${{ runner.temp }}/redcn-sites-release/
+          if-no-files-found: error
+          retention-days: 14

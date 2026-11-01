@@ -55,7 +55,7 @@ class BrowserAcceptance(unittest.TestCase):
 
     def test_existing_dictionary_and_generation_geo(self):
         self.page.add_init_script("localStorage.setItem('most-rules-version','3');localStorage.setItem('most-rules',JSON.stringify({'рабочий стол':'自定义书桌'}));")
-        self.page.goto(self.url)
+        self.page.goto(self.server.desktop_access.launch_url(self.server.server_port))
         self.page.locator('#source').fill('2-комнатная квартира. Две изолированные комнаты. Цена 80 000 руб. Метро Юго-Западная — 7 минут пешком. Есть рабочий стол. Без животных. Регистрацию не делаем.')
         self.page.locator('#extract').click()
         self.page.locator('#generate').click()
@@ -82,7 +82,7 @@ class BrowserAcceptance(unittest.TestCase):
         image = photo_store.attach_photo(self.storage.name, image_url, 'data:image/png;base64,' + base64.b64encode(stream.getvalue()).decode())
         analysis = {'version':1, 'status':'review', 'engine':'Acceptance fixture', 'originalId':image['id'], 'sourceUrl':image_url, 'candidates':[{'id':'chairs','label':'Стулья','confidence':.8,'count':None,'evidence':[{'text':'Два видимых стула'}]}]}
         with patch.object(photo_store, 'load_photo', return_value=image), patch.object(photo_store, 'analyze_photo', return_value=analysis):
-            self.page.goto(self.url)
+            self.page.goto(self.server.desktop_access.launch_url(self.server.server_port))
             payload = {'fields':{'price':'80000','photos':[image_url],'features':[]},'titles':['测试'],'body':'测试','tags':'#莫斯科租房'}
             self.page.locator('#cliFile').set_input_files({'name':'acceptance.json','mimeType':'application/json','buffer':json.dumps(payload).encode()})
             row = self.page.locator('#photoObservations label').first
@@ -111,7 +111,7 @@ class BrowserAcceptance(unittest.TestCase):
 
     def test_real_chrome_scroll_loads_gallery_and_reaches_bottom(self):
         import browser_import
-        self.page.goto(self.url)
+        self.page.goto(self.server.desktop_access.launch_url(self.server.server_port))
         self.page.set_content('''<main><h1>Сдаётся 2-комнатная квартира 54 м²</h1>
             <div data-name="PriceInfo">80 000 ₽ в месяц</div>
             <div data-name="Description">Две изолированные комнаты</div>
@@ -136,7 +136,7 @@ class BrowserAcceptance(unittest.TestCase):
             url = f'https://images.cdn-cian.ru/images/furniture-follow-{index}.jpg'
             images[url] = photo_store.attach_photo(self.storage.name, url, 'data:image/png;base64,' + base64.b64encode(stream.getvalue()).decode())
         with patch.object(photo_store, 'load_photo', side_effect=lambda directory, url, *args, **kwargs: images[url]):
-            self.page.goto(self.url)
+            self.page.goto(self.server.desktop_access.launch_url(self.server.server_port))
             self.page.locator('#demo').click()
             self.assertTrue(self.page.locator('#demoNotice').is_visible())
             payload = {'fields':{'price':'80000','photos':list(images),'features':[]},'titles':['真实房源'],'body':'真实房源说明','tags':'#莫斯科租房'}

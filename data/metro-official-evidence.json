@@ -195,6 +195,34 @@
       "retrievalMethod": "web-primary-pdf-text",
       "status": "verified",
       "limitations": "Text extraction exposes line legend; outlined station labels and the map version date were not verified. This file is not a current-service certificate and is not copied as artwork."
+    },
+    {
+      "id": "mosmetro-line-numbers-2025",
+      "url": "https://mosmetro.ru/news/details/8547",
+      "title": "Метрополитен: номера линий праздничных поездов",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "publishedAt": "2025-12-19",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "scope": "Explicit line-number pairs only; this is not present train service or complete station coverage.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "moscow-bkl-color-2026",
+      "url": "https://ac.mos.ru/news/24374/",
+      "title": "Аналитический центр Москвы: БКЛ на схемах обозначена бирюзовым",
+      "publisher": "Аналитический центр Москвы",
+      "evidenceType": "official-city",
+      "verifiedAt": "2026-11-01",
+      "publishedAt": "2026-03-02",
+      "retrievalMethod": "web-primary-page",
+      "status": "verified",
+      "scope": "Official municipal color name and exclusion of Delovoy Tsentr/Shelepikha from BKL; numeric RGB not published.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
     }
   ],
   "lines": [
@@ -249,14 +277,24 @@
     {
       "key": "bolshaya-koltsevaya",
       "ru": "Большая кольцевая",
-      "number": null,
-      "numberStatus": "not-verified-in-this-supplement"
+      "number": "11",
+      "numberStatus": "not-verified-in-this-supplement",
+      "numberSourceIds": [
+        "mosmetro-line-numbers-2025"
+      ],
+      "officialColorName": "бирюзовый",
+      "colorSourceIds": [
+        "moscow-bkl-color-2026"
+      ]
     },
     {
       "key": "serpukhovsko-timiryazevskaya",
       "ru": "Серпуховско-Тимирязевская",
-      "number": null,
-      "numberStatus": "not-verified-in-this-supplement"
+      "number": "9",
+      "numberStatus": "not-verified-in-this-supplement",
+      "numberSourceIds": [
+        "mosmetro-line-numbers-2025"
+      ]
     }
   ],
   "stationLineAssertions": [
@@ -650,5 +688,39 @@
     "serviceStatus": "No open-now/normal-service assertion is inferred from a directory or old scheme.",
     "hexColors": "Keep observed source color separate; a named official color is not evidence for an exact RGB value.",
     "stationTranslations": "Do not upgrade community translations based on a general scheme link without reading each station label."
-  }
+  },
+  "retiredMemberships": [
+    {
+      "ru": "Каховская",
+      "lineNameRu": "Каховская",
+      "currentLineKey": "bolshaya-koltsevaya",
+      "sourceIds": [
+        "mosmetro-kakhovskaya-retired"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "former-independent-line-membership-only"
+    },
+    {
+      "ru": "Деловой центр",
+      "lineNameRu": "Большая кольцевая",
+      "currentLineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "moscow-bkl-color-2026",
+        "mosmetro-delovoy-ra"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "removed-from-former-line-not-station-closure"
+    },
+    {
+      "ru": "Шелепиха",
+      "lineNameRu": "Большая кольцевая",
+      "currentLineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "moscow-bkl-color-2026",
+        "mosmetro-numbering-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "removed-from-former-line-not-station-closure"
+    }
+  ]
 }

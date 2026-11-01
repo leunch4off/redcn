@@ -9,7 +9,7 @@ import json
 import math
 from pathlib import Path
 import re
-from datetime import date
+from datetime import date, datetime
 from urllib.parse import urlsplit
 
 MAX_ROUTES = 10
@@ -19,7 +19,8 @@ _MODES = {'unknown', 'public', 'metro', 'bus', 'walk', 'car', 'bike'}
 _METHODS = {'unknown', 'manual-confirmed', 'provider', 'estimate'}
 _FIELDS = {'name', 'campus', 'campusId', 'address', 'latitude', 'longitude',
            'time', 'mode', 'transport', 'routeDistanceKm', 'stops', 'method',
-           'checkedAt', 'sourceUrl', 'accessMinutes', 'egressMinutes', 'transfers', 'segments'}
+           'checkedAt', 'sourceUrl', 'accessMinutes', 'egressMinutes', 'transfers', 'segments',
+           'originPoint','destinationPoint','useEntrances','calculation'}
 _STOP_FIELDS = {'name', 'latitude', 'longitude'}
 _SEGMENT_FIELDS = {'mode', 'transport', 'from', 'to', 'minutes'}
 
@@ -55,6 +56,44 @@ def _number(value, field, lower, upper):
     if not math.isfinite(result) or not lower <= result <= upper:
         raise ValueError('Число вне диапазона в поле маршрута «' + field + '»')
     return int(result) if result.is_integer() else result
+
+
+def _route_point(value):
+    if value is None:
+        return None
+    keys={'latitude','longitude','name','kind','availability','checkedAt','sourceUrl'}
+    if not isinstance(value,dict) or set(value)-keys:
+        raise ValueError('Неверные поля выбранной точки маршрута')
+    kind=value.get('kind','point');availability=value.get('availability','unknown')
+    if kind not in ('point','building-entrance','metro-exit') or availability not in ('available','closed','unknown'):
+        raise ValueError('Неверный тип или доступность точки маршрута')
+    day=_text(value.get('checkedAt',''),'point.checkedAt',10)
+    if day:
+        try:
+            if date.fromisoformat(day).isoformat()!=day:raise ValueError()
+        except ValueError as error:raise ValueError('Неверная дата проверки точки') from error
+    url=_text(value.get('sourceUrl',''),'point.sourceUrl',1200)
+    if url:
+        parsed=urlsplit(url)
+        if parsed.scheme!='https' or not parsed.hostname or parsed.username or parsed.password or parsed.port not in (None,443):raise ValueError('Источник точки должен быть HTTPS-ссылкой')
+    return {'latitude':_number(value.get('latitude',''),'point.latitude',-90,90),'longitude':_number(value.get('longitude',''),'point.longitude',-180,180),'name':_text(value.get('name',''),'point.name',160),'kind':kind,'availability':availability,'checkedAt':day,'sourceUrl':url}
+
+
+def _route_calculation(value):
+    if value is None:return None
+    keys={'provider','calculatedAt','expiresAt','durationSeconds','distanceKm','travelTimeKind','responseSha256'}
+    if not isinstance(value,dict) or set(value)!=keys or value['provider']!='valhalla-fossgis-demo' or value['travelTimeKind']!='network-estimate':raise ValueError('Неверные данные расчёта маршрута')
+    stamps=[]
+    for key in ('calculatedAt','expiresAt'):
+        text=_text(value[key],key,40)
+        try:
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z',text):raise ValueError()
+            stamps.append(datetime.fromisoformat(text.replace('Z','+00:00')).timestamp())
+        except ValueError as error:raise ValueError('Неверная дата расчёта маршрута') from error
+    if not 0<stamps[1]-stamps[0]<=600:raise ValueError('Неверный срок расчёта маршрута')
+    if not isinstance(value['responseSha256'],str) or not re.fullmatch(r'[a-f0-9]{64}',value['responseSha256']):raise ValueError('Неверный хеш ответа маршрута')
+    if any(type(value[key]) not in (int,float) for key in ('durationSeconds','distanceKm')):raise ValueError('Метрики маршрута должны быть числами')
+    return {**value,'durationSeconds':_number(value['durationSeconds'],'durationSeconds',0,172800),'distanceKm':_number(value['distanceKm'],'distanceKm',0,2000)}
 
 
 def validate_routes(value):
@@ -124,6 +163,7 @@ def validate_routes(value):
                     'minutes': integer(segment.get('minutes', ''), 'segment.minutes', 1440)}
             if any(part[key] for key in ('transport', 'from', 'to')) or part['minutes'] != '':
                 clean_segments.append(part)
+        if type(row.get('useEntrances',False)) is not bool:raise ValueError('Расчёт по входам задаётся переключателем')
         clean = {
             'name': _text(row.get('name', ''), 'name', 240),
             'campus': _text(row.get('campus', ''), 'campus', 240),
@@ -143,6 +183,10 @@ def validate_routes(value):
             'egressMinutes': integer(row.get('egressMinutes', ''), 'egressMinutes', 180),
             'transfers': integer(row.get('transfers', ''), 'transfers', 12),
             'segments': clean_segments,
+            'originPoint': _route_point(row.get('originPoint')),
+            'destinationPoint': _route_point(row.get('destinationPoint')),
+            'useEntrances': row.get('useEntrances',False),
+            'calculation': _route_calculation(row.get('calculation')),
         }
         if any(clean[key] for key in ('name', 'campus', 'campusId', 'address')):
             output.append(clean)

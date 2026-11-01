@@ -17,11 +17,26 @@ export function resolveGeo(name,kind=''){
 }
 export function resolveGeoLine(name){
   const key=geoFold(name).replace(/\s+линия$/u,'');
-  const row=GEO_CATALOG.lines.find(line=>line.officialNameEvidence&&geoFold(line.ru).replace(/\s+линия$/u,'')===key);
+  const row=GEO_CATALOG.lines.find(line=>(line.officialNameEvidence||line.communityNameEvidence)&&geoFold(line.ru).replace(/\s+линия$/u,'')===key);
   return row?{...row,kind:'line'}:undefined;
 }
 export function officialGeoNames(){
   return (GEO_CATALOG.officialNameCatalog||[]).map(row=>({...row,sourceIds:[...(row.sourceIds||[])]}));
+}
+// Verified membership is an independently sourced fact. A retired HH line row,
+// a shared station name or an RGB value never establishes current membership.
+export function resolveVerifiedMetroLines(name){
+  const station=geoFold(name),facts=new Map((GEO_CATALOG.officialLineCatalog||[]).map(row=>[row.key,row])),sources=new Map(GEO_CATALOG.sources.map(row=>[row.id,row]));
+  const result=[];
+  for(const claim of GEO_CATALOG.officialStationLineAssertions||[]){
+    if(geoFold(claim.ru)!==station||claim.scope!=='station-line-membership')continue;
+    const line=facts.get(claim.lineKey);if(!line?.number||!claim.checkedAt)continue;
+    const sourceIds=[...new Set([...(claim.sourceIds||[]),...(line.numberSourceIds||[]),...(line.colorSourceIds||[])])];
+    if(!sourceIds.length||sourceIds.some(id=>!sources.has(id)))continue;
+    if(result.some(row=>row.key===line.key))continue;
+    result.push({stationRu:claim.ru,key:line.key,number:line.number,lineRu:line.ru,officialColorName:line.officialColorName||'',checkedAt:claim.checkedAt,sourceIds,sourceUrls:sourceIds.map(id=>sources.get(id).url),colorRGBVerified:false,scope:'explicit-station-line-membership'});
+  }
+  return result;
 }
 export function geoLabel(row,{includeRussian=true}={}){
   if(!row)return '';
@@ -44,7 +59,7 @@ export function getGeoStats(){
     stop:records.filter(r=>r.kind==='stop').length,metroNames:new Set(records.filter(r=>r.kind==='metro').map(r=>geoFold(r.ru))).size,
     translated:records.filter(r=>r.zh).length,translatedMetroNames:new Set(records.filter(r=>r.kind==='metro'&&r.zh).map(r=>geoFold(r.ru))).size,
     reviewed:records.filter(r=>r.translationStatus==='reviewed').length,reviewedNames:new Set(records.filter(r=>r.translationStatus==='reviewed').map(r=>geoFold(r.ru))).size,
-    updatedAt:GEO_CATALOG.updatedAt,coverage:GEO_CATALOG.coverage,sources:GEO_CATALOG.sources,translationSources:GEO_CATALOG.translationSources||[],officialNames:officialGeoNames(),officialNamesCoverage:GEO_CATALOG.officialNamesCoverage||{complete:false}};
+    updatedAt:GEO_CATALOG.updatedAt,coverage:GEO_CATALOG.coverage,sources:GEO_CATALOG.sources,translationSources:GEO_CATALOG.translationSources||[],officialNames:officialGeoNames(),officialNamesCoverage:GEO_CATALOG.officialNamesCoverage||{complete:false},verifiedMetroMemberships:(GEO_CATALOG.officialStationLineAssertions||[]).length};
 }
 function geoTrie(names){
   const root=new Map();

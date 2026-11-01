@@ -90,10 +90,10 @@ class UniversityRouteCacheBrowser(unittest.TestCase):
     def test_late_lookup_after_removing_earlier_row_updates_current_row_without_duplication(self):
         self.page.evaluate("window.second={...window.fields.universityRoutes[0],campusId:'msu-sternberg'};window.editor.refresh({...window.fields,universityRoutes:[window.fields.universityRoutes[0],window.second]});window.defer=true;window.response={hit:true,route:{...window.second,time:'35'}}")
         entries=self.page.locator('.university-route-entry')
-        entries.nth(1).locator('summary').click()
+        entries.nth(1).locator(':scope > summary').click()
         entries.nth(1).get_by_role('button',name='Взять недавний проверенный маршрут',exact=True).click()
         self.page.wait_for_function("typeof window.release==='function'")
-        entries.nth(0).locator('summary').click();entries.nth(0).get_by_role('button',name='Убрать маршрут',exact=True).click()
+        entries.nth(0).locator(':scope > summary').click();entries.nth(0).get_by_role('button',name='Убрать маршрут',exact=True).click()
         self.page.evaluate('window.release();void 0')
         self.page.wait_for_function("window.editor.value().length===1&&window.editor.value()[0].time==='35'")
         self.assertEqual(self.page.evaluate('window.editor.value()[0].campusId'),'msu-sternberg')

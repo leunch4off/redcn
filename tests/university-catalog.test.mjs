@@ -29,13 +29,13 @@ test('specific study destination remains separate from university and apartment 
   assert.equal(resolveUniversity('МГИМО Одинцово'),null);
   for(const row of UNIVERSITY_CATALOG.campuses){
     assert(UNIVERSITY_CATALOG.universities.some(parent=>parent.id===row.universityId));
-    assert(row.addressRu);assert(['teaching_campus','teaching_building','main_address','administrative','dormitory','contact_address','student_center','conference_venue'].includes(row.locationType),row.id);
+    assert(row.addressRu);assert(['teaching_campus','teaching_building','main_address','administrative','dormitory','contact_address','student_center','conference_venue','faculty_contact','historical_faculty_address'].includes(row.locationType),row.id);
     assert.equal(row.proximityVerified,false);assert(!Object.hasOwn(row,'apartmentWalkingMinutes'));
   }
   const conference=UNIVERSITY_CATALOG.campuses.find(row=>row.id==='mai-corps6');assert.equal(conference.locationType,'conference_venue');assert.equal(conference.locationEvidenceScope,'conference-venue');
 });
 test('search finds Chinese/Russian aliases and address without truncating the full knowledge list',()=>{
-  const all=searchUniversities('',{limit:10000});assert.equal(all.length,UNIVERSITY_CATALOG.universities.length+UNIVERSITY_CATALOG.campuses.length);
+  const all=searchUniversities('',{limit:10000,includeInactive:true});assert.equal(all.length,UNIVERSITY_CATALOG.universities.length+UNIVERSITY_CATALOG.campuses.length);
   const faculties=searchUniversities('Моховая',{limit:100});assert(faculties.some(row=>row.id==='msu-journalism'));assert(faculties.some(row=>row.id==='msu-iaas'));
   assert(searchUniversities('奥金佐沃',{limit:100}).some(row=>row.id==='mgimo-odintsovo'));
   assert(searchUniversities('ВШЭ',{includeCampuses:false,limit:100}).every(row=>row.kind==='university'));

@@ -518,7 +518,12 @@ def card_zip(directory,result_id,variant='original'):
 
 
 def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None):
-    directory=Path(directory);state=PairingState(directory);allowed=set(hosts or lan_names())
+    from workspace_ownership import WorkspaceOwner, OwnershipError
+    directory=Path(directory)
+    owner_scope=getattr(controller,'workspace_owner',None)
+    if owner_scope is None:owner_scope=WorkspaceOwner(directory)
+    owner_scope.check(directory)
+    state=PairingState(directory);allowed=set(hosts or lan_names())
     if not allowed:raise ValueError('Не найдены локальные адреса Mac')
     def latest_job_info():
         getter=getattr(controller,'latest_job',None)
@@ -535,6 +540,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
             try:self.wfile.write(content)
             except (BrokenPipeError,ConnectionResetError):pass
         def permitted(self,auth=True,csrf=False):
+            try:owner_scope.check(directory)
+            except (OwnershipError,OSError):
+                self.respond(403,{'error':'Недоступно рабочее пространство владельца','code':'WORKSPACE_OWNER_MISMATCH'});return False
             host=self.headers.get('Host','')
             self.secure=False
             try:
@@ -585,7 +593,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                         export_match=re.fullmatch(r'card-exports/([a-f0-9]{32})',relative)
                         if export_match:
                             if export_match[1] not in {card_id for card_id,_ in access_roles._read_cards(directory)}:self.respond(404,{'error':'Карточка не найдена'});return
-                            document=card_api.dispatch(directory,relative,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
+                            document=card_api.dispatch(directory,relative,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'),actor=getattr(self,'actor',None))
                             if document:
                                 status,value,mime,headers=document
                                 value={'exports':[row for row in value.get('exports',[]) if not row.get('requiresRegeneration') and access_roles.viewer_asset_allowed(directory,'export',row.get('id'))]}
@@ -598,14 +606,14 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     import learning_service
                     document=learning_service.dispatch(directory,path.removeprefix('/api/phone/'),actor=self.actor)
                     if document:self.respond(*document);return
-                    document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
+                    document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'),actor=getattr(self,'actor',None))
                     if document:
                         if self.role=='editor' and re.fullmatch(r'dossier-options/[a-f0-9]{32}',relative):
                             status,value,mime,headers=document
                             value={**value,'attachments':[row for row in value.get('attachments',[]) if row.get('category')!='contract' and row.get('shareable') is not False]}
                             document=status,value,mime,headers
                         self.respond(*document);return
-                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':3,'release':getattr(controller,'release','unknown'),'role':self.role,'capabilities':access_roles.capabilities(self.role),'activeJob':latest_job_info() if self.role!='viewer' else None});return
+                if path=='/api/phone/state':self.respond(200,{'paired':True,'workspaceId':owner_scope.owner_id,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':3,'release':getattr(controller,'release','unknown'),'role':self.role,'capabilities':access_roles.capabilities(self.role),'activeJob':latest_job_info() if self.role!='viewer' else None});return
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
                     feed=list_cards(directory,after)
@@ -660,7 +668,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     if self.secure:cookie+='; Secure'
                     role=state.role(token)
-                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info(),'role':role,'capabilities':access_roles.capabilities(role),'release':getattr(controller,'release','unknown')},headers={'Set-Cookie':cookie});return
+                    self.respond(200,{'paired':True,'workspaceId':owner_scope.owner_id,'csrfToken':state.csrf(token),'activeJob':latest_job_info(),'role':role,'capabilities':access_roles.capabilities(role),'release':getattr(controller,'release','unknown')},headers={'Set-Cookie':cookie});return
                 if not access_roles.phone_route_allowed(self.role,'POST',relative,data):
                     self.respond(403,{'error':'У этой роли нет доступа к данному действию.','code':'ROLE_FORBIDDEN'});return
                 workspace=getattr(controller,'workspace_api',None)
@@ -671,7 +679,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 import learning_service
                 document=learning_service.dispatch(directory,relative,data,actor=self.actor)
                 if document:self.respond(*document);return
-                document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
+                document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'),actor=getattr(self,'actor',None))
                 if document:self.respond(*document);return
                 if path=='/api/phone/logout':
                     state.revoke(self.session);self.respond(200,{'ok':True},headers={'Set-Cookie':f'{COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'+('; Secure' if self.secure else '')});return

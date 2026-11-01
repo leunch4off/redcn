@@ -1,3 +1,4 @@
+import {setupTagPostStats} from './tag-post-stats.mjs';
 // Private editorial memory. All user values enter the DOM as text.
 export function learningTextLanguage(text){return /\p{Script=Han}/u.test(String(text))?'zh':'ru';}
 export function learningGroundingFields(fields={}){
@@ -102,7 +103,8 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  for(const node of [translationInput,direction])node.addEventListener(node===direction?'change':'input',()=>{translationContext=null;translationApply.disabled=true;});
  translation.prepend(make('h3','Русский ↔ 中文'));translation.append(translationActions,translationStatus);
  details.append(heading,intro,compose,translation,status,controls,schedulerForm,schedulerStatus,rows,make('h3','Добавить проверенный опыт'),form,formActions);mount.append(details);
+ const postStats=setupTagPostStats({mount:details,api,getTags:()=>getOutput()?.tags||'',onSaved:()=>run(refresh)});
  details.addEventListener('toggle',()=>{if(details.open)run(refresh);});
  schedulerForm.hidden=!canManageSettings();
- return {refresh,capture,setPermissions:()=>{schedulerForm.hidden=!canManageSettings();},clear:()=>{revision++;rows.replaceChildren();draftContext=translationContext=null;draftApply.disabled=translationApply.disabled=true;for(const node of [draftTitle,draftBody,draftTags,translationInput,translationOutput,ru,zh,text,tag,views,context])node.value='';status.textContent='Откройте блок, чтобы получить состояние памяти.';},destroy:()=>{revision++;details.remove();}};
+ return {refresh,capture,setPermissions:()=>{schedulerForm.hidden=!canManageSettings();},clear:()=>{revision++;postStats.clear();rows.replaceChildren();draftContext=translationContext=null;draftApply.disabled=translationApply.disabled=true;for(const node of [draftTitle,draftBody,draftTags,translationInput,translationOutput,ru,zh,text,tag,views,context])node.value='';status.textContent='Откройте блок, чтобы получить состояние памяти.';},destroy:()=>{revision++;postStats.destroy();details.remove();}};
 }

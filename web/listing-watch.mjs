@@ -1,3 +1,4 @@
+import {setupDeviceNotifications} from './device-notifications.mjs';
 // The monitor stores links and dates; a full import is always an explicit action.
 const lwText=(value,limit=400)=>typeof value==='string'?value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').slice(0,limit):'';
 const lwCianHost=host=>host==='cian.ru'||host==='www.cian.ru';
@@ -84,7 +85,7 @@ export function setupListingWatch({mount,api,onScan,toast=()=>{}}={}){
   const list=make('div','','listing-watch-list'),empty=make('p','Список ещё не загружен.','muted'),more=button('Показать ещё',()=>loadMore());more.hidden=true;list.append(empty);
   const noticesPanel=make('details','','listing-watch-settings'),noticesSummary=make('summary','Внутренние уведомления'),noticesList=make('div');noticesPanel.append(noticesSummary,noticesList);
   const logPanel=make('details','','listing-watch-settings'),logSummary=make('summary','Технический журнал импортов и проверок'),logKind=make('select'),logList=make('div');logKind.setAttribute('aria-label','Тип операций в журнале');for(const [value,label]of[['all','Все операции'],['import','Ручные импорты'],['watch','Проверки выдачи']]){const option=make('option',label);option.value=value;logKind.append(option);}logPanel.append(logSummary,logKind,logList);
-  shell.append(heading,note,details,status,timing,coverage,toolbar,list,more,noticesPanel,logPanel);mount.replaceChildren(shell);
+  const deviceMount=make('div');shell.append(heading,note,details,status,timing,coverage,toolbar,list,more,noticesPanel,deviceMount,logPanel);mount.replaceChildren(shell);const deviceNotifications=setupDeviceNotifications({mount:deviceMount,api,toast});
   let destroyed=false,epoch=0,timer=null,dirty=false,mutation=false,loaded=false,nextBefore=null,currentItems=[],lastStatus=null;
   const scanning=new Set();
   const change=()=>{dirty=true;configNote.textContent='Настройки изменены. Сохраните их на Mac.';};source.oninput=change;enabled.onchange=change;adapter.onchange=change;maxPages.oninput=change;notices.onchange=change;for(const input of Object.values(filterInputs))input.oninput=change;
@@ -177,5 +178,5 @@ export function setupListingWatch({mount,api,onScan,toast=()=>{}}={}){
   document.addEventListener('visibilitychange',visibleAgain);
   category.onchange=()=>{nextBefore=null;refresh();};setBusy(false);
   if(!api){status.textContent='Мониторинг работает через запущенный сервер Mac.';details.open=false;category.disabled=true;more.disabled=true;}
-  return {refresh,destroy(){if(destroyed)return;destroyed=true;++epoch;cancelPoll();document.removeEventListener('visibilitychange',visibleAgain);mount.replaceChildren();currentItems=[];scanning.clear();}};
+  return {refresh,destroy(){if(destroyed)return;destroyed=true;++epoch;cancelPoll();deviceNotifications?.destroy();document.removeEventListener('visibilitychange',visibleAgain);mount.replaceChildren();currentItems=[];scanning.clear();}};
 }

@@ -1,14 +1,73 @@
 import http from 'node:http';
-import {readFile} from 'node:fs/promises';
-const root=new URL('../',import.meta.url);
-const files={'/phone/routes.mjs':['docs/phone-routes.mjs','text/javascript; charset=utf-8'],'/phone/designer.mjs':['docs/phone-designer.mjs','text/javascript; charset=utf-8'],'/card-files.mjs':['web/card-files.mjs','text/javascript'],'/card-archive.mjs':['web/card-archive.mjs','text/javascript'],'/presentation-studio.mjs':['web/presentation-studio.mjs','text/javascript'],'/phone/icons/icon-192.png':['docs/icons/icon-192.png','image/png'],'/phone/icons/icon-512.png':['docs/icons/icon-512.png','image/png'],'/phone/icons/apple-touch-icon.png':['docs/icons/apple-touch-icon.png','image/png'],'/phone/':['docs/phone.html','text/html; charset=utf-8'],'/phone/manifest.webmanifest':['docs/phone.webmanifest','application/manifest+json'],'/phone/sw.js':['docs/phone-sw.js','text/javascript'],'/qr-code.mjs':['web/qr-code.mjs','text/javascript'],'/phone-connection.mjs':['web/phone-connection.mjs','text/javascript'],'/editor-state.mjs':['web/editor-state.mjs','text/javascript'],'/furniture-photos.mjs':['web/furniture-photos.mjs','text/javascript'],'/geo-catalog.mjs':['web/geo-catalog.mjs','text/javascript'],'/media-core.mjs':['web/media-core.mjs','text/javascript'],'/related.mjs':['web/related.mjs','text/javascript'],'/photo-ui.mjs':['web/photo-ui.mjs','text/javascript'],'/related-ui.mjs':['web/related-ui.mjs','text/javascript'],'/source-import.mjs':['web/source-import.mjs','text/javascript'],'/fact-evidence.mjs':['web/fact-evidence.mjs','text/javascript'],'/history.mjs':['web/history.mjs','text/javascript'],'/history-ui.mjs':['web/history-ui.mjs','text/javascript'],'/pages/':['docs/index.html','text/html; charset=utf-8'],'/pages/plan.json':['docs/plan.json','application/json'],'/pages/research.json':['docs/research.json','application/json'],'/pages/knowledge-seed.json':['docs/knowledge-seed.json','application/json'],'/research.json':['data/research.json','application/json'],'/knowledge-seed.json':['data/knowledge-seed.json','application/json'],'/insights.mjs':['web/insights.mjs','text/javascript'],'/insights-ui.mjs':['web/insights-ui.mjs','text/javascript'],'/api/roadmap':['plan.json','application/json; charset=utf-8'],'/':['web/index.html','text/html; charset=utf-8'],'/app.js':['web/app.js','text/javascript; charset=utf-8'],'/engine.mjs':['web/engine.mjs','text/javascript; charset=utf-8'],'/content-tools.mjs':['web/content-tools.mjs','text/javascript; charset=utf-8'],'/word-editor.mjs':['web/word-editor.mjs','text/javascript; charset=utf-8'],'/styles.css':['web/styles.css','text/css; charset=utf-8']};
-for(const name of ['request-deadline','metro-names','photo-observation-policy','rental-lexicon','community-phrases','ru-zh-translator','template-catalog','language-studio','university-catalog','university-ui','publication-model','publication-render','design-canvas-editor','university-routes','listing-watch','import-diagnostics','phone-routes-controller'])files['/'+name+'.mjs']=['web/'+name+'.mjs','text/javascript'];
-files['/moscow-universities.json']=['data/moscow-universities.json','application/json'];
-files['/ru-zh-open-lexicon.json']=['data/ru-zh-open-lexicon.json','application/json'];
-for(const kind of ['title','description','tags'])files['/data/template-catalog/'+kind+'.ndjson.gz']=['data/template-catalog/'+kind+'.ndjson.gz','application/gzip'];
-http.createServer(async(req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;
-  try{if(pathname==='/api/import'){res.writeHead(422,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Импорт ссылок доступен на опубликованном сайте.'}));return;}
-    if(!files[pathname]){res.writeHead(404);res.end('Not found');return;}
-    const [path,type]=files[pathname];res.writeHead(200,{'Content-Type':type});const content=await readFile(new URL(path,root));res.end(path==='web/styles.css'?Buffer.concat([content,Buffer.from('\n'),await readFile(new URL('web/card-archive.css',root)),Buffer.from('\n'),await readFile(new URL('web/presentation-studio.css',root)),Buffer.from('\n'),await readFile(new URL('web/language-studio.css',root)),Buffer.from('\n'),await readFile(new URL('web/university-ui.css',root)),Buffer.from('\n'),await readFile(new URL('web/design-canvas-editor.css',root)),Buffer.from('\n'),await readFile(new URL('web/university-routes.css',root)),Buffer.from('\n'),await readFile(new URL('web/listing-watch.css',root)),Buffer.from('\n'),await readFile(new URL('web/import-diagnostics.css',root))]):content);
-  }catch{res.writeHead(500);res.end('Preview error');}
-}).listen(Number(process.env.PORT||(process.argv.includes('--port')?process.argv[process.argv.indexOf('--port')+1]:3000)),'0.0.0.0',()=>console.log('MOST preview ready'));
+import {readFile,lstat} from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+
+const projectRoot=fileURLToPath(new URL('../',import.meta.url));
+const MAX_ASSET_BYTES=32*1024*1024;
+const types={'.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
+// Only these generated/data assets may be served outside the public web source
+// directory. This is intentionally not a repository-wide static file server.
+const aliases={
+ '/':['web/index.html','text/html; charset=utf-8'],
+ '/phone/':['docs/phone.html','text/html; charset=utf-8'],
+ '/phone/designer.mjs':['docs/phone-designer.mjs',types['.mjs']],
+ '/phone/routes.mjs':['docs/phone-routes.mjs',types['.mjs']],
+ '/phone/manifest.webmanifest':['docs/phone.webmanifest','application/manifest+json'],
+ '/phone/sw.js':['docs/phone-sw.js',types['.js']],
+ '/pages/':['docs/index.html','text/html; charset=utf-8'],
+ '/api/roadmap':['plan.json','application/json; charset=utf-8'],
+ '/moscow-universities.json':['data/moscow-universities.json','application/json'],
+ '/ru-zh-open-lexicon.json':['data/ru-zh-open-lexicon.json','application/json'],
+};
+for(const name of ['icon-192.png','icon-512.png','apple-touch-icon.png'])aliases['/phone/icons/'+name]=['docs/icons/'+name,'image/png'];
+for(const [name,source]of [['plan.json','plan.json'],['research.json','data/research.json'],['knowledge-seed.json','data/knowledge-seed.json']]){
+ aliases['/'+name]=[source,'application/json; charset=utf-8'];
+ aliases['/pages/'+name]=['docs/'+name,'application/json; charset=utf-8'];
+}
+for(const kind of ['title','description','tags'])aliases['/data/template-catalog/'+kind+'.ndjson.gz']=['data/template-catalog/'+kind+'.ndjson.gz','application/gzip'];
+const desktopStyles=['styles','card-archive','presentation-studio','design-canvas-editor','language-studio','university-ui','city-pois','university-routes','listing-watch','import-diagnostics','content-studio','workflow','commute-compare','fact-ledger','dictionary-review','dossier-transfer','table-export','access-roles','import-errors','model-viewer','publication-review','mobile-acceptance'];
+
+async function publicFile(root,relative){
+ const parts=relative.split('/');
+ if(parts.some(part=>!part||part==='.'||part==='..'))throw Error('Invalid public asset path');
+ let current=path.resolve(root);
+ for(let index=0;index<parts.length;index++){
+  current=path.join(current,parts[index]);const stat=await lstat(current);
+  // Reject symlinked files and parent directories, including selected aliases.
+  if(stat.isSymbolicLink()||(index<parts.length-1?!stat.isDirectory():!stat.isFile()||stat.size>MAX_ASSET_BYTES))throw Error('Not a bounded public asset');
+ }
+ return readFile(current);
+}
+
+export function createPreviewResponder({root=projectRoot}={}){
+ const response=(status,body,type='text/plain; charset=utf-8',extra={})=>({status,body:Buffer.isBuffer(body)?body:Buffer.from(body),headers:{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...extra}});
+ return async function previewResponse(requestUrl,method='GET'){
+  let pathname;
+  try{pathname=new URL(requestUrl,'http://localhost').pathname;}catch{return response(400,'Invalid request');}
+  if(pathname==='/api/import')return response(422,JSON.stringify({error:'Импорт через Google Chrome доступен в локальном сервере: bash start-redcn.command.'}),'application/json; charset=utf-8');
+  if(!['GET','HEAD'].includes(method))return response(405,'Method not allowed','text/plain; charset=utf-8',{'Allow':'GET, HEAD'});
+  let asset=Object.hasOwn(aliases,pathname)?aliases[pathname]:null;
+  // New frontend modules work automatically, including nested source adapters;
+  // encoded paths, hidden files and all other suffixes are denied. URL dot
+  // segments are canonicalized before mapping exclusively into web/.
+  if(!asset&&/^\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.(?:mjs|js|css)$/u.test(pathname))asset=['web'+pathname,types[path.extname(pathname)]];
+  if(!asset)return response(404,'Not found');
+  try{
+   const content=pathname==='/styles.css'?Buffer.concat(await Promise.all(desktopStyles.map(async name=>Buffer.concat([await publicFile(root,'web/'+name+'.css'),Buffer.from('\n')])))):await publicFile(root,asset[0]);
+   return response(200,method==='HEAD'?Buffer.alloc(0):content,asset[1],{'Content-Length':String(content.length)});
+  }catch{return response(404,'Public asset not found');}
+ };
+}
+
+export function createPreviewServer(options={}){
+ const respond=createPreviewResponder(options);
+ return http.createServer(async(req,res)=>{const value=await respond(req.url,req.method);res.writeHead(value.status,value.headers);res.end(value.body);});
+}
+
+if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
+ const index=process.argv.indexOf('--port'),port=Number(process.env.PORT||(index>=0?process.argv[index+1]:3000));
+ if(!Number.isInteger(port)||port<0||port>65535)throw Error('Port must be an integer from 0 to 65535');
+ const server=createPreviewServer();
+ server.listen(port,'127.0.0.1',()=>console.log('MOST preview ready: http://127.0.0.1:'+server.address().port));
+}

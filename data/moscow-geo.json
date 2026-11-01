@@ -1644,15 +1644,28 @@
       "id": "hh:136.877",
       "kind": "metro",
       "ru": "Железнодорожная",
-      "zh": "",
-      "translationStatus": "untranslated",
+      "zh": "热列兹诺多罗日纳亚",
+      "translationStatus": "published-primary-name",
       "source": "hh-metro",
       "lines": [
         "136"
       ],
       "lat": 55.7525,
       "lng": 38.008889,
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "alternativeChineseNames": [
+        {
+          "zh": "热列兹诺多罗日纳亚",
+          "sourceId": "nps-zh-zheleznodorozhnaya",
+          "sourceUrl": "https://npsgk.ru/ch/news/kompanii-natsproektstroya-ustanovili-vse-prolety-mosta-konkorsa-na-stantsii-zheleznodorozhnoy-mtsd-4/",
+          "checkedAt": "2026-11-01",
+          "authority": "contractor-published-name-not-operator",
+          "operatorCertified": false
+        }
+      ],
+      "translationSource": "https://npsgk.ru/ch/news/kompanii-natsproektstroya-ustanovili-vse-prolety-mosta-konkorsa-na-stantsii-zheleznodorozhnoy-mtsd-4/",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "contractor-published-name-not-operator"
     },
     {
       "id": "hh:7.465",
@@ -1907,7 +1920,18 @@
       "lat": 55.652923,
       "lng": 37.596573,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "membershipStatus": "historical-line-membership",
+      "membershipRetirementEvidence": {
+        "ru": "Каховская",
+        "lineNameRu": "Каховская",
+        "currentLineKey": "bolshaya-koltsevaya",
+        "sourceIds": [
+          "mosmetro-kakhovskaya-retired"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "former-independent-line-membership-only"
+      }
     },
     {
       "id": "hh:97.818",
@@ -1936,7 +1960,7 @@
           "translationStatus": "unchanged",
           "officialStationId": "266",
           "lineNameRu": "Большая кольцевая",
-          "lineNumber": null
+          "lineNumber": "11"
         }
       ]
     },
@@ -5611,7 +5635,7 @@
           "translationStatus": "unchanged",
           "officialStationId": "229",
           "lineNameRu": "Серпуховско-Тимирязевская",
-          "lineNumber": null
+          "lineNumber": "9"
         }
       ]
     },
@@ -213297,6 +213321,13 @@
         "checkedAt": "2026-11-01",
         "scope": "printed-line-name-only",
         "mapVersionDate": null
+      },
+      "officialNumber": "1",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-indicators"
+        ],
+        "checkedAt": "2026-11-01"
       }
     },
     {
@@ -213335,6 +213366,13 @@
         "checkedAt": "2026-11-01",
         "scope": "printed-line-name-only",
         "mapVersionDate": null
+      },
+      "officialNumber": "4А",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-navigation-17"
+        ],
+        "checkedAt": "2026-11-01"
       }
     },
     {
@@ -213354,6 +213392,13 @@
         "checkedAt": "2026-11-01",
         "scope": "printed-line-name-only",
         "mapVersionDate": null
+      },
+      "officialNumber": "9",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-line-numbers-2025"
+        ],
+        "checkedAt": "2026-11-01"
       }
     },
     {
@@ -213455,6 +213500,13 @@
         "checkedAt": "2026-11-01",
         "scope": "printed-line-name-only",
         "mapVersionDate": null
+      },
+      "officialNumber": "8А",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-navigation-17"
+        ],
+        "checkedAt": "2026-11-01"
       }
     },
     {
@@ -213493,7 +213545,22 @@
         "checkedAt": "2026-11-01",
         "scope": "printed-line-name-only",
         "mapVersionDate": null
-      }
+      },
+      "officialNumber": "11",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-line-numbers-2025"
+        ],
+        "checkedAt": "2026-11-01"
+      },
+      "officialColorName": "бирюзовый",
+      "colorNameEvidence": {
+        "sourceIds": [
+          "moscow-bkl-color-2026"
+        ],
+        "checkedAt": "2026-11-01"
+      },
+      "colorStatus": "snapshot-rgb-not-officially-verified"
     },
     {
       "id": "98",
@@ -213555,6 +213622,13 @@
         "checkedAt": "2026-11-01",
         "scope": "printed-line-name-only",
         "mapVersionDate": null
+      },
+      "officialNumber": "16",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-indicators"
+        ],
+        "checkedAt": "2026-11-01"
       }
     },
     {
@@ -213572,7 +213646,21 @@
         "verifiedAt": "2026-11-01",
         "scope": "number-and-color-name"
       },
-      "colorStatus": "snapshot-rgb-not-officially-verified"
+      "colorStatus": "snapshot-rgb-not-officially-verified",
+      "numberEvidence": {
+        "sourceIds": [
+          "mosmetro-numbering-17"
+        ],
+        "checkedAt": "2026-11-01"
+      },
+      "zh": "鲁布廖夫-阿尔汉格尔斯克线",
+      "translationStatus": "community",
+      "communityNameEvidence": {
+        "sourceId": "zhwiki-metro-lines-2026",
+        "checkedAt": "2026-11-01",
+        "authority": "community-name-not-operator",
+        "operatorCertified": false
+      }
     }
   ],
   "sources": [
@@ -213825,6 +213913,72 @@
       "retrievalMethod": "web-primary-pdf-text",
       "status": "verified",
       "limitations": "Text extraction exposes line legend; outlined station labels and the map version date were not verified. This file is not a current-service certificate and is not copied as artwork."
+    },
+    {
+      "id": "mosmetro-line-numbers-2025",
+      "url": "https://mosmetro.ru/news/details/8547",
+      "title": "Метрополитен: номера линий праздничных поездов",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "publishedAt": "2025-12-19",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "scope": "Explicit line-number pairs only; this is not present train service or complete station coverage.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "moscow-bkl-color-2026",
+      "url": "https://ac.mos.ru/news/24374/",
+      "title": "Аналитический центр Москвы: БКЛ на схемах обозначена бирюзовым",
+      "publisher": "Аналитический центр Москвы",
+      "evidenceType": "official-city",
+      "verifiedAt": "2026-11-01",
+      "publishedAt": "2026-03-02",
+      "retrievalMethod": "web-primary-page",
+      "status": "verified",
+      "scope": "Official municipal color name and exclusion of Delovoy Tsentr/Shelepikha from BKL; numeric RGB not published.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "nps-zh-zheleznodorozhnaya",
+      "url": "https://npsgk.ru/ch/news/kompanii-natsproektstroya-ustanovili-vse-prolety-mosta-konkorsa-na-stantsii-zheleznodorozhnoy-mtsd-4/",
+      "publisher": "ГК Нацпроектстрой / Natsproektstroy",
+      "title": "Китайская публикация подрядчика о станции Железнодорожная МЦД-4",
+      "publishedAt": "2026-06-10",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "primary-contractor-publication",
+      "scope": "Published Chinese proper name only; not operator nomenclature or present service.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "nps-zh-petrovsko",
+      "url": "https://npsgk.ru/ch/news/kompanii-nps-zavershili-stroitelstvo-stantsii-petrovsko-razumovskaya-mtsd-1/",
+      "publisher": "ГК Нацпроектстрой / Natsproektstroy",
+      "title": "Китайская публикация подрядчика о Петровско-Разумовской МЦД-1",
+      "publishedAt": "2025-12-26",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "primary-contractor-publication",
+      "scope": "Alternative published Chinese name only; existing reviewed or community choice is preserved.",
+      "licenseStatus": "not-stated-in-inspected-page",
+      "reuseScope": "Factual names, addresses and evidence metadata only; source article body and map artwork are not copied."
+    },
+    {
+      "id": "zhwiki-metro-lines-2026",
+      "url": "https://zh.wikipedia.org/wiki/莫斯科地铁",
+      "publisher": "Chinese Wikipedia contributors",
+      "title": "Китайское community-название Рублёво-Архангельской линии",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "community-authored-nomenclature",
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "scope": "Line-name spelling only. Community line colors, counts and service claims are not imported."
     }
   ],
   "updatedAt": "2026-10-30T08:18:37.151750+00:00",
@@ -214238,7 +214392,7 @@
       "translationStatus": "unchanged",
       "officialStationId": "266",
       "lineNameRu": "Большая кольцевая",
-      "lineNumber": null
+      "lineNumber": "11"
     },
     {
       "ru": "Севастопольская",
@@ -214252,7 +214406,7 @@
       "translationStatus": "unchanged",
       "officialStationId": "229",
       "lineNameRu": "Серпуховско-Тимирязевская",
-      "lineNumber": null
+      "lineNumber": "9"
     },
     {
       "ru": "Деловой центр",
@@ -214356,5 +214510,164 @@
   "officialNamesCoverage": {
     "complete": false,
     "scope": "Explicit published names with source and verification date; community, studio and untranslated entries remain separate."
-  }
+  },
+  "officialLineCatalog": [
+    {
+      "key": "sokolnicheskaya",
+      "ru": "Сокольническая",
+      "number": "1",
+      "numberSourceIds": [
+        "mosmetro-indicators"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified"
+    },
+    {
+      "key": "filyovskaya-branch",
+      "ru": "Филёвская",
+      "number": "4А",
+      "numberSourceIds": [
+        "mosmetro-navigation-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified"
+    },
+    {
+      "key": "solntsevskaya",
+      "ru": "Солнцевская",
+      "number": "8А",
+      "numberSourceIds": [
+        "mosmetro-navigation-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified"
+    },
+    {
+      "key": "troitskaya",
+      "ru": "Троицкая",
+      "number": "16",
+      "numberSourceIds": [
+        "mosmetro-indicators"
+      ],
+      "colorNameRu": "изумрудный",
+      "colorSourceIds": [
+        "mosmetro-line-colors"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified"
+    },
+    {
+      "key": "rublevo-arkhangelskaya",
+      "ru": "Рублёво-Архангельская",
+      "number": "17",
+      "numberSourceIds": [
+        "mosmetro-numbering-17"
+      ],
+      "colorNameRu": "графитовый",
+      "colorSourceIds": [
+        "mosmetro-ra-service-2026",
+        "mosmetro-ra-color-2026"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified",
+      "officialColorName": "графитовый"
+    },
+    {
+      "key": "bolshaya-koltsevaya",
+      "ru": "Большая кольцевая",
+      "number": "11",
+      "numberStatus": "not-verified-in-this-supplement",
+      "numberSourceIds": [
+        "mosmetro-line-numbers-2025"
+      ],
+      "officialColorName": "бирюзовый",
+      "colorSourceIds": [
+        "moscow-bkl-color-2026"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified"
+    },
+    {
+      "key": "serpukhovsko-timiryazevskaya",
+      "ru": "Серпуховско-Тимирязевская",
+      "number": "9",
+      "numberStatus": "not-verified-in-this-supplement",
+      "numberSourceIds": [
+        "mosmetro-line-numbers-2025"
+      ],
+      "checkedAt": "2026-11-01",
+      "rgbStatus": "snapshot-not-verified"
+    }
+  ],
+  "retiredMetroMemberships": [
+    {
+      "ru": "Каховская",
+      "lineNameRu": "Каховская",
+      "currentLineKey": "bolshaya-koltsevaya",
+      "sourceIds": [
+        "mosmetro-kakhovskaya-retired"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "former-independent-line-membership-only"
+    },
+    {
+      "ru": "Деловой центр",
+      "lineNameRu": "Большая кольцевая",
+      "currentLineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "moscow-bkl-color-2026",
+        "mosmetro-delovoy-ra"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "removed-from-former-line-not-station-closure"
+    },
+    {
+      "ru": "Шелепиха",
+      "lineNameRu": "Большая кольцевая",
+      "currentLineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "moscow-bkl-color-2026",
+        "mosmetro-numbering-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "removed-from-former-line-not-station-closure"
+    }
+  ],
+  "publishedNameAliasReview": [
+    {
+      "ru": "Площадь трёх вокзалов",
+      "formerName": "Каланчёвская",
+      "decision": "No Chinese name joined from the old Kalanchyovskaya spelling without a dated rename source; keep unresolved."
+    },
+    {
+      "ru": "Москва-Сити",
+      "formerName": "Тестовская",
+      "decision": "Do not equate D1 and D4 records or copy coordinates by shared new name; published name aliases require line-specific review."
+    },
+    {
+      "ru": "Крюково",
+      "candidateAlias": "Зеленоград-Крюково",
+      "decision": "The HH spelling is retained. An alias is not a verified station rename or Chinese translation."
+    }
+  ],
+  "publishedStationNameFacts": [
+    {
+      "ru": "Железнодорожная",
+      "zh": "热列兹诺多罗日纳亚",
+      "lineIds": [
+        "136"
+      ],
+      "sourceId": "nps-zh-zheleznodorozhnaya",
+      "authority": "contractor-published-name-not-operator"
+    },
+    {
+      "ru": "Петровско-Разумовская",
+      "zh": "彼得罗夫斯科-拉祖莫夫",
+      "lineIds": [
+        "131"
+      ],
+      "sourceId": "nps-zh-petrovsko",
+      "authority": "contractor-published-name-not-operator"
+    }
+  ]
 }

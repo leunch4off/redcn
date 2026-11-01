@@ -1,6 +1,6 @@
 {
   "project": "redcn",
-  "version": 22,
+  "version": 23,
   "total": 334,
   "tasks": [
     {
@@ -299,7 +299,10 @@
         "RCN-004"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/SOURCES-ROUTES-v26.md — один независимый обезличенный CIAN-снимок; несколько схем ещё не подтверждены",
+        "tests/fixtures/source-schema-corpus-v26.manifest.json"
+      ]
     },
     {
       "id": "RCN-021",
@@ -913,8 +916,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/WORKSPACE-OWNERSHIP-v26.md — владелец отдельного cache-dir и приглашённые роли",
+        "tests/test_workspace_ownership.py — 15 проверок HTTP/области на Mac",
+        "tests/test_workspace_ownership_browser.py — 3 Chrome-сценария входа/перезагрузки/перезапуска на Mac"
+      ]
     },
     {
       "id": "RCN-058",
@@ -2194,7 +2201,9 @@
         "RCN-004"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 16 подтверждённых пар станция–линия, полный реестр и точный RGB ещё не приняты"
+      ]
     },
     {
       "id": "RCN-136",
@@ -2793,8 +2802,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/MOBILE-ACCEPTANCE-v26.md — узкий экран и visualViewport, без заявления о физической iOS-клавиатуре",
+        "tests/test_mobile_editor_learning_browser.py — 5 пройденных Chrome-сценариев на Mac, ввод/редактирование/Tab/сохранение/перезагрузка",
+        "tests/mobile-keyboard.test.mjs"
+      ]
     },
     {
       "id": "RCN-171",
@@ -3481,7 +3494,10 @@
         "RCN-004"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "data/metro-published-names.json — происхождение названий отделено от официального статуса",
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 81 строка МЦД ещё без подтверждённого перевода"
+      ]
     },
     {
       "id": "RCN-212",
@@ -3505,7 +3521,11 @@
         "RCN-004"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/QUALITY-v26.md — интерфейс ручных связей и явных конфликтов; автоматическое тождество предметов не принято",
+        "cli/photo_instance_api.py",
+        "web/photo-instance-editor.mjs"
+      ]
     },
     {
       "id": "RCN-214",
@@ -3998,7 +4018,11 @@
         "RCN-004"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "tests/fixtures/macos-portability — полностью синтетический архив с исходного Mac",
+        "scripts/portable-mac-proof.py — проверка восстановленных связей и байтов",
+        "docs/CLOUD-BACKUP-AND-DEVICE-DELIVERY-v26.md — отдельный macOS runner имеет самостоятельный результат CI"
+      ]
     },
     {
       "id": "RCN-242",
@@ -4470,7 +4494,10 @@
       "priority": "P1",
       "depends_on": [],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 9 текущих и 1 исторический адрес, отдельные основания переезда/закрытия; заявленный объём ограничен",
+        "tests/test_university_lifecycle.py"
+      ]
     },
     {
       "id": "RCN-272",
@@ -4960,7 +4987,10 @@
         "RCN-297"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 4 опубликованные точки конкретных зданий с методом и неизвестной метрической точностью",
+        "tests/university-coordinate-lifecycle.test.mjs"
+      ]
     },
     {
       "id": "RCN-301",
@@ -5296,7 +5326,10 @@
         "RCN-318"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/QUALITY-v26.md — вручную подтверждённые видимые экземпляры; точный инвентарь всей квартиры не заявляется",
+        "tests/test_photo_instance_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-320",
@@ -5512,7 +5545,8 @@
         "cli/local_text_model.py",
         "scripts/train-local-text-model.py",
         "scripts/evaluate-local-text-model.py",
-        "docs/LOCAL-LEARNING-v24.md"
+        "docs/LOCAL-LEARNING-v24.md",
+        "docs/QUALITY-v26.md — независимый от обучения корпус и исходные ответы; редакционной приёмки адаптера нет"
       ]
     },
     {
@@ -5557,7 +5591,10 @@
       "status": "planned",
       "evidence": [
         "cli/learning_memory.py — ручные наблюдения и ранжирование без утверждения причинности",
-        "tests/test_learning_memory.py"
+        "tests/test_learning_memory.py",
+        "cli/tag_post_evaluation.py",
+        "web/tag-post-stats.mjs",
+        "docs/QUALITY-v26.md — реальные датированные наблюдения и сравнимый контроль по-прежнему требуются"
       ]
     }
   ],

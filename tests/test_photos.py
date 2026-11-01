@@ -100,7 +100,7 @@ class PhotoTests(unittest.TestCase):
         original=self.attach();server=local_server.create_server(self.directory,0);thread=threading.Thread(target=server.serve_forever);thread.start()
         try:
             import re
-            base=f'http://127.0.0.1:{server.server_port}';page=urllib.request.urlopen(base).read().decode();token=re.search('name="redcn-token" content="([^"]+)"',page)[1]
+            base=f'http://127.0.0.1:{server.server_port}';page=urllib.request.urlopen(base).read().decode();token=server.desktop_access.token
             for headers in [{},{'X-Redcn-Token':token,'Origin':'https://evil.test'}]:
                 with self.assertRaises(urllib.error.HTTPError):urllib.request.urlopen(urllib.request.Request(base+'/api/local/media/'+original['id'],headers=headers))
             with urllib.request.urlopen(urllib.request.Request(base+'/api/local/media/'+original['id'],headers={'X-Redcn-Token':token})) as response:self.assertEqual(response.read(),picture())

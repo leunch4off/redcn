@@ -53,7 +53,7 @@ class PhotoVariantBrowserAcceptance(unittest.TestCase):
 
     def test_gallery_designer_intro_outro_html_and_native_pdf_share_selected_raster(self):
         self.page.set_viewport_size({'width':1440,'height':1100})
-        self.page.goto(self.desktop+'/listing/'+self.card_id,wait_until='domcontentloaded')
+        self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id),wait_until='domcontentloaded')
         self.page.wait_for_function("document.getElementById('output').value.includes('已确认的房源照片资料')")
         self.page.locator('#photoCard').wait_for(state='visible')
         self.page.locator('#photoCard').scroll_into_view_if_needed()

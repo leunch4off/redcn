@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {UNIVERSITY_CATALOG,resolveUniversity} from '../web/university-catalog.mjs';
+import {UNIVERSITY_CATALOG,resolveUniversity,universityCampusAvailability} from '../web/university-catalog.mjs';
 import {DICTIONARY,generateListing,translate,extractFacts,extractUniversityReferences,analyzeListingSource} from '../web/engine.mjs';
 import {translateRussian} from '../web/ru-zh-translator.mjs';
 
@@ -16,11 +16,23 @@ test('each catalog university participates in titles and descriptions only after
   }
 });
 test('campus references use complete Chinese names without borrowing their address or metro',()=>{
-  for(const row of UNIVERSITY_CATALOG.campuses){
+  for(const row of UNIVERSITY_CATALOG.campuses.filter(value=>universityCampusAvailability(value).selectable)){
     const result=generateListing({...uniFixture,campus:row.ru});
     assert(result.body.includes(row.zh),row.ru);
     if(row.addressRu)assert(!result.body.includes(row.addressRu));
     assert.doesNotMatch(result.body,/步行约\d|公交约\d|地铁约\d/);
+  }
+});
+test('a historical faculty address is flagged and never becomes a current destination or automatic replacement',()=>{
+  const old=UNIVERSITY_CATALOG.campuses.find(row=>row.id==='hse-economics-former-shabolovka');
+  const replacement=UNIVERSITY_CATALOG.campuses.find(row=>row.id===old.locationLifecycle.currentCampusId);
+  for(const campus of [old.ru,...old.aliases]){
+    const result=generateListing({...uniFixture,campus});
+    assert(result.problems.some(value=>value.includes('устарел')));
+    const copy=result.titles.join('\n')+'\n'+result.body+'\n'+result.tags;
+    for(const text of [old.ru,old.zh,old.addressRu,replacement.ru,replacement.zh,replacement.addressRu])assert(!copy.includes(text),text);
+    assert.doesNotMatch(copy,/通勤目标|校区：|步行约\d|公交约\d|地铁约\d|maps\.google|yandex\./);
+    assert(result.body.includes('54㎡'),'ordinary apartment content is preserved');
   }
 });
 test('a known university and campus mismatch blocks silent association',()=>{

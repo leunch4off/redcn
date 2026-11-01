@@ -1,6 +1,9 @@
 """Background ownership, fixed-port waiting and reversible LaunchAgent files."""
 import errno
+import hashlib
 import importlib.util
+import io
+import json
 from pathlib import Path
 import plistlib
 import signal
@@ -52,7 +55,7 @@ class BackgroundServerTests(unittest.TestCase):
         backend.matching_server.return_value = True
         with patch.object(background_server, 'log') as logger:
             background_server.run_service('/tmp/redcn-test', backend=backend, stop_event=stop)
-        backend.enable_existing_phone.assert_called_once_with(8765,8767)
+        backend.enable_existing_phone.assert_called_once_with(8765,8767,Path('/tmp/redcn-test').resolve())
         self.assertEqual(logger.call_count, 2)  # state transition and stop, no polling flood
 
     def test_owned_listener_and_tunnel_close_when_phone_cannot_bind(self):
@@ -90,6 +93,21 @@ class BackgroundServerTests(unittest.TestCase):
 class LaunchAgentTests(unittest.TestCase):
     def result(self, code=0, stderr=''):
         return subprocess.CompletedProcess([],code,'',stderr)
+
+    def test_status_accepts_release_metadata_but_rejects_another_workspace(self):
+        home = Path('/tmp/redcn-status-fixture')
+        health = {'app': 'redcn', 'protocol': 7, 'browser_channel': 'chrome',
+                  'storage': hashlib.sha256(str((home/'.cache/redcn').resolve()).encode()).hexdigest(),
+                  'release': 'v26', 'activeJobs': 0}
+        for foreign in (False, True):
+            payload = {**health, **({'storage': 'foreign-workspace'} if foreign else {})}
+            phone = io.BytesIO(b'phone'); phone.status = 200
+            opener = Mock()
+            opener.open.side_effect = [io.BytesIO(json.dumps(payload).encode()), phone]
+            with self.subTest(foreign=foreign), patch.object(macos_service, 'launchctl', return_value=self.result()), patch.object(macos_service.urllib.request, 'build_opener', return_value=opener):
+                status = macos_service.service_status('gui/501', home)
+            self.assertEqual(status['editorReady'], not foreign)
+            self.assertTrue(status['phoneListenerReady'])
 
     def test_runtime_arch_falls_back_when_native_dependencies_cannot_load(self):
         python = Path('/tmp/project with spaces/.venv/bin/python')

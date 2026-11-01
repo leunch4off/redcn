@@ -132,7 +132,7 @@ class PhoneRelayTests(unittest.TestCase):
         import socket
         self.controller_thread=threading.Thread(target=self.controller.serve_forever,daemon=True);self.controller_thread.start()
         with socket.socket() as available:available.bind(('127.0.0.1',0));port=available.getsockname()[1]
-        result=local_server.enable_existing_phone(self.controller.server_port,port)
+        result=local_server.enable_existing_phone(self.controller.server_port,port,self.directory)
         self.assertTrue(result['enabled']);self.assertEqual(result['port'],port);self.assertTrue(result['pairUrls'])
         self.assertTrue(self.controller.phone_relay.status()['enabled'])
 

@@ -60,9 +60,9 @@ class UniversityStoreTests(unittest.TestCase):
         self.assertFalse(self.directory.exists())
 
     def test_published_points_require_paired_coordinates_source_date_and_honest_accuracy(self):
-        self.value['sources'][0].update(campusIds=['one-campus'],supports=['published-coordinate'])
+        self.value['sources'][0].update(campusIds=['one-campus'],supports=['published-coordinate'],institutionId='one')
         campus=self.value['campuses'][0]
-        campus.update(latitude=55.7,longitude=37.5,coordinateEvidence={'method':'official-published-point','scope':'building','sourceIds':['official-one'],'checkedAt':'2026-10-30','accuracyMeters':None,'accuracyStatus':'not-published','publishedPrecision':'6 decimal places','entranceVerified':False})
+        campus.update(latitude=55.7,longitude=37.5,coordinateEvidence={'method':'official-published-point','scope':'building','sourceIds':['official-one'],'checkedAt':'2026-10-30','accuracyMeters':None,'accuracyStatus':'not-published','publishedPrecision':'6 decimal places','entranceVerified':False,'boundCampusId':campus['id'],'boundAddressRu':campus['addressRu'],'accuracyScope':'published-building-point'})
         self.write()
         self.assertEqual(store.read_catalog(self.catalog)[0]['campuses'][0]['latitude'],55.7)
         original=copy.deepcopy(campus)

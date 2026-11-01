@@ -8,7 +8,7 @@ import {RENTAL_RULES,translateRussian} from './ru-zh-translator.mjs';
 import {getTemplate,renderTemplate,catalogStats,getListingStyle,renderListingTemplate,listingStyleStats} from './template-catalog.mjs';
 import {translateMetroName} from './metro-names.mjs';
 import {COMMUNITY_RENTAL_RULES,COMMUNITY_RENTAL_META} from './community-phrases.mjs';
-import {UNIVERSITY_CATALOG,universityRules,resolveUniversity,resolveCampus,universityStats} from './university-catalog.mjs';
+import {UNIVERSITY_CATALOG,universityRules,resolveUniversity,resolveCampus,universityStats,universityCampusAvailability} from './university-catalog.mjs';
 import {roomTerminology,extractRoomCounts,audienceIntroduction,descriptionAudience,normalizeListingStudioProfile,applyStudioProfile} from './listing-semantics.mjs';
 import {renderTitleFormula} from './content-studio.mjs';
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
@@ -224,7 +224,9 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   // A school is a reference chosen by the operator/source, not evidence that
   // the apartment is nearby. A campus address never supplies a journey time.
   const selectedUniversity=resolveUniversity(universities[0]?.name||'');
-  const selectedCampus=resolveCampus(v.campus||'');
+  const campusCandidate=resolveCampus(v.campus||'');
+  const selectedCampus=campusCandidate&&universityCampusAvailability(campusCandidate).selectable?campusCandidate:null;
+  if(campusCandidate&&!selectedCampus){problems.push('Выбранный адрес подразделения устарел или закрыт. Выберите актуальный адрес; автоматическая замена не выполняется.');v.campus='';}
   if(selectedCampus&&selectedUniversity&&selectedCampus.universityId!==selectedUniversity.id)problems.push('Выбранный кампус относится к другому вузу. Проверьте вуз и кампус.');
   const universityTarget=universities.length?zh(universities[0].name):selectedCampus?zh(UNIVERSITY_CATALOG.universities.find(row=>row.id===selectedCampus.universityId)?.ru||''):'';
   const layout=kind(v), area=positive('area')?v.area+'㎡':'', price=positive('price')?wan(v.price):'';
@@ -264,7 +266,7 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   section('location');
   if(v.address)push('📍 '+zh(v.address));
   else if(v.complex||v.districtZh)push('📍 莫斯科｜'+zh(v.complex||v.districtZh));
-  if(v.campus){const labels={teaching_campus:'校区',teaching_building:'教学楼',main_address:'院校地址参考',contact_address:'联络地址参考',administrative:'行政地址参考',student_center:'学生中心',dormitory:'宿舍地址参考'};push('🎓 '+(labels[selectedCampus?.locationType]||'校区')+'：'+zh(v.campus));}
+  if(v.campus){const labels={teaching_campus:'校区',teaching_building:'教学楼',main_address:'院校地址参考',contact_address:'联络地址参考',faculty_contact:'院系联络地址参考',administrative:'行政地址参考',student_center:'学生中心',dormitory:'宿舍地址参考'};push('🎓 '+(labels[selectedCampus?.locationType]||'校区')+'：'+zh(v.campus));}
   section('facts');
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
   else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');

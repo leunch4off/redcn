@@ -3,6 +3,7 @@ import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
 import {cardPhotoDataUrl} from './card-files.mjs';
 import {withRequestDeadline} from './request-deadline.mjs';
 import {setupFurniturePhotos} from './furniture-photos.mjs';
+import {setupPhotoInstanceEditor} from './photo-instance-editor.mjs';
 import {photoSources,cropRectangle,photoFileName,photoExportAsset,photoZip,confirmedPhotoFeatures} from './media-core.mjs';
 
 // A prepared backend derivative is usable only with its own original and a
@@ -19,11 +20,19 @@ export function presentationAcceptedCrop(value,originalId){
  return null;
 }
 
-export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatures}){
+export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatures,getCardId=()=>null}){
  const pe=id=>document.getElementById(id);let items=[],active=null,epoch=0,objectUrls=[],viewerUrls=[],edits={},busy=false,zipUrl=null;
  const itemSource=url=>{const rows=typeof getPost==='function'?getPost()?.fields?.photoItems:null;return Array.isArray(rows)?rows.find(row=>row?.url===url):null;};
  const sourceCacheKey=url=>{const source=itemSource(url);return source?url+'\n'+JSON.stringify([source.photoId,source.variants||{},source.observedVariants||[]]):url;};
  const furniturePhotos=setupFurniturePhotos({getItems:()=>items,onOpen:item=>show(item),read,write});
+ const instanceMount=document.createElement('div');let instanceEditor=null,instanceCard=null;
+ if(local)pe('photoGallery').insertAdjacentElement('afterend',instanceMount);
+ function refreshInstances(){
+  if(!local)return;const id=getCardId();if(id===instanceCard)return;instanceCard=id;instanceEditor?.dispose();instanceEditor=null;
+  if(/^[a-f0-9]{32}$/.test(id||''))instanceEditor=setupPhotoInstanceEditor({mount:instanceMount,api,cardId:id,loadPhoto:binary});
+  else instanceMount.textContent='Сохраните карточку на Mac, чтобы сопоставить предметы на разных ракурсах.';
+ }
+
  const photoDb=new Promise((resolve,reject)=>{const r=indexedDB.open('redcn-photos-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('photos',{keyPath:'url'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});photoDb.catch(()=>{});
  async function cacheGet(url,key=url){try{const db=await photoDb;return await new Promise((resolve,reject)=>{const r=db.transaction('photos').objectStore('photos').get(key);r.onsuccess=()=>resolve(r.result?.cacheVersion===2?{...r.result,url}:null);r.onerror=()=>reject(r.error);});}catch{return null;}}
  async function cachePut(item){try{const db=await photoDb;await new Promise((resolve,reject)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put({url:item.cacheKey||item.url,originalUrl:item.url,cacheVersion:2,blob:item.blob,width:item.width,height:item.height,mime:item.mime,cropBlob:item.cropBlob,cropMeta:item.cropMeta,variantBlob:item.variantBlob,variantMeta:item.variantMeta,variantReview:item.variantReview,serverId:item.serverId,analysis:item.analysis,at:Date.now()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}catch{toast('Фото готово, но не поместилось в кеш браузера. Оригинал можно скачать.');}}
@@ -32,11 +41,11 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  function status(){for(const id of ['photoAnalyze','photoLoad','photoRefresh','photoDownload','photoDownloadCropped','photoCropAuto','photoAttach','photoCropApply','photoAttachOne'])pe(id).disabled=busy||(id==='photoAnalyze'&&!local);const ready=items.filter(i=>i.blob).length,crops=items.filter(i=>i.cropBlob).length,errors=items.filter(i=>i.error).length;pe('photoStatus').textContent=ready+' / '+items.length+' оригиналов загружено · '+crops+' копий кадрировано'+(busy?' · обработка…':'')+(errors?' · '+errors+' требуют внимания':'');}
  function assetUrl(blob){const url=URL.createObjectURL(blob);objectUrls.push(url);return url;}
  function imageNode(blob,url,alt){const image=document.createElement('img');image.src=blob?assetUrl(blob):url;image.alt=alt;image.loading='lazy';image.referrerPolicy='no-referrer';return image;}
- function render(){furniturePhotos.render();for(const url of objectUrls)URL.revokeObjectURL(url);objectUrls=[];pe('photoGallery').replaceChildren();pe('photoCard').classList.toggle('hidden',!items.length);status();
+ function render(){furniturePhotos.render();refreshInstances();for(const url of objectUrls)URL.revokeObjectURL(url);objectUrls=[];pe('photoGallery').replaceChildren();pe('photoCard').classList.toggle('hidden',!items.length);status();
   items.forEach((item,index)=>{const card=document.createElement('article'),open=document.createElement('button'),meta=document.createElement('p'),tools=document.createElement('div'),label=document.createElement('label'),selected=document.createElement('input');card.className='photo-tile';open.className='photo-open';open.type='button';open.setAttribute('aria-label','Открыть фото '+(index+1));open.append(imageNode(item.preferOriginal?item.blob:item.cropBlob||item.variantBlob||item.blob,item.url,'Фото '+(index+1)));open.onclick=()=>show(item);selected.type='checkbox';selected.checked=item.selected;selected.onchange=()=>{item.selected=selected.checked;changed();emitFeatures();renderObservations();furniturePhotos.render();};label.append(selected,document.createTextNode((index===items.findIndex(i=>i.selected)?'Обложка · ':'')+'Фото '+(index+1)));meta.className='small';meta.textContent=item.error||item.message||(item.blob?item.width+' × '+item.height+' · '+(item.cropBlob?'копия кадрирована':'оригинал сохранён'):'Ожидает загрузки');
    const move=(text,delta)=>{const b=document.createElement('button');b.className='btn';b.textContent=text;b.setAttribute('aria-label',(delta<0?'Поднять':'Опустить')+' фото '+(index+1));b.disabled=index+delta<0||index+delta>=items.length;b.onclick=()=>{[items[index],items[index+delta]]=[items[index+delta],items[index]];changed();render();};return b;};tools.className='photo-tile-tools';const cover=document.createElement('button');cover.className='btn';cover.textContent='На обложку';cover.disabled=index===0&&item.selected;cover.onclick=()=>{item.selected=true;items.splice(index,1);items.unshift(item);changed();render();};tools.append(label,move('↑',-1),move('↓',1),cover);card.append(open,meta,tools);pe('photoGallery').append(card);});renderObservations();
  }
- async function binary(id){const r=await fetch('/api/local/media/'+id,{headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||''}});if(!r.ok)throw Error('Локальная копия фото недоступна');return r.blob();}
+ async function binary(id,{signal}={}){return withRequestDeadline(25000,async requestSignal=>{const r=await fetch('/api/local/media/'+id,{headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||''},cache:'no-store',signal:requestSignal});if(!r.ok)throw Error('Локальная копия фото недоступна');return r.blob();},{signal});}
  async function dimensions(blob){if(blob.size>12_000_000||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Фото: JPEG/PNG/WebP до 12 МБ');const bitmap=await createImageBitmap(blob);try{cropRectangle(bitmap.width,bitmap.height);return {width:bitmap.width,height:bitmap.height};}finally{bitmap.close();}}
  async function acceptedCrop(item){
   if(item.acceptedPending)return item.acceptedPending;

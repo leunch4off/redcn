@@ -62,7 +62,7 @@ def run_service(directory, port=8765, phone_port=8767, *, stop_event=None,
                     report('existing', 'Уже работает этот redcn. Ожидаем его завершения, второй сервер не запускаем.')
                     if not reused_phone_enabled:
                         try:
-                            backend.enable_existing_phone(port, phone_port)
+                            backend.enable_existing_phone(port, phone_port, directory)
                             reused_phone_enabled = True
                         except (OSError, ValueError):
                             report('existing-phone-error', 'Редактор работает, телефон пока недоступен; повтор подключения.')

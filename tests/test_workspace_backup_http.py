@@ -23,7 +23,7 @@ class WorkspaceBackupHTTP(unittest.TestCase):
         self.thread=threading.Thread(target=self.server.serve_forever,daemon=True);self.thread.start()
         self.base=f'http://127.0.0.1:{self.server.server_port}'
         page=urllib.request.urlopen(self.base+'/').read().decode()
-        self.token=re.search(r'name="redcn-token" content="([^"]+)"',page)[1]
+        self.token=self.server.desktop_access.token
         local_server.save_result(self.directory,{'fields':{'price':'80000','area':'40'},'titles':['合成测试'],'body':'仅供自动测试','tags':'#测试'})
 
     def tearDown(self):

@@ -1,8 +1,9 @@
 """Explicit capabilities for paired devices, before any phone route dispatch.
 
-Pairing is a workspace invitation, not a public user-registration API. These
-roles do not claim separate per-user tenants or ownership of arbitrary files.
-The desktop token remains the only authority that can manage device grants.
+Pairing is an invitation to the owner's isolated workspace. A phone's creator
+identity does not replace that owner: access is delegated explicitly by role.
+The private desktop credential alone can manage device grants. HTTP handlers
+check their immutable workspace-owner scope before dispatching these routes.
 """
 import json
 from pathlib import Path
@@ -16,12 +17,14 @@ _MEDIA = r'[a-f0-9]{64}'
 _VIEW_GET = (r'state', r'cards', rf'cards/{_CARD}(?:\.zip)?',
              rf'(?:media|previews)/{_MEDIA}', rf'card-exports/{_CARD}', rf'exports/{_ASSET}')
 _EDITOR_GET = (r'learning', r'language', r'language/catalog/(?:title|description|tags)',
+               r'acceptance-evidence', r'route-provider', r'device-delivery/context', rf'photo-instances/{_CARD}',
                r'universities', r'city-pois', r'listing-watch', r'listing-watch/items',
                r'listing-watch/notifications',r'activity-log',rf'fact-revisions/{_CARD}',rf'jobs/{_CARD}',
                r'import-diagnostics', r'photo-ai', r'design', rf'design-images/{_CARD}',
                rf'dossier-(?:options|design)/{_CARD}', r'photo-duplicates',
                r'dictionary-reviews',rf'publication-review/{_CARD}')
 _EDITOR_POST = (r'learning', r'logout', r'import', rf'cards/{_CARD}/(?:prepare|analyze|routes|rewrite|edit-text)',
+                r'acceptance-evidence', r'route-provider/calculate', rf'photo-instances/{_CARD}',
                 r'university-route-cache/(?:lookup|remember)',
                 r'language/search', r'universities/search', r'city-pois/search', r'translate',
                 r'listing-watch/read', r'card-export', r'listing-map',r'design',r'design-images',

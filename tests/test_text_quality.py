@@ -14,6 +14,28 @@ import local_content
 
 
 class TextQualityTests(unittest.TestCase):
+    def test_tv_stand_is_not_evidence_of_a_television(self):
+        self.assertEqual(claims('Есть ТВ-тумба.', 'ru'), {'tvStand': {'present'}})
+        self.assertEqual(claims('Есть тумба под телевизор.', 'ru'), {'tvStand': {'present'}})
+        for word in ('电视柜', '电视机柜', '电视架'):
+            self.assertEqual(claims('配有'+word+'。', 'zh'), {'tvStand': {'present'}})
+        self.assertEqual(claims('配有电视和电视柜。', 'zh'), {'tv': {'present'}, 'tvStand': {'present'}})
+        self.assertTrue(polarity_issues('Есть ТВ-тумба.', '配有电视。', 'ru', 'zh', require_mentions=True))
+
+    def test_isolated_rooms_do_not_create_a_bathtub(self):
+        self.assertNotIn('bathtub', claims('Есть 2 изолированные комнаты.', 'ru'))
+        self.assertIn('bathtub', claims('Есть ванна.', 'ru'))
+
+    def test_registration_refusal_and_induction_hob_are_recognized(self):
+        self.assertEqual(claims('Владелец не оформляет временную регистрацию.', 'ru'), {'registration': {'absent'}})
+        self.assertEqual(claims('Есть индукционная плита.', 'ru'), {'hob': {'present'}})
+
+    def test_negative_list_suffix_does_not_cross_a_positive_or_contrast(self):
+        self.assertEqual(claims('Холодильника, обеденного стола и стульев нет в комплектации.', 'ru'),
+            {'fridge': {'absent'}, 'table': {'absent'}, 'chairs': {'absent'}})
+        self.assertEqual(claims('Холодильник есть, но стульев нет.', 'ru'),
+            {'fridge': {'present'}, 'chairs': {'absent'}})
+
     def test_json_duplicate_keys_and_extra_fields_are_rejected(self):
         for text in ('{"title":"一", "body":"二", "body":"三"}',
             '{"title":"一","body":"二","phone":"123"}',

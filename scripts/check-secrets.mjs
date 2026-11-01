@@ -4,13 +4,14 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import path from 'node:path';
 
 const secretRules=[
+ ['Cloud recovery/capability key',/[\"']?(?:ownerKey|cipherKey|registrationKey)[\"']?\s*[:=]\s*[\"'][a-f0-9]{64}[\"']/g],
  ['GitHub token',/\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{50,})\b/g],
  ['OpenAI key',/\bsk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{35,}\b/g],
  ['Telegram bot token',/\b\d{7,12}:[A-Za-z0-9_-]{30,}\b/g],
  ['Private key',/-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/g],
  ['AWS access key',/\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g],
 ];
-const forbiddenFile=/(?:^|\/)(?:\.env(?:\..*)?|cookies?(?:\.[^/]+)?|phone-access\.json|phone-profile\.json|auth(?:entication)?[-_.][^/]+|[^/]+\.sqlite3(?:-wal|-shm)?|\.redcn-cache|\.venv)(?:\/|$)/i;
+const forbiddenFile=/(?:^|\/)(?:\.env(?:\..*)?|cookies?(?:\.[^/]+)?|phone-access\.json|phone-profile\.json|cloud-backup-credentials\.json|redcn-cloud-recovery-key\.json|desktop-owner\.json|auth(?:entication)?[-_.][^/]+|[^/]+\.sqlite3(?:-wal|-shm)?|\.redcn-cache|\.venv)(?:\/|$)/i;
 export function scanSecretContent(filename,content){
  const hits=[];
  if(forbiddenFile.test(filename))hits.push({file:filename,line:0,reason:'Runtime/private file is tracked'});

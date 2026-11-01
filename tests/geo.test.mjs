@@ -40,7 +40,7 @@ test('each published official-name entry and reviewed runtime label has a dated 
  names[0].sourceIds.length=0;assert(officialGeoNames()[0].sourceIds.length,'public getter detaches source references');
 });
 test('official printed line names are usable while membership matches exact line identity only',()=>{
- assert.equal(resolveGeoLine('Сокольническая линия').zh,'驯隼人村庄线');assert.equal(translateGeo('Большая кольцевая'),'大环线（Большая кольцевая линия）');assert.equal(resolveGeoLine('Рублёво-Архангельская'),undefined,'map lacks this new line, do not create a name');
+ assert.equal(resolveGeoLine('Сокольническая линия').zh,'驯隼人村庄线');assert.equal(translateGeo('Большая кольцевая'),'大环线（Большая кольцевая линия）');assert.equal(resolveGeoLine('Рублёво-Архангельская').translationStatus,'community','the new source is community nomenclature, not the old official legend');assert.equal(resolveGeoLine('Рублёво-Архангельская').officialNameEvidence,undefined);
  const pairs=GEO_CATALOG.records.flatMap(row=>(row.officialMembershipEvidence||[]).map(evidence=>({row,evidence})));assert.equal(pairs.length,14);assert.equal(GEO_CATALOG.officialStationLineAssertions.length,16);
  for(const {row,evidence}of pairs){assert.equal(row.ru.toLowerCase(),evidence.ru.toLowerCase());assert.equal(evidence.scope,'station-line-membership');assert.equal(evidence.translationStatus,'unchanged');}
  const legacy=GEO_CATALOG.records.find(row=>row.ru==='Каховская'&&row.lines.includes('11'));assert.equal(legacy.officialMembershipEvidence,undefined);assert.equal(legacy.serviceStatus,'not_verified');

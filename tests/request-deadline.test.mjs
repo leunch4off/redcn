@@ -93,7 +93,8 @@ test('service worker timeout returns only the constant offline page and clears i
 test('worker photo endpoint uses the same compatible body deadline and preserves image bytes',async()=>{
   const bytes=new Uint8Array([137,80,78,71,13,10,26,10,0]);
   const env=harness({photoSourceUrl,fetch:async(_target,options)=>{assert.equal(typeof options.signal.addEventListener,'function');return new Response(bytes,{headers:{'Content-Type':'image/png'}});}});
-  const worker=(await readFile(new URL('../worker/server.js',import.meta.url),'utf8')).replace('export default','globalThis.workerApi=');vm.runInContext(worker,env.context);
+  const cloud=(await readFile(new URL('../worker/cloud-backup.mjs',import.meta.url),'utf8')).replace(/^export /gm,'');
+  const worker=(await readFile(new URL('../worker/server.js',import.meta.url),'utf8')).replace('export default','globalThis.workerApi=');vm.runInContext(cloud+'\n'+worker,env.context);
   const response=await env.context.workerApi.fetch(new Request('https://app.test/api/photo?url='+encodeURIComponent('https://images.cdn-cian.ru/images/123.jpg')));
   assert.equal(response.status,200);assert.deepEqual(new Uint8Array(await response.arrayBuffer()),bytes);assert.equal(env.timers.size,0);
 });

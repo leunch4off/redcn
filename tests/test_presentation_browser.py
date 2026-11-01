@@ -26,7 +26,7 @@ class PresentationAcceptance(unittest.TestCase):
         base='http://127.0.0.1:'+str(self.controller.server_port)
         try:
             self.page.set_viewport_size({'width':1440,'height':1100})
-            self.page.goto(base+'/listing/'+self.card_id)
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id))
             self.page.wait_for_function("document.getElementById('output').value.includes('两间独立')")
             self.page.locator('#openPresentation').click()
             self.page.wait_for_function("document.getElementById('presentationStatus').textContent.includes('2 фото')")
@@ -100,7 +100,7 @@ class PresentationAcceptance(unittest.TestCase):
         thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
         base='http://127.0.0.1:'+str(self.controller.server_port)
         try:
-            self.page.goto(base+'/');self.page.locator('#price').fill('92000');self.page.locator('#area').fill('46');self.page.locator('#metro').fill('Прокшино');self.page.locator('#generate').click()
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port));self.page.locator('#price').fill('92000');self.page.locator('#area').fill('46');self.page.locator('#metro').fill('Прокшино');self.page.locator('#generate').click()
             self.page.locator('#openPresentation').click()
             try:
                 with self.page.expect_download(timeout=15000) as download:self.page.locator('#presentationHtml').click()

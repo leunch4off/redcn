@@ -39,7 +39,7 @@ class CilievStudioAcceptance(unittest.TestCase):
         acceptance.PhoneBrowserAcceptance.tearDown(self)
 
     def open_studio(self):
-        self.page.goto(self.desktop+'/listing/'+self.card_id,wait_until='domcontentloaded')
+        self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id),wait_until='domcontentloaded')
         self.page.wait_for_function("document.getElementById('output').value.includes('两间独立')")
         self.page.locator('#openPresentation').click()
         self.page.locator('#designCanvasEditor').wait_for()

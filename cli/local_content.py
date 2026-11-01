@@ -11,6 +11,7 @@ import unicodedata
 from learning_memory import LearningMemory
 from text_quality import (parse_card, language_check, polarity_issues, translation_checks,
     LISTING_SYSTEM, TRANSLATION_SYSTEM)
+from rental_conditions import fee_issues, metro_proximity_issues
 
 FACT_KEYS = ('city', 'district', 'districtZh', 'complex', 'metro', 'metroLine', 'walk',
     'area', 'rooms', 'floor', 'floors', 'price', 'priceCurrency', 'pricePeriod',
@@ -75,7 +76,9 @@ def _content_fingerprint(text):
 
 def _numeral_text(text):
     text=re.sub(r'(?<=\d),(?=\d{3}(?:\D|$))','',text)
-    text=re.sub(r'(?<=\d)\s*[wW](?=\W|$)','万',text)
+    # Chinese letters are word characters too: 8.5W独立两居 is the same rent
+    # as 85000, not a new unrelated 8.5. Do not consume a Latin word suffix.
+    text=re.sub(r'(?<=\d)\s*[wW](?![A-Za-z0-9_])','万',text)
     return text.replace(',','.')
 
 
@@ -129,6 +132,8 @@ def validate_draft(draft, baseline, fields=None):
         if claim in output and claim not in reference:
             issues.append('Не подтверждена формулировка: '+claim)
     issues.extend(polarity_issues(reference,output))
+    issues.extend(fee_issues(reference, output))
+    issues.extend(metro_proximity_issues(reference, output, fields))
     if re.search(r'佣金|中介费|电话|微信|微訊|v信|https?://|\b(?:wechat|weixin|whatsapp|telegram|vx)\b', output, re.I):
         issues.append('В черновик попал контакт или комиссия')
     if re.search(r'售价|出售|购买|买房',output) and not re.search(r'售价|出售|购买|买房',reference):

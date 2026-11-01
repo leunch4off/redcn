@@ -1,0 +1,2 @@
+# Optional authenticated encryption for private cloud workspace bundles.
+cryptography>=44,<50

@@ -61,7 +61,15 @@ def dispatch(directory, path, data=None, *, actor='operator'):
         if not isinstance(data, dict):
             raise ValueError('Нужен объект запроса памяти')
         action = data.get('action', 'record')
-        if action in ('generate-preview', 'translate-preview'):
+        if action == 'record-post-stat':
+            if set(data)-{'action', 'post', 'approved'}:
+                raise ValueError('Неизвестные поля наблюдения публикации')
+            value = {'event': memory.record_post_observation(data.get('post'), approved=data.get('approved', False))}
+        elif action == 'compare-post-stats':
+            if set(data) != {'action', 'eligibleTags'}:
+                raise ValueError('Нужны только теги, подходящие по фактам текущей квартиры')
+            value = memory.compare_post_observations(data['eligibleTags'])
+        elif action in ('generate-preview', 'translate-preview'):
             import local_content
             value = (local_content.generate_preview if action == 'generate-preview'
                 else local_content.translate_preview)(directory, data)

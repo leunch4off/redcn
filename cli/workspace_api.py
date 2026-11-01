@@ -13,6 +13,8 @@ import sqlite3
 class WorkspaceAPI:
     @staticmethod
     def request_limit(path):
+        if path == 'acceptance-evidence':
+            return 32_000
         from workspace_backup import request_limit
         return request_limit(path)
 
@@ -55,8 +57,18 @@ class WorkspaceAPI:
     def dispatch(self, path, data=None, *, namespace='local', query=None, actor=None):
         import language_service
         try:
+            from cloud_backup import dispatch as dispatch_cloud_backup
+            cloud = dispatch_cloud_backup(self.directory, path, data, namespace=namespace)
+            if cloud:
+                return cloud
             import workspace_backup
             document=workspace_backup.dispatch(self.directory,path,data,namespace=namespace)
+            if document:return document
+            import device_delivery
+            document=device_delivery.dispatch(self.directory,path,data)
+            if document:return document
+            import acceptance_evidence
+            document=acceptance_evidence.dispatch(self.directory,path,data,actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone'))
             if document:return document
             import publication_review
             document=publication_review.dispatch(self.directory,path,data,actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone'))
@@ -66,6 +78,9 @@ class WorkspaceAPI:
             if document:return document
             import university_route_cache
             document=university_route_cache.dispatch(self.directory,path,data)
+            if document:return document
+            import route_provider
+            document=route_provider.dispatch(self.directory,path,data)
             if document:return document
             if re.fullmatch(r'fact-revisions/[a-f0-9]{32}',path) and data is None:
                 from fact_ledger import list_fact_revisions

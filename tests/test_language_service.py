@@ -180,7 +180,7 @@ class AuthenticatedLanguageRoutes(unittest.TestCase):
     def test_desktop_token_protects_search_and_catalog_and_phone_exports_binary(self):
         base='http://127.0.0.1:'+str(self.desktop.server_port)
         page=urllib.request.urlopen(base+'/').read().decode()
-        token=re.search(r'name="redcn-token" content="([^"]+)"',page)[1]
+        token=self.desktop.desktop_access.token
         for path in ('language','language/catalog/title'):
             with self.assertRaises(urllib.error.HTTPError) as caught:urllib.request.urlopen(base+'/api/local/'+path)
             self.assertEqual(caught.exception.code,403)

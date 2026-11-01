@@ -76,6 +76,14 @@ class GroundedContent(unittest.TestCase):
             {'titles':['莫斯科40㎡'],'body':'月租8万卢布，配有沙发。'}, {'price':'80000','area':'40'}),[])
         self.assertEqual(content.validate_draft({'title':'莫斯科40㎡｜8W/月','body':'莫斯科公寓，40㎡，月租80,000₽，配有沙发。'},
             {'titles':['莫斯科40㎡'],'body':'月租8万卢布，配有沙发。'}, {'price':'80000','area':'40'}),[])
+    def test_decimal_w_price_adjacent_to_chinese_title_matches_the_ruble_price(self):
+        baseline = {'body': '莫斯科，月租85000卢布。'}
+        for title in ('莫斯科8.5W独立两居', '莫斯科8.5w公寓', '莫斯科8.5W/月'):
+            with self.subTest(title=title):
+                self.assertEqual(content.validate_draft({'title': title, 'body': baseline['body']},
+                    baseline, {'price': '85000'}), [])
+        self.assertTrue(content.validate_draft({'title': '莫斯科8.7W公寓', 'body': baseline['body']},
+            baseline, {'price': '85000'}))
     def test_bilingual_approved_memory_and_pending_is_never_used(self):
         memory=LearningMemory(self.directory)
         memory.record('translation',{'ru':'есть стол','zh':'有桌子'},status='approved')

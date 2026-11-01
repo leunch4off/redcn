@@ -15,7 +15,7 @@ test('official metro supplement is bounded to reviewed pairs and attributes ever
     for(const id of row.sourceIds){const source=sources.get(id);assert(source);assert.equal(source.evidenceType,'official-transport');assert.equal(source.verifiedAt,row.checkedAt);}
   }
   for(const source of sources.values()){
-    const url=new URL(source.url);assert.equal(url.protocol,'https:');assert(['mosmetro.ru','www.mosmetro.ru','transport.mos.ru'].includes(url.hostname));
+    const url=new URL(source.url);assert.equal(url.protocol,'https:');assert(['mosmetro.ru','www.mosmetro.ru','transport.mos.ru','ac.mos.ru'].includes(url.hostname));
     assert.equal(source.status,'verified');assert(source.retrievalMethod);assert.equal(source.sha256,undefined);
   }
 });

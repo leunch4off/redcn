@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -15,6 +16,23 @@ def module(name):
 
 
 class InstallPackageTests(unittest.TestCase):
+    def test_existing_venv_launcher_does_not_invoke_broken_global_python(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); binary = root/'bin'; binary.mkdir()
+            (root/'start-redcn.command').write_bytes((ROOT/'start-redcn.command').read_bytes())
+            venv = root/'.venv/bin'; venv.mkdir(parents=True)
+            (venv/'python').write_text('#!/bin/sh\nif [ "$1" = "-c" ]; then exit 0; fi\nprintf "%s\\n" "$@" > invoked.txt\n')
+            (venv/'python').chmod(0o755)
+            (binary/'python3').write_text('#!/bin/sh\nprintf broken > global-python-invoked.txt\nexit 91\n')
+            (binary/'python3').chmod(0o755)
+            (binary/'node').write_text('#!/bin/sh\nexit 0\n'); (binary/'node').chmod(0o755)
+            result = subprocess.run(['/bin/bash', str(root/'start-redcn.command'), '--port', '8765'],
+                                    env={**os.environ, 'PATH': str(binary)+os.pathsep+'/usr/bin:/bin'},
+                                    cwd=root, input='', capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr+result.stdout)
+            self.assertFalse((root/'global-python-invoked.txt').exists())
+            self.assertEqual((root/'invoked.txt').read_text().splitlines(), ['cli/redcn.py', '--serve', '--port', '8765'])
+
     def test_versions_are_checked_without_running_server_or_installing_dependencies(self):
         installer=module('install-redcn')
         with patch.object(installer.subprocess,'check_output',return_value='v21.9.0'),patch.object(installer.shutil,'which',return_value='/test/node'):

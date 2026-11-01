@@ -107,6 +107,7 @@ def read_catalog(path=None):
             raise ValueError('Неверное основание включения вуза')
         _references(evidence.get('sourceIds'), source_ids)
         _validate_china_student_evidence(university, source_records)
+        _validate_academic_unit_history(university, source_records)
     campus_ids = set()
     for campus in value['campuses']:
         if not isinstance(campus, dict):
@@ -119,6 +120,15 @@ def read_catalog(path=None):
             raise ValueError('Кампус ссылается на неизвестный вуз')
         _validate_place(campus, source_records)
         _string(campus.get('addressRu'), 'campus.addressRu', 1000)
+        _validate_location_lifecycle(campus, source_records)
+    campus_records = {row['id']: row for row in value['campuses']}
+    for campus in value['campuses']:
+        replacement = campus.get('locationLifecycle', {}).get('currentCampusId')
+        if replacement:
+            current = campus_records.get(replacement)
+            if (current is None or current['universityId'] != campus['universityId']
+                    or current.get('locationLifecycle', {}).get('status') in ('former-address', 'closed')):
+                raise ValueError('Исторический адрес должен вести к действующему адресу того же вуза')
     return value, hashlib.sha256(raw).hexdigest()
 
 
@@ -148,12 +158,19 @@ def _validate_coordinates(value, sources):
     evidence = value.get('coordinateEvidence')
     if not isinstance(evidence, dict) or evidence.get('method')!='official-published-point' or evidence.get('scope') not in ('building', 'institution', 'campus'):
         raise ValueError('Для координат нужен первичный источник и область точки')
+    if (evidence.get('boundCampusId') != value.get('id')
+            or fold(evidence.get('boundAddressRu', '')) != fold(value.get('addressRu', ''))
+            or evidence.get('accuracyScope') != 'published-'+evidence['scope']+'-point'):
+        raise ValueError('Точность и координаты должны относиться к выбранному адресному объекту')
     _references(evidence.get('sourceIds'), sources)
     if any(identifier not in value['sourceIds'] for identifier in evidence['sourceIds']):
         raise ValueError('Источник координат должен относиться к выбранному корпусу')
     for identifier in evidence['sourceIds']:
         source = sources[identifier]
-        if value.get('id') not in source.get('campusIds', []) or 'published-coordinate' not in source.get('supports', []) or source.get('verifiedAt')!=evidence.get('checkedAt'):
+        if (value.get('id') not in source.get('campusIds', []) or 'published-coordinate' not in source.get('supports', [])
+                or source.get('verifiedAt')!=evidence.get('checkedAt')
+                or source.get('evidenceType')!='official-university'
+                or source.get('institutionId')!=value.get('universityId')):
             raise ValueError('Источник не подтверждает точку именно выбранного корпуса на указанную дату')
     checked = evidence.get('checkedAt')
     try:
@@ -170,6 +187,71 @@ def _validate_coordinates(value, sources):
     _string(evidence.get('publishedPrecision'), 'coordinateEvidence.publishedPrecision', 200)
     if evidence.get('entranceVerified') is not False:
         raise ValueError('Точка корпуса не подтверждает конкретный доступный вход')
+
+
+def _validate_location_lifecycle(campus, sources):
+    """A former faculty address is not evidence that its building is closed."""
+    evidence = campus.get('locationLifecycle')
+    if evidence is None:
+        return
+    if not isinstance(evidence, dict) or evidence.get('status') not in ('current-listed', 'former-address', 'closed'):
+        raise ValueError('Неверный статус адреса подразделения')
+    _references(evidence.get('sourceIds'), sources)
+    if any(identifier not in campus['sourceIds'] for identifier in evidence['sourceIds']):
+        raise ValueError('История адреса должна подтверждаться источником этого объекта')
+    checked = evidence.get('checkedAt')
+    try:
+        if not isinstance(checked, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', checked) or date.fromisoformat(checked)>date.today():
+            raise ValueError()
+    except ValueError as error:
+        raise ValueError('Неверная дата проверки истории адреса') from error
+    if any(sources[identifier]['verifiedAt'] != checked for identifier in evidence['sourceIds']):
+        raise ValueError('Дата истории адреса не совпадает с проверкой источника')
+    _string(evidence.get('noteRu'), 'locationLifecycle.noteRu', 2500)
+    if evidence.get('status') == 'former-address':
+        if _id(evidence.get('currentCampusId')) == campus['id']:
+            raise ValueError('Исторический адрес не может заменять сам себя')
+        if evidence.get('buildingClosed') is not False:
+            raise ValueError('Переезд подразделения не подтверждает закрытие здания')
+    elif evidence.get('status') == 'closed':
+        scope = evidence.get('closureScope')
+        if scope not in ('department', 'building') or not any(
+                scope+'-closure' in sources[identifier].get('supports', [])
+                for identifier in evidence['sourceIds']):
+            raise ValueError('Закрытие подразделения или корпуса требует отдельного прямого подтверждения')
+    if evidence.get('status') != 'former-address' and evidence.get('currentCampusId') is not None:
+        raise ValueError('Только исторический адрес может иметь замену')
+    if evidence.get('physicalAccessVerified') is not False:
+        raise ValueError('Справочная публикация адреса не подтверждает доступность входа')
+
+
+def _validate_academic_unit_history(university, sources):
+    records=university.get('academicUnitHistory', [])
+    if not isinstance(records,list) or len(records)>100:
+        raise ValueError('Неверная история подразделений вуза')
+    for record in records:
+        if (not isinstance(record,dict) or record.get('status')!='closed'
+                or record.get('closureScope')!='academic-unit-only'
+                or record.get('effectiveClosureDate') is not None):
+            raise ValueError('История подразделения не должна означать закрытие вуза или здания')
+        for key in ('id','ru','zh','noteRu'):
+            _string(record.get(key),'academicUnitHistory.'+key,2500)
+        try:
+            published=date.fromisoformat(record.get('documentDate',''))
+            checked=date.fromisoformat(record.get('checkedAt',''))
+            if published.isoformat()!=record['documentDate'] or checked.isoformat()!=record['checkedAt'] or published>checked or checked>date.today():
+                raise ValueError()
+        except (TypeError,ValueError) as error:
+            raise ValueError('Неверная дата акта о закрытии подразделения') from error
+        _references(record.get('sourceIds'),sources)
+        for identifier in record['sourceIds']:
+            source=sources[identifier]
+            if (identifier not in university['sourceIds'] or source.get('institutionId')!=university['id']
+                    or source.get('evidenceType')!='official-university'
+                    or 'academic-unit-closure' not in source.get('supports',[])
+                    or source.get('verifiedAt')!=record.get('checkedAt')
+                    or source.get('publishedAt')!=record.get('documentDate')):
+                raise ValueError('Закрытие подразделения требует отдельного первичного акта именно этого вуза')
 
 
 def _validate_china_student_evidence(university, sources):
@@ -242,6 +324,7 @@ def _search_text(row, parent=None):
     values = [row['ru'], row['zh'], *row.get('aliases', []), row.get('addressRu', ''),
               row.get('addressZh', ''), row.get('city', ''), row.get('region', '')]
     values.extend(record['personName'] for record in row.get('chinaStudentEvidence',{}).get('accounts',[]))
+    values.extend(record['ru'] for record in row.get('academicUnitHistory',[]))
     if parent:
         values.extend([parent['ru'], parent['zh'], *parent.get('aliases', [])])
     return fold('\n'.join(values))

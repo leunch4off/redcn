@@ -99,7 +99,7 @@ def _payload(kind, value):
         if 'excluded' in value: result['excluded'] = excluded
         return result
     if kind == 'tag_stat':
-        if not {'tag'} <= set(value) <= {'tag', 'views', 'uses', 'observedAt', 'platform', 'context'}:
+        if not {'tag'} <= set(value) <= {'tag', 'views', 'uses', 'observedAt', 'platform', 'context', 'post'}:
             raise ValueError('Неверные поля статистики тега')
         tag = _text(value['tag'], 100).lstrip('#').strip()
         if not re.fullmatch(r'[\w\u3400-\u9fff-]{1,80}', tag):
@@ -112,8 +112,15 @@ def _payload(kind, value):
         platform = value.get('platform', 'rednote')
         if not isinstance(platform, str) or not re.fullmatch(r'[\w-]{1,40}', platform):
             raise ValueError('Неверная площадка')
-        return {'tag': '#'+tag, 'views': views, 'uses': uses, 'observedAt': _stamp(value.get('observedAt')),
-                'platform': platform, 'context': _text(value['context'], 500) if value.get('context') else ''}
+        result = {'tag': '#'+tag, 'views': views, 'uses': uses, 'observedAt': _stamp(value.get('observedAt')),
+                  'platform': platform, 'context': _text(value['context'], 500) if value.get('context') else ''}
+        if 'post' in value:
+            from tag_post_evaluation import normalize_post
+            post = normalize_post(value['post'])
+            if result['tag'] not in post['tags'] or views != post['views'] or uses != 1:
+                raise ValueError('Статистика поста не соответствует тегу, просмотрам или числу публикаций')
+            result['post'] = post
+        return result
     raise ValueError('Неизвестный вид учебного примера')
 
 
@@ -352,9 +359,20 @@ class LearningMemory:
         grouped = {tag: [] for tag in tags}
         with self._db() as db:
             rows = db.execute("SELECT payload FROM examples WHERE status='approved' AND kind='tag_stat'").fetchall()
+        legacy, latest_posts = [], {}
         for row in rows:
             payload = json.loads(row[0])
-            if payload['tag'] in grouped: grouped[payload['tag']].append(payload)
+            post = payload.get('post')
+            if isinstance(post, dict):
+                previous = latest_posts.get(post['postId'])
+                if previous is None or post['observedAt'] > previous['post']['observedAt']:
+                    latest_posts[post['postId']] = payload
+            else:
+                legacy.append(payload)
+        for payload in [*legacy, *latest_posts.values()]:
+            measured_tags = payload.get('post', {}).get('tags', [payload['tag']])
+            for tag in measured_tags:
+                if tag in grouped: grouped[tag].append({**payload, 'tag': tag})
         result = []
         for tag in tags:
             measurements = grouped[tag]
@@ -369,6 +387,32 @@ class LearningMemory:
                            'confidence': 'unmeasured' if not known else 'limited' if len(known)<5 else 'observed',
                            'source': 'manual', 'causalEffectKnown': False})
         return sorted(result, key=lambda row: -row['score'])[:limit]
+
+    def record_post_observation(self, post, *, approved=False):
+        """One real publication observation, not one duplicate row per tag."""
+        from tag_post_evaluation import normalize_post
+        if type(approved) is not bool:
+            raise ValueError('Подтверждение наблюдения должно быть явным')
+        post = normalize_post(post)
+        stamp = post['observedAt']
+        if len(stamp) == 10:
+            # This legacy ranking field needs a timestamp. The canonical post
+            # keeps its date-only precision; matched analysis uses that value.
+            stamp += 'T00:00:00+00:00'
+        payload = {'tag': post['tags'][0], 'views': post['views'], 'uses': 1,
+                   'observedAt': stamp, 'post': post}
+        event_id = 'post-stat-'+_hash(_json(post))[:40]
+        return self.record('tag_stat', payload, source='manual',
+            status='approved' if approved else 'pending', group_id=post['postId'], event_id=event_id)
+
+    def compare_post_observations(self, eligible_tags):
+        from tag_post_evaluation import compare_posts, MAX_POSTS
+        with self._db() as db:
+            values = db.execute("SELECT payload FROM examples WHERE status='approved' AND kind='tag_stat' ORDER BY created DESC LIMIT ?", (MAX_POSTS,)).fetchall()
+            pending = db.execute("SELECT COUNT(*) FROM examples WHERE status='pending' AND kind='tag_stat'").fetchone()[0]
+        posts = [row['post'] for value in values if isinstance((row := json.loads(value[0])).get('post'), dict)]
+        return {**compare_posts(posts, eligible_tags), 'pendingTagObservationsExcluded': pending,
+                'legacyTagOnlyObservationsExcluded': len(values)-len(posts)}
 
     @staticmethod
     def _training_row(row):

@@ -33,11 +33,24 @@ async function withRequestDeadline(milliseconds,operation,{signal:externalSignal
 }
 
 /* Phone scope only. Private cards, media, pairing and API responses are NEVER cached. */
-const PHONE_PUBLIC_CACHE='redcn-phone-public-v25';
+const PHONE_PUBLIC_CACHE='redcn-phone-public-v26';
 const PHONE_PUBLIC_ASSETS=new Set(['/phone/manifest.webmanifest','/phone/icons/icon-192.png','/phone/icons/icon-512.png','/phone/icons/apple-touch-icon.png']);
 const PHONE_OFFLINE_PAGE=`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#34543a"><title>МОСТ · нет связи</title><style>body{margin:0;background:#f5f5f0;color:#263d2b;font:16px/1.6 system-ui;padding:calc(60px + env(safe-area-inset-top)) 24px 40px}main{max-width:380px;margin:auto}h1{font-size:30px;line-height:1.15}p{color:#657260}button{width:100%;border:0;border-radius:14px;background:#34543a;color:white;font:600 16px system-ui;min-height:50px;padding:12px}</style><main><p>МОСТ · СВЯЗЬ С КОМПЬЮТЕРОМ</p><h1>Сейчас Mac недоступен</h1><p>Проверьте интернет и включённый сервер МОСТ на Mac. Для адреса 192.168… нужна домашняя сеть; внешняя HTTPS-ссылка работает через интернет.</p><p>Когда связь вернётся, готовые карточки и фото снова появятся здесь.</p><button onclick="location.reload()">Проверить связь</button></main></html>`;
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(PHONE_PUBLIC_CACHE);await Promise.all([...PHONE_PUBLIC_ASSETS].map(async path=>{try{const response=await fetch(path,{credentials:'omit',cache:'reload'});if(response.ok&&response.type!=='opaque')await cache.put(path,response);}catch{}}));await self.skipWaiting();})());});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key.startsWith('redcn-phone-public-')&&key!==PHONE_PUBLIC_CACHE)await caches.delete(key);await self.clients.claim();})());});
+self.addEventListener('notificationclick',event=>{
+  const notice=event.notification;
+  if(notice?.data?.redcnDeviceDelivery!==1||!/^redcn-notice-[a-f0-9]{16}-[a-f0-9]{32}$/u.test(notice.tag||''))return;
+  notice.close();
+  event.waitUntil((async()=>{
+    const target=new URL('/phone/',self.location.origin);
+    for(const client of await self.clients.matchAll({type:'window',includeUncontrolled:true})){
+      let url;try{url=new URL(client.url);}catch{continue;}
+      if(url.origin===target.origin&&url.pathname.startsWith('/phone/')&&typeof client.focus==='function')return client.focus();
+    }
+    return self.clients.openWindow(target.href);
+  })());
+});
 self.addEventListener('fetch',event=>{
   const request=event.request,url=new URL(request.url);
   if(request.method!=='GET'||url.origin!==self.location.origin)return;

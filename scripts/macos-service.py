@@ -175,7 +175,10 @@ def service_status(domain, home=None):
         with opener.open('http://127.0.0.1:8765/api/local/health', timeout=2) as response:
             health = json.loads(response.read(4097))
         expected_storage = hashlib.sha256(str((home/'.cache'/'redcn').resolve()).encode()).hexdigest()
-        editor = health == {'app':'redcn', 'protocol':7, 'storage':expected_storage, 'browser_channel':'chrome'}
+        expected = {'app':'redcn', 'protocol':7, 'storage':expected_storage, 'browser_channel':'chrome'}
+        # Version and job counters are additive health metadata. Verify the
+        # owned service identity without rejecting a newer healthy release.
+        editor = isinstance(health, dict) and all(health.get(key) == value for key, value in expected.items())
     except (OSError, ValueError):
         pass
     try:

@@ -9,3 +9,10 @@ test('both editors reuse existing authenticated api and send only origin and rou
  for(const call of calls)assert.deepEqual(call.payload,{origin:{latitude:55.7,longitude:37.5,address:'Москва, адрес'},route:row});
  assert.deepEqual(createUniversityRouteCacheCallbacks(null),{});
 });
+
+test('route calculation sends explicit points and mode through authenticated API, without private listing content',async()=>{
+ const calls=[],callbacks=createUniversityRouteCacheCallbacks(async(path,payload)=>{calls.push({path,payload});return {ok:true};});
+ const row={mode:'walk',originPoint:{latitude:55.7,longitude:37.5,kind:'building-entrance'},destinationPoint:{latitude:55.71,longitude:37.51,kind:'metro-exit'},useEntrances:true};
+ await callbacks.calculateRoute(row,{photos:['private'],body:'private',sourceHtml:'private'});
+ assert.equal(calls[0].path,'route-provider/calculate');assert.equal(calls[0].payload.shareCoordinates,true);assert.equal(calls[0].payload.useEntrances,true);assert.equal(calls[0].payload.mode,'walk');assert.equal(JSON.stringify(calls).includes('private'),false);
+});

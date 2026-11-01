@@ -33,9 +33,18 @@ class PhoneDesignerLoadingBrowserTests(unittest.TestCase):
             raise
 
     def test_selected_card_prewarms_only_public_module_and_open_reads_template_in_parallel(self):
-        modules, designs = [], []
+        modules, designs, photos = [], [], []
         self.page.route('**/phone/designer.mjs', lambda route: modules.append(route))
         self.page.route('**/api/phone/design', lambda route: designs.append(route))
+        # The card's <img> previews may load normally. Hold only the designer's
+        # authenticated fetches so first-canvas and photo redraw readiness can
+        # be proved independently, without racing a fast local image response.
+        def hold_designer_photo(route):
+            if route.request.resource_type == 'fetch':
+                photos.append(route)
+            else:
+                route.continue_()
+        self.page.route('**/api/phone/media/*', hold_designer_photo)
         fixture.PhoneBrowserAcceptance.connect(self)
         self.assertEqual(modules, [], 'The initial feed does not need the designer')
         self.open_card()
@@ -59,7 +68,15 @@ class PhoneDesignerLoadingBrowserTests(unittest.TestCase):
         print('COLD_DESIGNER_FIXTURE_EDITOR_MS='+str(round((time.perf_counter()-started)*1000, 1)), flush=True)
         print('DESIGNER_PHASES='+str(self.page.evaluate("({mount:{...document.getElementById('phoneDesignMount').dataset},canvas:{...document.getElementById('designCanvasEditor').dataset}})")), flush=True)
         self.assertEqual(self.page.locator('#designCanvasEditor').get_attribute('data-preview-ready'), 'true')
-        self.page.wait_for_function("document.getElementById('phoneDesignMount').dataset.photosReady==='true'")
+        first_draws = self.page.locator('#designCanvasEditor').evaluate('node=>Number(node.dataset.drawCount)')
+        self.assertGreaterEqual(first_draws, 1, 'Editor-ready requires a genuinely painted canvas')
+        self.assertEqual(self.page.locator('#phoneDesignMount').get_attribute('data-photos-ready'), 'false')
+        self.page.unroute('**/api/phone/media/*', hold_designer_photo)
+        for route in photos:
+            route.continue_()
+        # Decoded photos invalidate the first preview. Wait for the subsequent
+        # real draw, not just the once-set editor-ready milestone.
+        self.page.wait_for_function("draws=>document.getElementById('phoneDesignMount').dataset.photosReady==='true'&&document.getElementById('designCanvasEditor').dataset.previewReady==='true'&&Number(document.getElementById('designCanvasEditor').dataset.drawCount)>draws", arg=first_draws)
         self.assertEqual(len(designs), 1, 'The common studio consumes the prefetched read, not a second GET')
         self.assertGreaterEqual(self.page.locator('#phoneDesignMount').evaluate('node=>Number(node.dataset.editorMs)'), 0)
         self.assertTrue(self.page.evaluate("performance.getEntriesByName('redcn-designer-editor-ready').length>0&&performance.getEntriesByName('redcn-designer-photos-ready').length>0"))
@@ -79,6 +96,7 @@ class PhoneDesignerLoadingBrowserTests(unittest.TestCase):
         designs[0].fulfill(json={'template': None, 'updated': None, 'rules': {}})
         self.wait_editor_ready()
         self.page.locator('#designCanvasEditor').wait_for()
+        self.page.wait_for_function("document.getElementById('phoneDesignMount').dataset.photosReady==='true'&&document.getElementById('designCanvasEditor').dataset.previewReady==='true'")
         self.assertEqual(self.page.locator('#designCanvasEditor').get_attribute('data-preview-ready'), 'true')
 
     def test_save_data_disables_only_the_automatic_warmup(self):

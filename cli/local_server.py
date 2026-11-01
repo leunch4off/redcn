@@ -5,6 +5,7 @@ from datetime import datetime
 import errno
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.cookies import SimpleCookie, CookieError
 from pathlib import Path
 import re
 import secrets
@@ -22,6 +23,7 @@ import card_api
 import language_service
 import learning_service
 import http_delivery
+from workspace_ownership import WorkspaceOwner, DesktopOwnerAccess, OwnershipError
 from fact_ledger import validate_result_fields, record_fact_revision
 from source_readiness import source_readiness
 
@@ -120,11 +122,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     if browser_channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    token, jobs, lock = secrets.token_urlsafe(32), {}, threading.Lock()
+    owner_scope = WorkspaceOwner(directory)
+    desktop_access = DesktopOwnerAccess(owner_scope)
+    token, jobs, lock = desktop_access.token, {}, threading.Lock()
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v25', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v26', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
@@ -154,7 +158,9 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             with lock:
                 jobs[job_id].update(message=message)
                 jobs[job_id]['tracker'].update(message,**fields)
-            try:workspace.diagnostics.record(audit_tokens.get(job_id), message, **fields)
+            try:
+                owner_scope.check()
+                workspace.diagnostics.record(audit_tokens.get(job_id), message, **fields)
             except (OSError, ValueError, sqlite3.Error):pass
         connection = None
         listing = None
@@ -163,6 +169,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         success=False
         learn=False
         try:
+            owner_scope.check()
             report('Проверяем общий генератор Node.js до запуска Chrome…',stage='preflight')
             from node_runtime import resolve_node
             resolve_node()
@@ -190,11 +197,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if cancel.is_set(): raise ValueError('Импорт отменён')
             from phone_relay import cache_photos
             result['mediaStatus']='loading'
+            owner_scope.check()
             result_id = save_result(directory, result, actor=actor, kind='import')
             cache_photos(directory,result,report,cancel)
             from photo_generation import photo_revision
             photo_generated=photo_revision(directory,result,text=listing['text'],rules=params.get('rules'),prefs=params.get('prefs'),report=report,cancel=cancel)
             report('Сохраняем карточку и подготовленные фотографии…',stage='save')
+            owner_scope.check()
             merge_prepared_media(directory,result_id,result,photo_baseline=photo_baseline,photo_generated=photo_generated)
             learn,outcome=photo_outcome(result)
             readiness=listing['sourceReadiness']
@@ -210,6 +219,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             failure = error
             if result_id:
                 try:
+                    owner_scope.check()
                     current=read_result(directory,result_id)
                     if current and current.get('mediaStatus')=='loading':
                         current['mediaStatus']='cancelled' if cancel.is_set() else 'error'
@@ -223,11 +233,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 audit_token = audit_tokens.pop(job_id, None)
             try:
                 if audit_token:
+                    owner_scope.check()
                     workspace.diagnostics.complete(audit_token,
                         'success' if success else 'cancelled' if cancel.is_set() else 'error',
                         progress=measured, capture=(listing or {}).get('capture'), error=failure)
             except (OSError, ValueError, sqlite3.Error):pass
             try:
+                owner_scope.check()
                 from activity_log import record_import_attempt
                 stages = {row['id']:row.get('elapsedSeconds', 0) for row in measured.get('stages', []) if isinstance(row,dict) and isinstance(row.get('id'),str)}
                 outcome = 'cancelled' if cancel.is_set() else 'partial' if success and not learn else 'done' if success else 'needs_attention' if failure and type(failure).__name__ == 'NeedsAttention' else 'error'
@@ -236,6 +248,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if connection is not None:connection.close()
 
     def start_import(params, *, actor='Mac owner'):
+        owner_scope.check()
         from learning_scheduler import touch_foreground
         touch_foreground(directory)
         if not isinstance(actor,str) or not actor.strip() or len(actor)>100:
@@ -276,6 +289,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         return {'id':selected,**job_status(selected)}
 
     def prepare_card(result_id,*,analyze=False):
+        owner_scope.check()
         from learning_scheduler import touch_foreground
         touch_foreground(directory)
         from phone_relay import cache_photos
@@ -312,6 +326,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     generated=photo_revision(directory,result,rules=profile.get('rules'),prefs=profile.get('prefs'),report=report,cancel=cancel)
                 if cancel.is_set():raise ValueError('Загрузка отменена')
                 report('Сохраняем подготовленные фотографии…',stage='save')
+                owner_scope.check()
                 merge_prepared_media(directory,result_id,result,photo_baseline=baseline,photo_generated=generated)
                 learn,outcome=photo_outcome(result)
                 success=True
@@ -337,7 +352,9 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             self.send_header('X-Frame-Options','DENY')
             for key,val in compression.items():self.send_header(key,val)
             for key,val in (headers or {}).items():self.send_header(key,val)
-            self.end_headers();self.wfile.write(content)
+            self.end_headers()
+            try:self.wfile.write(content)
+            except (BrokenPipeError,ConnectionResetError):pass
 
         def permitted(self, api=False):
             host = f'127.0.0.1:{self.server.server_port}'
@@ -346,9 +363,21 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             origin = self.headers.get('Origin')
             if origin and origin != 'http://'+host:
                 self.respond(403,{'error':'Неверный источник запроса'});return False
-            if api and not secrets.compare_digest(self.headers.get('X-Redcn-Token',''), token):
+            try:
+                owner_scope.check()
+            except (OwnershipError, OSError):
+                self.respond(403,{'error':'Недоступно рабочее пространство владельца','code':'WORKSPACE_OWNER_MISMATCH'});return False
+            if api and not desktop_access.authorized(self.headers.get('X-Redcn-Token','')):
                 self.respond(403,{'error':'Обновите страницу локального сайта'});return False
             return True
+
+        def desktop_owner(self):
+            try:
+                cookies=SimpleCookie();cookies.load(self.headers.get('Cookie',''))
+                item=cookies.get(desktop_access.cookie_name(self.server.server_port))
+                return bool(item and desktop_access.authorized_cookie(item.value,self.server.server_port))
+            except (ValueError, TypeError, CookieError):
+                return False
 
         def do_GET(self):
             if not self.permitted(): return
@@ -358,6 +387,16 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 # source URLs, pairing material or card contents leave this route.
                 with lock: active_jobs=sum(job.get('state')=='running' for job in jobs.values())
                 self.respond(200,{**identity,'activeJobs':active_jobs});return
+            if path == '/api/local/owner-proof':
+                query=parse_qs(urlsplit(self.path).query)
+                try:
+                    if set(query)!={'challenge'} or len(query['challenge'])!=1:raise ValueError()
+                    proof=desktop_access.proof(self.server.server_port,query['challenge'][0])
+                except (ValueError,TypeError):self.respond(400,{'error':'Неверный запрос подтверждения владельца'});return
+                self.respond(200,{'proof':proof});return
+            if path == desktop_access.session_path(self.server.server_port):
+                if not self.desktop_owner():self.respond(403,{'error':'Откройте редактор от владельца'});return
+                self.respond(200,{'token':token});return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
                 if path == '/api/local/phone-sessions':
@@ -411,7 +450,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if not page_path.exists():
                     self.respond(503,{'error':'Сначала выполните npm run build'});return
                 page = page_path.read_text(encoding='utf-8').replace('name="redcn-hosting" content="github-pages"','name="redcn-hosting" content="local"')
-                page = page.replace('<meta charset="utf-8">','<meta charset="utf-8"><base href="/"><meta name="redcn-browser-channel" content="'+browser_channel+'"><meta name="redcn-token" content="'+token+'">',1)
+                visible_token=''
+                page = page.replace('<meta charset="utf-8">','<meta charset="utf-8"><base href="/"><meta name="redcn-browser-channel" content="'+browser_channel+'"><meta name="redcn-workspace" content="'+owner_scope.owner_id+'"><meta name="redcn-token" content="'+visible_token+'">',1)
                 page = page.replace('GitHub Pages · данные локально','Локально · Chrome подключён')
                 self.respond(200,page.encode(),'text/html; charset=utf-8');return
             files = {'/plan.json':redcn.ROOT/'plan.json', '/research.json':redcn.ROOT/'data/research.json', '/knowledge-seed.json':redcn.ROOT/'data/knowledge-seed.json'}
@@ -420,6 +460,19 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             self.respond(404,{'error':'Не найдено'})
 
         def do_POST(self):
+            if urlsplit(self.path).path == '/api/local/desktop-access':
+                if not self.permitted():return
+                host='http://127.0.0.1:'+str(self.server.server_port)
+                if self.headers.get('Origin')!=host:
+                    self.respond(403,{'error':'Откройте локальный редактор от владельца'});return
+                try:
+                    size=int(self.headers.get('Content-Length','0'))
+                    if self.headers.get_content_type()!='application/json' or not 1<=size<=256:raise ValueError()
+                    data=json.loads(self.rfile.read(size))
+                    if not isinstance(data,dict) or set(data)!={'token'} or not desktop_access.authorized(data['token']):raise ValueError()
+                except (ValueError, TypeError):
+                    self.respond(403,{'error':'Откройте локальный редактор от владельца'});return
+                self.respond(200,{'ok':True,'sessionPath':desktop_access.session_path(self.server.server_port)},headers={'Set-Cookie':desktop_access.cookie(self.server.server_port)});return
             if not self.permitted(api=True): return
             try:
                 if self.headers.get_content_type() != 'application/json': raise ValueError('Нужен JSON')
@@ -505,6 +558,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 self.respond(400,{'error':str(error)})
 
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
+    server.workspace_owner=owner_scope
+    server.desktop_access=desktop_access
     from photo_ai_runtime import start_background
     start_background(directory)
     from learning_scheduler import start_background as start_learning_background
@@ -559,13 +614,44 @@ def bind_or_reuse(directory, port, browser_channel='chrome'):
     raise ValueError('Не найден свободный порт. Используйте --port 0 для автоматического выбора.')
 
 
-def enable_existing_phone(port,phone_port):
+def owner_launch_url(directory, port, result_id=None):
+    """Owner CLI only: bootstrap from its private credential, never HTTP HTML."""
+    scope=WorkspaceOwner(directory)
+    access=DesktopOwnerAccess(scope,create=False)
+    verify_existing_owner(access,port)
+    return access.launch_url(port,result_id)
+
+
+def verify_existing_owner(access,port):
+    """A public health identity alone cannot authenticate a localhost listener."""
+    if type(port) is not int or not 1<=port<=65535:raise ValueError('Неверный порт локального редактора')
+    challenge=secrets.token_hex(16)
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*_args,**_kwargs):return None
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+    with opener.open('http://127.0.0.1:'+str(port)+'/api/local/owner-proof?challenge='+challenge,timeout=3) as response:
+        proof=json.loads(response.read(1025))
+    if not isinstance(proof,dict) or not secrets.compare_digest(str(proof.get('proof','')),access.proof(port,challenge)):
+        raise OwnershipError('Работающий сервер не подтвердил владельца рабочего пространства')
+
+
+def open_existing(directory, port=8765, result_id=None):
+    """Open a verified existing controller without starting another one."""
+    if not any(matching_server(directory,port,channel) for channel in ('chrome','chromium')):
+        raise ValueError('Локальный redcn этого владельца не запущен')
+    if not webbrowser.open(owner_launch_url(directory,port,result_id)):
+        raise ValueError('Не удалось открыть браузер владельца на Mac')
+    return 0
+
+
+def enable_existing_phone(port,phone_port,directory=None):
     base='http://127.0.0.1:'+str(port)
     opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    with opener.open(base+'/',timeout=3) as response:page=response.read(10_000_000).decode('utf-8')
-    match=re.search(r'<meta name="redcn-token" content="([A-Za-z0-9_-]+)">',page)
-    if not match:raise ValueError('Обновите работающий redcn перед подключением телефона')
-    request=urllib.request.Request(base+'/api/local/phone',json.dumps({'action':'enable','port':phone_port}).encode(),headers={'Content-Type':'application/json','Origin':base,'X-Redcn-Token':match[1]})
+    root=Path(directory) if directory is not None else Path.home()/'.cache'/'redcn'
+    if not any(matching_server(root,port,channel) for channel in ('chrome','chromium')):raise ValueError('Локальный redcn принадлежит другому рабочему пространству')
+    access=DesktopOwnerAccess(WorkspaceOwner(root),create=False)
+    verify_existing_owner(access,port)
+    request=urllib.request.Request(base+'/api/local/phone',json.dumps({'action':'enable','port':phone_port}).encode(),headers={'Content-Type':'application/json','Origin':base,'X-Redcn-Token':access.token})
     with opener.open(request,timeout=5) as response:return json.loads(response.read(100_000))
 
 
@@ -575,9 +661,9 @@ def serve(directory, port=8765, result_id=None, open_browser=True, browser_chann
     if server is None:
         print('\nredcn уже работает: '+link+'\nОткрываем существующий сайт. Второй сервер не нужен.',flush=True)
         if phone:
-            access=enable_existing_phone(selected_port,phone_port)
+            access=enable_existing_phone(selected_port,phone_port,directory)
             for pair_url in access['pairUrls']:print(pair_url,flush=True)
-        if open_browser: webbrowser.open(link)
+        if open_browser: webbrowser.open(owner_launch_url(directory,selected_port,result_id))
         return 0
     if phone:
         access=server.phone_relay.enable(phone_port)
@@ -585,7 +671,7 @@ def serve(directory, port=8765, result_id=None, open_browser=True, browser_chann
         for pair_url in access['pairUrls']:print(pair_url,flush=True)
     if port and port != selected_port: print(f'Порт {port} занят. Выбран порт {selected_port}.',flush=True)
     print('\nЛокальный redcn: '+link+'\nОставьте терминал открытым. Остановка: Ctrl+C.',flush=True)
-    if open_browser: webbrowser.open(link)
+    if open_browser: webbrowser.open(server.desktop_access.launch_url(selected_port,result_id))
     previous_term=None
     if threading.current_thread() is threading.main_thread():
         previous_term=signal.signal(signal.SIGTERM,lambda *_:threading.Thread(target=server.shutdown,daemon=True).start())
