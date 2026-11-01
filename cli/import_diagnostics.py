@@ -88,8 +88,8 @@ def _number(value, maximum=MAX_SECONDS):
     return round(value, 3)
 
 
-def _count(value):
-    return value if type(value) is int and 0 <= value <= 1000000 else None
+def _count(value, maximum=1000000):
+    return value if type(value) is int and 0 <= value <= maximum else None
 
 
 def _event_fields(message='', **fields):
@@ -114,6 +114,7 @@ def _event_fields(message='', **fields):
         value = _number(fields.get(name))
         if value is not None:
             output[name] = value
+    if fields.get('sectionState') in ('ready','partial','not_found','not_visited_budget'):output['sectionState']=fields['sectionState']
     if fields.get('profile') in PROFILES:
         output['profile'] = fields['profile']
     if fields.get('readyState') in ('loading', 'interactive', 'complete'):
@@ -150,12 +151,30 @@ def _progress(value):
             count = _count(row.get(key))
             if count is not None:
                 stage[key] = count
-        if row.get('state') in ('running', 'done', 'error', 'waitingManual'):
+        if row.get('state') in ('running', 'done', 'error', 'waitingManual', 'partial'):
             stage['state'] = row['state']
+        if row.get('quality') in ('complete', 'partial', 'unknown'):
+            stage['quality'] = row['quality']
         rows.append(stage)
     if rows:
         output['stages'] = rows
     return output
+
+
+def _browser_calls(value):
+    kinds={'preflight','challenge','restore-scroll','page-scroll','page-snapshot','navigation-snapshot','layout-recognition'}
+    kinds.update(prefix+section for prefix in ('probe:','frame:','snapshot:') for section in SECTIONS)
+    rows=[]
+    for row in value[:200] if isinstance(value,list) else []:
+        if not isinstance(row,dict) or row.get('kind') not in kinds:continue
+        clean={'kind':row['kind']}
+        for key in ('seconds','domReadMs','serializationProbeMs'):
+            number=_number(row.get(key),MAX_SECONDS*1000 if key.endswith('Ms') else MAX_SECONDS)
+            if number is not None:clean[key]=number
+        count=_count(row.get('serializedChars'),64000000)
+        if count is not None:clean['serializedChars']=count
+        rows.append(clean)
+    return rows
 
 
 def _capture(value):
@@ -164,14 +183,14 @@ def _capture(value):
     output = {}
     if value.get('strategy') in ('sections', 'page'):
         output['strategy'] = value['strategy']
-    for key in ('version', 'scrolls', 'imageCandidates'):
+    for key in ('version', 'scrolls', 'imageCandidates', 'fullSnapshotReads'):
         count = _count(value.get(key))
         if count is not None:
             output[key] = count
-    for key in ('completed', 'bounded', 'pageBottomReached', 'sectionFallback'):
+    for key in ('completed', 'bounded', 'pageBottomReached', 'sectionFallback', 'pageWalkCompleted'):
         if type(value.get(key)) is bool:
             output[key] = value[key]
-    for key in ('seconds', 'activeSeconds'):
+    for key in ('seconds', 'activeSeconds', 'browserCallSeconds', 'budgetSeconds', 'budgetOverrunSeconds', 'sectionSeconds', 'sectionActiveSeconds'):
         duration = _number(value.get(key))
         if duration is not None:
             output[key] = duration
@@ -179,9 +198,26 @@ def _capture(value):
     for row in value.get('sections', [])[:3] if isinstance(value.get('sections'), list) else []:
         if not isinstance(row, dict) or row.get('section') not in SECTIONS:
             continue
-        sections.append(_event_fields(**row))
+        clean=_event_fields(**row)
+        if row.get('reason') in ('ready','partial','not_found','not_visited_budget'):clean['reason']=row['reason']
+        if 'found' in row and row['found'] is None:clean['found']=None
+        for key in ('visited','postFallbackObserved'):
+            if type(row.get(key)) is bool:clean[key]=row[key]
+        measured=_number(row.get('browserCallSeconds'))
+        if measured is not None:clean['browserCallSeconds']=measured
+        sections.append(clean)
     if sections:
         output['sections'] = sections
+    if value.get('preflightSource') in ('snapshot','batched-probe'):output['preflightSource']=value['preflightSource']
+    if value.get('stabilityMethod') in ('adapter-fields','fallback-text'):output['stabilityMethod']=value['stabilityMethod']
+    calls=_browser_calls(value.get('browserCalls'))
+    if calls:output['browserCalls']=calls
+    timings=value.get('loadTimings')
+    if isinstance(timings,dict):
+        safe={key:_number(timings[key]) for key in ('browserStartSeconds','navigationSeconds','browserCallSeconds') if _number(timings.get(key)) is not None}
+        calls=_browser_calls(timings.get('browserCalls'))
+        if calls:safe['browserCalls']=calls
+        if safe:output['loadTimings']=safe
     return output
 
 

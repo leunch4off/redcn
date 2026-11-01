@@ -21,6 +21,7 @@ import photo_store
 import card_api
 import language_service
 import http_delivery
+from source_readiness import source_readiness
 
 
 def store_history(directory, entry):
@@ -162,6 +163,12 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if cancel.is_set():raise ValueError('Импорт отменён')
             connection = redcn.open_cache(directory)
             listing = redcn.load_listing(params['url'], connection, params.get('refresh', False), params.get('loader','auto'), params.get('timeout',180), report, cancel, params.get('browser_channel',browser_channel))
+            listing['sourceReadiness'] = source_readiness(listing)
+            with lock:
+                readiness=listing['sourceReadiness']
+                jobs[job_id]['tracker'].mark_stage_quality('scroll',
+                    'complete' if readiness['completed'] else readiness['state'],
+                    [{'section':row['name'],'reason':row['reason']} for row in readiness['sections']])
             with lock:
                 from photo_ai_settings import load_config
                 jobs[job_id]['tracker'].set_profile('import:vision' if load_config(directory)['enabled'] else 'import:cache' if listing.get('cached') else
@@ -182,8 +189,15 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             report('Сохраняем карточку и подготовленные фотографии…',stage='save')
             merge_prepared_media(directory,result_id,result,photo_baseline=photo_baseline,photo_generated=photo_generated)
             learn,outcome=photo_outcome(result)
+            readiness=listing['sourceReadiness']
+            outcome.update(photoPartial=outcome['partial'],sourcePartial=readiness['partial'],sourceReadiness=readiness)
+            outcome['partial']=outcome['partial'] or readiness['partial']
+            outcome['warnings']=[*readiness['warnings'],*outcome['warnings']]
+            learn=learn and not readiness['partial']
             success=True
-            with lock: jobs[job_id].update(state='done',message='Готово' if learn else 'Текст готов, подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
+            message=('Карточка сохранена. Полнота разделов источника не подтверждена.' if readiness['partial'] else
+                     'Готово' if learn else 'Текст готов, подготовка фотографий завершена не полностью.')
+            with lock: jobs[job_id].update(state='done',message=message,result_id=result_id,**outcome)
         except Exception as error:
             failure = error
             if result_id:

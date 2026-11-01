@@ -21,6 +21,9 @@ STAGES = (
     ('crop', 'Автоматическое кадрирование'), ('vision','Мебель и техника на фото'), ('save', 'Сохранение карточки'),
 )
 LABELS = dict(STAGES)
+SECTION_NAMES = ('gallery','description','characteristics')
+SECTION_REASONS = ('ready','partial','not_found','not_visited_budget')
+STAGE_QUALITIES = ('complete','partial','unknown')
 PROFILES = ('import:auto', 'import:chrome', 'import:http', 'import:cache', 'prepare', 'import:vision', 'prepare:vision')
 
 
@@ -135,6 +138,8 @@ class JobProgress:
         self.awaiting_user = False
         self.wait_limit = None
         self.history_eligible = None
+        self.stage_quality = {}
+        self.section_states = {}
         self.estimate = history.estimate(key)
 
     def set_profile(self, key):
@@ -145,7 +150,8 @@ class JobProgress:
                 self.key, self.estimate = key, self.history.estimate(key)
 
     def update(self, message, stage=None, completed=None, total=None,
-               awaitingUser=None, maxTotalSeconds=None, **_unused):
+               awaitingUser=None, maxTotalSeconds=None, section=None,
+               sectionState=None, sectionReady=None, **_unused):
         with self.lock:
             if self.state != 'running':
                 return
@@ -172,6 +178,38 @@ class JobProgress:
                 self.counts['completed'] = completed
             if type(total) is int and total >= 0:
                 self.counts['total'] = total
+            if stage == 'scroll' and section in SECTION_NAMES:
+                reason=sectionState if sectionState in SECTION_REASONS else 'ready' if sectionReady is True else 'partial' if sectionReady is False else None
+                if reason is not None:
+                    self.section_states[section]=reason
+                    self.stage_quality['scroll']=self._section_quality()
+
+    def _section_quality(self):
+        if any(reason!='ready' for reason in self.section_states.values()):return 'partial'
+        return 'complete' if all(section in self.section_states for section in SECTION_NAMES) else 'unknown'
+
+    def mark_stage_quality(self, stage, quality, sections=None):
+        """Reconcile final capture quality without changing job completion.
+
+        Only allowlisted reason metadata enters progress. A finished operation
+        is separate from verified source sections; history remains controlled
+        by finish(success, learn=...) and its caller.
+        """
+        if stage not in LABELS or quality not in STAGE_QUALITIES:
+            raise ValueError('Неизвестный этап или результат проверки')
+        with self.lock:
+            if sections is not None:
+                if not isinstance(sections,list):raise ValueError('Разделы проверки должны быть списком')
+                states={}
+                for row in sections:
+                    if not isinstance(row,dict) or row.get('section') not in SECTION_NAMES:continue
+                    reason=row.get('reason')
+                    if reason in SECTION_REASONS:states[row['section']]=reason
+                if stage=='scroll':
+                    self.section_states=states
+                    derived=self._section_quality()
+                    if quality=='complete' and derived!='complete':quality=derived
+            self.stage_quality[stage]=quality
 
     def finish(self, success, learn=True):
         with self.lock:
@@ -203,12 +241,17 @@ class JobProgress:
                 duration = self.durations.get(stage, 0)
                 if current and self.state == 'running':
                     duration += stage_elapsed
-                rows.append({'id': stage, 'label': LABELS[stage],
+                row={'id': stage, 'label': LABELS[stage],
                     'state': ('error' if self.state == 'error' else
                               'waitingManual' if self.awaiting_user and self.state == 'running' else
                               'running' if self.state == 'running' else 'done') if current else 'done',
                     'elapsedSeconds': round(duration, 1),
-                    **self.stage_counts.get(stage,{})})
+                    **self.stage_counts.get(stage,{})}
+                if stage in self.stage_quality:
+                    row['quality']=self.stage_quality[stage]
+                    if row['state']=='done' and row['quality']!='complete':row['state']='partial'
+                    if stage=='scroll':row['sections']=[{'section':name,'reason':self.section_states[name],'ready':self.section_states[name]=='ready'} for name in SECTION_NAMES if name in self.section_states]
+                rows.append(row)
             return {'stage': 'done' if self.state == 'done' else self.current,
                 'label': 'Готово' if self.state == 'done' else LABELS[self.current],
                 'message': self.message, 'state': self.state,

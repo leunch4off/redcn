@@ -13,4 +13,8 @@ const equipment=resolvePhotoFurniture(fields,FEATURES);
 fields.features=equipment.features;fields.featureCounts=equipment.featureCounts;
 const result=generateListing(fields,rules,{...DEFAULT_PREFS,...input.prefs});
 if(result.problems.length){process.stderr.write(result.problems.join('\n'));process.exitCode=2;}
-else process.stdout.write(JSON.stringify({fields,...result,warnings:[...extracted.warnings,...(fields.sourceAudit?.warnings||[])]}));
+else {
+ const furniture=Array.isArray(fields.sourceAudit?.furniture)?fields.sourceAudit.furniture:[];
+ const freshWarnings=extracted.warnings.filter(message=>{if(!message.startsWith('Проверьте наличие: '))return true;const row=furniture.find(row=>message.startsWith('Проверьте наличие: '+row.label+' ('));return !row||['conflict','planned','unknown'].includes(row.status);});
+ process.stdout.write(JSON.stringify({fields,...result,warnings:[...new Set([...freshWarnings,...(fields.sourceAudit?.warnings||[])])]}));
+}

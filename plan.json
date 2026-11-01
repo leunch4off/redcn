@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 17,
-  "total": 325,
+  "version": 18,
+  "total": 330,
   "tasks": [
     {
       "id": "RCN-001",
@@ -574,7 +574,11 @@
       "status": "done",
       "evidence": [
         "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
-        "tests/test_cli.py: fixture фото и manifest"
+        "tests/test_cli.py: fixture фото и manifest",
+        "cli/photo_store.py: image_mime, _original_metadata, attach_photo/load_photo — MIME по сигнатуре и декодеру, исходные байты сохраняются",
+        "tests/test_cli.py: test_photo_download_uses_actual_webp_bytes_despite_jpg_url_and_header",
+        "tests/test_photo_provenance.py: test_actual_webp_bytes_override_jpg_url_and_browser_mime_without_reencoding",
+        "docs/VERIFICATION.md; docs/SOURCE-RESEARCH-2026-11-01.md — проверка формата не доказывает чистоту фото или точность детектора"
       ]
     },
     {
@@ -590,7 +594,11 @@
       "status": "done",
       "evidence": [
         "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
-        "tests/test_cli.py: fixture фото и manifest"
+        "tests/test_cli.py: fixture фото и manifest",
+        "cli/redcn.py; cli/photo_store.py; cli/phone_relay.py — photoId, наблюдаемые variants, layout и происхождение проходят в медиа-конвейер",
+        "tests/test_photo_provenance.py: layout_metadata, cached_source_annotation, perceptual_candidate",
+        "tests/cian-conflicts.test.mjs: десять фото отдельно от одной планировки",
+        "docs/VERIFICATION.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md — похожие кадры лишь кандидаты, оригиналы не удаляются"
       ]
     },
     {
@@ -2980,7 +2988,10 @@
         "cli/photo_store.py",
         "tests/test_photos.py",
         "docs/VERIFICATION.md#v8-2026-10-30",
-        "https://github.com/leunch4off/redcn/pull/6"
+        "https://github.com/leunch4off/redcn/pull/6",
+        "tests/test_photo_provenance.py: empty_ocr, small_or_multiple_distant_edge_regions, malformed_footer_ocr — консервативные состояния и кеш параметров",
+        "docs/SOURCE-RESEARCH-2026-11-01.md — на трёх реальных архивных кадрах OCR пропустил видимые знаки; точность watermark не принята",
+        "docs/VERIFICATION.md; RCN-329 — реальная калибровка и FP/FN остаются отдельной плановой приёмкой"
       ]
     },
     {
@@ -3781,7 +3792,10 @@
         "tests/test_auto_photo_crop.py",
         "tests/test_phone_job_browser.py",
         "docs/IMPORT-AND-AUTO-PHOTOS.md",
-        "docs/VERIFICATION.md#v13-2026-10-30"
+        "docs/VERIFICATION.md#v13-2026-10-30",
+        "tests/test_photo_provenance.py: layout_metadata, cached_source_annotation, perceptual_candidate — сохранность исходников и происхождения",
+        "tests/test_client_publication_backend.py; tests/test_source_readiness.py; tests/source-readiness.test.mjs — производный ZIP и раздельная полнота исходника/фото",
+        "docs/VERIFICATION.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md; docs/SOURCE-RESEARCH-2026-11-01.md — знак не обнаружен не означает подтверждённую чистоту; реальная точность crop не принята"
       ]
     },
     {
@@ -4890,6 +4904,108 @@
       ],
       "status": "planned",
       "evidence": []
+    },
+    {
+      "id": "RCN-326",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Единая клиентская проекция без упоминаний комиссии",
+      "acceptance": "Одна согласованная Python/JavaScript-политика проверяет генерацию, ручные шаблоны, старые сохранённые карточки, названия/описания/теги, подписи и метаданные, копирование сайта и телефона, HTML/PDF, intro/outro PNG, ZIP/post.txt и manifest. Ни наличие, ни отсутствие комиссии не публикуется; источник и ручная редакция сохраняются. Изолированная комиссионная фраза удаляется без потери аренды, залога, аванса и коммунальных платежей; неразделимое смешанное условие блокирует вывод с конкретным фрагментом. Приёмка всех путей включает собранный сайт и нативные проверки; произвольный растр с текстом не считать проверенным без отдельного доказательства.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-065",
+        "RCN-180",
+        "RCN-228",
+        "RCN-282"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/client-publication.mjs; cli/client_publication.py",
+        "web/engine.mjs; web/app.js; web/phone.mjs; web/photo-ui.mjs",
+        "web/publication-model.mjs; web/publication-render.mjs; web/presentation-studio.mjs; web/history.mjs; web/history-ui.mjs",
+        "cli/card_assets.py; cli/card_api.py; cli/phone_relay.py",
+        "tests/fixtures/client-publication-policy.json; tests/client-publication.test.mjs; tests/client-publication-frontend.test.mjs",
+        "tests/test_client_publication.py; tests/test_client_publication_backend.py",
+        "docs/VERIFICATION.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md — код и целевые проверки есть, итоговая общая нативная приёмка ещё ожидается",
+        "docs/VERIFICATION.md — 01.11.2026: archive, projection of 13 preserved cards, native phone/copy/ZIP/PDF, partial-source UI and save/reload checks; no new live imports"
+      ]
+    },
+    {
+      "id": "RCN-327",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Честная полнота секций и измеренные этапы импорта",
+      "acceptance": "Схема capture/sourceReadiness различает ready, partial, unknown, реально не найденный раздел и не посещённый из-за бюджета; reads=0 не доказывает отсутствие данных. Операция может завершиться с отдельными sourcePartial и photoPartial, без ложной галочки полноты и без предложения повторить фото для пробела исходника. Сайт, телефон, сохранённая карточка, прогресс и очищенная диагностика сохраняют согласованный статус и только измеренные времена/число вызовов; произвольный исходный текст в обратную связь не переносится. Синтетические DOM/HTTP-сценарии и нативная сборка должны подтвердить видимое поведение.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-010",
+        "RCN-322"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/browser_dom.py; cli/browser_import.py; cli/job_progress.py; cli/import_diagnostics.py",
+        "cli/source_readiness.py; cli/local_server.py; cli/phone_relay.py",
+        "web/source-readiness.mjs; web/app.js; web/phone.mjs; scripts/build.mjs",
+        "tests/test_section_scroll.py; tests/test_job_progress.py; tests/test_import_diagnostics.py; tests/test_source_readiness.py",
+        "tests/source-readiness.test.mjs; tests/test_source_readiness_browser.py",
+        "docs/IMPORT-RUN-AUDIT-2026-11-01.md; docs/VERIFICATION.md — исторические замеры отделены от новой нативной приёмки",
+        "docs/VERIFICATION.md — 01.11.2026: archive, projection of 13 preserved cards, native phone/copy/ZIP/PDF, partial-source UI and save/reload checks; no new live imports"
+      ]
+    },
+    {
+      "id": "RCN-328",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Контракт архивной карточки ЦИАН: фото и противоречивые факты",
+      "acceptance": "На обезличенном контракте предоставленного Safari-архива без исполнения стороннего JavaScript извлекаются 10 фото квартиры отдельно от одной планировки; реальные WebP-байты не считаются JPEG по URL .jpg. Сохраняются ID, наблюдаемые варианты, порядок, provenance и layout; рекомендации исключаются. Противоречия ванна/душ, залог 50% против 35000 при цене 65000 и кирпич/панель сохраняют свидетельства и не выдаются как согласованные факты. Две сущности Лианозово сохраняют разные ID/линии/режим/время; byCar не становится пешим. Создание, публикация, обновление, первое обнаружение и импорт не смешиваются. Проверка архива и общая нативная приёмка фиксируются отдельно от живой доступности сайта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320",
+        "RCN-043",
+        "RCN-044",
+        "RCN-326"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/source-adapters/cian.mjs; web/engine.mjs; web/fact-evidence.mjs; cli/analyze-source.mjs; cli/generate.mjs",
+        "cli/source_adapters/cian.py; cli/redcn.py; cli/photo_store.py; cli/phone_relay.py",
+        "tests/fixtures/cian-conflicts-52.html; tests/cian-conflicts.test.mjs",
+        "tests/test_cli.py; tests/test_photo_provenance.py",
+        "docs/VERIFICATION.md; docs/SOURCE-RESEARCH-2026-11-01.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md — контрактные проверки не равны полной приёмке живого импорта",
+        "docs/VERIFICATION.md — 01.11.2026: archive, projection of 13 preserved cards, native phone/copy/ZIP/PDF, partial-source UI and save/reload checks; no new live imports"
+      ]
+    },
+    {
+      "id": "RCN-329",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Калибровка watermark на реальных положительных и отрицательных кадрах",
+      "acceptance": "Разметить разрешённые реальные кадры со знаком и без него, включая низкий контраст, разные размеры, края и важные предметы. На фиксированных версиях детектора измерить false positive/false negative и пропуски отдельно от синтетических OCR-тестов. Проверить минимальную допустимую подрезку, потери площади/композиции, повторное обнаружение и сохранность оригиналов; неуверенный результат остаётся на ручной проверке. Публиковать точность только вместе с набором, разметкой и методом; отсутствие OCR-срабатывания не означает подтверждённую чистоту.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-206",
+        "RCN-254",
+        "RCN-328"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/SOURCE-RESEARCH-2026-11-01.md — реальная проверка трёх архивных кадров дала пропуски видимых логотипов, FP/FN на размеченном корпусе ещё не измерены",
+        "tests/test_photo_provenance.py — только правила консервативной обработки, не статистическая точность детектора"
+      ]
+    },
+    {
+      "id": "RCN-330",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Выбор наблюдаемого варианта и единое принятое изображение",
+      "acceptance": "Для одного photoId сравниваются только реально наблюдаемые full/thumbnail/srcset-варианты с происхождением, доступностью, фактическим MIME, декодированием, размерами, качеством и отдельным состоянием watermark. Маленькое превью не повышается до оригинала и не выбирается автоматически без проверки качества. Сохранённая ручная правка имеет приоритет; единый принятый вариант/кадрирование применяется к галерее, телефону, intro/outro, HTML/PDF и ZIP. Исходники и отклонённые варианты сохраняются; выбор и причины воспроизводятся, в том числе после кеша и повторного импорта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-044",
+        "RCN-254",
+        "RCN-328",
+        "RCN-329"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/SOURCE-RESEARCH-2026-11-01.md — наблюдаемые варианты и ограничения качества превью",
+        "cli/photo_store.py; tests/test_photo_provenance.py — происхождение и сохранность уже покрыты частично; единый выбор для всех форматов требует отдельной приёмки"
+      ]
     }
   ],
   "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",

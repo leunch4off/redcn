@@ -14,6 +14,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'cli'))
 import card_assets
 import local_server
+from client_publication import PUBLICATION_POLICY_VERSION
 
 HTML = '<!doctype html><html lang="ru"><head><meta charset="utf-8"><style>@page{size:A4;margin:16mm}body{font-family:Arial,sans-serif}h1{color:#c0492f}</style></head><body><main><h1>Москва · 莫斯科</h1><p>80 000 ₽</p><a href="https://yandex.ru/maps/">Карта</a></main></body></html>'
 
@@ -151,7 +152,7 @@ class CardAssetTests(unittest.TestCase):
         html = HTML.replace('</main>', '<img alt="Фото" src="' + data + '"></main>')
         card_assets.validate_html(html)
         for kind in ('intro', 'outro'):
-            row = card_assets.create_image_export(self.directory, self.result_id, data, kind)
+            row = card_assets.create_image_export(self.directory, self.result_id, data, kind, publication_policy_version=PUBLICATION_POLICY_VERSION)
             content, mime, name = card_assets.export_asset(self.directory, row['id'])
             self.assertEqual(content, png)
             self.assertEqual(mime, 'image/png')

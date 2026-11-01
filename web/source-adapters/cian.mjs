@@ -1,4 +1,4 @@
-import {photoSources} from '../media-core.mjs';
+import {photoSources,photoSourceUrl} from '../media-core.mjs';
 import {readRelatedHtml} from '../related.mjs';
 // Only data-name / id / data-marker and literal JSON data are read. No page code runs.
 const SOURCE_NAMES=new Set(['Description','OfferDescription','OfferTitleNew','OfferTitle','ObjectFactoidsItem','OfferSummaryInfoItem','FeaturesItem','FeaturesLayout','PriceInfo','OfferFactItem','AddressItem','AddressContainer','UndergroundItem','HomeownerInfo','HomeownerLayout','NoFeeLabelContainer']);
@@ -40,22 +40,42 @@ export function readCianHtml(input) {
   const picked=records.filter(r=>SOURCE_NAMES.has(r.name)&&!['FeaturesLayout','AddressContainer','HomeownerLayout'].includes(r.name));
   let text=picked.map(r=>r.text).join('\n');
   if(!text)for(const item of ld){if(typeof item?.description==='string')text+=item.description+'\n';}
-  for(const item of ld){if(Array.isArray(item?.image))images.push(...item.image);else if(typeof item?.image==='string')images.push(item.image);}
-  if(offer?.photos)for(const p of offer.photos)if(typeof p.fullUrl==='string')images.push(p.fullUrl);
-  const safeImages=photoSources(images);
+  const mediaItems=[],mediaSeen=new Set();
+  const addPhoto=(photo,order,layout=false)=>{
+    if(!photo||typeof photo!=='object')return;
+    const variants={};for(const key of ['fullUrl','thumbnailUrl','thumbnail2Url','miniUrl']){const value=photoSourceUrl(photo[key]);if(value)variants[key]=value;}
+    const url=variants.fullUrl||variants.thumbnailUrl||variants.thumbnail2Url||variants.miniUrl;if(!url||mediaSeen.has(url))return;
+    mediaSeen.add(url);mediaItems.push({url,photoId:String(photo.id??'').slice(0,40),order,isLayout:layout||photo.isLayout===true,isCianLayout:layout||photo.isCianLayout===true,variants,source:'CIAN offer'});
+  };
+  for(const [index,photo]of(Array.isArray(offer?.photos)?offer.photos:[]).entries())addPhoto(photo,index);
+  for(const [index,photo]of(Array.isArray(offer?.cianLayouts)?offer.cianLayouts:[]).entries())addPhoto(photo,index,true);
+  const photoItems=mediaItems.filter(p=>!p.isLayout&&!p.isCianLayout),layouts=mediaItems.filter(p=>p.isLayout||p.isCianLayout);
+  if(!photoItems.length)for(const item of ld){if(Array.isArray(item?.image))images.push(...item.image);else if(typeof item?.image==='string')images.push(item.image);}
+  const layoutUrls=new Set(layouts.flatMap(p=>Object.values(p.variants)));
+  const safeImages=photoItems.length?photoItems.map(p=>p.url):photoSources(images).filter(url=>!layoutUrls.has(url));
   const url=ld.find(x=>typeof x?.offers?.url==='string')?.offers.url||(offer?.cianId?'https://www.cian.ru/rent/flat/'+offer.cianId+'/':'');
   // Keep a strict allowlist: no phones, account IDs, tokens, tracking or site config.
-  const selected={};if(offer)for(const key of ['cianId','description','geo','isByHomeowner','totalArea','livingArea','kitchenArea','roomsCount','floorNumber','building','loggiasCount','balconiesCount','windowsViewType','separateWcsCount','combinedWcsCount','repairType','bargainTerms','hasFridge','hasDishwasher','hasWasher','hasFurniture','hasKitchenFurniture','hasConditioner','hasTv','hasInternet','hasBathtub','hasShower','hasLift'])if(offer[key]!==undefined)selected[key]=offer[key];
-  return {version:1,platform:'cian',title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
+  const selected={};if(offer)for(const key of ['cianId','description','geo','isByHomeowner','totalArea','livingArea','kitchenArea','roomsCount','floorNumber','building','loggiasCount','balconiesCount','windowsViewType','separateWcsCount','combinedWcsCount','repairType','bargainTerms','hasFridge','hasDishwasher','hasWasher','hasFurniture','hasKitchenFurniture','hasConditioner','hasTv','hasInternet','hasBathtub','hasShower','hasLift','creationDate','publicationDate','editDate','timezone'])if(offer[key]!==undefined)selected[key]=offer[key];
+  return {version:1,platform:'cian',title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,photoItems,layouts,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
 }
 
 export function cianFieldFacts(source) {
-  const facts={},evidence=[],warnings=[],o=source.offer||{},records=source.records||[];
+  const facts={},evidence=[],warnings=[],conflicts=[],blockedFields=[],o=source.offer||{},records=source.records||[];
   const set=(field,value,where,raw)=>{if(value===undefined||value===null||value==='')return;facts[field]=typeof value==='number'?String(value):value;evidence.push({field,value:facts[field],source:where,text:String(raw??value).slice(0,700)});};
-  for(const [field,key] of Object.entries({area:'totalArea',living:'livingArea',kitchen:'kitchenArea',rooms:'roomsCount',floor:'floorNumber',balconies:'balconiesCount',loggias:'loggiasCount',combinedWcs:'combinedWcsCount',separateWcs:'separateWcsCount'}))if(o[key]!==undefined)set(field,String(Number(o[key])),'JSON offer.'+key,o[key]);
+  for(const [field,key] of Object.entries({area:'totalArea',living:'livingArea',kitchen:'kitchenArea',rooms:'roomsCount',floor:'floorNumber',balconies:'balconiesCount',loggias:'loggiasCount',combinedWcs:'combinedWcsCount',separateWcs:'separateWcsCount'})){
+    const raw=o[key];
+    if(raw===undefined||raw===null||typeof raw==='boolean'||String(raw).trim()==='')continue;
+    const value=Number(String(raw).replace(',','.'));
+    if(Number.isFinite(value)&&value>=0)set(field,String(value),'JSON offer.'+key,raw);
+  }
   if(typeof o.hasLift==='boolean')set('lift',o.hasLift?'yes':'no','JSON hasLift');
   if(o.geo?.coordinates){set('latitude',o.geo.coordinates.lat,'JSON geo.coordinates.lat');set('longitude',o.geo.coordinates.lng,'JSON geo.coordinates.lng');}
   if(o.building?.floorsCount!==undefined)set('floors',o.building.floorsCount,'JSON building.floorsCount');
+  const material={brick:'Кирпичный',panel:'Панельный',monolith:'Монолитный',block:'Блочный',monolithBrick:'Монолитно-кирпичный'}[o.building?.materialType||o.building?.houseMaterialType];
+  if(material)set('buildingType',material,'JSON building.materialType');
+  if(o.building?.buildYear!==undefined)set('buildingYear',o.building.buildYear,'JSON building.buildYear');
+  if(o.building?.ceilingHeight!==undefined)set('ceiling',o.building.ceilingHeight,'JSON building.ceilingHeight');
+
   const b=o.bargainTerms||{};for(const [f,k] of [['price','price'],['deposit','deposit'],['commission','clientFee'],['prepayMonths','prepayMonths']])if(b[k]!==undefined)set(f,b[k],'JSON bargainTerms.'+k);
   if(o.isByHomeowner!==undefined)set('seller',o.isByHomeowner?'owner':'unknown','JSON isByHomeowner');
   if(b.utilitiesTerms){const u=b.utilitiesTerms;if(u.includedInPrice===true)set('utilities',u.flowMetersNotIncludedInPrice?'meters':'included','JSON utilitiesTerms');else if(u.includedInPrice===false)set('utilities','extra','JSON utilitiesTerms');}
@@ -64,13 +84,25 @@ export function cianFieldFacts(source) {
   if(addresses.length){set('address',addresses.map(a=>a.shortName||a.fullName||a.name).filter(Boolean).join(', '),'JSON geo.address');const district=addresses.find(a=>a.type==='raion');if(district)set('district',district.fullName||district.name,'JSON geo.address');const city=addresses.find(a=>a.type==='location');if(city)set('city',city.name,'JSON geo.address');}
   if(source.url)set('url',source.url,'JSON-LD / cianId');
   const labels={'Общая площадь':'area','Жилая площадь':'living','Площадь кухни':'kitchen','Год постройки':'buildingYear','Тип дома':'buildingType','Тип перекрытий':'floorType','Строительная серия':'buildingSeries','Подъезды':'entrances','Отопление':'heating','Аварийность':'emergency','Санузел':'bathroom','Вид из окон':'windows','Ремонт':'renovation','Высота потолков':'ceiling'};
-  for(const r of records.filter(r=>['ObjectFactoidsItem','OfferSummaryInfoItem'].includes(r.name))){const text=r.text.replace(/\s+/g,' ');if(/^Этаж\s/.test(text)){const m=text.match(/Этаж\s+(\d+)\s+из\s+(\d+)/);if(m){if(facts.floor===undefined)set('floor',m[1],r.name,text);if(facts.floors===undefined)set('floors',m[2],r.name,text);}}for(const [label,field] of Object.entries(labels))if(text.startsWith(label+' ')&&facts[field]===undefined){let value=text.slice(label.length).trim();if(['area','living','kitchen','ceiling'].includes(field))value=value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',','.');set(field,value,r.name,text);}}
+  for(const r of records.filter(r=>['ObjectFactoidsItem','OfferSummaryInfoItem'].includes(r.name))){const text=r.text.replace(/\s+/g,' ');if(/^Этаж\s/.test(text)){const m=text.match(/Этаж\s+(\d+)\s+из\s+(\d+)/);if(m){if(facts.floor===undefined)set('floor',m[1],r.name,text);if(facts.floors===undefined)set('floors',m[2],r.name,text);}}for(const [label,field] of Object.entries(labels))if(text.startsWith(label+' ')){let value=text.slice(label.length).trim();if(['area','living','kitchen','ceiling'].includes(field))value=value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',','.');if(value!==undefined&&facts[field]!==undefined&&String(facts[field]).toLowerCase()!==String(value).toLowerCase()){
+      const earlier=evidence.find(e=>e.field===field);conflicts.push({field,status:'conflict',resolution:'operator_required',candidates:[earlier,{field,value,source:r.name,text}]});
+      if(!blockedFields.includes(field))blockedFields.push(field);warnings.push('Противоречие '+field+': '+facts[field]+' / '+value+'. Требуется проверка.');
+    }else if(facts[field]===undefined)set(field,value,r.name,text);}}
   if(!facts.address){const a=records.filter(r=>r.name==='AddressItem').map(r=>r.text);if(a.length)set('address',[...new Set(a)].join(', '),'AddressItem');}
   const routes=o.geo?.undergrounds||[];
   if(routes.length){const lines=routes.map(r=>[r.name,r.travelTime??'',({walk:'walk',transport:'public',byCar:'car'})[r.travelType]||'unknown',r.lineType==='mcd1'?'D1':r.lineType||''].join(' | '));set('transit',lines.join('\n'),'JSON geo.undergrounds');set('metro',routes[0].name,'JSON geo.undergrounds[0]');if(routes[0].travelType==='walk')set('walk',routes[0].travelTime,'JSON geo.undergrounds[0]');}
   else{const lines=records.filter(r=>r.name==='UndergroundItem').map(r=>{const m=r.text.match(/^(.*?)\s+(\d+(?:[–-]\d+)?)\s*мин/);return m?[m[1],m[2],'unknown',''].join(' | '):null;}).filter(Boolean);if(lines.length){set('transit',[...new Set(lines)].join('\n'),'UndergroundItem');warnings.push('Способ пути в текстовом DOM не подписан: требуется проверка, пеший маршрут не предполагается.');}}
   if(o.geo?.railways?.length)set('railways',o.geo.railways.map(r=>[r.name,r.time??'',({byFoot:'walk',byCar:'car'})[r.travelType]||'unknown'].join(' | ')).join('\n'),'JSON geo.railways');
+  const percent=source.description?.match(/(?:залог|депозит)\s*(?:составляет\s*)?([0-9]+(?:[.,][0-9]+)?)\s*%/i);
+  if(percent&&facts.price&&facts.deposit!==undefined){const amount=Number(facts.price)*Number(percent[1].replace(',','.'))/100;
+    if(Number.isFinite(amount)&&Number(facts.deposit)!==amount){conflicts.push({field:'deposit',status:'conflict',resolution:'operator_required',candidates:[evidence.find(e=>e.field==='deposit'),{field:'deposit',value:String(amount),units:'RUB',source:'Описание: процент от месячной аренды',text:percent[0]}]});blockedFields.push('deposit');warnings.push('Залог противоречив: JSON '+facts.deposit+' ₽, '+percent[1]+'% от '+facts.price+' ₽ = '+amount+' ₽. Требуется подтверждение.');}
+  }
+  if(source.photoItems?.length)set('photoItems',source.photoItems,'CIAN offer.photos');
+  if(source.layouts?.length)set('layouts',source.layouts,'CIAN offer.cianLayouts');
+  if(o.creationDate||o.publicationDate||o.editDate)set('sourceDates',{created:o.creationDate||null,published:o.publicationDate??null,updated:o.editDate||null,timezone:o.timezone??null},'CIAN source dates');
+  if(routes.length)set('transitDetails',routes.map(r=>({id:r.id??null,name:r.name,line:r.lineType||'',color:r.lineColor||'',mode:({walk:'walk',transport:'public',byCar:'car'})[r.travelType]||'unknown',time:r.travelTime??null,source:'CIAN geo.undergrounds'})),'CIAN transport identity');
+  for(const field of blockedFields)facts[field]='';
   if(source.description)set('sourceDescription',source.description,'#description / [data-name="Description"]');
   if(facts.address)set('name',facts.address,'Адрес объекта');
-  return {facts,evidence,warnings};
+  return {facts,evidence,warnings,conflicts,blockedFields};
 }

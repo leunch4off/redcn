@@ -74,6 +74,8 @@ def _db(directory):
     connection.execute('CREATE TABLE IF NOT EXISTS attachments (id TEXT PRIMARY KEY, card_id TEXT, name TEXT, category TEXT, mime TEXT, size INTEGER, created REAL, digest TEXT)')
     connection.execute('CREATE TABLE IF NOT EXISTS designs (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT, updated REAL)')
     connection.execute('CREATE TABLE IF NOT EXISTS exports (id TEXT PRIMARY KEY, card_id TEXT, kind TEXT, name TEXT, mime TEXT, size INTEGER, created REAL, digest TEXT)')
+    # Additive certification only: original exports and user files stay intact.
+    connection.execute('CREATE TABLE IF NOT EXISTS export_publication_policy (export_id TEXT PRIMARY KEY, version TEXT NOT NULL, digest TEXT NOT NULL)')
     connection.execute('CREATE TABLE IF NOT EXISTS design_images (id TEXT PRIMARY KEY, role TEXT, name TEXT, mime TEXT, width INTEGER, height INTEGER, size INTEGER, created REAL, digest TEXT, original_digest TEXT, original_mime TEXT, original_size INTEGER)')
     return connection
 
@@ -549,6 +551,47 @@ def validate_html(html):
     return html
 
 
+class _PublicationText(HTMLParser):
+    """Inspect composed text as well as attrs/CSS; inline tags cannot split a fee."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.text = []
+        self.metadata = []
+        self.in_style = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'style':self.in_style = True
+        self.metadata.extend(value for key,value in attrs if value and not (key == 'src' and value.startswith('data:image/')))
+
+    def handle_startendtag(self, tag, attrs):self.handle_starttag(tag,attrs)
+
+    def handle_endtag(self, tag):
+        if tag == 'style':self.in_style = False
+
+    def handle_data(self, value):
+        (self.metadata if self.in_style else self.text).append(value)
+
+    def handle_comment(self, value):self.metadata.append(value)
+
+
+def _assert_public_html(html):
+    from client_publication import assert_public_text
+    parser = _PublicationText()
+    parser.feed(html);parser.close()
+    # Check both natural spacing and exact composition across inline elements.
+    assert_public_text(''.join(parser.text))
+    assert_public_text(' '.join(parser.text))
+    for value in parser.metadata:assert_public_text(value)
+
+
+def _publication_card(directory, result_id):
+    from client_publication import client_card
+    _card(directory,result_id)
+    with sqlite3.connect(Path(directory)/'listings.sqlite3', timeout=15) as connection:
+        row=connection.execute('SELECT payload FROM results WHERE id=?',(result_id,)).fetchone()
+    return client_card(json.loads(row[0]))
+
+
 def _render_pdf(html, browser_channel):
     if browser_channel not in ('chrome', 'chromium'):
         raise ValueError('Неверный браузер PDF')
@@ -582,7 +625,7 @@ def _render_pdf(html, browser_channel):
 
 
 @_serialize_files
-def _persist_export(directory, result_id, content, kind, mime):
+def _persist_export(directory, result_id, content, kind, mime, *, policy_version=None):
     # The shared file lock protects only bytes + database references. Rendering
     # runs outside it so phones can still fetch contracts during a PDF job.
     digest = _write(directory, content)
@@ -591,17 +634,22 @@ def _persist_export(directory, result_id, content, kind, mime):
     name = 'ciliev-' + result_id[:8] + ('-' + kind + '.png' if kind in ('intro', 'outro') else '.' + kind)
     with _db(directory) as connection:
         connection.execute('INSERT INTO exports VALUES (?,?,?,?,?,?,?,?)', (export_id, result_id, kind, name, mime, len(content), stamp, digest))
-    return {'id': export_id, 'result_id': result_id, 'kind': kind, 'name': name, 'mime': mime, 'bytes': len(content), 'created': stamp}
+        if policy_version:
+            connection.execute('INSERT INTO export_publication_policy VALUES (?,?,?)',(export_id,policy_version,digest))
+    return {'id': export_id, 'result_id': result_id, 'kind': kind, 'name': name, 'mime': mime, 'bytes': len(content), 'created': stamp,
+            'publicationPolicyVersion':policy_version,'requiresRegeneration':not bool(policy_version)}
 
 
 def create_export(directory, result_id, html, kind, browser_channel='chrome'):
-    _card(directory, result_id)
+    from client_publication import PUBLICATION_POLICY_VERSION
+    _publication_card(directory, result_id)
     if kind not in ('html', 'pdf'):
         raise ValueError('Формат экспорта: html/pdf')
     validate_html(html)
+    _assert_public_html(html)
     content = html.encode('utf-8') if kind == 'html' else _render_pdf(html, browser_channel)
     mime = 'text/html; charset=utf-8' if kind == 'html' else 'application/pdf'
-    return _persist_export(directory, result_id, content, kind, mime)
+    return _persist_export(directory, result_id, content, kind, mime, policy_version=PUBLICATION_POLICY_VERSION)
 
 
 @_serialize_files
@@ -612,18 +660,29 @@ def export_asset(directory, export_id):
     if not row:
         raise ValueError('Экспорт не найден')
     _card(directory, row[0])
+    from client_publication import PUBLICATION_POLICY_VERSION
+    with _db(directory) as connection:
+        policy=connection.execute('SELECT version,digest FROM export_publication_policy WHERE export_id=?',(export_id,)).fetchone()
+    if not policy or policy[0] != PUBLICATION_POLICY_VERSION or policy[1] != row[1]:
+        raise ValueError('Материал создан до действующего правила публикации. Создайте его заново в разделе «Дизайн»; исходный файл сохранён.')
     return _read(directory, row[1]), row[2], row[3]
 
 
 def list_exports(directory, result_id):
     _card(directory, result_id)
     with _db(directory) as connection:
-        rows = connection.execute('SELECT id,card_id,kind,name,mime,size,created FROM exports WHERE card_id=? ORDER BY created DESC,id DESC', (result_id,)).fetchall()
-    return [dict(zip(('id', 'result_id', 'kind', 'name', 'mime', 'bytes', 'created'), row)) for row in rows]
+        rows = connection.execute('SELECT e.id,e.card_id,e.kind,e.name,e.mime,e.size,e.created,p.version,p.digest,e.digest FROM exports e LEFT JOIN export_publication_policy p ON p.export_id=e.id WHERE card_id=? ORDER BY created DESC,e.id DESC', (result_id,)).fetchall()
+    from client_publication import PUBLICATION_POLICY_VERSION
+    return [{**dict(zip(('id', 'result_id', 'kind', 'name', 'mime', 'bytes', 'created'), row[:7])),
+             'publicationPolicyVersion':row[7],
+             'requiresRegeneration':row[7] != PUBLICATION_POLICY_VERSION or row[8] != row[9]} for row in rows]
 
 
-def create_image_export(directory, result_id, data, kind):
-    _card(directory, result_id)
+def create_image_export(directory, result_id, data, kind, *, publication_policy_version=None):
+    from client_publication import PUBLICATION_POLICY_VERSION
+    _publication_card(directory, result_id)
+    if publication_policy_version != PUBLICATION_POLICY_VERSION:
+        raise ValueError('Обновите страницу «Дизайн» и создайте изображение заново по действующему правилу публикации.')
     if kind not in ('intro', 'outro'):
         raise ValueError('Вид изображения: intro/outro')
     if not isinstance(data, str):
@@ -640,5 +699,10 @@ def create_image_export(directory, result_id, data, kind):
         raise ValueError('Нужен PNG до 8 МБ')
     import photo_store
     image = photo_store.open_photo(content)
-    image.close()
-    return _persist_export(directory, result_id, content, kind, 'image/png')
+    try:
+        # Canvas images normally have no text chunks. Drop any pasted PNG
+        # comments/EXIF as well; they are not part of the client presentation.
+        image.info.clear()
+        output=io.BytesIO();image.save(output,format='PNG');content=output.getvalue()
+    finally:image.close()
+    return _persist_export(directory, result_id, content, kind, 'image/png', policy_version=PUBLICATION_POLICY_VERSION)

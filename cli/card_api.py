@@ -49,7 +49,7 @@ def dispatch(directory, path, data=None, *, namespace='local', browser_channel='
     if match and data is None:return json_result({'exports':[asset(item) for item in card_assets.list_exports(directory,match[1])]})
     if path=='card-export' and data is not None:
         if data.get('kind') in ('intro','outro'):
-            result=card_assets.create_image_export(directory,data.get('result_id'),data.get('data'),data.get('kind'))
+            result=card_assets.create_image_export(directory,data.get('result_id'),data.get('data'),data.get('kind'),publication_policy_version=data.get('publicationPolicyVersion'))
         else:result=card_assets.create_export(directory,data.get('result_id'),data.get('html'),data.get('kind'),browser_channel=browser_channel)
         return json_result(asset(result))
     match=re.fullmatch(r'exports/([a-f0-9]{32,64})',path)

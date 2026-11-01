@@ -30,7 +30,7 @@ class PhoneTimeoutCompatibilityAcceptance(unittest.TestCase):
     def test_pair_feed_photo_share_preparation_and_export_download_without_static_timeout(self):
         import card_assets
         content=phone_fixture.photo_store.asset(self.directory,self.assets[0]['id'])[0]
-        card_assets.create_image_export(self.directory,self.card_id,base64.b64encode(content).decode(),'intro')
+        card_assets.create_image_export(self.directory,self.card_id,base64.b64encode(content).decode(),'intro',publication_policy_version=__import__('client_publication').PUBLICATION_POLICY_VERSION)
         self.connect();self.assert_no_static_helpers()
         self.page.locator('#phoneCards .listing-card').first.click()
         self.page.wait_for_function("document.getElementById('phoneSharePhoto').textContent==='Поделиться фото'&&!document.getElementById('phoneSharePhoto').disabled")

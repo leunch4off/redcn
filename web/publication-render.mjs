@@ -1,3 +1,4 @@
+import {sanitizeClientText} from './client-publication.mjs';
 import {normalizePublicationDesign,resolvePublicationData,publicationNodeText,publicationNodeLink,PUBLICATION_FONT_STACKS} from './publication-model.mjs';
 
 const publicationEscape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -107,7 +108,7 @@ function publicationHtmlNode(node,surface,data,assets,photos,theme){
   else{const source=publicationNodeImage(node,data,assets,photos);if(source)content='<img src="'+source+'" alt="'+(node.type==='map'?'房源位置':node.type==='avatar'?'房产顾问头像':node.type==='logo'?'ciliev':'房源照片')+'" style="object-fit:'+node.style.objectFit+'">';else if(node.type==='logo'||node.type==='avatar'){content='<div class="monogram '+(node.type==='logo'?'brand-monogram':'')+'" style="font-size:'+Math.min(node.w,node.h)*.52/surface.width*100+'cqw">C</div>';css+='background:'+node.style.background+';';}else{content='<span class="image-placeholder">'+(node.type==='map'?'位置待确认<br>请补充真实坐标':'房源照片')+'</span>';css+='background:'+node.style.background+';';}}
   if(node.style.borderWidth)css+='border:'+node.style.borderWidth/surface.width*100+'cqw solid '+node.style.borderColor+';';
   const href=publicationNodeLink(node,data);if(href)content='<a class="publication-action" href="'+publicationEscape(href)+'">'+content+'</a>';
-  return '<div class="pub-node pub-'+node.type+extra+'" data-node-id="'+publicationEscape(node.id)+'" data-bind="'+publicationEscape(node.bind)+'" style="'+publicationEscape(css)+'">'+content+'</div>';
+  return '<div class="pub-node pub-'+node.type+extra+'" data-node-id="'+publicationEscape(sanitizeClientText(node.id))+'" data-bind="'+publicationEscape(node.bind)+'" style="'+publicationEscape(css)+'">'+content+'</div>';
 }
 
 export function publicationDocumentPages(card={},input={},assets={}){

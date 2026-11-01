@@ -124,6 +124,45 @@ class MeasuredProgressTests(unittest.TestCase):
         self.assertTrue(all('total' not in fields for fields in updates))
 
 
+class SectionQualityProgressTests(unittest.TestCase):
+    def tracker(self,folder):return job_progress.JobProgress(job_progress.DurationHistory(folder),'import:chrome')
+
+    def test_completed_job_keeps_partial_and_unvisited_source_sections_distinct(self):
+        with tempfile.TemporaryDirectory() as folder:
+            tracker=self.tracker(folder)
+            for name,reason in [('gallery','ready'),('description','not_visited_budget'),('characteristics','partial')]:
+                tracker.update('Блок',stage='scroll',section=name,sectionState=reason,sectionReady=reason=='ready')
+            tracker.update('Китайский текст',stage='generate');tracker.finish(True,learn=False)
+            progress=tracker.snapshot();row=next(row for row in progress['stages'] if row['id']=='scroll')
+            self.assertEqual(progress['state'],'done');self.assertEqual(row['state'],'partial');self.assertEqual(row['quality'],'partial')
+            self.assertEqual([item['reason'] for item in row['sections']],['ready','not_visited_budget','partial'])
+            self.assertFalse(progress['historyEligible'])
+
+    def test_final_fallback_can_reconcile_previous_partial_observation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            tracker=self.tracker(folder);tracker.update('Блок',stage='scroll',section='description',sectionState='not_found')
+            tracker.mark_stage_quality('scroll','complete',[{'section':name,'reason':'ready'} for name in job_progress.SECTION_NAMES])
+            tracker.update('Сохранено',stage='save');tracker.finish(True,learn=False)
+            row=next(row for row in tracker.snapshot()['stages'] if row['id']=='scroll')
+            self.assertEqual(row['state'],'done');self.assertEqual(row['quality'],'complete');self.assertTrue(all(item['ready'] for item in row['sections']))
+
+    def test_only_one_ready_section_cannot_prove_complete_source(self):
+        with tempfile.TemporaryDirectory() as folder:
+            tracker=self.tracker(folder);tracker.update('Блок',stage='scroll')
+            tracker.mark_stage_quality('scroll','complete',[{'section':'gallery','reason':'ready'}]);tracker.finish(True,learn=False)
+            row=next(row for row in tracker.snapshot()['stages'] if row['id']=='scroll')
+            self.assertEqual(row['state'],'partial');self.assertEqual(row['quality'],'unknown')
+
+    def test_progress_does_not_copy_raw_section_content_or_untrusted_states(self):
+        with tempfile.TemporaryDirectory() as folder:
+            tracker=self.tracker(folder);tracker.update('Блок',stage='scroll',section='gallery',sectionState='SECRET_STATE',sectionReady=True)
+            tracker.mark_stage_quality('scroll','partial',[{'section':'gallery','reason':'partial','text':'SECRET_LISTING'}, {'section':'SECRET_SECTION','reason':'ready'}])
+            tracker.finish(True,learn=False);serialized=json.dumps(tracker.snapshot())
+            self.assertNotIn('SECRET_',serialized)
+            row=next(row for row in tracker.snapshot()['stages'] if row['id']=='scroll')
+            self.assertEqual(row['sections'],[{'section':'gallery','reason':'partial','ready':False}])
+
+
 class ImportJobProgressTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory()
@@ -213,6 +252,33 @@ class ImportJobProgressTests(unittest.TestCase):
         self.assertEqual(job_progress.DurationHistory(self.directory).estimate('import:chrome')['sampleCount'],0)
         self.assertEqual(job_progress.DurationHistory(self.directory).estimate('import:cache')['sampleCount'],1)
         self.assertEqual(done['progress']['stages'][-1]['id'],'save')
+
+    def test_source_partial_with_ready_photos_keeps_quality_separate_and_persists_evidence(self):
+        capture={'version':2,'completed':False,'bounded':True,'sections':[
+            {'section':'gallery','found':True,'ready':True,'reads':1},
+            {'section':'description','found':False,'ready':False,'reads':0},
+            {'section':'characteristics','found':True,'ready':False,'reads':2}]}
+        def load(*args,**kwargs):
+            args[5]('Фотографии готовы',stage='scroll',section='gallery',sectionState='ready')
+            args[5]('Описание не проверено',stage='scroll',section='description',sectionState='not_visited_budget')
+            args[5]('Характеристики неполные',stage='scroll',section='characteristics',sectionState='partial')
+            return {'url':URL,'text':'Квартира 54 м², 80 000 руб. Описание прочитано запасным способом.',
+                    'images':[],'cached':False,'loader':'chrome','capture':capture}
+        def photos(directory,result,report=None,cancel=None):
+            result.update(media=[],mediaStatus='ready',photoInventory={'state':'disabled','checked':0,'total':0})
+        with patch.object(node_runtime,'resolve_node',return_value='/fixture/node'),patch.object(redcn,'load_listing',side_effect=load),patch.object(redcn,'generate',return_value={'fields':{'photos':[]},'titles':['标题'],'body':'正文','tags':'#租房'}),patch.object(phone_relay,'cache_photos',side_effect=photos):
+            job_id=self.server.start_import({'url':URL,'loader':'chrome'})
+            job=self.wait_job(job_id)
+        self.assertEqual(job['state'],'done');self.assertTrue(job['sourcePartial']);self.assertFalse(job['photoPartial'])
+        self.assertTrue(job['partial']);self.assertNotEqual(job['message'],'Готово')
+        self.assertIn('Полнота разделов источника не подтверждена',job['message'])
+        self.assertFalse(job['progress']['historyEligible'])
+        row=next(item for item in job['progress']['stages'] if item['id']=='scroll')
+        self.assertEqual(row['state'],'partial')
+        stored=local_server.read_result(self.directory,job['result_id'])
+        summary=stored['listing']['sourceReadiness'];self.assertTrue(summary['partial'])
+        self.assertEqual([item['reason'] for item in summary['sections']],['ready','not_visited_budget','partial'])
+        self.assertIn('запасным способом',stored['listing']['text'])
 
 
 if __name__=='__main__':unittest.main()

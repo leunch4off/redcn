@@ -1,3 +1,4 @@
+import {sanitizeClientText,containsClientCommission} from './client-publication.mjs';
 import {suggestTags} from './content-tools.mjs';
 import {readSourceHtml,sourceFieldFacts} from './source-import.mjs';
 import {normalizeRussian,detectFurniture,detectConditions,resolvePhotoFurniture} from './fact-evidence.mjs';
@@ -266,8 +267,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.ceiling)push('📏 层高：'+v.ceiling+'米');
   section('conditions');
   if(positive('price'))push('💰 租金：'+price+'/月（'+rubles(v.price)+'₽）');
-  if(v.deposit!==''&&v.deposit!==undefined)push('🔐 押金：'+(Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）'));
-  if(v.commission!==''&&v.commission!==undefined)push('🤝 中介费：'+(Number(v.commission)===0?'无需支付中介费':v.commission+'%'));
+  if(v.deposit!==''&&v.deposit!==undefined&&v.deposit!==null)push('🔐 押金：'+(Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）'));
   if(v.prepayMonths)push('📄 预付：'+v.prepayMonths+'个月');
   if(v.contractMonths)push('📅 描述所列合同期限：'+v.contractMonths+'个月');
   if(v.minMonths&&v.leaseTerm==='long')push('📅 卡片所列最低租期：'+v.minMonths+'个月'+(v.contractMonths&&Number(v.contractMonths)!==Number(v.minMonths)?'（与描述不一致，请确认）':''));
@@ -363,6 +363,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
       editorial:{titleStyles:titleIndexes.map(index=>getListingStyle('title',index,titleContext)),descriptionStyle:getListingStyle('description',copyVariation,blockContext),stats:listingStyleStats()}};
   }
   if(universityTarget)titles[0]+='｜🎓通勤目标：'+universityTarget;
+  try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
   return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],problems,templateInfo};
 }
 
@@ -439,6 +440,7 @@ export function analyzeListingSource(input,rules=DICTIONARY){
   }
   const furniture=detectFurniture((source.description||source.text||'')+'\n'+(source.records||[]).filter(r=>r.name==='FeaturesItem').map(r=>r.text).join('\n'),FEATURES,source.equipment||source.offer||{},source.equipment?'Параметры '+source.platform:'JSON');
   const facts={...simple.facts,...structured.facts,...conditions.facts,source:source.text||source.description||'',sourceDescription:source.description||'',features:furniture.filter(r=>r.status==='present').map(r=>r.id),featureCounts:Object.fromEntries(furniture.filter(r=>r.count).map(r=>[r.id,r.count])),photos:source.images||[],relatedOffers:source.related||[]};
+  for(const field of structured.blockedFields||[])facts[field]='';
   // Recommendations and page navigation may mention another university.
   // Prefer the apartment's own description when that section was identified.
   const schoolReferences=extractUniversityReferences(source.description||source.text||'');
@@ -451,6 +453,6 @@ export function analyzeListingSource(input,rules=DICTIONARY){
   if(!facts.price)warnings.push('Цена не найдена; заполните вручную.');
   warnings.push('Маршруты до вузов, кампус, услуги и наличие китайских магазинов не определяются без подтверждённых данных.');
   const fields=[...structured.evidence,...conditions.evidence,...schoolReferences.evidence];
-  facts.sourceAudit={version:1,stats:source.stats||{},fields,furniture,warnings,description:source.description||'',unmapped:(source.records||[]).filter(r=>!fields.some(e=>e.text===r.text)).slice(0,100)};
+  facts.sourceAudit={version:1,stats:source.stats||{},fields,furniture,warnings,conflicts:structured.conflicts||[],blockedFields:structured.blockedFields||[],description:source.description||'',unmapped:(source.records||[]).filter(r=>!fields.some(e=>e.text===r.text)).slice(0,100)};
   return {facts,warnings,sourceAudit:facts.sourceAudit};
 }

@@ -21,7 +21,9 @@ _ocr_lock = threading.Lock()
 _photo_locks = {}
 _guard = threading.Lock()
 MAX_PIXELS = 40_000_000
-AUTO_CROP_POLICY = 'verified-edge-v1'
+AUTO_CROP_POLICY = 'verified-edge-v2'
+AUTO_CROP_MIN_SHORT_SIDE = 320
+AUTO_CROP_MAX_AREA_LOSS = .25
 AUTO_CROP_SECONDS = 12
 _auto_crop_lock = threading.Lock()
 
@@ -64,6 +66,14 @@ def _save(directory,content,mime,metadata):
     if not path.exists():
         with tempfile.NamedTemporaryFile(dir=folder,delete=False) as f: f.write(content);temp=Path(f.name)
         temp.replace(path)
+    if metadata.get('kind')=='original':
+        with _connection(directory) as db:
+            existing=db.execute('SELECT metadata FROM assets WHERE id=?',(digest,)).fetchone()
+        if existing:
+            try:
+                previous=json.loads(existing[0])
+                if previous.get('kind')=='original':metadata={**previous,**metadata}
+            except (ValueError,TypeError):pass
     metadata={**metadata,'id':digest,'mime':mime,'bytes':len(content)}
     with _connection(directory) as db: db.execute('INSERT OR REPLACE INTO assets VALUES (?,?,?)',(digest,mime,json.dumps(metadata,ensure_ascii=False)))
     return metadata
@@ -78,33 +88,90 @@ def asset(directory,digest):
     return content,row[0],json.loads(row[1])
 
 
-def load_photo(directory,url,refresh=False):
+def image_mime(content):
+    """Use bytes, not a .jpg suffix or browser/HTTP label, as the MIME evidence."""
+    if content.startswith(b'\xff\xd8\xff'):return 'image/jpeg'
+    if content.startswith(b'\x89PNG\r\n\x1a\n'):return 'image/png'
+    if content.startswith(b'RIFF') and content[8:12]==b'WEBP':return 'image/webp'
+    raise ValueError('Сигнатура не соответствует JPEG, PNG или WebP')
+
+
+def _original_metadata(content,image,reported_mime):
+    Image,_=pillow()
+    with Image.open(io.BytesIO(content)) as raw:
+        actual={'JPEG':'image/jpeg','PNG':'image/png','WEBP':'image/webp'}.get(raw.format)
+        if actual!=image_mime(content):raise ValueError('Декодер и сигнатура фото не согласованы')
+        try:orientation=int(raw.getexif().get(274,1))
+        except (ValueError,TypeError):orientation=1
+        return actual,{'width':image.width,'height':image.height,
+            'encodedWidth':raw.width,'encodedHeight':raw.height,'exifOrientation':orientation,
+            'orientationNormalized':True,'coordinateSpace':'exif-transposed-normalized',
+            'reportedMime':str(reported_mime or '')[:80],'mimeEvidence':'magic-and-decoder',
+            'kind':'original','markState':'not-checked','cleanlinessConfirmed':False}
+
+
+def _source_metadata(source):
+    if source is None:return {}
+    if not isinstance(source,dict):raise ValueError('Неверные метаданные источника фото')
+    selected={}
+    photo_id=source.get('photoId')
+    if isinstance(photo_id,(str,int)) and not isinstance(photo_id,bool):
+        text=str(photo_id)
+        if re.fullmatch(r'[A-Za-z0-9_.:-]{1,100}',text):selected['photoId']=text
+    order=source.get('order')
+    if isinstance(order,int) and not isinstance(order,bool) and 0<=order<1000:selected['order']=order
+    for key in ('isLayout','isCianLayout'):
+        if isinstance(source.get(key),bool):selected[key]=source[key]
+    variants=source.get('variants')
+    if isinstance(variants,dict):
+        safe={}
+        for key in ('fullUrl','thumbnailUrl','thumbnail2Url','miniUrl'):
+            if isinstance(variants.get(key),str):
+                try:safe[key]=redcn.allowed_url(variants[key],images=True,resolve=False)
+                except ValueError:pass
+        if safe:selected['variants']=safe
+    return selected
+
+
+def _annotate_source(directory,metadata,source):
+    selected=_source_metadata(source)
+    if not selected:return metadata
+    metadata={**metadata,**selected}
+    with _connection(directory) as db:
+        db.execute('UPDATE assets SET metadata=? WHERE id=?',(json.dumps(metadata,ensure_ascii=False),metadata['id']))
+    return metadata
+
+
+def load_photo(directory,url,refresh=False,*,source=None):
     url=redcn.allowed_url(url,images=True,resolve=False)
+    _source_metadata(source)
     with _guard: lock=_photo_locks.setdefault(url,threading.Lock())
     with lock:
         if not refresh:
             with _connection(directory) as db: row=db.execute('SELECT id FROM photo_urls WHERE url=?',(url,)).fetchone()
             if row:
-                try:return {**asset(directory,row[0])[2],'cached':True}
+                try:return {**_annotate_source(directory,asset(directory,row[0])[2],source),'cached':True}
                 except (OSError,ValueError):pass
-        content,mime=redcn.fetch_bytes(url,images=True)
-        valid=(mime=='image/jpeg' and content.startswith(b'\xff\xd8\xff')) or (mime=='image/png' and content.startswith(b'\x89PNG\r\n\x1a\n')) or (mime=='image/webp' and content.startswith(b'RIFF') and content[8:12]==b'WEBP')
-        if not valid: raise ValueError('Сигнатура не соответствует формату фото')
+        content,reported_mime=redcn.fetch_bytes(url,images=True)
         image=open_photo(content)
-        try: result=_save(directory,content,mime,{'sourceUrl':url,'width':image.width,'height':image.height,'kind':'original'})
+        try:
+            mime,metadata=_original_metadata(content,image,reported_mime)
+            result=_save(directory,content,mime,{**metadata,'sourceUrl':url,**_source_metadata(source)})
         finally:image.close()
         with _connection(directory) as db:db.execute('INSERT OR REPLACE INTO photo_urls VALUES (?,?)',(url,result['id']))
         return {**result,'cached':False}
 
 
-def attach_photo(directory,url,data):
+def attach_photo(directory,url,data,*,source=None):
     url=redcn.allowed_url(url,images=True,resolve=False)
     if not isinstance(data,str) or not re.match(r'^data:image/(?:jpeg|png|webp);base64,',data):raise ValueError('Нужна фотография JPEG/PNG/WebP')
     try:content=base64.b64decode(data.split(',',1)[1],validate=True)
     except ValueError as error:raise ValueError('Неверный файл фото') from error
     if len(content)>redcn.MAX_IMAGE:raise ValueError('Фото больше 12 МБ')
     image=open_photo(content)
-    try:result=_save(directory,content,data[5:data.index(';')],{'sourceUrl':url,'width':image.width,'height':image.height,'kind':'original','attached':True})
+    try:
+        mime,metadata=_original_metadata(content,image,data[5:data.index(';')])
+        result=_save(directory,content,mime,{**metadata,'sourceUrl':url,'attached':True,**_source_metadata(source)})
     finally:image.close()
     with _connection(directory) as db:db.execute('INSERT OR REPLACE INTO photo_urls VALUES (?,?)',(url,result['id']))
     return result
@@ -158,7 +225,9 @@ def recognize(image,directory,*,cancel=None,deadline=None):
             result=subprocess.run([str(binary),str(path)],capture_output=True,text=True,timeout=_ocr_timeout(deadline,30))
             _check_photo_cancel(cancel)
             if result.returncode:raise ValueError('Vision не смог прочитать фото; доступна ручная граница кадра')
-            return json.loads(result.stdout),'Apple Vision'
+            rows=json.loads(result.stdout)
+            if not isinstance(rows,list) or any(not isinstance(row,dict) for row in rows):raise ValueError('OCR вернул неверный формат; нужна повторная проверка')
+            return rows,'Apple Vision'
         executable=shutil.which('tesseract')
         if not executable:raise ValueError('OCR не установлен: на Mac нужен Swift/Vision; на Linux/Windows — Tesseract. Можно задать отступ вручную.')
         result=subprocess.run([executable,str(path),'stdout','-l','eng','--psm','11','tsv'],capture_output=True,text=True,timeout=_ocr_timeout(deadline,30))
@@ -231,13 +300,18 @@ def detect_photo_marks(image,directory,allow_id_footer=False,*,cancel=None,deadl
         enlarged=variant.resize((variant.width*2,variant.height*2))
         try:found,_=recognize(enlarged,directory,**options)
         finally:enlarged.close();variant.close()
-        mapped=[{**row,'y':(y+float(row['y'])*(image.height-y))/image.height,'height':float(row['height'])*(image.height-y)/image.height} for row in found]
+        if not isinstance(found,list) or any(not isinstance(row,dict) for row in found):
+            footer.close();raise ValueError('OCR вернул неверный формат; нужна повторная проверка')
+        try:mapped=[{**row,'y':(y+float(row['y'])*(image.height-y))/image.height,'height':float(row['height'])*(image.height-y)/image.height} for row in found]
+        except (KeyError,TypeError,ValueError) as error:
+            footer.close();raise ValueError('OCR вернул неверные координаты; нужна повторная проверка') from error
         boxes=watermark_boxes(mapped,allow_id_footer)
         if boxes:footer.close();return boxes,engine+' · усиление контраста'
     footer.close();return [],engine
 
 
 def propose_crop(width,height,boxes):
+    if min(width,height)<AUTO_CROP_MIN_SHORT_SIDE:return {'status':'review','reason':'small-image','message':'Маленькое изображение: автоматическая обрезка отключена, оригинал сохранён.'}
     if not boxes:return {'status':'review','message':'Метка ЦИАН не найдена уверенно. Оригинал сохранён; выберите отступ вручную.'}
     margins={'left':0,'top':0,'right':0,'bottom':0}
     # Padding covers the pin/icon adjacent to or above the OCR text.
@@ -253,13 +327,16 @@ def propose_crop(width,height,boxes):
         margins[edge]=max(margins[edge],round(value,4))
     try: rect=crop_rect(width,height,margins)
     except ValueError as error:return {'status':'review','message':str(error),'boxes':boxes}
-    return {'status':'detected','margins':margins,'rect':rect,'boxes':boxes,'method':'normalized-ocr-edge','retainedArea':round((rect[2]-rect[0])*(rect[3]-rect[1])/(width*height),4)}
+    retained=(rect[2]-rect[0])*(rect[3]-rect[1])/(width*height)
+    if retained<1-AUTO_CROP_MAX_AREA_LOSS:return {'status':'review','reason':'area-loss','message':'Предложенная обрезка убирает более 25% площади; нужна ручная проверка.','boxes':boxes,'retainedArea':round(retained,4)}
+    return {'status':'detected','margins':margins,'rect':rect,'boxes':boxes,'method':'normalized-ocr-edge','retainedArea':round(retained,4)}
 
 
 def crop_photo(directory,digest,margins=None,*,cancel=None,deadline=None,min_confidence=0):
     _check_photo_cancel(cancel)
     content,_,original=asset(directory,digest)
     if original.get('kind')!='original':raise ValueError('Обрезка выполняется только из оригинала')
+    if margins is None and (original.get('isLayout') or original.get('isCianLayout')):return {'status':'review','reason':'layout','originalId':digest,'message':'Планировка: автоматическая обрезка отключена; доступна ручная граница.'}
     image=open_photo(content)
     try:
         engine=None;boxes=[];allow_id_footer=bool(re.match(r'https://(?:[\w-]+\.)*(?:cian\.ru|cdn-cian\.ru|ciancdn\.ru)/',original.get('sourceUrl','')))
@@ -278,7 +355,7 @@ def crop_photo(directory,digest,margins=None,*,cancel=None,deadline=None,min_con
             try: rows,_=recognize(cropped,directory,**options);remaining=watermark_boxes(rows,allow_id_footer);verification='mark-remains' if remaining else 'ocr-checked'
             except (OSError,ValueError,subprocess.SubprocessError):verification='not-checked'
         buffer=io.BytesIO();cropped.save(buffer,'JPEG',quality=95,subsampling=0)
-        metadata=_save(directory,buffer.getvalue(),'image/jpeg',{'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification,'cropMethod':'normalized-ocr-edge' if engine else 'manual','retainedArea':round(cropped.width*cropped.height/(image.width*image.height),4)})
+        metadata=_save(directory,buffer.getvalue(),'image/jpeg',{**_source_metadata(original),'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification,'cropMethod':'normalized-ocr-edge' if engine else 'manual','coordinateSpace':'exif-transposed-normalized','originalWidth':image.width,'originalHeight':image.height,'markState':'known-mark-excluded' if verification=='ocr-checked' else 'requires-review','cleanlinessConfirmed':False,'verificationEvidence':{'knownRegionsExcluded':bool(engine) and all((box['x']+box['width'])*image.width<=rect[0] or box['x']*image.width>=rect[2] or (box['y']+box['height'])*image.height<=rect[1] or box['y']*image.height>=rect[3] for box in boxes),'postOcr':'mark-detected' if remaining else 'not-detected' if verification=='ocr-checked' else 'not-checked'},'retainedArea':round(cropped.width*cropped.height/(image.width*image.height),4)})
         cropped.close()
         return {**metadata,'status':'review' if verification in ('mark-remains','not-checked') else 'cropped','boxes':boxes,'remaining':remaining,'message': 'В копии ещё распознаётся метка: проверьте кадр.' if remaining else 'Копия кадрирована; оригинал сохранён.'}
     finally:image.close()
@@ -294,7 +371,11 @@ def auto_crop_photo(directory,digest,*,cancel=None,max_seconds=AUTO_CROP_SECONDS
     if isinstance(max_seconds,bool) or not isinstance(max_seconds,(int,float)) or not 0<max_seconds<=60:
         raise ValueError('Лимит обработки фотографии: от 0 до 60 секунд')
     if not isinstance(digest,str) or not re.fullmatch(r'[a-f0-9]{64}',digest):raise ValueError('Неверный ID фотографии')
-    policy=AUTO_CROP_POLICY+'-'+hashlib.sha256(Path(__file__).with_name('recognize-photo.swift').read_bytes()).hexdigest()[:12]
+    original=asset(directory,digest)[2]
+    if original.get('isLayout') or original.get('isCianLayout'):return {'originalId':digest,'status':'review','autoStatus':'skipped','reason':'layout','cached':False,'markState':'requires-review','cleanlinessConfirmed':False}
+    if min(original.get('width',0),original.get('height',0))<AUTO_CROP_MIN_SHORT_SIDE:return {'originalId':digest,'status':'review','autoStatus':'skipped','reason':'small-image','cached':False,'markState':'requires-review','cleanlinessConfirmed':False}
+    parameters={'minConfidence':.8,'maxAreaLoss':AUTO_CROP_MAX_AREA_LOSS,'minShortSide':AUTO_CROP_MIN_SHORT_SIDE,'coordinateSpace':'exif-transposed-normalized'}
+    policy=AUTO_CROP_POLICY+'-'+hashlib.sha256(Path(__file__).with_name('recognize-photo.swift').read_bytes()+json.dumps(parameters,sort_keys=True).encode()).hexdigest()[:12]
     end=min(time.monotonic()+max_seconds,deadline) if deadline is not None else time.monotonic()+max_seconds
     while not _auto_crop_lock.acquire(timeout=min(.2,max(.001,end-time.monotonic()))):
         _check_photo_cancel(cancel)
@@ -327,7 +408,7 @@ def auto_crop_photo(directory,digest,*,cancel=None,max_seconds=AUTO_CROP_SECONDS
         _check_photo_cancel(cancel)
         verified=decision.get('status')=='cropped' and decision.get('verification')=='ocr-checked'
         auto_status='cropped' if verified else 'unavailable' if decision.get('retryable') or decision.get('verification')=='not-checked' else 'review' if decision.get('boxes') else 'unchanged'
-        decision={**decision,'autoStatus':auto_status,'policy':policy,'originalId':digest,'cached':False}
+        decision={**decision,'autoStatus':auto_status,'policy':policy,'originalId':digest,'cached':False,'markState':decision.get('markState') or ('detected' if decision.get('boxes') else 'not-checked' if auto_status in ('unavailable','skipped') else 'not-detected'),'cleanlinessConfirmed':False,'parameters':parameters}
         if not decision.get('boxes') and auto_status=='unchanged':decision['message']='Уверенная метка не обнаружена; оригинал сохранён без изменений.'
         if auto_status not in ('unavailable','skipped'):
             with _connection(directory) as db:
@@ -343,6 +424,7 @@ def analyze_photo(directory,digest,*,cancel=None,deadline=None):
     if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
     content,mime,original=asset(directory,digest)
     if original.get('kind')!='original':raise ValueError('Распознавание выполняется по оригиналу')
+    if original.get('isLayout') or original.get('isCianLayout'):raise ValueError('Планировка не анализируется как фотография комнаты')
     folder=Path(directory)/'vision';folder.mkdir(parents=True,exist_ok=True)
     from photo_ai_settings import load_config
     config=load_config(directory)
@@ -363,3 +445,49 @@ def analyze_photo(directory,digest,*,cancel=None,deadline=None):
             temp=Path(stream.name);temp.chmod(0o600);json.dump(result,stream,ensure_ascii=False)
         temp.replace(cache)
     return result
+
+
+def visual_signature(image):
+    """Conservative similarity hint, never an identity or deletion decision.
+
+    Compare the central scene above the usual footer. A small distance can also
+    describe different plain rooms; callers must retain every original.
+    """
+    Image,ImageOps=pillow()
+    center=image.crop((int(image.width*.05),int(image.height*.05),
+                       int(image.width*.95),int(image.height*.80)))
+    gray=ImageOps.grayscale(center)
+    resized=gray.resize((17,16),Image.Resampling.LANCZOS)
+    try:
+        pixels=list(resized.get_flattened_data() if hasattr(resized,'get_flattened_data') else resized.getdata());number=0
+        for y in range(16):
+            for x in range(16):number=(number<<1)|int(pixels[y*17+x]>pixels[y*17+x+1])
+        return {'algorithm':'central-dhash256-v1','value':format(number,'064x'),
+                'region':[.05,.05,.95,.80],'decision':'review-only'}
+    finally:center.close();gray.close();resized.close()
+
+
+def near_duplicate_candidates(directory,digests,*,distance_limit=10):
+    """Return review pairs only. Never merges, excludes or deletes any asset."""
+    if not isinstance(distance_limit,int) or isinstance(distance_limit,bool) or not 0<=distance_limit<=32:
+        raise ValueError('Порог сходства: целое число от 0 до 32')
+    if not isinstance(digests,list) or len(digests)>60:raise ValueError('Сравнение: до 60 фотографий')
+    rows=[];seen=set()
+    for digest in digests:
+        if digest in seen:continue
+        seen.add(digest);content,_,meta=asset(directory,digest)
+        if meta.get('kind')!='original' or meta.get('isLayout') or meta.get('isCianLayout'):continue
+        image=open_photo(content)
+        try:signature=visual_signature(image)
+        finally:image.close()
+        rows.append({'id':digest,'signature':signature,'width':meta['width'],'height':meta['height']})
+    pairs=[]
+    for index,left in enumerate(rows):
+        for right in rows[index+1:]:
+            ratio=left['width']/left['height']/(right['width']/right['height'])
+            if not .97<=ratio<=1.03:continue
+            distance=(int(left['signature']['value'],16)^int(right['signature']['value'],16)).bit_count()
+            if distance<=distance_limit:pairs.append({'leftId':left['id'],'rightId':right['id'],
+                'distance':distance,'bits':256,'algorithm':'central-dhash256-v1',
+                'status':'candidate','requiresReview':True,'action':'retain-both'})
+    return sorted(pairs,key=lambda row:(row['distance'],row['leftId'],row['rightId']))

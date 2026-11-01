@@ -58,6 +58,16 @@ class CLITests(unittest.TestCase):
                 result = cli.download_photos(['https://images.cdn-cian.ru/1.jpg', 'https://images.cdn-cian.ru/2.png'], Path(folder))
             self.assertTrue(Path(result[0]['path']).exists());self.assertIn('error', result[1]);self.assertTrue((Path(folder) / 'manifest.json').exists())
 
+    def test_photo_download_uses_actual_webp_bytes_despite_jpg_url_and_header(self):
+        from PIL import Image
+        data = io.BytesIO(); Image.new('RGB', (640, 480), 'white').save(data, 'WEBP')
+        content = data.getvalue()
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(cli, 'fetch_bytes', return_value=(content, 'image/jpeg')):
+                result = cli.download_photos(['https://images.cdn-cian.ru/fixture.jpg'], Path(folder))
+            self.assertEqual(Path(result[0]['path']).suffix, '.webp')
+            self.assertEqual(Path(result[0]['path']).read_bytes(), content)
+
     def test_batch_only_new_successful_eligible_items(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'batch.json'

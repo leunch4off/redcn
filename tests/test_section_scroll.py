@@ -44,6 +44,13 @@ class SectionPage:
 
     def evaluate(self, expression, argument=None):
         if expression == browser_import.SECTION_PROBE:
+            if argument['section']=='all':
+                self.probes.append(dict(argument))
+                result={}
+                for section in ('gallery','description','characteristics'):
+                    rows=self.states.get(section)
+                    result[section]=(rows.pop(0) if len(rows)>1 else rows[0]) if rows else {'found':True,'ready':True,'recognized':True}
+                return {'sections':result}
             self.section = argument['section']
             self.probes.append(dict(argument))
             rows = self.states.get(self.section)
@@ -84,7 +91,7 @@ class SectionCaptureTests(unittest.TestCase):
         self.assertIn('пианино', result['text']);self.assertEqual(result['images'], [IMAGE])
         self.assertTrue(audit['completed']);self.assertFalse(audit['bounded'])
         self.assertFalse(audit['pageBottomReached'])
-        self.assertEqual([row['reads'] for row in audit['sections']], [1,1,1])
+        self.assertEqual([row['reads'] for row in audit['sections']], [2,2,2])
         self.assertLess(audit['seconds'], .1);self.assertTrue(page.restored)
         self.assertEqual([fields['section'] for _,fields in reports if fields.get('sectionReady')], visits)
 
@@ -94,9 +101,9 @@ class SectionCaptureTests(unittest.TestCase):
             {'found':True,'ready':False}, {'found':True,'ready':True}]})
         _, audit = self.run_capture(page, clock)
         self.assertTrue(audit['completed'])
-        self.assertEqual(page.waits, [80,80])
-        self.assertEqual(audit['sections'][0]['reads'], 3)
-        self.assertEqual(audit['sections'][1]['reads'], 1)
+        self.assertEqual(page.waits, [80])
+        self.assertEqual(audit['sections'][0]['reads'], 4)
+        self.assertEqual(audit['sections'][1]['reads'], 2)
 
     def test_missing_layout_is_bounded_and_reports_incomplete_sections(self):
         clock = Clock();page = SectionPage(clock, {kind:[{'found':False,'ready':False}]
@@ -139,7 +146,8 @@ class SectionCaptureTests(unittest.TestCase):
                 api.TimeoutError=type('FakeBrowserTimeout',(api.Error,),{})
                 def evaluate(expression, argument=None):
                     if expression==browser_import.SECTION_PROBE:
-                        return {'recognized':True,'found':True,'ready':True}
+                        state={'recognized':True,'found':True,'ready':True}
+                        return {'sections':{kind:dict(state) for kind in ('gallery','description','characteristics')}} if argument.get('section')=='all' else state
                     if expression==browser_import.SCROLL_TOP:return None
                     if expression==browser_import.SNAPSHOT:
                         if pending:raise api.Error(pending.pop())
@@ -211,13 +219,32 @@ class SectionBrowserAcceptance(unittest.TestCase):
             }
           });</script>'''
 
+    def test_ready_snapshot_does_not_clone_the_whole_page_and_reports_measured_dom_work(self):
+        self.page.set_content(self.html())
+        self.page.evaluate("() => { Element.prototype.cloneNode=()=>{throw Error('Unnecessary whole-page clone');}; }")
+        result=self.page.evaluate(browser_import.SNAPSHOT)
+        self.assertTrue(browser_import.listing_ready(result)[0]);self.assertEqual(result['fallback'],'')
+        self.assertEqual(set(result['sectionStates']),{'gallery','description','characteristics'})
+        for key in ['domReadMs','serializationProbeMs','serializedChars']:self.assertGreaterEqual(result[key],0)
+
+    def test_semantic_fingerprint_ignores_gallery_counter_but_observes_price_changes(self):
+        self.page.set_content(self.html())
+        before=self.page.evaluate(browser_import.SNAPSHOT)
+        self.page.evaluate("document.querySelector('[data-name=OfferGallery]').append(document.createTextNode('1 / 10 · 543 просмотров'))")
+        changed=self.page.evaluate(browser_import.SNAPSHOT)
+        self.assertNotEqual(before['text'],changed['text'])
+        self.assertEqual(browser_import.listing_signature(before),browser_import.listing_signature(changed))
+        self.page.evaluate("document.querySelector('[data-name=PriceInfo]').textContent='90 000 ₽ в месяц'")
+        price=self.page.evaluate(browser_import.SNAPSHOT)
+        self.assertNotEqual(browser_import.listing_signature(before),browser_import.listing_signature(price))
+
     def test_loaded_gallery_advances_to_description_and_characteristics_without_polling(self):
         self.page.set_content(self.html());self.page.wait_for_function('document.querySelector("img").complete')
         self.page.evaluate('document.querySelector("[data-name=OfferGallery]").style.height="2400px"')
         first=self.page.evaluate(browser_import.SNAPSHOT)
         result,audit=browser_import.capture_sections(self.page,first,time.monotonic()+10,lambda *_args,**_kwargs:None)
         self.assertTrue(audit['completed']);self.assertEqual(self.page.evaluate('window.visits'),['gallery','description','characteristics'])
-        self.assertTrue(all(row['reads']==1 for row in audit['sections']))
+        self.assertTrue(all(row['reads']==2 for row in audit['sections']))
         self.assertIn('пианино',result['text']);self.assertIn(IMAGE,result['images'])
         self.assertNotIn('https://images.cdn-cian.ru/unrelated.jpg',result['images'])
         self.assertEqual(self.page.evaluate('scrollY'),0)
@@ -288,3 +315,59 @@ class SectionBrowserAcceptance(unittest.TestCase):
 
 
 if __name__=='__main__': unittest.main()
+
+
+class SectionBudgetRegressionTests(unittest.TestCase):
+    def capture(self,page,clock,**options):
+        with patch.object(browser_import.time,'monotonic',clock.now):
+            return browser_import.capture_sections(page,snapshot(),clock.now()+30,lambda *_args,**_kwargs:None,**options)
+
+    def test_slow_gallery_does_not_erase_preflight_observations_of_later_sections(self):
+        clock=Clock();page=SectionPage(clock,{'gallery':[{'found':True,'ready':False}]});base=page.evaluate
+        def slow(expression,argument=None):
+            if expression==browser_import.SECTION_PROBE and argument.get('section')=='gallery':
+                clock.value+=7
+            return base(expression,argument)
+        page.evaluate=slow
+        _,audit=self.capture(page,clock,budget=6)
+        gallery,description,characteristics=audit['sections']
+        self.assertEqual(page.probes[0],{'section':'all'})
+        self.assertEqual(gallery['reason'],'partial');self.assertEqual(gallery['reads'],2)
+        for row in [description,characteristics]:
+            self.assertTrue(row['found']);self.assertTrue(row['ready']);self.assertEqual(row['reason'],'ready')
+            self.assertFalse(row['visited']);self.assertEqual(row['reads'],1)
+        self.assertFalse(audit['completed'],'No fresh full snapshot was captured after the batched probe')
+        self.assertEqual(audit['fullSnapshotReads'],0)
+        self.assertEqual(audit['budgetOverrunSeconds'],1)
+        self.assertEqual(audit['browserCalls'][1]['seconds'],7)
+        self.assertTrue(page.restored)
+
+    def test_zero_budget_does_not_report_absent_sections(self):
+        clock=Clock();page=SectionPage(clock)
+        _,audit=self.capture(page,clock,budget=0)
+        for row in audit['sections']:
+            self.assertIsNone(row['found']);self.assertEqual(row['reads'],0);self.assertEqual(row['reason'],'not_visited_budget')
+        self.assertFalse(page.probes);self.assertFalse(audit['completed'])
+
+    def test_all_missing_sections_are_actually_observed_not_skipped(self):
+        clock=Clock();page=SectionPage(clock,{kind:[{'found':False,'ready':False}] for kind in ('gallery','description','characteristics')})
+        _,audit=self.capture(page,clock,budget=.1)
+        for row in audit['sections']:
+            self.assertFalse(row['found']);self.assertGreaterEqual(row['reads'],1);self.assertEqual(row['reason'],'not_found')
+
+    def test_snapshot_preflight_requires_no_redundant_batched_probe(self):
+        clock=Clock();page=SectionPage(clock)
+        first={**snapshot(),'sectionStates':{kind:{'found':True,'ready':True} for kind in ('gallery','description','characteristics')}}
+        with patch.object(browser_import.time,'monotonic',clock.now):
+            _,audit=browser_import.capture_sections(page,first,clock.now()+30,lambda *_args,**_kwargs:None,budget=0)
+        self.assertTrue(audit['completed']);self.assertEqual(audit['preflightSource'],'snapshot');self.assertFalse(page.probes)
+
+    def test_semantic_stability_ignores_incidental_page_text_but_keeps_price_and_section_changes(self):
+        state={'found':True,'ready':True}
+        first={**snapshot(),'stabilityKey':'["Цена 80000 ₽","54 м²","Описание квартиры"]','sectionStates':{'description':state}}
+        noise={**first,'text':TEXT+' 999 просмотров, 17:00','fallback':'Changing recommendations and gallery UI'}
+        self.assertEqual(browser_import.listing_signature(first),browser_import.listing_signature(noise))
+        price={**noise,'stabilityKey':first['stabilityKey'].replace('80000','90000')}
+        self.assertNotEqual(browser_import.listing_signature(first),browser_import.listing_signature(price))
+        pending={**first,'sectionStates':{'description':{'found':True,'ready':False}}}
+        self.assertNotEqual(browser_import.listing_signature(first),browser_import.listing_signature(pending))

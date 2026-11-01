@@ -151,12 +151,36 @@ def save_profile(directory,profile):
     return {'profileSaved':True}
 
 
+def photo_source_items(result):
+    """Retain known provenance while keeping old cards' loader call unchanged."""
+    fields=result.get('fields',{}) if isinstance(result.get('fields'),dict) else {}
+    listing=result.get('listing',{}) if isinstance(result.get('listing'),dict) else {}
+    output={}
+    for holder in (listing,fields):
+        rows=holder.get('photoItems',[])
+        for row in rows if isinstance(rows,list) else []:
+            if not isinstance(row,dict):continue
+            try:url=redcn.allowed_url(row.get('url'),images=True,resolve=False)
+            except (ValueError,TypeError):continue
+            previous=output.get(url,{})
+            output[url]={**previous,**row,'url':url}
+            # A layout identification is not silently undone by an old clone.
+            for key in ('isLayout','isCianLayout'):
+                if previous.get(key) is True:output[url][key]=True
+    return output
+
+
 def source_images(result):
     fields=result.get('fields',{}) if isinstance(result.get('fields'),dict) else {}
     listing=result.get('listing',{}) if isinstance(result.get('listing'),dict) else {}
     values=fields.get('photos') or listing.get('images') or []
     edits=fields.get('photoEdits',{}) if isinstance(fields.get('photoEdits'),dict) else {}
     excluded=set(value for value in edits.get('excluded',[]) if isinstance(value,str))
+    for url,item in photo_source_items(result).items():
+        if item.get('isLayout') is True or item.get('isCianLayout') is True:
+            excluded.add(url)
+            variants=item.get('variants',{})
+            if isinstance(variants,dict):excluded.update(value for value in variants.values() if isinstance(value,str))
     if isinstance(edits.get('order'),list):values=[value for value in edits['order'] if value in values]+list(values)
     urls=[]
     for value in values if isinstance(values,list) else []:
@@ -169,10 +193,11 @@ def source_images(result):
 def cache_photos(directory,result,report=None,cancel=None):
     from job_progress import emit
     urls=source_images(result)
+    sources=photo_source_items(result)
     if cancel and cancel.is_set():raise ValueError('Загрузка отменена')
     def load(url):
         if cancel and cancel.is_set():return {'sourceUrl':url,'error':'Загрузка отменена'}
-        try:return photo_store.load_photo(directory,url)
+        try:return photo_store.load_photo(directory,url,source=sources[url]) if url in sources else photo_store.load_photo(directory,url)
         except (OSError,ValueError,redcn.subprocess.SubprocessError) as error:return {'sourceUrl':url,'error':str(error)}
     emit(report,'Сохраняем фотографии на Mac: '+str(len(urls)),stage='photos',completed=0,total=len(urls))
     by_url={}
@@ -256,6 +281,7 @@ def parse_cursor(value):
 
 
 def list_cards(directory,after=0):
+    from client_publication import sanitize_text,PublicationReviewRequired
     stamp,identifier=parse_cursor(after);upper=time.time()
     db=redcn.open_cache(directory)
     try:
@@ -266,21 +292,32 @@ def list_cards(directory,after=0):
     for result_id,updated,payload in rows:
         try:result=json.loads(payload)
         except ValueError:continue
-        if result.get('fields',{}).get('isDemo') is True:continue
-        fields=result.get('fields',{});media=card_media(directory,result,include_crops=False,originals_by_url=metadata)
-        cards.append({'id':result_id,'updated':updated,'title':(result.get('titles') or [''])[0], 'price':fields.get('price',''),'metro':fields.get('metro',''),'area':fields.get('area',''),'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+media[0]['id'] if media else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
+        if not isinstance(result,dict):continue
+        fields=result.get('fields',{}) if isinstance(result.get('fields'),dict) else {}
+        if fields.get('isDemo') is True:continue
+        media=card_media(directory,result,include_crops=False,originals_by_url=metadata)
+        titles=result.get('titles')
+        title=titles[0] if isinstance(titles,list) and titles else titles if isinstance(titles,str) else ''
+        summary={};needs_review=False
+        for key,value in {'title':title,'price':fields.get('price',''),'metro':fields.get('metro',''),'area':fields.get('area','')}.items():
+            if isinstance(value,str):
+                try:summary[key]=sanitize_text(value)
+                except PublicationReviewRequired:summary[key]='';needs_review=True
+            else:summary[key]=value if key in ('price','area') and type(value) in (int,float) and math.isfinite(value) else ''
+        cards.append({'id':result_id,'updated':updated,**summary,'publicationNeedsReview':needs_review,'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+media[0]['id'] if media else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
     cursor=(repr(rows[-1][1])+':'+rows[-1][0]) if has_more and rows else (repr(upper)+':'+'f'*32)
     return {'cards':cards,'cursor':cursor,'serverTime':upper,'hasMore':has_more}
 
 
 def public_card(directory,result_id):
     import local_server
+    from client_publication import client_card
     result=local_server.read_result(directory,result_id)
     if result is None or result.get('fields',{}).get('isDemo') is True:return None
     db=redcn.open_cache(directory)
     try:updated=db.execute('SELECT updated FROM results WHERE id=?',(result_id,)).fetchone()[0]
     finally:db.close()
-    return {**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),'media':card_media(directory,result)}
+    return client_card({**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),'media':card_media(directory,result)})
 
 
 def card_zip(directory,result_id,variant='original'):

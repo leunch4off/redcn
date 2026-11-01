@@ -1,6 +1,7 @@
 """CIAN DOM contract. No Avito markers belong in this adapter."""
 CONFIG = {
     'id': 'cian',
+    'stability': ['[data-name="OfferTitleNew"]','[data-name="OfferTitle"]','[data-name="PriceInfo"]','[data-name="OfferDescription"]','[data-name="Description"]','[data-name="OfferSummaryInfoItem"]','[data-name="ObjectFactoidsItem"]','[data-name="FeaturesItem"]','[data-name="OfferFactItem"]','[data-name="UndergroundItem"]'],
     'metadataTokens': ["_cianConfig['frontend-offer-card']", '_cianConfig["frontend-offer-card"]'],
     'fields': ['[data-name="'+name+'"]' for name in (
         'OfferSummaryInfoItem','ObjectFactoidsItem','OfferFactItem','FeaturesItem',

@@ -109,7 +109,7 @@
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
-      <details id="phoneDiagnostics"><summary>Диагностика подключения · v19</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v21</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -160,7 +160,7 @@
 <script>/* Independent ES5 startup guard: it must run even when the module cannot parse. */
 (function () {
   'use strict';
-  var version = 'v19', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var version = 'v21', started = Date.now(), attempt = 0, timer = 0, done = false;
   var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
   var moduleStarted = false, probeTimer = 0, probing = false;
   function el(id) { return document.getElementById(id); }
@@ -274,6 +274,173 @@ async function withRequestDeadline(milliseconds,operation,{signal:externalSignal
     const result=Promise.resolve().then(()=>{scope.throwIfAborted();return operation(scope.signal,scope);});
     return await Promise.race([cancellation,result]);
   }finally{disposed=true;clearTimer();detach();}
+}
+
+// One client-publication policy. Source facts, drafts and stored cards are private
+// inputs and must never be overwritten by this derived projection.
+const PUBLICATION_POLICY_VERSION='client-publication-v1';
+const clientCommissionPattern=/комисси[а-яё]*|агентск[а-яё]*\s+(?:вознагражден[а-яё]*|сбор[а-яё]*|услуг[а-яё]*)|вознагражден[а-яё]*\s+(?:агент[а-яё]*|риелтор[а-яё]*)|риелторск[а-яё]*\s+(?:сбор[а-яё]*|услуг[а-яё]*)|中介\s*(?:费|費)|佣金|傭金|免佣|经纪\s*(?:费|費)|經紀\s*(?:费|費)|代理\s*(?:费|費)|\bcommission\b|\b(?:broker(?:age)?|agent|agency)\s+fees?\b/iu;
+const clientProtectedPattern=/(?:аренд[ауы]|арендная\s+плата|залог|депозит|предоплат|аванс|коммунал|жку|квартплат|сч[её]тчик|площад|комнат|спальн|мебел|диван|кроват|холодильник|квартир|адрес|метро|этаж|\b(?:rent|deposit|utilities|bedrooms?)\b|租金|月租|押金|定金|预付|預付|物业|物業|水电|水電|面积|面積|卧室|臥室|家具|公寓|精装|精裝|平米|[一两兩二三四五六七八九十]室|[一两兩二三四五六七八九十]厅|地铁|地鐵|\d\s*(?:㎡|м²|м2))/iu;
+const clientPrivateKey=/(?:commission|^(?:clientFee|agentFee|brokerFee|agencyFee|offer|bargainTerms|source(?:Audit|Description|Ru|Html)?|raw(?:Text|Html|Body|Description)?|original(?:Text|Html|Body|Description)|notes|operatorNotes|internal|rules|prefs|sourceEnvelope)$)/iu;
+const clientFold=value=>String(value||'').replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g,'');
+// A matched token alone is insufficient: any leftover property/location words
+// make the clause ambiguous. This protects facts outside a finite keyword list.
+const clientFeeGrammar=/без|нет|не|комисси[а-яё]*|агентск[а-яё]*|вознагражден[а-яё]*|риелторск[а-яё]*|услуг[а-яё]*|сбор[а-яё]*|оплат[а-яё]*|плат[а-яё]*|отсутств[а-яё]*|взима[а-яё]*|составля[а-яё]*|дополнительн[а-яё]*|услови[а-яё]*|уточн[а-яё]*|обсужда[а-яё]*|оговор[а-яё]*|согласова[а-яё]*|разов[а-яё]*|единоразов[а-яё]*|руб(?:л[а-яё]*)?|процент[а-яё]*|посредник[а-яё]*|арендатор[а-яё]*|собственник[а-яё]*|нанимател[а-яё]*|(?:^|\s)(?:с|со|за|от|для|по|к|на|и|или|до|в|из|у)(?=\s|$)|no|zero|free|waived|payable|paid|pay|by|the|tenant|landlord|fees?|commission|broker(?:age)?|agency|agent|additional|negotiable|contact|details|discuss|request|one[ -]?time|rur|rub|rmb|中介|费|費|佣金|傭金|免佣|经纪|經紀|代理|无需|無需|支付|免|无|無|不收|不另收|收取|另付|另计|另計|费用|費用|服务|服務|元|卢布|盧布|人民币|人民幣|一次性|为|為|是|可议|可議|面议|面議|咨询|諮詢|协商|協商|双方|租客|房东|房東|承担|承擔|待确认|待確認|具体详询|具體詳詢|请|請|私聊|详询|詳詢|确认|確認|联系|聯繫/giu;
+function clientCommissionOnly(text){const rest=clientFold(text).replace(clientFeeGrammar,'');return !/[\p{L}]/u.test(rest);}
+
+class ClientPublicationReviewRequired extends Error{
+ constructor(fragment,reason='Перед публикацией разделите комиссию и остальные условия'){super(reason+': «'+fragment.slice(0,300)+'». Исходный текст сохранён.');this.name='ClientPublicationReviewRequired';this.fragment=fragment.slice(0,700);this.code='PUBLICATION_REVIEW_REQUIRED';}
+}
+function containsClientCommission(value){return clientCommissionPattern.test(clientFold(value));}
+function clientTextClauses(line){
+ if(/^\s*#/.test(line))return (line.match(/#[^#]*/g)||[]).map(text=>({text,separator:' '}));
+ const rows=[];let start=0;
+ for(let index=0;index<line.length;index++){
+  const c=line[index],numeric=/\d/.test(line[index-1]||'')&&/\d/.test(line[index+1]||'');
+  const delimiter=';；|｜·•。!?！？'.includes(c)||(c===','&&!numeric)||c==='，'||c==='.'&&!numeric&&(index===line.length-1||/\s/.test(line[index+1]||''))||c==='/'&&/\s/.test(line[index-1]||'')&&/\s/.test(line[index+1]||'');
+  if(delimiter){rows.push({text:line.slice(start,index),separator:c});start=index+1;}
+ }
+ rows.push({text:line.slice(start),separator:''});return rows;
+}
+function sanitizeClientText(value){
+ if(value==null)return '';if(typeof value!=='string')throw TypeError('Текст публикации должен быть строкой');
+ if(!containsClientCommission(value))return value;
+ const lines=[];
+ for(const line of value.replace(/\r\n?/g,'\n').split('\n')){
+  if(!containsClientCommission(line)){lines.push(line);continue;}
+  let output='',separator='';
+  for(const clause of clientTextClauses(line)){
+   const text=clause.text.trim();if(!text)continue;
+   if(containsClientCommission(text)){
+    if(clientProtectedPattern.test(clientFold(text))||!clientCommissionOnly(text))throw new ClientPublicationReviewRequired(text);
+    continue;
+   }
+   if(output)output+=separator+(separator&&!/[\s。，；]/.test(separator)?' ':'');output+=text;separator=clause.separator;
+  }
+  if(output){if(/[。.!?！？]/.test(separator))output+=separator;lines.push(output);}
+ }
+ return lines.join('\n').trim();
+}
+function assertClientText(value){const cleaned=sanitizeClientText(value);if(cleaned!==String(value??''))throw new ClientPublicationReviewRequired(String(value??''));return cleaned;}
+const clientDisputedClaims={deposit:/押金|免押|залог|депозит/iu,buildingType:/кирпич|панел|монолит|блочн|砖|磚|板式|预制|預製|整体浇筑/iu,bathroom:/浴缸|淋浴|ванн|душ/iu,price:/租金|月租|аренд[ауы]|арендная плата/iu,area:/面积|面積|площад|\d\s*(?:㎡|м²|м2)/iu,floor:/楼层|樓層|этаж/iu,rooms:/комнат|卧室|臥室|[一两兩二三四五六七八九十]室/iu};
+function clientCheckDisputedFacts(card){
+ if(!card||typeof card!=='object')return;
+ const fields=card.fields&&typeof card.fields==='object'?card.fields:card,audit=fields.sourceAudit||card.sourceAudit||{},blocked=Array.isArray(audit.blockedFields)?audit.blockedFields:[];
+ const texts=[card.title,card.body,card.tags,...(Array.isArray(card.titles)?card.titles:[]),fields.description].filter(value=>typeof value==='string');
+ for(const field of blocked){
+  if(typeof field!=='string')continue;
+  const reason='Перед публикацией проверьте противоречивое поле '+field,value=fields[field];
+  if(value!==undefined&&value!==null&&value!==''&&!(Array.isArray(value)&&!value.length))throw new ClientPublicationReviewRequired(field+': '+String(value),reason);
+  const expression=clientDisputedClaims[field];if(!expression)continue;
+  for(const text of texts)for(const line of text.split(/\n|[。;]/u))if(expression.test(line)){
+   if(field==='deposit'&&!/\d|无需|無需|免押|без\s+залога/iu.test(line)&&/待确认|待確認|待核实|уточн|неизвест/iu.test(line))continue;
+   throw new ClientPublicationReviewRequired(line.trim(),reason);
+  }
+ }
+}
+function clientPublicationCard(card={}){
+ clientCheckDisputedFacts(card);
+ const active=new Set();
+ function project(value,key='',depth=0){
+  if(depth>32)throw TypeError('Слишком глубокая модель публикации');
+  if(typeof value==='string'){
+   if(/^data:image\/(?:png|jpeg|webp);base64,/i.test(value))return value;
+   return sanitizeClientText(value);
+  }
+  if(value===null||typeof value!=='object')return value;
+  if(active.has(value))throw TypeError('Циклическая модель публикации');active.add(value);
+  let result;if(Array.isArray(value))result=value.map(item=>project(item,key,depth+1));
+  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name))continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
+  active.delete(value);return result;
+ }
+ const projected=project(card);if(projected&&typeof projected==='object'&&!Array.isArray(projected)){for(const key of ['body','title','tags'])if(key in projected&&typeof projected[key]!=='string')projected[key]='';if('titles' in projected)projected.titles=(Array.isArray(projected.titles)?projected.titles:typeof projected.titles==='string'?[projected.titles]:[]).filter(value=>typeof value==='string'&&value.trim());projected.publicationPolicyVersion=PUBLICATION_POLICY_VERSION;}return projected;
+}
+
+// Only status codes cross this UI boundary. Source text, capture details and
+// arbitrary backend warning strings must never become readiness feedback.
+const sectionNames={gallery:'Фотографии',description:'Описание',characteristics:'Характеристики'};
+const sectionReasons={partial:'полнота раздела не подтверждена',not_found:'раздел не найден при проверке',not_visited_budget:'проверка не выполнена: исчерпан лимит времени'};
+
+function readinessOf(value){
+  if(!value||typeof value!=='object')return null;
+  const candidates=[value.sourceReadiness,value.listing&&value.listing.sourceReadiness,value.fields&&value.fields.sourceReadiness,value];
+  return candidates.find(row=>row&&typeof row==='object'&&['ready','partial','unknown'].includes(row.state))||null;
+}
+
+function sourceReadinessFeedback(value,fallback){
+  const readiness=readinessOf(value)||readinessOf(fallback),partial=!!(value&&value.sourcePartial===true)||!!(readiness&&(readiness.partial===true||readiness.state==='partial'));
+  const state=partial?'partial':readiness?readiness.state:'',details=[];
+  if(partial){
+    const rows=Array.isArray(readiness&&readiness.sections)?readiness.sections:[];
+    for(const name of Object.keys(sectionNames)){
+      const row=rows.find(section=>section&&(section.name||section.section)===name);
+      if(!row||row.reason==='ready'||row.ready===true)continue;
+      details.push(sectionNames[name]+' — '+(sectionReasons[row.reason]||'полнота раздела не подтверждена')+'.');
+    }
+  }
+  const message=partial?['Сбор исходной страницы частичный.',...details].join(' '):state==='unknown'?'Полнота исходной страницы не проверялась.':'';
+  return {state,partial,details,message};
+}
+
+function importCompletionFeedback(job,fallback){
+  const source=sourceReadinessFeedback(job,fallback),photoPartial=typeof job.photoPartial==='boolean'?job.photoPartial:job.partial===true&&!source.partial;
+  const title=source.partial?'Карточка готова · исходная страница собрана частично':photoPartial?'Карточка готова · фото подготовлены частично':'Готово на Mac';
+  const message=[source.partial?'Карточка создана.':photoPartial?'Карточка готова.':'',source.message,photoPartial?'Фотографии подготовлены частично.':''].filter(Boolean).join(' ');
+  return {title,message,sourceMessage:source.message,sourcePartial:source.partial,photoPartial,retryPhotos:photoPartial&&!!job.result_id};
+}
+
+function importStageMark(step){
+  return step.state==='partial'||step.quality==='partial'||step.state==='error'||step.state==='waitingManual'?'!':step.state==='done'?'✓':'…';
+}
+
+const metadataKeys=['sourceReadiness','photoItems','layouts','sourceDates','transitDetails'];
+function metadataUrl(value){try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}}
+function metadataString(value,max=500){return typeof value==='string'?value.slice(0,max):null;}
+function metadataMedia(value,layout){
+  if(!Array.isArray(value))return undefined;
+  return value.slice(0,400).filter(row=>row&&typeof row==='object').map(row=>{
+    const url=metadataUrl(row.url);if(!url)return null;
+    const item={url,isLayout:layout||row.isLayout===true,isCianLayout:layout||row.isCianLayout===true};
+    if(typeof row.photoId==='string'||typeof row.photoId==='number')item.photoId=String(row.photoId).slice(0,40);
+    if(Number.isInteger(row.order)&&row.order>=0)item.order=row.order;
+    if(typeof row.source==='string')item.source=row.source.slice(0,80);
+    if(row.variants&&typeof row.variants==='object'){item.variants={};for(const key of ['fullUrl','thumbnailUrl','thumbnail2Url','miniUrl']){const variant=metadataUrl(row.variants[key]);if(variant)item.variants[key]=variant;}}
+    return item;
+  }).filter(Boolean);
+}
+
+// Editor snapshots retain only the source's bounded structured metadata. This
+// deliberately excludes offer JSON, capture logs, HTML and browser/session data.
+function sourceEditorMetadata(fields,listing){
+  const output={},primary=fields&&typeof fields==='object'?fields:{},fallback=listing&&typeof listing==='object'?listing:{};
+  for(const key of metadataKeys){
+    const value=primary[key]??fallback[key];
+    if(key==='sourceReadiness'){
+      if(!value||!['ready','partial','unknown'].includes(value.state))continue;
+      const feedback=sourceReadinessFeedback({sourceReadiness:value});
+      output[key]={state:feedback.state,partial:feedback.partial,completed:value.completed===true&&!feedback.partial,sections:[]};
+      for(const name of Object.keys(sectionNames)){
+        const row=Array.isArray(value.sections)&&value.sections.find(item=>item&&(item.name||item.section)===name);if(!row)continue;
+        const reason=['ready','partial','not_found','not_visited_budget'].includes(row.reason)?row.reason:row.ready===true?'ready':'partial';
+        output[key].sections.push({name,reason,found:typeof row.found==='boolean'?row.found:null,visited:row.visited===true,ready:row.ready===true&&reason==='ready'});
+      }
+      output[key].warnings=feedback.details;
+      for(const measurement of ['seconds','activeSeconds','budgetSeconds','budgetOverrunSeconds'])if(typeof value[measurement]==='number'&&Number.isFinite(value[measurement])&&value[measurement]>=0&&value[measurement]<=7200)output[key][measurement]=value[measurement];
+    }else if(key==='photoItems'||key==='layouts'){
+      const rows=metadataMedia(value,key==='layouts');if(rows)output[key]=rows;
+    }else if(key==='sourceDates'&&value&&typeof value==='object'){
+      output[key]={};for(const date of ['created','published','updated','timezone']){const item=value[date];if(typeof item==='string')output[key][date]=item.slice(0,80);else if(typeof item==='number'&&Number.isFinite(item)||item===null)output[key][date]=item;}
+    }else if(key==='transitDetails'&&Array.isArray(value)){
+      output[key]=value.slice(0,80).filter(row=>row&&typeof row==='object').map(row=>{
+        const item={};for(const text of ['name','line','color','source']){const safe=metadataString(row[text],text==='name'?200:80);if(safe!==null)item[text]=safe;}
+        if(typeof row.id==='string')item.id=row.id.slice(0,80);else if(typeof row.id==='number'&&Number.isFinite(row.id)||row.id===null)item.id=row.id;
+        if(['walk','public','car','unknown'].includes(row.mode))item.mode=row.mode;
+        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(row.time===null)item.time=null;
+        return item;
+      });
+    }
+  }
+  return output;
 }
 
 // Positive photo observations only. Keep these object terms aligned with
@@ -1034,6 +1201,7 @@ const phoneWriting={revision:0,draftRevision:0,busy:false,capabilities:null,load
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
 const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
 const phoneTime=value=>phoneDate(value)?.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})||'';
+function phoneDetailStamp(card){const feedback=sourceReadinessFeedback(card);ph('phoneDetailStamp').textContent=['С Mac · '+phoneTime(card.updated),feedback.message].filter(Boolean).join(' · ');ph('phoneDetailStamp').dataset.sourceState=feedback.state;}
 const phoneCardCount=count=>count+' '+(count%100>=11&&count%100<=14?'карточек':count%10===1?'карточка':count%10>=2&&count%10<=4?'карточки':'карточек');
 const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(value).toLocaleString('ru-RU')+' ₽':'';
 // This is a trace of completed requests, not a percentage estimate. It stays in
@@ -1131,7 +1299,7 @@ async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
 async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
   if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneResetWriting();phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='prepared';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=card;phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=card;phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
@@ -1209,7 +1377,7 @@ function phoneWritingEnd(request){if(request?.revision===phoneWriting.revision){
 function phoneApplyWrittenCard(card,request){
   if(!phoneWritingCurrent(request))return false;if(card?.id!==request.id)throw Error('Ответ относится к другой карточке. Обновите объявление.');
   const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=card;phoneUpdateRouteTools();
-  const title=card.titles?.[0]||card.title||card.fields?.name||'Квартира в Москве';ph('phoneDetailTitle').textContent=title;ph('phoneTitleCopy').textContent=card.titles?.[0]||card.title||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);
+  const title=card.titles?.[0]||card.title||card.fields?.name||'Квартира в Москве';ph('phoneDetailTitle').textContent=title;ph('phoneTitleCopy').textContent=card.titles?.[0]||card.title||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);
   const summary=phoneState.cards.get(card.id);if(summary){phoneState.cards.set(card.id,{...summary,title,updated:card.updated});phoneRenderCards();}
   if(phoneState.view==='detail')window.scrollTo(0,oldScroll);return true;
 }
@@ -1250,24 +1418,25 @@ ph('phoneApplyDraft').onclick=async()=>{
   catch(error){if(phoneWritingCurrent(request)){ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
   finally{phoneWritingEnd(request);}
 };
-async function phoneCopy(text){if(!text)return phoneToast('В этом поле пока нет текста.');try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);}else{const field=document.createElement('textarea');field.value=text;field.style.position='fixed';field.style.top='0';field.style.left='-10000px';document.body.append(field);field.focus();field.select();field.setSelectionRange(0,text.length);const success=document.execCommand('copy');field.remove();if(!success)throw Error('copy');}phoneToast('Скопировано. Можно вставить в публикацию.');}catch{phoneToast('Удерживайте текст, выберите «Выбрать всё», затем «Скопировать».');}}
+async function phoneCopy(text){if(!text)return phoneToast('В этом поле пока нет текста.');try{if(phoneState.detail)clientPublicationCard(phoneState.detail);text=sanitizeClientText(text);}catch(error){phoneToast(error.message);return;}if(!text)return phoneToast('В этом поле нет клиентского текста после проверки публикации.');try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);}else{const field=document.createElement('textarea');field.value=text;field.style.position='fixed';field.style.top='0';field.style.left='-10000px';document.body.append(field);field.focus();field.select();field.setSelectionRange(0,text.length);const success=document.execCommand('copy');field.remove();if(!success)throw Error('copy');}phoneToast('Скопировано. Можно вставить в публикацию.');}catch{phoneToast('Удерживайте текст, выберите «Выбрать всё», затем «Скопировать».');}}
 ph('phoneCopyTitle').onclick=()=>phoneCopy(phoneState.detail?.titles?.[0]||'');ph('phoneCopyBody').onclick=()=>phoneCopy(phoneState.detail?.body||'');ph('phoneCopyTags').onclick=()=>phoneCopy(phoneState.detail?.tags||'');ph('phoneCopyAll').onclick=()=>phoneCopy([phoneState.detail?.titles?.[0],phoneState.detail?.body,phoneState.detail?.tags].filter(Boolean).join('\n\n'));
 function phoneJobDuration(value){const total=Math.max(0,Math.round(Number(value)||0)),minutes=Math.floor(total/60),seconds=total%60;return minutes?minutes+' мин '+seconds+' с':seconds+' с';}
 function phoneJobClock(){
-  if(!phoneJobLatest)return;const {progress:p,state,received,partial}=phoneJobLatest,running=state==='running',delta=running?(performance.now()-received)/1000:0,elapsed=(Number(p.elapsedSeconds)||0)+delta,stageTime=(Number(p.stageElapsedSeconds)||0)+delta;
+  if(!phoneJobLatest)return;const {progress:p,state,received,photoPartial,sourcePartial}=phoneJobLatest,running=state==='running',delta=running?(performance.now()-received)/1000:0,elapsed=(Number(p.elapsedSeconds)||0)+delta,stageTime=(Number(p.stageElapsedSeconds)||0)+delta;
   ph('phoneJobElapsed').textContent=(running?'Прошло ':'Затрачено ')+phoneJobDuration(elapsed);ph('phoneJobStageTime').textContent=p.label&&p.stage!=='done'?p.label+' · '+phoneJobDuration(stageTime)+(running&&Number(p.maxTotalSeconds)>0?' · лимит '+phoneJobDuration(p.maxTotalSeconds):''):'';
   const samples=Number(p.sampleCount)||0,average=Number(p.estimateSeconds),hasAverage=p.estimateSource==='history'&&samples>0&&Number.isFinite(average)&&average>0;
   const profile=p.profile==='import:cache'?' для данных из кеша':String(p.profile||'').startsWith('prepare')?' для подготовки фото':'';
   if(p.awaitingUser){ph('phoneJobEstimate').textContent='Ожидаем вашу проверку в Chrome на Mac. Время ручного подтверждения предсказать нельзя.';return;}
-  if(!hasAverage){ph('phoneJobEstimate').textContent=partial?'Среднее ещё не рассчитано. Неполная подготовка фото не включается в измерения.':'Среднее ещё не рассчитано'+profile+': собираем время завершённых операций. Текущий этап показан ниже.';return;}
+  const partialNote=sourcePartial?(photoPartial?'Неполный сбор страницы и подготовка фото не включаются в измерения.':'Неполный сбор исходной страницы не включается в измерения.'):photoPartial?'Неполная подготовка фото не включается в измерения.':'';
+  if(!hasAverage){ph('phoneJobEstimate').textContent=partialNote?'Среднее ещё не рассчитано. '+partialNote:'Среднее ещё не рассчитано'+profile+': собираем время завершённых операций. Текущий этап показан ниже.';return;}
   const range=Array.isArray(p.historyRangeSeconds)&&p.historyRangeSeconds.length===2?' Диапазон '+phoneJobDuration(p.historyRangeSeconds[0])+'–'+phoneJobDuration(p.historyRangeSeconds[1])+'.':'';
   const prefix='Среднее'+profile+': '+phoneJobDuration(average)+' по '+samples+' завершённым операциям.';
-  ph('phoneJobEstimate').textContent=prefix+(partial?' Неполная подготовка фото не включена в среднее.':'')+(running?(elapsed>average?' Сейчас дольше обычного; обработка продолжается.':' Ориентировочно осталось '+phoneJobDuration(average-elapsed)+'.'):'')+range;
+  ph('phoneJobEstimate').textContent=prefix+(partialNote?' '+partialNote:'')+(running?(elapsed>average?' Сейчас дольше обычного; обработка продолжается.':' Ориентировочно осталось '+phoneJobDuration(average-elapsed)+'.'):'')+range;
 }
 function phoneRenderJobProgress(result){
-  const p=result.progress||{};phoneJobLatest={progress:p,state:result.state,partial:result.partial===true,received:performance.now()};ph('phoneJob').dataset.jobState=result.state||'running';
+  const p=result.progress||{},feedback=importCompletionFeedback(result);phoneJobLatest={progress:p,state:result.state,photoPartial:feedback.photoPartial,sourcePartial:feedback.sourcePartial,received:performance.now()};ph('phoneJob').dataset.jobState=result.state||'running';
   const total=Number(p.total),completed=Number(p.completed),hasCount=Number.isFinite(total)&&total>0&&Number.isFinite(completed);ph('phoneJobCount').classList.toggle('hidden',!hasCount);if(hasCount){ph('phoneJobCount').max=total;ph('phoneJobCount').value=Math.min(total,Math.max(0,completed));}
-  ph('phoneJobSteps').replaceChildren();for(const step of p.stages||[]){const row=document.createElement('li');row.dataset.state=step.state;const mark=document.createElement('span');mark.className='job-step-mark';mark.textContent=step.state==='done'?'✓':step.state==='error'?'!':step.state==='waitingManual'?'!':'…';const text=document.createElement('span'),title=document.createElement('strong'),note=document.createElement('small');title.textContent=step.label||step.id;note.textContent=phoneJobDuration(step.elapsedSeconds)+(Number.isFinite(step.completed)&&Number(step.total)>0?' · '+step.completed+' из '+step.total:'');text.append(title,note);row.append(mark,text);ph('phoneJobSteps').append(row);}
+  ph('phoneJobSteps').replaceChildren();for(const step of p.stages||[]){const row=document.createElement('li');row.dataset.state=step.state;const mark=document.createElement('span');mark.className='job-step-mark';mark.textContent=importStageMark(step);const text=document.createElement('span'),title=document.createElement('strong'),note=document.createElement('small');title.textContent=step.label||step.id;note.textContent=phoneJobDuration(step.elapsedSeconds)+(Number.isFinite(step.completed)&&Number(step.total)>0?' · '+step.completed+' из '+step.total:'');text.append(title,note);row.append(mark,text);ph('phoneJobSteps').append(row);}
   ph('phoneJobDetails').classList.toggle('hidden',!p.stages?.length);phoneJobClock();clearInterval(phoneJobProgressTimer);if(result.state==='running'&&!document.hidden)phoneJobProgressTimer=setInterval(phoneJobClock,500);
 }
 function phoneResumeJob(info){if(!info?.id||!['running','done','error'].includes(info.state)||phoneState.job)return;if(info.sourceUrl&&!ph('phoneImportUrl').value)ph('phoneImportUrl').value=info.sourceUrl;phoneSetJob(info.id,info.kind||'import',info.cardId);if(info.state==='running')phoneView('import');}
@@ -1275,7 +1444,7 @@ function phoneSetJob(id,kind='import',cardId=null){phoneState.job={id,kind,cardI
 async function phoneCheckJob(){
   clearTimeout(phoneJobTimer);const job=phoneState.job;if(!job||document.hidden)return;
   try{const result=await phoneApi('jobs/'+encodeURIComponent(job.id));if(phoneState.job!==job)return;ph('phoneJobMessage').textContent=result.message||result.progress?.message||'Компьютер обрабатывает объявление…';ph('phoneJobRetry').classList.add('hidden');phoneRenderJobProgress(result);if(job.kind==='prepare')ph('phoneMediaStatus').textContent=result.message||'Mac готовит фотографии…';
-    if(result.state==='done'){phoneState.jobResult=result.result_id;ph('phoneJobTitle').textContent=result.partial?'Карточка готова · фото подготовлены частично':'Готово на Mac';if(result.partial&&result.result_id){phoneJobLast={...job,kind:'prepare',cardId:result.result_id};ph('phoneJobRestart').textContent='Повторить подготовку фото';ph('phoneJobRestart').classList.remove('hidden');}ph('phoneJobOpen').classList.toggle('hidden',!result.result_id);ph('phoneImportSubmit').disabled=false;phoneState.job=null;await phoneRefreshCards({reset:true});if(job.kind==='prepare'&&result.result_id===phoneState.detailId)await phoneOpenCard(result.result_id,{keepScroll:true});}
+    if(result.state==='done'){const feedback=importCompletionFeedback(result,result.result_id===phoneState.detailId?phoneState.detail:null);phoneState.jobResult=result.result_id;ph('phoneJobTitle').textContent=feedback.title;if(feedback.message)ph('phoneJobMessage').textContent=feedback.message;if(feedback.retryPhotos){phoneJobLast={...job,kind:'prepare',cardId:result.result_id};ph('phoneJobRestart').textContent='Повторить подготовку фото';ph('phoneJobRestart').classList.remove('hidden');}ph('phoneJobOpen').classList.toggle('hidden',!result.result_id);ph('phoneImportSubmit').disabled=false;phoneState.job=null;await phoneRefreshCards({reset:true});if(job.kind==='prepare'&&result.result_id===phoneState.detailId)await phoneOpenCard(result.result_id,{keepScroll:true});}
     else if(result.state==='error'){ph('phoneJobTitle').textContent='Не удалось завершить обработку';ph('phoneImportSubmit').disabled=false;ph('phoneJobRestart').classList.remove('hidden');phoneState.job=null;}
     else{ph('phoneJobTitle').textContent=result.progress?.awaitingUser?'Нужна проверка в Chrome на Mac':result.progress?.label||'Mac готовит объявление';phoneJobTimer=setTimeout(phoneCheckJob,1800);}
   }catch(error){if(phoneState.job!==job)return;ph('phoneJobMessage').textContent=error.message+' Проверка состояния не отменяет работу на Mac.';ph('phoneJobRetry').classList.remove('hidden');clearInterval(phoneJobProgressTimer);}
@@ -1348,7 +1517,7 @@ function phoneInitializeAudit(){
 }
 function phoneUpdateRouteTools(){
  if(!phoneState.paired||!phoneState.detail?.id)return;
- if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=card;ph('phoneDetailStamp').textContent='С Mac · '+phoneTime(card.updated);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
+ if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=card;phoneDetailStamp(card);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
  phoneRoutesUI.cardChanged(phoneState.detail);
 }
 phoneStart();

@@ -426,5 +426,18 @@ class DiagnosticCampaignTests(unittest.TestCase):
         self.assertEqual(self.manager.status()['completed'], 1)
 
 
+class CaptureVersionThreePrivacyTests(unittest.TestCase):
+    def test_reasons_and_browser_timings_survive_without_semantic_keys_or_raw_text(self):
+        from import_diagnostics import _capture
+        value=_capture({'version':3,'stabilityKey':'SECRET_PROPERTY_TEXT','rawHtml':'SECRET_HTML','preflightSource':'snapshot','stabilityMethod':'adapter-fields','budgetOverrunSeconds':1.2,'browserCalls':[{'kind':'probe:gallery','seconds':2,'domReadMs':3,'serializationProbeMs':4,'serializedChars':2000000,'token':'SECRET_TOKEN'},{'kind':'SECRET_BAD_KIND','seconds':2}],'sections':[{'section':'description','found':None,'visited':False,'reads':0,'reason':'not_visited_budget','text':'SECRET_DESCRIPTION'}]})
+        self.assertEqual(value['sections'][0]['reason'],'not_visited_budget');self.assertIsNone(value['sections'][0]['found']);self.assertEqual(value['browserCalls'][0]['domReadMs'],3);self.assertEqual(len(value['browserCalls']),1);self.assertNotIn('SECRET',json.dumps(value))
+        self.assertEqual(value['browserCalls'][0]['serializedChars'],2000000)
+
+    def test_partial_stage_quality_survives_without_arbitrary_stage_text(self):
+        from import_diagnostics import _progress
+        value=_progress({'stages':[{'id':'scroll','state':'partial','quality':'partial','text':'PRIVATE','sections':[{'rawHtml':'PRIVATE'}]}]})
+        self.assertEqual(value['stages'],[{'id':'scroll','state':'partial','quality':'partial'}])
+
+
 if __name__ == '__main__':
     unittest.main()

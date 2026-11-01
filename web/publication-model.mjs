@@ -1,3 +1,4 @@
+import {clientPublicationCard,sanitizeClientText} from './client-publication.mjs';
 import {translate,FEATURES,DICTIONARY} from './engine.mjs';
 import {translateGeo,resolveGeo} from './geo-catalog.mjs';
 import {resolveUniversityRoutes} from './university-routes.mjs';
@@ -240,8 +241,9 @@ const publicationZh=(value,rules)=>translate(publicationSafeString(String(value?
 const publicationMode={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通',car:'驾车',unknown:'出行方式待确认','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};
 
 export function resolvePublicationData(card={},input={},assets={}){
+  card=clientPublicationCard(card);
   const design=normalizePublicationDesign(input),f=card.fields&&typeof card.fields==='object'?card.fields:{},rules={...DICTIONARY,...publicationAddressTerms,...(assets.rules||{})},warnings=[];
-  const zh=value=>{const result=publicationZh(value,rules);if(/[А-Яа-яЁё]/.test(result))warnings.push('部分名称仍为俄文，请检查中文翻译。');return result;};
+  const zh=value=>{const result=sanitizeClientText(publicationZh(sanitizeClientText(String(value??'')),rules));if(/[А-Яа-яЁё]/.test(result))warnings.push('部分名称仍为俄文，请检查中文翻译。');return result;};
   const price=publicationNumeric(f.price),area=publicationNumeric(f.area),floor=publicationNumeric(f.floor),floors=publicationNumeric(f.floors),lat=publicationNumeric(f.latitude??card.listing?.latitude),lon=publicationNumeric(f.longitude??card.listing?.longitude);
   const coordinates=lat!==null&&lon!==null&&Math.abs(lat)<=85.0511287798066&&Math.abs(lon)<=180;
   const layout=f.layout==='studio'?'开放式公寓':f.layout==='euro2'?'一室一厅':f.layout==='euro3'?'两室一厅':({1:'一居室',2:'两居室',3:'三居室',4:'四居室'})[String(f.rooms)]||(f.rooms?zh(f.rooms)+'居室':'公寓');
@@ -264,10 +266,10 @@ export function resolvePublicationData(card={},input={},assets={}){
     data.links[prefix+'Title']=safePublicationLink(route?.links?.yandex);data.links[prefix+'Time']=safePublicationLink(route?.links?.google);data.links[prefix+'Distance']=safePublicationLink(route?.links?.google);data.links[prefix+'Transport']=safePublicationLink(route?.links?.yandex);
     for(let stop=0;stop<3;stop++){const bind=prefix+'Stop'+(stop+1);data[bind]=route?.stops?.[stop]||'';data.links[bind]=safePublicationLink(route?.stopDetails?.[stop]?.links?.yandex);}
   }
-  for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=redactPublicationPhones(data[key]);
-  return data;
+  for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=sanitizeClientText(redactPublicationPhones(data[key]));
+  return clientPublicationCard(data);
 }
 
-export function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return redactPublicationPhones(String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:''));}
+export function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return sanitizeClientText(redactPublicationPhones(String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:'')));}
 
 export function publicationNodeLink(node,data){if(['wechat','wechatLabel','wechatId','contact'].includes(node.bind))return safePublicationLink(data.wechatUrl);if(node.type==='map')return safePublicationLink(data.mapUrl);return safePublicationLink(data.links?.[node.bind]);}
