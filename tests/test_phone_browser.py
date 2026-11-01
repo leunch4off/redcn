@@ -71,7 +71,57 @@ class PhoneBrowserAcceptance(unittest.TestCase):
         self.assertNotIn('#',self.page.url)
 
     def assert_mobile_fit(self):
-        self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
+        width=self.page.evaluate('document.documentElement.scrollWidth')
+        if width>393:
+            state=self.page.evaluate("""() => {
+                const expectedWidth=393,root=document.documentElement;
+                const key=el=>el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+
+                    (typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).filter(Boolean).slice(0,4).join('.'):'');
+                const rectangle=el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom};};
+                const describe=el=>{const c=getComputedStyle(el);return {element:key(el),rect:rectangle(el),
+                    scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,scrollLeft:el.scrollLeft,
+                    display:c.display,position:c.position,zIndex:c.zIndex,width:c.width,minWidth:c.minWidth,
+                    maxWidth:c.maxWidth,overflowX:c.overflowX,overflowY:c.overflowY,whiteSpace:c.whiteSpace,
+                    overflowWrap:c.overflowWrap,wordBreak:c.wordBreak,boxSizing:c.boxSizing,
+                    flex:c.flex,flexBasis:c.flexBasis,gridTemplateColumns:c.gridTemplateColumns};};
+                const clipAncestor=el=>{for(let parent=el.parentElement;parent;parent=parent.parentElement){
+                    const c=getComputedStyle(parent);
+                    if(['auto','scroll','hidden','clip'].includes(c.overflowX))return describe(parent);
+                }return null;};
+                const all=Array.from(document.body.querySelectorAll('*')),overflow=[];
+                for(const el of all.slice(0,20000)){
+                    if(!el.getClientRects().length)continue;
+                    const c=getComputedStyle(el);if(c.display==='none'||c.visibility==='hidden'||c.visibility==='collapse')continue;
+                    const r=el.getBoundingClientRect();if(r.width===0||r.height===0)continue;
+                    const outside=r.right>expectedWidth+1||r.left< -1;
+                    const contentOverflow=el.scrollWidth>el.clientWidth+1&&c.overflowX==='visible';
+                    if(!outside&&!contentOverflow)continue;
+                    const clip=clipAncestor(el);
+                    overflow.push({...describe(el),outsideViewport:outside,contentOverflow,
+                        intersectsVisibleHeight:r.bottom>0&&r.top<innerHeight,
+                        nearestOverflowClip:clip,
+                        mayExpandDocument:!clip||clip.rect.right>expectedWidth+1||clip.rect.left< -1,
+                        parent:el.parentElement?key(el.parentElement):null,
+                        text:(el.innerText||el.textContent||'').replace(/\\s+/g,' ').slice(0,150)});
+                }
+                overflow.sort((a,b)=>Number(b.mayExpandDocument)-Number(a.mayExpandDocument)||
+                    Math.max(b.rect.right-expectedWidth,-b.rect.left,b.scrollWidth-b.clientWidth)-
+                    Math.max(a.rect.right-expectedWidth,-a.rect.left,a.scrollWidth-a.clientWidth));
+                return {url:location.pathname,activeCrumb:document.getElementById('crumb')?.textContent,
+                    activeTabs:Array.from(document.querySelectorAll('nav button.active,[data-phone-view][aria-selected=true]')).map(el=>({element:key(el),tab:el.dataset.tab||el.dataset.phoneView,text:el.textContent})),
+                    visibleSections:Array.from(document.querySelectorAll('main>section')).filter(el=>el.getClientRects().length).map(describe),
+                    viewport:{expectedWidth,innerWidth,innerHeight,rootClientWidth:root.clientWidth,rootScrollWidth:root.scrollWidth,
+                        bodyScrollWidth:document.body.scrollWidth,scrollX,scrollY,
+                        visual:visualViewport?{width:visualViewport.width,height:visualViewport.height,offsetLeft:visualViewport.offsetLeft,
+                            offsetTop:visualViewport.offsetTop,scale:visualViewport.scale}:null},
+                    nav:document.querySelector('aside nav')?describe(document.querySelector('aside nav')):null,
+                    overflowingCount:overflow.length,scannedElements:Math.min(all.length,20000),truncated:all.length>20000,
+                    overflowingElements:overflow.slice(0,40)};
+            }""")
+            state['observedScrollWidth']=width
+            print('MOBILE_FIT_DIAGNOSTICS '+json.dumps(state,ensure_ascii=False),flush=True)
+            self.assertLessEqual(width,393,'Mobile overflow; measured details printed as MOBILE_FIT_DIAGNOSTICS')
+        self.assertLessEqual(width,393)
 
     def test_cards_photos_live_update_downloads_and_install_visibility(self):
         self.connect();self.assert_mobile_fit()

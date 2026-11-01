@@ -29,4 +29,27 @@ jobs:
       - run: npm test
       - run: npm run validate && npm run validate:pages
       - run: python scripts/run-browser-regression.py
-      - run: python -m unittest discover -s tests -p 'test_*.py'
+      - run: python scripts/run-python-partition.py --verify-only
+  python:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r cli/requirements-browser.txt -r cli/requirements-media.txt
+      - run: python -m playwright install --with-deps chrome
+      - run: npm run build
+      - run: python scripts/run-python-partition.py --part ${{ matrix.part }} --parts 4
