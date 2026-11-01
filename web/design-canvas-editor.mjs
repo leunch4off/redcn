@@ -70,7 +70,7 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   const field=(title,input)=>{const wrap=make('label',title);wrap.htmlFor=input.id;wrap.append(input);return wrap;};
   const normal=()=>normalizePublicationDesign(getDesign());
   let draft=normal(),surfaceId=Object.keys(draft.surfaces||{})[0]||'intro',selection=new Set(),history=designCanvasHistory(draft);
-  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null;
+  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='';
   const host=make('section','',{class:'design-canvas-editor',id:'designCanvasEditor','aria-label':'Редактор расположения блоков'});
   const title=make('div','',{class:'design-canvas-heading'});title.append(make('h3','Редактор макета'),make('p','Перемещайте блоки и меняйте их размеры. Текст из полей карточки подставляется заново для каждого объявления.',{class:'muted'}));
   const toolbar=make('div','',{class:'design-canvas-toolbar'}),surfaces=select('designCanvasSurface',[]),zooms=select('designCanvasZoom',[['fit','По ширине'],['25','25%'],['50','50%'],['75','75%'],['100','100%']]);
@@ -109,8 +109,16 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   workbench.append(left,side);host.append(title,toolbar,workbench);mount.replaceChildren(host);
 
   function surface(){return draft.surfaces[surfaceId];}
-  function effectiveSurface(){try{return publicationSurfaceLayout(draft,surfaceId,resolvePublicationData(getCard()||{},draft,getAssets()||{}));}catch{return surface();}}
-  function effectiveNode(node){return effectiveSurface().nodes.find(value=>value.id===node?.id)||node;}
+  function effectiveSurface(){
+    // Overview, gallery and intro use the saved geometry verbatim. Resolving
+    // every translated card field here used to block the initial editor.
+    if(!['pdfLocation','outro'].includes(surfaceId))return surface();
+    try{const card=getCard()||{},assets=getAssets()||{},key=JSON.stringify([surfaceId,draft,card,assets.rules||{},Math.floor((Date.now()+10800000)/86400000)]);
+      if(key===layoutCacheKey&&layoutCacheValue)return layoutCacheValue;
+      const value=publicationSurfaceLayout(draft,surfaceId,resolvePublicationData(card,draft,assets),{normalized:true});layoutCacheKey=key;layoutCacheValue=value;return value;
+    }catch{return surface();}
+  }
+  function effectiveNode(node){return node?effectiveSurface().nodes.find(value=>value.id===node.id)||node:null;}
   function materializeGeometry(ids){const wanted=new Set(ids),view=effectiveSurface(),map=surface().nodes.find(node=>node.type==='map'),attribution=surface().nodes.find(node=>node.bind==='mapAttribution');if(wanted.has(map?.id)||wanted.has(attribution?.id)){if(map)wanted.add(map.id);if(attribution)wanted.add(attribution.id);}for(const node of surface().nodes)if(wanted.has(node.id)&&!node.locked){const displayed=view.nodes.find(value=>value.id===node.id);if(displayed)for(const key of ['x','y','w','h'])node[key]=displayed[key];}}
   function selected(){return surface()?.nodes.find(node=>selection.has(node.id))||null;}
   function nodeName(node){return node.label||node.name||(node.bind?bindingName(node.bind):typeNames[node.type]||'Блок');}
@@ -145,7 +153,7 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
     layers.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(selection.has(b.dataset.nodeId))));
   }
   function refreshLayers(){const focused=layers.contains(document.activeElement)?document.activeElement?.dataset.nodeId:null;layers.replaceChildren();for(const node of [...surface().nodes].sort((a,b)=>(b.z||0)-(a.z||0))){const b=button((node.visible===false?'◌ ':node.locked?'🔒 ':'')+nodeName(node),'',event=>selectNode(node,event));b.removeAttribute('id');b.dataset.nodeId=node.id;b.setAttribute('aria-pressed',String(selection.has(node.id)));layers.append(b);}if(focused)[...layers.children].find(node=>node.dataset.nodeId===focused)?.focus({preventScroll:true});}
-  function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
+  function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;const key=[s.width,s.height,scale,showGrid,selection.size].join('|');if(key===dimensionsKey)return;dimensionsKey=key;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
   async function draw(){const epoch=++renderEpoch,s=surface();if(!s||destroyed)return;const design=dceClone(draft),card=dceClone(getCard()||{});const buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;try{const assets=await getAssets();const result=await renderPage(buffer,surfaceId,design,card,assets||{});if(destroyed||epoch!==renderEpoch)return;canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');}catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}}
   function queueRender(){if(renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
   function refreshUI(){if(destroyed)return;dimensions();backgroundInput.value=surface().background||'#07162b';refreshOverlay();refreshLayers();refreshInspector();undo.disabled=!history.canUndo();redo.disabled=!history.canRedo();queueRender();}

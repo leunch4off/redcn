@@ -125,7 +125,26 @@ class PhoneBrowserAcceptance(unittest.TestCase):
             for tab in ['editor','rules','library','settings','history','analytics','knowledge','roadmap']:
                 self.page.locator('aside nav [data-tab="'+tab+'"]').click()
                 self.assert_mobile_fit()
-            self.page.locator('aside nav [data-tab="editor"]').click()
+            try:
+                self.page.locator('aside nav [data-tab="editor"]').click()
+            except Exception as error:
+                state=self.page.evaluate("""() => {
+                    const nav=document.querySelector('aside nav'),button=nav.querySelector('[data-tab="editor"]');
+                    const describe=el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {
+                        rect:r.toJSON(),position:c.position,zIndex:c.zIndex,overflowX:c.overflowX,
+                        overflowY:c.overflowY,scrollSnapType:c.scrollSnapType,
+                        scrollLeft:el.scrollLeft,scrollTop:el.scrollTop,scrollWidth:el.scrollWidth,
+                        scrollHeight:el.scrollHeight,clientWidth:el.clientWidth,clientHeight:el.clientHeight};};
+                    const r=button.getBoundingClientRect(),x=Math.max(1,Math.min(innerWidth-1,r.x+r.width/2)),
+                        y=Math.max(1,Math.min(innerHeight-1,r.y+r.height/2));
+                    return {viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY,
+                        visual:visualViewport?{width:visualViewport.width,height:visualViewport.height,
+                            offsetLeft:visualViewport.offsetLeft,offsetTop:visualViewport.offsetTop,scale:visualViewport.scale}:null},
+                        nav:describe(nav),button:describe(button),hitPoint:{x,y},
+                        hits:document.elementsFromPoint(x,y).slice(0,8).map(el=>({tag:el.tagName,id:el.id,
+                            className:String(el.className),text:el.textContent.slice(0,160)}))};
+                }""")
+                raise AssertionError('Mobile editor tab click failed: '+json.dumps(state,ensure_ascii=False)) from error
             self.page.locator('#metro').fill('Юго-Западная')
             self.assertGreaterEqual(self.page.locator('#metro').evaluate('el=>parseFloat(getComputedStyle(el).fontSize)'),16)
             self.assertGreaterEqual(self.page.locator('#generate').bounding_box()['height'],44)

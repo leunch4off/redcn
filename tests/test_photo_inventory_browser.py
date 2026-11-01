@@ -88,6 +88,15 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
             self.page.wait_for_function("!document.getElementById('photoAnalyze').disabled&&document.getElementById('feature-fridge').checked&&document.getElementById('feature-sofa').checked&&document.getElementById('feature-bedAny').checked")
             self.assertEqual(model.call_count,2)
         self.assertTrue(self.fridge_observation().is_checked());self.assertFalse(self.page.locator('#feature-bed').is_checked())
+        # Loaded publication text is protected as an existing edit. Photo facts
+        # change the candidate immediately, then the operator accepts its diff.
+        self.assertEqual(self.page.locator('#output').input_value(),self.result['body'])
+        apply=self.page.get_by_role('button',name='Применить новую версию',exact=True)
+        apply.wait_for(state='visible')
+        preview=apply.locator('..').inner_text()
+        self.assertIn('Описание',preview);self.assertIn('沙发',preview);self.assertIn('床',preview)
+        apply.click()
+        self.page.wait_for_function("document.getElementById('output').value.includes('沙发')&&document.getElementById('output').value.includes('床')")
         self.assert_positive_body()
         # A human can correct, restore and reject the same observation even
         # while the source's unchecked Cian flag remains in the audit.
@@ -107,7 +116,13 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
         self.assertEqual(saved['fields']['sourceAudit']['furniture'][0]['status'],'absent')
         self.page.reload();self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'&&document.querySelectorAll('#photoObservations input[type=checkbox]').length===3")
         self.assertFalse(self.fridge_observation().is_checked());self.assertFalse(self.page.locator('#feature-fridge').is_checked())
-        self.page.locator('#generate').click();self.assert_positive_body(fridge=False)
+        before=self.page.locator('#output').input_value()
+        self.page.locator('#generate').click()
+        self.assertEqual(self.page.locator('#output').input_value(),before)
+        apply=self.page.get_by_role('button',name='Применить новую версию',exact=True)
+        apply.wait_for(state='visible');apply.click()
+        self.page.wait_for_function("document.getElementById('output').value.includes('沙发')&&document.getElementById('output').value.includes('床')&&!document.getElementById('output').value.includes('冰箱')")
+        self.assert_positive_body(fridge=False)
 
     def test_phone_inventory_is_readonly_fits_and_analyzes_only_on_explicit_request(self):
         first=observation(self.assets[0]['id'],['fridge'])

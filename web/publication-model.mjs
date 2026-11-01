@@ -241,8 +241,8 @@ export function publicationPage(design,id){return normalizePublicationDesign(des
 // A changed position, binding or literal text is an explicit operator choice.
 const publicationSameAutomaticNode=(node,base)=>!!base&&['type','bind','text','x','y','w','h'].every(key=>node[key]===base[key]);
 let publicationLayoutBaseline=null;
-export function publicationSurfaceLayout(input,surfaceId,data={}){
-  const design=normalizePublicationDesign(input),source=design.surfaces[surfaceId]||design.surfaces.pdfOverview;
+export function publicationSurfaceLayout(input,surfaceId,data={},options={}){
+  const design=options.normalized===true?input:normalizePublicationDesign(input),source=design.surfaces[surfaceId]||design.surfaces.pdfOverview;
   const surface={...source,nodes:source.nodes.map(node=>({...node,style:{...node.style}}))};
   if(!['pdfLocation','outro'].includes(surface.id))return surface;
   const baseline=(publicationLayoutBaseline||=(publicationBaseSurfaces()))[surface.id],defaults=new Map(baseline.nodes.map(node=>[node.id,node]));
@@ -271,9 +271,17 @@ export function publicationSurfaceLayout(input,surfaceId,data={}){
 const publicationNumeric=value=>value!==''&&value!=null&&typeof value!=='boolean'&&Number.isFinite(Number(value))?Number(value):null;
 const publicationZh=(value,rules)=>translate(publicationSafeString(String(value??''),40000),rules);
 const publicationMode={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通',car:'驾车',unknown:'出行方式待确认','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};
+const publicationDataCache=new Map();
+export function clearPublicationDataCache(){publicationDataCache.clear();}
+const publicationDataClone=value=>JSON.parse(JSON.stringify(value));
 
 export function resolvePublicationData(card={},input={},assets={}){
   card=clientPublicationCard(card);
+  // Data depends on the card, brand and dictionary, not the node positions.
+  // Keep a bounded detached cache; mutable dictionaries and Moscow midnight
+  // are part of its key, so route verification and new edits cannot go stale.
+  const cacheKey=JSON.stringify([card,input.version,input.brand,input.contact,input.footer,assets.rules||{},DICTIONARY,!!assets.mapAttribution,Math.floor((Date.now()+10800000)/86400000)]);
+  if(publicationDataCache.has(cacheKey))return publicationDataClone(publicationDataCache.get(cacheKey));
   const design=normalizePublicationDesign(input),f=card.fields&&typeof card.fields==='object'?card.fields:{},rules={...DICTIONARY,...publicationAddressTerms,...(assets.rules||{})},warnings=[];
   const zh=value=>{const result=sanitizeClientText(publicationZh(sanitizeClientText(String(value??'')),rules));if(/[А-Яа-яЁё]/.test(result))warnings.push('部分名称仍为俄文，请检查中文翻译。');return result;};
   const price=publicationNumeric(f.price),area=publicationNumeric(f.area),floor=publicationNumeric(f.floor),floors=publicationNumeric(f.floors),lat=publicationNumeric(f.latitude??card.listing?.latitude),lon=publicationNumeric(f.longitude??card.listing?.longitude);
@@ -299,7 +307,9 @@ export function resolvePublicationData(card={},input={},assets={}){
     for(let stop=0;stop<3;stop++){const bind=prefix+'Stop'+(stop+1);data[bind]=route?.stops?.[stop]||'';data.links[bind]=safePublicationLink(route?.stopDetails?.[stop]?.links?.yandex);}
   }
   for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=sanitizeClientText(redactPublicationPhones(data[key]));
-  return clientPublicationCard(data);
+  const result=clientPublicationCard(data);publicationDataCache.set(cacheKey,result);
+  while(publicationDataCache.size>4)publicationDataCache.delete(publicationDataCache.keys().next().value);
+  return publicationDataClone(result);
 }
 
 export function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return sanitizeClientText(redactPublicationPhones(String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:'')));}

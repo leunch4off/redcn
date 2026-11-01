@@ -68,7 +68,7 @@ function publicationDrawRoute(ctx,node,route,theme,warnings){
 }
 
 export async function renderPublicationPage(canvas,surfaceId,input,card={},assets={}){
-  const design=normalizePublicationDesign(input),id=design.surfaces[surfaceId]?surfaceId:'pdfOverview',data=publicationPageData(card,design,assets,id),surface=publicationSurfaceLayout(design,id,data),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
+  const design=normalizePublicationDesign(input),id=design.surfaces[surfaceId]?surfaceId:'pdfOverview',data=publicationPageData(card,design,assets,id),surface=publicationSurfaceLayout(design,id,data,{normalized:true}),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
   canvas.width=surface.width;canvas.height=surface.height;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas 2D недоступен');ctx.fillStyle=surface.background;ctx.fillRect(0,0,canvas.width,canvas.height);
   for(const node of publicationSurfaceNodes(surface)){
     if(publicationBoundEmpty(node,data)||surface.id==='pdfGallery'&&node.type==='image'&&!publicationNodeImage(node,data,assets,photos))continue;ctx.save();ctx.translate(node.x,node.y);ctx.globalAlpha=node.style.opacity;
@@ -120,7 +120,7 @@ export function publicationDocumentPages(card={},input={},assets={}){
     while(remaining){const chunks=publicationDescriptionSlice(remaining,continuationBody);pages.push({surface:continuation,data:{...data,body:chunks[0]},photos});remaining=chunks[1];if(pages.length>40)throw Error('Описание требует слишком много страниц. Уменьшите шрифт или увеличьте текстовый блок.');}
   }
   if(photos.length){for(let at=0;at<photos.length;at+=5)pages.push({surface:design.surfaces.pdfGallery,data:{...data},photos:photos.slice(at,at+5)});}
-  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:publicationSurfaceLayout(design,'pdfLocation',data),data:{...data},photos});
+  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:publicationSurfaceLayout(design,'pdfLocation',data,{normalized:true}),data:{...data},photos});
   return {design,data,pages};
 }
 

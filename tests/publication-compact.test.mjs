@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {defaultPublicationDesign,resolvePublicationData,publicationSurfaceLayout} from '../web/publication-model.mjs';
+import {defaultPublicationDesign,resolvePublicationData,clearPublicationDataCache,publicationSurfaceLayout} from '../web/publication-model.mjs';
 import {publicationDocumentPages,buildPublicationHtml,renderPublicationPage} from '../web/publication-render.mjs';
 import {presentationAcceptedCrop} from '../web/photo-ui.mjs';
 import {compressPresentationPhotos,presentationCardKey} from '../web/presentation-studio.mjs';
@@ -96,4 +96,16 @@ test('an original blob becoming available does not finish a pending saved manual
  const first=ensure(item);await cropEntered;let secondDone=false;const second=ensure(item).then(()=>{secondDone=true;});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(secondDone,false,'manual crop preparation is part of the original preparation');
  release();await Promise.all([first,second]);assert.equal(binaries,1);assert.equal(item.cropMeta.verification,'manual');
+});
+
+test('publication data cache avoids repeated design normalization and invalidates every content dependency',()=>{
+ clearPublicationDataCache();let surfaceReads=0;const design=defaultPublicationDesign(),input=new Proxy(design,{get(value,key){if(key==='surfaces')surfaceReads++;return value[key];}}),card={fields:{price:80000,metro:'Тестовая станция'},body:'正文'},rules={'Тестовая станция':'测试站'};
+ const first=resolvePublicationData(card,input,{rules});assert.equal(first.metro,'测试站');const reads=surfaceReads;assert(reads>0);
+ first.body='caller mutation';assert.equal(resolvePublicationData(card,input,{rules}).body,'正文');assert.equal(surfaceReads,reads,'identical data must reuse the normalized translation result');
+ design.surfaces.outro.nodes[0].x+=1;resolvePublicationData(card,input,{rules});assert.equal(surfaceReads,reads,'moving a block does not change translated card data');
+ rules['Тестовая станция']='新的站名';assert.equal(resolvePublicationData(card,input,{rules}).metro,'新的站名');
+ card.fields.price=90000;assert.equal(resolvePublicationData(card,input,{rules}).priceLarge,'9万');
+ design.brand.agentName='新顾问';assert.equal(resolvePublicationData(card,input,{rules}).agentName,'新顾问');
+ card.fields.universityRoutes=[{name:'МГУ',time:'40',mode:'bus',method:'manual-confirmed',checkedAt:'2026-11-01'}];
+ const originalNow=Date.now;try{Date.now=()=>Date.parse('2026-11-01T10:00:00Z');assert.equal(resolvePublicationData(card,input,{rules}).route1.verification.stale,false);Date.now=()=>Date.parse('2026-12-03T10:00:00Z');assert.equal(resolvePublicationData(card,input,{rules}).route1.verification.stale,true);}finally{Date.now=originalNow;clearPublicationDataCache();}
 });

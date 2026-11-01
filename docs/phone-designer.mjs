@@ -2495,8 +2495,8 @@ function publicationPage(design,id){return normalizePublicationDesign(design).su
 // A changed position, binding or literal text is an explicit operator choice.
 const publicationSameAutomaticNode=(node,base)=>!!base&&['type','bind','text','x','y','w','h'].every(key=>node[key]===base[key]);
 let publicationLayoutBaseline=null;
-function publicationSurfaceLayout(input,surfaceId,data={}){
-  const design=normalizePublicationDesign(input),source=design.surfaces[surfaceId]||design.surfaces.pdfOverview;
+function publicationSurfaceLayout(input,surfaceId,data={},options={}){
+  const design=options.normalized===true?input:normalizePublicationDesign(input),source=design.surfaces[surfaceId]||design.surfaces.pdfOverview;
   const surface={...source,nodes:source.nodes.map(node=>({...node,style:{...node.style}}))};
   if(!['pdfLocation','outro'].includes(surface.id))return surface;
   const baseline=(publicationLayoutBaseline||=(publicationBaseSurfaces()))[surface.id],defaults=new Map(baseline.nodes.map(node=>[node.id,node]));
@@ -2525,9 +2525,17 @@ function publicationSurfaceLayout(input,surfaceId,data={}){
 const publicationNumeric=value=>value!==''&&value!=null&&typeof value!=='boolean'&&Number.isFinite(Number(value))?Number(value):null;
 const publicationZh=(value,rules)=>translate(publicationSafeString(String(value??''),40000),rules);
 const publicationMode={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通',car:'驾车',unknown:'出行方式待确认','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};
+const publicationDataCache=new Map();
+function clearPublicationDataCache(){publicationDataCache.clear();}
+const publicationDataClone=value=>JSON.parse(JSON.stringify(value));
 
 function resolvePublicationData(card={},input={},assets={}){
   card=clientPublicationCard(card);
+  // Data depends on the card, brand and dictionary, not the node positions.
+  // Keep a bounded detached cache; mutable dictionaries and Moscow midnight
+  // are part of its key, so route verification and new edits cannot go stale.
+  const cacheKey=JSON.stringify([card,input.version,input.brand,input.contact,input.footer,assets.rules||{},DICTIONARY,!!assets.mapAttribution,Math.floor((Date.now()+10800000)/86400000)]);
+  if(publicationDataCache.has(cacheKey))return publicationDataClone(publicationDataCache.get(cacheKey));
   const design=normalizePublicationDesign(input),f=card.fields&&typeof card.fields==='object'?card.fields:{},rules={...DICTIONARY,...publicationAddressTerms,...(assets.rules||{})},warnings=[];
   const zh=value=>{const result=sanitizeClientText(publicationZh(sanitizeClientText(String(value??'')),rules));if(/[А-Яа-яЁё]/.test(result))warnings.push('部分名称仍为俄文，请检查中文翻译。');return result;};
   const price=publicationNumeric(f.price),area=publicationNumeric(f.area),floor=publicationNumeric(f.floor),floors=publicationNumeric(f.floors),lat=publicationNumeric(f.latitude??card.listing?.latitude),lon=publicationNumeric(f.longitude??card.listing?.longitude);
@@ -2553,7 +2561,9 @@ function resolvePublicationData(card={},input={},assets={}){
     for(let stop=0;stop<3;stop++){const bind=prefix+'Stop'+(stop+1);data[bind]=route?.stops?.[stop]||'';data.links[bind]=safePublicationLink(route?.stopDetails?.[stop]?.links?.yandex);}
   }
   for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=sanitizeClientText(redactPublicationPhones(data[key]));
-  return clientPublicationCard(data);
+  const result=clientPublicationCard(data);publicationDataCache.set(cacheKey,result);
+  while(publicationDataCache.size>4)publicationDataCache.delete(publicationDataCache.keys().next().value);
+  return publicationDataClone(result);
 }
 
 function publicationNodeText(node,data){const value=node.bind?data[node.bind]:node.text;if(value==null||typeof value==='object')return '';return sanitizeClientText(redactPublicationPhones(String(value).replace(/\{\{([a-zA-Z0-9]+)\}\}/g,(_,key)=>typeof data[key]==='string'?data[key]:'')));}
@@ -2628,7 +2638,7 @@ function publicationDrawRoute(ctx,node,route,theme,warnings){
 }
 
 async function renderPublicationPage(canvas,surfaceId,input,card={},assets={}){
-  const design=normalizePublicationDesign(input),id=design.surfaces[surfaceId]?surfaceId:'pdfOverview',data=publicationPageData(card,design,assets,id),surface=publicationSurfaceLayout(design,id,data),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
+  const design=normalizePublicationDesign(input),id=design.surfaces[surfaceId]?surfaceId:'pdfOverview',data=publicationPageData(card,design,assets,id),surface=publicationSurfaceLayout(design,id,data,{normalized:true}),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
   canvas.width=surface.width;canvas.height=surface.height;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas 2D недоступен');ctx.fillStyle=surface.background;ctx.fillRect(0,0,canvas.width,canvas.height);
   for(const node of publicationSurfaceNodes(surface)){
     if(publicationBoundEmpty(node,data)||surface.id==='pdfGallery'&&node.type==='image'&&!publicationNodeImage(node,data,assets,photos))continue;ctx.save();ctx.translate(node.x,node.y);ctx.globalAlpha=node.style.opacity;
@@ -2680,7 +2690,7 @@ function publicationDocumentPages(card={},input={},assets={}){
     while(remaining){const chunks=publicationDescriptionSlice(remaining,continuationBody);pages.push({surface:continuation,data:{...data,body:chunks[0]},photos});remaining=chunks[1];if(pages.length>40)throw Error('Описание требует слишком много страниц. Уменьшите шрифт или увеличьте текстовый блок.');}
   }
   if(photos.length){for(let at=0;at<photos.length;at+=5)pages.push({surface:design.surfaces.pdfGallery,data:{...data},photos:photos.slice(at,at+5)});}
-  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:publicationSurfaceLayout(design,'pdfLocation',data),data:{...data},photos});
+  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:publicationSurfaceLayout(design,'pdfLocation',data,{normalized:true}),data:{...data},photos});
   return {design,data,pages};
 }
 
@@ -2760,7 +2770,7 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   const field=(title,input)=>{const wrap=make('label',title);wrap.htmlFor=input.id;wrap.append(input);return wrap;};
   const normal=()=>normalizePublicationDesign(getDesign());
   let draft=normal(),surfaceId=Object.keys(draft.surfaces||{})[0]||'intro',selection=new Set(),history=designCanvasHistory(draft);
-  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null;
+  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='';
   const host=make('section','',{class:'design-canvas-editor',id:'designCanvasEditor','aria-label':'Редактор расположения блоков'});
   const title=make('div','',{class:'design-canvas-heading'});title.append(make('h3','Редактор макета'),make('p','Перемещайте блоки и меняйте их размеры. Текст из полей карточки подставляется заново для каждого объявления.',{class:'muted'}));
   const toolbar=make('div','',{class:'design-canvas-toolbar'}),surfaces=select('designCanvasSurface',[]),zooms=select('designCanvasZoom',[['fit','По ширине'],['25','25%'],['50','50%'],['75','75%'],['100','100%']]);
@@ -2799,8 +2809,16 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   workbench.append(left,side);host.append(title,toolbar,workbench);mount.replaceChildren(host);
 
   function surface(){return draft.surfaces[surfaceId];}
-  function effectiveSurface(){try{return publicationSurfaceLayout(draft,surfaceId,resolvePublicationData(getCard()||{},draft,getAssets()||{}));}catch{return surface();}}
-  function effectiveNode(node){return effectiveSurface().nodes.find(value=>value.id===node?.id)||node;}
+  function effectiveSurface(){
+    // Overview, gallery and intro use the saved geometry verbatim. Resolving
+    // every translated card field here used to block the initial editor.
+    if(!['pdfLocation','outro'].includes(surfaceId))return surface();
+    try{const card=getCard()||{},assets=getAssets()||{},key=JSON.stringify([surfaceId,draft,card,assets.rules||{},Math.floor((Date.now()+10800000)/86400000)]);
+      if(key===layoutCacheKey&&layoutCacheValue)return layoutCacheValue;
+      const value=publicationSurfaceLayout(draft,surfaceId,resolvePublicationData(card,draft,assets),{normalized:true});layoutCacheKey=key;layoutCacheValue=value;return value;
+    }catch{return surface();}
+  }
+  function effectiveNode(node){return node?effectiveSurface().nodes.find(value=>value.id===node.id)||node:null;}
   function materializeGeometry(ids){const wanted=new Set(ids),view=effectiveSurface(),map=surface().nodes.find(node=>node.type==='map'),attribution=surface().nodes.find(node=>node.bind==='mapAttribution');if(wanted.has(map?.id)||wanted.has(attribution?.id)){if(map)wanted.add(map.id);if(attribution)wanted.add(attribution.id);}for(const node of surface().nodes)if(wanted.has(node.id)&&!node.locked){const displayed=view.nodes.find(value=>value.id===node.id);if(displayed)for(const key of ['x','y','w','h'])node[key]=displayed[key];}}
   function selected(){return surface()?.nodes.find(node=>selection.has(node.id))||null;}
   function nodeName(node){return node.label||node.name||(node.bind?bindingName(node.bind):typeNames[node.type]||'Блок');}
@@ -2835,7 +2853,7 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
     layers.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(selection.has(b.dataset.nodeId))));
   }
   function refreshLayers(){const focused=layers.contains(document.activeElement)?document.activeElement?.dataset.nodeId:null;layers.replaceChildren();for(const node of [...surface().nodes].sort((a,b)=>(b.z||0)-(a.z||0))){const b=button((node.visible===false?'◌ ':node.locked?'🔒 ':'')+nodeName(node),'',event=>selectNode(node,event));b.removeAttribute('id');b.dataset.nodeId=node.id;b.setAttribute('aria-pressed',String(selection.has(node.id)));layers.append(b);}if(focused)[...layers.children].find(node=>node.dataset.nodeId===focused)?.focus({preventScroll:true});}
-  function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
+  function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;const key=[s.width,s.height,scale,showGrid,selection.size].join('|');if(key===dimensionsKey)return;dimensionsKey=key;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
   async function draw(){const epoch=++renderEpoch,s=surface();if(!s||destroyed)return;const design=dceClone(draft),card=dceClone(getCard()||{});const buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;try{const assets=await getAssets();const result=await renderPage(buffer,surfaceId,design,card,assets||{});if(destroyed||epoch!==renderEpoch)return;canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');}catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}}
   function queueRender(){if(renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
   function refreshUI(){if(destroyed)return;dimensions();backgroundInput.value=surface().background||'#07162b';refreshOverlay();refreshLayers();refreshInspector();undo.disabled=!history.canUndo();redo.disabled=!history.canRedo();queueRender();}
@@ -3037,7 +3055,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   const frame=psElement('iframe','','presentation-frame');frame.id='presentationPreview';frame.title='Предпросмотр HTML и будущего PDF';frame.setAttribute('sandbox','');const frameWrap=psElement('details','','presentation-preview-card');frameWrap.id='presentationHtmlPreview';frameWrap.append(psElement('summary','Все страницы HTML / PDF'),frame);preview.append(frameWrap,imageWrap);
   const proofDialog=psElement('dialog','','presentation-proof-dialog'),proofHeading=psElement('h2','Готовый PDF'),proofTools=psElement('div','','presentation-proof-tools'),proofClose=button('Закрыть','presentationProofClose'),proofOpen=psElement('a','Открыть PDF отдельно','btn'),proofFrame=psElement('iframe','','presentation-proof-frame');
   proofDialog.id='presentationProofDialog';proofHeading.id='presentationProofTitle';proofDialog.setAttribute('aria-labelledby',proofHeading.id);proofFrame.id='presentationProofFrame';proofFrame.title='PDF с окончательными страницами';proofOpen.id='presentationProofOpen';proofOpen.target='_blank';proofOpen.rel='noopener';proofTools.append(proofHeading,proofClose);proofDialog.append(proofTools,psElement('p','Это созданный PDF. Если встроенный просмотр недоступен, откройте его отдельно.','muted'),proofOpen,proofFrame);shell.append(proofDialog);
-  function clearProof(){proofFrame.removeAttribute('src');proofOpen.removeAttribute('href');if(proofUrl)URL.revokeObjectURL(proofUrl);proofUrl='';}proofClose.onclick=()=>proofDialog.close();proofDialog.addEventListener('close',clearProof);
+  function clearProof(){proofFrame.removeAttribute('src');proofOpen.removeAttribute('href');if(proofUrl)URL.revokeObjectURL(proofUrl);proofUrl='';}proofClose.onclick=()=>{clearProof();proofDialog.close();};proofDialog.addEventListener('close',clearProof);
   const demoCard={titles:['设计演示 · 非真实房源'],body:'此为设计演示。\n\n房源文字、照片与条件会随所选公寓自动替换。家具与家电以已确认的信息为准。',tags:'#设计演示',fields:{isDemo:true,price:75000,area:40,rooms:1,layout:'euro2',metro:'设计演示',metroLine:'非真实房源',walk:'15',city:'Москва',address:'莫斯科 · 设计演示',features:[]}};
   function demoPhoto(){const c=document.createElement('canvas');c.width=1200;c.height=900;const x=c.getContext('2d');x.fillStyle='#d7cbbb';x.fillRect(0,0,1200,900);x.fillStyle='#eee5d7';x.fillRect(0,0,1200,600);x.fillStyle='#172c4b';x.fillRect(90,80,360,420);x.fillStyle='#a6bbc8';x.fillRect(110,100,320,380);x.fillStyle='#31425a';x.fillRect(600,420,440,210);x.fillStyle='#a39480';x.fillRect(560,570,520,140);x.fillStyle='#795e3d';x.fillRect(140,690,300,25);x.fillRect(170,715,18,130);x.fillRect(390,715,18,130);x.fillStyle='#172c4b';x.font='28px sans-serif';x.fillText('设计演示 · 非房源照片',55,850);return c.toDataURL('image/jpeg',.9);}
   const current=()=>demo?demoCard:getCard?.()||{};
@@ -3089,7 +3107,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   // The initial fetch may fail before a save is attempted; keep that rejection
   // handled while retaining it for the explicit Save operation.
   serverReady.catch(()=>{});
-  return {refresh:()=>{clearTimeout(timer);demo=false;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});return render(true);},template:()=>normalizePublicationDesign(template),destroy:()=>{destroyed=true;revision++;brandLoadEpoch++;assetRoleEpoch.logo++;assetRoleEpoch.avatar++;clearTimeout(timer);editor?.destroy();if(proofDialog.open)proofDialog.close();clearProof();assetCache.clear();clearPublicationImageCache();photos=[];logo=avatar=intro=outro=mapImage='';lastRendered=null;savedServerRules={};template=defaultPublicationDesign();legacyBackup=null;frame.removeAttribute('srcdoc');imagePreview.removeAttribute('src');for(const input of Object.values(inputs))input.value='';mount.replaceChildren();}};
+  return {refresh:()=>{clearTimeout(timer);demo=false;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});return render(true);},template:()=>normalizePublicationDesign(template),destroy:()=>{destroyed=true;revision++;brandLoadEpoch++;assetRoleEpoch.logo++;assetRoleEpoch.avatar++;clearTimeout(timer);editor?.destroy();if(proofDialog.open)proofDialog.close();clearProof();assetCache.clear();clearPublicationImageCache();clearPublicationDataCache();photos=[];logo=avatar=intro=outro=mapImage='';lastRendered=null;savedServerRules={};template=defaultPublicationDesign();legacyBackup=null;frame.removeAttribute('srcdoc');imagePreview.removeAttribute('src');for(const input of Object.values(inputs))input.value='';mount.replaceChildren();}};
 }
 
 export {setupPresentationStudio};

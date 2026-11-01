@@ -118,7 +118,7 @@
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
-      <details id="phoneDiagnostics"><summary>Диагностика подключения · v21</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v23</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -169,7 +169,7 @@
 <script>/* Independent ES5 startup guard: it must run even when the module cannot parse. */
 (function () {
   'use strict';
-  var version = 'v21', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var version = 'v23', started = Date.now(), attempt = 0, timer = 0, done = false;
   var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
   var moduleStarted = false, probeTimer = 0, probing = false;
   function el(id) { return document.getElementById(id); }
@@ -1530,7 +1530,7 @@ function phoneApplyRole(state){
  if(!owner){phoneArchiveUI?.destroy();phoneArchiveUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;}
  if(!edit){phoneDictionaryUI?.clear();phonePublicationReviewUI?.clear();phoneRoutesUI?.destroy();phoneRoutesUI=null;phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;phoneResetWriting();clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneState.job=null;phoneJobLatest=phoneJobLast=null;ph('phoneJob').classList.add('hidden');}
  ph('phoneRewriteAll')?.closest('section')?.classList.toggle('hidden',!edit);
- const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
+ const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v23 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
  if(!edit&&['import','watch','design'].includes(phoneState.view))phoneView('cards');
  if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
  return !!previous&&previous!==phoneState.role;

@@ -90,16 +90,20 @@ class BrowserAcceptance(unittest.TestCase):
             checkbox = row.locator('input[type=checkbox]')
             row.locator('input[type=number]').fill('2')
             checkbox.check()
+            self.page.wait_for_function("document.getElementById('feature-chairs').checked&&document.getElementById('feature-qty-chairs').value==='2'")
             self.assertTrue(self.page.locator('#feature-chairs').is_checked())
             self.assertEqual(self.page.locator('#feature-qty-chairs').input_value(), '2')
             checkbox.uncheck()
+            self.page.wait_for_function("!document.getElementById('feature-chairs').checked&&document.getElementById('feature-qty-chairs').value===''")
             self.assertFalse(self.page.locator('#feature-chairs').is_checked())
             self.assertEqual(self.page.locator('#feature-qty-chairs').input_value(), '')
             self.page.locator('#feature-chairs').check()
             self.page.locator('#feature-qty-chairs').fill('5')
             checkbox.check()
+            self.page.wait_for_function("JSON.parse(localStorage.getItem('most-draft'))?.fields?.photoEvidence?.some(row=>row.id==='chairs')&&document.getElementById('feature-qty-chairs').value==='5'")
             self.assertEqual(self.page.locator('#feature-qty-chairs').input_value(), '5')
             checkbox.uncheck()
+            self.page.wait_for_function("JSON.parse(localStorage.getItem('most-draft'))?.fields?.photoEvidence?.length===0&&document.getElementById('feature-chairs').checked&&document.getElementById('feature-qty-chairs').value==='5'")
             self.assertTrue(self.page.locator('#feature-chairs').is_checked())
             self.assertEqual(self.page.locator('#feature-qty-chairs').input_value(), '5')
             draft = self.page.evaluate("JSON.parse(localStorage.getItem('most-draft'))")
@@ -151,8 +155,25 @@ class BrowserAcceptance(unittest.TestCase):
             self.assertGreaterEqual(dock_box['y'], 0)
             self.assertLess(dock_box['y'], 150)
             first_counter = self.page.locator('#furniturePhotoCounter').inner_text()
-            self.page.evaluate('window.scrollBy(0,240)')
+            first_image = self.page.locator('#furniturePhotoImage').get_attribute('src')
+            self.assertTrue(self.page.locator('#furniturePhotoAuto').is_checked())
+            # The catalog can grow without changing how scrolling distributes
+            # photos over its full height. Cross a real photo boundary instead
+            # of assuming every fixed 240 px reaches the next segment.
+            scroll = self.page.evaluate("""() => {
+                const section=document.getElementById('furnitureSection').getBoundingClientRect();
+                const [number,count]=document.getElementById('furniturePhotoCounter').textContent.split('/').map(Number);
+                const distance=Math.max(1,section.height-innerHeight*.35),next=number;
+                if(next>=count)throw Error('Fixture must start before the final photo');
+                const targetTop=innerHeight*.25-distance*(next+.15)/count;
+                const before=scrollY,delta=section.top-targetTop;
+                window.scrollBy(0,delta);
+                return {before,delta,sectionHeight:section.height,sectionTop:section.top,number,count};
+            }""")
+            self.assertGreater(scroll['delta'], 0, scroll)
+            self.page.wait_for_function('before => scrollY>before', arg=scroll['before'])
             self.page.wait_for_function("old => document.getElementById('furniturePhotoCounter').textContent!==old", arg=first_counter)
+            self.assertNotEqual(self.page.locator('#furniturePhotoImage').get_attribute('src'), first_image)
             self.page.locator('#furniturePhotoAuto').uncheck()
             before_counter = self.page.locator('#furniturePhotoCounter').inner_text()
             before_image = self.page.locator('#furniturePhotoImage').get_attribute('src')

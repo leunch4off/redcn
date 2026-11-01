@@ -505,14 +505,14 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                             value={**value,'attachments':[row for row in value.get('attachments',[]) if row.get('category')!='contract' and row.get('shareable') is not False]}
                             document=status,value,mime,headers
                         self.respond(*document);return
-                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':3,'role':self.role,'capabilities':access_roles.capabilities(self.role),'activeJob':latest_job_info() if self.role!='viewer' else None});return
+                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':3,'release':getattr(controller,'release','unknown'),'role':self.role,'capabilities':access_roles.capabilities(self.role),'activeJob':latest_job_info() if self.role!='viewer' else None});return
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
                     feed=list_cards(directory,after)
                     if self.role=='viewer':
                         visible={card_id for card_id,_ in access_roles._read_cards(directory)}
                         feed['cards']=[row for row in feed['cards'] if row['id'] in visible]
-                    feed.update(role=self.role,capabilities=access_roles.capabilities(self.role))
+                    feed.update(role=self.role,capabilities=access_roles.capabilities(self.role),release=getattr(controller,'release','unknown'))
                     self.respond(200,feed);return
                 match=re.fullmatch(r'/api/phone/previews/([a-f0-9]{64})',path)
                 if match:
@@ -560,7 +560,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     if self.secure:cookie+='; Secure'
                     role=state.role(token)
-                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info(),'role':role,'capabilities':access_roles.capabilities(role)},headers={'Set-Cookie':cookie});return
+                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info(),'role':role,'capabilities':access_roles.capabilities(role),'release':getattr(controller,'release','unknown')},headers={'Set-Cookie':cookie});return
                 if not access_roles.phone_route_allowed(self.role,'POST',relative,data):
                     self.respond(403,{'error':'У этой роли нет доступа к данному действию.','code':'ROLE_FORBIDDEN'});return
                 workspace=getattr(controller,'workspace_api',None)

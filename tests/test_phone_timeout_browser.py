@@ -32,7 +32,11 @@ class PhoneTimeoutCompatibilityAcceptance(unittest.TestCase):
         content=phone_fixture.photo_store.asset(self.directory,self.assets[0]['id'])[0]
         card_assets.create_image_export(self.directory,self.card_id,base64.b64encode(content).decode(),'intro',publication_policy_version=__import__('client_publication').PUBLICATION_POLICY_VERSION)
         self.connect();self.assert_no_static_helpers()
-        self.page.locator('#phoneCards .listing-card').first.click()
+        with self.page.expect_response(lambda response:response.url.endswith('/api/phone/cards/'+self.card_id) and response.request.method=='GET') as detail:
+            self.page.locator('#phoneCards .listing-card').first.click()
+        self.assertEqual(detail.value.status,200)
+        self.assertEqual(detail.value.json()['body'],self.result['body'],'The selected fixture card must be loaded before testing its media controls')
+        self.page.locator('#phoneDetail').wait_for(state='visible')
         self.page.wait_for_function("document.getElementById('phoneSharePhoto').textContent==='Поделиться фото'&&!document.getElementById('phoneSharePhoto').disabled")
         self.assertIn('两间独立',self.page.locator('#phoneBody').inner_text())
         button=self.page.locator('#phoneFilesMount').get_by_role('button',name='Intro · PNG',exact=True);button.wait_for()

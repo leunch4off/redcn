@@ -57,7 +57,9 @@ class CanvasBrowserAcceptance(unittest.TestCase):
     def drag(self,node_id,dx,dy,resize=False):
         box=self.page.locator('#designCanvasOverlay [data-node-id="'+node_id+'"]');box.scroll_into_view_if_needed()
         target=box.locator('.design-canvas-resize') if resize else box
+        target.scroll_into_view_if_needed()
         bounds=target.bounding_box();x=bounds['x']+bounds['width']*.5;y=bounds['y']+bounds['height']*.5
+        self.assertTrue(self.page.evaluate("([x,y,id])=>x>0&&x<innerWidth&&y>0&&y<innerHeight&&document.elementFromPoint(x,y)?.closest('[data-node-id]')?.dataset.nodeId===id", [x,y,node_id]), 'Mouse drag must reach the visible canvas node rather than another layer or an offscreen coordinate')
         self.page.mouse.move(x,y);self.page.mouse.down();self.page.mouse.move(x+dx,y+dy,steps=6);self.page.mouse.up()
 
     def test_drag_commits_once_and_keyboard_undo_keep_export_units_and_bindings(self):
@@ -98,12 +100,16 @@ class CanvasBrowserAcceptance(unittest.TestCase):
         self.assertEqual(self.page.evaluate("Array.from(document.getElementById('designCanvasPreview').getContext('2d').getImageData(0,0,1,1).data.slice(0,3))"),[0,255,0]);self.assertTrue(self.page.locator('#designCanvasUndo').is_disabled())
 
     def test_route_title_moves_independently_of_its_time_and_other_inner_nodes(self):
+        # The automatic canvas intentionally hides default route nodes when no
+        # travel time has been supplied. Editing a real route needs route data.
+        self.page.evaluate("window.canvasTestSetCard({id:'a',title:'房源 A',fields:{price:80000,area:54,universities:'МГУ | 40 | public'}});window.canvasTestEditor.refresh({resetHistory:true})")
         self.page.locator('#designCanvasSurface').select_option('outro');self.page.locator('#designCanvasSnap').uncheck()
         nodes=self.page.evaluate("window.canvasTestDesign.surfaces.outro.nodes")
         title=next(node for node in nodes if node.get('bind')=='route1Title')
         time=next(node for node in nodes if node.get('bind')=='route1Time')
         self.assertNotEqual(title['id'],time['id'],'Route title and time must be separate editable text nodes')
         self.assertEqual(title['type'],'text');self.assertEqual(time['type'],'text')
+        self.assertEqual(self.page.locator('#designCanvasOverlay [data-node-id="'+title['id']+'"]').evaluate('el=>getComputedStyle(el).pointerEvents'),'auto')
         unchanged={node['id']:node for node in nodes if node['id']!=title['id']}
         self.drag(title['id'],18,7)
         moved=self.node(title['id'],'outro');self.assertGreater(moved['x'],title['x']);self.assertGreater(moved['y'],title['y']);self.assertEqual(moved['bind'],'route1Title')

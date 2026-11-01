@@ -11,3 +11,11 @@ test('photo scroll stays bounded before/after the furniture list and advances th
   assert.equal(furniturePhotoIndex(10,50,800,1),0);
   assert.equal(furniturePhotoIndex(10,50,800,0),0);
 });
+
+test('expanded furniture catalog advances at its measured segment boundary, not a fixed pixel cadence',()=>{
+  const viewport=1000,height=1800,count=3,start=100;
+  assert.equal(furniturePhotoIndex(start,height,viewport,count),0);
+  assert.equal(furniturePhotoIndex(start-240,height,viewport,count),0,'240 px may remain within one segment of a long catalog');
+  const distance=height-viewport*.35,targetTop=viewport*.25-distance*1.15/count;
+  assert.equal(furniturePhotoIndex(targetTop,height,viewport,count),1);
+});
