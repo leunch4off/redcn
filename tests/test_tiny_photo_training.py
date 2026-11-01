@@ -1,8 +1,12 @@
 import copy
+from contextlib import nullcontext
 import importlib.util
 from pathlib import Path
+import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('tiny_training', Path(__file__).resolve().parents[1]/'scripts'/'train-tiny-photo-detector.py')
 training = importlib.util.module_from_spec(spec)
@@ -51,6 +55,50 @@ class TrainingMetricsTests(unittest.TestCase):
         rows = training.predictions_from_output(output, 640, 640, 320)
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]['xyxy'], [.375, .375, .625, .625])
+
+
+class CooperativeTrainingTests(unittest.TestCase):
+    def test_existing_cancel_stops_before_loading_weights_and_does_not_delete_marker(self):
+        with tempfile.TemporaryDirectory() as root:
+            cancel = Path(root)/'training.cancel'
+            cancel.write_text('foreground request')
+            with self.assertRaises(training.TrainingCancelled):
+                training.train(SimpleNamespace(cancel_file=cancel))
+            self.assertEqual(cancel.read_text(),'foreground request')
+
+    def test_foreground_cancellation_between_batches_keeps_remaining_data_unprocessed(self):
+        with tempfile.TemporaryDirectory() as root:
+            cancel = Path(root)/'training.cancel'
+            batches = training.training_batches([1,2,3,4],2,cancel)
+            self.assertEqual(next(batches),[1,2])
+            cancel.write_text('foreground request')
+            with self.assertRaises(training.TrainingCancelled):
+                next(batches)
+            self.assertEqual(cancel.read_text(),'foreground request')
+
+    def test_validation_also_yields_to_foreground_between_images(self):
+        class Tensor:
+            def __getitem__(self,key):return self
+            def to(self,device):return self
+            def detach(self):return self
+            def cpu(self):return self
+            def tolist(self):return [[160,160,80,80,1,.9]]
+        with tempfile.TemporaryDirectory() as root:
+            cancel = Path(root)/'training.cancel'
+            calls=[]
+            class Model:
+                def eval(self):pass
+                def __call__(self,photo):
+                    calls.append(photo)
+                    cancel.write_text('foreground request')
+                    return [Tensor()]
+            rows=[{'imageId':str(index),'boxes':[],'verifiedClassIndices':[0]} for index in range(2)]
+            with patch.dict(sys.modules,{'torch':SimpleNamespace(no_grad=nullcontext)}), \
+                    patch.object(training,'prepare_image',return_value=(Tensor(),[],320,320)) as prepare:
+                with self.assertRaises(training.TrainingCancelled):
+                    training.evaluate(Model(),rows,[{'id':'sofa'}],320,'cpu',cancel)
+            self.assertEqual(len(calls),1)
+            self.assertEqual(prepare.call_count,1)
 
 
 class ManifestTests(unittest.TestCase):

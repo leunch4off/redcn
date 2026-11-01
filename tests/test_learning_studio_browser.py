@@ -128,6 +128,35 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.assertTrue(self.page.get_by_role('button', name='Применить проверенный перевод', exact=True).is_disabled())
         self.assertEqual(self.page.evaluate('applied.length'), 0)
 
+    def test_auto_accept_toggle_explains_gate_and_does_not_enable_rollback_without_acceptance(self):
+        toggle = self.page.get_by_role('checkbox', name='Принимать новые веса после проверки качества', exact=True)
+        self.assertFalse(toggle.is_checked())
+        toggle.check()
+        self.page.wait_for_function("document.body.textContent.includes('Автоприёмка включена: только после полного сравнения качества')")
+        self.assertTrue(toggle.is_checked())
+        self.assertTrue(self.page.get_by_role('button', name='Вернуть предыдущие веса', exact=True).is_disabled())
+        self.assertIn('Веса — обученные настройки модели', self.page.locator('body').inner_text())
+        self.assertFalse((Path(self.folder.name)/'text-ai.json').exists())
+
+    def test_grounded_advertising_is_distinguished_from_model_text_with_measured_rates(self):
+        def preview(route):
+            request = route.request.post_data_json
+            if request.get('action') == 'generate-preview':
+                self.assertEqual(request['styleMode'], 'advertising')
+                route.fulfill(status=200, content_type='application/json', body=json.dumps({
+                    'status': 'review', 'backend': 'grounded-advertising', 'fallback': True,
+                    'title': '已确认房源', 'body': '租金80000卢布。', 'tags': '#莫斯科租房',
+                    'ai': {'generatedTokens': 25, 'tokensPerSecond': 12.5, 'elapsedSeconds': 2.4}}))
+            else:
+                route.continue_()
+        self.page.route('**/api/learning', preview)
+        self.page.get_by_role('button', name='Создать ИИ-черновик по карточке', exact=True).click()
+        self.page.wait_for_function("document.body.textContent.includes('ответ модели не прошёл проверку')")
+        text = self.page.locator('body').inner_text()
+        self.assertIn('Модель: 25 токенов', text)
+        self.assertIn('12.5 ток/с', text)
+        self.assertIn('Время: 2.4 с', text)
+
 
 if __name__ == '__main__':
     unittest.main()

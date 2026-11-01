@@ -4,11 +4,14 @@ This module never downloads photos, changes listing facts or stores image bytes
 in the result. The import coordinator merges the returned evidence separately.
 """
 import math
+import hashlib
 import re
 import time
 
 from job_progress import emit
+from ai_telemetry import sanitize_ai
 from local_photo_ai import AUTO_CONFIDENCE, FEATURE_LABELS, normalize_inventory
+from photo_auto_policy import detector_suggestion, human_decisions, review_journal
 import photo_store
 import redcn
 
@@ -74,6 +77,7 @@ def _positive(candidate, analysis, digest, model):
     for evidence in candidate['evidence']:
         if (evidence.get('kind') != 'model-visual-observation' or evidence.get('provider') != 'ollama'
                 or evidence.get('model') != model or evidence.get('photoId') != digest
+                or evidence.get('source') != 'local-photo'
                 or evidence.get('originalId') != digest or evidence.get('directlyVisible') is not True
                 or evidence.get('confidence') != candidate['confidence']):
             continue
@@ -87,7 +91,7 @@ def _positive(candidate, analysis, digest, model):
     return False
 
 
-def _candidates(analysis, digest, model):
+def _candidates(analysis, digest, model, *, auto_apply=False):
     output = []
     rows = analysis.get('candidates')
     seen = set()
@@ -105,6 +109,10 @@ def _candidates(analysis, digest, model):
             'status': 'candidate', 'evidence': _evidence(row.get('evidence')),
             'autoEligible': row.get('autoEligible') is True, 'autoCountEligible': False}
         candidate['autoEligible'] = _positive(candidate, analysis, digest, model)
+        candidate['automaticSuggestion'] = auto_apply is True and detector_suggestion(candidate, analysis, digest)
+        if candidate['automaticSuggestion']:
+            candidate.update(status='auto-proposed',requiresConfirmation=True,reviewReason='model-unaccepted',
+                reviewId=hashlib.sha256((digest+'|'+feature).encode()).hexdigest())
         output.append(candidate)
     return output
 
@@ -131,6 +139,8 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
             'message': 'Локальный анализ фото не включён'}
     model = config['model'].strip()
     output['autoApply'] = config.get('autoApply') is True
+    output['autoApplyMode'] = ('suggestions-only' if model == 'redcn-furniture-v1' else 'direct-observations') if output['autoApply'] else 'off'
+    fields = result.get('fields') if isinstance(result.get('fields'), dict) else {}
     configured_budget = config.get('maxSeconds', max_seconds)
     if type(max_seconds) not in (int, float) or not math.isfinite(max_seconds) or not 0 < max_seconds <= 1800:
         return {**output, 'state': 'partial', 'skipped': len(selected), 'message': 'Неверный общий лимит анализа фото'}
@@ -168,8 +178,13 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                 _, _, original = photo_store.asset(directory, digest)
                 if original.get('kind') != 'original' or original.get('id') != digest:
                     raise ValueError('Нужен проверенный оригинал')
+                def photo_progress(message, **details):
+                    ai = sanitize_ai({**(details.get('ai') if isinstance(details.get('ai'), dict) else {}),
+                        'photoIndex': index + 1, 'photoTotal': len(selected), 'operation': 'furniture'})
+                    emit(report, message, **{**details, 'stage': 'vision', 'ai': ai,
+                        'completed': index, 'total': len(selected)})
                 analysis = photo_store.analyze_photo(directory, digest, cancel=cancel,
-                    deadline=min(deadline, time.monotonic() + 120))
+                    deadline=min(deadline, time.monotonic() + 120), status=photo_progress)
                 _cancelled(cancel)
                 if not isinstance(analysis, dict) or analysis.get('originalId') != digest:
                     raise ValueError('Анализ относится к другому оригиналу')
@@ -177,11 +192,22 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                 photo['engine'] = str(analysis.get('engine', ''))[:300]
                 photo['provider']=str(analysis.get('provider',''))[:40]
                 photo['model']=str(analysis.get('model',''))[:150]
+                photo['cached']=analysis.get('cached') is True
+                photo['autoApply']=output['autoApply'] and analysis.get('autoApply',True) is True
+                photo['autoApplyMode']=str(analysis.get('autoApplyMode',output['autoApplyMode']))[:40]
+                if isinstance(analysis.get('ai'),dict):
+                    photo['ai']=sanitize_ai({**analysis['ai'],'photoIndex':index+1,'photoTotal':len(selected)})
                 if status not in ('ok', 'review'):
                     photo['status'] = status if status in ('disabled', 'unavailable', 'invalid', 'timeout', 'busy', 'cancelled') else 'invalid'
                     output['failed'] += 1; incomplete = True
                 else:
-                    candidates = _candidates(analysis, digest, model)
+                    candidates = _candidates(analysis, digest, model, auto_apply=photo['autoApply'])
+                    rejected, confirmed = human_decisions(fields,url,digest)
+                    for candidate in candidates:
+                        if candidate['id'] in rejected:
+                            candidate.update(status='rejected',autoEligible=False,automaticSuggestion=False,reviewDecision='rejected')
+                        elif candidate['id'] in confirmed:
+                            candidate.update(status='confirmed',automaticSuggestion=False,reviewDecision='confirmed')
                     photo.update(status='review', candidates=candidates)
                     unknown = analysis.get('unknownIds')
                     if isinstance(unknown, list):
@@ -191,7 +217,7 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                         incomplete = True
                     if analysis.get('provider') == 'yolox-trained':
                         output['reviewRequired'] = True
-                    if output['autoApply']:
+                    if photo['autoApply']:
                         for candidate in candidates:
                             if not candidate['autoEligible'] or candidate['confidence'] < AUTO_CONFIDENCE:
                                 continue
@@ -200,6 +226,10 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                                 'autoEligible': True, 'originalId': digest, 'photoId': digest,
                                 'sourceUrl': url, 'confidence': candidate['confidence'],
                                 'evidence': candidate['evidence'], 'engine': photo['engine'], 'count': None})
+                    photo['autoApplySummary']={'requested':output['autoApply'],'mode':photo['autoApplyMode'],
+                        'automaticFacts':sum(row['autoEligible'] for row in candidates) if photo['autoApply'] else 0,
+                        'automaticSuggestions':sum(row.get('automaticSuggestion') is True for row in candidates),
+                        'needsReview':sum(row.get('reviewDecision') not in ('confirmed','rejected') and not (photo['autoApply'] and row['autoEligible']) for row in candidates)}
             except (OSError, ValueError):
                 _cancelled(cancel)
                 photo['status'] = 'unavailable'
@@ -208,6 +238,16 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
             stage='vision', completed=index + 1, total=len(selected))
     _cancelled(cancel)
     output['features'] = sorted(features)
+    output['reviewJournal']=review_journal(fields,output['photos'],requested=output['autoApply'])
+    review_needed={(row['originalId'],row['featureId']) for row in output['reviewJournal']['entries'] if row['state']=='pending'}
+    review_needed.update((photo['originalId'],row['id']) for photo in output['photos'] for row in photo['candidates']
+        if row.get('reviewDecision') not in ('confirmed','rejected') and not (photo.get('autoApply') and row['autoEligible']))
+    output['autoApplySummary']={'requested':output['autoApply'],'mode':output['autoApplyMode'],
+        'automaticFacts':len(output['photoEvidence']),
+        'automaticSuggestions':output['reviewJournal']['pending'],
+        'newSuggestions':output['reviewJournal']['added'],
+        'needsReview':len(review_needed),
+        **({'reason':'model-unaccepted','acceptedClasses':0} if model=='redcn-furniture-v1' else {})}
     if output.get('reviewRequired'):
         output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
             and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))

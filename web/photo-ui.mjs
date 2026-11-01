@@ -1,3 +1,4 @@
+import {createAiProgress} from './ai-progress.mjs';
 import {clientPublicationCard} from './client-publication.mjs';
 import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
 import {cardPhotoDataUrl} from './card-files.mjs';
@@ -20,8 +21,57 @@ export function presentationAcceptedCrop(value,originalId){
  return null;
 }
 
-export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatures,getCardId=()=>null}){
+const photoJournalFeatures=new Set(['sofa','bedAny','chairs','tv','fridge','oven','microwave','sink','table','desk','wardrobe','washer','dishwasher','piano','coffeeMachine','mirror','curtains','coffeeTable']);
+const photoJournalDigest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+const photoJournalScore=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1;
+
+/** The direct-photo action uses the same bounded review queue as batch scans.
+ * It never confirms a finding or assigns an item count by itself. */
+export function mergePhotoReviewJournal(previous,items,{now=new Date().toISOString(),refresh=false,rejectedFeatures=[]}={}){
+ const sources=Array.isArray(items)?items.slice(0,600):[],entries=new Map(),current=new Map(),rejected=new Set(Array.isArray(rejectedFeatures)?rejectedFeatures:[]);
+ const knownPrevious=previous?.version===1&&Array.isArray(previous.entries);
+ for(const item of sources){const digest=item?.analysis?.originalId||item?.serverId;if(typeof item?.url==='string'&&photoJournalDigest(digest))current.set(item.url,digest);}
+ function decision(digest,feature,old){
+  if(rejected.has(feature))return 'rejected';
+  const same=sources.filter(item=>item?.analysis?.originalId===digest);
+  if(same.some(item=>item.rejected?.[feature]===true))return 'rejected';
+  if(same.some(item=>item.confirmed?.[feature]&&typeof item.confirmed[feature]==='object'))return 'confirmed';
+  return old;
+ }
+ for(const row of knownPrevious?previous.entries.slice(0,600):[]){
+  if(!row||!photoJournalDigest(row.id)||!photoJournalDigest(row.originalId)||!photoJournalFeatures.has(row.featureId)||typeof row.sourceUrl!=='string'||!['pending','confirmed','rejected','stale'].includes(row.state))continue;
+  const state=row.state==='pending'&&current.has(row.sourceUrl)&&current.get(row.sourceUrl)!==row.originalId?'stale':row.state;
+  entries.set(row.id,{...row,state:decision(row.originalId,row.featureId,state),count:null});
+ }
+ let added=0;
+ for(const item of sources){
+  const analysis=item?.analysis,digest=analysis?.originalId;
+  if(analysis?.autoApply!==true||analysis.provider!=='yolox-trained'||analysis.model!=='redcn-furniture-v1'||!['review','ok'].includes(analysis.status)||!photoJournalDigest(digest)||!photoSources([item.url]).length)continue;
+  for(const candidate of Array.isArray(analysis.candidates)?analysis.candidates.slice(0,64):[]){
+   if(!candidate||candidate.automaticSuggestion!==true||!photoJournalDigest(candidate.reviewId)||!photoJournalFeatures.has(candidate.id)||!photoJournalScore(candidate.confidence)||candidate.confidence<.85||(Array.isArray(analysis.unknownIds)&&analysis.unknownIds.includes(candidate.id)))continue;
+   const evidence=Array.isArray(candidate.evidence)?candidate.evidence.slice(0,8):[];
+   const bound=evidence.some(row=>{const region=row?.region;return row?.kind==='object-detection'&&row.provider==='yolox-trained'&&row.model==='redcn-furniture-v1'&&row.source==='local-photo'&&row.originalId===digest&&row.photoId===digest&&row.confidence===candidate.confidence&&Array.isArray(region)&&region.length===4&&region.every(photoJournalScore)&&region[2]>0&&region[3]>0&&region[0]+region[2]<=1+1e-9&&region[1]+region[3]<=1+1e-9;});
+   if(!bound)continue;
+   const old=entries.get(candidate.reviewId);
+   if(old&&(old.originalId!==digest||old.featureId!==candidate.id))continue;
+   const state=decision(digest,candidate.id,['confirmed','rejected'].includes(old?.state)?old.state:'pending');
+   entries.set(candidate.reviewId,{id:candidate.reviewId,originalId:digest,sourceUrl:item.url,
+    featureId:candidate.id,label:typeof candidate.label==='string'?candidate.label.slice(0,150):candidate.id,
+    confidence:candidate.confidence,evidence:JSON.parse(JSON.stringify(evidence)),provider:'yolox-trained',model:'redcn-furniture-v1',
+    automatic:true,state,reason:'model-unaccepted',count:null,createdAt:old?.createdAt||now,lastSeenAt:refresh?now:old?.lastSeenAt||now});
+   if(!old)added++;
+  }
+ }
+ if(!knownPrevious&&!entries.size)return null;
+ const rows=[...entries.values()].sort((a,b)=>Number(current.get(a.sourceUrl)!==a.originalId)-Number(current.get(b.sourceUrl)!==b.originalId)||Number(a.state!=='pending')-Number(b.state!=='pending')||a.id.localeCompare(b.id)).slice(0,600);
+ return {version:1,requested:sources.some(item=>item?.analysis?.autoApply===true),entries:rows,
+  added:Math.min(600,(Number.isInteger(previous?.added)?Math.max(0,previous.added):0)+added),
+  pending:rows.filter(row=>row.state==='pending').length,confirmed:rows.filter(row=>row.state==='confirmed').length,rejected:rows.filter(row=>row.state==='rejected').length};
+}
+
+export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatures,getCardId=()=>null,getRejectedFeatures=()=>[]}){
  const pe=id=>document.getElementById(id);let items=[],active=null,epoch=0,objectUrls=[],viewerUrls=[],edits={},busy=false,zipUrl=null;
+ const aiProgress=createAiProgress({after:pe('photoStatus'),id:'photoAiProgress'});
  const itemSource=url=>{const rows=typeof getPost==='function'?getPost()?.fields?.photoItems:null;return Array.isArray(rows)?rows.find(row=>row?.url===url):null;};
  const sourceCacheKey=url=>{const source=itemSource(url);return source?url+'\n'+JSON.stringify([source.photoId,source.variants||{},source.observedVariants||[]]):url;};
  const furniturePhotos=setupFurniturePhotos({getItems:()=>items,onOpen:item=>show(item),read,write});
@@ -36,7 +86,10 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  const photoDb=new Promise((resolve,reject)=>{const r=indexedDB.open('redcn-photos-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('photos',{keyPath:'url'});r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});photoDb.catch(()=>{});
  async function cacheGet(url,key=url){try{const db=await photoDb;return await new Promise((resolve,reject)=>{const r=db.transaction('photos').objectStore('photos').get(key);r.onsuccess=()=>resolve(r.result?.cacheVersion===2?{...r.result,url}:null);r.onerror=()=>reject(r.error);});}catch{return null;}}
  async function cachePut(item){try{const db=await photoDb;await new Promise((resolve,reject)=>{const tx=db.transaction('photos','readwrite');tx.objectStore('photos').put({url:item.cacheKey||item.url,originalUrl:item.url,cacheVersion:2,blob:item.blob,width:item.width,height:item.height,mime:item.mime,cropBlob:item.cropBlob,cropMeta:item.cropMeta,variantBlob:item.variantBlob,variantMeta:item.variantMeta,variantReview:item.variantReview,serverId:item.serverId,analysis:item.analysis,at:Date.now()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}catch{toast('Фото готово, но не поместилось в кеш браузера. Оригинал можно скачать.');}}
- function state(){return {order:items.map(i=>i.url),excluded:items.filter(i=>!i.selected).map(i=>i.url),originals:items.filter(i=>i.preferOriginal).map(i=>i.url),crops:Object.fromEntries(items.filter(i=>!i.preferOriginal&&i.manualCropOverride&&i.cropMeta?.verification==='manual'&&i.cropMeta?.margins).map(i=>[i.url,i.cropMeta.margins])),observations:Object.fromEntries(items.filter(i=>i.analysis).map(i=>[i.url,{analysis:i.analysis,confirmed:i.confirmed||{},rejected:i.rejected||{}}]))};}
+ function state(){
+  const journal=mergePhotoReviewJournal(edits.reviewJournal,items,{rejectedFeatures:getRejectedFeatures()});
+  if(journal)edits.reviewJournal=journal;
+  return {...(journal?{reviewJournal:journal}:{}),order:items.map(i=>i.url),excluded:items.filter(i=>!i.selected).map(i=>i.url),originals:items.filter(i=>i.preferOriginal).map(i=>i.url),crops:Object.fromEntries(items.filter(i=>!i.preferOriginal&&i.manualCropOverride&&i.cropMeta?.verification==='manual'&&i.cropMeta?.margins).map(i=>[i.url,i.cropMeta.margins])),observations:Object.fromEntries(items.filter(i=>i.analysis).map(i=>[i.url,{analysis:i.analysis,confirmed:i.confirmed||{},rejected:i.rejected||{}}]))};}
  function changed(){edits=state();onChange?.();}
  function status(){for(const id of ['photoAnalyze','photoLoad','photoRefresh','photoDownload','photoDownloadCropped','photoCropAuto','photoAttach','photoCropApply','photoAttachOne'])pe(id).disabled=busy||(id==='photoAnalyze'&&!local);const ready=items.filter(i=>i.blob).length,crops=items.filter(i=>i.cropBlob).length,errors=items.filter(i=>i.error).length;pe('photoStatus').textContent=ready+' / '+items.length+' оригиналов загружено · '+crops+' копий кадрировано'+(busy?' · обработка…':'')+(errors?' · '+errors+' требуют внимания':'');}
  function assetUrl(blob){const url=URL.createObjectURL(blob);objectUrls.push(url);return url;}
@@ -89,13 +142,43 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  // Suggestions stay separate from listing facts until explicitly confirmed.
  const analyzeButton=pe('photoAnalyze'),analyzeAuto=pe('photoAnalyzeAuto'),observations=pe('photoObservations');analyzeButton.disabled=!local;analyzeAuto.checked=local&&read('most-photo-analyze',true);analyzeAuto.disabled=!local;analyzeAuto.onchange=()=>write('most-photo-analyze',analyzeAuto.checked);
  function emitFeatures(){onFeatures?.(confirmedPhotoFeatures(items));}
- function renderObservations(){observations.replaceChildren();const found=items.filter(i=>i.selected&&i.analysis);observations.classList.toggle('hidden',!found.length);if(!found.length)return;const title=document.createElement('h3'),help=document.createElement('p');title.textContent='Предметы на фотографиях';help.className='small';help.textContent='Уверенные находки локальной модели включены как видимые на фото. Снимите ошибочные отметки; остальные предметы можно подтвердить вручную. Процент — оценка модели, а не гарантия. Количество требует проверки и не суммируется между ракурсами.';observations.append(title,help);
+ function observationDetail(item,row){
+  const journal=edits.reviewJournal?.entries,pending=Array.isArray(journal)&&journal.some(entry=>entry?.originalId===item.analysis.originalId&&entry.featureId===row.id&&entry.state==='pending');
+  const decision=item.rejected?.[row.id]?' · отклонено':item.confirmed?.[row.id]?' · подтверждено':row.automaticSuggestion&&pending?' · автодобавлено в журнал · требует подтверждения':'';
+  return row.label+decision+' · '+(item.analysis.provider==='yolox-trained'?'оценка '+Number(row.confidence).toFixed(2):Math.round(row.confidence*100)+'%')+' · '+(row.evidence||[]).map(e=>e.text||e.label).join('; ');
+ }
+ function renderObservations(){observations.replaceChildren();const found=items.filter(i=>i.selected&&i.analysis);observations.classList.toggle('hidden',!found.length);if(!found.length)return;const title=document.createElement('h3'),help=document.createElement('p');title.textContent='Предметы на фотографиях';help.className='small';help.textContent='Автодобавление сохраняет находки ИИ в журнал проверки. Предположения обученной модели требуют подтверждения перед включением в описание. Отметьте видимые предметы; ошибочные снимите. Оценка модели не гарантирует точность, количество между ракурсами не суммируется.';observations.append(title,help);
   for(const item of found){const section=document.createElement('div'),heading=document.createElement('p');heading.textContent='Фото '+(items.indexOf(item)+1)+' · '+item.analysis.engine;section.append(heading);if(!item.analysis.candidates?.length){const empty=document.createElement('p');empty.className='small';empty.textContent='Предметы не распознаны уверенно. Можно отметить мебель в карточке вручную.';section.append(empty);}
-   for(const row of item.analysis.candidates||[]){const line=document.createElement('label'),check=document.createElement('input'),count=document.createElement('input'),detail=document.createElement('span');check.type='checkbox';check.checked=!item.rejected?.[row.id]&&(!!item.confirmed?.[row.id]||(item.analysis.autoApply===true&&isAutomaticPhotoObservation({...row,status:'auto-visible',originalId:item.analysis.originalId,photoId:item.analysis.originalId})));count.type='number';count.min='1';count.max='12';count.step='1';count.placeholder='Кол-во';count.style.width='90px';count.setAttribute('aria-label',row.label+': количество на фото '+(items.indexOf(item)+1));count.value=item.confirmed?.[row.id]?.count??row.count??'';detail.textContent=row.label+' · '+(item.analysis.provider==='yolox-trained'?'оценка '+Number(row.confidence).toFixed(2):Math.round(row.confidence*100)+'%')+' · '+(row.evidence||[]).map(e=>e.text||e.label).join('; ');line.title='Проверьте видимый предмет. Неизвестное не означает отсутствие.';line.append(check,detail,count);line.style.display='flex';line.style.gap='8px';line.style.alignItems='center';
-    const update=async()=>{item.confirmed??={};item.rejected??={};const n=Number(count.value);if(check.checked){delete item.rejected[row.id];item.confirmed[row.id]={count:count.value&&Number.isInteger(n)&&n>=1&&n<=12?n:null};}else{delete item.confirmed[row.id];item.rejected[row.id]=true;}await cachePut(item);changed();emitFeatures();};check.onchange=update;count.onchange=update;section.append(line);}
+   for(const row of item.analysis.candidates||[]){const line=document.createElement('label'),check=document.createElement('input'),count=document.createElement('input'),detail=document.createElement('span');check.type='checkbox';check.checked=!item.rejected?.[row.id]&&(!!item.confirmed?.[row.id]||(item.analysis.autoApply===true&&isAutomaticPhotoObservation({...row,status:'auto-visible',originalId:item.analysis.originalId,photoId:item.analysis.originalId})));count.type='number';count.min='1';count.max='12';count.step='1';count.placeholder='Кол-во';count.style.width='90px';count.setAttribute('aria-label',row.label+': количество на фото '+(items.indexOf(item)+1));count.value=item.confirmed?.[row.id]?.count??row.count??'';detail.textContent=observationDetail(item,row);line.title='Проверьте видимый предмет. Неизвестное не означает отсутствие.';line.append(check,detail,count);line.style.display='flex';line.style.gap='8px';line.style.alignItems='center';
+    const update=async()=>{item.confirmed??={};item.rejected??={};const n=Number(count.value);if(check.checked){delete item.rejected[row.id];item.confirmed[row.id]={count:count.value&&Number.isInteger(n)&&n>=1&&n<=12?n:null};}else{delete item.confirmed[row.id];item.rejected[row.id]=true;}await cachePut(item);changed();emitFeatures();detail.textContent=observationDetail(item,row);};check.onchange=update;count.onchange=update;section.append(line);}
    observations.append(section);}
  }
- async function analyzeAll(){if(busy)return;if(!local){toast('Анализ фото доступен в локальном redcn на Mac.');return;}busy=true;status();const token=epoch;try{for(const item of items.filter(i=>i.selected)){if(epoch!==token)break;try{await ensure(item);const source=itemSource(item.url),original=await api('photo',{action:'load',url:item.url,...(source?{source}:{})});item.serverId=original.id;const analysis=await api('photo',{action:'analyze',id:original.id});if(item.analysis?.originalId!==analysis.originalId){item.confirmed={};item.rejected={};}item.analysis=analysis;item.confirmed??={};item.message=item.analysis.message;await cachePut(item);}catch(error){item.error=error.message;}if(epoch===token)render();}changed();emitFeatures();}finally{busy=false;if(epoch===token)render();}}
+ async function analyzeAll(){
+  if(busy)return;if(!local){toast('Анализ фото доступен в локальном redcn на Mac.');return;}
+  busy=true;status();const token=epoch,queue=items.filter(i=>i.selected);aiProgress.clear();
+  if(edits.reviewJournal?.version===1)edits.reviewJournal={...edits.reviewJournal,added:0};
+  try{
+   for(const [index,item] of queue.entries()){
+    if(epoch!==token)break;
+    const started=performance.now();
+    aiProgress.update({operation:'furniture',phase:'preparing',active:true,photoIndex:index+1,photoTotal:queue.length,elapsedSeconds:0});
+    try{
+     await ensure(item);const source=itemSource(item.url),original=await api('photo',{action:'load',url:item.url,...(source?{source}:{})});item.serverId=original.id;
+     aiProgress.update({operation:'furniture',phase:'analyzing',active:true,photoIndex:index+1,photoTotal:queue.length,elapsedSeconds:(performance.now()-started)/1000});
+     const analysis=await api('photo',{action:'analyze',id:original.id});
+     if(epoch!==token)break;
+     aiProgress.update({operation:'furniture',phase:['review','ok'].includes(analysis.status)?'complete':'unavailable',elapsedSeconds:(performance.now()-started)/1000,...analysis.ai,active:false,photoIndex:index+1,photoTotal:queue.length});
+     if(item.analysis?.originalId!==analysis.originalId){item.confirmed={};item.rejected={};}
+     item.analysis=analysis;item.confirmed??={};item.message=item.analysis.message;
+     const journal=mergePhotoReviewJournal(edits.reviewJournal,items,{refresh:true,rejectedFeatures:getRejectedFeatures()});
+     if(journal)edits.reviewJournal=journal;
+     await cachePut(item);
+    }catch(error){if(epoch!==token)break;aiProgress.stop('error');item.error=error.message;}
+    if(epoch===token)render();
+   }
+   if(epoch===token){changed();emitFeatures();}
+  }finally{busy=false;aiProgress.stop();if(epoch===token)render();}
+ }
  analyzeButton.onclick=()=>analyzeAll();
  pe('photoAutoLoad').checked=read('most-photo-autoload',true);pe('photoAutoLoad').onchange=()=>write('most-photo-autoload',pe('photoAutoLoad').checked);
  pe('photoLoad').onclick=()=>loadAll();pe('photoRefresh').onclick=()=>loadAll(true);pe('photoDownload').onclick=()=>exportPhotos();pe('photoDownloadCropped').onclick=()=>exportPhotos(true);
@@ -107,5 +190,5 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  pe('photoDownloadCropOne').onclick=()=>{if(active?.cropBlob)downloadPhoto(photoFileName(items.indexOf(active),'image/jpeg',true),active.cropBlob);else toast('Сначала создайте кадрированную копию.');};
  pe('photoFiles').onchange=async()=>{try{const files=[...pe('photoFiles').files];const queue=active?[active]:items.filter(i=>!i.blob);if(files.length>queue.length)throw Error('Прикрепите не больше файлов, чем незагруженных фото; либо откройте нужное фото.');for(let n=0;n<files.length;n++){const file=files[n],item=queue[n],size=await dimensions(file);let serverId=null;if(local){const encoded=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});serverId=(await api('photo',{action:'attach',url:item.url,data:encoded})).id;}Object.assign(item,size,{blob:file,mime:file.type,error:'',message:'Оригинал прикреплён вручную',serverId,cropBlob:null,cropMeta:null,variantBlob:null,variantMeta:null,variantReview:null,analysis:null,confirmed:{}});await cachePut(item);changed();emitFeatures();}render();if(active)show(active);toast('Оригиналы прикреплены в выбранном порядке.');}catch(error){toast(error.message);}finally{pe('photoFiles').value='';}};
  pe('photoAttach').onclick=()=>{active=null;pe('photoFiles').click();};pe('photoAttachOne').onclick=()=>pe('photoFiles').click();
- return {state,async presentationPhotos(){const token=epoch,selected=items.filter(item=>item.selected).slice(0,30),photos=new Array(selected.length);let next=0;await Promise.all(Array.from({length:Math.min(3,selected.length)},async()=>{while(next<selected.length){const index=next++,item=selected[index];await ensure(item);await acceptedCrop(item);if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');const asset=photoExportAsset(item,true),blob=asset.blob;if(blob)photos[index]={dataUrl:await cardPhotoDataUrl(blob),originalId:item.serverId||'',selectedId:asset.kind==='crop'?item.cropMeta?.id||'':asset.kind==='variant'?item.variantMeta?.id||'':item.serverId||'',selection:asset.kind==='crop'?item.cropMeta?.verification||'manual':asset.kind==='variant'?'observed-variant':'original'};}}));return photos.filter(Boolean);},setSources(urls,saved={}){epoch++;if(zipUrl){URL.revokeObjectURL(zipUrl);zipUrl=null;}pe('photoZipLink').classList.add('hidden');edits=saved||{};const safe=photoSources(urls),order=[...new Set([...(Array.isArray(edits.order)?edits.order:[]).filter(u=>safe.includes(u)),...safe])];items=order.map(url=>({url,cacheKey:sourceCacheKey(url),selected:!edits.excluded?.includes(url),preferOriginal:edits.originals?.includes(url)===true,manualCropOverride:!edits.originals?.includes(url)&&!!edits.crops?.[url],expectedMargins:edits.originals?.includes(url)?undefined:edits.crops?.[url],analysis:edits.observations?.[url]?.analysis,confirmed:edits.observations?.[url]?.confirmed||{},rejected:edits.observations?.[url]?.rejected||{}}));active=null;render();const token=epoch;const start=()=>{if(token!==epoch||!pe('photoAutoLoad').checked)return;if(busy){setTimeout(start,250);return;}loadAll();};Promise.all(items.map(async item=>{const cached=await cacheGet(item.url,item.cacheKey);if(epoch===token&&cached?.blob)try{await ensure(item);}catch{}})).then(()=>{if(epoch===token){render();start();}});},refresh:render};
+ return {state,async presentationPhotos(){const token=epoch,selected=items.filter(item=>item.selected).slice(0,30),photos=new Array(selected.length);let next=0;await Promise.all(Array.from({length:Math.min(3,selected.length)},async()=>{while(next<selected.length){const index=next++,item=selected[index];await ensure(item);await acceptedCrop(item);if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');const asset=photoExportAsset(item,true),blob=asset.blob;if(blob)photos[index]={dataUrl:await cardPhotoDataUrl(blob),originalId:item.serverId||'',selectedId:asset.kind==='crop'?item.cropMeta?.id||'':asset.kind==='variant'?item.variantMeta?.id||'':item.serverId||'',selection:asset.kind==='crop'?item.cropMeta?.verification||'manual':asset.kind==='variant'?'observed-variant':'original'};}}));return photos.filter(Boolean);},setSources(urls,saved={}){epoch++;aiProgress.clear();if(zipUrl){URL.revokeObjectURL(zipUrl);zipUrl=null;}pe('photoZipLink').classList.add('hidden');edits=saved||{};const safe=photoSources(urls),order=[...new Set([...(Array.isArray(edits.order)?edits.order:[]).filter(u=>safe.includes(u)),...safe])];items=order.map(url=>({url,cacheKey:sourceCacheKey(url),selected:!edits.excluded?.includes(url),preferOriginal:edits.originals?.includes(url)===true,manualCropOverride:!edits.originals?.includes(url)&&!!edits.crops?.[url],expectedMargins:edits.originals?.includes(url)?undefined:edits.crops?.[url],analysis:edits.observations?.[url]?.analysis,confirmed:edits.observations?.[url]?.confirmed||{},rejected:edits.observations?.[url]?.rejected||{}}));active=null;render();const token=epoch;const start=()=>{if(token!==epoch||!pe('photoAutoLoad').checked)return;if(busy){setTimeout(start,250);return;}loadAll();};Promise.all(items.map(async item=>{const cached=await cacheGet(item.url,item.cacheKey);if(epoch===token&&cached?.blob)try{await ensure(item);}catch{}})).then(()=>{if(epoch===token){render();start();}});},refresh:render};
 }

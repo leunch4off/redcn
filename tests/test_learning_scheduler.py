@@ -117,6 +117,39 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(self.memory.checkpoints()[0]['state'], 'unaccepted')
         self.assertNotIn('sampleHashes', scheduler.status(self.directory))
 
+    def test_auto_evaluation_starts_after_training_releases_shared_model_gate(self):
+        trainer = self.ready()
+        scheduler.save_config(self.directory, {'automaticPromotion': True})
+        def evaluate(config):
+            with scheduler.model_resource(self.directory, kind='background'):
+                return {'phase': 'evaluating'}
+        with self.runtime(trainer), patch.object(trainer, '_evaluate', side_effect=evaluate) as evaluator:
+            self.assertEqual(trainer.tick()['phase'], 'evaluating')
+            evaluator.assert_called_once()
+        self.assertEqual(len(self.calls), 1)
+        self.assertFalse((self.directory/'text-ai.json').exists())
+
+    def test_turning_auto_accept_on_evaluates_saved_candidate_without_retraining(self):
+        trainer = self.ready()
+        with self.runtime(trainer):
+            trainer.tick()
+        scheduler.save_config(self.directory, {'automaticPromotion': True})
+        with patch.object(trainer, '_evaluate', return_value={'phase': 'evaluating'}) as evaluator:
+            self.assertEqual(trainer.tick()['phase'], 'evaluating')
+            evaluator.assert_called_once()
+        self.assertEqual(len(self.calls), 1)
+
+    def test_blocked_quality_does_not_repeat_evaluation_or_training_without_new_data(self):
+        trainer = self.ready()
+        with self.runtime(trainer):
+            trainer.tick()
+        trainer.state.update(qualityOutcome='blocked', qualityMessage='Текущие веса сохранены')
+        scheduler.save_config(self.directory, {'automaticPromotion': True})
+        with patch.object(trainer, '_evaluate') as evaluator:
+            self.assertEqual(trainer.tick()['phase'], 'quality-blocked')
+            evaluator.assert_not_called()
+        self.assertEqual(len(self.calls), 1)
+
     def test_foreground_gate_signals_cancel_and_cannot_overlap_training(self):
         with scheduler.model_resource(self.directory, kind='background'):
             with self.assertRaises(scheduler.ModelBusy):

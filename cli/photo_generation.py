@@ -23,8 +23,10 @@ def photo_revision(directory, result, *, text='', rules=None, prefs=None, report
                      if isinstance(row,dict) and row.get('status')=='present' and 'id' in row}
     human=[row for row in fields.get('photoEvidence',[]) or [] if isinstance(row,dict) and row.get('status')=='confirmed']
     human_ids={row['id'] for row in human if 'id' in row}
+    baseline=fields.get('photoFeatureBaseline') if isinstance(fields.get('photoFeatureBaseline'),dict) else {}
+    manually_checked={feature for feature,value in baseline.items() if isinstance(value,dict) and value.get('checked') is True}
     fields['features']=[feature for feature in fields.get('features',[])
-                        if feature not in previous or feature in source_positive or feature in human_ids]
+                        if feature not in previous or feature in source_positive or feature in human_ids or feature in manually_checked]
     fields['photoEvidence']=human+inventory.get('photoEvidence',[])
     fields['photoAutoFeatures']=sorted(found)
     edits=fields.get('photoEdits') if isinstance(fields.get('photoEdits'),dict) else {}
@@ -35,9 +37,12 @@ def photo_revision(directory, result, *, text='', rules=None, prefs=None, report
         same=old.get('analysis',{}).get('originalId')==photo.get('originalId')
         observations[photo['sourceUrl']]={'analysis':{'version':2,'status':'review','originalId':photo['originalId'],
             'provider':photo.get('provider'),'model':photo.get('model'),'engine':photo.get('engine'),
+            **({key:photo[key] for key in ('ai','autoApplyMode','autoApplySummary') if key in photo}),
             'autoApply':config['autoApply'],'candidates':photo['candidates'],'unknownIds':photo.get('unknownIds',[])},
             'confirmed':old.get('confirmed',{}) if same else {},'rejected':old.get('rejected',{}) if same else {}}
     fields['photoEdits']={**edits,'observations':observations}
+    if isinstance(inventory.get('reviewJournal'),dict):
+        fields['photoEdits']['reviewJournal']=copy.deepcopy(inventory['reviewJournal'])
     if not previous and not found:
         return {key:(fields if key=='fields' else copy.deepcopy(result[key]))
                 for key in ('fields','body','titles','tags') if key=='fields' or key in result}

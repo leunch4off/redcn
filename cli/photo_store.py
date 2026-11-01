@@ -521,9 +521,12 @@ def auto_crop_photo(directory,digest,*,cancel=None,max_seconds=AUTO_CROP_SECONDS
     finally:_auto_crop_lock.release()
 
 
-def analyze_photo(directory,digest,*,cancel=None,deadline=None):
+def analyze_photo(directory,digest,*,cancel=None,deadline=None,status=None):
     """Analyze the verified original; suggested objects never become facts here."""
     import vision_photo
+    from ai_telemetry import sanitize_ai
+    from job_progress import emit
+    started=time.monotonic()
     _check_photo_cancel(cancel)
     if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
     content,mime,original=asset(directory,digest)
@@ -536,18 +539,31 @@ def analyze_photo(directory,digest,*,cancel=None,deadline=None):
     if config.get('model')=='redcn-furniture-v1':
         import trained_photo_detector
         trained_identity=Path(trained_photo_detector.__file__).read_bytes()+trained_photo_detector.cache_identity(directory).encode()
-    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+trained_identity+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
+    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+Path(__file__).with_name('photo_auto_policy.py').read_bytes()+trained_identity+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
     cache=folder/(digest+'-'+source_hash+'.json')
     if cache.exists():
         try:
             saved=json.loads(cache.read_text())
-            if saved.get('originalId')==digest and saved.get('status')=='review' and not saved.get('fallback'):
-                return {**saved,'cached':True}
+            if isinstance(saved,dict) and saved.get('originalId')==digest and saved.get('status')=='review' and not saved.get('fallback'):
+                _check_photo_cancel(cancel)
+                cached_ai=sanitize_ai({**(saved.get('ai') if isinstance(saved.get('ai'),dict) else {}),
+                    'backend':saved.get('provider'),'model':saved.get('model'),'operation':'furniture',
+                    'phase':'cached','cached':True,'elapsedSeconds':time.monotonic()-started})
+                emit(status,'Наблюдения по этому оригиналу загружены из кеша',stage='vision',ai=cached_ai)
+                return {**saved,'cached':True,'ai':cached_ai}
         except (OSError,ValueError):pass
     image=open_photo(content)
-    try:result={**vision_photo.analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
+    emit(status,'Анализируем оригинал: мебель и техника',stage='vision',ai=sanitize_ai({
+        'backend':'yolox-trained' if config.get('model')=='redcn-furniture-v1' else 'ollama' if config.get('enabled') else 'apple-vision',
+        'model':config.get('model'),'operation':'furniture','phase':'loading','cached':False,'elapsedSeconds':time.monotonic()-started}))
+    try:result={**vision_photo.analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline,status=status),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
     finally:image.close()
     _check_photo_cancel(cancel)
+    result['ai']=sanitize_ai({**(result.get('ai') if isinstance(result.get('ai'),dict) else {}),
+        'backend':result.get('provider'),'model':result.get('model'),'operation':'furniture',
+        'phase':'complete' if result.get('status')=='review' else 'unavailable',
+        'cached':False,'elapsedSeconds':time.monotonic()-started})
+    emit(status,result.get('message','Анализ фото завершён'),stage='vision',ai=result['ai'])
     if result.get('status')=='review' and not result.get('fallback'):
         with tempfile.NamedTemporaryFile(mode='w',dir=folder,encoding='utf-8',delete=False) as stream:
             temp=Path(stream.name);temp.chmod(0o600);json.dump(result,stream,ensure_ascii=False)

@@ -65,6 +65,11 @@ class AIStatusTests(unittest.TestCase):
             self.assertTrue(result['autoApplyConfigured'])
             self.assertFalse(result['modelAllowsAutomaticApplication'])
             self.assertFalse(result['automaticApplication'])
+            self.assertTrue(result['automaticReviewCapture'])
+            self.assertEqual(result['effectiveMode'], 'suggestions-only')
+            summary = russian_status(inspect_ai(root))
+            self.assertIn('Автодобавление в журнал проверки: ВКЛЮЧЕНО', summary)
+            self.assertIn('Автоподтверждение для описания: ВЫКЛЮЧЕНО — модель ещё не прошла приёмку', summary)
 
     def test_partial_or_unsafe_photo_config_is_reported_as_error_not_enabled(self):
         for value in ({'enabled': True}, {**DEFAULTS, 'enabled': True, 'endpoint': 'https://remote.invalid'}):
@@ -104,6 +109,18 @@ class AIStatusTests(unittest.TestCase):
             self.assertEqual(result['idleTraining']['recordedPhase'], 'training')
             self.assertFalse(result['idleTraining']['phaseIsLiveProcessProof'])
             self.assertNotIn('secret', json.dumps(result))
+
+    def test_auto_accept_flag_reports_configuration_without_claiming_live_quality(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root/'learning').mkdir()
+            (root/'learning/scheduler.json').write_text('{"enabled":true,"automaticPromotion":true}')
+            before = set(root.rglob('*'))
+            result = inspect_ai(root)
+            self.assertTrue(result['idleTraining']['automaticPromotion'])
+            self.assertFalse(result['idleTraining']['phaseIsLiveProcessProof'])
+            self.assertIn('Автоматическое принятие новых весов: ВКЛЮЧЕНО', russian_status(result))
+            self.assertEqual(before, set(root.rglob('*')))
 
     def test_health_filters_fields_and_has_bounded_loopback_request(self):
         calls = []

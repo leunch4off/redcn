@@ -60,7 +60,7 @@ def phone_route_allowed(role, method, path, data=None):
     # Whole-workspace export and archive inspection require the desktop token,
     # including when a paired phone carries the owner role.
     if path.startswith('workspace-backup'):return False
-    if path=='learning' and method=='POST' and isinstance(data,dict) and data.get('action')=='scheduler-config' and role!='owner':
+    if path=='learning' and method=='POST' and isinstance(data,dict) and data.get('action') in {'scheduler-config', 'rollback-model'} and role!='owner':
         return False
     if method == 'GET':
         patterns = _VIEW_GET + (_EDITOR_GET if role in ('owner', 'editor') else ()) + (_OWNER_GET if role == 'owner' else ())

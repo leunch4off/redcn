@@ -77,6 +77,12 @@ class PairingRoles(unittest.TestCase):
             self.assertFalse(access_roles.phone_route_allowed('editor',method,path));self.assertTrue(access_roles.phone_route_allowed('owner',method,path))
         for role in (None,'admin',{},[]):self.assertFalse(access_roles.phone_route_allowed(role,'GET','cards'))
 
+    def test_only_owner_can_change_learning_policy_or_rollback_weights(self):
+        for action in ('scheduler-config', 'rollback-model'):
+            self.assertTrue(access_roles.phone_route_allowed('owner', 'POST', 'learning', {'action': action}))
+            for role in ('editor', 'viewer'):
+                self.assertFalse(access_roles.phone_route_allowed(role, 'POST', 'learning', {'action': action}))
+
 
 class RoleHTTPBoundary(unittest.TestCase):
     setUp=fixture.PhoneRelayTests.setUp

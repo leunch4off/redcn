@@ -75,6 +75,20 @@ class LearningServiceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.request({'action': 'scheduler-config', 'enabled': 'true'})
 
+    def test_auto_promotion_toggle_is_strict_and_does_not_accept_a_candidate(self):
+        value = self.request({'action': 'scheduler-config', 'automaticPromotion': True})
+        self.assertTrue(value['scheduler']['automaticPromotion'])
+        self.assertEqual(value['scheduler']['promotion']['state'], 'not-evaluated')
+        self.assertFalse((self.path/'text-ai.json').exists())
+        for payload in ({'automaticPromotion': 1}, {'automaticPromotion': 'true'},
+                        {'automaticPromotion': True, 'report': '/private/report.json'}, {}):
+            with self.assertRaises(ValueError):
+                self.request({'action': 'scheduler-config', **payload})
+
+    def test_rollback_rejects_caller_supplied_paths(self):
+        with self.assertRaises(ValueError):
+            self.request({'action': 'rollback-model', 'path': '/different/weights'})
+
     def test_trained_parameter_status_requires_completed_receipt_and_matching_weights(self):
         import local_text_model
         from text_model_contract import EXPECTED_TRAINABLE

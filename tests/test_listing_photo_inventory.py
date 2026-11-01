@@ -100,6 +100,7 @@ class ListingInventoryTests(unittest.TestCase):
         self.assertEqual(output['features'], [])
         self.assertEqual(output['photoEvidence'], [])
         self.assertTrue(output['photos'][0]['candidates'][0]['autoEligible'])
+        self.assertEqual(output['autoApplySummary']['needsReview'],2)
 
     def test_empty_observation_remains_unknown_and_never_means_absent(self):
         def empty(_, digest, **kwargs):
@@ -130,6 +131,46 @@ class ListingInventoryTests(unittest.TestCase):
         self.assertEqual(output['features'], [])
         self.assertEqual(output['photoEvidence'], [])
         self.assertFalse(output['photos'][0]['candidates'][0]['autoEligible'])
+
+    def test_enabled_trained_detector_adds_to_review_journal_without_publication_facts(self):
+        from test_photo_auto_policy import observation as detection
+        def trained(_, digest, **kwargs):
+            return {**detection(digest), 'autoApply': True, 'autoApplyMode': 'suggestions-only'}
+        output, _, _ = self.analyze(card(2), config={**CONFIG, 'model': 'redcn-furniture-v1'}, analysis=trained)
+        self.assertEqual(output['features'], [])
+        self.assertEqual(output['photoEvidence'], [])
+        self.assertEqual(output['autoApplySummary']['automaticFacts'], 0)
+        self.assertEqual(output['autoApplySummary']['automaticSuggestions'], 2)
+        self.assertEqual(output['autoApplySummary']['needsReview'], 2)
+        self.assertEqual(output['autoApplyMode'], 'suggestions-only')
+        self.assertTrue(all(row['state'] == 'pending' for row in output['reviewJournal']['entries']))
+        self.assertTrue(output['photos'][0]['candidates'][0]['automaticSuggestion'])
+        self.assertTrue(output['coverageComplete'])
+
+    def test_explicit_rejections_prevent_automatic_readdition_on_same_original(self):
+        for global_rejection in (False, True):
+            result = card(1)
+            digest = result['media'][0]['id']; url = result['media'][0]['sourceUrl']
+            result['fields'].update({'photoRejectedFeatures': ['oven']} if global_rejection else {
+                'photoEdits': {'observations': {url: {'analysis': {'originalId': digest}, 'rejected': {'oven': True}}}}})
+            before = copy.deepcopy(result)
+            output, _, _ = self.analyze(result)
+            self.assertEqual(output['features'], [])
+            self.assertEqual(output['photoEvidence'], [])
+            self.assertEqual(output['photos'][0]['candidates'][0]['reviewDecision'], 'rejected')
+            self.assertEqual(result, before)
+
+    def test_provider_progress_carries_photo_index_without_invented_tokens(self):
+        events = []
+        def analyze(_, digest, **options):
+            options['status']('Detector measured', ai={'backend': 'yolox-trained', 'phase': 'complete',
+                'inferenceSeconds': .05, 'imagesPerSecond': 20., 'tokensPerSecond': 999, 'tokenBased': False})
+            return observation(digest)
+        self.analyze(card(2), analysis=analyze, report=lambda message, **details: events.append(details))
+        metrics = [row['ai'] for row in events if 'ai' in row]
+        self.assertEqual([row['photoIndex'] for row in metrics], [1, 2])
+        self.assertTrue(all(row['photoTotal'] == 2 and row['imagesPerSecond'] == 20 for row in metrics))
+        self.assertTrue(all('tokensPerSecond' not in row for row in metrics))
 
     def test_stale_auto_flags_wrong_hash_provider_model_negation_and_unknown_are_revalidated(self):
         def change_score(value):

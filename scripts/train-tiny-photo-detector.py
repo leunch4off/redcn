@@ -17,6 +17,24 @@ import time
 THRESHOLDS = (.35, .5, .7, .85, .9)
 
 
+class TrainingCancelled(Exception):
+    """A foreground request has priority over this background experiment."""
+
+
+def check_cancel(cancel_file):
+    if cancel_file is not None:
+        marker = Path(cancel_file)
+        # Existence is sufficient; never read a marker or follow its contents.
+        if marker.is_symlink() or marker.exists():
+            raise TrainingCancelled('Foreground request interrupted photo training')
+
+
+def training_batches(rows, batch_size, cancel_file=None):
+    for offset in range(0, len(rows), batch_size):
+        check_cancel(cancel_file)
+        yield rows[offset:offset+batch_size]
+
+
 def sha256(path):
     digest = hashlib.sha256()
     with Path(path).open('rb') as stream:
@@ -228,12 +246,13 @@ def build_model(classes, checkpoint, source, device, train_objectness=False):
         'totalParameters': sum(p.numel() for p in model.parameters())}
 
 
-def evaluate(model, rows, classes, size, device):
+def evaluate(model, rows, classes, size, device, cancel_file=None):
     import torch
     model.eval()
     records = []
     with torch.no_grad():
         for row in rows:
+            check_cancel(cancel_file)
             tensor, _, width, height = prepare_image(row, size)
             output = model(tensor[None].to(device))[0].detach().cpu().tolist()
             records.append({'imageId': row['imageId'], 'boxes': row['boxes'], 'verifiedClassIndices': row['verifiedClassIndices'],
@@ -243,6 +262,8 @@ def evaluate(model, rows, classes, size, device):
 
 def train(args):
     started = time.monotonic()
+    cancel_file = getattr(args, 'cancel_file', None)
+    check_cancel(cancel_file)
     import torch
     import numpy as np
     if args.output.exists():
@@ -256,6 +277,7 @@ def train(args):
     data = validate_manifest(json.loads(args.manifest.read_text()), args.manifest.parent)
     if args.train_objectness and data.get('fullyAnnotatedTargetClasses') is not True:
         raise ValueError('Objectness training requires fullyAnnotatedTargetClasses=true and exhaustive target-class annotations')
+    check_cancel(cancel_file)
     model, initialization = build_model(data['classes'], args.pretrained, args.yolox_source, args.device, args.train_objectness)
     initial_parameters = {name: parameter.detach().cpu().clone() for name, parameter in model.named_parameters() if parameter.requires_grad}
     optimizer = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.learning_rate, weight_decay=.0001)
@@ -273,59 +295,69 @@ def train(args):
             'Positive-only verification cannot establish deployment precision without verified negatives.',
             'No independent rental-domain test acceptance; weights never auto-activated.',
             'Pillow bilinear differs from upstream OpenCV preprocessing.']}
-    print(json.dumps({'stage': 'baseline-validation', 'images': receipt['validationImages']}), flush=True)
-    receipt['baseline'] = evaluate(model, data['splits']['validation'], data['classes'], args.size, args.device)
     step = 0
-    stopped = False
-    for epoch in range(args.epochs):
-        rows = list(data['splits']['train']); random.Random(args.seed+epoch).shuffle(rows)
-        model.train(); model.backbone.eval()
-        for module in model.modules():
-            if isinstance(module, torch.nn.BatchNorm2d):
-                module.eval()
-        for offset in range(0, len(rows), args.batch_size):
-            if step >= args.max_steps or time.monotonic()-started >= args.max_seconds:
-                stopped = True; break
-            batch = rows[offset:offset+args.batch_size]
-            prepared = [prepare_image(row, args.size) for row in batch]
-            images = torch.stack([item[0] for item in prepared]).to(args.device)
-            targets = torch.zeros((len(batch), max(1, max(len(item[1]) for item in prepared)), 5), dtype=torch.float32, device=args.device)
-            for index, (_, labels, _, _) in enumerate(prepared):
-                if labels:
-                    targets[index, :len(labels)] = torch.tensor(labels, dtype=torch.float32, device=args.device)
-            optimizer.zero_grad(set_to_none=True)
-            before = time.monotonic()
-            result = model(images, targets)
-            loss = result['total_loss']
-            if not torch.isfinite(loss):
-                raise ValueError('Non-finite loss; weights will not be promoted')
-            loss.backward(); torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 10.)
-            optimizer.step(); step += 1
-            record = {'step': step, 'epoch': epoch+1, 'loss': float(loss.detach().cpu()), 'seconds': time.monotonic()-before}
-            receipt['steps'].append(record)
-            if step == 1 or step % 5 == 0:
-                print(json.dumps({'stage': 'training', **record}), flush=True)
-        print(json.dumps({'stage': 'validation', 'epoch': epoch+1, 'steps': step}), flush=True)
-        metrics = evaluate(model, data['splits']['validation'], data['classes'], args.size, args.device)
-        receipt['evaluations'].append({'epoch': epoch+1, 'steps': step, 'metrics': metrics})
-        if stopped:
-            break
+    stopped, cancelled = False, False
+    try:
+        print(json.dumps({'stage': 'baseline-validation', 'images': receipt['validationImages']}), flush=True)
+        receipt['baseline'] = evaluate(model, data['splits']['validation'], data['classes'], args.size, args.device, cancel_file)
+        for epoch in range(args.epochs):
+            rows = list(data['splits']['train']); random.Random(args.seed+epoch).shuffle(rows)
+            model.train(); model.backbone.eval()
+            for module in model.modules():
+                if isinstance(module, torch.nn.BatchNorm2d):
+                    module.eval()
+            for batch in training_batches(rows, args.batch_size, cancel_file):
+                if step >= args.max_steps or time.monotonic()-started >= args.max_seconds:
+                    stopped = True; break
+                prepared = [prepare_image(row, args.size) for row in batch]
+                images = torch.stack([item[0] for item in prepared]).to(args.device)
+                targets = torch.zeros((len(batch), max(1, max(len(item[1]) for item in prepared)), 5), dtype=torch.float32, device=args.device)
+                for index, (_, labels, _, _) in enumerate(prepared):
+                    if labels:
+                        targets[index, :len(labels)] = torch.tensor(labels, dtype=torch.float32, device=args.device)
+                optimizer.zero_grad(set_to_none=True)
+                before = time.monotonic()
+                result = model(images, targets)
+                loss = result['total_loss']
+                if not torch.isfinite(loss):
+                    raise ValueError('Non-finite loss; weights will not be promoted')
+                loss.backward(); torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 10.)
+                optimizer.step(); step += 1
+                record = {'step': step, 'epoch': epoch+1, 'loss': float(loss.detach().cpu()), 'seconds': time.monotonic()-before}
+                receipt['steps'].append(record)
+                if step == 1 or step % 5 == 0:
+                    print(json.dumps({'stage': 'training', **record}), flush=True)
+            check_cancel(cancel_file)
+            print(json.dumps({'stage': 'validation', 'epoch': epoch+1, 'steps': step}), flush=True)
+            metrics = evaluate(model, data['splits']['validation'], data['classes'], args.size, args.device, cancel_file)
+            receipt['evaluations'].append({'epoch': epoch+1, 'steps': step, 'metrics': metrics})
+            if stopped:
+                break
+    except TrainingCancelled:
+        stopped, cancelled = True, True
     weights = args.output/'weights.pt'
     model = model.cpu().eval()
     torch.save({'model': model.state_dict(), 'classes': data['classes'], 'inputSize': args.size, 'autoApprovedIds': []}, weights)
-    receipt.update({'status': 'trained-unaccepted', 'completedSteps': step,
+    receipt.update({'status': 'cancelled' if cancelled else 'trained-unaccepted', 'completedSteps': step,
+        'stoppedEarly': stopped, 'cancelledForForeground': cancelled,
         'stoppedAtBound': stopped, 'seconds': time.monotonic()-started,
         'weightsSha256': sha256(weights), 'weightsBytes': weights.stat().st_size})
     receipt['changedTrainableTensors'] = [name for name, parameter in model.named_parameters()
         if name in initial_parameters and not torch.equal(parameter.detach().cpu(), initial_parameters[name])]
-    receipt['comparison'] = comparison_metrics(receipt['baseline'], receipt['evaluations'][-1]['metrics'], data['classes'])
-    if args.export_onnx:
+    current_evaluation = bool(receipt['evaluations'] and receipt['evaluations'][-1]['steps'] == step)
+    receipt['evaluationCoversSavedWeights'] = current_evaluation
+    receipt['comparison'] = comparison_metrics(receipt['baseline'], receipt['evaluations'][-1]['metrics'], data['classes']) if current_evaluation else {}
+    if args.export_onnx and not cancelled:
         try:
+            check_cancel(cancel_file)
             model.head.decode_in_inference = False
             target = args.output/'model.onnx'
             torch.onnx.export(model, torch.zeros(1, 3, args.size, args.size), str(target), input_names=['images'], output_names=['output'], opset_version=11)
             receipt['onnx'] = {'path': target.name, 'sha256': sha256(target), 'bytes': target.stat().st_size,
                 'inputShape': [1, 3, args.size, args.size], 'outputEncoding': 'raw-yolox', 'classIds': [row['id'] for row in data['classes']]}
+        except TrainingCancelled:
+            receipt.update(status='cancelled',stoppedEarly=True,cancelledForForeground=True)
+            receipt['onnx'] = {'status': 'skipped', 'reason': 'foreground-request'}
         except (ImportError, RuntimeError, ValueError) as error:
             receipt['onnx'] = {'status': 'failed', 'message': str(error)[:300]}
     (args.output/'trainreceipt.json').write_text(json.dumps(receipt, ensure_ascii=False, indent=2)+'\n')
@@ -348,6 +380,7 @@ def main():
     parser.add_argument('--learning-rate', type=float, default=.0001)
     parser.add_argument('--max-seconds', type=int, default=1800)
     parser.add_argument('--export-onnx', action='store_true')
+    parser.add_argument('--cancel-file', type=Path, help='Cooperative foreground-priority marker; never deleted by this trainer')
     parser.add_argument('--train-objectness', action='store_true', help='Requires exhaustive target-class annotations declared in manifest; default freezes objectness')
     train(parser.parse_args())
 

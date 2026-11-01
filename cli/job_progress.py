@@ -12,6 +12,8 @@ import tempfile
 import threading
 import time
 
+from ai_telemetry import ACTIVE_PHASES, sanitize_ai
+
 
 STAGES = (
     ('preflight', 'Проверка генератора'), ('browser', 'Запуск Chrome'),
@@ -140,6 +142,9 @@ class JobProgress:
         self.history_eligible = None
         self.stage_quality = {}
         self.section_states = {}
+        self.ai = {}
+        self.ai_stage = None
+        self.ai_updated = self.started
         self.estimate = history.estimate(key)
 
     def set_profile(self, key):
@@ -151,7 +156,7 @@ class JobProgress:
 
     def update(self, message, stage=None, completed=None, total=None,
                awaitingUser=None, maxTotalSeconds=None, section=None,
-               sectionState=None, sectionReady=None, **_unused):
+               sectionState=None, sectionReady=None, ai=None, **_unused):
         with self.lock:
             if self.state != 'running':
                 return
@@ -160,6 +165,7 @@ class JobProgress:
                 stage = self.current
             now = self.clock()
             if stage != self.current:
+                self._freeze_ai(now)
                 self.durations[self.current] = self.durations.get(self.current, 0) + now - self.stage_started
                 if self.current not in self.completed_stages:
                     self.completed_stages.append(self.current)
@@ -170,6 +176,10 @@ class JobProgress:
                 self.wait_limit = None
                 self.counts = self.stage_counts.setdefault(stage,{})
             self.message = str(message)
+            if ai is not None:
+                measured = sanitize_ai(ai)
+                if measured:
+                    self.ai, self.ai_stage, self.ai_updated = measured, stage, now
             if awaitingUser is not None:
                 self.awaiting_user = bool(awaitingUser)
             if type(maxTotalSeconds) in (int, float) and maxTotalSeconds > 0:
@@ -216,8 +226,11 @@ class JobProgress:
             if self.state != 'running':
                 return
             self.stopped = self.clock()
+            self._freeze_ai(self.stopped)
             self.durations[self.current] = self.durations.get(self.current, 0) + self.stopped - self.stage_started
             self.state = 'done' if success else 'error'
+            if not success and self.ai.get('phase') in ACTIVE_PHASES:
+                self.ai['phase'] = 'error'
             self.history_eligible = bool(success and learn)
             if success:
                 if self.current not in self.completed_stages:
@@ -225,6 +238,13 @@ class JobProgress:
                 if learn:
                     self.history.record(self.key, self.stopped - self.started, self.durations)
                     self.estimate = self.history.estimate(self.key)
+
+    def _freeze_ai(self, now):
+        if self.ai_stage == self.current and self.ai.get('phase') in ACTIVE_PHASES:
+            if 'elapsedSeconds' in self.ai:
+                self.ai['elapsedSeconds'] = round(min(7200,
+                    self.ai['elapsedSeconds'] + max(0, now-self.ai_updated)), 6)
+            self.ai_updated = now
 
     def snapshot(self):
         with self.lock:
@@ -252,6 +272,13 @@ class JobProgress:
                     if row['state']=='done' and row['quality']!='complete':row['state']='partial'
                     if stage=='scroll':row['sections']=[{'section':name,'reason':self.section_states[name],'ready':self.section_states[name]=='ready'} for name in SECTION_NAMES if name in self.section_states]
                 rows.append(row)
+            ai = copy.deepcopy(self.ai)
+            if ai:
+                ai['active'] = (self.state == 'running' and self.ai_stage == self.current
+                    and ai.get('phase') in ACTIVE_PHASES)
+                ai['sampleAgeSeconds'] = round(max(0, now - self.ai_updated), 1)
+                if ai['active'] and 'elapsedSeconds' in ai:
+                    ai['elapsedSeconds'] = round(ai['elapsedSeconds'] + max(0, now - self.ai_updated), 1)
             return {'stage': 'done' if self.state == 'done' else self.current,
                 'label': 'Готово' if self.state == 'done' else LABELS[self.current],
                 'message': self.message, 'state': self.state,
@@ -262,4 +289,4 @@ class JobProgress:
                 'awaitingUser': self.awaiting_user and self.state == 'running',
                 'maxTotalSeconds': self.wait_limit, 'remainingSeconds': remaining,
                 'estimateExceeded': exceeded, **copy.deepcopy(self.estimate),
-                **self.counts, 'stages': rows}
+                **self.counts, 'stages': rows, **({'ai': ai} if ai else {})}

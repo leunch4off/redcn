@@ -16,6 +16,8 @@ if __name__ == '__main__' and sys.flags.isolated:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from local_photo_ai import FEATURE_LABELS
+from ai_telemetry import sanitize_ai
+from job_progress import emit
 
 MODEL = 'redcn-furniture-v1'
 MODEL_SHA = '650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5'
@@ -146,7 +148,9 @@ def _infer(directory, content, mime):
     inputs = session.get_inputs()
     if len(inputs) != 1 or inputs[0].shape != [1, 3, SIZE, SIZE] or inputs[0].type != 'tensor(float)':
         raise ValueError('Неверный вход обученной модели')
+    inference_started = time.monotonic()
     outputs = session.run(None, {inputs[0].name: tensor})
+    inference_seconds = time.monotonic() - inference_started
     if len(outputs) != 1 or outputs[0].shape != (1, ROWS, len(CLASS_IDS)+5):
         raise ValueError('Неверный выход обученной модели')
     digest = hashlib.sha256(content).hexdigest()
@@ -156,6 +160,10 @@ def _infer(directory, content, mime):
         'runtimeArchitecture': platform.machine(),
         'engine': 'redcn · обученная компактная модель · проверка', 'originalId': digest,
         'candidates': candidates, 'autoApply': False,
+        'ai': sanitize_ai({'backend': 'yolox-trained', 'model': MODEL, 'operation': 'furniture',
+            'phase': 'complete', 'tokenBased': False, 'cached': False, 'processedImages': 1,
+            'inferenceSeconds': inference_seconds,
+            **({'imagesPerSecond': 1 / inference_seconds} if inference_seconds > 0 else {})}),
         'unknownIds': [key for key in FEATURE_LABELS if key != 'bed' and key not in {row['id'] for row in candidates}],
         'message': 'Обученная модель предлагает предметы для проверки. Находки ещё не добавлены в описание.',
         'limitations': ['Первый обучающий прогон не прошёл приёмку точности.',
@@ -170,55 +178,71 @@ def _unavailable():
         'limitations': ['Это не означает, что предметов нет.']}
 
 
-def analyze(content, mime, directory, *, cancel=None, deadline=None):
+def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None):
     if cancel is not None and cancel.is_set():
         raise ValueError('Анализ отменён')
     started = time.monotonic()
+    def progress(phase, message, **metrics):
+        ai = sanitize_ai({'backend': 'yolox-trained', 'model': MODEL, 'operation': 'furniture',
+            **metrics, 'phase': phase, 'tokenBased': False, 'cached': False,
+            'elapsedSeconds': time.monotonic() - started})
+        emit(status, message, stage='vision', ai=ai)
+        return ai
+    def completed(result):
+        raw_metrics = result.get('ai') if isinstance(result.get('ai'), dict) else {}
+        metrics = {key: raw_metrics[key] for key in ('inferenceSeconds', 'imagesPerSecond', 'processedImages') if key in raw_metrics}
+        result['ai'] = progress('complete' if result.get('status') == 'review' else 'unavailable',
+            result.get('message', 'Анализ фото завершён'), **metrics)
+        return result
     remaining = 20 if deadline is None else min(20, deadline-started)
     if remaining <= 0:
         raise ValueError('Время анализа фото истекло')
     if not isinstance(content, bytes) or not 0 < len(content) <= MAX_BYTES:
-        return _unavailable()
+        return completed(_unavailable())
     request = json.dumps({'content': base64.b64encode(content).decode(), 'mime': mime}).encode()
     process = None
     try:
         from photo_native_runtime import runtime_command, NativeRuntimeError
         try:
+            if status is not None:
+                progress('loading', 'Загружаем локальный детектор мебели и техники')
             command, runtime = runtime_command(directory, deadline=started+remaining)
         except NativeRuntimeError as error:
-            return {**_unavailable(), 'message': str(error)+'; фото не проверено.',
-                'errorCode': error.code, 'runtime': {'selection': 'native-arm', 'status': 'invalid'}}
+            return completed({**_unavailable(), 'message': str(error)+'; фото не проверено.',
+                'errorCode': error.code, 'runtime': {'selection': 'native-arm', 'status': 'invalid'}})
         process = subprocess.Popen([*command, str(Path(__file__).resolve()), '--worker', str(directory)],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
         finish = started+remaining
         pending = request
+        if status is not None:
+            progress('analyzing', 'Находим видимые предметы на фото; скорость измеряется в фото/с')
         while True:
             if cancel is not None and cancel.is_set():
                 raise ValueError('Анализ отменён')
             budget = finish-time.monotonic()
             if budget <= 0:
-                return _unavailable()
+                return completed(_unavailable())
             try:
                 stdout, _ = process.communicate(input=pending, timeout=min(.1, budget))
                 break
             except subprocess.TimeoutExpired:
                 pending = None
         if process.returncode != 0 or len(stdout) > MAX_OUTPUT:
-            return _unavailable()
+            return completed(_unavailable())
         result = json.loads(stdout)
         if not isinstance(result, dict) or result.get('provider') != 'yolox-trained' or result.get('model') != MODEL:
-            return _unavailable()
+            return completed(_unavailable())
         if runtime.get('selection') == 'native-arm' and result.get('runtimeArchitecture') != 'arm64':
-            return {**_unavailable(), 'message': 'ARM runtime вернул несовпадающую архитектуру; фото не проверено.',
-                'errorCode': 'PHOTO_NATIVE_RUNTIME_ARCHITECTURE', 'runtime': {**runtime, 'status': 'invalid'}}
+            return completed({**_unavailable(), 'message': 'ARM runtime вернул несовпадающую архитектуру; фото не проверено.',
+                'errorCode': 'PHOTO_NATIVE_RUNTIME_ARCHITECTURE', 'runtime': {**runtime, 'status': 'invalid'}})
         result['runtime'] = {**runtime, 'workerArchitecture': result.get('runtimeArchitecture', 'unknown')}
         # Enforce publication policy even when loading an older worker/cache.
         result['autoApply'] = False
         for row in result.get('candidates', []):
             row.update(autoEligible=False, autoCountEligible=False, count=None)
-        return result
+        return completed(result)
     except (OSError, json.JSONDecodeError, TypeError, AttributeError):
-        return _unavailable()
+        return completed(_unavailable())
     finally:
         if process is not None and process.poll() is None:
             try: process.terminate()

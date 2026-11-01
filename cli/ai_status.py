@@ -90,6 +90,10 @@ def inspect_ai(directory):
         model = 'unknown'
     automatic_policy = model != 'redcn-furniture-v1'
     photo_enabled = _enabled(photo)
+    review_capture = photo_enabled is True and auto_apply is True and model == 'redcn-furniture-v1'
+    effective_mode = ('unknown' if photo_enabled is None or auto_apply is None else
+                      'suggestions-only' if review_capture else
+                      'direct-observations' if photo_enabled is True and auto_apply is True and automatic_policy else 'off')
     return {
         'readOnly': True,
         'text': {'enabled': _enabled(text),
@@ -100,11 +104,13 @@ def inspect_ai(directory):
         'photo': {'enabled': photo_enabled, 'model': model,
                   'configurationSource': photo_source,
                   'autoApplyConfigured': auto_apply,
+                  'automaticReviewCapture': review_capture,
+                  'effectiveMode': effective_mode,
                   'modelAllowsAutomaticApplication': automatic_policy if photo is not None else None,
                   'automaticApplication': (auto_apply and automatic_policy) if photo_enabled is True
                                           else False if photo_enabled is False else None},
         'idleTraining': {'enabled': _enabled(training), 'recordedPhase': phase,
-                         'automaticPromotion': False,
+                         'automaticPromotion': (training or {}).get('automaticPromotion') is True,
                          'phaseIsLiveProcessProof': False},
         'processActivity': 'not-inspected',
         'warnings': warnings,
@@ -138,10 +144,13 @@ def russian_status(value):
              'Файлы текстовой модели: ' + ('ЕСТЬ' if text['modelConfigPresent'] else 'НЕ НАЙДЕНЫ'),
              'Среда текстовой модели: ' + ('ЕСТЬ' if text['runtimePresent'] else 'НЕ НАЙДЕНА'),
              'Анализ фото: ' + flag(photo['enabled']) + ' · ' + photo['model'],
-             'Автодобавление фото-находок: ' + flag(photo['automaticApplication']),
+             'Автодобавление в журнал проверки: ' + flag(photo.get('automaticReviewCapture', False)),
+             'Автоподтверждение для описания: ' + flag(photo['automaticApplication']) +
+             (' — модель ещё не прошла приёмку' if photo.get('effectiveMode') == 'suggestions-only' else ''),
              'Обучение в простое: ' + flag(training['enabled']),
              'Последний записанный этап обучения: ' + training['recordedPhase'],
-             'Автоматическое принятие новых весов: ВЫКЛЮЧЕНО']
+             'Автоматическое принятие новых весов: ' + flag(training['automaticPromotion']) +
+             ' · только после независимого сравнения качества']
     if 'server' in value:
         server = value['server']
         lines.append('Сервер: ' + (server['release'] or 'версия неизвестна') if server['reachable'] else 'Сервер: НЕ ОТВЕЧАЕТ')

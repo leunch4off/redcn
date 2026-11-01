@@ -21,7 +21,8 @@ from learning_memory import LearningMemory
 
 DEFAULTS = {'enabled': False, 'idleSeconds': 120, 'checkSeconds': 60,
             'minNewExamples': 20, 'maxSteps': 20, 'maxSeconds': 600,
-            'maxSequenceLength': 256}
+            'maxSequenceLength': 256, 'automaticPromotion': False,
+            'evaluationSeconds': 900}
 _THREADS = {}
 _THREADS_LOCK = threading.Lock()
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,11 +71,11 @@ def load_config(directory):
     if not isinstance(value, dict) or not set(value) <= set(DEFAULTS):
         raise ValueError('Неверные настройки фонового обучения')
     config = {**DEFAULTS, **value}
-    if type(config['enabled']) is not bool:
+    if any(type(config[key]) is not bool for key in ('enabled', 'automaticPromotion')):
         raise ValueError('Включение обучения задаётся переключателем')
     for key, low, high in [('idleSeconds',60,3600), ('checkSeconds',30,300),
             ('minNewExamples',20,1000), ('maxSteps',1,200),
-            ('maxSeconds',30,600), ('maxSequenceLength',64,512)]:
+            ('maxSeconds',30,600), ('maxSequenceLength',64,512), ('evaluationSeconds',60,1800)]:
         if type(config[key]) is not int or not low <= config[key] <= high:
             raise ValueError('Неверный предел обучения: '+key)
     return config
@@ -86,11 +87,11 @@ def save_config(directory, updates):
     previous = _folder(directory)/'scheduler.json'
     value = {**load_config(directory), **updates}
     # Validate before replacing the active configuration.
-    if type(value['enabled']) is not bool:
+    if any(type(value[key]) is not bool for key in ('enabled', 'automaticPromotion')):
         raise ValueError('Включение обучения задаётся переключателем')
     for key, low, high in [('idleSeconds',60,3600), ('checkSeconds',30,300),
             ('minNewExamples',20,1000), ('maxSteps',1,200),
-            ('maxSeconds',30,600), ('maxSequenceLength',64,512)]:
+            ('maxSeconds',30,600), ('maxSequenceLength',64,512), ('evaluationSeconds',60,1800)]:
         if type(value[key]) is not int or not low <= value[key] <= high:
             raise ValueError('Неверный предел обучения: '+key)
     _write(previous, value)
@@ -185,8 +186,9 @@ def status(directory):
     state = _read(_folder(directory)/'scheduler-state.json', {})
     if not isinstance(state, dict):
         state = {}
-    return {**load_config(directory), **{key: value for key, value in state.items()
-            if key not in {'sampleHashes'}}, 'automaticPromotion': False}
+    from model_promotion import public_status
+    return {**{key: value for key, value in state.items() if key not in {'sampleHashes'}},
+            **load_config(directory), 'promotion': public_status(directory)}
 
 
 class IdleTrainer:
@@ -244,6 +246,10 @@ class IdleTrainer:
             return self._state('disabled', 'Фоновое обучение выключено.')
         if self._busy() or not self._idle(config):
             return self._state('waiting-idle', 'Обучение ждёт свободный Mac и завершение работы с объявлениями.')
+        if (config['automaticPromotion'] and self.state.get('lastOutcome') == 'unaccepted'
+                and self.state.get('jobId') and self.state.get('qualityOutcome') not in {'accepted', 'blocked'}
+                and self.clock() >= self.state.get('qualityRetryAfter', 0)):
+            return self._evaluate(config)
         summary = self.memory.status()
         if not summary['trainingEligible']:
             return self._state('collecting', 'Нужно не менее 20 проверенных примеров из пяти независимых групп.')
@@ -257,6 +263,10 @@ class IdleTrainer:
         if same and self.state.get('lastOutcome') == 'exhausted':
             return self._state('failed', 'Повторные попытки остановлены после трёх ошибок. Нужна проверка обучения или новые примеры.')
         if same and self.state.get('lastOutcome') in {'unaccepted', 'complete'}:
+            if self.state.get('qualityOutcome') == 'accepted':
+                return self._state('accepted', 'Новые веса приняты после сравнения; ожидаем новые подтверждённые примеры.')
+            if self.state.get('qualityOutcome') == 'blocked':
+                return self._state('quality-blocked', self.state.get('qualityMessage', 'Проверка не разрешила замену весов; текущая модель сохранена.'))
             return self._state('ready-for-review', 'Обученный адаптер ожидает проверки. Нужны новые подтверждённые примеры.')
         if same and self.clock() < self.state.get('retryAfter', 0):
             return self._state('backoff', 'Предыдущая попытка сохранена; следующая проверка отложена.')
@@ -269,7 +279,13 @@ class IdleTrainer:
             with model_resource(self.directory, kind='background', timeout=0):
                 if self._busy() or not self._idle(config):
                     return self._state('waiting-idle', 'Появилась работа с объявлениями; обучение отложено.')
-                return self._run(config, runtime, fingerprint, samples, same)
+                result = self._run(config, runtime, fingerprint, samples, same)
+            # The evaluation process acquires the same model gate itself.
+            # Never hold the parent's training lock while starting that child.
+            if (config['automaticPromotion'] and self.state.get('lastOutcome') == 'unaccepted'
+                    and not self.stopped.is_set()):
+                return self._evaluate(config)
+            return result
         except ModelBusy:
             return self._state('waiting-model', 'Локальная модель обрабатывает текущий запрос.')
 
@@ -314,9 +330,9 @@ class IdleTrainer:
         adapter = output/'adapters.safetensors'
         if job_id == self.state.get('jobId') and adapter.is_file():
             args += ['--resume-adapter', str(adapter)]
-        self._state('training', 'Mac обучает кандидат; новый адаптер автоматически не применяется.',
+        self._state('training', 'Mac обучает кандидат. Выбор новых весов возможен только после отдельного сравнения качества.',
             jobId=job_id, fingerprint=fingerprint, sampleHashes=samples, attempts=attempt,
-            lastOutcome='running', retryAfter=0)
+            lastOutcome='running', retryAfter=0, qualityOutcome='pending', qualityRetryAfter=0)
         self.memory.save_checkpoint(job_id, {'state':'running', 'step':0, 'snapshot':str(dataset), 'model':str(model)})
         started = self.clock()
         with self._process_lock:
@@ -380,6 +396,77 @@ class IdleTrainer:
             lastOutcome=outcome, retryAfter=self.clock()+3600, stepsCompleted=step,
             trainableParameters=540672 if complete else 0, adapterReady=adapter.is_file())
 
+    def _evaluate(self, config):
+        """Evaluate saved weights offline; imports and foreground work preempt it."""
+        if self._busy() or not self._idle(config) or not load_config(self.directory)['automaticPromotion']:
+            return self._state('waiting-idle', 'Сравнение весов ждёт свободный Mac.')
+        runtime = self._runtime()
+        if runtime is None:
+            return self._state('runtime-unavailable', 'Среда проверки модели пока недоступна.')
+        job_id = self.state.get('jobId', '')
+        if not isinstance(job_id, str) or not job_id.startswith('idle-') or not job_id[5:].isalnum():
+            raise ValueError('Неверный идентификатор кандидата')
+        run = self.folder/'training-runs'/job_id
+        output = run/'candidate'
+        report = run/('quality-'+uuid.uuid4().hex+'.json')
+        command = runtime[0][:-1]+[str(ROOT/'scripts/evaluate-text-candidate.py'),
+            '--cache', str(self.directory), '--candidate', str(output),
+            '--training-dataset', str(run/'dataset.json'), '--output', str(report),
+            '--max-seconds', str(config['evaluationSeconds'])]
+        cancel = self.folder/'training.cancel'
+        if cancel.is_symlink():
+            raise ValueError('Маркер отмены не должен быть ссылкой')
+        cancel.unlink(missing_ok=True)
+        if self._busy() or not self._idle(config):
+            return self._state('waiting-idle', 'Текущий запрос получил приоритет над проверкой весов.')
+        self._state('evaluating', 'Mac сравнивает текущие и новые веса на независимых объявлениях.', qualityOutcome='running')
+        started, interrupted = self.clock(), False
+        with self._process_lock:
+            if self.stopped.is_set():
+                return self._state('quality-paused', 'Проверка остановлена вместе с сервером.')
+            process = self.popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, start_new_session=True)
+            self._process = process
+        try:
+            while process.poll() is None:
+                if (self.stopped.is_set() or self._busy() or not self._idle(config) or cancel.exists()
+                        or self.clock()-started > config['evaluationSeconds']+15):
+                    interrupted = True
+                    _write(cancel, {'at': self.clock()})
+                    process.terminate()
+                    try: process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill(); process.wait(timeout=2)
+                    break
+                self.stopped.wait(1)
+        finally:
+            if process.poll() is None:
+                process.kill(); process.wait(timeout=2)
+            with self._process_lock:
+                if self._process is process:
+                    self._process = None
+        if self.stopped.is_set():
+            return {key:value for key,value in self.state.items() if key!='sampleHashes'}
+        if interrupted or self._busy() or not self._idle(config):
+            return self._state('quality-paused', 'Сравнение приостановлено для текущего запроса; выбранные веса сохранены.',
+                qualityOutcome='paused', qualityRetryAfter=self.clock()+300)
+        if process.returncode or not report.is_file():
+            return self._state('quality-blocked', 'Сравнение не завершилось. Текущие веса сохранены; нужна проверка кандидата.',
+                qualityOutcome='blocked', qualityMessage='Сравнение не завершилось; текущие веса сохранены.')
+        try:
+            from model_promotion import promote
+            decision = promote(self.directory, report, automatic=True)
+        except ModelBusy:
+            return self._state('quality-paused', 'Локальная модель занята; приёмка весов отложена.',
+                qualityOutcome='paused', qualityRetryAfter=self.clock()+300)
+        except (ValueError, OSError):
+            return self._state('quality-blocked', 'Настройки или артефакты изменились после проверки; текущие веса сохранены.',
+                qualityOutcome='blocked', qualityMessage='Приёмка остановлена: нужна новая независимая проверка.')
+        accepted = decision.get('accepted') is True
+        return self._state('accepted' if accepted else 'quality-blocked', decision['message'],
+            qualityOutcome='accepted' if accepted else 'blocked', qualityMessage=decision['message'],
+            qualityPassed=decision.get('candidatePassed'), qualityRequested=decision.get('requested'))
+
     def run(self):
         try:
             while not self.stopped.is_set():
@@ -421,10 +508,14 @@ class IdleTrainer:
             thread.join(timeout=6)
             if thread.is_alive():
                 raise RuntimeError('Фоновое обучение ещё завершает запись; повторите закрытие сервера.')
-        if self.state.get('phase') == 'training' and self.folder.is_dir():
+        if self.state.get('phase') in {'training', 'evaluating'} and self.folder.is_dir():
+            evaluating = self.state.get('phase') == 'evaluating'
             self.state.update(phase='paused', lastOutcome='paused', retryAfter=0,
                 message='Обучение приостановлено при закрытии сервера; сохранённая контрольная точка будет проверена.',
                 updatedAt=self.clock())
+            if evaluating:
+                self.state.update(phase='quality-paused', lastOutcome='unaccepted', qualityOutcome='paused',
+                    qualityRetryAfter=0, message='Проверка новых весов приостановлена вместе с сервером.')
             _write(self.folder/'scheduler-state.json', self.state)
         with _THREADS_LOCK:
             if _THREADS.get(str(self.directory)) is self:

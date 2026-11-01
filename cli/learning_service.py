@@ -83,11 +83,17 @@ def dispatch(directory, path, data=None, *, actor='operator'):
         elif action == 'list':
             value = _overview(directory, memory, status=data.get('status'), limit=data.get('limit', 30))
         elif action == 'scheduler-config':
-            if type(data.get('enabled')) is not bool:
-                raise ValueError('Укажите, включать ли обучение во время простоя')
+            keys = set(data)-{'action'}
+            if not keys or not keys <= {'enabled', 'automaticPromotion'} or any(type(data[key]) is not bool for key in keys):
+                raise ValueError('Переключатели обучения и приёмки должны быть логическими значениями')
             import learning_scheduler
-            learning_scheduler.save_config(directory, {'enabled': data['enabled']})
+            learning_scheduler.save_config(directory, {key: data[key] for key in keys})
             value = {'scheduler': _scheduler(directory)}
+        elif action == 'rollback-model':
+            if set(data) != {'action'}:
+                raise ValueError('Откат использует только сохранённую предыдущую конфигурацию')
+            from model_promotion import rollback
+            value = {**rollback(directory), 'scheduler': _scheduler(directory)}
         elif action == 'retrieve':
             value = {'matches': memory.retrieve(data.get('query', ''), limit=data.get('limit', 6))}
         elif action == 'rank':

@@ -10,7 +10,7 @@ import unicodedata
 
 from learning_memory import LearningMemory
 from text_quality import (parse_card, language_check, polarity_issues, translation_checks,
-    LISTING_SYSTEM, TRANSLATION_SYSTEM)
+    payment_periods, LISTING_SYSTEM, TRANSLATION_SYSTEM)
 from rental_conditions import fee_issues, metro_proximity_issues
 
 FACT_KEYS = ('city', 'district', 'districtZh', 'complex', 'metro', 'metroLine', 'walk',
@@ -18,7 +18,10 @@ FACT_KEYS = ('city', 'district', 'districtZh', 'complex', 'metro', 'metroLine', 
     'deposit', 'depositCurrency', 'layout', 'separate', 'bedrooms', 'livingRooms',
     'children', 'pets', 'petPolicy', 'childrenPolicy', 'registration', 'serviceConfirmations',
     'features', 'featureCounts', 'photoEvidence', 'photoRejectedFeatures', 'sourceAudit',
-    'utilities', 'ceiling', 'balconies', 'loggias', 'universityRoutes')
+    'utilities', 'ceiling', 'balconies', 'loggias', 'universityRoutes',
+    'kitchen', 'living', 'bedroomArea', 'occupants', 'registrationMonths',
+    'registrationPeople', 'shortTerm', 'minMonths', 'shortTermPolicy',
+    'smokingPolicy', 'guestPolicy', 'subletPolicy', 'leaseTerm', 'contractMonths', 'prepayMonths')
 VOICES = ('自然简洁，少用表情，用短段落', '像认真介绍房子的朋友，先讲位置，再讲生活空间',
     '先说预算与空间，用清楚的小标题', '先写一个真实亮点，段落疏朗，最多三个表情',
     '不写套话，像房源笔记，先讲已确认的家具与布局')
@@ -31,9 +34,9 @@ def _clean(value, maximum=20_000):
     return re.sub(r'https?://\S+|\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b|(?:微信|wechat|telegram|телефон)\s*[:：=]\s*\S+', '', value, flags=re.I).strip()
 
 
-def _model(request, directory, *, deadline=None):
+def _model(request, directory, *, deadline=None, status=None, cancel=None):
     from local_text_model import generate
-    return generate(request, directory, deadline=deadline)
+    return generate(request, directory, deadline=deadline, status=status, cancel=cancel)
 
 
 def _fallback_translate(text, glossary, directory, timeout):
@@ -108,7 +111,7 @@ def _title_language(title,fields):
     return language_check(remaining,'zh')['passed']
 
 
-def validate_draft(draft, baseline, fields=None):
+def validate_draft(draft, baseline, fields=None, *, max_body=150):
     """Reject conspicuous changed figures/claims; still not a full semantic proof."""
     output = draft['title']+'\n'+draft['body']
     reference = '\n'.join([*baseline.get('titles', []), baseline.get('body', '')])
@@ -117,8 +120,8 @@ def validate_draft(draft, baseline, fields=None):
         issues.append('Модель не вернула полный китайский текст')
     if not _title_language(draft['title'],fields):
         issues.append('Заголовок должен быть на китайском; исходное имя станции или ЖК можно сохранить')
-    if len(re.findall(r'[\u3400-\u9fff]',draft['title'])) > 45 or len(re.findall(r'[\u3400-\u9fff]',draft['body'])) > 150:
-        issues.append('Сократите заголовок до 45, а описание до 150 китайских знаков')
+    if len(re.findall(r'[\u3400-\u9fff]',draft['title'])) > 45 or len(re.findall(r'[\u3400-\u9fff]',draft['body'])) > max_body:
+        issues.append(f'Сократите заголовок до 45, а описание до {max_body} китайских знаков')
     if _numeric_tokens(output)-_numeric_tokens(reference):
         issues.append('В ИИ-черновике есть числа, отсутствующие в проверенном тексте')
     if _quantities(output)-_quantities(reference):
@@ -152,7 +155,9 @@ def validate_draft(draft, baseline, fields=None):
     return list(dict.fromkeys(issues))
 
 
-def generate_preview(directory, data):
+def generate_preview(directory, data, *, status=None, cancel=None):
+    if data.get('styleMode') == 'advertising':
+        return _advertising_preview(directory, data, status=status, cancel=cancel)
     from language_service import node_language, _profile
     from fact_ledger import validate_listing_fields
     fields = data.get('fields')
@@ -191,7 +196,7 @@ def generate_preview(directory, data):
     begin = time.monotonic()
     for attempt in range(2):
         result = _model({'messages': messages, 'maxTokens': 420, 'temperature': .75 if attempt==0 else .25},
-            directory, deadline=begin+55)
+            directory, deadline=begin+55, status=status, cancel=cancel)
         meta = {key: result[key] for key in ('model', 'autoApply', 'message') if key in result}
         meta.update(elapsedSeconds=time.monotonic()-begin, attempts=attempt+1)
         if result.get('status') != 'review':
@@ -219,6 +224,268 @@ def generate_preview(directory, data):
         'status': 'blocked' if issues else 'review', 'autoApply': False,
         'warnings': [*issues, 'Проверьте смысл и китайский язык перед применением. Проверка чисел не подтверждает все утверждения.'],
         'variation': style, 'factsHash': hashlib.sha256(reference.encode()).hexdigest()}
+
+
+def _advertising_money_roles(text):
+    """Read labelled amounts, not '先了解面积、租金与入住条件：50㎡'."""
+    result = set()
+    normalized = _numeral_text(text)
+    pattern = (r'(押金|租金|月租|房租)(?:(?:\s|[:：])|约|为|是|每月|参考|卢布|费用|金额|需支付|需|支付|共计|共){0,20}'
+               r'(\d+(?:\.\d+)?\s*万?)')
+    for match in re.finditer(pattern, normalized):
+        for value in _numeric_tokens(match[2]):
+            result.add(('deposit' if match[1] == '押金' else 'rent', value))
+    return result
+
+
+def _with_advertising_conditions(rendered, fields):
+    """Carry explicit rental restrictions into the advertising fact context.
+
+    Legacy positive-only copy may omit these fields; absence of a checkbox is
+    not a prohibition. Studio registration assistance is a separate service.
+    """
+    clauses = []
+    pets = fields.get('petPolicy')
+    children = fields.get('childrenPolicy')
+    if pets == 'no':
+        clauses.append('不接受宠物。')
+    elif pets == 'negotiable':
+        clauses.append('携带宠物需事先协商。')
+    elif pets == 'conflict':
+        clauses.append('宠物条件待确认。')
+    if children == 'no':
+        clauses.append('不接受带孩子入住。')
+    elif children == 'conflict':
+        clauses.append('儿童入住条件待确认。')
+    body = rendered.get('body', '')
+    return {**rendered, 'body': '\n'.join([body, *(clause for clause in clauses if clause not in body)]).strip()}
+
+
+def advertising_baseline(fields, rules=None):
+    """The same public-fact projection is used by preview and weight acceptance."""
+    from fact_ledger import validate_listing_fields
+    from language_service import node_language
+    if not isinstance(fields, dict):
+        raise ValueError('Сначала выберите карточку объявления')
+    validate_listing_fields(fields)
+    grounded = {key: fields[key] for key in FACT_KEYS if key in fields}
+    baseline = _with_advertising_conditions(node_language({'action': 'generate', 'fields': grounded,
+        'rules': rules or {}, 'prefs': {'benefits': '', 'contact': '', 'brandTags': ''}}), grounded)
+    if baseline.get('problems'):
+        raise ValueError(' · '.join(baseline['problems']))
+    return grounded, baseline
+
+
+def advertising_messages(reference, instruction, *, seed, previous_body='', previous_title='', recent_titles=()):
+    """One initial inference contract, shared with independent model probes."""
+    from advertising_styles import ADVERTISING_SYSTEM
+    return [{'role': 'system', 'content': ADVERTISING_SYSTEM},
+            {'role': 'user', 'content': json.dumps({'verifiedText': reference, 'style': instruction,
+                'previousTextToAvoid': previous_body[:300], 'previousTitleToAvoid': previous_title[:120],
+                'recentTitlesToAvoid': list(dict.fromkeys(recent_titles))[:6],
+                'variation': str(seed)}, ensure_ascii=False)}]
+
+
+def _advertising_issues(draft, baseline, fields, *, max_body=280):
+    """Advertising must keep stated fees and figures, not just avoid new ones."""
+    # A bedroom section containing a desk is called "床与收纳" by the existing
+    # renderer. That heading is not evidence of a bed in the apartment.
+    def factual_prose(value):
+        value = re.sub(r'(?m)^[^\w\u3400-\u9fff]*床与收纳(?:清单|信息)?\s*$', '', value)
+        return value + ('\n地铁' if fields.get('metro') else '')
+    fact_baseline = {**baseline, 'body': factual_prose(baseline.get('body', ''))}
+    fact_draft = {**draft, 'body': factual_prose(draft['body'])}
+    issues = validate_draft(fact_draft, fact_baseline, fields, max_body=max_body)
+    reference = '\n'.join([*(baseline.get('titles') or [])[:1], baseline.get('body', '')])
+    output = draft['title']+'\n'+draft['body']
+    missing = _quantities(reference)-_quantities(output)
+    if missing:
+        issues.append('В рекламном тексте пропущены проверенные суммы, площадь или время')
+    issues.extend(fee_issues(reference, output, require_mentions=True))
+    issues.extend(polarity_issues(factual_prose(reference), factual_prose(output), require_mentions=True))
+    if _advertising_money_roles(reference) != _advertising_money_roles(output):
+        issues.append('В рекламном тексте изменено назначение суммы аренды или залога')
+    if payment_periods(reference) != payment_periods(output):
+        issues.append('В рекламном тексте изменён или пропущен период оплаты')
+    # Compact models are allowed to vary the introduction and structure. Keep
+    # restriction/uncertainty clauses verbatim (ignoring punctuation) because
+    # the shared concept parser does not cover every rental-contract condition.
+    normalized_output = _content_fingerprint(output)
+    for clause in re.split(r'[。；;\n]+', baseline.get('body', '')):
+        if re.search(r'禁止|不得|不接待|不吸烟|不接受|不含|另付|另计|仅限|需.{0,20}确认|待确认|协商|至少|最少|个月起|预付|合同期限|最低租期|可入住\s*\d+\s*人', clause):
+            normalized_clause = _content_fingerprint(clause)
+            if normalized_clause and normalized_clause not in normalized_output:
+                issues.append('В рекламном тексте изменено ограничение или условие, требующее подтверждения')
+    def counted_terms(value):
+        units = re.findall(r'(\d+(?:\.\d+)?)\s*(个月|人|楼|层|间|个|套|张|台|把|扇|部)', _numeral_text(value))
+        return {('floor' if unit in ('楼', '层') else unit, format(float(number), '.12g')) for number, unit in units}
+    if counted_terms(reference) != counted_terms(output):
+        issues.append('В рекламном тексте изменены сроки, этаж или подтверждённое количество')
+    # Keep named transport/college rows from the renderer. A generic "metro"
+    # mention does not establish that the model retained the correct station.
+    for line in baseline.get('body', '').splitlines():
+        route = re.match(r'^\s*[▪•\-]\s*([^|｜：:\n]+)[|｜].*(?:分钟|时间待确认)', line)
+        if route and _content_fingerprint(route[1]) not in normalized_output:
+            issues.append('В рекламном тексте пропущено или изменено название маршрута')
+    for term in ('高端', '豪华', '全新', '首次出租', '采光很好', '采光充足', '阳光充足',
+                 '拎包', '家具齐全', '设备齐全', '配套齐全', '安全', '双电梯', '森林',
+                 '地暖', '落地窗', '朝南', '随时入住', '立即入住', '随时看房', '可短租',
+                 '包落地', '包登记', '学生优先', '只要女生', '男女不限'):
+        if term in output and term not in reference:
+            issues.append('Не подтверждено рекламное утверждение: '+term)
+    if re.search(r'人民币|美元|欧元|港币|英镑|\b(?:CNY|USD|EUR)\b|[￥¥$]|\d+(?:[.,]\d+)?\s*(?:万元|元)', output, re.I):
+        if not re.search(r'人民币|美元|欧元|港币|英镑|\b(?:CNY|USD|EUR)\b|[￥¥$]|\d+(?:[.,]\d+)?\s*(?:万元|元)', reference, re.I):
+            issues.append('В рекламном тексте изменена валюта')
+    # Keep an explicitly stated floor pair intact. It must not turn into area,
+    # money, a count of tenants, or disappear in a catchy shortened draft.
+    for match in re.finditer(r'\d+\s*/\s*\d+\s*层', reference):
+        pair = re.sub(r'\s+', '', match[0])
+        if pair not in re.sub(r'\s+', '', output):
+            issues.append('В рекламном тексте не сохранены этаж и этажность')
+    return list(dict.fromkeys(issues))
+
+
+def _advertising_preview(directory, data, *, status=None, cancel=None):
+    from advertising_styles import next_style, claim_variant
+    from job_progress import emit
+    from language_service import node_language, _profile
+
+    started = time.monotonic()
+    fields = data.get('fields')
+    profile = _profile(directory)
+    grounded, baseline = advertising_baseline(fields, profile.get('rules', {}))
+    render_args = {'action': 'generate', 'fields': grounded, 'rules': profile.get('rules', {}),
+                   'prefs': {'benefits': '', 'contact': '', 'brandTags': ''}}
+    reference = _clean('\n'.join([*(baseline.get('titles') or [])[:1], baseline.get('body', '')]), 12000)
+    group_id = data.get('groupId') or hashlib.sha256(reference.encode()).hexdigest()
+    if not isinstance(group_id, str) or not 1 <= len(group_id) <= 2000:
+        raise ValueError('Неверная группа истории генерации')
+    memory = LearningMemory(directory)
+    style = next_style(directory, group_id)
+    current = data.get('output') if isinstance(data.get('output'), dict) else {}
+    prior = _clean(current.get('body', ''), 20000)
+    prior_title = _clean(current.get('title', ''), 500)
+    recent = memory.recent_generated(group_id, limit=30) + ([prior] if prior else [])
+    titles = memory.recent_generated(group_id, limit=30, kind='title') + ([prior_title] if prior_title else [])
+    body_history, title_history = ({_content_fingerprint(text) for text in recent},
+                                  {_content_fingerprint(text) for text in titles})
+    candidates = re.findall(r'#[\w\u3400-\u9fff-]+', baseline.get('tags', ''))[:30]
+    ranking = memory.rank_tags(candidates, limit=8)
+    meta = {'status': 'blocked', 'autoApply': False, 'styleId': style['id'],
+            'variation': style['label'], 'factsHash': hashlib.sha256(reference.encode()).hexdigest()}
+    issues = []
+
+    def cancelled():
+        return cancel is not None and cancel.is_set()
+
+    def accept(draft, *, fallback=False, extra=None):
+        if cancelled():
+            return None
+        if (_content_fingerprint(draft['body']) in body_history
+                or _content_fingerprint(draft['title']) in title_history):
+            return None
+        if not claim_variant(directory, group_id, draft['title'], draft['body']):
+            return None
+        value = {**meta, **draft, **(extra or {}), 'status': 'review', 'fallback': fallback,
+                 'elapsedSeconds': time.monotonic()-started,
+                 'tags': ' '.join(row['tag'] for row in ranking), 'tagRanking': ranking,
+                 'warnings': (['Ответ модели не принят. Новая подача собрана из проверенных фактов.'] if fallback else [])
+                    + ['Проверьте китайский текст перед публикацией.']}
+        try:
+            memory.record('title', {'text': draft['title'], 'language': 'zh'}, source='generated', group_id=group_id)
+            memory.record('description', {'text': draft['body'], 'language': 'zh'}, source='generated', group_id=group_id)
+        except (OSError, ValueError, sqlite3.Error):
+            value['memoryWarning'] = 'Черновик создан; подробная история не записана'
+        return value
+
+    messages = advertising_messages(reference, style['instruction'], seed=style['seed'],
+        previous_body=prior, previous_title=prior_title, recent_titles=titles)
+    # Do not silently cut off terms at the end of a rich property description.
+    # Large facts stay in the deterministic renderer below in their entirety.
+    if len(messages[1]['content']) <= 4000:
+        for attempt in range(2):
+            if cancelled():
+                break
+            emit(status, 'Составляю рекламное описание: '+style['label'], stage='generate',
+                 ai={'backend': 'mlx', 'operation': 'text', 'phase': 'preparing', 'tokenBased': True})
+            result = _model({'messages': messages, 'maxTokens': 768, 'temperature': .75 if attempt == 0 else .4,
+                             'seed': (style['seed']+attempt) % 2**32},
+                            directory, deadline=started+55, status=status, cancel=cancel)
+            meta.update({key: result[key] for key in ('model', 'backend', 'ai') if key in result})
+            meta['attempts'] = attempt+1
+            if result.get('status') != 'review':
+                issues = [result.get('message', 'Модель недоступна')]
+                break
+            try:
+                draft = _parse(result.get('text', ''))
+                issues = _advertising_issues(draft, baseline, grounded)
+            except (ValueError, TypeError):
+                issues = ['Модель не вернула корректный формат рекламного черновика']
+            if not issues:
+                accepted = accept(draft)
+                if accepted:
+                    return accepted
+                issues = ['Название или описание уже встречались в истории этой карточки']
+            if time.monotonic()-started > 40:
+                break
+            messages[0]['content'] += ' 必须保留所有已知金额、面积、时间、楼层和费用条件；限制和待确认条件原句保留；不能重复历史版本。'
+    else:
+        issues = ['Много проверенных фактов: сохраняем полные блоки без сокращения']
+    if cancelled():
+        return {**meta, 'status': 'cancelled', 'warnings': ['Генерация отменена; карточка не изменена']}
+
+    # Reuse the established fact renderer and its commission/service/evidence
+    # gates. Only presentation indices change; no model claim is salvaged.
+    for offset in range(12):
+        if cancelled():
+            break
+        variant = (style['seed'] % 1000000) + style['sequence']*13 + offset + 1
+        rendered = node_language({**render_args, 'fields': {**grounded,
+            'titleVariant': variant, 'copyVariant': variant, 'tagVariant': variant,
+            'style': 'compact' if style['id'] in ('budget', 'checklist', 'compact') else 'story'}})
+        rendered = _with_advertising_conditions(rendered, grounded)
+        if rendered.get('problems'):
+            continue
+        for title in (rendered.get('titles') or [])[:3]:
+            draft = {'title': _clean(title, 240), 'body': _clean(rendered.get('body', ''), 6000)}
+            maximum = max(280, len(re.findall(r'[\u3400-\u9fff]', reference))+100)
+            if _advertising_issues(draft, baseline, grounded, max_body=maximum):
+                continue
+            accepted = accept(draft, fallback=True, extra={'backend': 'grounded-advertising',
+                'fallbackFrom': meta.get('model', 'local-model'), 'modelIssues': issues[:8],
+                'ai': {**meta.get('ai', {}), 'textSource': 'rules'}})
+            if accepted:
+                emit(status, 'Рекламная подача собрана из проверенных фактов; ответ модели не принят',
+                     stage='generate', ai={**meta.get('ai', {}), 'phase': 'complete', 'textSource': 'rules'})
+                return accepted
+    return {**meta, 'status': 'cancelled' if cancelled() else 'blocked', 'elapsedSeconds': time.monotonic()-started,
+            'warnings': [*issues[:8], 'Новый вариант не прошёл проверку. Текущий текст сохранён.']}
+
+
+def generate_import_advertisement(directory, result, *, status=None, cancel=None):
+    """A new import may gain validated prose; manual-save protection is upstream.
+
+    A rejected/aborted model draft cannot damage a successful source import.
+    Generated text remains pending learning data, never self-approved training.
+    """
+    if cancel is not None and cancel.is_set():
+        return result
+    try:
+        preview = generate_preview(directory, {'fields': result.get('fields'), 'styleMode': 'advertising',
+            'groupId': str(result.get('id') or result.get('sourceUrl') or result.get('url') or '') or None,
+            'output': {'title': (result.get('titles') or [''])[0], 'body': result.get('body', '')}},
+            status=status, cancel=cancel)
+    except (OSError, ValueError, sqlite3.Error, subprocess.SubprocessError) as error:
+        return {**result, 'aiAdvertisement': {'status': 'unavailable',
+            'warnings': ['Рекламный вариант недоступен; сохранён исходный текст.'], 'errorType': type(error).__name__}}
+    if cancel is not None and cancel.is_set():
+        return result
+    metadata = {key: preview[key] for key in ('status', 'model', 'backend', 'styleId', 'variation',
+        'factsHash', 'elapsedSeconds', 'fallback', 'warnings', 'ai') if key in preview}
+    if preview.get('status') != 'review':
+        return {**result, 'aiAdvertisement': metadata}
+    return {**result, 'titles': [preview['title']], 'body': preview['body'], 'tags': preview['tags'],
+            'aiAdvertisement': metadata}
 
 
 def translate_preview(directory, data):

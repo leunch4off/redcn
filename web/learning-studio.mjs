@@ -2,7 +2,7 @@ import {setupTagPostStats} from './tag-post-stats.mjs';
 // Private editorial memory. All user values enter the DOM as text.
 export function learningTextLanguage(text){return /\p{Script=Han}/u.test(String(text))?'zh':'ru';}
 export function learningGroundingFields(fields={}){
- const keys=['city','district','districtZh','complex','metro','metroLine','walk','area','rooms','floor','floors','price','priceCurrency','pricePeriod','deposit','depositCurrency','layout','separate','bedrooms','livingRooms','children','pets','petPolicy','childrenPolicy','registration','serviceConfirmations','features','featureCounts','photoRejectedFeatures','utilities','ceiling','balconies','loggias','universityRoutes'];
+ const keys=['city','district','districtZh','complex','metro','metroLine','walk','area','rooms','floor','floors','price','priceCurrency','pricePeriod','deposit','depositCurrency','layout','separate','bedrooms','livingRooms','children','pets','petPolicy','childrenPolicy','registration','serviceConfirmations','features','featureCounts','photoEvidence','photoRejectedFeatures','sourceAudit','utilities','ceiling','balconies','loggias','universityRoutes','kitchen','living','bedroomArea','occupants','registrationMonths','registrationPeople','shortTerm','minMonths','shortTermPolicy','smokingPolicy','guestPolicy','subletPolicy','leaseTerm','contractMonths','prepayMonths'];
  return Object.fromEntries(keys.filter(key=>Object.hasOwn(fields,key)).map(key=>[key,fields[key]]));
 }
 
@@ -13,10 +13,12 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  details.className='card learning-studio';
  const intro=make('p','Ваши правки накапливаются на Mac. Утверждённые примеры используются для словаря, подсказок и будущего обучения. Число записей памяти не равно числу параметров модели.',{className:'muted'});
  const status=make('p','Откройте блок, чтобы получить состояние памяти.',{role:'status'}),controls=make('div','',{className:'output-options'}),rows=make('div');
- const schedulerStatus=make('p','Состояние фонового обучения будет получено с Mac.',{className:'muted',role:'status'}),schedulerForm=make('div'),schedulerEnabled=fieldScheduler();
- function fieldScheduler(){const wrapper=make('label',' Обучать адаптер во время простоя Mac'),input=make('input','',{type:'checkbox'});wrapper.prepend(input);schedulerForm.append(wrapper);return input;}
+ const schedulerStatus=make('p','Состояние фонового обучения будет получено с Mac.',{className:'muted',role:'status'}),schedulerForm=make('div'),schedulerEnabled=fieldScheduler(' Обучать адаптер во время простоя Mac'),promotionEnabled=fieldScheduler(' Принимать новые веса после проверки качества');
+ function fieldScheduler(label){const wrapper=make('label',label),input=make('input','',{type:'checkbox'});input.setAttribute('aria-label',label.trim());wrapper.prepend(input);schedulerForm.append(wrapper);return input;}
+ schedulerForm.append(make('p','Веса — обученные настройки модели. Новая версия включается только после полного сравнения с текущей: проверочные факты без ошибок, отсутствие ухудшений и разные варианты текста. Обучение и проверка уступают место работе с объявлениями. Предыдущая версия сохраняется для отката.',{className:'muted'}));
  let revision=0,busy=false;
  const button=(parent,text,action)=>{const node=make('button',text,{type:'button',className:'btn'});node.onclick=()=>run(action);parent.append(node);return node;};
+ const rollback=button(schedulerForm,'Вернуть предыдущие веса',async()=>{if(!canManageSettings())throw Error('Выбор весов доступен владельцу');await api('learning',{action:'rollback-model'});await refresh();toast('Предыдущие веса восстановлены');});rollback.disabled=true;
  const field=(parent,label,node)=>{const wrapper=make('label',label);node.setAttribute('aria-label',label.trim());wrapper.append(node);parent.append(wrapper);return node;};
  const form=make('div','',{className:'learning-form'}),kind=field(form,'Что запомнить',make('select'));
  for(const [value,label]of [['dictionary','Точный перевод / словарь'],['translation','Пример перевода RU ↔ 中文'],['title','Пример заголовка'],['description','Пример описания'],['furniture','Мебель и техника вручную'],['tag_stat','Статистика тега']])kind.append(make('option',label,{value}));
@@ -34,8 +36,8 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  function render(value){
   const s=value.status||{},counts=s.counts||s;
   status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
-  const scheduler=value.scheduler||{},config=scheduler.config||scheduler,model=value.text_ai||{};schedulerEnabled.checked=config.enabled===true;schedulerForm.hidden=!canManageSettings();
-  schedulerStatus.textContent=[model.installed?'Текстовая модель установлена'+(model.enabled?' и включена':''): 'Текстовая модель ещё не установлена',scheduler.message||'Ожидаем состояние планировщика',model.trainedParameters?'Обученных параметров адаптера: '+Number(model.trainedParameters).toLocaleString('ru-RU'):'',scheduler.stepsCompleted?'Выполнено шагов: '+Number(scheduler.stepsCompleted):'',scheduler.adapterReady?'Кандидат адаптера сохранён; требуется приёмка перед подключением':''].filter(Boolean).join(' · ');
+  const scheduler=value.scheduler||{},config=scheduler.config||scheduler,model=value.text_ai||{},promotion=scheduler.promotion||{},evaluation=promotion.latestEvaluation||{};schedulerEnabled.checked=config.enabled===true;promotionEnabled.checked=config.automaticPromotion===true;schedulerForm.hidden=!canManageSettings();rollback.disabled=promotion.rollbackAvailable!==true;
+  schedulerStatus.textContent=[model.installed?'Текстовая модель установлена'+(model.enabled?' и включена':''): 'Текстовая модель ещё не установлена',scheduler.message||'Ожидаем состояние планировщика',model.trainedParameters?'Обученных параметров адаптера: '+Number(model.trainedParameters).toLocaleString('ru-RU'):'',scheduler.stepsCompleted?'Выполнено шагов: '+Number(scheduler.stepsCompleted):'',config.automaticPromotion?'Автоприёмка включена: только после полного сравнения качества':'Автоприёмка выключена',evaluation.stepsCompleted?'Последний кандидат обучен: '+Number(evaluation.stepsCompleted)+' шагов':'',evaluation.requested?'Последняя проверка: '+Number(evaluation.candidatePassed||0)+'/'+Number(evaluation.requested):'',evaluation.message||'',scheduler.adapterReady&&scheduler.qualityOutcome!=='accepted'?'Кандидат сохранён; текущие веса работают до успешной приёмки':'',promotion.state==='accepted'?'Проверенные новые веса подключены; предыдущую версию можно вернуть':''].filter(Boolean).join(' · ');
   rows.replaceChildren();
   for(const row of value.events||[]){const block=make('article','',{className:'card-file-row'}),body=make('div');body.append(make('strong',({dictionary:'Словарь',translation:'Перевод',title:'Заголовок',description:'Описание',furniture:'Мебель и техника',tag_stat:'Статистика тега'}[row.kind]||row.kind)+' · '+({pending:'на проверке',approved:'утверждено',rejected:'отклонено'}[row.status]||row.status)),make('p',rowText(row).slice(0,2500),{className:'muted'}));block.append(body);const actions=make('div','',{className:'output-options'});
    if(row.status!=='approved')button(actions,'Утвердить',async()=>{await api('learning',{action:'review',id:row.id,status:'approved'});await refresh();});
@@ -57,6 +59,7 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  });
  button(controls,'Обновить',refresh);controls.append(filters);filters.onchange=()=>run(refresh);
  schedulerEnabled.onchange=()=>run(async()=>{if(!canManageSettings())throw Error('Настройки обучения доступны владельцу');const enabled=schedulerEnabled.checked;await api('learning',{action:'scheduler-config',enabled});await refresh();});
+ promotionEnabled.onchange=()=>run(async()=>{if(!canManageSettings())throw Error('Настройки приёмки доступны владельцу');await api('learning',{action:'scheduler-config',automaticPromotion:promotionEnabled.checked});await refresh();});
  button(controls,'Подготовить утверждённые данные к обучению',async()=>{await api('learning',{action:'snapshot'});await refresh();status.textContent+=' Подготовлена версия данных для обучения; веса модели ещё не изменены.';});
  const compose=make('section'),composeActions=make('div','',{className:'output-options'}),draftStatus=make('p','Модель составляет черновик по цене, расположению и подтверждённым характеристикам. Проверьте смысл перед применением.',{className:'muted',role:'status'});
  const draftTitle=field(compose,'Название · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:240})),draftBody=field(compose,'Описание · редактируемый ИИ-черновик',make('textarea','',{rows:7,maxLength:20000})),draftTags=field(compose,'Теги · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:3000}));
@@ -71,9 +74,10 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  });draftApply.disabled=true;
  const generate=button(composeActions,'Создать ИИ-черновик по карточке',async()=>{
   const expected=fingerprint();draftApply.disabled=true;draftContext=null;draftStatus.textContent='Локальная модель составляет текст. Первый запуск включает загрузку весов…';
-  const value=await api('learning',{action:'generate-preview',fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
+  const value=await api('learning',{action:'generate-preview',styleMode:'advertising',fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
   if(expected!==fingerprint())throw Error('Во время генерации открыта или изменена другая карточка. Повторите запрос.');
-  draftStatus.textContent=[value.status==='review'?'ИИ-черновик требует проверки':'Локальная модель пока не подготовила пригодный черновик',...(value.warnings||[]),value.elapsedSeconds!==undefined?'Время: '+Number(value.elapsedSeconds).toFixed(1)+' с':''].filter(Boolean).join(' · ');
+  const grounded=value.fallback===true||value.backend==='grounded-advertising',ai=value.ai||{},elapsed=value.elapsedSeconds??ai.elapsedSeconds;
+  draftStatus.textContent=[value.status==='review'?(grounded?'Рекламный черновик из проверенных фактов; ответ модели не прошёл проверку':'ИИ-черновик требует проверки'):'Локальная модель пока не подготовила пригодный черновик',...(value.warnings||[]),Number.isInteger(ai.generatedTokens)&&ai.generatedTokens>=0?'Модель: '+ai.generatedTokens+' токенов':'',Number.isFinite(ai.tokensPerSecond)&&ai.tokensPerSecond>=0?ai.tokensPerSecond.toFixed(1)+' ток/с':'',Number.isFinite(elapsed)&&elapsed>=0?'Время: '+elapsed.toFixed(1)+' с':''].filter(Boolean).join(' · ');
   if(value.status!=='review')return;
   draftTitle.value=typeof value.title==='string'?value.title:'';draftBody.value=typeof value.body==='string'?value.body:'';draftTags.value=typeof value.tags==='string'?value.tags:'';
   draftContext=expected;draftApply.disabled=!draftTitle.value||!draftBody.value;

@@ -173,27 +173,29 @@ def ollama_classify(image, model):
     return object_candidates(objects), 'Ollama · '+model+' · локально'
 
 
-def analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=None, deadline=None):
+def analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=None, deadline=None, status=None):
     from learning_scheduler import model_resource, ModelBusy
     try:
         with model_resource(directory,kind='foreground',timeout=3):
-            return _analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline)
+            return _analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline,status=status)
     except ModelBusy:
         return {'status':'unavailable','provider':'local','candidates':[],'autoApply':False,
             'message':'Локальная модель занята. Повторите анализ фото через несколько секунд.',
             'limitations':['Отсутствие результата не означает отсутствие предметов.']}
 
 
-def _analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=None, deadline=None):
+def _analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=None, deadline=None, status=None):
     from photo_ai_settings import load_config
     if cancel is not None and cancel.is_set():raise ValueError('Анализ отменён')
     if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
     config=load_config(directory)
     if config['enabled'] and config['model']=='redcn-furniture-v1':
         import trained_photo_detector
+        from photo_auto_policy import trained_policy
         if content is None:
             buffer=io.BytesIO();preview=image.convert('RGB');preview.save(buffer,'JPEG',quality=92);preview.close();content=buffer.getvalue();mime='image/jpeg'
-        return {**trained_photo_detector.analyze(content,mime,directory,cancel=cancel,deadline=deadline),'version':ANALYSIS_VERSION}
+        outcome=trained_photo_detector.analyze(content,mime,directory,cancel=cancel,deadline=deadline,status=status)
+        return {**trained_policy(outcome,requested=config.get('autoApply') is True),'version':ANALYSIS_VERSION}
     fallback=None
     if config['enabled']:
         from photo_ai_runtime import ensure_started
@@ -202,11 +204,16 @@ def _analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=
         if content is None:
             buffer=io.BytesIO();image.convert('RGB').save(buffer,'JPEG',quality=92);content=buffer.getvalue();mime='image/jpeg'
         outcome=local_photo_ai.analyze_photo(content,mime,model=config['model'],endpoint=config['endpoint'],
-            timeout=120,deadline=deadline,cancel=cancel)
+            timeout=120,deadline=deadline,cancel=cancel,status=status)
         if cancel is not None and cancel.is_set():raise ValueError('Анализ отменён')
         if outcome['status']=='ok':
             return {**outcome,'version':ANALYSIS_VERSION,'status':'review',
                 'autoApply':config['autoApply'],
+                'autoApplyMode':'direct-observations' if config['autoApply'] else 'off',
+                'autoApplySummary':{'requested':config['autoApply'],
+                    'mode':'direct-observations' if config['autoApply'] else 'off',
+                    'automaticFacts':sum(row.get('autoEligible') is True for row in outcome.get('candidates',[])) if config['autoApply'] else 0,
+                    'automaticSuggestions':0,'needsReview':sum(row.get('autoEligible') is not True for row in outcome.get('candidates',[]))},
                 'message':'Предметы с прямым визуальным подтверждением добавляются как видимые на фото. Сомнительные находки и количество требуют проверки; отсутствие предметов не определяется.',
                 'limitations':['Оценка модели не является гарантией точности.', 'Работоспособность, размеры, интернет и условия аренды не определяются по фото.']}
         fallback=outcome

@@ -84,6 +84,24 @@ class PhotoAIAdapterTests(unittest.TestCase):
                 photo_store.analyze_photo(self.directory, self.digest)
         self.assertEqual(provider.call_count, 4)
 
+    def test_cache_reports_reuse_without_replaying_old_inference_or_token_speed(self):
+        events = []
+        def measured(*args, **kwargs):
+            return {**self.success(*args, **kwargs), 'ai': {'backend': 'ollama', 'operation': 'furniture',
+                'phase': 'complete', 'generatedTokens': 120, 'generationSeconds': 2.,
+                'tokensPerSecond': 60., 'inferenceSeconds': 2.2, 'tokenBased': True, 'cached': False}}
+        with patch.object(local_photo_ai, 'analyze_photo', side_effect=measured) as provider:
+            fresh = photo_store.analyze_photo(self.directory, self.digest, status=lambda message, **details: events.append(details))
+            cached = photo_store.analyze_photo(self.directory, self.digest, status=lambda message, **details: events.append(details))
+        self.assertEqual(fresh['ai']['tokensPerSecond'], 60)
+        self.assertEqual(cached['ai']['phase'], 'cached')
+        self.assertTrue(cached['ai']['cached'])
+        for key in ('tokensPerSecond', 'generatedTokens', 'generationSeconds', 'inferenceSeconds', 'imagesPerSecond'):
+            self.assertNotIn(key, cached['ai'])
+            self.assertNotIn(key, events[-1]['ai'])
+        self.assertEqual(provider.call_count, 1)
+        self.assertEqual(photo_store.asset(self.directory, self.digest)[0], self.content)
+
     def test_wrong_original_or_corrupt_cache_is_recomputed(self):
         import json
         with patch.object(local_photo_ai, 'analyze_photo', side_effect=self.success) as provider:

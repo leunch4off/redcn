@@ -86,6 +86,24 @@ class TrainedDetectorTests(unittest.TestCase):
         self.assertFalse(result['autoApply']); self.assertFalse(result['candidates'][0]['autoEligible'])
         self.assertIsNone(result['candidates'][0]['count'])
 
+    def test_detector_reports_image_timing_and_never_fake_tokens(self):
+        class Process:
+            returncode=0
+            def communicate(self, **kwargs):
+                return json.dumps({'status':'review','provider':'yolox-trained','model':detector.MODEL,
+                    'autoApply':False,'candidates':[], 'ai':{'inferenceSeconds':.05,'imagesPerSecond':20,
+                    'processedImages':1,'tokensPerSecond':999,'generatedTokens':99}}).encode(),b''
+            def poll(self):return 0
+        events=[]
+        with patch.object(detector.subprocess,'Popen',return_value=Process()):
+            result=detector.analyze(b'fixture','image/jpeg','/unused',status=lambda message,**fields:events.append(fields))
+        self.assertEqual(result['ai']['inferenceSeconds'],.05)
+        self.assertEqual(result['ai']['imagesPerSecond'],20)
+        self.assertFalse(result['ai']['tokenBased'])
+        self.assertNotIn('tokensPerSecond',result['ai'])
+        self.assertNotIn('generatedTokens',result['ai'])
+        self.assertEqual([row['ai']['phase'] for row in events],['loading','analyzing','complete'])
+
     def test_expired_worker_is_terminated_and_reaped(self):
         class Process:
             terminated=False
@@ -96,8 +114,9 @@ class TrainedDetectorTests(unittest.TestCase):
             def terminate(self):self.terminated=True
             def wait(self, timeout):self.reaped=True
         process=Process()
+        clock=iter([0,0])
         with patch.object(detector.subprocess,'Popen',return_value=process), \
-                patch.object(detector.time,'monotonic',side_effect=[0,0,21]):
+                patch.object(detector.time,'monotonic',side_effect=lambda:next(clock,21)):
             result=detector.analyze(b'fixture','image/jpeg','/unused')
         self.assertEqual(result['status'],'unavailable')
         self.assertTrue(process.terminated); self.assertTrue(process.reaped)

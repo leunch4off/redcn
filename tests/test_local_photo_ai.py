@@ -207,6 +207,27 @@ class ProviderTests(unittest.TestCase):
     def analyze(self, endpoint, **kwargs):
         return ai.analyze_photo(self.content, 'image/png', model=MODEL, endpoint=endpoint, **kwargs)
 
+    def test_progress_reports_backend_token_counts_not_character_estimates(self):
+        events=[]
+        response={'done':True,'message':{'content':json.dumps(inventory(item()))},
+            'eval_count':120,'eval_duration':2_000_000_000,'prompt_eval_count':500}
+        with server(chat=response) as (endpoint,_,_):
+            result=self.analyze(endpoint,status=lambda message,**fields:events.append(fields))
+        self.assertEqual(result['status'],'ok')
+        self.assertEqual(result['ai']['generatedTokens'],120)
+        self.assertEqual(result['ai']['generationSeconds'],2)
+        self.assertEqual(result['ai']['tokensPerSecond'],60)
+        self.assertEqual(result['ai']['promptTokens'],500)
+        self.assertEqual(events[-1]['ai'],result['ai'])
+        self.assertEqual(events[0]['ai']['phase'],'loading')
+        self.assertTrue(any(row['ai']['phase']=='analyzing' for row in events))
+
+    def test_missing_invalid_metrics_never_invent_a_token_rate(self):
+        for raw in ({},{'eval_count':True,'eval_duration':1},
+                {'eval_count':100,'eval_duration':0},{'eval_count':100,'eval_duration':float('nan')},
+                {'eval_count':'100','eval_duration':2_000_000_000}):
+            self.assertNotIn('tokensPerSecond',ai._ollama_metrics(raw))
+
     def test_actual_loopback_request_uses_schema_safe_metadata_free_preview_and_no_proxy(self):
         with server() as (endpoint, seen, _), patch.dict(os.environ, {'HTTP_PROXY': 'http://invalid.invalid:3', 'OLLAMA_API_KEY': 'must-not-be-sent'}):
             result = self.analyze(endpoint)

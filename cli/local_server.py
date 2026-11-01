@@ -105,7 +105,7 @@ def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,phot
             # Do not replace a manual edit made while the model was running.
             unchanged=all(current.get(key)==photo_baseline.get(key) for key in ('fields','body','titles','tags'))
             if unchanged:
-                for key in ('fields','body','titles','tags','tagSuggestions','templateInfo','translationWarnings','unknown','problems','warnings'):
+                for key in ('fields','body','titles','tags','tagSuggestions','templateInfo','translationWarnings','unknown','problems','warnings','aiAdvertisement'):
                     if key in photo_generated:current[key]=photo_generated[key]
             if 'photoInventory' in current:
                 current['photoInventory']['textUpdated']=unchanged
@@ -128,7 +128,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v26', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v27', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
@@ -154,10 +154,20 @@ def create_server(directory, port=8765, browser_channel='chrome'):
 
     def run_import(job_id, params, cancel, actor):
         attempt_started, attempt_clock = time.time(), time.monotonic()
+        audit_ai_signature = None
         def report(message, **fields):
+            nonlocal audit_ai_signature
             with lock:
                 jobs[job_id].update(message=message)
                 jobs[job_id]['tracker'].update(message,**fields)
+            # Token samples stay in bounded live state. Repeated samples must
+            # not exhaust the separate diagnostic campaign's event budget.
+            ai = fields.get('ai')
+            if isinstance(ai, dict):
+                signature = (fields.get('stage'), ai.get('backend'), ai.get('phase'), ai.get('photoIndex'))
+                if signature == audit_ai_signature:
+                    return
+                audit_ai_signature = signature
             try:
                 owner_scope.check()
                 workspace.diagnostics.record(audit_tokens.get(job_id), message, **fields)
@@ -202,6 +212,22 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             cache_photos(directory,result,report,cancel)
             from photo_generation import photo_revision
             photo_generated=photo_revision(directory,result,text=listing['text'],rules=params.get('rules'),prefs=params.get('prefs'),report=report,cancel=cancel)
+            from local_text_model import settings as text_model_settings
+            try:
+                advertising_enabled=text_model_settings(directory).get('advertisingEnabled') is True
+            except (OSError,ValueError,TypeError):
+                advertising_enabled=False
+                report('Настройки текстового ИИ недоступны; сохраняем описание по проверенным фактам.',
+                    stage='generate',ai={'backend':'mlx','operation':'text','phase':'unavailable'})
+            if advertising_enabled:
+                try:
+                    from local_content import generate_import_advertisement
+                    photo_generated=generate_import_advertisement(directory,
+                        {**result, **(photo_generated or {})}, status=report, cancel=cancel)
+                except (OSError,ValueError,TypeError):
+                    report('ИИ не завершил рекламное описание; сохраняем описание по проверенным фактам.',
+                        stage='generate',ai={'backend':'mlx','operation':'text','phase':'unavailable'})
+            if cancel.is_set():raise ValueError('Импорт отменён')
             report('Сохраняем карточку и подготовленные фотографии…',stage='save')
             owner_scope.check()
             merge_prepared_media(directory,result_id,result,photo_baseline=photo_baseline,photo_generated=photo_generated)
