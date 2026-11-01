@@ -5,6 +5,7 @@ calling this module. Marketing exports never include dossier attachments.
 """
 import base64
 import binascii
+import errno
 import hashlib
 from html.parser import HTMLParser
 import json
@@ -610,21 +611,74 @@ def _pdf_worker_command(browser_channel):
     return [sys.executable,str(Path(__file__).with_name('pdf_render_worker.py')),browser_channel]
 
 
-def _pdf_process_snapshot(timeout,pids=None):
-    """Read only ownership identifiers, never command lines or environment."""
-    if os.name!='posix' or timeout<=0:return {}
+def _pdf_linux_snapshot(deadline,pids=None,*,proc_root=Path('/proc')):
+    """Translate procfs host IDs into this process's PID namespace.
+
+    A container can expose the host /proc while getpid/Popen/kill use inner
+    IDs. Calling ps -p on the inner PID would inspect an unrelated host task.
+    Only PID/PPID/group/start ticks/state and namespace identity are read here.
+    Linux proc_pid_status(5) defines the NSpid/NSpgid ordering used below.
+    """
     try:
-        command=['ps','-axo','pid=,ppid=,pgid=,lstart='] if pids is None else ['ps','-p',','.join(str(pid) for pid in pids),'-o','pid=,ppid=,pgid=,lstart=']
-        rows=subprocess.run(command,capture_output=True,text=True,timeout=timeout)
-    except (OSError,subprocess.TimeoutExpired):return {}
+        own_namespace=os.readlink(proc_root/'self/ns/pid')
+        own_status={line.split(':',1)[0]:line.split(':',1)[1].split() for line in (proc_root/'self/status').read_text().splitlines() if ':' in line}
+        index=len(own_status['NSpid'])-1
+    except (OSError,KeyError):return None
+    records={}
+    try:entries=list(proc_root.iterdir())
+    except OSError:return None
+    for entry in entries:
+        if time.monotonic()>=deadline:return None
+        if not entry.name.isdigit():continue
+        pid=None
+        try:
+            fields={line.split(':',1)[0]:line.split(':',1)[1].split() for line in (entry/'status').read_text().splitlines() if ':' in line}
+            ids=fields['NSpid']
+            if len(ids)<=index:continue
+            pid=int(ids[index]);parent=int(fields['PPid'][0]);host=int(fields['Pid'][0])
+            namespace=os.readlink(entry/'ns/pid')
+            if namespace!=own_namespace:continue
+            stat=(entry/'stat').read_text().rsplit(')',1)[1].split()
+            groups=fields.get('NSpgid',[])
+            group=int(groups[index]) if len(groups)>index else None
+            records[host]=(pid,parent,group,'linux:'+stat[19],stat[0],namespace,int(stat[2]))
+        except OSError as error:
+            if error.errno in (errno.ENOENT,errno.ESRCH):continue
+            if pids is None or pid is None or pid in pids:return None
+        except (KeyError,ValueError,IndexError):
+            if pids is None or pid is None or pid in pids:return None
+    # Only this exact namespace is eligible. In particular, a sibling may
+    # reuse the same inner PID and must never replace an owned identity.
+    visible={host for host,row in records.items() if row[5]==own_namespace}
     output={}
-    if rows.returncode:return output
+    for host in visible:
+        pid,parent,group,birth,state,namespace,host_group=records[host]
+        if pids is not None and pid not in pids:continue
+        group=group if group is not None else records.get(host_group,(0,))[0]
+        output[pid]=(records[parent][0] if parent in visible else 0,group,birth,state)
+    return output
+
+
+def _pdf_process_snapshot(timeout,pids=None):
+    """Read only ownership identifiers and terminal state, never command lines."""
+    if os.name!='posix':return {}
+    if timeout<=0:return None
+    if sys.platform.startswith('linux'):
+        return _pdf_linux_snapshot(time.monotonic()+timeout,pids)
+    try:
+        command=['ps','-axo','pid=,ppid=,pgid=,stat=,lstart='] if pids is None else ['ps','-p',','.join(str(pid) for pid in pids),'-o','pid=,ppid=,pgid=,stat=,lstart=']
+        rows=subprocess.run(command,capture_output=True,text=True,timeout=timeout)
+    except (OSError,subprocess.TimeoutExpired):return None
+    output={}
+    if rows.returncode:
+        if pids is None or rows.returncode!=1 or rows.stderr.strip():return None
+        if not rows.stdout.strip():return {}
     for line in rows.stdout.splitlines():
-        parts=line.split(None,3)
-        if len(parts)!=4:continue
+        parts=line.split(None,4)
+        if len(parts)!=5:return None
         try:pid,parent,group=map(int,parts[:3])
-        except ValueError:continue
-        output[pid]=(parent,group,' '.join(parts[3].split()))
+        except ValueError:return None
+        output[pid]=(parent,group,' '.join(parts[4].split()),parts[3])
     return output
 
 
@@ -636,6 +690,7 @@ class _PdfOwnedProcesses:
     def refresh(self,deadline,*,known_only=False):
         rows=_pdf_process_snapshot(max(0,min(.08,deadline-time.monotonic())),
                                    set(self.identities)|{self.process.pid} if known_only else None)
+        if rows is None:return None
         root=rows.get(self.process.pid)
         if root and (self.process.pid in self.identities or self.process.poll() is None):
             if self.process.pid not in self.identities:self.identities[self.process.pid]=root[2]
@@ -651,6 +706,7 @@ class _PdfOwnedProcesses:
     def signal(self,signum,deadline):
         if os.name=='posix':
             live=self.refresh(deadline,known_only=True)
+            live={} if live is None else {pid:row for pid,row in live.items() if row[3][:1] not in ('Z','X')}
             groups={row[1] for pid,row in live.items() if row[1] in live}
             # Popen owns this session even before the first ps snapshot returns.
             if self.process.poll() is None:groups.add(self.process.pid)
@@ -668,19 +724,28 @@ class _PdfOwnedProcesses:
                 except (OSError,subprocess.TimeoutExpired):self.process.kill()
         elif self.process.poll() is None:self.process.kill()
 
+    def stopped(self,deadline):
+        owner_stopped=self.process.poll() is not None
+        live=self.refresh(deadline,known_only=True)
+        return owner_stopped and live is not None and not any(row[3][:1] not in ('Z','X') for row in live.values())
+
     def stop(self,deadline):
         self.refresh(deadline)
         self.signal(signal.SIGTERM,deadline)
         remaining=max(0,deadline-time.monotonic())
         grace=min(deadline-min(.2,remaining*.4),time.monotonic()+.3)
         while time.monotonic()<grace:
-            if self.process.poll() is not None and not self.refresh(grace,known_only=True):return
+            if self.stopped(grace):return True
             time.sleep(min(.02,max(0,grace-time.monotonic())))
         self.signal(signal.SIGKILL if os.name=='posix' else signal.SIGTERM,deadline)
-        remaining=deadline-time.monotonic()
-        if remaining>0:
-            try:self.process.wait(timeout=remaining)
-            except subprocess.TimeoutExpired:pass
+        # kill() delivery and owner exit do not prove that a detached renderer
+        # has stopped executing. Confirm every tracked birth identity, not just
+        # the direct worker, before releasing the global PDF slot.
+        while time.monotonic()<deadline:
+            if self.stopped(deadline):return True
+            time.sleep(min(.01,max(0,deadline-time.monotonic())))
+        return False
+
 
 
 def _render_pdf(html, browser_channel, *, timeout=PDF_TOTAL_TIMEOUT):
@@ -709,7 +774,7 @@ def _render_pdf(html, browser_channel, *, timeout=PDF_TOTAL_TIMEOUT):
         first=True;payload=html.encode('utf-8')
         while True:
             remaining=execution_deadline-time.monotonic()
-            if remaining<=0:raise TimeoutError('Создание PDF превысило общий срок. Собственные процессы Chrome остановлены; повторите запрос.')
+            if remaining<=0:raise TimeoutError('Создание PDF превысило общий срок. Очистка Chrome может быть неполной; повторите запрос после проверки.')
             try:
                 content,errors=process.communicate(input=payload if first else None,timeout=min(.15,remaining))
                 break
@@ -725,14 +790,21 @@ def _render_pdf(html, browser_channel, *, timeout=PDF_TOTAL_TIMEOUT):
                       'validation':'Проверьте статический HTML перед созданием PDF',
                       'too_large':'Созданный PDF превышает 40 МБ; уменьшите число или размер фотографий',
                       'invalid_pdf':'Chrome не вернул PDF'}
-            raise ValueError(messages.get(code,'Chrome не смог создать PDF. Повторите запрос или проверьте установленный браузер.'))
+            raise ValueError(messages.get(code,'Chrome не смог создать PDF. Повторите запрос или проверьте установленный браузер.')+' Очистка Chrome может быть неполной.')
         if not content.startswith(b'%PDF-'):raise ValueError('Chrome не вернул PDF')
         if len(content)>MAX_ATTACHMENT:raise ValueError('Созданный PDF превышает 40 МБ; уменьшите число или размер фотографий')
-        if time.monotonic()>=execution_deadline:raise TimeoutError('Создание PDF превысило общий срок. Повторите запрос.')
+        try:completion=json.loads(errors.splitlines()[-1])
+        except (ValueError,IndexError):completion={}
+        if (not isinstance(completion,dict) or completion.get('protocol')!='redcn-pdf-v1' or completion.get('complete') is not True
+                or type(completion.get('bytes')) is not int or completion['bytes']!=len(content)
+                or completion.get('sha256')!=hashlib.sha256(content).hexdigest()):
+            raise ValueError('Процесс PDF не подтвердил завершение печати и очистки. Очистка Chrome может быть неполной.')
+        if time.monotonic()>=execution_deadline:raise TimeoutError('Создание PDF превысило общий срок. Очистка Chrome может быть неполной; повторите запрос после проверки.')
         return content
     finally:
         try:
-            if tree is not None:tree.stop(deadline)
+            if tree is not None and not tree.stop(deadline):
+                raise ValueError('Срок PDF истёк, но остановка собственного Chrome не подтверждена. Проверьте процессы перед повторным запросом.')
         finally:
             if process is not None:
                 # Never call an unbounded communicate() in cleanup: an orphaned

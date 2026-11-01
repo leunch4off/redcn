@@ -1,5 +1,6 @@
 """Owned static PDF worker. HTML enters only stdin; stdout contains only PDF."""
 import json
+import hashlib
 import sys
 
 from card_assets import MAX_ATTACHMENT, MAX_HTML, validate_html, _PublicationText
@@ -66,6 +67,8 @@ def main():
     # Do not emit success bytes until Chrome, context and driver cleanup finish.
     sys.stdout.buffer.write(content)
     sys.stdout.buffer.flush()
+    sys.stderr.write(json.dumps({'protocol':'redcn-pdf-v1','complete':True,'bytes':len(content),'sha256':hashlib.sha256(content).hexdigest()}))
+    sys.stderr.flush()
 
 
 if __name__ == '__main__':

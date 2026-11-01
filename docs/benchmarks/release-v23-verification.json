@@ -53,5 +53,27 @@
     "serverRestarted": false
   },
   "privateCampaignChanged": false,
-  "localPhotoAIEnabled": false
+  "localPhotoAIEnabled": false,
+  "laterPdfSupervisionFix": {
+    "contract": "90-second total deadline; confirmed observed-child cessation; unknown metadata stays unknown; controlled completion protocol after Playwright cleanup; arbitrary unobserved detached processes not guaranteed stopped",
+    "protocol": "redcn-pdf-v1",
+    "focusedPython": {
+      "run": 35,
+      "passed": 34,
+      "macOnlySkipped": 1,
+      "seconds": 4.668
+    },
+    "stressCases": {
+      "run": 15,
+      "passed": 15,
+      "seconds": 14.972
+    },
+    "independentRoot": {
+      "run": 14,
+      "passed": 14,
+      "seconds": 4.146
+    },
+    "fullMatrixCases": 700,
+    "latestChecks": "https://github.com/leunch4off/redcn/pull/6"
+  }
 }
