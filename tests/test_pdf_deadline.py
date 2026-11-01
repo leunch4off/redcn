@@ -171,6 +171,29 @@ class PdfDeadlineTests(unittest.TestCase):
             with patch.object(card_assets.os,'readlink',side_effect=denied_namespace):
                 self.assertIsNone(card_assets._pdf_linux_snapshot(time.monotonic()+1,{6},proc_root=root))
 
+    @unittest.skipUnless(sys.platform.startswith('linux'),'Linux non-root proc discovery')
+    def test_unrelated_root_namespace_denial_does_not_hide_owned_host_namespace_children(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            for pid,parent in ((1,0),(5,1),(6,5)):
+                proc_fixture(root,pid,pid,parent,pid,111,pid*100)
+                status=root/str(pid)/'status'
+                status.write_text(status.read_text().replace('NSpid:\t'+str(pid)+' '+str(pid),'NSpid:\t'+str(pid)).replace('NSpgid:\t'+str(pid)+' '+str(pid),'NSpgid:\t'+str(pid)))
+            (root/'self').symlink_to(root/'5',target_is_directory=True)
+            readlink=os.readlink
+            def denied_root(path,*args,**kwargs):
+                if Path(path)==root/'1/ns/pid':raise PermissionError(1,'Unrelated root namespace is private')
+                return readlink(path,*args,**kwargs)
+            with patch.object(card_assets.os,'readlink',side_effect=denied_root):
+                rows=card_assets._pdf_linux_snapshot(time.monotonic()+1,proc_root=root)
+                self.assertIsNotNone(rows,'An unrelated unreadable namespace must not disable discovery')
+                self.assertEqual(rows[6],(5,6,'linux:600','S'))
+            def denied_owned(path,*args,**kwargs):
+                if Path(path) in (root/'1/ns/pid',root/'6/ns/pid'):raise PermissionError(1,'Namespace is private')
+                return readlink(path,*args,**kwargs)
+            with patch.object(card_assets.os,'readlink',side_effect=denied_owned):
+                self.assertIsNone(card_assets._pdf_linux_snapshot(time.monotonic()+1,{6},proc_root=root))
+
     def test_darwin_metadata_failure_or_malformed_rows_are_not_an_empty_snapshot(self):
         for result in (subprocess.CompletedProcess([],0,'malformed metadata\n',''),subprocess.CompletedProcess([],1,'','ps: metadata not permitted')):
             with self.subTest(result=result),patch.object(card_assets.sys,'platform','darwin'),patch.object(card_assets.subprocess,'run',return_value=result):

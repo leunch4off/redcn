@@ -644,9 +644,12 @@ def _pdf_linux_snapshot(deadline,pids=None,*,proc_root=Path('/proc')):
             records[host]=(pid,parent,group,'linux:'+stat[19],stat[0],namespace,int(stat[2]))
         except OSError as error:
             if error.errno in (errno.ENOENT,errno.ESRCH):continue
-            if pids is None or pid is None or pid in pids:return None
+            # Discovery may encounter unrelated privileged processes on a
+            # normal non-root host. Only verification of selected, already
+            # observed identities must fail closed on unreadable metadata.
+            if pids is not None and (pid is None or pid in pids):return None
         except (KeyError,ValueError,IndexError):
-            if pids is None or pid is None or pid in pids:return None
+            if pids is not None and (pid is None or pid in pids):return None
     # Only this exact namespace is eligible. In particular, a sibling may
     # reuse the same inner PID and must never replace an owned identity.
     visible={host for host,row in records.items() if row[5]==own_namespace}
