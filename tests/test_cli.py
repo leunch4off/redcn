@@ -74,7 +74,7 @@ class CLITests(unittest.TestCase):
             path.write_text(json.dumps([{'url':'https://cian.ru/1','seller':'owner'},{'url':'https://avito.ru/2','seller':'agent','commission':50},{'url':'https://avito.ru/3','seller':'agent','commission':51}]))
             def run():
                 stream=io.StringIO()
-                with contextlib.redirect_stdout(stream),patch.object(cli,'load_listing',return_value={'text':'fixture','images':[]}),patch.object(cli,'generate',return_value={'titles':['中文'],'body':'中文','tags':'#莫斯科'}):
+                with contextlib.redirect_stdout(stream),patch.object(cli,'load_listing',return_value={'text':'fixture','images':[],'fields':{'publicationStatus':'active','eligibleForNew':True}}),patch.object(cli,'generate',return_value={'titles':['中文'],'body':'中文','tags':'#莫斯科'}):
                     cli.main(['--batch',str(path),'--cache-dir',folder,'--json'])
                 return json.loads(stream.getvalue())
             self.assertEqual([x['status'] for x in run()],['new','new','filtered'])

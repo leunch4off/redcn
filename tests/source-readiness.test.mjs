@@ -8,6 +8,16 @@ const partialSource=()=>({state:'partial',partial:true,completed:false,sections:
   {name:'characteristics',ready:false,reason:'not_found',visited:true,found:false}
 ]});
 
+test('normalized rental evidence survives editor persistence without serializing source HTML or offer state',()=>{
+  const fields={pricePeriod:'day',priceCurrency:'RUB',sellerSource:'Avito item-owner',commissionSource:'Avito params',commissionStatus:'present',commissionAmount:'25000',publicationStatus:'removed',eligibleForNew:false,
+    oneTimeFees:[{label:'Уборка',amount:'1500',currency:'RUB',source:'Условия аренды',html:'PRIVATE_HTML'}],
+    transitDetails:[{name:'Сокол',mode:'walk',time:'5–7',url:'https://www.avito.ru/moskva/kvartiry/test_123',source:'Расположение'}],html:'PRIVATE_HTML',offer:{cookies:'PRIVATE_COOKIE'}};
+  const once=sourceEditorMetadata(fields),saved=sourceEditorMetadata(JSON.parse(JSON.stringify(once)));
+  for(const key of ['pricePeriod','priceCurrency','sellerSource','commissionSource','commissionStatus','commissionAmount','publicationStatus','eligibleForNew'])assert.equal(saved[key],fields[key]);
+  assert.equal(saved.oneTimeFees[0].amount,'1500');assert.equal(saved.transitDetails[0].time,'5–7');assert.equal(saved.transitDetails[0].url,fields.transitDetails[0].url);
+  assert.doesNotMatch(JSON.stringify(saved),/PRIVATE|cookies|html|offer/);
+});
+
 test('completed operation keeps source gaps visible and never offers a photo retry for them',()=>{
   const job={state:'done',partial:true,photoPartial:false,sourcePartial:true,result_id:'a'.repeat(32),sourceReadiness:partialSource()},before=structuredClone(job);
   const result=importCompletionFeedback(job);

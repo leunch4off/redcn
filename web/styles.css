@@ -64,3 +64,4 @@
 .card-files{margin-top:24px;overflow-wrap:anywhere}.card-files h2{font-size:18px}.card-files p{font-size:13px;color:#78816f;margin-bottom:14px}.card-file-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:1px solid #e4e8dd;padding:14px 0;min-width:0}.card-file-row span{flex:1;min-width:130px;font-size:12px;overflow-wrap:anywhere}.card-files .btn{margin:4px 0}
 
 .phone-remote-box{margin:20px 0;padding:18px;border:1px solid #dfe5d8;border-radius:14px;background:#f7faf3;overflow-wrap:anywhere}.phone-remote-box h3{margin-top:0}.phone-remote-box a{display:block;min-height:44px;padding:12px 0;overflow-wrap:anywhere}.phone-remote-box .notice{margin:14px 0}
+#initialPayment{overflow-wrap:anywhere}#initialPayment dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;font-size:13px}#initialPayment dd{margin:0;text-align:right}#initialPayment .payment-total{font-weight:800}#initialPayment .small{margin:12px 0;font-size:12px}

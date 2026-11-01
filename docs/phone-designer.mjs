@@ -3,7 +3,7 @@
 const PUBLICATION_POLICY_VERSION='client-publication-v1';
 const clientCommissionPattern=/комисси[а-яё]*|агентск[а-яё]*\s+(?:вознагражден[а-яё]*|сбор[а-яё]*|услуг[а-яё]*)|вознагражден[а-яё]*\s+(?:агент[а-яё]*|риелтор[а-яё]*)|риелторск[а-яё]*\s+(?:сбор[а-яё]*|услуг[а-яё]*)|中介\s*(?:费|費)|佣金|傭金|免佣|经纪\s*(?:费|費)|經紀\s*(?:费|費)|代理\s*(?:费|費)|\bcommission\b|\b(?:broker(?:age)?|agent|agency)\s+fees?\b/iu;
 const clientProtectedPattern=/(?:аренд[ауы]|арендная\s+плата|залог|депозит|предоплат|аванс|коммунал|жку|квартплат|сч[её]тчик|площад|комнат|спальн|мебел|диван|кроват|холодильник|квартир|адрес|метро|этаж|\b(?:rent|deposit|utilities|bedrooms?)\b|租金|月租|押金|定金|预付|預付|物业|物業|水电|水電|面积|面積|卧室|臥室|家具|公寓|精装|精裝|平米|[一两兩二三四五六七八九十]室|[一两兩二三四五六七八九十]厅|地铁|地鐵|\d\s*(?:㎡|м²|м2))/iu;
-const clientPrivateKey=/(?:commission|^(?:clientFee|agentFee|brokerFee|agencyFee|offer|bargainTerms|source(?:Audit|Description|Ru|Html)?|raw(?:Text|Html|Body|Description)?|original(?:Text|Html|Body|Description)|notes|operatorNotes|internal|rules|prefs|sourceEnvelope)$)/iu;
+const clientPrivateKey=/(?:commission|^(?:clientFee|agentFee|brokerFee|agencyFee|initialPayment|paymentCalculation|oneTimeFees|offer|bargainTerms|source(?:Audit|Description|Ru|Html)?|raw(?:Text|Html|Body|Description)?|original(?:Text|Html|Body|Description)|notes|operatorNotes|internal|rules|prefs|sourceEnvelope)$)/iu;
 const clientFold=value=>String(value||'').replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g,'');
 // A matched token alone is insufficient: any leftover property/location words
 // make the clause ambiguous. This protects facts outside a finite keyword list.
@@ -1111,6 +1111,284 @@ function tokenize(text,entries) {
 function replaceSpan(text,start,end,expected,replacement){if(text.slice(start,end)!==expected)throw Error('Текст изменился. Выберите слово заново.');return text.slice(0,start)+replacement+text.slice(end);}
 function listingEligible(seller,commission){return seller==='owner'||seller==='agent'&&commission!==''&&commission!==null&&commission!==undefined&&Number.isFinite(Number(commission))&&Number(commission)>=0&&Number(commission)<=50;}
 
+
+const TITLE_FORMULA_VARIABLES=Object.freeze(['city','layout','area','price','metro','floor','feature','university','code']);
+const variableSet=new Set(TITLE_FORMULA_VARIABLES);
+const keys={history:'most-title-history-v1',formulas:'most-title-formulas-v1',profiles:'most-studio-profiles-v1',selection:'most-content-selection-v1'};
+const enums={punctuation:['standard','compact','fullwidth'],emoji:['source','none'],addressing:['neutral','polite','friendly']};
+const DEFAULT_STUDIO_PROFILE=Object.freeze({id:'default',name:'Обычный',punctuation:'standard',emoji:'source',addressing:'neutral'});
+
+function validateTitleFormula(formula){
+ const problems=[],variables=[];
+ if(typeof formula!=='string')return {valid:false,problems:['Формула должна быть текстом'],variables};
+ if(!formula.trim()||formula.length>500)problems.push('Формула должна содержать от 1 до 500 знаков');
+ if(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(formula))problems.push('В формуле есть управляющие символы');
+ if(containsClientCommission(formula))problems.push('Комиссия не включается в заголовок для клиента');
+ const matches=[...formula.matchAll(/\{([a-zA-Z][a-zA-Z0-9]*)\}/gu)];
+ for(const match of matches){if(!variableSet.has(match[1]))problems.push('Неизвестная переменная: '+match[1]);else if(!variables.includes(match[1]))variables.push(match[1]);}
+ if(/[{}]/u.test(formula.replace(/\{([a-zA-Z][a-zA-Z0-9]*)\}/gu,'')))problems.push('Используйте подстановку в виде {price} без вложенных скобок');
+ if(!matches.length)problems.push('Добавьте хотя бы одну переменную текущего объявления');
+ if(matches.length>20)problems.push('Допускается до 20 подстановок');
+ return {valid:!problems.length,problems:[...new Set(problems)],variables};
+}
+
+function renderTitleFormula(formula,context={}){
+ const validation=validateTitleFormula(formula);if(!validation.valid)throw Error(validation.problems.join(' · '));
+ const values=Object.create(null);
+ for(const key of TITLE_FORMULA_VARIABLES){
+  const value=context&&Object.hasOwn(context,key)?context[key]:'';
+  if(value!=null&&typeof value!=='string'&&typeof value!=='number'||typeof value==='number'&&!Number.isFinite(value))throw TypeError('Неверное значение подстановки '+key);
+  const text=value==null?'':String(value).trim();
+  if(containsClientCommission(text))throw Error('Комиссия не включается в заголовок для клиента');
+  values[key]=text;
+ }
+ // Empty facts disappear; separators cannot turn an unknown value into a claim.
+ // No evaluation, HTML parsing, property traversal or recursive interpolation.
+ const rendered=formula.replace(/\{([a-zA-Z][a-zA-Z0-9]*)\}/gu,(_,key)=>values[key]);
+ const cleaned=rendered.split(/\s*[|｜·•]\s*/u).map(part=>part.trim()).filter(Boolean).join(formula.includes('｜')?'｜':formula.includes('·')?' · ':' | ')
+  .replace(/\s+/gu,' ').trim();
+ if(!validation.variables.some(key=>values[key]))return '';
+ return sanitizeClientText(cleaned);
+}
+
+function normalizeStudioProfile(value={}){
+ if(!value||typeof value!=='object'||Array.isArray(value))throw TypeError('Нужен профиль стиля');
+ const profile={id:String(value.id||'default'),name:String(value.name||'Обычный').trim(),punctuation:value.punctuation||'standard',emoji:value.emoji||'source',addressing:value.addressing||'neutral'};
+ if(!/^[a-zA-Z0-9_-]{1,80}$/u.test(profile.id))throw Error('Неверный ID профиля');
+ if(!profile.name||profile.name.length>80||/[\u0000-\u001f\u007f]/u.test(profile.name))throw Error('Название профиля должно содержать от 1 до 80 знаков');
+ for(const [key,options] of Object.entries(enums))if(!options.includes(profile[key]))throw Error('Неизвестная настройка стиля: '+key);
+ return profile;
+}
+
+function titleHistoryKey(fields={}){
+ const source=typeof fields.url==='string'?fields.url.trim():'';
+ if(source)try{const url=new URL(source);if(['https:','http:'].includes(url.protocol))return 'url:'+url.origin+url.pathname.replace(/\/+$/u,'');}catch{}
+ if(typeof fields.resultId==='string'&&fields.resultId)return 'card:'+fields.resultId.slice(0,100);
+ if(typeof fields.editorIdentity==='string'&&/^[a-zA-Z0-9_-]{1,100}$/u.test(fields.editorIdentity))return 'editor:'+fields.editorIdentity;
+ if(typeof fields.name==='string'&&fields.name.trim())return 'name:'+fields.name.trim().slice(0,200);
+ return 'draft';
+}
+
+function recordTitleHistory(history,key,title,kind='selected',at=new Date().toISOString()){
+ if(typeof title!=='string'||!title.trim())return history&&typeof history==='object'&&!Array.isArray(history)?history:{};
+ title=sanitizeClientText(title).trim();if(!title)return history||{};
+ if(title.length>2000)throw Error('Заголовок слишком длинный для истории');
+ const valid=history&&typeof history==='object'&&!Array.isArray(history)?history:{};
+ const previous=Array.isArray(valid[key])?valid[key].filter(row=>row&&typeof row.title==='string'&&typeof row.at==='string'):[];
+ const row={title,kind:['selected','manual','generated','restored','formula'].includes(kind)?kind:'selected',at};
+ return Object.fromEntries([...Object.entries(valid).filter(([name])=>name!==key).slice(-39),[key,[row,...previous.filter(item=>item.title!==title)].slice(0,50)]]);
+}
+
+function diffTokens(value){
+ const text=String(value??'');
+ // Clauses preserve Chinese words, numbers, spaces and punctuation exactly.
+ return text.match(/[^\n。！？!?；;]+[。！？!?；;]?|\n/gu)||[];
+}
+function textDiff(before,after){
+ before=String(before??'');after=String(after??'');
+ if(before===after)return before?[{kind:'same',text:before}]:[];
+ const a=diffTokens(before),b=diffTokens(after);
+ if(a.length>300||b.length>300)return [{kind:'removed',text:before},{kind:'added',text:after}].filter(row=>row.text);
+ const table=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1));
+ for(let i=a.length-1;i>=0;i--)for(let j=b.length-1;j>=0;j--)table[i][j]=a[i]===b[j]?table[i+1][j+1]+1:Math.max(table[i+1][j],table[i][j+1]);
+ const result=[];let i=0,j=0;
+ const push=(kind,text)=>{const last=result.at(-1);if(last?.kind===kind)last.text+=text;else result.push({kind,text});};
+ while(i<a.length||j<b.length){if(i<a.length&&j<b.length&&a[i]===b[j]){push('same',a[i++]);j++;}else if(j<b.length&&(i===a.length||table[i][j+1]>=table[i+1][j]))push('added',b[j++]);else push('removed',a[i++]);}
+ return result;
+}
+function publicationTextDiff(before={},after={}){
+ return ['title','body','tags'].map(key=>({key,before:String(before[key]??''),after:String(after[key]??''),changes:textDiff(before[key],after[key])})).filter(row=>row.before!==row.after);
+}
+
+const clone=value=>JSON.parse(JSON.stringify(value));
+function safeSelection(value){return value&&typeof value==='object'&&!Array.isArray(value)?{profile:String(value.profile||'default'),formula:String(value.formula||'')}: {profile:'default',formula:''};}
+function safeProfiles(rows){const result=[{...DEFAULT_STUDIO_PROFILE}];for(const row of Array.isArray(rows)?rows:[])try{const normalized=normalizeStudioProfile(row);if(normalized.id!=='default'&&!result.some(item=>item.id===normalized.id))result.push(normalized);}catch{}return result.slice(0,31);}
+function safeFormulas(rows){return (Array.isArray(rows)?rows:[]).filter(row=>row&&typeof row.id==='string'&&/^[a-zA-Z0-9_-]{1,80}$/u.test(row.id)&&typeof row.name==='string'&&row.name.length<=80&&validateTitleFormula(row.formula).valid).map(row=>({id:row.id,name:row.name,formula:row.formula})).slice(0,30);}
+function safeOutput(value={}){return {title:sanitizeClientText(String(value.title??'')),body:sanitizeClientText(String(value.body??'')),tags:sanitizeClientText(String(value.tags??''))};}
+
+function setupContentStudio({mount,read,write,getFields,getOutput,setOutput,toast=()=>{},onProfileChange=()=>{},previewTitle}={}){
+ if(!mount)return null;
+ const make=(tag,text,options={})=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;Object.assign(node,options);return node;};
+ const notify=message=>{status.textContent=message;toast(message);};
+ let history=read(keys.history,{}),profiles=safeProfiles(read(keys.profiles,[])),formulas=safeFormulas(read(keys.formulas,[])),selection=safeSelection(read(keys.selection,{})),pending=null;
+ let baseline={...getOutput()},manual=new Set();
+ const details=make('details'),summary=make('summary','Заголовки, сохранённые стили и проверка правок'),body=make('div',undefined,{className:'content-studio-body'});
+ mount.classList.add('content-studio');mount.replaceChildren(details);details.append(summary,body);
+ const status=make('p','Настройки применяются при следующей генерации.',{className:'muted'});status.setAttribute('role','status');
+ const section=(title)=>{const block=make('section'),heading=make('h3',title);block.append(heading);body.append(block);return block;};
+ const label=(block,text,node)=>{const wrapper=make('label',text);wrapper.append(node);block.append(wrapper);return node;};
+ const button=(block,text,action)=>{const node=make('button',text,{type:'button',className:'btn'});node.onclick=action;block.append(node);return node;};
+ const select=(block,title,rows)=>{const node=label(block,title,make('select'));for(const [value,text] of rows)node.append(make('option',text,{value}));return node;};
+ const profileSection=section('Профили оформления текста');
+ const profileSelect=select(profileSection,'Сохранённый стиль',[]),profileName=label(profileSection,'Название своего стиля',make('input',undefined,{type:'text',maxLength:80,placeholder:'Например, лаконично и без эмодзи'}));
+ const punctuation=select(profileSection,'Пунктуация',[['standard','Обычная'],['compact','Меньше пустых строк'],['fullwidth','Китайская пунктуация']]);
+ const emoji=select(profileSection,'Эмодзи',[['source','Сохранить'],['none','Без декоративных эмодзи']]);
+ const addressing=select(profileSection,'Обращение',[['neutral','Нейтральное'],['polite','Вежливое 您'],['friendly','Дружелюбное 你']]);
+ const uid=prefix=>prefix+'-'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
+ const commitSelection=()=>{if(write(keys.selection,selection)!==false){onProfileChange(settings());return true;}return false;};
+ function renderProfiles(){profileSelect.replaceChildren();for(const row of profiles)profileSelect.append(make('option',row.name,{value:row.id}));if(!profiles.some(row=>row.id===selection.profile))selection.profile='default';profileSelect.value=selection.profile;const row=profiles.find(row=>row.id===selection.profile);profileName.value=row.id==='default'?'':row.name;punctuation.value=row.punctuation;emoji.value=row.emoji;addressing.value=row.addressing;}
+ profileSelect.onchange=()=>{selection.profile=profileSelect.value;renderProfiles();commitSelection();};
+ button(profileSection,'Сохранить стиль',()=>{try{const old=profiles.find(row=>row.id===selection.profile),profile=normalizeStudioProfile({id:old?.id==='default'?uid('style'):old.id,name:profileName.value,punctuation:punctuation.value,emoji:emoji.value,addressing:addressing.value});const next=[...profiles.filter(row=>row.id!==profile.id),profile];if(next.length>31)throw Error('Допускается до 30 своих стилей');if(write(keys.profiles,next.filter(row=>row.id!=='default'))===false)return;profiles=next;selection.profile=profile.id;renderProfiles();commitSelection();notify('Стиль сохранён. Факты объявления сохраняются.');}catch(error){notify(error.message);}});
+ button(profileSection,'Удалить свой стиль',()=>{if(selection.profile==='default')return notify('Обычный стиль остаётся доступным');const next=profiles.filter(row=>row.id!==selection.profile);if(write(keys.profiles,next.filter(row=>row.id!=='default'))===false)return;profiles=next;selection.profile='default';renderProfiles();commitSelection();});
+ const formulaSection=section('Своя формула заголовка');
+ const formulaSelect=select(formulaSection,'Формула',[['','Автоматические заголовки']]),formulaName=label(formulaSection,'Название формулы',make('input',undefined,{type:'text',maxLength:80})),formulaText=label(formulaSection,'Шаблон с проверяемыми полями',make('textarea',undefined,{rows:3,maxLength:500,placeholder:'{city}｜{layout}｜{area}｜{price}'}));
+ formulaSection.append(make('p','Поля: '+TITLE_FORMULA_VARIABLES.map(key=>'{'+key+'}').join(' ')+' . Неизвестные факты пропускаются; новые характеристики формула не подтверждает.',{className:'muted'}));
+ const formulaPreview=make('output',undefined,{className:'content-studio-preview'});formulaSection.append(formulaPreview);
+ function renderFormulas(){formulaSelect.replaceChildren(make('option','Автоматические заголовки',{value:''}));for(const row of formulas)formulaSelect.append(make('option',row.name,{value:row.id}));const row=formulas.find(row=>row.id===selection.formula);if(!row)selection.formula='';formulaSelect.value=selection.formula;formulaName.value=row?.name||'';formulaText.value=row?.formula||'';formulaPreview.textContent='';}
+ formulaSelect.onchange=()=>{selection.formula=formulaSelect.value;renderFormulas();commitSelection();};
+ function checkFormula(){const validation=validateTitleFormula(formulaText.value);if(!validation.valid)throw Error(validation.problems.join(' · '));const value=previewTitle?previewTitle(formulaText.value):renderTitleFormula(formulaText.value,{});if(typeof value!=='string')throw Error('Не удалось проверить заголовок');formulaPreview.textContent=value||'Нет известных полей для этой формулы';return value;}
+ button(formulaSection,'Предпросмотр',()=>{try{checkFormula();}catch(error){notify(error.message);}});
+ button(formulaSection,'Сохранить формулу',()=>{try{checkFormula();const name=formulaName.value.trim();if(!name||name.length>80)throw Error('Укажите название формулы до 80 знаков');const row={id:selection.formula||uid('formula'),name,formula:formulaText.value};const next=[...formulas.filter(item=>item.id!==row.id),row];if(next.length>30)throw Error('Допускается до 30 формул');if(write(keys.formulas,next)===false)return;formulas=next;selection.formula=row.id;renderFormulas();commitSelection();notify('Формула сохранена для будущих заголовков');}catch(error){notify(error.message);}});
+ button(formulaSection,'Удалить формулу',()=>{const next=formulas.filter(row=>row.id!==selection.formula);if(write(keys.formulas,next)===false)return;formulas=next;selection.formula='';renderFormulas();commitSelection();});
+ const historySection=section('История выбранных заголовков');
+ historySection.append(make('p','История привязана к текущему объявлению. Восстановление меняет только заголовок.',{className:'muted'}));
+ const historySelect=select(historySection,'Предыдущая версия',[]),historyPreview=make('div',undefined,{className:'content-studio-diff'});historySection.append(historyPreview);
+ function appendDiff(parent,changes){for(const row of changes){const node=make(row.kind==='added'?'ins':row.kind==='removed'?'del':'span',row.text);parent.append(node);}}
+ function showHistory(){historyPreview.replaceChildren();const row=historyRows().find(item=>item.at+'\n'+item.title===historySelect.value);if(!row)return;appendDiff(historyPreview,textDiff(getOutput()?.title||'',row.title));}
+ historySelect.onchange=showHistory;
+ function historyRows(){const rows=history?.[titleHistoryKey(getFields())];return Array.isArray(rows)?rows.filter(row=>row&&typeof row.title==='string'&&typeof row.at==='string').slice(0,50):[];}
+ function renderHistory(){historySelect.replaceChildren();for(const row of historyRows())historySelect.append(make('option',new Date(row.at).toLocaleString('ru-RU')+' · '+row.title,{value:row.at+'\n'+row.title}));showHistory();}
+ button(historySection,'Запомнить текущий заголовок',()=>{recordTitle(getOutput()?.title,'manual');notify('Текущий заголовок сохранён в истории');});
+ button(historySection,'Восстановить выбранный заголовок',()=>{const row=historyRows().find(item=>item.at+'\n'+item.title===historySelect.value);if(!row)return notify('Выберите сохранённый заголовок');try{const title=sanitizeClientText(row.title);if(!title)throw Error('В версии нет текста для публикации');recordTitle(getOutput()?.title,'manual');setOutput({...getOutput(),title});recordTitle(title,'restored');notify('Заголовок восстановлен; описание и теги сохранены');}catch(error){notify(error.message);}});
+ const review=section('Изменения перед перегенерацией');review.hidden=true;review.setAttribute('aria-live','polite');
+ const diff=make('div',undefined,{className:'content-studio-diff'});review.append(make('p','Красным показан удаляемый текст, зелёным — новый. Примените результат или сохраните текущую редакцию.'),diff);
+ button(review,'Применить новую версию',async()=>{if(!pending)return;const task=pending;if(JSON.stringify(getOutput())!==task.outputFingerprint||JSON.stringify(getFields())!==task.fieldsFingerprint){pending=null;review.hidden=true;return notify('Поля или текст изменились после предпросмотра. Запустите генерацию ещё раз.');}pending=null;review.hidden=true;try{recordTitle(getOutput()?.title,'manual');await task.commit(task.candidate);markCommitted(getOutput(),task.keys);recordTitle(task.candidate.title,'generated');}catch(error){notify(error.message);}});
+ button(review,'Оставить текущий текст',()=>{pending=null;review.hidden=true;notify('Текущая редакция сохранена');});
+ body.append(status);
+ function settings(){return {studioProfile:clone(profiles.find(row=>row.id===selection.profile)||DEFAULT_STUDIO_PROFILE),titleFormula:formulas.find(row=>row.id===selection.formula)?.formula||''};}
+ function recordTitle(title,kind='selected'){try{const next=recordTitleHistory(history,titleHistoryKey(getFields()),title,kind);if(write(keys.history,next)===false)return false;history=next;renderHistory();return true;}catch(error){notify(error.message);return false;}}
+ function requestRegeneration(candidate,commit){
+  try{const before=safeOutput(getOutput()),next=safeOutput({...before,...candidate}),changes=publicationTextDiff(before,next);
+   const affected=changes.some(row=>manual.has(row.key)||row.before!==String(baseline[row.key]??''));
+   const committedKeys=['title','body','tags'].filter(key=>Object.hasOwn(candidate,key));
+   if(!changes.length||!affected||!Object.values(before).some(value=>value.trim())){commit(candidate);markCommitted(getOutput(),committedKeys);recordTitle(next.title,'generated');return true;}
+   pending={candidate:{...candidate,...next},keys:committedKeys,commit,outputFingerprint:JSON.stringify(getOutput()),fieldsFingerprint:JSON.stringify(getFields())};diff.replaceChildren();
+   const labels={title:'Заголовок',body:'Описание',tags:'Теги'};
+   for(const row of changes){const block=make('section'),heading=make('h4',labels[row.key]),text=make('div');appendDiff(text,row.changes);block.append(heading,text);diff.append(block);}
+   review.hidden=false;details.open=true;review.scrollIntoView?.({block:'nearest',behavior:'smooth'});return false;
+  }catch(error){notify(error.message);return false;}
+ }
+ function refresh(){pending=null;review.hidden=true;renderHistory();}
+ function markCommitted(output=getOutput(),committedKeys=['title','body','tags']){for(const key of committedKeys)if(['title','body','tags'].includes(key)){baseline[key]=String(output[key]??'');manual.delete(key);}}
+ function markManual(key){if(['title','body','tags'].includes(key))manual.add(key);}
+ function applySettings(value={}){
+  try{
+   if(Object.hasOwn(value,'studioProfile')){
+    const profile=normalizeStudioProfile(value.studioProfile||{});
+    // Profiles embedded in a saved card remain selectable even if the local
+    // catalogue was cleared; loading a card never changes its saved layout.
+    profiles=[...profiles.filter(row=>row.id!==profile.id),profile];selection.profile=profile.id;
+   }
+   if(Object.hasOwn(value,'titleFormula')){
+    if(value.titleFormula){const validation=validateTitleFormula(value.titleFormula);if(!validation.valid)throw Error(validation.problems.join(' · '));let row=formulas.find(item=>item.formula===value.titleFormula);if(!row){row={id:uid('card-formula'),name:'Формула сохранённой карточки',formula:value.titleFormula};formulas=[...formulas.slice(-29),row];}selection.formula=row.id;}
+    else selection.formula='';
+   }
+   renderProfiles();renderFormulas();refresh();
+  }catch(error){notify(error.message);}
+ }
+ renderProfiles();renderFormulas();renderHistory();
+ return {recordTitle,refresh,settings,applySettings,markManual,markCommitted,selectedProfile:()=>settings().studioProfile,profiles:()=>clone(profiles),requestRegeneration};
+}
+
+// Room vocabulary describes supplied layout data, never the presence of a bed.
+// Audience copy is editorial framing and does not grant permission to rent.
+const DESCRIPTION_AUDIENCES=Object.freeze([
+  {id:'general',label:'Общая'},
+  {id:'student',label:'Студенты'},
+  {id:'family',label:'Семья'},
+  {id:'professional',label:'Работающие / командированные'},
+]);
+const listingPositiveRoomInteger=value=>value!==''&&value!==null&&value!==undefined&&Number.isInteger(Number(value))&&Number(value)>0?Number(value):null;
+const listingRoomCountLabel=(value,noun)=>listingPositiveRoomInteger(value)===null?'':listingPositiveRoomInteger(value)+'间'+noun;
+function listingSeparateBedroomClaim(text){
+  for(const match of String(text).matchAll(/(?:独立|单独|单独的|封闭式)\s*卧室|(?:отдельн[а-яё]*|изолированн[а-яё]*)\s+спальн[а-яё]*|separate\s+bedroom/giu)){
+    const before=String(text).slice(Math.max(0,match.index-35),match.index),after=String(text).slice(match.index+match[0].length,match.index+match[0].length+30);
+    if(/(?:нет|без|не предусмотрена|no|without)\s*$/iu.test(before)||/(?:没有|无|不含)\s*$/u.test(before)||/^\s*(?:нет|отсутствует|не предусмотрена|不存在)/iu.test(after))continue;
+    return true;
+  }
+  return false;
+}
+function roomTerminology(fields={}){
+  const value=fields&&typeof fields==='object'&&!Array.isArray(fields)?fields:{};
+  const studio=value.layout==='studio',warnings=[];
+  const bedrooms=listingPositiveRoomInteger(value.bedrooms),livingRooms=listingPositiveRoomInteger(value.livingRooms);
+  if(studio&&(bedrooms!==null||value.separateBedroom===true||value.separate===true||listingPositiveRoomInteger(value.rooms)>1))warnings.push('Планировка противоречива: Studio указана вместе с отдельными комнатами или спальней. Проверьте планировку; отдельная спальня не выводится из кровати.');
+  const manual=[value.description,value.highlight,value.sourceDescription].filter(item=>typeof item==='string').join('\n');
+  if(studio&&listingSeparateBedroomClaim(manual))warnings.push('В авторском тексте Studio заявлена отдельная спальня. Сверьте текст с планировкой перед публикацией.');
+  if(value.layout==='euro2'&&bedrooms!==null&&bedrooms!==1)warnings.push('Для евро-2 ожидается одна спальня, но в полях указано '+bedrooms+'. Уточните планировку; число комнат не заменяет число спален.');
+  if(value.layout==='euro3'&&bedrooms!==null&&bedrooms!==2)warnings.push('Для евро-3 ожидаются две спальни, но в полях указано '+bedrooms+'. Уточните планировку; число комнат не заменяет число спален.');
+  if(bedrooms!==null&&listingPositiveRoomInteger(value.rooms)!==null&&!['euro2','euro3','studio'].includes(value.layout)&&bedrooms>Number(value.rooms))warnings.push('Спален больше, чем комнат в объявлении. Проверьте независимые поля комнат и спален.');
+  return {rooms:listingPositiveRoomInteger(value.rooms),bedrooms,livingRooms,
+    roomTerm:'房间',bedroomTerm:'卧室',livingRoomTerm:'客厅',livingAreaTerm:'居住面积',
+    bedroomLabel:studio?'':listingRoomCountLabel(value.bedrooms,'卧室'),
+    livingRoomLabel:studio?'':listingRoomCountLabel(value.livingRooms,'客厅'),
+    separateRooms:!studio&&value.separate===true,warnings};
+}
+
+const listingRoomCountValue=raw=>({одна:'1',один:'1',одной:'1',две:'2',два:'2',двух:'2',три:'3',трех:'3',трёх:'3',четыре:'4'})[String(raw).toLowerCase()]||String(raw);
+function extractRoomCounts(text=''){
+  const value=String(text),out={};
+  const count='(\\d{1,2}|одна|один|одной|две|два|двух|три|трех|трёх|четыре)';
+  for(const [field,noun] of [['bedrooms','(?:спальн(?:я|и|ей|ь|е|ю)?|спален)'],['livingRooms','гостин(?:ая|ые|ых|ой|ую)?']]){
+    const label=new RegExp('(?:^|[\\s,;\\n])(?:количество\\s+)?'+noun+'\\s*[:—-]\\s*'+count+'(?!\\d)(?!\\s*(?:м[²2]?|кв|㎡))','iu').exec(value);
+    const inline=new RegExp('(?<![\\p{L}\\d])'+count+'\\s*(?:отдельн[а-яё]*\\s+|изолированн[а-яё]*\\s+)?'+noun+'(?![а-яё])','iu').exec(value);
+    const match=label||inline;
+    if(match&&!/(?:^|\s)(?:не|нет|без)\s*$/iu.test(value.slice(Math.max(0,match.index-15),match.index)))out[field]=listingRoomCountValue(match[1]);
+  }
+  return out;
+}
+
+function descriptionAudience(value='general'){
+  const aliases={worker:'professional',working:'professional',family:'family',student:'student',professional:'professional',general:'general'};
+  return typeof value==='string'&&Object.hasOwn(aliases,value)?aliases[value]:'general';
+}
+const listingAudienceIntroductions=Object.freeze({
+  student:[
+    '在莫斯科读书找住处，可以先按自己的预算核对下面的户型、配置和出行信息。',
+    '给关注莫斯科租房的同学：先看房屋参数，再核对所需院校的实际通勤。',
+    '留学租房先整理需求：预算、生活配置与上课路线，下面是这套房源已提供的信息。',
+  ],
+  family:[
+    '与家人一起找住处，可以先核对房间安排、生活配置和租赁条件；具体入住要求需另行确认。',
+    '关注共同居住空间的家庭，可以从户型与收纳配置开始了解这套房源；入住条件请逐项核对。',
+    '为家人找住处，先把面积、房间安排与日常费用看清楚，具体入住要求再向房东确认。',
+  ],
+  professional:[
+    '在莫斯科工作找住处，可以先核对预算、室内配置与工作地点的实际通勤。',
+    '关注工作与生活安排的朋友，可以按下面的房屋资料逐项比较租住需求。',
+    '工作期间选择住处，先看房屋配置与费用，再确认租期和到工作地点的路线。',
+  ],
+});
+function audienceIntroduction(audience='general',variation=0){
+  const rows=listingAudienceIntroductions[descriptionAudience(audience)];
+  if(!rows)return '';
+  const index=Number.isFinite(Number(variation))?Math.abs(Math.trunc(Number(variation))):0;
+  return rows[index%rows.length];
+}
+
+function normalizeListingStudioProfile(profile={}){
+  const value=profile&&typeof profile==='object'&&!Array.isArray(profile)?profile:{};
+  return {id:typeof value.id==='string'?value.id.slice(0,80):'',name:typeof value.name==='string'?value.name.slice(0,100):'',
+    punctuation:['standard','compact','fullwidth'].includes(value.punctuation)?value.punctuation:'standard',
+    emoji:['source','none'].includes(value.emoji)?value.emoji:'source',
+    addressing:['neutral','polite','friendly'].includes(value.addressing)?value.addressing:'neutral'};
+}
+function applyStudioProfile(text='',profile={}){
+  const selected=normalizeListingStudioProfile(profile);let output=String(text??'');
+  if(selected.addressing!=='neutral'){
+    const pronoun=selected.addressing==='polite'?'您':'你';
+    output=output.replace(/欢迎(?:用)?中文/gu,'欢迎'+pronoun+'用中文');
+  }
+  if(selected.emoji==='none')output=output.replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D]/gu,'').replace(/^[ \t]+/gm,'').replace(/[ \t]+$/gm,'');
+  if(selected.punctuation==='compact')output=output.replace(/\n[ \t]*\n+/g,'\n');
+  if(selected.punctuation==='fullwidth'){
+    // URLs, e-mail, identifiers and numeric punctuation must remain usable.
+    output=output.split(/(https?:\/\/[^\s]+|[a-zA-Z][a-zA-Z0-9_.@/+:-]*|\d+(?:[:./-]\d+)+)/gu)
+      .map((part,index)=>index%2?part:part.replace(/[:;()]/g,char=>({':':'：',';':'；','(':'（',')':'）'})[char])).join('');
+  }
+  return output.trim();
+}
+
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
 const engineCommunityKey=value=>String(value).toLowerCase().replaceAll('ё','е');
 const engineCommunityMeanings=new Map(Object.entries(COMMUNITY_RENTAL_RULES).map(([ru,zh])=>[engineCommunityKey(ru),zh]));
@@ -1289,18 +1567,29 @@ function extractUniversityReferences(text){
 }
 function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   v={...v};
+  const roomInfo=roomTerminology(v),semanticWarnings=[...roomInfo.warnings],studioProfile=normalizeListingStudioProfile(v.studioProfile);
   const photoFacts=resolvePhotoFurniture(v,FEATURES);
   v.features=photoFacts.features;v.featureCounts=photoFacts.featureCounts;
   const sourceConditions=detectConditions(v.sourceDescription||v.sourceAudit?.description||'').facts;
   const sharingAllowed=Number(v.rooms)===2&&v.separate===true&&!['studio','euro2'].includes(v.layout);
   const unknown=[],problems=[],translationWarnings=[];
+  // Missing metadata belongs to legacy/manual monthly-ruble cards. An explicit
+  // unknown value is a new source observation, not permission to assume units.
+  const suppliedPrice=v.price!==undefined&&v.price!==null&&v.price!=='';
+  const incompatiblePeriod=!!(v.pricePeriod&&v.pricePeriod!=='month'&&(v.pricePeriod!=='unknown'||suppliedPrice));
+  const incompatibleCurrency=!!(v.priceCurrency&&v.priceCurrency!=='RUB'&&(v.priceCurrency!=='unknown'||suppliedPrice));
+  const incompatibleDepositCurrency=Number(v.deposit)>0&&!!v.depositCurrency&&v.depositCurrency!=='RUB';
+  if(incompatiblePeriod)problems.push(v.pricePeriod==='unknown'?'Период ставки не подтверждён. Проверьте и выберите месячную цену перед публикацией.':'Источник указывает аренду не за месяц ('+v.pricePeriod+'). Нельзя публиковать её как ₽/месяц; выберите подтверждённую месячную цену.');
+  if(incompatibleCurrency)problems.push(v.priceCurrency==='unknown'?'Валюта ставки не подтверждена. Проверьте и выберите цену в RUB перед публикацией.':'Валюта источника '+v.priceCurrency+' не совпадает с рублёвой формой. Укажите подтверждённую цену в RUB; автоматический пересчёт не выполняется.');
+  if(incompatibleDepositCurrency)problems.push('Валюта залога '+v.depositCurrency+' не подтверждает сумму в рублях. Проверьте и укажите залог в RUB перед публикацией; автоматический пересчёт не выполняется.');
   for(const conflict of photoFacts.conflicts)translationWarnings.push('Фото и источник расходятся: '+conflict.label+'. В публикации показан видимый предмет; актуальную комплектацию нужно проверить.');
   const zh=s=>{const t=translateRussian(s,{rules,mode:'safe'});unknown.push(...(t.unknown||[]));if(/[а-яё]/i.test(t.text)&&!t.unknown?.length)unknown.push(String(s));translationWarnings.push(...(t.warnings||[]));return t.text;};
   const metroZh=s=>translateMetroName(s,{rules,dictionary:DICTIONARY});
   const positive=k=>Number(v[k])>0;
-  for(const k of ['price','deposit','area','kitchen','living','bedroomArea','floor','floors','occupants','registrationPeople','registrationMonths']){
+  for(const k of ['price','deposit','area','kitchen','living','bedroomArea','rooms','bedrooms','livingRooms','floor','floors','occupants','registrationPeople','registrationMonths']){
     if(v[k]!==undefined && v[k]!=='' && (!Number.isFinite(Number(v[k]))||Number(v[k])<0))problems.push('Проверьте значение: '+k);
   }
+  for(const key of ['rooms','bedrooms','livingRooms'])if(v[key]!==undefined&&v[key]!==null&&v[key]!==''&&!Number.isInteger(Number(v[key])))problems.push('Количество должно быть целым: '+key);
   if(positive('floor')&&positive('floors')&&Number(v.floor)>Number(v.floors))problems.push('Этаж выше этажности дома');
   if(positive('kitchen')&&positive('area')&&Number(v.kitchen)>Number(v.area))problems.push('Кухня больше общей площади');
   const routes=parseRoutes(v.transit);
@@ -1357,7 +1646,9 @@ function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
   else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');
   else if(v.layout==='studio')push('🏠 户型：开放式Studio');
-  else push('🏠 户型：'+layout+(v.separate?'｜房间独立':''));
+  else push('🏠 户型：'+layout+(roomInfo.separateRooms?'｜房间独立':''));
+  if(roomInfo.bedroomLabel)push('🛏 卧室数量：'+roomInfo.bedroomLabel);
+  if(roomInfo.livingRoomLabel)push('🛋 客厅数量：'+roomInfo.livingRoomLabel);
   if(area)push('📐 面积：'+area);
   if(positive('living'))push('🛋 居住面积：'+v.living+'㎡');
   if(positive('kitchen'))push('🍳 厨房：'+v.kitchen+'㎡');
@@ -1382,7 +1673,7 @@ function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     const lead=wording('🏡 房源介绍：','🏡 关于这套住房：','🌿 莫斯科租房参考：','🏠 空间与配置：','✨ 这套公寓的信息：');
     const apartmentHooks=[];
     for(const [id,text] of [['desk','配有书桌，工作学习更方便'],['piano','室内配有钢琴'],['closet','设有独立衣帽间'],['pantry','设有独立储藏室'],['computer','室内配有电脑'],['dishwasher','配有洗碗机'],['wardrobe','配有衣柜'],['sofa','配有沙发'],['projector','配有投影仪']])if(featureSet.has(id))apartmentHooks.push(text);
-    if(v.separate)apartmentHooks.push('房间彼此独立');
+    if(roomInfo.separateRooms)apartmentHooks.push('房间彼此独立');
     const apartmentHook=apartmentHooks[copyVariation%Math.max(1,apartmentHooks.length)]||'';
     const intro=[area?area+'的'+layout:layout,apartmentHook,v.occupants?'房源描述注明可入住'+v.occupants+'人':null].filter(Boolean).join('，')+'。';
     const descriptions=[intro,'这套'+intro,'先了解面积、租金与入住条件：'+intro,'房源资料整理如下：'+intro];
@@ -1466,8 +1757,15 @@ function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
       editorial:{titleStyles:titleIndexes.map(index=>getListingStyle('title',index,titleContext)),descriptionStyle:getListingStyle('description',copyVariation,blockContext),stats:listingStyleStats()}};
   }
   if(universityTarget)titles[0]+='｜🎓通勤目标：'+universityTarget;
+  if(typeof v.titleFormula==='string'&&v.titleFormula.trim())try{
+    const customTitle=renderTitleFormula(v.titleFormula,titleContext);if(customTitle)titles[0]=customTitle;
+  }catch(error){problems.push('Формула заголовка: '+error.message);}
+  const audienceLead=audienceIntroduction(v.audience,copyVariation);
+  if(audienceLead)body=audienceLead+'\n\n'+body;
+  titles=titles.map(title=>applyStudioProfile(title,studioProfile));body=applyStudioProfile(body,studioProfile);
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
-  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],problems,templateInfo};
+  if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
+  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo};
 }
 
 // Trigger dictionaries describe vocabulary, not evidence. A larger vocabulary
@@ -1490,6 +1788,7 @@ function extractFacts(text,rules=DICTIONARY) {
   const capture=(key,re)=>{const m=t.match(re);if(m)out[key]=m[1].replace(/\s/g,'').replace(',','.');};
   capture('area',/(?:общая\s*площадь\s*[:—-]?\s*)?(\d+(?:[.,]\d+)?)\s*(?:м²|м2|кв\.?\s*м|㎡)/i);
   capture('rooms',/(\d+)\s*[- ]?(?:комн|комнат)/i);
+  Object.assign(out,extractRoomCounts(text));
   const f=t.match(/(\d+)\s*\/\s*(\d+)\s*(?:эт|楼|层)/i)||t.match(/этаж\s*[:—-]?\s*(\d+)\s*(?:из|\/)\s*(\d+)/i);if(f){out.floor=f[1];out.floors=f[2];}
   else {capture('floor',/(?:этаж\s*[:—-]?\s*)(\d+)/i);capture('floors',/(\d+)\s*[- ]?этажн/i);}
   const price=t.match(/(?:аренда|цена|стоимость|月租|租金)\s*[:：—-]?\s*(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?\s*(?:₽|руб|卢布)?/i)

@@ -259,6 +259,38 @@ def eligible(seller, commission):
         return False
 
 
+def batch_publication_decision(listing, url):
+    """Classify observed source availability before generating a new candidate.
+
+    A manifest's eligibility is an operator filter, not evidence that its Avito
+    page is still published. Missing/partial availability remains retryable and
+    must not enter `seen`; old CIAN imports retain their existing intake flow.
+    """
+    holders = [listing]
+    if isinstance(listing.get('fields'), dict):
+        holders.append(listing['fields'])
+    known = ('active', 'archived', 'removed', 'unavailable', 'unknown')
+    states = [row.get('publicationStatus') for row in holders
+              if row.get('publicationStatus') in known]
+    inactive = next((state for state in states
+                     if state in ('archived', 'removed', 'unavailable')), None)
+    if inactive:
+        return {'status': 'filtered', 'publicationStatus': inactive,
+                'reason': 'Источник отмечает объявление как ' +
+                          {'archived': 'архивное', 'removed': 'снятое',
+                           'unavailable': 'недоступное'}[inactive] +
+                          '; оно исключено из новых.'}
+    host = (urllib.parse.urlsplit(url).hostname or '').lower()
+    is_avito = host == 'avito.ru' or host.endswith('.avito.ru')
+    veto = any(row.get('eligibleForNew') is False for row in holders)
+    state = 'active' if 'active' in states else 'unknown'
+    if veto or is_avito and state != 'active':
+        return {'status': 'pending', 'publicationStatus': state,
+                'reason': 'Статус публикации не подтверждён источником; '
+                          'объявление отложено на проверку и не добавлено в новые.'}
+    return {'status': 'new', 'publicationStatus': state}
+
+
 def generate(text, data=None, rules=None, prefs=None):
     from node_runtime import resolve_node
     node = resolve_node()
@@ -368,8 +400,12 @@ def main(argv=None):
                     result.append({'url': url, 'status': 'seen'});continue
                 try:
                     listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel, browser_scroll=args.browser_scroll)
+                    publication = batch_publication_decision(listing, url)
+                    if publication['status'] != 'new':
+                        result.append({'url': url, **publication})
+                        continue
                     generated = generate(listing['text'], {**listing.get('fields',{}), 'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
-                    row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
+                    row = {'url': url, **publication, 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
                         row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12],args.crop_photos,args.crop_bottom,args.cache_dir,listing.get('photoItems'))
                     result.append(row)

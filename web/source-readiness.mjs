@@ -35,7 +35,7 @@ export function importStageMark(step){
   return step.state==='partial'||step.quality==='partial'||step.state==='error'||step.state==='waitingManual'?'!':step.state==='done'?'✓':'…';
 }
 
-const metadataKeys=['sourceReadiness','photoItems','layouts','sourceDates','transitDetails'];
+const metadataKeys=['sourceReadiness','photoItems','layouts','sourceDates','transitDetails','pricePeriod','priceCurrency','depositCurrency','commissionCurrency','sellerSource','commissionSource','commissionStatus','commissionAmount','oneTimeFees','publicationStatus','eligibleForNew','locationSource'];
 function metadataUrl(value){try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}}
 function metadataString(value,max=500){return typeof value==='string'?value.slice(0,max):null;}
 function metadataMedia(value,layout){
@@ -57,7 +57,23 @@ export function sourceEditorMetadata(fields,listing){
   const output={},primary=fields&&typeof fields==='object'?fields:{},fallback=listing&&typeof listing==='object'?listing:{};
   for(const key of metadataKeys){
     const value=primary[key]??fallback[key];
-    if(key==='sourceReadiness'){
+    if(key==='pricePeriod'){
+      if(['month','day','week','year','unknown'].includes(value))output[key]=value;
+    }else if(['priceCurrency','depositCurrency','commissionCurrency'].includes(key)){
+      if(['RUB','USD','EUR','unknown'].includes(value))output[key]=value;
+    }else if(key==='publicationStatus'){
+      if(['active','archived','removed','unknown'].includes(value))output[key]=value;
+    }else if(key==='commissionStatus'){
+      if(['present','none','unknown'].includes(value))output[key]=value;
+    }else if(key==='eligibleForNew'){
+      if(typeof value==='boolean')output[key]=value;
+    }else if(['sellerSource','commissionSource','locationSource'].includes(key)){
+      const safe=metadataString(value,500);if(safe!==null)output[key]=safe;
+    }else if(key==='commissionAmount'){
+      if(['string','number'].includes(typeof value)&&/^\d+(?:\.\d{1,2})?$/.test(String(value)))output[key]=String(value).slice(0,20);
+    }else if(key==='oneTimeFees'&&Array.isArray(value)){
+      output[key]=value.slice(0,30).filter(row=>row&&typeof row==='object').map(row=>({label:metadataString(row.label,150)||'Разовый платёж',amount:metadataString(row.amount,30)??(typeof row.amount==='number'&&Number.isFinite(row.amount)?String(row.amount):''),currency:['RUB','USD','EUR','unknown'].includes(row.currency)?row.currency:'unknown',source:metadataString(row.source,500)||''}));
+    }else if(key==='sourceReadiness'){
       if(!value||!['ready','partial','unknown'].includes(value.state))continue;
       const feedback=sourceReadinessFeedback({sourceReadiness:value});
       output[key]={state:feedback.state,partial:feedback.partial,completed:value.completed===true&&!feedback.partial,sections:[]};
@@ -77,7 +93,8 @@ export function sourceEditorMetadata(fields,listing){
         const item={};for(const text of ['name','line','color','source']){const safe=metadataString(row[text],text==='name'?200:80);if(safe!==null)item[text]=safe;}
         if(typeof row.id==='string')item.id=row.id.slice(0,80);else if(typeof row.id==='number'&&Number.isFinite(row.id)||row.id===null)item.id=row.id;
         if(['walk','public','car','unknown'].includes(row.mode))item.mode=row.mode;
-        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(row.time===null)item.time=null;
+        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(typeof row.time==='string'&&/^\d{1,4}(?:[–-]\d{1,4})?$/.test(row.time))item.time=row.time;else if(row.time===null)item.time=null;
+        const url=metadataUrl(row.url);if(url)item.url=url;
         return item;
       });
     }

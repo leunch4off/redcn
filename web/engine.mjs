@@ -8,6 +8,8 @@ import {getTemplate,renderTemplate,catalogStats,getListingStyle,renderListingTem
 import {translateMetroName} from './metro-names.mjs';
 import {COMMUNITY_RENTAL_RULES,COMMUNITY_RENTAL_META} from './community-phrases.mjs';
 import {UNIVERSITY_CATALOG,universityRules,resolveUniversity,resolveCampus,universityStats} from './university-catalog.mjs';
+import {roomTerminology,extractRoomCounts,audienceIntroduction,descriptionAudience,normalizeListingStudioProfile,applyStudioProfile} from './listing-semantics.mjs';
+import {renderTitleFormula} from './content-studio.mjs';
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
 const engineCommunityKey=value=>String(value).toLowerCase().replaceAll('ё','е');
 const engineCommunityMeanings=new Map(Object.entries(COMMUNITY_RENTAL_RULES).map(([ru,zh])=>[engineCommunityKey(ru),zh]));
@@ -186,18 +188,29 @@ export function extractUniversityReferences(text){
 }
 export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   v={...v};
+  const roomInfo=roomTerminology(v),semanticWarnings=[...roomInfo.warnings],studioProfile=normalizeListingStudioProfile(v.studioProfile);
   const photoFacts=resolvePhotoFurniture(v,FEATURES);
   v.features=photoFacts.features;v.featureCounts=photoFacts.featureCounts;
   const sourceConditions=detectConditions(v.sourceDescription||v.sourceAudit?.description||'').facts;
   const sharingAllowed=Number(v.rooms)===2&&v.separate===true&&!['studio','euro2'].includes(v.layout);
   const unknown=[],problems=[],translationWarnings=[];
+  // Missing metadata belongs to legacy/manual monthly-ruble cards. An explicit
+  // unknown value is a new source observation, not permission to assume units.
+  const suppliedPrice=v.price!==undefined&&v.price!==null&&v.price!=='';
+  const incompatiblePeriod=!!(v.pricePeriod&&v.pricePeriod!=='month'&&(v.pricePeriod!=='unknown'||suppliedPrice));
+  const incompatibleCurrency=!!(v.priceCurrency&&v.priceCurrency!=='RUB'&&(v.priceCurrency!=='unknown'||suppliedPrice));
+  const incompatibleDepositCurrency=Number(v.deposit)>0&&!!v.depositCurrency&&v.depositCurrency!=='RUB';
+  if(incompatiblePeriod)problems.push(v.pricePeriod==='unknown'?'Период ставки не подтверждён. Проверьте и выберите месячную цену перед публикацией.':'Источник указывает аренду не за месяц ('+v.pricePeriod+'). Нельзя публиковать её как ₽/месяц; выберите подтверждённую месячную цену.');
+  if(incompatibleCurrency)problems.push(v.priceCurrency==='unknown'?'Валюта ставки не подтверждена. Проверьте и выберите цену в RUB перед публикацией.':'Валюта источника '+v.priceCurrency+' не совпадает с рублёвой формой. Укажите подтверждённую цену в RUB; автоматический пересчёт не выполняется.');
+  if(incompatibleDepositCurrency)problems.push('Валюта залога '+v.depositCurrency+' не подтверждает сумму в рублях. Проверьте и укажите залог в RUB перед публикацией; автоматический пересчёт не выполняется.');
   for(const conflict of photoFacts.conflicts)translationWarnings.push('Фото и источник расходятся: '+conflict.label+'. В публикации показан видимый предмет; актуальную комплектацию нужно проверить.');
   const zh=s=>{const t=translateRussian(s,{rules,mode:'safe'});unknown.push(...(t.unknown||[]));if(/[а-яё]/i.test(t.text)&&!t.unknown?.length)unknown.push(String(s));translationWarnings.push(...(t.warnings||[]));return t.text;};
   const metroZh=s=>translateMetroName(s,{rules,dictionary:DICTIONARY});
   const positive=k=>Number(v[k])>0;
-  for(const k of ['price','deposit','area','kitchen','living','bedroomArea','floor','floors','occupants','registrationPeople','registrationMonths']){
+  for(const k of ['price','deposit','area','kitchen','living','bedroomArea','rooms','bedrooms','livingRooms','floor','floors','occupants','registrationPeople','registrationMonths']){
     if(v[k]!==undefined && v[k]!=='' && (!Number.isFinite(Number(v[k]))||Number(v[k])<0))problems.push('Проверьте значение: '+k);
   }
+  for(const key of ['rooms','bedrooms','livingRooms'])if(v[key]!==undefined&&v[key]!==null&&v[key]!==''&&!Number.isInteger(Number(v[key])))problems.push('Количество должно быть целым: '+key);
   if(positive('floor')&&positive('floors')&&Number(v.floor)>Number(v.floors))problems.push('Этаж выше этажности дома');
   if(positive('kitchen')&&positive('area')&&Number(v.kitchen)>Number(v.area))problems.push('Кухня больше общей площади');
   const routes=parseRoutes(v.transit);
@@ -254,7 +267,9 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.layout==='euro2')push('🏠 户型：一室一厅｜独立卧室＋厨房客厅');
   else if(v.layout==='euro3')push('🏠 户型：两室一厅｜两间卧室＋厨房客厅');
   else if(v.layout==='studio')push('🏠 户型：开放式Studio');
-  else push('🏠 户型：'+layout+(v.separate?'｜房间独立':''));
+  else push('🏠 户型：'+layout+(roomInfo.separateRooms?'｜房间独立':''));
+  if(roomInfo.bedroomLabel)push('🛏 卧室数量：'+roomInfo.bedroomLabel);
+  if(roomInfo.livingRoomLabel)push('🛋 客厅数量：'+roomInfo.livingRoomLabel);
   if(area)push('📐 面积：'+area);
   if(positive('living'))push('🛋 居住面积：'+v.living+'㎡');
   if(positive('kitchen'))push('🍳 厨房：'+v.kitchen+'㎡');
@@ -279,7 +294,7 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     const lead=wording('🏡 房源介绍：','🏡 关于这套住房：','🌿 莫斯科租房参考：','🏠 空间与配置：','✨ 这套公寓的信息：');
     const apartmentHooks=[];
     for(const [id,text] of [['desk','配有书桌，工作学习更方便'],['piano','室内配有钢琴'],['closet','设有独立衣帽间'],['pantry','设有独立储藏室'],['computer','室内配有电脑'],['dishwasher','配有洗碗机'],['wardrobe','配有衣柜'],['sofa','配有沙发'],['projector','配有投影仪']])if(featureSet.has(id))apartmentHooks.push(text);
-    if(v.separate)apartmentHooks.push('房间彼此独立');
+    if(roomInfo.separateRooms)apartmentHooks.push('房间彼此独立');
     const apartmentHook=apartmentHooks[copyVariation%Math.max(1,apartmentHooks.length)]||'';
     const intro=[area?area+'的'+layout:layout,apartmentHook,v.occupants?'房源描述注明可入住'+v.occupants+'人':null].filter(Boolean).join('，')+'。';
     const descriptions=[intro,'这套'+intro,'先了解面积、租金与入住条件：'+intro,'房源资料整理如下：'+intro];
@@ -363,8 +378,15 @@ export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
       editorial:{titleStyles:titleIndexes.map(index=>getListingStyle('title',index,titleContext)),descriptionStyle:getListingStyle('description',copyVariation,blockContext),stats:listingStyleStats()}};
   }
   if(universityTarget)titles[0]+='｜🎓通勤目标：'+universityTarget;
+  if(typeof v.titleFormula==='string'&&v.titleFormula.trim())try{
+    const customTitle=renderTitleFormula(v.titleFormula,titleContext);if(customTitle)titles[0]=customTitle;
+  }catch(error){problems.push('Формула заголовка: '+error.message);}
+  const audienceLead=audienceIntroduction(v.audience,copyVariation);
+  if(audienceLead)body=audienceLead+'\n\n'+body;
+  titles=titles.map(title=>applyStudioProfile(title,studioProfile));body=applyStudioProfile(body,studioProfile);
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
-  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],problems,templateInfo};
+  if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
+  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo};
 }
 
 // Trigger dictionaries describe vocabulary, not evidence. A larger vocabulary
@@ -387,6 +409,7 @@ export function extractFacts(text,rules=DICTIONARY) {
   const capture=(key,re)=>{const m=t.match(re);if(m)out[key]=m[1].replace(/\s/g,'').replace(',','.');};
   capture('area',/(?:общая\s*площадь\s*[:—-]?\s*)?(\d+(?:[.,]\d+)?)\s*(?:м²|м2|кв\.?\s*м|㎡)/i);
   capture('rooms',/(\d+)\s*[- ]?(?:комн|комнат)/i);
+  Object.assign(out,extractRoomCounts(text));
   const f=t.match(/(\d+)\s*\/\s*(\d+)\s*(?:эт|楼|层)/i)||t.match(/этаж\s*[:—-]?\s*(\d+)\s*(?:из|\/)\s*(\d+)/i);if(f){out.floor=f[1];out.floors=f[2];}
   else {capture('floor',/(?:этаж\s*[:—-]?\s*)(\d+)/i);capture('floors',/(\d+)\s*[- ]?этажн/i);}
   const price=t.match(/(?:аренда|цена|стоимость|月租|租金)\s*[:：—-]?\s*(\d[\d\s]*(?:[.,]\d+)?)\s*(тыс\.?|[wW万])?\s*(?:₽|руб|卢布)?/i)
