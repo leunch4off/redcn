@@ -136,7 +136,10 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         skipped=processing.get('skipped',0)
         warnings=[]
         inventory=result.get('photoInventory') or {}
-        if inventory.get('state')=='partial':warnings.append('Мебель и техника проверены не на всех фото. Неопознанные предметы остаются неизвестными.')
+        if inventory.get('state')=='partial':
+            warnings.append('Фото обработаны; подсказки обученной модели требуют подтверждения перед добавлением в описание.'
+                if inventory.get('reviewRequired') and inventory.get('coverageComplete')
+                else 'Мебель и техника проверены не на всех фото. Неопознанные предметы остаются неизвестными.')
         if status!='ready' or download_failed:
             warnings.append('Часть фотографий не загрузилась на Mac'+(': '+str(download_failed) if download_failed else '')+'.')
         if failed:warnings.append('Не удалось автоматически обработать фото: '+str(failed)+'.')

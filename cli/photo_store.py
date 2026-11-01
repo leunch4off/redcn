@@ -21,7 +21,7 @@ _ocr_lock = threading.Lock()
 _photo_locks = {}
 _guard = threading.Lock()
 MAX_PIXELS = 40_000_000
-AUTO_CROP_POLICY = 'verified-edge-v2'
+AUTO_CROP_POLICY = 'verified-edge-v3-cian-avito'
 AUTO_CROP_MIN_SHORT_SIDE = 320
 AUTO_CROP_MAX_AREA_LOSS = .25
 AUTO_CROP_SECONDS = 12
@@ -248,6 +248,24 @@ def recognize(image,directory,*,cancel=None,deadline=None):
         return rows,'Tesseract'
 
 
+def _watermark_brand(text):
+    """Recognize bounded OCR brand tokens, never arbitrary word substrings.
+
+    Common Cyrillic/Latin lookalikes and adjacent OCR fragments are accepted.
+    This is an OCR policy, not a trained watermark detector or a clean-photo
+    guarantee. A printed word in the photographed scene still needs review.
+    """
+    normalized=str(text).casefold().translate(str.maketrans({
+        'с':'c','ц':'c','і':'i','и':'i','а':'a','н':'n','о':'o','т':'t','в':'v'}))
+    for brand,pattern in (('cian',r'c[i1l]an'),('avito',r'av[i1l]to')):
+        if re.search(r'(?<![a-zа-яё0-9])'+pattern+r'(?:\.ru)?(?![a-zа-яё0-9])',normalized):return brand
+        # Joining is useful only if the whole measured group is the brand.
+        # "musician", "Avitometer" and neighbouring unrelated words are not.
+        compact=re.sub(r'[\s.·-]','',normalized)
+        if re.fullmatch(pattern+r'(?:ru)?',compact):return brand
+    return None
+
+
 def watermark_boxes(rows,allow_id_footer=False):
     # OCR may split a brand into several adjacent words. Join only nearby
     # tokens on the same line, keeping their measured union as evidence.
@@ -257,6 +275,11 @@ def watermark_boxes(rows,allow_id_footer=False):
         try:
             numbers={k:float(row[k]) for k in ('x','y','width','height','confidence')}
             if not all(math.isfinite(v) for v in numbers.values()):continue
+            if any(type(row[k]) is bool for k in numbers):continue
+            if not (0<=numbers['confidence']<=1 and 0<=numbers['x']<1 and 0<=numbers['y']<1
+                    and numbers['width']>0 and numbers['height']>0
+                    and numbers['x']+numbers['width']<=1.00001
+                    and numbers['y']+numbers['height']<=1.00001):continue
             safe_rows.append({**row,**numbers})
         except (KeyError,TypeError,ValueError):continue
     rows=safe_rows
@@ -276,10 +299,10 @@ def watermark_boxes(rows,allow_id_footer=False):
         except (KeyError,TypeError,ValueError):continue
     result=[]
     for row in [*rows,*joined]:
-        text=re.sub(r'[^a-zа-я]','',str(row.get('text','')).lower()).translate(str.maketrans({'с':'c','і':'i','а':'a','н':'h'}))
         original=str(row.get('text','')).lower()
+        brand=_watermark_brand(original)
         footer=allow_id_footer and re.search(r'\bid\s*[:#]?\s*\d{4,}',original) and float(row.get('x',0))>.45 and float(row.get('y',0))>.65 and float(row.get('confidence',0))>=.8
-        if not (re.search(r'ци[аa][нh]|c[i1l][aа][nп]|сian',original) or 'cian' in text or footer):continue
+        if not (brand or footer):continue
         if float(row.get('confidence',0))<.45:continue
         try:box={k:float(row[k]) for k in ('x','y','width','height')}
         except (KeyError,TypeError,ValueError):continue
@@ -288,7 +311,7 @@ def watermark_boxes(rows,allow_id_footer=False):
             # CIAN's pin + brand sit above its ID line; scale the exclusion
             # zone with the measured text height instead of fixed pixels.
             box['y']=max(0,box['y']-3.3*box['height']);box['height']=min(1-box['y'],box['height']*2)
-        candidate={**box,'text':row['text'],'confidence':row.get('confidence'),'method':'cian-id-footer' if footer else 'brand-text'}
+        candidate={**box,'text':row['text'],'confidence':row.get('confidence'),'brand':'cian' if footer else brand,'method':'cian-id-footer' if footer else 'brand-text'}
         if not any(all(abs(candidate[k]-other[k])<.001 for k in ('x','y','width','height')) for other in result):result.append(candidate)
     return result
 
@@ -318,7 +341,7 @@ def detect_photo_marks(image,directory,allow_id_footer=False,*,cancel=None,deadl
 
 def propose_crop(width,height,boxes):
     if min(width,height)<AUTO_CROP_MIN_SHORT_SIDE:return {'status':'review','reason':'small-image','message':'Маленькое изображение: автоматическая обрезка отключена, оригинал сохранён.'}
-    if not boxes:return {'status':'review','message':'Метка ЦИАН не найдена уверенно. Оригинал сохранён; выберите отступ вручную.'}
+    if not boxes:return {'status':'review','message':'Метка ЦИАН или Авито не найдена уверенно. Оригинал сохранён; выберите отступ вручную.'}
     margins={'left':0,'top':0,'right':0,'bottom':0}
     # Padding covers the pin/icon adjacent to or above the OCR text.
     for box in boxes:
@@ -437,7 +460,11 @@ def analyze_photo(directory,digest,*,cancel=None,deadline=None):
     folder=Path(directory)/'vision';folder.mkdir(parents=True,exist_ok=True)
     from photo_ai_settings import load_config
     config=load_config(directory)
-    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
+    trained_identity=b''
+    if config.get('model')=='redcn-furniture-v1':
+        import trained_photo_detector
+        trained_identity=Path(trained_photo_detector.__file__).read_bytes()+trained_photo_detector.cache_identity(directory).encode()
+    source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+trained_identity+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
     cache=folder/(digest+'-'+source_hash+'.json')
     if cache.exists():
         try:

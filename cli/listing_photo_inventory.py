@@ -189,6 +189,8 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                     output['checked'] += 1
                     if analysis.get('provider') != 'ollama' or analysis.get('fallbackReason'):
                         incomplete = True
+                    if analysis.get('provider') == 'yolox-trained':
+                        output['reviewRequired'] = True
                     if output['autoApply']:
                         for candidate in candidates:
                             if not candidate['autoEligible'] or candidate['confidence'] < AUTO_CONFIDENCE:
@@ -206,5 +208,8 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
             stage='vision', completed=index + 1, total=len(selected))
     _cancelled(cancel)
     output['features'] = sorted(features)
+    if output.get('reviewRequired'):
+        output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
+            and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))
     output['state'] = 'partial' if incomplete else 'complete'
     return output

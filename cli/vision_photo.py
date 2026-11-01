@@ -178,6 +178,11 @@ def analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=N
     if cancel is not None and cancel.is_set():raise ValueError('Анализ отменён')
     if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
     config=load_config(directory)
+    if config['enabled'] and config['model']=='redcn-furniture-v1':
+        import trained_photo_detector
+        if content is None:
+            buffer=io.BytesIO();preview=image.convert('RGB');preview.save(buffer,'JPEG',quality=92);preview.close();content=buffer.getvalue();mime='image/jpeg'
+        return {**trained_photo_detector.analyze(content,mime,directory,cancel=cancel,deadline=deadline),'version':ANALYSIS_VERSION}
     fallback=None
     if config['enabled']:
         from photo_ai_runtime import ensure_started

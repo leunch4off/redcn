@@ -1,0 +1,630 @@
+{
+  "kind": "bounded-supervised-classifier-finetune",
+  "status": "trained-unaccepted",
+  "seconds": 159.6169011250022,
+  "completedSteps": 670,
+  "trainImages": 134,
+  "validationImages": 80,
+  "weightsSha256": "269d620af048697aa0580dd4615e262bf4073c1b6a7efdfbb0c497dd2580d61d",
+  "weightsBytes": 3894958,
+  "initialization": {
+    "copiedTensors": 636,
+    "mappedCocoClassIds": [
+      "sofa",
+      "bedAny",
+      "chairs",
+      "tv",
+      "fridge",
+      "oven",
+      "microwave",
+      "sink",
+      "table"
+    ],
+    "trainedLayers": [
+      "head.cls_preds."
+    ],
+    "objectnessTrained": false,
+    "trainableParameters": 4095,
+    "totalParameters": 900654
+  },
+  "changedTrainableTensors": [
+    "head.cls_preds.0.weight",
+    "head.cls_preds.0.bias",
+    "head.cls_preds.1.weight",
+    "head.cls_preds.1.bias",
+    "head.cls_preds.2.weight",
+    "head.cls_preds.2.bias"
+  ],
+  "onnx": {
+    "path": "model.onnx",
+    "sha256": "650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5",
+    "bytes": 3667939,
+    "inputShape": [
+      1,
+      3,
+      416,
+      416
+    ],
+    "outputEncoding": "raw-yolox",
+    "classIds": [
+      "sofa",
+      "bedAny",
+      "chairs",
+      "tv",
+      "fridge",
+      "oven",
+      "microwave",
+      "sink",
+      "table",
+      "desk",
+      "wardrobe",
+      "washer",
+      "dishwasher",
+      "gasStove",
+      "piano",
+      "cabinetry",
+      "cupboard",
+      "coffeeMachine",
+      "mirror",
+      "curtains",
+      "coffeeTable"
+    ]
+  },
+  "autoApprovedIds": [],
+  "datasetSha256": "33b741b0f9162379ae58c9cd23dd03ee73c9fc9c5a875abf22f7dcfaf0416e0c",
+  "baselineExpandedHeadCounts": {
+    "tp": 9,
+    "fp": 28,
+    "fn": 162
+  },
+  "finalCounts": {
+    "tp": 37,
+    "fp": 20,
+    "fn": 134
+  },
+  "classMetrics": [
+    {
+      "id": "sofa",
+      "baseline": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 3,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.4,
+        "precisionWilsonLower95": 0.3423802275066531,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 2,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.6,
+        "precisionWilsonLower95": 0.4385029682449545,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "bedAny",
+      "baseline": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.14285714285714285,
+        "precisionWilsonLower95": 0.20654931437723742,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 4,
+        "fp": 1,
+        "fn": 3,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 0.8,
+        "recall": 0.5714285714285714,
+        "precisionWilsonLower95": 0.37553462976252533,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "chairs",
+      "baseline": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 28,
+        "verifiedImages": 9,
+        "verifiedNegativeImages": 0,
+        "precision": 0.6666666666666666,
+        "recall": 0.06666666666666667,
+        "precisionWilsonLower95": 0.20765960080204768,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 14,
+        "fp": 7,
+        "fn": 16,
+        "verifiedImages": 9,
+        "verifiedNegativeImages": 0,
+        "precision": 0.6666666666666666,
+        "recall": 0.4666666666666667,
+        "precisionWilsonLower95": 0.45373451974255247,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "tv",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 4,
+        "fp": 1,
+        "fn": 1,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 0.8,
+        "recall": 0.8,
+        "precisionWilsonLower95": 0.37553462976252533,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "fridge",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "oven",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 8,
+        "verifiedImages": 8,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 8,
+        "verifiedImages": 8,
+        "verifiedNegativeImages": 0,
+        "precision": 0,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "microwave",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "sink",
+      "baseline": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 8,
+        "verifiedImages": 8,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.1111111111111111,
+        "precisionWilsonLower95": 0.20654931437723742,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 4,
+        "fp": 7,
+        "fn": 5,
+        "verifiedImages": 8,
+        "verifiedNegativeImages": 0,
+        "precision": 0.36363636363636365,
+        "recall": 0.4444444444444444,
+        "precisionWilsonLower95": 0.15166471095367573,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "table",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 11,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 11,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "desk",
+      "baseline": {
+        "tp": 3,
+        "fp": 23,
+        "fn": 18,
+        "verifiedImages": 6,
+        "verifiedNegativeImages": 0,
+        "precision": 0.11538461538461539,
+        "recall": 0.14285714285714285,
+        "precisionWilsonLower95": 0.04003244623610616,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 17,
+        "verifiedImages": 6,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.19047619047619047,
+        "precisionWilsonLower95": 0.5101091635454027,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "wardrobe",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "verifiedImages": 1,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 1,
+        "verifiedImages": 1,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "washer",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 4,
+        "verifiedImages": 3,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 3,
+        "verifiedImages": 3,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.25,
+        "precisionWilsonLower95": 0.20654931437723742,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "dishwasher",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "verifiedImages": 0,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": null,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "verifiedImages": 0,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": null,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "gasStove",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 3,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 1,
+        "recall": 0.4,
+        "precisionWilsonLower95": 0.3423802275066531,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "piano",
+      "baseline": {
+        "tp": 0,
+        "fp": 4,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 0,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 0,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "cabinetry",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 14,
+        "verifiedImages": 9,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 14,
+        "verifiedImages": 9,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "cupboard",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 15,
+        "verifiedImages": 7,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 15,
+        "verifiedImages": 7,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "coffeeMachine",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 3,
+        "verifiedImages": 3,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 1,
+        "fp": 1,
+        "fn": 2,
+        "verifiedImages": 3,
+        "verifiedNegativeImages": 0,
+        "precision": 0.5,
+        "recall": 0.3333333333333333,
+        "precisionWilsonLower95": 0.09453120573423071,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "mirror",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "curtains",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 1,
+        "fn": 5,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": 0,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    },
+    {
+      "id": "coffeeTable",
+      "baseline": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      },
+      "final": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 6,
+        "verifiedImages": 5,
+        "verifiedNegativeImages": 0,
+        "precision": null,
+        "recall": 0,
+        "precisionWilsonLower95": 0,
+        "statisticalGatePassed": false
+      }
+    }
+  ],
+  "measuredEnvironment": {
+    "hardware": "user Mac M2 8GB",
+    "runtime": "Python 3.11 x86_64 through Rosetta",
+    "trainingDevice": "cpu",
+    "threads": 2,
+    "inputSize": 416,
+    "epochs": 10,
+    "learningRate": 0.001,
+    "batchSize": 2
+  },
+  "limitations": [
+    "First classifier-head fine-tune; backbone, box regression and objectness frozen.",
+    "Baseline is the same expanded 21-class head before fine-tuning, not the original 80-class model.",
+    "Partial Open Images labels: unknown class/image pairs excluded, no verified negatives.",
+    "Small validation, no rental-domain independent test; dishwasher has zero validation support.",
+    "No auto-approved classes; weights are not accepted for automatic description facts.",
+    "Crop changes use OCR and geometry rules, not trained watermark weights."
+  ]
+}

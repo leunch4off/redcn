@@ -118,6 +118,17 @@ class ListingInventoryTests(unittest.TestCase):
         self.assertEqual(output['state'], 'partial')
         self.assertEqual(output['checked'], 1)
         self.assertEqual(output['features'], [])
+
+    def test_trained_review_has_full_coverage_without_automatic_publication(self):
+        def trained(_, digest, **kwargs):
+            return {**observation(digest), 'provider': 'yolox-trained', 'model': 'redcn-furniture-v1'}
+        output, _, _ = self.analyze(card(2), config={**CONFIG, 'model': 'redcn-furniture-v1', 'autoApply': False}, analysis=trained)
+        self.assertEqual(output['checked'], 2)
+        self.assertTrue(output['reviewRequired'])
+        self.assertTrue(output['coverageComplete'])
+        self.assertEqual(output['state'], 'partial')
+        self.assertEqual(output['features'], [])
+        self.assertEqual(output['photoEvidence'], [])
         self.assertFalse(output['photos'][0]['candidates'][0]['autoEligible'])
 
     def test_stale_auto_flags_wrong_hash_provider_model_negation_and_unknown_are_revalidated(self):
