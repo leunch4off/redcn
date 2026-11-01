@@ -2,7 +2,7 @@
 
 **Назначение:** redcn — рабочее место подготовки китайских объявлений о московской аренде: ЦИАН/Авито, сайт и Python CLI, динамические названия и теги, двуязычный словарь, новые объекты и фотографии.
 
-**330 задач: 246 выполнено, 84 в плане.** Галочка означает выполнение критерия и наличие доказательства. Issue остаётся открытым.
+**330 задач: 294 выполнено, 36 в плане.** Галочка означает выполнение критерия и наличие доказательства. Issue остаётся открытым.
 
 [Правила](https://github.com/leunch4off/redcn/blob/main/docs/ROADMAP-POLICY.md) · [Машиночитаемый план](https://github.com/leunch4off/redcn/blob/main/plan.json) · [Назначение и функции](https://github.com/leunch4off/redcn/blob/main/docs/PRODUCT.md) · [Референс пользователя](https://github.com/leunch4off/redcn/blob/main/docs/references/user-listing-examples.txt) · [Связь референса с функциями](https://github.com/leunch4off/redcn/blob/main/docs/REFERENCE-MAP.md)
 
@@ -24,19 +24,19 @@
 - [x] **RCN-010 · Экран прогресса в приложении** (P0). Приёмка: Сайт показывает статусы всех 200 задач и ссылки на связанные issue. Доказательство: Браузерная приёмка: 200 карточек задач и ссылка на issue #1
 ## Импорт ЦИАН
 
-- [ ] **RCN-011 · Ручная загрузка ссылки ЦИАН** (P1). Приёмка: HTTPS-ссылка возвращает доступный HTML или понятный отказ.
+- [x] **RCN-011 · Ручная загрузка ссылки ЦИАН** (P1). Приёмка: HTTPS-ссылка возвращает доступный HTML или понятный отказ. Доказательство: cli/redcn.py; cli/http_fetch_worker.py; tests/test_http_import_retries.py; tests/test_cli.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-011
 - [x] **RCN-012 · Извлечение JSON-LD описания** (P1). Приёмка: Описание из структурированных данных имеет приоритет перед навигацией. Доказательство: cli/redcn.py; tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок
 - [x] **RCN-013 · Структурированная цена ЦИАН** (P1). Приёмка: Цена и период аренды распознаются из fixtures разных форматов. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
 - [x] **RCN-014 · Планировка ЦИАН** (P1). Приёмка: Разделены комнаты, спальни, общая и жилая площадь без подмены евро-форматов. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
 - [x] **RCN-015 · Метро из карточки ЦИАН** (P1). Приёмка: Для каждой станции сохраняются своё время и способ передвижения. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
 - [x] **RCN-016 · Комиссия ЦИАН** (P1). Приёмка: Извлечён процент, источник и признак отсутствующих данных. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
 - [x] **RCN-017 · Автор ЦИАН** (P1). Приёмка: Собственник/агент подтверждаются явным полем источника, иначе unknown. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
-- [ ] **RCN-018 · Изменения карточки ЦИАН** (P1). Приёмка: Повторная загрузка показывает различия цены и условий с предыдущим снимком.
+- [x] **RCN-018 · Изменения карточки ЦИАН** (P1). Приёмка: Повторная загрузка показывает различия цены и условий с предыдущим снимком. Доказательство: cli/fact_ledger.py; cli/local_server.py; cli/language_service.py; web/fact-ledger.mjs; tests/test_fact_ledger.py; tests/fact-ledger.test.mjs; tests/test_fact_ledger_browser.py; tests/test_workspace_boundaries.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-018
 - [x] **RCN-019 · Отказ при защите страницы** (P1). Приёмка: CAPTCHA и блокировка не обходятся; доступна вставка текста. Доказательство: cli/redcn.py; tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок
 - [ ] **RCN-020 · Fixtures реальных схем ЦИАН** (P1). Приёмка: Обезличенные разрешённые HTML-снимки покрывают несколько вариантов карточки.
 ## Импорт Авито
 
-- [ ] **RCN-021 · Ручная загрузка ссылки Авито** (P1). Приёмка: HTTPS-ссылка поддерживается серверным импортом и CLI.
+- [x] **RCN-021 · Ручная загрузка ссылки Авито** (P1). Приёмка: HTTPS-ссылка поддерживается серверным импортом и CLI. Доказательство: cli/redcn.py; cli/http_fetch_worker.py; tests/test_http_import_retries.py; tests/test_cli.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-021
 - [x] **RCN-022 · Описание Авито из JSON-LD** (P1). Приёмка: Текст карточки очищен от рекомендаций и рекламы. Доказательство: cli/redcn.py; tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок
 - [x] **RCN-023 · Цена и залог Авито** (P1). Приёмка: Различены месячная плата, обеспечительный платёж и разовые сборы. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
 - [x] **RCN-024 · Расположение Авито** (P1). Приёмка: Адрес, район и станции хранятся отдельными полями с источником. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
@@ -44,7 +44,7 @@
 - [x] **RCN-026 · Автор Авито** (P1). Приёмка: Метка собственника проверяется по данным карточки, не по отсутствию комиссии. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs
 - [x] **RCN-027 · Статус публикации Авито** (P1). Приёмка: Архивные и снятые объявления исключаются из новых. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/source-fields.test.mjs; tests/avito-corpus.test.mjs; cli/redcn.py: batch_publication_decision; tests/test_batch_publication.py
 - [x] **RCN-028 · Перенаправления Авито** (P1). Приёмка: Каждый переход проверяет домен; неподдерживаемый URL отклоняется. Доказательство: cli/redcn.py; tests/test_cli.py: JSON-LD, CAPTCHA, URL/redirect policy; без live-проверки площадок
-- [ ] **RCN-029 · Ошибки Авито в интерфейсе** (P1). Приёмка: Пользователь видит причину отказа и может вставить текст.
+- [x] **RCN-029 · Ошибки Авито в интерфейсе** (P1). Приёмка: Пользователь видит причину отказа и может вставить текст. Доказательство: web/import-errors.mjs; tests/import-errors.test.mjs; tests/test_import_errors_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-029
 - [x] **RCN-030 · Fixtures карточек Авито** (P1). Приёмка: Проверяются обычная карточка, недоступный объект и частично заполненная страница. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; tests/avito-corpus.test.mjs
 ## Новые объявления и отбор
 
@@ -53,11 +53,11 @@
 - [x] **RCN-033 · Фильтр комиссии до 50%** (P0). Приёмка: Посредник с 0…50% проходит; выше 50% отклоняется. Доказательство: tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen
 - [x] **RCN-034 · Неизвестная комиссия** (P0). Приёмка: Посредник без подтверждённого процента не проходит автоматический отбор. Доказательство: tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen
 - [x] **RCN-035 · Реестр уже обработанных ссылок** (P0). Приёмка: SQLite seen предотвращает повторную обработку успешной новой записи. Доказательство: tests/test_cli.py: batch, фильтры 0/50/50.01%, unknown и seen
-- [ ] **RCN-036 · Лента новых карточек на сайте** (P0). Приёмка: Новые объекты появляются в очереди с временем обнаружения.
+- [x] **RCN-036 · Лента новых карточек на сайте** (P0). Приёмка: Новые объекты появляются в очереди с временем обнаружения. Доказательство: cli/listing_watch.py; cli/search_adapters/cian.py; cli/search_adapters/avito.py; web/listing-watch.mjs; tests/test_listing_watch.py; tests/test_listing_watch_extended.py; tests/listing-watch.test.mjs; tests/test_listing_watch_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-036
 - [ ] **RCN-037 · Коннектор поиска ЦИАН** (P0). Приёмка: Разрешённый доступный источник выдачи или API преобразуется в кандидатов без обхода защиты.
 - [ ] **RCN-038 · Коннектор поиска Авито** (P0). Приёмка: Разрешённый источник выдачи или API выдаёт новых кандидатов с полями отбора.
-- [ ] **RCN-039 · Фильтры бюджета и района** (P0). Приёмка: Новые карточки отбираются по аренде, площади, комнатам и географии.
-- [ ] **RCN-040 · Объяснение отбора** (P0). Приёмка: У каждой записи видно, почему она принята, отклонена или отложена на проверку.
+- [x] **RCN-039 · Фильтры бюджета и района** (P0). Приёмка: Новые карточки отбираются по аренде, площади, комнатам и географии. Доказательство: cli/listing_watch.py; cli/search_adapters/cian.py; cli/search_adapters/avito.py; web/listing-watch.mjs; tests/test_listing_watch.py; tests/test_listing_watch_extended.py; tests/listing-watch.test.mjs; tests/test_listing_watch_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-039
+- [x] **RCN-040 · Объяснение отбора** (P0). Приёмка: У каждой записи видно, почему она принята, отклонена или отложена на проверку. Доказательство: cli/listing_watch.py; cli/search_adapters/cian.py; cli/search_adapters/avito.py; web/listing-watch.mjs; tests/test_listing_watch.py; tests/test_listing_watch_extended.py; tests/listing-watch.test.mjs; tests/test_listing_watch_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-040
 ## Фотографии и медиа
 
 - [x] **RCN-041 · Ссылки фото из OG и JSON-LD** (P1). Приёмка: CLI сохраняет только URL изображений, объявленных источником. Доказательство: cli/redcn.py: OG/JSON-LD, download_photos, batch folders; tests/test_cli.py: fixture фото и manifest
@@ -68,20 +68,20 @@
 - [x] **RCN-046 · Галерея сайта** (P1). Приёмка: Фото можно просматривать, открывать крупно и удалять из выбранного набора. Доказательство: web/photo-ui.mjs: диалог оригинал/копия и выбранный набор; Браузер: фото открывается без навигации, исключено 5 из 6 фото
 - [x] **RCN-047 · Порядок фотографий** (P1). Приёмка: Оператор переставляет фото и выбирает обложку; порядок сохраняется. Доказательство: web/photo-ui.mjs: стрелки и На обложку, photoEdits в snapshot; Браузер: после выбора обложки и reload первым осталось фото 2239194414
 - [x] **RCN-048 · Пакет медиа ZIP** (P1). Приёмка: Сайт экспортирует выбранные фото с текстом и источником одним архивом. Доказательство: web/media-core.mjs; web/photo-ui.mjs: ZIP с выбранными файлами, post.txt и manifest.json; Браузер HTTPS: ZIP скачан; Python zipfile проверил CRC, состав и JPEG 1280×754
-- [ ] **RCN-049 · Дубликаты фото** (P1). Приёмка: Полные дубликаты выявляются по SHA-256 между объявлениями.
+- [x] **RCN-049 · Дубликаты фото** (P1). Приёмка: Полные дубликаты выявляются по SHA-256 между объявлениями. Доказательство: cli/photo_store.py; cli/dossier_backup.py; tests/test_dossier_backup.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-049
 - [x] **RCN-050 · Обложки Rednote** (P1). Приёмка: Редактор накладывает выбранный заголовок и параметры на разрешённое фото без удаления водяных знаков. Доказательство: web/presentation-studio.mjs; tests/presentation-studio.test.mjs; tests/test_presentation_browser.py; docs/VERIFICATION.md#v10-2026-10-30
 ## Данные и кеш
 
 - [x] **RCN-051 · Кеш HTML-импорта браузера** (P1). Приёмка: Повторная ссылка читается из кеша до 24 часов, хранится максимум 20 страниц. Доказательство: web/app.js: кеш URL 24 часа, ограничение 20 записей
 - [x] **RCN-052 · Кеш CLI SQLite** (P1). Приёмка: Повторный URL использует локальный payload и дату загрузки. Доказательство: tests/test_cli.py: sqlite_cache_and_refresh
 - [x] **RCN-053 · Принудительное обновление CLI** (P1). Приёмка: Флаг --refresh заменяет устаревший снимок после успешной загрузки. Доказательство: tests/test_cli.py: sqlite_cache_and_refresh
-- [ ] **RCN-054 · Версионирование фактов** (P1). Приёмка: Цена и условия имеют историю с автором изменения.
-- [ ] **RCN-055 · Проверка схемы объекта** (P1). Приёмка: Некорректные типы полей отклоняются до сохранения и генерации.
-- [ ] **RCN-056 · Серверная база объектов** (P1). Приёмка: Карточки доступны после входа с другого устройства.
+- [x] **RCN-054 · Версионирование фактов** (P1). Приёмка: Цена и условия имеют историю с автором изменения. Доказательство: cli/fact_ledger.py; cli/local_server.py; cli/language_service.py; web/fact-ledger.mjs; tests/test_fact_ledger.py; tests/fact-ledger.test.mjs; tests/test_fact_ledger_browser.py; tests/test_workspace_boundaries.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-054
+- [x] **RCN-055 · Проверка схемы объекта** (P1). Приёмка: Некорректные типы полей отклоняются до сохранения и генерации. Доказательство: cli/fact_ledger.py; cli/redcn.py; cli/generate.mjs; cli/language_service.py; tests/test_fact_ledger.py; tests/fact-ledger.test.mjs; tests/test_workspace_boundaries.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-055
+- [x] **RCN-056 · Серверная база объектов** (P1). Приёмка: Карточки доступны после входа с другого устройства. Доказательство: cli/local_server.py; cli/phone_relay.py; cli/workspace_api.py; tests/test_phone_relay.py; tests/test_workspace_api.py; tests/test_shared_catalog_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-056
 - [ ] **RCN-057 · Изоляция данных пользователей** (P1). Приёмка: Каждая серверная операция проверяет владельца объекта.
 - [ ] **RCN-058 · Облачные резервные копии** (P1). Приёмка: Восстановление возвращает библиотеку, словари и медиа в согласованном состоянии.
-- [ ] **RCN-059 · Очистка кеша** (P1). Приёмка: В интерфейсе отдельно очищается кеш без удаления карточек и словаря.
-- [ ] **RCN-060 · Источники отдельных фактов** (P1). Приёмка: Цена, мебель и время маршрута показывают URL/ручной ввод и дату проверки.
+- [x] **RCN-059 · Очистка кеша** (P1). Приёмка: В интерфейсе отдельно очищается кеш без удаления карточек и словаря. Доказательство: cli/fact_ledger.py; web/fact-ledger.mjs; tests/test_fact_ledger.py; tests/test_fact_ledger_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-059
+- [x] **RCN-060 · Источники отдельных фактов** (P1). Приёмка: Цена, мебель и время маршрута показывают URL/ручной ввод и дату проверки. Доказательство: web/fact-ledger.mjs; cli/fact_ledger.py; tests/fact-ledger.test.mjs; tests/test_fact_ledger.py; tests/test_fact_ledger_browser.py; tests/test_workspace_boundaries.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-060
 ## Python и терминал
 
 - [x] **RCN-061 · Интерактивный ввод URL** (P0). Приёмка: python3 cli/redcn.py запрашивает ссылку при отсутствии аргументов. Доказательство: cli/redcn.py; cli/generate.mjs; tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator
@@ -93,7 +93,7 @@
 - [x] **RCN-067 · Вывод в файл** (P0). Приёмка: --output сохраняет итоговый текст или JSON по заданному пути. Доказательство: cli/redcn.py; cli/generate.mjs; tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator
 - [x] **RCN-068 · Настройки и словарь CLI** (P0). Приёмка: --rules и --prefs применяют пользовательские переводы и преимущества. Доказательство: cli/redcn.py; cli/generate.mjs; tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator
 - [x] **RCN-069 · Варианты через CLI** (P0). Приёмка: --variant меняет заголовки и допустимые теги при сохранении фактов. Доказательство: cli/redcn.py; cli/generate.mjs; tests/test_cli.py: interactive, argument, local, overrides, JSON/output, common generator
-- [ ] **RCN-070 · Установка одной командой** (P0). Приёмка: Подготовлен установочный пакет с проверкой Python/Node для macOS и Windows.
+- [x] **RCN-070 · Установка одной командой** (P0). Приёмка: Подготовлен установочный пакет с проверкой Python/Node для macOS и Windows. Доказательство: scripts/install-redcn.py; scripts/package-installer.py; tests/test_install_package.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-070
 ## Извлечение и качество фактов
 
 - [x] **RCN-071 · Базовые числа объявления** (P1). Приёмка: Из текста извлекаются площадь, комнаты, цена, залог и этажность. Доказательство: tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты
@@ -102,7 +102,7 @@
 - [x] **RCN-074 · Наличие техники** (P1). Приёмка: Фразы об отсутствии и будущей установке не превращаются в существующую технику. Доказательство: tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты
 - [x] **RCN-075 · Несколько станций** (P1). Приёмка: Каждой станции сопоставляются её диапазон времени и способ поездки. Доказательство: tests/engine.test.mjs: числа, десятичные, W/тыс, отрицания и маршруты
 - [x] **RCN-076 · Факты из изображений** (P1). Приёмка: Опциональный анализ фото предлагает признаки с уровнем уверенности и ручным подтверждением. Доказательство: cli/vision_photo.py; cli/classify-photo.swift; tests/test_vision.py; tests/test_ui_browser.py; https://github.com/leunch4off/redcn/pull/6
-- [ ] **RCN-077 · Противоречия источника** (P1). Приёмка: Расхождения между текстом, JSON-LD и ручным вводом выделены отдельно.
+- [x] **RCN-077 · Противоречия источника** (P1). Приёмка: Расхождения между текстом, JSON-LD и ручным вводом выделены отдельно. Доказательство: web/source-adapters/cian.mjs; web/source-adapters/avito.mjs; web/source-import.mjs; web/engine.mjs; web/fact-ledger.mjs; tests/source-witnesses.test.mjs; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-077
 - [x] **RCN-078 · Платежи первого месяца** (P1). Приёмка: Сумма аренда+залог+комиссия рассчитывается с пояснением. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; web/initial-payment.mjs; tests/initial-payment.test.mjs; tests/test_twenty_editor_browser.py
 - [x] **RCN-079 · Планируемая техника** (P1). Приёмка: Будущая установка хранится отдельно от уже имеющейся мебели. Доказательство: web/fact-evidence.mjs: статус planned отдельно от present; tests/source.test.mjs: будущая установка без отметки наличия; docs/CIAN-HTML-ANALYSIS.md
 - [x] **RCN-080 · Запрет переноса прошлых фактов** (P1). Приёмка: Разбор нового объявления очищает характеристики предыдущей квартиры. Доказательство: web/app.js: extract очищает старые факты и выделяет новый объект
@@ -149,11 +149,11 @@
 - [x] **RCN-113 · Рабочие переводы станций** (P2). Приёмка: Базовые станции из пользовательских примеров доступны в словаре. Доказательство: web/engine.mjs: DICTIONARY / translate; tests/engine.test.mjs
 - [x] **RCN-114 · Рабочие переводы вузов** (P2). Приёмка: МГУ, РУДН, МГИМО, РАНХиГС и другие доступны по алиасам. Доказательство: web/engine.mjs: DICTIONARY / translate; tests/engine.test.mjs
 - [ ] **RCN-115 · Каталог официальных наименований** (P2). Приёмка: Для названий хранится проверенный источник и дата подтверждения.
-- [ ] **RCN-116 · Автоматический перевод неизвестных слов** (P2). Приёмка: Подключаемый провайдер переводит выбранную фразу только по запросу оператора.
+- [x] **RCN-116 · Автоматический перевод неизвестных слов** (P2). Приёмка: Подключаемый провайдер переводит выбранную фразу только по запросу оператора. Доказательство: cli/dictionary_reviews.py; web/dictionary-review.mjs; tests/test_dictionary_reviews.py; tests/dictionary-review.test.mjs; tests/test_dictionary_review_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-116
 - [x] **RCN-117 · Контекстное различение комнат** (P2). Приёмка: Словарь учитывает разницу комнаты, спальни и гостиной в планировке. Доказательство: docs/RELEASE-20-INPUTS-2026-11-01.md; web/listing-semantics.mjs; tests/semantic-content.test.mjs
-- [ ] **RCN-118 · Произношение и пиньинь** (P2). Приёмка: Известные термины можно изучать с пиньинем и произношением.
+- [x] **RCN-118 · Произношение и пиньинь** (P2). Приёмка: Известные термины можно изучать с пиньинем и произношением. Доказательство: cli/dictionary_reviews.py; web/dictionary-review.mjs; tests/test_dictionary_reviews.py; tests/dictionary-review.test.mjs; tests/test_dictionary_review_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-118
 - [x] **RCN-119 · Проверка неоднозначных терминов** (P2). Приёмка: Регистрация и виза не используются как взаимозаменяемые обещания. Доказательство: web/engine.mjs: отдельная формулировка 临时居住登记; tests/engine.test.mjs: registration
-- [ ] **RCN-120 · Общий словарь команды** (P2). Приёмка: Изменения переводов проходят версии и доступны коллегам.
+- [x] **RCN-120 · Общий словарь команды** (P2). Приёмка: Изменения переводов проходят версии и доступны коллегам. Доказательство: cli/dictionary_reviews.py; web/dictionary-review.mjs; tests/test_dictionary_reviews.py; tests/dictionary-review.test.mjs; tests/test_dictionary_review_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-120
 ## Теги и семантика
 
 - [x] **RCN-121 · Каталог пользовательских тегов** (P0). Приёмка: Все теги из запроса доступны с русским значением. Доказательство: web/content-tools.mjs: TAG_CATALOG / suggestTags; tests/content.test.mjs; web/app.js: каталог и объяснения
@@ -165,7 +165,7 @@
 - [x] **RCN-127 · Управляемая ротация тегов** (P0). Приёмка: Номер варианта меняет допустимые общие теги, сохраняя тематические. Доказательство: web/content-tools.mjs: TAG_CATALOG / suggestTags; tests/content.test.mjs; web/app.js: каталог и объяснения
 - [x] **RCN-128 · Пояснение каждого тега** (P0). Приёмка: Оператор видит русский перевод и причину автоматического выбора. Доказательство: web/content-tools.mjs: TAG_CATALOG / suggestTags; tests/content.test.mjs; web/app.js: каталог и объяснения
 - [x] **RCN-129 · Ручное добавление тегов** (P0). Приёмка: Нажатие на тег каталога добавляет его без дубликатов. Доказательство: web/content-tools.mjs: TAG_CATALOG / suggestTags; tests/content.test.mjs; web/app.js: каталог и объяснения
-- [ ] **RCN-130 · Аналитика эффективности тегов** (P0). Приёмка: Теги связываются с просмотрами и обращениями по введённой статистике.
+- [x] **RCN-130 · Аналитика эффективности тегов** (P0). Приёмка: Теги связываются с просмотрами и обращениями по введённой статистике. Доказательство: web/workflow.mjs; tests/workflow.test.mjs; tests/test_workflow_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-130
 ## Метро и город
 
 - [x] **RCN-131 · Несколько маршрутов метро** (P2). Приёмка: Карточка хранит отдельные строки станция/минуты/способ/линия. Доказательство: web/engine.mjs: parseRoutes; tests/engine.test.mjs: ranges, modes and no invented times
@@ -177,19 +177,19 @@
 - [ ] **RCN-137 · Кеш маршрутов** (P2). Приёмка: Одинаковый маршрут переиспользуется в пределах заданного TTL.
 - [ ] **RCN-138 · Выход метро и вход дома** (P2). Приёмка: При расчёте учитываются конкретные доступные входы.
 - [ ] **RCN-139 · Городские преимущества** (P2). Приёмка: Китайские магазины, рестораны и парки имеют координаты и источник.
-- [ ] **RCN-140 · Предупреждение о приблизительности** (P2). Приёмка: Для оценок показаны способ расчёта и дата проверки.
+- [x] **RCN-140 · Предупреждение о приблизительности** (P2). Приёмка: Для оценок показаны способ расчёта и дата проверки. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-140
 ## Вузы и кампусы
 
 - [x] **RCN-141 · Несколько вузов карточки** (P2). Приёмка: У каждого вуза собственное время и способ поездки. Доказательство: web/app.js / web/index.html: universities и campus; tests/content.test.mjs: university/campus context
 - [x] **RCN-142 · Поле кампуса** (P2). Приёмка: Можно вручную указать точный кампус на китайском или через словарь. Доказательство: web/app.js / web/index.html: universities и campus; tests/content.test.mjs: university/campus context
-- [ ] **RCN-143 · Справочник кампусов** (P2). Приёмка: Один вуз содержит несколько подтверждённых адресов кампусов.
-- [ ] **RCN-144 · Маршрут к конкретному корпусу** (P2). Приёмка: Не подставляется общий маршрут ко всему вузу.
+- [x] **RCN-143 · Справочник кампусов** (P2). Приёмка: Один вуз содержит несколько подтверждённых адресов кампусов. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-143
+- [x] **RCN-144 · Маршрут к конкретному корпусу** (P2). Приёмка: Не подставляется общий маршрут ко всему вузу. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-144
 - [x] **RCN-145 · Выбор целевых вузов** (P2). Приёмка: Оператор задаёт список вузов вместо одинакового набора для всех квартир. Доказательство: web/app.js / web/index.html: universities и campus; tests/content.test.mjs: university/campus context
-- [ ] **RCN-146 · Фильтр максимальной дороги** (P2). Приёмка: Объекты сравниваются по дороге до выбранного кампуса.
-- [ ] **RCN-147 · Пересадки и последний участок** (P2). Приёмка: Отображаются пешая часть, транспорт и число пересадок.
-- [ ] **RCN-148 · Общежития и аренда рядом** (P2). Приёмка: Районы анализируются без выдачи квартиры за общежитие.
-- [ ] **RCN-149 · Источник названия кампуса** (P2). Приёмка: Для каждой записи хранится проверенный URL учреждения.
-- [ ] **RCN-150 · Сравнение объектов по вузам** (P2). Приёмка: Таблица показывает аренду, итоговые платежи и дорогу до кампуса.
+- [x] **RCN-146 · Фильтр максимальной дороги** (P2). Приёмка: Объекты сравниваются по дороге до выбранного кампуса. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-146
+- [x] **RCN-147 · Пересадки и последний участок** (P2). Приёмка: Отображаются пешая часть, транспорт и число пересадок. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-147
+- [x] **RCN-148 · Общежития и аренда рядом** (P2). Приёмка: Районы анализируются без выдачи квартиры за общежитие. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-148
+- [x] **RCN-149 · Источник названия кампуса** (P2). Приёмка: Для каждой записи хранится проверенный URL учреждения. Доказательство: tests/university-source-evidence.test.mjs; web/university-routes.mjs; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-149
+- [x] **RCN-150 · Сравнение объектов по вузам** (P2). Приёмка: Таблица показывает аренду, итоговые платежи и дорогу до кампуса. Доказательство: cli/university_routes.py; web/university-routes.mjs; web/commute-compare.mjs; tests/commute-compare.test.mjs; tests/university-routes.test.mjs; tests/test_university_routes.py; tests/test_commute_compare_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-150
 ## Условия и наши услуги
 
 - [x] **RCN-151 · Аренда и залог раздельно** (P1). Приёмка: Нулевой залог не теряется; платежи отображаются независимо. Доказательство: web/engine.mjs: платежи, регистрация, услуги, сроки и условия; tests/engine.test.mjs; web/index.html: отдельные поля
@@ -201,7 +201,7 @@
 - [x] **RCN-157 · Короткая аренда** (P1). Приёмка: Минимальный срок и возможность согласования отображаются отдельно. Доказательство: web/engine.mjs: платежи, регистрация, услуги, сроки и условия; tests/engine.test.mjs; web/index.html: отдельные поля
 - [x] **RCN-158 · Дети и животные** (P1). Приёмка: Подтверждённые условия и согласование с владельцем не смешиваются. Доказательство: web/engine.mjs: платежи, регистрация, услуги, сроки и условия; tests/engine.test.mjs; web/index.html: отдельные поля
 - [x] **RCN-159 · Ремонтные каникулы** (P1). Приёмка: Число бесплатных месяцев показывается с условием подтверждения договором. Доказательство: web/engine.mjs: платежи, регистрация, услуги, сроки и условия; tests/engine.test.mjs; web/index.html: отдельные поля
-- [ ] **RCN-160 · Подтверждение услуг перед публикацией** (P1). Приёмка: Проверочный список фиксирует дату подтверждения каждого обещания.
+- [x] **RCN-160 · Подтверждение услуг перед публикацией** (P1). Приёмка: Проверочный список фиксирует дату подтверждения каждого обещания. Доказательство: web/fact-ledger.mjs; cli/fact_ledger.py; tests/fact-ledger.test.mjs; tests/test_fact_ledger_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-160
 ## Рабочее пространство
 
 - [x] **RCN-161 · Сохранённые объекты** (P1). Приёмка: Карточка и вручную отредактированные заголовок/текст/теги сохраняются вместе. Доказательство: web/app.js: библиотека / черновик / поиск / новая карточка / seller filter; Браузер: сохранение и открытие объекта; tests/content.test.mjs: commission boundary
@@ -209,10 +209,10 @@
 - [x] **RCN-163 · Поиск библиотеки** (P1). Приёмка: Поиск работает по названию, метро, ЖК и заголовку. Доказательство: web/app.js: библиотека / черновик / поиск / новая карточка / seller filter; Браузер: сохранение и открытие объекта; tests/content.test.mjs: commission boundary
 - [x] **RCN-164 · Удаление и новая карточка** (P1). Приёмка: Удаление подтверждается; новый объект не удаляет библиотеку. Доказательство: web/app.js: библиотека / черновик / поиск / новая карточка / seller filter; Браузер: сохранение и открытие объекта; tests/content.test.mjs: commission boundary
 - [x] **RCN-165 · Фильтр продавца в библиотеке** (P1). Приёмка: Можно оставить собственников и агентов с комиссией до 50%. Доказательство: web/app.js: библиотека / черновик / поиск / новая карточка / seller filter; Браузер: сохранение и открытие объекта; tests/content.test.mjs: commission boundary
-- [ ] **RCN-166 · Доска статусов** (P1). Приёмка: Новый, проверен, готов, опубликован и архив имеют отдельные состояния.
-- [ ] **RCN-167 · Задачи по карточке** (P1). Приёмка: У объекта есть ответственный, срок и список недостающих данных.
-- [ ] **RCN-168 · Массовое редактирование** (P1). Приёмка: Услуги и профиль тегов меняются у выбранных карточек с предпросмотром.
-- [ ] **RCN-169 · Дубликаты объявлений** (P1). Приёмка: Одинаковый объект разных источников связывается после проверки.
+- [x] **RCN-166 · Доска статусов** (P1). Приёмка: Новый, проверен, готов, опубликован и архив имеют отдельные состояния. Доказательство: web/workflow.mjs; tests/workflow.test.mjs; tests/test_workflow_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-166
+- [x] **RCN-167 · Задачи по карточке** (P1). Приёмка: У объекта есть ответственный, срок и список недостающих данных. Доказательство: web/workflow.mjs; tests/workflow.test.mjs; tests/test_workflow_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-167
+- [x] **RCN-168 · Массовое редактирование** (P1). Приёмка: Услуги и профиль тегов меняются у выбранных карточек с предпросмотром. Доказательство: web/workflow.mjs; tests/workflow.test.mjs; tests/test_workflow_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-168
+- [x] **RCN-169 · Дубликаты объявлений** (P1). Приёмка: Одинаковый объект разных источников связывается после проверки. Доказательство: web/workflow.mjs; tests/workflow.test.mjs; tests/test_workflow_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-169
 - [ ] **RCN-170 · Мобильная приёмка** (P1). Приёмка: Редактор и словарь полностью проверены на узком экране с клавиатурой.
 ## Экспорт и командная работа
 
@@ -221,9 +221,9 @@
 - [x] **RCN-173 · Полное копирование** (P2). Приёмка: Заголовок, описание и теги выдаются в правильном порядке. Доказательство: web/app.js: copy / export / restore; wordCustom включён в backup; Браузерная приёмка v2: сохранение редактированного заголовка
 - [x] **RCN-174 · JSON-резервная копия** (P2). Приёмка: Библиотека, словари, преимущества и черновик экспортируются и восстанавливаются. Доказательство: web/app.js: copy / export / restore; wordCustom включён в backup; Браузерная приёмка v2: сохранение редактированного заголовка
 - [x] **RCN-175 · Словарь замен в резервной копии** (P2). Приёмка: Пользовательские CN/RU замены переносятся между браузерами. Доказательство: web/app.js: copy / export / restore; wordCustom включён в backup; Браузерная приёмка v2: сохранение редактированного заголовка
-- [ ] **RCN-176 · CSV/XLSX выгрузка** (P2). Приёмка: Объекты экспортируются с фильтрами и отдельными полями платежей.
-- [ ] **RCN-177 · Роли коллег** (P2). Приёмка: Владелец, редактор и просмотр имеют проверяемые права.
-- [ ] **RCN-178 · Согласование публикации** (P2). Приёмка: Подготовленный пост может пройти проверку коллегой до размещения.
+- [x] **RCN-176 · CSV/XLSX выгрузка** (P2). Приёмка: Объекты экспортируются с фильтрами и отдельными полями платежей. Доказательство: web/table-export.mjs; cli/table_export.py; tests/table-export.test.mjs; tests/test_table_export.py; tests/test_table_export_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-176
+- [x] **RCN-177 · Роли коллег** (P2). Приёмка: Владелец, редактор и просмотр имеют проверяемые права. Доказательство: cli/access_roles.py; cli/phone_relay.py; web/access-roles.mjs; tests/test_access_roles.py; tests/access-roles.test.mjs; tests/test_access_roles_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-177
+- [x] **RCN-178 · Согласование публикации** (P2). Приёмка: Подготовленный пост может пройти проверку коллегой до размещения. Доказательство: cli/publication_review.py; web/publication-review.mjs; tests/test_publication_review.py; tests/publication-review.test.mjs; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-178
 - [x] **RCN-179 · Версии поста** (P2). Приёмка: Возврат к ранее сохранённой редакции не стирает историю. Доказательство: web/history-ui.mjs; web/history.mjs: восстановление отдельным событием; Браузер: сохранение, PNG, восстановление цены 70000 / залога 140000 / площади 54; docs/HISTORY.md
 - [x] **RCN-180 · Экспорт пакета для Rednote** (P2). Приёмка: Текст, фото и источник собираются без автоматической публикации без команды. Доказательство: web/photo-ui.mjs: фото + текст + ссылка источника одним ZIP без публикации; Браузер HTTPS: post.txt содержит китайский текст, manifest.json содержит исходную ссылку
 ## Тесты, доступ и защита данных
@@ -236,8 +236,8 @@
 - [x] **RCN-186 · Видимость GitHub по указанию владельца** (P0). Приёмка: Видимость репозитория соответствует актуальному указанию владельца и подтверждена GitHub. Доказательство: 2026-10-29: пользователь разрешил открыть redcn для GitHub Pages; GitHub get_repo: visibility=public; Pages status=built, main/docs
 - [x] **RCN-187 · Ограничение сетевых URL** (P0). Приёмка: CLI проверяет HTTPS/домен/публичный IP/редирект до запроса. Доказательство: cli/redcn.py: allowed_url / CheckedRedirect; tests/test_cli.py: URL, private IP, redirect
 - [x] **RCN-188 · Безопасный вывод источника** (P0). Приёмка: Текст объявлений и словаря вставляется как текст, не исполняемый HTML. Доказательство: web/app.js / web/word-editor.mjs: textContent и createTextNode; нет исполнения HTML источника
-- [ ] **RCN-189 · Сканирование секретов** (P0). Приёмка: Перед push автоматически проверяются токены и локальные файлы с данными.
-- [ ] **RCN-190 · Автоматическая браузерная регрессия** (P0). Приёмка: В CI проверяется создание, сохранение, замена и восстановление карточки.
+- [x] **RCN-189 · Сканирование секретов** (P0). Приёмка: Перед push автоматически проверяются токены и локальные файлы с данными. Доказательство: scripts/check-secrets.mjs; scripts/install-git-hooks.mjs; tests/secret-scan.test.mjs; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-189
+- [x] **RCN-190 · Автоматическая браузерная регрессия** (P0). Приёмка: В CI проверяется создание, сохранение, замена и восстановление карточки. Доказательство: .github/workflows/verification.yml; scripts/run-browser-regression.py; scripts/run-python-partition.py; tests/test_ci_editor_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-190
 ## Публикация и эксплуатация
 
 - [x] **RCN-191 · Воспроизводимая сборка** (P1). Приёмка: Из web-модулей собирается один валидный Worker. Доказательство: scripts/build.mjs; scripts/validate-artifact.mjs; README.md; docs/CLI.md; docs/WORD-EDITOR.md
@@ -245,10 +245,10 @@
 - [x] **RCN-193 · Инструкция словаря** (P1). Приёмка: Описаны перевод, подсказки, выбранное/все совпадения и отмена. Доказательство: scripts/build.mjs; scripts/validate-artifact.mjs; README.md; docs/CLI.md; docs/WORD-EDITOR.md
 - [x] **RCN-194 · Публикация проверенной версии** (P1). Приёмка: Развёрнута версия с совпадающими исходниками и пройденными проверками. Доказательство: Sites deployment succeeded: appgdep_6ae3ac3068d881918ac7a2148ebe3847; Source commit 69f234962a8bbd7263dd5eff5b583b31b786d8f4; 21 JS + 10 Python checks
 - [ ] **RCN-195 · Автодеплой GitHub→Sites** (P1). Приёмка: Разрешённый pipeline публикует только проверенный коммит.
-- [ ] **RCN-196 · Логи импортов** (P1). Приёмка: Сохраняются время, статус и причина отказа без приватных заголовков запроса.
-- [ ] **RCN-197 · Повторные попытки** (P1). Приёмка: Ошибки сети обрабатываются с ограничением и без обхода защиты.
-- [ ] **RCN-198 · Планировщик новых объявлений** (P1). Приёмка: После отдельной настройки выполняет разрешённый источник по расписанию.
-- [ ] **RCN-199 · Уведомления о новых объектах** (P1). Приёмка: Выбранный канал получает только согласованные уведомления.
+- [x] **RCN-196 · Логи импортов** (P1). Приёмка: Сохраняются время, статус и причина отказа без приватных заголовков запроса. Доказательство: cli/activity_log.py; cli/listing_watch.py; cli/local_server.py; tests/test_listing_watch_extended.py; tests/test_workspace_boundaries.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-196
+- [x] **RCN-197 · Повторные попытки** (P1). Приёмка: Ошибки сети обрабатываются с ограничением и без обхода защиты. Доказательство: cli/redcn.py; tests/test_http_import_retries.py; cli/listing_watch.py; tests/test_listing_watch.py; tests/test_listing_watch_extended.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-197
+- [x] **RCN-198 · Планировщик новых объявлений** (P1). Приёмка: После отдельной настройки выполняет разрешённый источник по расписанию. Доказательство: cli/listing_watch.py; web/listing-watch.mjs; tests/test_listing_watch.py; tests/test_listing_watch_extended.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-198
+- [x] **RCN-199 · Уведомления о новых объектах** (P1). Приёмка: Выбранный канал получает только согласованные уведомления. Доказательство: cli/listing_watch.py; web/listing-watch.mjs; tests/test_listing_watch.py; tests/test_listing_watch_extended.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-199
 - [x] **RCN-200 · Контроль выпуска и roadmap** (P1). Приёмка: Релиз фиксирует число выполненных задач и оставшиеся ограничения, issue остаётся открытым. Доказательство: CHANGELOG.md; docs/VERIFICATION.md; GitHub issue #1 остаётся open
 ## Расширение базы и автоматизации · октябрь 2026
 
@@ -265,7 +265,7 @@
 - [ ] **RCN-211 · Проверка остальных китайских названий МЦД** (P1). Приёмка: Найти источники для непереведённых названий МЦД и новых линий, проверить алиасы и не выдавать community-названия за официальные.
 - [ ] **RCN-212 · Контрольная выборка распознавания мебели** (P1). Приёмка: Собрать разрешённую размеченную выборку кухонь и комнат и измерить точность по шкафам, стульям, вытяжкам, компьютерам и пианино.
 - [ ] **RCN-213 · Экземпляры предметов на нескольких ракурсах** (P1). Приёмка: Сопоставлять один предмет между разными фото, обосновывать точное количество отдельными видимыми экземплярами и показывать ошибки сопоставления.
-- [ ] **RCN-214 · Проверка китайских фраз оператором** (P1). Приёмка: Замечания из базы знаний переводить в версии утверждённого словаря с примерами до/после и сохранением исправленной формулировки.
+- [x] **RCN-214 · Проверка китайских фраз оператором** (P1). Приёмка: Замечания из базы знаний переводить в версии утверждённого словаря с примерами до/после и сохранением исправленной формулировки. Доказательство: cli/dictionary_reviews.py; web/dictionary-review.mjs; tests/test_dictionary_reviews.py; tests/dictionary-review.test.mjs; tests/test_dictionary_review_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-214
 - [ ] **RCN-215 · Полнота виртуальных фотогалерей** (P1). Приёмка: Проверить галереи с невидимыми слайдами и выдавать отдельный индикатор пропущенных фото вместо обещания полного сбора по прокрутке.
 ## iPhone и сервер на Mac
 
@@ -295,9 +295,9 @@
 - [x] **RCN-237 · Готовые материалы и досье на телефоне** (P1). Приёмка: Подключённый iPhone получает HTML, PDF, intro/outro и личные вложения той же карточки; PNG открываются для системного сохранения в Фото. Доказательство: web/phone.mjs; web/card-files.mjs; tests/test_presentation_browser.py; docs/VERIFICATION.md#v10-2026-10-30; https://github.com/leunch4off/redcn/pull/6
 - [x] **RCN-238 · Постоянная привязка досье и каталог Mac** (P1). Приёмка: Ссылка, черновик и библиотека сохраняют ID карточки; новый экспорт не создаёт другой объект, каталог Mac открывает подготовленные карточки. Доказательство: web/app.js; cli/local_server.py; tests/test_presentation_browser.py; docs/VERIFICATION.md#v10-2026-10-30; https://github.com/leunch4off/redcn/pull/6
 - [x] **RCN-239 · Свободное размещение и изменение размеров блоков** (P2). Приёмка: Расширить редактор до перемещения блоков мышью и касанием с сеткой, размерами, выравниванием и отменой действий; сохранить печатную геометрию. Доказательство: web/design-canvas-editor.mjs; tests/design-canvas-editor.test.mjs; tests/test_design_canvas_browser.py; docs/VERIFICATION.md#v16
-- [ ] **RCN-240 · Просмотр и измерения LiDAR/3D внутри карточки** (P2). Приёмка: Реализовать отдельный безопасный просмотр поддерживаемых моделей, масштаб, единицы и измерения с проверкой реальных сканов.
+- [x] **RCN-240 · Просмотр и измерения LiDAR/3D внутри карточки** (P2). Приёмка: Реализовать отдельный безопасный просмотр поддерживаемых моделей, масштаб, единицы и измерения с проверкой реальных сканов. Доказательство: web/model-viewer.mjs; tests/model-viewer.test.mjs; tests/test_model_viewer_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-240
 - [ ] **RCN-241 · Резервные копии досье и готовых файлов** (P2). Приёмка: Добавить проверяемый экспорт и восстановление всей карточки с вложениями, шаблонами и версиями материалов на другом Mac.
-- [ ] **RCN-242 · Клиентская копия досье с выбором доступа** (P2). Приёмка: Пользователь явно выбирает выдаваемые клиенту файлы; личные заметки и договоры других заселений остаются закрытыми.
+- [x] **RCN-242 · Клиентская копия досье с выбором доступа** (P2). Приёмка: Пользователь явно выбирает выдаваемые клиенту файлы; личные заметки и договоры других заселений остаются закрытыми. Доказательство: cli/dossier_backup.py; cli/client_publication.py; web/dossier-transfer.mjs; tests/test_dossier_backup.py; tests/test_dossier_api.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-242
 ## Скорость и работа через интернет
 
 - [x] **RCN-243 · Временный HTTPS-доступ к телефону через интернет** (P1). Приёмка: Отдельный телефонный сервер получает HTTPS-ссылку без проброса роутера; по внешнему адресу проверены вход, Secure-cookie и отказ без сессии, рабочий стол не публикуется. Доказательство: cli/remote_access.py; cli/phone_relay.py; tests/test_remote_access.py; tests/test_external_phone.py; docs/VERIFICATION.md#v11-2026-10-30
@@ -327,7 +327,7 @@
 - [x] **RCN-261 · Изолированный локальный машинный перевод** (P1). Приёмка: Отдельная nativeARM среда,официальныеRU→EN→ZH модели,ограничение времени,лицензионные уведомления и аудит чисел/словаря. Доказательство: cli/nmt_worker.py; scripts/setup-translation-runtime.py; docs/LOCAL-TRANSLATION.md; tests/test_nmt_worker.py
 - [ ] **RCN-262 · Независимая редактура китайским носителем** (P1). Приёмка: Проверить выборку реальных объявлений и переводов носителем,зафиксировать ошибки и правки без изменения подтверждённых фактов.
 - [ ] **RCN-263 · Оценка прямойRU→ZH модели на корпусе аренды** (P1). Приёмка: Сравнить качество,лицензию,память и скорость прямого перевода с текущим промежуточным английским на фиксированной выборке.
-- [ ] **RCN-264 · Пополнение словаря из одобренных исправлений** (P1). Приёмка: Оператор подтверждает пару;система хранит версию и источник,выявляет конфликты и не превращает машинный черновик в проверенный факт.
+- [x] **RCN-264 · Пополнение словаря из одобренных исправлений** (P1). Приёмка: Оператор подтверждает пару;система хранит версию и источник,выявляет конфликты и не превращает машинный черновик в проверенный факт. Доказательство: cli/dictionary_reviews.py; web/dictionary-review.mjs; tests/test_dictionary_reviews.py; tests/dictionary-review.test.mjs; tests/test_dictionary_review_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-264
 ## Вузы, кампусы и быстрый импорт
 
 - [x] **RCN-265 · Московские вузы с китайскими названиями и источниками** (P1). Приёмка: У записей есть официальные источники и основание включения; обучение китайских студентов, китайская страница и общий международный приём различаются. Доказательство: data/moscow-universities.json; docs/MOSCOW-UNIVERSITIES-RU.md; tests/university-catalog.test.mjs
@@ -352,8 +352,8 @@
 - [x] **RCN-282 · Полный текст и фотографии в многостраничном PDF** (P1). Приёмка: Длинное описание продолжается на дополнительных листах, выбранные фото до 30 размещаются по страницам, шрифты и изображения ожидаются в ограниченный срок. Доказательство: web/publication-render.mjs; cli/card_assets.py; tests/publication-core.test.mjs
 - [x] **RCN-283 · Ленивый дизайнер на телефоне** (P1). Приёмка: Крупный словарь и редактор загружаются отдельным модулем при открытии дизайна, без включения в первую загрузку ленты. Доказательство: docs/phone-designer.mjs; web/phone.mjs; scripts/validate-pages.mjs
 - [x] **RCN-284 · Визуальная проверка готового комплекта Ciliev** (P1). Приёмка: Реальные HTML/PDF/intro/outro из одной карточки проверены по изображениям страниц, геометрии, китайским шрифтам и сохранению пользовательских данных. Доказательство: docs/VERIFICATION.md#v16; tests/test_ciliev_studio_browser.py
-- [ ] **RCN-285 · Компактный макет без подтверждённых маршрутов** (P1). Приёмка: При отсутствии подтверждённых маршрутов автоматический макет убирает пустую маршрутную зону и может увеличить карту; явно заданные пользователем позиции сохраняются. Canvas, рамки выбора и HTML/PDF/PNG используют одинаковую результирующую геометрию; проверены случаи с нулём, одним и несколькими подтверждёнными маршрутами.
-- [ ] **RCN-286 · Проверенные подрезки в дизайнере Mac** (P1). Приёмка: Дизайнер Mac автоматически использует ручную производную либо проверенную OCR-копию из backend; ручные правки имеют приоритет. HTML/PDF/PNG и повторное открытие сохраняют одинаковый выбор кадров. Оригиналы доступны и не перезаписываются, сомнительная OCR-подрезка не применяется.
+- [x] **RCN-285 · Компактный макет без подтверждённых маршрутов** (P1). Приёмка: При отсутствии подтверждённых маршрутов автоматический макет убирает пустую маршрутную зону и может увеличить карту; явно заданные пользователем позиции сохраняются. Canvas, рамки выбора и HTML/PDF/PNG используют одинаковую результирующую геометрию; проверены случаи с нулём, одним и несколькими подтверждёнными маршрутами. Доказательство: web/publication-model.mjs; web/publication-render.mjs; web/design-canvas-editor.mjs; tests/publication-compact.test.mjs; tests/test_publication_compact_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-285
+- [x] **RCN-286 · Проверенные подрезки в дизайнере Mac** (P1). Приёмка: Дизайнер Mac автоматически использует ручную производную либо проверенную OCR-копию из backend; ручные правки имеют приоритет. HTML/PDF/PNG и повторное открытие сохраняют одинаковый выбор кадров. Оригиналы доступны и не перезаписываются, сомнительная OCR-подрезка не применяется. Доказательство: cli/photo_store.py; web/photo-ui.mjs; web/phone.mjs; web/publication-model.mjs; tests/test_dossier_backup.py; tests/publication-compact.test.mjs; tests/test_publication_compact_browser.py; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-286
 ## Ciliev: следующие улучшения
 
 - [ ] **RCN-287 · Ускорить первое открытие дизайнера на телефоне** (P1). Приёмка: На 393 px через внешний HTTPS измерить открытие canvas и готовность фотографий отдельно; сократить первую готовность редактора до 10 секунд, сохраняя общий генератор и авторизацию. Фактический замер v16: canvas 16,118 с, фото ещё готовятся. Доказательство: docs/VERIFICATION.md#v16
@@ -375,7 +375,7 @@
 
 - [ ] **RCN-300 · Проверенные координаты кампусов и учебных корпусов** (P1). Приёмка: Добавить координаты конкретных адресных объектов с первичным источником, датой и точностью. Университет без выбранного здания не подменяется его главным корпусом; непроверенное геокодирование остаётся отдельным черновиком.
 - [ ] **RCN-301 · Маршруты общественного транспорта через поддерживаемый API** (P1). Приёмка: Сначала подтвердить доступность, лицензию, стоимость и поддержку общественного транспорта выбранным API. Затем получать реальные автобусы, пересадки и времена с датой расчёта, защищённым ключом и обработкой устаревания; до этого значения не выдумываются.
-- [ ] **RCN-302 · Явное расширение охвата выдачи за две страницы** (P1). Приёмка: Реализовать ограниченный инкрементальный обход насыщенного поиска с контрольной границей публикаций, дедупликацией и пределами времени и частоты. Показывать фактическую полноту и пропуски; расширение фильтров и массовая загрузка квартир не выполняются молча.
+- [x] **RCN-302 · Явное расширение охвата выдачи за две страницы** (P1). Приёмка: Реализовать ограниченный инкрементальный обход насыщенного поиска с контрольной границей публикаций, дедупликацией и пределами времени и частоты. Показывать фактическую полноту и пропуски; расширение фильтров и массовая загрузка квартир не выполняются молча. Доказательство: cli/listing_watch.py; tests/test_listing_watch_extended.py; web/listing-watch.mjs; docs/RELEASE-84-PROGRESS-2026-11-01.md; docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-302
 - [ ] **RCN-303 · Необязательная доставка уведомлений в выбранный канал** (P1). Приёмка: Оператор явно выбирает собственный канал или устройство и включает доставку. Проверить адресата, безопасное хранение ключей, дедупликацию, повторную отправку и отключение; без настройки внешние сообщения и push не отправляются.
 ## Фотоинвентаризация и китайские публикации v18
 
