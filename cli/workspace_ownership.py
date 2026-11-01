@@ -69,6 +69,11 @@ class WorkspaceOwner:
         for child in self.directory.iterdir():
             try:
                 value = child.lstat()
+                if stat.S_ISREG(value.st_mode) and value.st_nlink == 0:
+                    # SQLite can unlink a journal between path lookup and stat.
+                    # Recheck once: absence is normal; a replacement must still
+                    # pass the same strict symlink/hardlink checks below.
+                    value = child.lstat()
             except FileNotFoundError:  # a completed SQLite journal may vanish
                 continue
             if stat.S_ISLNK(value.st_mode) or (stat.S_ISREG(value.st_mode) and value.st_nlink != 1):

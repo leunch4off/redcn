@@ -23,6 +23,23 @@ import photo_store
 from workspace_ownership import WorkspaceOwner,DesktopOwnerAccess,OwnershipError,owned_path
 
 
+def unlink_during_lstat(target, replacement=None):
+    """Model an inode unlinked after lookup but before stat sampled nlink."""
+    original=Path.lstat
+    calls=[]
+    def raced(path,*args,**kwargs):
+        value=original(path,*args,**kwargs)
+        if path==target:
+            calls.append(value.st_nlink)
+            if len(calls)==1:
+                target.unlink()
+                if replacement is not None:replacement()
+                fields=list(value);fields[3]=0
+                return os.stat_result(fields)
+        return value
+    return raced,calls
+
+
 class ScopeTests(unittest.TestCase):
     def test_private_owner_credential_is_persistent_and_not_a_workspace_public_id(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -76,6 +93,47 @@ class ScopeTests(unittest.TestCase):
             with self.assertRaises(OwnershipError):owned_path(root,'media/linked')
             for path in ('../foreign','/tmp/foreign'):
                 with self.assertRaises(OwnershipError):owned_path(root,path)
+
+    def test_completed_sqlite_journal_can_vanish_during_metadata_check(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);scope=WorkspaceOwner(root)
+            journal=root/'activity-log.sqlite3-journal';journal.write_bytes(b'synthetic journal')
+            raced,calls=unlink_during_lstat(journal)
+            with patch.object(Path,'lstat',raced):self.assertTrue(scope.check())
+            self.assertFalse(journal.exists());self.assertEqual(len(calls),1)
+
+    def test_zero_link_snapshot_rechecks_replacement_and_keeps_link_rejection(self):
+        for kind in ('private-file','symlink','hardlink'):
+            with self.subTest(kind=kind),tempfile.TemporaryDirectory() as folder:
+                base=Path(folder);root=base/'workspace';scope=WorkspaceOwner(root)
+                foreign=base/'foreign';foreign.write_bytes(b'other workspace fixture')
+                journal=root/'activity-log.sqlite3-journal';journal.write_bytes(b'synthetic journal')
+                def replace():
+                    if kind=='private-file':journal.write_bytes(b'next private journal')
+                    elif kind=='symlink':journal.symlink_to(foreign)
+                    else:os.link(foreign,journal)
+                raced,calls=unlink_during_lstat(journal,replace)
+                with patch.object(Path,'lstat',raced):
+                    if kind=='private-file':self.assertTrue(scope.check())
+                    else:
+                        with self.assertRaises(OwnershipError):scope.check()
+                self.assertEqual(len(calls),2)
+                self.assertEqual(foreign.read_bytes(),b'other workspace fixture')
+
+    def test_zero_link_retry_is_bounded_and_unstable_metadata_fails_closed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);scope=WorkspaceOwner(root)
+            journal=root/'activity-log.sqlite3-journal';journal.write_bytes(b'synthetic journal')
+            original=Path.lstat;calls=[]
+            def unstable(path,*args,**kwargs):
+                value=original(path,*args,**kwargs)
+                if path==journal:
+                    calls.append(True);fields=list(value);fields[3]=0
+                    return os.stat_result(fields)
+                return value
+            with patch.object(Path,'lstat',unstable):
+                with self.assertRaises(OwnershipError):scope.check()
+            self.assertEqual(len(calls),2)
 
 
 class TwoOwnerHTTP(unittest.TestCase):
@@ -166,6 +224,17 @@ class TwoOwnerHTTP(unittest.TestCase):
         status,body,_=self.call(self.a,'/api/local/cards',token='é'*43)
         self.assertEqual(status,403)
         self.assertIn('error',json.loads(body))
+
+    def test_unlinked_sqlite_journal_does_not_revoke_valid_owner_http_access(self):
+        journal=self.a['directory']/'activity-log.sqlite3-journal'
+        journal.write_bytes(b'completed synthetic transaction')
+        raced,calls=unlink_during_lstat(journal)
+        with patch.object(Path,'lstat',raced):
+            status,body,_=self.call(self.a,'/api/local/cards',token=self.a['token'])
+        self.assertEqual(status,200,body.decode())
+        self.assertEqual(len(calls),1)
+        self.assertEqual(self.call(self.a,'/api/local/cards',token=self.b['token'])[0],403)
+        self.assertEqual(self.call(self.a,'/api/local/cards')[0],403)
 
     def test_foreign_card_edit_attachment_and_media_ids_do_not_cross_workspaces(self):
         before=local_server.read_result(self.b['directory'],self.b['card'])
