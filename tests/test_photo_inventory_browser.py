@@ -56,7 +56,7 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
 
     def open_desktop(self):
         self.page.set_viewport_size({'width':1440,'height':1100})
-        self.page.goto(self.desktop+'/listing/'+self.card_id,wait_until='domcontentloaded')
+        self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id),wait_until='domcontentloaded')
         self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'&&document.getElementById('importStatus').textContent.includes('Сохранённая карточка загружена')")
 
     def fridge_observation(self):
@@ -139,7 +139,9 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
         with patch.object(self.controller,'prepare_card',return_value=job_id) as prepare:
             phone_fixture.PhoneBrowserAcceptance.connect(self)
             self.page.locator('#phoneCards .listing-card').first.click()
-            inventory=self.page.locator('#phonePhotoInventory');inventory.locator('summary').click()
+            # Model observations remain read-only; manual instance review has
+            # its own sibling panel and must not broaden this selector.
+            inventory=self.page.locator('#phonePhotoInventory > details');inventory.locator('summary').click()
             self.assertIn('проверено 2 / 2 фото',inventory.inner_text())
             self.assertIn('Холодильник · видно на фото',inventory.inner_text())
             self.assertIn('это не означает отсутствие мебели',inventory.inner_text())

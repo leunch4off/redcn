@@ -171,7 +171,8 @@ class PhoneBrowserAcceptance(unittest.TestCase):
     def test_main_editor_navigation_and_inputs_fit_iphone_width(self):
         thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
         try:
-            self.page.goto('http://127.0.0.1:'+str(self.controller.server_port))
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port))
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
             for tab in ['editor','rules','library','settings','history','analytics','knowledge','roadmap']:
                 self.page.locator('aside nav [data-tab="'+tab+'"]').click()
                 if tab=='roadmap':
@@ -208,7 +209,8 @@ class PhoneBrowserAcceptance(unittest.TestCase):
         thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
         try:
             with patch.object(self.controller.phone_relay,'status',return_value={'enabled':True,'port':self.phone.server_port,'urls':[]}):
-                self.page.goto('http://127.0.0.1:'+str(self.controller.server_port))
+                self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port))
+                self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
                 self.page.wait_for_function("document.getElementById('phoneConnectionStatus').textContent.includes('включён')")
                 self.page.locator('#price').fill('90000');self.page.locator('#area').fill('55')
                 with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000):

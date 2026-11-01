@@ -39,7 +39,11 @@ class DeviceNotificationsBrowserTests(unittest.TestCase):
   self.page.get_by_role('button',name='Выбрать этот браузер и включить',exact=True).click();self.page.wait_for_function('window.permissionRequests===2')
   self.page.wait_for_function("document.querySelector('[role=status]').textContent.includes('Получатель')")
   self.assertEqual(self.page.evaluate('window.shown.length'),1)
-  self.page.get_by_role('button',name='Выключить доставку',exact=True).click();self.assertIn('выключена',self.page.get_by_role('status').inner_text())
+  self.page.get_by_role('button',name='Выключить доставку',exact=True).click()
+  # The UI confirms disable only after the IndexedDB transaction commits.
+  # A click finishing does not mean its async event handler has completed.
+  self.page.wait_for_function("document.querySelector('[role=status]').textContent.includes('Доставка на это устройство выключена.')")
+  self.assertIn('выключена',self.page.get_by_role('status').inner_text())
   setting=self.page.evaluate("async()=>{const s=window.createStore();try{return await s.setting('a'.repeat(64));}finally{s.close();}}")
   self.assertFalse(setting['enabled']);self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
  def test_real_indexeddb_transaction_has_one_claim_across_concurrent_stores_and_owner_scopes(self):

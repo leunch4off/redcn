@@ -43,7 +43,7 @@ class WorkspaceBrowserAcceptance(unittest.TestCase):
 
     def open_desktop(self):
         self.page.set_viewport_size({'width':1440,'height':1100})
-        self.page.goto(self.desktop+'/listing/'+self.card_id,wait_until='domcontentloaded')
+        self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id),wait_until='domcontentloaded')
         self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'&&document.getElementById('output').value.includes('两间独立')")
 
     def pair_phone(self,*,role='editor'):

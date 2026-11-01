@@ -16,12 +16,15 @@ class InstalledAppPairingAcceptance(unittest.TestCase):
         desktop_thread=threading.Thread(target=self.controller.serve_forever,daemon=True);desktop_thread.start()
         installed=None
         try:
-            self.page.goto('http://127.0.0.1:'+str(self.controller.server_port)+'/')
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port))
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
             self.page.locator('#phoneConnectionShortcut').click()
             self.page.locator('#phonePairManualCode').wait_for(state='visible')
             code=self.page.locator('#phonePairManualCode').inner_text().replace(' ','')
             self.assertRegex(code,r'^[0-9]{8}$')
-            self.page.reload();self.page.locator('#phoneConnectionShortcut').click()
+            self.page.reload()
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
+            self.page.locator('#phoneConnectionShortcut').click()
             self.assertEqual(self.page.locator('#phonePairManualCode').inner_text().replace(' ',''),code)
             # A new standalone app context has no Safari session. It enters the
             # current visible eight-digit code, without needing the used QR URL.

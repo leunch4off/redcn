@@ -111,13 +111,15 @@ class BrowserAcceptance(unittest.TestCase):
 
     def test_real_chrome_scroll_loads_gallery_and_reaches_bottom(self):
         import browser_import
-        self.page.goto(self.server.desktop_access.launch_url(self.server.server_port))
+        # Use the fresh blank page: set_content preserves a live app's pending
+        # bootstrap callbacks, which would then render into this source fixture.
         self.page.set_content('''<main><h1>Сдаётся 2-комнатная квартира 54 м²</h1>
             <div data-name="PriceInfo">80 000 ₽ в месяц</div>
             <div data-name="Description">Две изолированные комнаты</div>
             <div style="height:2400px"></div><div data-name="OfferGallery"><img id="lazy"></div></main>
             <script>addEventListener('scroll',()=>{if(scrollY>1000)document.querySelector('#lazy').setAttribute('data-original','https://images.cdn-cian.ru/images/lazy-room.jpg');});</script>''')
         first = self.page.evaluate(browser_import.SNAPSHOT)
+        self.assertNotIn('https://images.cdn-cian.ru/images/lazy-room.jpg', first['images'])
         snapshot, capture = browser_import.capture_scrolled(self.page, first, time.monotonic()+12, lambda url, **kwargs: url)
         self.assertTrue(capture['completed'])
         self.assertFalse(capture['bounded'])

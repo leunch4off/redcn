@@ -18,7 +18,7 @@ class DesktopPerformanceAcceptance(unittest.TestCase):
         self.page.on('request',lambda request:requests.append(request.url))
         try:
             started=time.monotonic()
-            self.page.goto('http://127.0.0.1:'+str(self.controller.server_port)+'/',wait_until='domcontentloaded',timeout=10000)
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port),wait_until='domcontentloaded',timeout=10000)
             self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'",timeout=10000)
             elapsed=time.monotonic()-started
             self.assertLess(elapsed,10,'Editor readiness took '+str(elapsed)+' seconds')

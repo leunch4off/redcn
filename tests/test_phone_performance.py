@@ -68,7 +68,7 @@ class PhonePerformanceAcceptance(unittest.TestCase):
             self.page.locator('#phoneReconnect').wait_for(state='visible',timeout=10500)
             waited=time.perf_counter()-started
             self.assertLess(waited,10,'An unreachable Mac must not leave a 25-second startup spinner')
-            self.assertIn('секунд',self.page.locator('#phonePairStatus').inner_text())
+            self.assertIn('Ответ сервера не получен за 8 с.',self.page.locator('#phonePairStatus').inner_text())
             self.assertEqual(self.page.locator('#phoneLoadConnection').get_attribute('data-state'),'error')
             self.assertEqual(self.page.locator('#phoneLoadCards').get_attribute('data-state'),'waiting')
             self.assertTrue(self.page.locator('#phoneLoadRetry').is_visible())

@@ -20,7 +20,7 @@ class LanguageStudioAcceptance(unittest.TestCase):
         acceptance.PhoneBrowserAcceptance.tearDown(self)
 
     def open_editor(self):
-        self.page.goto(self.desktop,wait_until='domcontentloaded')
+        self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port),wait_until='domcontentloaded')
         self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
         self.page.locator('#languageComposer').wait_for(state='attached')
 
