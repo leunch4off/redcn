@@ -109,7 +109,17 @@ class DictionaryReviewBrowserTests(unittest.TestCase):
         self.page.wait_for_function("typeof window.releaseOldDictionary==='function'")
         # Show the controls through their real details disclosure. The held
         # refresh is already busy, so the toggle cannot issue a second read.
+        # Details dispatches toggle asynchronously: wait for that actual event
+        # before clear(), otherwise a queued toggle can legitimately start the
+        # new session's refresh after busy has been reset.
+        self.page.evaluate('''()=>{
+          window.dictionaryResetToggled=false;
+          document.querySelector('#dictionaryResetMount .dictionary-review').addEventListener(
+            'toggle',()=>window.dictionaryResetToggled=true,{once:true});
+        }''')
         self.page.locator('#dictionaryResetMount .dictionary-review > summary').first.click()
+        self.page.wait_for_function('window.dictionaryResetToggled===true')
+        self.assertEqual(self.page.evaluate('window.dictionaryResetReads'),1,'Opening while busy must not start another read')
         self.assertTrue(self.page.locator('#dictionaryResetMount').get_by_role('button',name='Обновить общий словарь',exact=True).is_disabled())
         self.page.evaluate('window.dictionaryResetUI.clear()')
         self.assertTrue(self.page.locator('#dictionaryResetMount').get_by_role('button',name='Обновить общий словарь',exact=True).is_enabled())
