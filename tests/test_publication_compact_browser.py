@@ -30,6 +30,15 @@ window.compactDesign=()=>design;
 window.compactGeometry=()=>publicationSurfaceLayout(design,'outro',resolvePublicationData(card,design));
 window.compactReady=true;
 </script></html>'''
+STUDIO_HARNESS='''<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/web/design-canvas-editor.css"><link rel="stylesheet" href="/web/presentation-studio.css"><style>*{box-sizing:border-box}body{margin:0;font:16px system-ui}#mount{padding:12px;max-width:1300px;margin:auto}.btn{padding:8px}input,select,textarea{font:inherit}</style><div id="mount"></div><script type="module">
+import {setupPresentationStudio} from '/web/presentation-studio.mjs';
+import {cardPhotoDataUrl} from '/web/card-files.mjs';
+const nativeEncode=HTMLCanvasElement.prototype.toDataURL;
+window.rasterEncodes=[];HTMLCanvasElement.prototype.toDataURL=function(type,...args){if(type==='image/png'&&this.width===1080&&this.height===1920)rasterEncodes.push(document.getElementById('presentationTabintro')?.classList.contains('chosen')?'intro':'outro');return nativeEncode.call(this,type,...args);};
+const photo=await cardPhotoDataUrl(await(await fetch('/api/local/media/'+'a'.repeat(64))).blob());
+window.studio=setupPresentationStudio({mount:document.getElementById('mount'),getCard:()=>({titles:['实拍房源'],body:'公寓介绍',fields:{price:80000,area:54,metro:'Юго-Западная'}}),getPhotos:async()=>[{dataUrl:photo}]});
+await studio.refresh();window.studioReady=true;
+</script></html>'''
 
 
 class PublicationCompactBrowserAcceptance(unittest.TestCase):
@@ -52,8 +61,8 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
             def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
             def log_message(self,*args):pass
             def do_GET(self):
-                if self.path in ('/layout','/photos'):
-                    body=(LAYOUT_HARNESS if self.path=='/layout' else cls.photo_html).encode();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body);return
+                if self.path in ('/layout','/photos','/studio'):
+                    body=({'/layout':LAYOUT_HARNESS,'/photos':cls.photo_html,'/studio':STUDIO_HARNESS}[self.path]).encode();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body);return
                 if self.path.startswith('/api/local/media/'):
                     body=cls.images.get(self.path.rsplit('/',1)[-1]);self.send_response(200 if body else 404);self.send_header('Content-Type','image/png');self.end_headers();self.wfile.write(body or b'');return
                 if self.path=='/styles.css':self.path='/web/styles.css'
@@ -118,6 +127,21 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
         result=self.page.evaluate('async()=>{releaseAccepted();return await pendingPreparedPhoto;}')
         self.assertEqual((result['width'],result['height'],result['selection']),(600,600,'original'))
         self.assertEqual(result['originalId'],'a'*64)
+
+    def test_default_pdf_encodes_no_social_png_and_tabs_prepare_their_selected_image_only(self):
+        self.page.goto(self.url+'/studio',wait_until='domcontentloaded')
+        self.page.wait_for_function('window.studioReady===true')
+        self.assertEqual(self.page.evaluate('rasterEncodes'),[])
+        self.page.locator('#presentationTabintro').click()
+        self.page.wait_for_function("rasterEncodes.join(',')==='intro'&&document.getElementById('presentationImagePreview').naturalWidth===1080")
+        intro=self.page.locator('#presentationImagePreview').get_attribute('src')
+        self.page.locator('#presentationTaboutro').click()
+        self.page.wait_for_function("previous=>rasterEncodes.join(',')==='intro,outro'&&document.getElementById('presentationImagePreview').src!==previous&&document.getElementById('presentationImagePreview').naturalWidth===1080",arg=intro)
+        self.page.locator('#presentationTabpdf').click()
+        self.page.locator('#presentationTabintro').click()
+        self.page.evaluate('studio.refresh()')
+        self.assertEqual(self.page.evaluate('rasterEncodes'),['intro','outro'])
+        self.assertEqual(self.page.locator('#presentationImagePreview').get_attribute('src'),intro)
 
 
 if __name__=='__main__':unittest.main()

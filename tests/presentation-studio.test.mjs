@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeDesignTemplate,buildPresentationHtml,presentationCardData,expandDesignText,safePresentationImage,PRESENTATION_BLOCKS,presentationCardKey} from '../web/presentation-studio.mjs';
+import {normalizeDesignTemplate,buildPresentationHtml,presentationCardData,expandDesignText,safePresentationImage,PRESENTATION_BLOCKS,presentationCardKey,preparePresentationRaster} from '../web/presentation-studio.mjs';
 const card={titles:['明亮公寓 <script>alert(1)</script>'],body:'第一行\nSecond line & <img src=x onerror=alert(1)>',tags:'#莫斯科',fields:{price:80000,area:54,rooms:2,metro:'Юго-Западная',address:'Москва',latitude:55.7,longitude:37.5}};
 test('presentation templates preserve valid order and restrict colors fonts paper and text bounds',()=>{
  const t=normalizeDesignTemplate({preset:'night',accent:'red; background:url(https://evil)',font:'evil',paper:'evil',contact:'x'.repeat(1000),blocks:[{id:'photos',enabled:false},{id:'photos'},{id:'bad'},{id:'title'}],intro:{fontSize:300,overlay:-10,position:'bad',photoIndex:500}});
@@ -40,4 +40,19 @@ test('explicit v1 callers keep their bounded legacy document while a fresh defau
 test('publication identity includes university commute and confirmed equipment changes',()=>{
  const base={...card,fields:{...card.fields,features:['desk'],universities:'МГУ | 40 | metro',campus:''}};const key=presentationCardKey(base);
  for(const patch of [{universities:'РУДН | 50 | bus'},{features:['desk','fridge']},{featureCounts:{desk:2}},{campus:'Новый кампус'}])assert.notEqual(presentationCardKey({...base,fields:{...base.fields,...patch}}),key);
+});
+
+test('PDF and HTML prepare no social rasters while each social selection encodes only its own surface',async()=>{
+ const calls=[],encoded=[],renderer=async kind=>{calls.push(kind);return {toDataURL:type=>{encoded.push([kind,type]);return 'data:image/png;base64,'+kind;}};};const context={card,design:normalizeDesignTemplate(),photos:['data:image/png;base64,aGVsbG8=']};
+ for(const kind of [null,'pdf','pdfOverview'])assert.deepEqual(await preparePresentationRaster(kind,context,renderer),{intro:'',outro:''});
+ assert.deepEqual(calls,[]);assert.deepEqual(encoded,[]);
+ assert.deepEqual(await preparePresentationRaster('intro',context,renderer),{intro:'data:image/png;base64,intro',outro:''});
+ assert.deepEqual(await preparePresentationRaster('outro',context,renderer),{intro:'',outro:'data:image/png;base64,outro'});
+ assert.deepEqual(calls,['intro','outro']);assert.deepEqual(encoded,[['intro','image/png'],['outro','image/png']]);
+});
+
+test('a changed card or auth scope during social drawing prevents stale PNG encoding',async()=>{
+ let current=true,release,encoded=0;const renderer=async()=>{await new Promise(resolve=>{release=resolve;});return {toDataURL:()=>{encoded++;return 'data:image/png;base64,eA==';}};};const pending=preparePresentationRaster('intro',{photos:['data:image/png;base64,eA==']},renderer,()=>current);
+ current=false;release();assert.equal(await pending,null);assert.equal(encoded,0);
+ assert.equal(await preparePresentationRaster('outro',{},renderer,()=>false),null);
 });
