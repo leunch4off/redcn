@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "sourceHead": "80b735b60453091f72ca63ce6e8bc6528d999668",
+  "device": "Native Mac Chrome, isolated temporary caches",
+  "scope": "Two synthetic 640x420 photos over loopback; not external HTTPS, a physical phone, real listing import, or ImportDiagnostics campaign.",
+  "measurement": "Unprofiled monotonic click-to-observed readiness; photo readiness requires exactly two prepared photos and completed status.",
+  "records": [
+    {
+      "mode": "desktop",
+      "fixture": "PresentationAcceptance: two synthetic 640x420 PNG photos",
+      "profiler": false,
+      "expectedPreparedPhotos": 2,
+      "fixturePhotoCount": 2,
+      "operationTimeoutMs": 30000,
+      "errors": [],
+      "pageErrors": [],
+      "clickElapsedMs": 9058,
+      "canvasUsableElapsedMs": 11015.1,
+      "photosReadyElapsedMs": 14311.7,
+      "observed": {
+        "preparedPhotoCount": 2,
+        "photosStage": "",
+        "photosReady": "true",
+        "canvasReady": "true",
+        "status": "Предпросмотр обновлён · 2 фото. Общий шаблон применяется к данным карточки.",
+        "toast": "",
+        "internalCanvasMarkMs": [
+          7390.9,
+          9362.7,
+          13995.9
+        ],
+        "internalPhotosMarkMs": [
+          12180.8
+        ]
+      },
+      "photosObservation": "Requires photosReady=true AND the completed studio status reporting exactly 2 photos; observed after usable-canvas wait, with production photo mark reported separately if earlier.",
+      "canvasUnder10Seconds": false,
+      "photosObservedUnder10Seconds": false,
+      "twoPreparedPhotosValidated": true
+    },
+    {
+      "mode": "phone",
+      "fixture": "PresentationAcceptance: two synthetic 640x420 PNG photos",
+      "profiler": false,
+      "expectedPreparedPhotos": 2,
+      "fixturePhotoCount": 2,
+      "operationTimeoutMs": 30000,
+      "errors": [],
+      "pageErrors": [],
+      "clickElapsedMs": 768.4,
+      "canvasUsableElapsedMs": 12044,
+      "photosReadyElapsedMs": 13398.6,
+      "observed": {
+        "preparedPhotoCount": 2,
+        "photosStage": "decoded",
+        "photosReady": "true",
+        "canvasReady": "true",
+        "status": "Предпросмотр обновлён · 2 фото. Общий шаблон применяется к данным карточки.",
+        "toast": "",
+        "internalCanvasMarkMs": [
+          9346.5,
+          11350,
+          13584.1
+        ],
+        "internalPhotosMarkMs": [
+          11962.6
+        ]
+      },
+      "photosObservation": "Requires photosReady=true AND the completed studio status reporting exactly 2 photos; observed after usable-canvas wait, with production photo mark reported separately if earlier.",
+      "canvasUnder10Seconds": false,
+      "photosObservedUnder10Seconds": false,
+      "twoPreparedPhotosValidated": true
+    }
+  ]
+}
