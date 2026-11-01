@@ -1,4 +1,4 @@
-import {sanitizeClientText,clientPublicationCard} from './client-publication.mjs';
+import {sanitizeClientText,clientPublicationCard,acceptAuthenticatedClientCard} from './client-publication.mjs';
 import {sourceReadinessFeedback,importCompletionFeedback,importStageMark} from './source-readiness.mjs';
 import {setupCardArchive} from './card-archive.mjs';
 import {setupCardFiles,cardPhotoDataUrl,cardDownloadBlob} from './card-files.mjs';
@@ -26,7 +26,7 @@ const phoneWriting={revision:0,draftRevision:0,busy:false,capabilities:null,load
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
 const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
 const phoneTime=value=>phoneDate(value)?.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})||'';
-function phoneDetailStamp(card){const feedback=sourceReadinessFeedback(card);ph('phoneDetailStamp').textContent=['С Mac · '+phoneTime(card.updated),feedback.message].filter(Boolean).join(' · ');ph('phoneDetailStamp').dataset.sourceState=feedback.state;}
+function phoneDetailStamp(card){const feedback=sourceReadinessFeedback(card),review=card.publicationNeedsReview===true?(typeof card.publicationReviewReason==='string'?card.publicationReviewReason.slice(0,500):'Клиентский текст требует обновления на Mac.'):'';ph('phoneDetailStamp').textContent=['С Mac · '+phoneTime(card.updated),feedback.message,review].filter(Boolean).join(' · ');ph('phoneDetailStamp').dataset.sourceState=feedback.state;ph('phoneDetailStamp').dataset.publicationNeedsReview=String(card.publicationNeedsReview===true);}
 const phoneCardCount=count=>count+' '+(count%100>=11&&count%100<=14?'карточек':count%10===1?'карточка':count%10>=2&&count%10<=4?'карточки':'карточек');
 const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(value).toLocaleString('ru-RU')+' ₽':'';
 // This is a trace of completed requests, not a percentage estimate. It stays in
@@ -141,7 +141,7 @@ async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
 async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
   if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneResetWriting();phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='prepared';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=card;phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=acceptAuthenticatedClientCard(card);phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
@@ -220,7 +220,7 @@ function phoneWritingEnd(request){if(request?.revision===phoneWriting.revision){
 function phoneApplyWrittenCard(card,request){
   if(!phoneWritingCurrent(request))return false;if(card?.id!==request.id)throw Error('Ответ относится к другой карточке. Обновите объявление.');
   phonePublicationReviewUI?.clear();
-  const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=card;phoneUpdateRouteTools();
+  const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=acceptAuthenticatedClientCard(card);phoneUpdateRouteTools();
   const title=card.titles?.[0]||card.title||card.fields?.name||'Квартира в Москве';ph('phoneDetailTitle').textContent=title;ph('phoneTitleCopy').textContent=card.titles?.[0]||card.title||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);
   const summary=phoneState.cards.get(card.id);if(summary){phoneState.cards.set(card.id,{...summary,title,updated:card.updated});phoneRenderCards();}
   if(phoneState.view==='detail')window.scrollTo(0,oldScroll);return true;
@@ -367,7 +367,7 @@ function phoneInitializeDesigner(){
     if(epoch!==phoneState.authEpoch||!phoneState.paired||!phoneCanEdit())return null;
     let initialRead=null;
     const api=(path,data)=>{const request=phoneApi(path,data);if(path==='design'&&!data)initialRead=request;return request;};
-    const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail?{...phoneState.detail,identity:phoneState.detail.id}:{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});
+    const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail||{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});
     phonePresentationUI=studio;
     await (initialRead||Promise.resolve()).catch(()=>{});
     return epoch===phoneState.authEpoch&&studio===phonePresentationUI?studio:null;
@@ -394,7 +394,7 @@ function phoneInitializeAudit(){
 }
 function phoneUpdateRouteTools(){
  if(!phoneState.paired||!phoneState.detail?.id||phoneState.role==='viewer')return;
- if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=card;phoneDetailStamp(card);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
+ if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=acceptAuthenticatedClientCard(card);phoneDetailStamp(card);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
  phoneRoutesUI.cardChanged(phoneState.detail);
 }
 phoneStart();

@@ -276,6 +276,7 @@ export function clearPublicationDataCache(){publicationDataCache.clear();}
 const publicationDataClone=value=>JSON.parse(JSON.stringify(value));
 
 export function resolvePublicationData(card={},input={},assets={}){
+  const serviceContext=card;
   card=clientPublicationCard(card);
   // Data depends on the card, brand and dictionary, not the node positions.
   // Keep a bounded detached cache; mutable dictionaries and Moscow midnight
@@ -307,7 +308,7 @@ export function resolvePublicationData(card={},input={},assets={}){
     for(let stop=0;stop<3;stop++){const bind=prefix+'Stop'+(stop+1);data[bind]=route?.stops?.[stop]||'';data.links[bind]=safePublicationLink(route?.stopDetails?.[stop]?.links?.yandex);}
   }
   for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=sanitizeClientText(redactPublicationPhones(data[key]));
-  const result=clientPublicationCard(data);publicationDataCache.set(cacheKey,result);
+  const result=clientPublicationCard(data,{serviceContext});publicationDataCache.set(cacheKey,result);
   while(publicationDataCache.size>4)publicationDataCache.delete(publicationDataCache.keys().next().value);
   return publicationDataClone(result);
 }

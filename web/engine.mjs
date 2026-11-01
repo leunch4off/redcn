@@ -1,5 +1,5 @@
-import {sanitizeClientText,containsClientCommission} from './client-publication.mjs';
-import {validateListingFields} from './fact-ledger.mjs';
+import {sanitizeClientText,containsClientCommission,assertClientServiceClaims} from './client-publication.mjs';
+import {validateListingFields,serviceClaimChecklist} from './fact-ledger.mjs';
 import {suggestTags} from './content-tools.mjs';
 import {readSourceHtml,sourceFieldFacts} from './source-import.mjs';
 import {normalizeRussian,detectFurniture,detectConditions,resolvePhotoFurniture} from './fact-evidence.mjs';
@@ -332,15 +332,16 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.subletPolicy==='no')push('📝 不得将公寓转租给他人');
   if(v.shortTermPolicy==='no')push('📅 不接受按日短租');
   section('service');
+  const serviceChecks=serviceClaimChecklist(v,{prefs,receipts:v.serviceConfirmations}),confirmedService=id=>serviceChecks.claims.some(row=>row.id===id&&row.confirmed);
   {
     let registration='抵达登记（临时居住登记）：提供办理协助';
-    if(positive('registrationMonths'))registration+='（'+v.registrationMonths+'个月）';
-    if(positive('registrationPeople'))registration+='，最多'+v.registrationPeople+'人';
+    if(confirmedService('registration')&&positive('registrationMonths'))registration+='（'+v.registrationMonths+'个月）';
+    if(confirmedService('registration')&&positive('registrationPeople'))registration+='，最多'+v.registrationPeople+'人';
     push('','✈️ '+registration+'。');
   }
-  if(v.pickup)push('🚕 免费接送到入住地点'+(v.luggage?'，协助搬运行李':'')+'。');
-  if(v.arrival)push('📋 免费协助了解抵达后的相关手续。');
-  if(v.support&&prefs.benefits)push('','🇨🇳 我们的优势：',prefs.benefits);
+  if(v.pickup&&confirmedService('pickup'))push('🚕 免费接送到入住地点'+(v.luggage?'，协助搬运行李':'')+'。');
+  if(v.arrival&&confirmedService('arrival'))push('📋 免费协助了解抵达后的相关手续。');
+  if(v.support&&prefs.benefits&&confirmedService('support'))push('','🇨🇳 我们的优势：',prefs.benefits);
   section('contact');
   if(prefs.contact)push('','📩 联系我们：'+prefs.contact);
   else push('',wording('📩 欢迎中文咨询，了解房源详情并预约看房！','💌 想了解租赁条件或安排看房？欢迎用中文私信我们！','📨 欢迎中文留言咨询，我们协助了解房源并预约看房。'));
@@ -387,6 +388,7 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(audienceLead)body=audienceLead+'\n\n'+body;
   titles=titles.map(title=>applyStudioProfile(title,studioProfile));body=applyStudioProfile(body,studioProfile);
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
+  try{assertClientServiceClaims({fields:{...v,serviceBenefits:typeof prefs.benefits==='string'?prefs.benefits:''},titles,body,tags:renderedTags});}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';tagSuggestions=[];}
   if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
   return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo};
 }

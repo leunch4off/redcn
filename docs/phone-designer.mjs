@@ -1,9 +1,289 @@
+// Literal rental values shared by the two source adapters. No phrase here is
+// evidence of a different field (in particular, zero commission is not owner).
+function rentalNumber(value){
+ if(typeof value==='number')return Number.isFinite(value)&&value>=0?String(value):'';
+ if(typeof value!=='string'||!/^\s*\d[\d \u00a0\u202f]*(?:[.,]\d+)?\s*$/.test(value))return '';
+ const number=Number(value.replace(/[ \u00a0\u202f]/g,'').replace(',','.'));
+ return Number.isFinite(number)&&number>=0?String(number):'';
+}
+function rentalAmount(text){
+ const value=String(text??'').trim();
+ const match=value.match(/(?:^|[^\d])([0-9][\d \u00a0\u202f]*(?:[.,]\d+)?)\s*(тыс\.?|млн\.?)?/i);
+ if(!match)return '';
+ const number=rentalNumber(match[1]);if(!number)return '';
+ return String(Number(number)*(match[2]?/^млн/i.test(match[2])?1_000_000:1000:1));
+}
+function rentalPeriod(value){
+ const text=String(value??'').toLowerCase().trim();
+ if(/^(?:monthly|month|p1m|mon)$/i.test(text)||/(?:\/|в|за)\s*(?:мес(?:яц)?[а-я.]*|月)|в месяц/i.test(text))return 'month';
+ if(/^(?:daily|day|p1d|d|daytime)$/i.test(text)||/(?:\/|в|за)\s*(?:сут(?:ки|ок)?[а-я.]*|день|дня|дней)|посуточ/i.test(text))return 'day';
+ if(/^(?:weekly|week|p1w|w)$/i.test(text)||/(?:\/|в|за)\s*недел[а-я.]*/i.test(text))return 'week';
+ if(/^(?:yearly|annual|year|p1y|yr)$/i.test(text)||/(?:\/|в|за)\s*(?:год|лет|года)/i.test(text))return 'year';
+ return 'unknown';
+}
+function rentalCurrency(value){
+ const text=String(value??'').trim();
+ if(/(?:^|[^a-z])(?:rur|rub)(?:$|[^a-z])/i.test(text)||/₽|руб(?:\.|лей|ля)?(?:\s|$)/i.test(text))return 'RUB';
+ if(/(?:^|[^a-z])usd(?:$|[^a-z])/i.test(text)||/\$|доллар/i.test(text))return 'USD';
+ if(/(?:^|[^a-z])eur(?:$|[^a-z])/i.test(text)||/€|евро(?:\s|$)/i.test(text))return 'EUR';
+ return 'unknown';
+}
+// Witnesses keep their own units. A daily dollar amount is not another
+// observation of a monthly ruble price, even when both are on the same page.
+function rentalWitnessComparable(left,right,field=left?.field){
+ if(field!=='price')return true;
+ for(const key of ['currency','period'])if(left?.[key]&&left[key]!=='unknown'&&right?.[key]&&right[key]!=='unknown'&&left[key]!==right[key])return false;
+ return true;
+}
+function rentalWitnessValue(value){
+ if(typeof value==='string'){const number=rentalNumber(value);return number!==''?number:value.trim().replace(/\s+/gu,' ').toLowerCase();}
+ return JSON.stringify(value);
+}
+function retainRentalWitness(evidence,row){
+ const signature=JSON.stringify([row.field,row.source,row.value,row.currency,row.period,row.text]);
+ if(!evidence.some(item=>JSON.stringify([item.field,item.source,item.value,item.currency,item.period,item.text])===signature))evidence.push(row);
+ return row;
+}
+function rentalWitnessConflicts(evidence,label){
+ const groups=new Map(),conflicts=[];
+ for(const row of evidence){if(!row||row.value===undefined||row.value===null||row.value===''||row.value==='unknown')continue;const rows=groups.get(row.field)||[];rows.push(row);groups.set(row.field,rows);}
+ for(const [field,rows]of groups){
+  const candidates=rows.filter(row=>rows.some(other=>rentalWitnessComparable(row,other,field)&&rentalWitnessValue(row.value)!==rentalWitnessValue(other.value)));
+  if(candidates.length>1)conflicts.push({field,status:'conflict',resolution:'operator_required',message:label+': разные значения поля '+field+'; требуется проверка.',candidates});
+ }
+ return conflicts;
+}
+function rentalCommission(text){
+ const value=String(text??'').trim();
+ if(/^(?:нет|без комиссии|не взимается|отсутствует)$/i.test(value))return {percent:'0',status:'none'};
+ const percent=value.match(/^\s*(\d+(?:[.,]\d+)?)\s*%\s*$/);
+ if(percent){const number=rentalNumber(percent[1]);return {percent:number,status:Number(number)===0?'none':'present'};}
+ const currency=rentalCurrency(value),amount=currency!=='unknown'&&!/%/.test(value)?rentalAmount(value):'';
+ return {percent:'',status:'unknown',...(amount?{amount,currency}: {})};
+}
+function rentalSeller(value){
+ const text=String(value??'').trim();
+ if(/^(?:собственник|от собственника|владелец|owner)$/i.test(text))return 'owner';
+ if(/^(?:агент|агентство(?: недвижимости)?|ри[еэ]лтор|agent|agency)$/i.test(text))return 'agent';
+ return 'unknown';
+}
+function explicitRentalLayout(value){
+ const text=String(value??'').toLowerCase();
+ if(['studio','euro2','euro3'].includes(text.trim()))return text.trim();
+ const found=new Set();
+ for(const [layout,pattern]of [['euro2',/(?:^|[^\p{L}\p{N}])евро[ -]?(?:2|двушк[аиуой]*)(?=$|[^\p{L}\p{N}])/gu],['euro3',/(?:^|[^\p{L}\p{N}])евро[ -]?(?:3|тр[её]шк[аиуой]*)(?=$|[^\p{L}\p{N}])/gu],['studio',/(?:^|[^\p{L}\p{N}])(?:студи[яи]|studio)(?=$|[^\p{L}\p{N}])/gu]]){
+  for(const match of text.matchAll(pattern))if(!/(?:^|\s)не\s*$/u.test(text.slice(Math.max(0,match.index-12),match.index)))found.add(layout);
+ }
+ return found.size===1?[...found][0]:'';
+}
+
+// Private operator facts. No source HTML, image bytes or credentials are stored
+// in revision snapshots. This module also supplies the shared JS schema guard.
+const factNumericFields=new Set('price deposit commission commissionAmount area rooms bedrooms livingRooms kitchen living bedroomArea occupants floor floors combinedWcs separateWcs buildingYear entrances ceiling balconies loggias prepayMonths contractMonths rentFreeMonths minMonths registrationMonths registrationPeople latitude longitude'.split(' '));
+const factBooleanFields=new Set('ready newRenovation separate children pets shortTerm pickup luggage arrival support isDemo eligibleForNew'.split(' '));
+const factListFields=new Set('features photos photoItems layouts transitDetails sourceDatesList photoEvidence photoAutoFeatures photoRejectedFeatures relatedOffers universityRoutes oneTimeFees'.split(' '));
+const factMapFields=new Set('featureCounts photoEdits sourceAudit sourceReadiness sourceDates photoFeatureBaseline studioProfile serviceConfirmations'.split(' '));
+const factTextFields=new Set('url source name district complex districtZh metro walk university uniTime uniMode route details style layout transit universities highlight description utilities registration registrationPolicy childrenPolicy petPolicy smokingPolicy guestPolicy subletPolicy shortTermPolicy campus region audience seller commissionStatus commissionSource commissionCurrency depositCurrency pricePeriod priceCurrency phraseNotes city address renovation windows bathroom buildingType buildingSeries floorType heating emergency leaseTerm sourceDescription railways lift resultId editorIdentity titleFormula sellerSource publicationStatus serviceBenefits'.split(' '));
+const factTextOrNumberFields=new Set(['walk','uniTime']);
+const FACT_TRACKED_FIELDS=Object.freeze('price pricePeriod priceCurrency deposit depositCurrency commission commissionStatus commissionAmount commissionCurrency utilities prepayMonths contractMonths leaseTerm area living kitchen bedrooms livingRooms rooms floor floors layout metro walk transit university uniTime uniMode route campus universities universityRoutes latitude longitude address district city seller buildingType buildingYear renovation bathroom ceiling windows balconies loggias ready newRenovation features featureCounts childrenPolicy petPolicy smokingPolicy guestPolicy subletPolicy registrationPolicy registration registrationMonths registrationPeople pickup luggage arrival support'.split(' '));
+const factLabels={price:'Аренда',pricePeriod:'Период ставки',priceCurrency:'Валюта ставки',deposit:'Залог',depositCurrency:'Валюта залога',commission:'Комиссия, % · внутри команды',commissionAmount:'Фиксированная комиссия · внутри команды',commissionCurrency:'Валюта комиссии',commissionStatus:'Статус комиссии',utilities:'Коммунальные услуги',area:'Общая площадь',living:'Жилая площадь',kitchen:'Площадь кухни',rooms:'Комнаты',bedrooms:'Спальни',livingRooms:'Гостиные',floor:'Этаж',floors:'Этажность',layout:'Планировка',metro:'Основная станция',walk:'Пешком, минуты',transit:'Маршруты',features:'Мебель и техника',featureCounts:'Количество предметов',childrenPolicy:'Дети',petPolicy:'Животные',registrationPolicy:'Условия регистрации источника',registration:'Услуга регистрации',address:'Адрес',district:'Район',city:'Город',universities:'Вузы и маршруты',universityRoutes:'Маршруты к кампусам',contractMonths:'Срок договора',prepayMonths:'Месяцев предоплаты',leaseTerm:'Тип аренды',smokingPolicy:'Курение',guestPolicy:'Гости',subletPolicy:'Субаренда',registrationMonths:'Срок регистрации',registrationPeople:'Число регистраций',pickup:'Встреча',luggage:'Багаж',arrival:'Помощь по прибытии',support:'Поддержка'};
+const factLedgerStorageKey='most-fact-ledger-v1';
+const factClone=value=>JSON.parse(JSON.stringify(value));
+const factOwn=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
+const factIsObject=value=>!!value&&typeof value==='object'&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);
+function factJsonProblems(value,problems,depth=0,active=new Set()){
+ if(depth>20){problems.push('Слишком глубокая структура карточки');return;}
+ if(value===null||typeof value==='boolean')return;
+ if(typeof value==='string'){if(value.length>8_000_000||value.includes('\0'))problems.push('Слишком длинный или некорректный текст карточки');return;}
+ if(typeof value==='number'){if(!Number.isFinite(value))problems.push('Нечисловое значение карточки');return;}
+ if(!Array.isArray(value)&&!factIsObject(value)){problems.push('Карточка должна содержать только JSON-значения');return;}
+ if(active.has(value)){problems.push('Циклическая структура карточки');return;}
+ if(Object.keys(value).length>5000){problems.push('Слишком большая коллекция карточки');return;}
+ active.add(value);
+ for(const [key,item]of Object.entries(value)){
+  if(item===undefined&&!Array.isArray(value))continue; // Omitted JSON properties in legacy callers.
+  if(['__proto__','constructor','prototype'].includes(key)){problems.push('Неверное имя поля карточки');continue;}
+  factJsonProblems(item,problems,depth+1,active);if(problems.length>30)break;
+ }
+ active.delete(value);
+}
+function validateListingFields(fields){
+ const problems=[];
+ if(!factIsObject(fields))return {valid:false,problems:['Поля объявления должны быть объектом']};
+ factJsonProblems(fields,problems);
+ for(const [key,value]of Object.entries(fields)){
+  if(value===null||value===undefined)continue;
+  if(factNumericFields.has(key)){
+   if(!['string','number'].includes(typeof value)){problems.push(key+': требуется число или пустое значение');continue;}
+   // Old text controls may contain source/manual prose. Preserve it for
+   // operator review; only an actual numeric literal is a numeric fact.
+   const number=factNumericValue(value);
+   if(typeof value==='string'&&/^[+-]?(?:nan|inf(?:inity)?)$/iu.test(value.trim()))problems.push(key+': требуется конечное число');
+   else if(['latitude','longitude'].includes(key)&&typeof value==='string'&&value.trim()&&number===undefined)problems.push(key+': требуются числовые координаты');
+   else if(number!==undefined){
+    const [minimum,maximum]=key==='latitude'?[-90,90]:key==='longitude'?[-180,180]:[0,1_000_000_000];
+    if(!Number.isFinite(number)||number<minimum||number>maximum)problems.push(key+': число вне допустимого диапазона');
+   }
+  }else if(factBooleanFields.has(key)&&typeof value!=='boolean')problems.push(key+': требуется логическая отметка');
+  else if(factListFields.has(key)&&!Array.isArray(value))problems.push(key+': требуется список');
+  else if(factMapFields.has(key)&&!factIsObject(value))problems.push(key+': требуется объект');
+  else if(factTextOrNumberFields.has(key)&&!['string','number'].includes(typeof value))problems.push(key+': требуется текст или число минут');
+  else if(factTextFields.has(key)&&!factTextOrNumberFields.has(key)&&typeof value!=='string')problems.push(key+': требуется текст');
+ }
+ for(const key of ['features','photos','photoAutoFeatures','photoRejectedFeatures'])if(Array.isArray(fields[key])&&fields[key].some(value=>typeof value!=='string'))problems.push(key+': список должен содержать текстовые значения');
+ if(factIsObject(fields.featureCounts)&&Object.values(fields.featureCounts).some(value=>!['number','string'].includes(typeof value)||!/^\d+(?:\.\d+)?$/u.test(String(value))))problems.push('featureCounts: неверное количество предметов');
+ if(!problems.length&&JSON.stringify(fields).length>16_000_000)problems.push('Поля объявления больше 16 МБ');
+ return {valid:!problems.length,problems:[...new Set(problems)]};
+}
+function assertListingFields(fields){const result=validateListingFields(fields);if(!result.valid)throw TypeError('Неверные поля объявления: '+result.problems.join(' · '));return fields;}
+function factStoredValue(value,key){
+ if(key!=='universityRoutes'||!Array.isArray(value))return value;
+ const scalar=['name','university','campus','campusId','address','latitude','longitude','time','mode','transport','line','routeDistanceKm','method','checkedAt','sourceUrl','accessMinutes','egressMinutes','transfers'];
+ const keep=(row,keys)=>Object.fromEntries(keys.filter(name=>row&&['string','number','boolean'].includes(typeof row[name])).map(name=>[name,typeof row[name]==='string'?row[name].slice(0,2000):row[name]]));
+ return value.slice(0,10).filter(factIsObject).map(row=>({...keep(row,scalar),...(Array.isArray(row.stops)?{stops:row.stops.slice(0,3).filter(factIsObject).map(stop=>keep(stop,['name','address','latitude','longitude']))}:{}),...(Array.isArray(row.segments)?{segments:row.segments.slice(0,8).filter(factIsObject).map(segment=>keep(segment,['mode','transport','from','to','minutes']))}:{})}));
+}
+function factSnapshot(fields){assertListingFields(fields);return factClone(Object.fromEntries(FACT_TRACKED_FIELDS.filter(key=>fields[key]!==undefined).map(key=>[key,factStoredValue(fields[key],key)])));}
+function factCanonical(value,key){
+ if(factNumericFields.has(key)||factTextOrNumberFields.has(key)){const number=factNumericValue(value);if(number!==undefined)return number;}
+ if(key==='features'&&Array.isArray(value))return [...new Set(value)].sort();
+ if(key==='featureCounts'&&factIsObject(value))return Object.fromEntries(Object.keys(value).sort().map(name=>[name,Number(value[name])]));
+ return value;
+}
+function factNumericValue(value){if(typeof value==='number')return value;if(typeof value==='string'){const literal=value.trim();if(/^-?(?:\d+|\d{1,3}(?:\s+\d{3})+)(?:[.,]\d+)?$/u.test(literal))return Number(literal.replace(/\s+/gu,'').replace(',','.'));}return undefined;}
+function factEqual(left,right,key){return JSON.stringify(factCanonical(left,key))===JSON.stringify(factCanonical(right,key));}
+function compareFactSnapshots(previous={},current={}){
+ return FACT_TRACKED_FIELDS.filter(key=>!factEqual(previous[key],current[key],key)).map(field=>({field,before:previous[field]??null,after:current[field]??null}));
+}
+function factTimestamp(value){if(typeof value!=='string'||!/^\d{4}-\d\d-\d\dT/u.test(value)||!/(?:Z|[+-]\d\d:\d\d)$/u.test(value)||!Number.isFinite(Date.parse(value)))throw Error('Неверная дата версии фактов');return value;}
+function factSourceUrl(value){try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?url.origin+url.pathname:'';}catch{return '';}}
+function factLedgerKey(fields={}){
+ const url=factSourceUrl(fields.url);if(url)return 'url:'+url.replace(/\/+$/u,'');
+ for(const key of ['resultId','editorIdentity','id'])if(typeof fields[key]==='string'&&/^[a-zA-Z0-9_-]{1,100}$/u.test(fields[key]))return key+':'+fields[key];
+ return '';
+}
+function sourceFactEvidence(fields={},options={}){
+ const rows=Array.isArray(fields.sourceAudit?.fields)?fields.sourceAudit.fields:[],confirmed=factIsObject(options.confirmed)?options.confirmed:{},output=[];
+ const observedAt=options.observedAt||fields.sourceObservedAt||null;
+ for(const key of FACT_TRACKED_FIELDS){
+  if(fields[key]===undefined)continue;
+  const witnesses=rows.filter(row=>row&&row.field===key),matching=witnesses.find(row=>factEqual(row.value,fields[key],key)&&rentalWitnessComparable(row,{currency:fields.priceCurrency,period:fields.pricePeriod},key));
+  const confirmation=confirmed[key]&&factEqual(confirmed[key].value,fields[key],key)?confirmed[key]:null;
+  output.push({field:key,value:factClone(factStoredValue(fields[key],key)),origin:matching?'source':'manual',source:matching?String(matching.source||'Источник').slice(0,200):'Ручной ввод',sourceUrl:matching?factSourceUrl(matching.sourceUrl||fields.url):'',
+   text:matching?String(matching.text??'').slice(0,700):'',observedAt:typeof observedAt==='string'?observedAt:null,checkedAt:confirmation?.at||null,checkedBy:confirmation?.actor||null});
+ }
+ for(const row of Array.isArray(fields.sourceAudit?.furniture)?fields.sourceAudit.furniture:[]){
+  if(!row||typeof row.id!=='string')continue;
+  const present=Array.isArray(fields.features)&&fields.features.includes(row.id),value=present;
+  const witness=(Array.isArray(row.matches)?row.matches:[]).find(item=>item&&typeof item.text==='string'),field='features.'+row.id;
+  const confirmation=confirmed[field]&&confirmed[field].value===value?confirmed[field]:null;
+  const matched=witness&&(row.status==='present'&&present||row.status==='absent'&&!present);
+  output.push({field,label:String(row.label||row.id).slice(0,150),value,origin:matched?'source':'manual',source:matched?String(witness.source||'Источник').slice(0,200):'Ручная/фото отметка',sourceUrl:matched?factSourceUrl(fields.url):'',text:witness?String(witness.text).slice(0,700):'',observedAt:typeof observedAt==='string'?observedAt:null,checkedAt:confirmation?.at||null,checkedBy:confirmation?.actor||null});
+ }
+ return output;
+}
+function findFactConflicts(fields={}){
+ const conflicts=[],rows=Array.isArray(fields.sourceAudit?.fields)?fields.sourceAudit.fields:[];
+ const add=row=>{const key=JSON.stringify([row.field,row.kind,row.values]);if(!conflicts.some(value=>value.signature===key))conflicts.push({...row,signature:key});};
+ for(const key of FACT_TRACKED_FIELDS){
+  const witnesses=rows.filter(row=>row&&row.field===key&&row.value!==undefined),values=[];
+  for(const row of witnesses)if(!values.some(value=>factEqual(value.value,row.value,key)&&value.currency===row.currency&&value.period===row.period))values.push({value:factClone(row.value),source:String(row.source||'Источник').slice(0,200),text:String(row.text??'').slice(0,700),...(row.currency?{currency:row.currency}:{}),...(row.period?{period:row.period}:{})});
+  const disagreements=values.filter(row=>values.some(other=>rentalWitnessComparable(row,other,key)&&!factEqual(row.value,other.value,key)));
+  if(disagreements.length>1)add({field:key,kind:'sources',message:'Источники расходятся',values:disagreements});
+  const comparable=values.filter(row=>rentalWitnessComparable(row,{currency:fields.priceCurrency,period:fields.pricePeriod},key));
+  if(fields[key]!==undefined&&fields[key]!==''&&fields[key]!==null&&comparable.length&&!comparable.some(value=>factEqual(value.value,fields[key],key)))add({field:key,kind:'manual',message:'Ручное значение отличается от источника',values:[...comparable,{value:factClone(fields[key]),source:'Текущее поле',text:''}]});
+ }
+ for(const conflict of Array.isArray(fields.sourceAudit?.conflicts)?fields.sourceAudit.conflicts:[]){
+  if(conflict&&typeof conflict.field==='string')add({field:conflict.field,kind:'source-audit',message:String(conflict.message||conflict.reason||'Противоречие источника').slice(0,500),values:[]});
+ }
+ for(const row of Array.isArray(fields.sourceAudit?.furniture)?fields.sourceAudit.furniture:[]){
+  if(!row||typeof row.id!=='string')continue;
+  if(row.status==='conflict'||['absent','planned'].includes(row.status)&&fields.features?.includes(row.id))add({field:'features.'+row.id,kind:'equipment',message:(row.label||row.id)+': отметка мебели расходится с исходными свидетельствами',values:(row.matches||[]).slice(0,20).map(item=>({value:row.status,source:String(item.source||'Источник'),text:String(item.text||'').slice(0,700)}))});
+ }
+ return conflicts.map(({signature,...row})=>row);
+}
+function createFactRevision(fields,options={}){
+ const key=factLedgerKey(fields);if(!key)throw Error('Сначала создайте карточку или укажите ссылку источника');
+ const actor=typeof options.actor==='string'?options.actor.trim():'';if(!actor||actor.length>100)throw Error('Укажите автора версии до 100 знаков');
+ const kind=options.kind||'manual';if(!['save','import','manual','confirm','restore'].includes(kind))throw Error('Неверный тип версии фактов');
+ const at=factTimestamp(options.at||new Date().toISOString()),snapshot=factSnapshot(fields),previous=options.previous?.fields||{},changes=compareFactSnapshots(previous,snapshot);
+ const version=Math.max(0,Number(options.previous?.revision)||0)+1;
+ const changed=new Set(changes.map(row=>row.field));if(options.confirmedField)changed.add(options.confirmedField);
+ return {version:1,id:key+':'+version,key,revision:version,kind,actor,at,fields:snapshot,changes,
+  evidence:sourceFactEvidence(fields,{observedAt:kind==='import'?at:options.observedAt,confirmed:options.confirmed}).filter(row=>changed.has(row.field))};
+}
+function serviceCardKey(fields={}){if(typeof fields.url==='string'&&factSourceUrl(fields.url))return factLedgerKey(fields);for(const key of ['editorIdentity','resultId','id'])if(typeof fields[key]==='string'&&/^[a-zA-Z0-9_-]{1,100}$/u.test(fields[key]))return key+':'+fields[key];return '';}
+function serviceClaimChecklist(fields={},options={}){
+ const positive=value=>['number','string'].includes(typeof value)&&Number.isFinite(Number(value))&&Number(value)>0?String(Number(value)):'';
+ const prefs=options.prefs||{},receipts=factIsObject(options.receipts)?options.receipts:{},now=options.now===undefined?Date.now():Date.parse(options.now),claims=[{id:'registration',label:'Содействие регистрации по прибытии',value:{service:'arrival-registration-assistance',months:positive(fields.registrationMonths),people:positive(fields.registrationPeople)}}];
+ if(fields.pickup===true)claims.push({id:'pickup',label:'Бесплатная встреча и доставка до заселения',value:{included:true,luggage:fields.luggage===true}});
+ if(fields.arrival===true)claims.push({id:'arrival',label:'Бесплатная помощь с процедурами по прибытии',value:{included:true}});
+ if(fields.support===true)claims.push({id:'support',label:'Поддержка и преимущества студии',value:{included:true,text:typeof prefs.benefits==='string'?prefs.benefits.slice(0,5000):''}});
+ const key=serviceCardKey(fields),rows=claims.map(claim=>{const receipt=receipts[claim.id],stamp=typeof receipt?.at==='string'&&/(?:Z|[+-]\d\d:\d\d)$/u.test(receipt.at)?Date.parse(receipt.at):NaN,actor=typeof receipt?.actor==='string'?receipt.actor.trim():'',ageDays=Number.isFinite(stamp)&&Number.isFinite(now)?(now-stamp)/86400000:null;
+  const signature=value=>factIsObject(value)?JSON.stringify(Object.fromEntries(Object.keys(value).sort().map(name=>[name,value[name]]))):null;const same=!!receipt&&signature(receipt.value)===signature(claim.value),card=!!key&&receipt?.cardKey===key,confirmed=same&&card&&!!actor&&actor.length<=100&&ageDays!==null&&ageDays>=0&&ageDays<=30;
+  return {...claim,confirmed,checkedAt:confirmed?receipt.at:null,checkedBy:confirmed?actor:null,reason:!receipt?'Нет подтверждения':!card?'Подтверждение относится к другой карточке':!same?'Объём услуги изменился':ageDays===null?'Неверная дата':ageDays<0?'Дата находится в будущем':ageDays>30?'Подтверждение старше 30 дней':'Не указан автор'};
+ });
+ const missing=rows.filter(row=>!row.confirmed);return {ready:!missing.length,claims:rows,missing:missing.map(row=>({id:row.id,label:row.label,reason:row.reason}))};
+}
+function setupFactLedger({mount,read,write,getFields,getPreferences=()=>({}),onServiceReceiptsChange,onApplyField,clearServerCache,getServerRevisions,toast=()=>{}}={}){
+ if(!mount)return null;
+ const make=(tag,text,attributes={})=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;Object.assign(node,attributes);return node;};
+ let storage=read(factLedgerStorageKey,{version:1,entries:{},confirmations:{}}),remote=[],remoteEpoch=0,lastKey='',lastServiceReceipts={};
+ if(!factIsObject(storage)||!factIsObject(storage.entries)||!factIsObject(storage.confirmations))storage={version:1,entries:{},confirmations:{}};
+ const shell=make('details'),summary=make('summary','Факты: версии, источники и противоречия'),body=make('div',undefined,{className:'fact-ledger-body'});shell.append(summary,body);mount.classList.add('fact-ledger');mount.replaceChildren(shell);
+ const actorLabel=make('label','Автор изменения'),actor=make('input',undefined,{value:read('most-fact-author','Оператор Mac'),maxLength:100,type:'text'});actor.setAttribute('aria-label','Автор изменения');actorLabel.append(actor);body.append(actorLabel);
+ actor.onchange=()=>write('most-fact-author',actor.value.trim());
+ const status=make('p','Снимки цен и условий не содержат исходный HTML или фотографии.',{className:'small'});status.setAttribute('role','status');body.append(status);
+ const toolbar=make('div',undefined,{className:'fact-ledger-actions'});body.append(toolbar);
+ const action=(parent,title,callback)=>{const button=make('button',title,{type:'button',className:'btn'});button.onclick=callback;parent.append(button);return button;};
+ const versions=make('select');versions.setAttribute('aria-label','Версия фактов для сравнения');body.append(versions);
+ const differences=make('div',undefined,{className:'fact-ledger-diff'}),servicesBox=make('div',undefined,{className:'fact-service-checklist'}),conflictsBox=make('div'),evidenceBox=make('div');body.append(differences,servicesBox,conflictsBox,evidenceBox);
+ const show=value=>value===undefined||value===null||value===''?'Не указано':typeof value==='object'?JSON.stringify(value):String(value);
+ function notify(message){status.textContent=message;toast(message);}
+ function rows(){const fields=getFields(),key=factLedgerKey(fields);const local=Array.isArray(storage.entries[key])?storage.entries[key]:[];return [...local,...remote.filter(row=>row.resultId===fields.resultId&&!local.some(item=>item.at===row.at&&JSON.stringify(item.fields)===JSON.stringify(row.fields)))].sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,100);}
+ function drawDifference(){differences.replaceChildren();const previous=rows().find(row=>row.id===versions.value);if(!previous)return;const changes=compareFactSnapshots(previous.fields,factSnapshot(getFields()));if(!changes.length){differences.textContent='Цена и условия совпадают с выбранным снимком.';return;}const list=make('dl');for(const row of changes){list.append(make('dt',factLabels[row.field]||row.field),make('dd',show(row.before)+' → '+show(row.after)));}differences.append(list);}
+ function render(){
+  const fields=getFields(),key=factLedgerKey(fields),entries=rows(),selectedVersion=versions.value;lastKey=key;lastServiceReceipts=storage.serviceConfirmations?.[key]||fields.serviceConfirmations||{};versions.replaceChildren();for(const row of entries)versions.append(make('option',new Date(row.at).toLocaleString('ru-RU')+' · '+row.actor+' · '+row.kind,{value:row.id}));if(entries.some(row=>row.id===selectedVersion))versions.value=selectedVersion;drawDifference();
+  servicesBox.replaceChildren(make('h3','Услуги перед публикацией'),make('p','Это подтверждение услуг нашей студии. Отказ собственника в регистрации не считается подтверждением или опровержением нашей помощи. Даты сохраняются по каждой услуге; объём и срок действия проверяются заново при изменении.',{className:'small'}));
+  const serviceState=checkServices();
+  for(const claim of serviceState.claims){const label=make('label'),check=make('input',undefined,{type:'checkbox',checked:claim.confirmed});check.setAttribute('aria-label','Подтвердить услугу: '+claim.label);label.append(check,document.createTextNode(claim.label+' · '+(claim.confirmed?new Date(claim.checkedAt).toLocaleString('ru-RU')+' · '+claim.checkedBy:claim.reason)));check.onchange=()=>confirmService(claim.id,claim.value,check.checked,key);servicesBox.append(label);}
+  conflictsBox.replaceChildren(make('h3','Противоречия'));
+  const conflicts=findFactConflicts(fields);if(!conflicts.length)conflictsBox.append(make('p','Среди доступных структурированных свидетельств расхождения не найдены. Это не проверка всей исходной страницы.',{className:'small'}));
+  for(const row of conflicts){const article=make('article',undefined,{className:'fact-ledger-conflict'});article.append(make('strong',(factLabels[row.field]||row.field)+' · '+row.message));for(const value of row.values)article.append(make('p',value.source+': '+show(value.value)+(value.text?' · '+value.text:'')));conflictsBox.append(article);}
+  evidenceBox.replaceChildren(make('h3','Источники и дата проверки'));
+  const evidence=sourceFactEvidence(fields,{confirmed:storage.confirmations[key]||{},observedAt:storage.observations?.[key]||entries.find(row=>row.kind==='import')?.at});
+  const table=make('table'),thead=make('thead'),tr=make('tr');for(const title of ['Факт','Текущее значение','Источник','Проверка'])tr.append(make('th',title));thead.append(tr);table.append(thead);const tbody=make('tbody');table.append(tbody);
+  for(const row of evidence){const tr=make('tr'),value=make('td',show(row.value)),source=make('td'),checked=make('td');tr.append(make('th',row.label||factLabels[row.field]||row.field),value,source,checked);source.append(make('span',row.source));if(row.sourceUrl){const link=make('a','Открыть источник',{href:row.sourceUrl,target:'_blank',rel:'noopener noreferrer'});source.append(link);}if(row.text)source.append(make('p',row.text,{className:'small'}));checked.append(make('p',row.checkedAt?new Date(row.checkedAt).toLocaleString('ru-RU')+' · '+row.checkedBy:'Не подтверждено оператором',{className:'small'}));action(checked,'Подтвердить текущий факт',()=>{if(factLedgerKey(getFields())!==key)return notify('Карточка изменилась. Обновите источники фактов.');confirmField(row.field,row.value);});tbody.append(tr);}
+  const scroll=make('div',undefined,{className:'fact-ledger-table'});scroll.append(table);evidenceBox.append(scroll);
+  if(onApplyField&&conflicts.some(row=>row.kind==='manual')){
+   const choose=make('div');choose.append(make('p','Значение источника принимается только явным действием. Ручной ввод автоматически не перезаписывается.',{className:'small'}));
+   for(const row of conflicts.filter(item=>item.kind==='manual'))for(const witness of row.values.filter(item=>item.source!=='Текущее поле'&&['string','number','boolean'].includes(typeof item.value)))action(choose,'Принять '+(factLabels[row.field]||row.field)+': '+show(witness.value),async()=>{try{if(factLedgerKey(getFields())!==key)throw Error('Карточка изменилась. Обновите источники фактов.');await onApplyField(row.field,factClone(witness.value));if(factLedgerKey(getFields())!==key)throw Error('Карточка изменилась. Повторите проверку фактов.');observe('restore');}catch(error){notify(error.message);}});
+   conflictsBox.append(choose);
+  }
+ }
+ function persist(){return write(factLedgerStorageKey,storage)!==false;}
+ function serviceReceipts(){return factClone(lastServiceReceipts);}
+ function checkServices(){const fields=getFields(),key=factLedgerKey(fields),receipts=storage.serviceConfirmations?.[key]||fields.serviceConfirmations||{};return serviceClaimChecklist(fields,{prefs:getPreferences(),receipts});}
+ function confirmService(id,expectedValue,checked,key){try{if(factLedgerKey(getFields())!==key)throw Error('Карточка изменилась. Обновите перечень услуг.');const claim=checkServices().claims.find(row=>row.id===id);if(!claim||JSON.stringify(claim.value)!==JSON.stringify(expectedValue))throw Error('Объём услуги изменился. Проверьте актуальные условия.');const who=actor.value.trim();if(!who||who.length>100)throw Error('Укажите автора подтверждения');const values={...(storage.serviceConfirmations?.[key]||getFields().serviceConfirmations||{})};if(checked)values[id]={value:factClone(claim.value),actor:who,at:new Date().toISOString(),cardKey:serviceCardKey(getFields())};else delete values[id];storage.serviceConfirmations={...(storage.serviceConfirmations||{}),[key]:values};if(!persist())return;lastKey=key;onServiceReceiptsChange?.(factClone(values));render();notify(checked?'Услуга подтверждена с датой и автором':'Подтверждение услуги снято');}catch(error){render();notify(error.message);}}
+ function observe(kind='manual',who=actor.value,confirmedField){
+  try{const fields=getFields(),key=factLedgerKey(fields),previous=storage.entries[key]?.[0],revision=createFactRevision(fields,{kind,actor:who,previous,confirmed:storage.confirmations[key]||{},confirmedField,observedAt:storage.observations?.[key]});if(kind==='import')storage.observations={...(storage.observations||{}),[key]:revision.at};if(previous&&!revision.changes.length&&kind!=='confirm'){if(kind==='import')persist();render();return previous;}
+   const entries=Object.fromEntries(Object.entries(storage.entries).filter(([name])=>name!==key).slice(-39));entries[key]=[revision,...(storage.entries[key]||[])].slice(0,100);storage={...storage,entries};if(!persist())return null;render();return revision;
+  }catch(error){notify(error.message);return null;}
+ }
+ function confirmField(field,expectedValue){try{const fields=getFields(),key=factLedgerKey(fields),evidence=sourceFactEvidence(fields).find(row=>row.field===field);if(!key||!evidence)throw Error('Факт недоступен');if(arguments.length>1&&!factEqual(expectedValue,evidence.value,field)){render();throw Error('Факт изменился. Проверьте актуальное значение перед подтверждением.');}const who=actor.value.trim();if(!who||who.length>100)throw Error('Укажите автора проверки');storage.confirmations[key]={...(storage.confirmations[key]||{}),[field]:{value:evidence.value,actor:who,at:new Date().toISOString()}};if(!persist())return;observe('confirm',who,field);notify('Текущий факт подтверждён. После изменения значения подтверждение потребуется заново.');}catch(error){notify(error.message);}}
+ function refresh(){const epoch=++remoteEpoch,id=getFields().resultId;remote=[];render();if(getServerRevisions&&id)Promise.resolve(getServerRevisions(id)).then(value=>{if(epoch!==remoteEpoch)return;remote=Array.isArray(value?.revisions)?value.revisions:Array.isArray(value)?value:[];render();}).catch(error=>{if(epoch===remoteEpoch)status.textContent='Локальные версии доступны. Серверная история: '+error.message;});}
+ versions.onchange=drawDifference;action(toolbar,'Зафиксировать текущие факты',()=>{if(observe('manual'))notify('Снимок цены и условий сохранён с автором');});action(toolbar,'Обновить версии и сравнение',refresh);
+ const cache=make('details'),cacheTitle=make('summary','Очистить только кеш импорта'),cacheNote=make('p','Карточки, словарь, история, настройки и фотографии сохраняются. Следующий импорт перечитает исходную страницу.',{className:'small'}),cacheLabel=make('label'),cacheCheck=make('input',undefined,{type:'checkbox'});cacheCheck.setAttribute('aria-label','Подтверждаю очистку только кеша импорта');cacheLabel.append(cacheCheck,document.createTextNode('Подтверждаю очистку только кеша импорта'));cache.append(cacheTitle,cacheNote,cacheLabel);body.append(cache);
+ action(cache,'Очистить кеш этого браузера',()=>{if(!cacheCheck.checked)return notify('Подтвердите очистку кеша');if(write('most-cache',{})!==false)notify('Кеш исходных страниц браузера очищен. Карточки и словарь сохранены.');});
+ if(clearServerCache)action(cache,'Очистить кеш исходных страниц на Mac',async()=>{if(!cacheCheck.checked)return notify('Подтвердите очистку кеша');try{const result=await clearServerCache();notify('Кеш Mac очищен: '+(result.cleared||0)+' записей. Карточки, словарь и фото сохранены.');}catch(error){notify(error.message);}});
+ render();return {observe,refresh,confirmField,checkServices,serviceReceipts,open:()=>{shell.open=true;servicesBox.scrollIntoView?.({block:'nearest',behavior:'smooth'});},history:()=>factClone(rows()),validate:()=>validateListingFields(getFields())};
+}
+
 // One client-publication policy. Source facts, drafts and stored cards are private
 // inputs and must never be overwritten by this derived projection.
-const PUBLICATION_POLICY_VERSION='client-publication-v1';
+const PUBLICATION_POLICY_VERSION='client-publication-v2';
 const clientCommissionPattern=/комисси[а-яё]*|агентск[а-яё]*\s+(?:вознагражден[а-яё]*|сбор[а-яё]*|услуг[а-яё]*)|вознагражден[а-яё]*\s+(?:агент[а-яё]*|риелтор[а-яё]*)|риелторск[а-яё]*\s+(?:сбор[а-яё]*|услуг[а-яё]*)|中介\s*(?:费|費)|佣金|傭金|免佣|经纪\s*(?:费|費)|經紀\s*(?:费|費)|代理\s*(?:费|費)|\bcommission\b|\b(?:broker(?:age)?|agent|agency)\s+fees?\b/iu;
 const clientProtectedPattern=/(?:аренд[ауы]|арендная\s+плата|залог|депозит|предоплат|аванс|коммунал|жку|квартплат|сч[её]тчик|площад|комнат|спальн|мебел|диван|кроват|холодильник|квартир|адрес|метро|этаж|\b(?:rent|deposit|utilities|bedrooms?)\b|租金|月租|押金|定金|预付|預付|物业|物業|水电|水電|面积|面積|卧室|臥室|家具|公寓|精装|精裝|平米|[一两兩二三四五六七八九十]室|[一两兩二三四五六七八九十]厅|地铁|地鐵|\d\s*(?:㎡|м²|м2))/iu;
-const clientPrivateKey=/(?:commission|^(?:clientFee|agentFee|brokerFee|agencyFee|initialPayment|paymentCalculation|oneTimeFees|workflow|factLedger|factRevision|factRevisions|serviceChecks|serviceConfirmations|publicationApproval|approvals|offer|bargainTerms|source(?:Audit|Description|Ru|Html)?|raw(?:Text|Html|Body|Description)?|original(?:Text|Html|Body|Description)|notes|operatorNotes|internal|rules|prefs|sourceEnvelope)$)/iu;
+const clientPrivateKey=/(?:commission|^(?:clientFee|agentFee|brokerFee|agencyFee|initialPayment|paymentCalculation|oneTimeFees|workflow|factLedger|factRevision|factRevisions|serviceChecks|serviceConfirmations|serviceBenefits|publicationApproval|approvals|offer|bargainTerms|source(?:Audit|Description|Ru|Html)?|raw(?:Text|Html|Body|Description)?|original(?:Text|Html|Body|Description)|notes|operatorNotes|internal|rules|prefs|sourceEnvelope)$)/iu;
 const clientFold=value=>String(value||'').replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]/g,'');
 // A matched token alone is insufficient: any leftover property/location words
 // make the clause ambiguous. This protects facts outside a finite keyword list.
@@ -60,7 +340,63 @@ function clientCheckDisputedFacts(card){
   }
  }
 }
-function clientPublicationCard(card={}){
+const clientServiceCanonical=value=>clientFold(value).replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D]/gu,'').replace(/\s+/gu,' ').trim();
+const clientServiceFree='(?:免费|免費|无偿|無償|бесплатн[а-яё]*|\\bfree\\b|\\bcomplimentary\\b)';
+const clientServiceRegistration='(?:抵达登记|临时居住登记|臨時居住登記|住宿登记|住宿登記|落地签|落地簽|登记|登記|注册|註冊|регистрац[а-яё]*|\\bregistration\\b)';
+const clientServicePickup='(?:接送|接机|接機|接站|搬运行李|搬運行李|трансфер[а-яё]*|встреч[а-яё]*|достав[а-яё]*|\\b(?:airport\\s+)?pickup\\b|\\btransfers?\\b|\\bshuttle\\b)';
+const clientServiceArrival='(?:抵达|抵達|到达|到達|手续|手續|прибыт[а-яё]*|процедур[а-яё]*|\\barrival\\b|\\bprocedures?\\b)';
+const clientServiceFreePattern=type=>new RegExp(clientServiceFree+'[^\\n。.!?;]{0,45}'+type+'|'+type+'[^\\n。.!?;]{0,45}'+clientServiceFree,'iu');
+const clientFreeRegistration=new RegExp(clientServiceFreePattern(clientServiceRegistration).source+'|包落地','iu');
+const clientFreePickup=clientServiceFreePattern(clientServicePickup),clientFreeArrival=clientServiceFreePattern(clientServiceArrival);
+function assertClientServiceClaims(card={},options={}){
+ const fields=card?.fields&&typeof card.fields==='object'?card.fields:card,benefits=typeof fields?.serviceBenefits==='string'?fields.serviceBenefits:'';
+ const checks=serviceClaimChecklist(fields,{prefs:{benefits},receipts:fields?.serviceConfirmations,now:options.now}),confirmed=id=>checks.claims.some(row=>row.id===id&&row.confirmed);
+ const texts=options.texts||[card?.title,card?.body,card?.output,card?.tags,...(Array.isArray(card?.titles)?card.titles:[]),fields?.description,fields?.details,fields?.highlight].filter(value=>typeof value==='string');
+ const deny=(text,reason)=>{throw new ClientPublicationReviewRequired(text,'Подтвердите актуальные услуги студии перед публикацией: '+reason);};
+ for(const text of texts){
+  if(typeof text!=='string')continue;
+  if(clientFreeRegistration.test(clientFold(text)))deny(text,'бесплатная регистрация не подтверждается обещанием содействия');
+  for(const line of text.split(/\n|[。;]/u))if(/登记|登記|注册|註冊|落地签|落地簽|регистрац|registration/iu.test(line)){
+   const months=[...line.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:个月|個月|месяц[а-яё]*|months?)/giu)],people=[...line.matchAll(/(\d+)\s*(?:人|человек[а-яё]*|people|persons?)/giu)];
+   if((months.length||people.length)&&(!confirmed('registration')||months.some(row=>Number(row[1].replace(',','.'))!==Number(fields.registrationMonths))||people.some(row=>Number(row[1])!==Number(fields.registrationPeople))))deny(line,'срок или количество регистраций');
+  }
+  let scan=clientServiceCanonical(text),match;
+  while((match=/我们的优势\s*[:：]/u.exec(scan))){const expected=clientServiceCanonical(sanitizeClientText(benefits));let start=match.index+match[0].length;while(scan[start]===' ')start++;
+   if(!confirmed('support')||!expected||scan.slice(start,start+expected.length)!==expected)deny(text,'изменился блок преимуществ');
+   scan=scan.slice(0,match.index)+scan.slice(start+expected.length);
+  }
+  if(clientFreePickup.test(scan)&&!confirmed('pickup'))deny(text,'бесплатная встреча и трансфер');
+  if(clientFreeArrival.test(scan)&&!confirmed('arrival'))deny(text,'бесплатная помощь по прибытии');
+ }
+ return card;
+}
+const clientServiceRegistryKey=Symbol.for('redcn.client-service-authority.v2');
+const clientServiceRegistry=globalThis[clientServiceRegistryKey]??=new Map();
+function clientServiceSignature(card){const active=new Set();function stable(value){if(!value||typeof value!=='object')return value;if(active.has(value))throw TypeError('Циклическая модель публикации');active.add(value);const result=Array.isArray(value)?value.map(stable):Object.fromEntries(Object.keys(value).sort().map(key=>[key,stable(value[key])]));active.delete(value);return result;}const text=JSON.stringify(stable(card));return text?.length<=1_000_000?text:null;}
+function clientServiceGrant(card){const signature=clientServiceSignature(card),grant=signature&&clientServiceRegistry.get(signature);if(grant?.kind==='server'&&!(Date.now()<=grant.expiresAt)){clientServiceRegistry.delete(signature);return null;}return grant||null;}
+function clientStoreServiceGrant(card,grant){const signature=clientServiceSignature(card);if(!signature)return;clientServiceRegistry.set(signature,grant);while(clientServiceRegistry.size>64)clientServiceRegistry.delete(clientServiceRegistry.keys().next().value);}
+function clientServiceTexts(card){const fields=card?.fields||{};return [card?.title,card?.body,card?.output,card?.tags,...(Array.isArray(card?.titles)?card.titles:[]),fields.description,fields.details,fields.highlight].filter(value=>typeof value==='string');}
+// Only the authenticated own-server GET path registers transport provenance.
+// A serialized policy marker alone never grants authority. Clones must match
+// exact approved content and every lookup checks the deadline again.
+function acceptAuthenticatedClientCard(card){
+ try{assertClientServiceClaims(card);return card;}catch(error){if(!(error instanceof ClientPublicationReviewRequired))throw error;}
+ const expiresAt=typeof card?.serviceAuthorization?.expiresAt==='string'?Date.parse(card.serviceAuthorization.expiresAt):NaN;
+ if(card?.publicationPolicyVersion!==PUBLICATION_POLICY_VERSION||card?.serviceAuthorization?.version!==1||!Number.isFinite(expiresAt)||expiresAt<Date.now()||expiresAt>Date.now()+30*86400000)throw new ClientPublicationReviewRequired('Услуги требуют актуального подтверждения на Mac');
+ clientStoreServiceGrant(card,{kind:'server',expiresAt,texts:clientServiceTexts(card).map(clientServiceCanonical)});return card;
+}
+function clientCheckServiceContext(card,context){
+ const grant=clientServiceGrant(context);
+ if(grant?.kind==='server'){
+  for(const text of clientServiceTexts(card)){try{assertClientServiceClaims({body:text,fields:{}});}catch(error){if(!(error instanceof ClientPublicationReviewRequired)||!grant.texts.includes(clientServiceCanonical(text)))throw error;}}
+  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(Object.hasOwn(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
+  return grant;
+ }
+ const original=grant?.kind==='private'?grant.context:context,merged={...(original?.fields||original||{}),...(card.fields||{})},privateContext={fields:Object.fromEntries(['url','editorIdentity','resultId','id','registrationMonths','registrationPeople','pickup','luggage','arrival','support','serviceBenefits','serviceConfirmations'].filter(key=>merged[key]!==undefined).map(key=>[key,merged[key]]))};
+ assertClientServiceClaims({...card,fields:privateContext.fields});return {kind:'private',context:JSON.parse(JSON.stringify(privateContext))};
+}
+function clientPublicationCard(card={},options={}){
+ const context=options.serviceContext||card,serviceGrant=clientCheckServiceContext(card,context);
  clientCheckDisputedFacts(card);
  const paymentFields=card?.fields&&typeof card.fields==='object'?card.fields:card;
  if(Number(paymentFields?.price)>0)for(const [key,unit]of[['pricePeriod','month'],['priceCurrency','RUB']])if(paymentFields[key]&&paymentFields[key]!==unit)throw new ClientPublicationReviewRequired(key+': '+paymentFields[key],'Перед публикацией подтвердите месячную ставку в рублях');
@@ -78,7 +414,7 @@ function clientPublicationCard(card={}){
   else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name))continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
   active.delete(value);return result;
  }
- const projected=project(card);if(projected&&typeof projected==='object'&&!Array.isArray(projected)){for(const key of ['body','title','tags'])if(key in projected&&typeof projected[key]!=='string')projected[key]='';if('titles' in projected)projected.titles=(Array.isArray(projected.titles)?projected.titles:typeof projected.titles==='string'?[projected.titles]:[]).filter(value=>typeof value==='string'&&value.trim());projected.publicationPolicyVersion=PUBLICATION_POLICY_VERSION;}return projected;
+ const projected=project(card);if(projected&&typeof projected==='object'&&!Array.isArray(projected)){for(const key of ['body','title','tags'])if(key in projected&&typeof projected[key]!=='string')projected[key]='';if('titles' in projected)projected.titles=(Array.isArray(projected.titles)?projected.titles:typeof projected.titles==='string'?[projected.titles]:[]).filter(value=>typeof value==='string'&&value.trim());projected.publicationPolicyVersion=PUBLICATION_POLICY_VERSION;clientStoreServiceGrant(projected,serviceGrant);}return projected;
 }
 
 // Generated by scripts/update-moscow-geo.py. Edit the source catalog via the importer.
@@ -911,6 +1247,16 @@ const furniturePatterns={
  ac:'кондиционер[а-я]*',internet:'wi[ -]?fi|wifi|интернет[а-я]*',fridge:'холодильник[а-я]*',stove:'(?:электро|газо)?плит[а-я]*|варочн[а-я]*\\s+(?:панел[а-я]*|плит[а-я]*)',oven:'духовк[а-я]*|духов[а-я]*\\s+шкаф[а-я]*',hood:'вытяжк[а-я]*',sink:'(?:кухонн[а-я]*\\s+)?(?:раковин[а-я]*|мойк[а-я]*)',washbasin:'раковин[а-я]*|умывальник[а-я]*|рукомойник[а-я]*',microwave:'микроволнов[а-я]*(?:\\s+печ[а-я]*)?|свч',dishwasher:'посудомо[а-я]*(?:\\s+машин[а-я]*)?',kettle:'чайник[а-я]*',table:'обеденн[а-я]*\\s+стол[а-я]*|стол(?:а|ом|ы|ов)?',chairs:'стул[а-я]*|стуль[а-я]*',washer:'стиральн[а-я]*(?:\\s+машин[а-я]*)?|стиралк[а-я]*',dryer:'сушильн[а-я]*(?:\\s+машин[а-я]*)?',bath:'ванн(?:а|у|ой|ы|е)',shower:'душ(?:а|ем)?|душев[а-я]*\\s+кабин[а-я]*',closet:'гардеробн[а-я]*',pantry:'кладов[а-я]*',shelves:'стеллаж[а-я]*|полк(?:а|и|ами|ах|ок|у)',computer:'компьютер[а-я]*|моноблок[а-я]*',projector:'проектор[а-я]*',homeCinema:'домашн[а-я]*\\s+кинотеатр[а-я]*',piano:'пианино|фортепиано|роял[а-я]*|цифров[а-я]*\\s+пианино',balcony:'балкон[а-я]*',loggia:'лоджи[а-я]*',kitchenFurniture:'мебел[а-я]*\\s+на\\s+кухне|кухонн[а-я]*\\s+(?:мебел[а-я]*|гарнитур[а-я]*|шкаф[а-я]*)|шкаф[а-я]*\\s+на\\s+кухн[а-я]*',roomFurniture:'мебел[а-я]*\\s+в\\s+комнат[а-я]*',mattress:'матрас[а-я]*'
 };
 const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasWasher',ac:'hasConditioner',tv:'hasTv',internet:'hasInternet',bath:'hasBathtub',shower:'hasShower',kitchenFurniture:'hasKitchenFurniture',roomFurniture:'hasFurniture'};
+function furnitureUnseenMention(before,term,after){
+ const boundary=/[;.!?\n。；]|\s+(?:но|зато|однако|but|however)\s+|但是|不过|但/iu;
+ const left=before.split(boundary).at(-1)||'',right=after.split(boundary)[0]||'',scope=left+term+right;
+ // A direct availability predicate belongs to this object. It must not be
+ // invalidated by another coordinated object that is outside the photograph.
+ const direct=/(?:^|\s)(?:есть|имеется|имеются|оборудован[а-я]*|оснащен[а-я]*|укомплектован[а-я]*|установлен[а-я]*)\s*$/iu.exec(left);
+ if(direct&&!/(?:^|\s)(?:не|нет|без)\s*$/iu.test(left.slice(0,direct.index))||/^\s*(?:есть|имеется|имеются|установлен[а-я]*|оборудован[а-я]*|оснащен[а-я]*)(?:\s|$)/iu.test(right))return false;
+ if(/не\s*(?:вид(?:ен|на|но|ны|им[а-я]*)|показан[а-я]*|показыва[а-я]*|разгляд[а-я]*|различим[а-я]*|попал[а-я]*\s+в\s+кадр)|вне\s+кадра|not\s+(?:visible|seen|shown|pictured|in\s+(?:the\s+)?(?:photo|picture|image|frame))|(?:can(?:not|['’]t)|could\s+not)\s+see|unseen|out\s+of\s+(?:the\s+)?(?:frame|view)|isn['’]?t\s+visible|看不到|看不见|看不見|不可见|不可見|未显示|未顯示|未展示|照片外/iu.test(scope))return true;
+ return /на\s+(?:фото|снимк[а-я]*|фотограф[а-я]*)|в\s+кадре|photo|picture|image|frame|照片|图片|圖片/iu.test(scope)&&/(?:^|\s)(?:нет|без|отсутству[а-я]*|no|without|absent|missing)(?:\s|$)|没有|沒有|未见|未見/iu.test(scope);
+}
 Object.assign(furniturePatterns,{
  coffeeTable:'журнальн[а-я]*\\s+стол(?:ик[а-я]*|[а-я]*)',dresser:'комод[а-я]*',cabinet:'буфет[а-я]*|тумб[а-я]*',shoeCabinet:'обувниц[а-я]*|шкаф[а-я]*\\s+для\\s+обуви',ottoman:'пуф(?:ик)?[а-я]*|банкетк[а-я]*',bench:'скам(?:ья|ьи|ей|ью|ейк[а-я]*)',mirror:'зеркал[а-я]*',curtains:'штор[а-я]*',dryingRack:'сушилк[а-я]*\\s+для\\s+белья',iron:'утюг[а-я]*',vacuum:'пылесос[а-я]*',coffeeMachine:'кофемашин[а-я]*|кофевар[а-я]*',toaster:'тостер[а-я]*',router:'роутер[а-я]*|маршрутизатор[а-я]*',monitor:'монитор[а-я]*',speakers:'колонк[а-я]*|акустическ[а-я]*\\s+систем[а-я]*',waterHeater:'водонагревател[а-я]*|бойлер[а-я]*',waterFilter:'(?:фильтр[а-я]*|систем[а-я]*\\s+фильтрации)\\s+(?:для\\s+)?вод[а-я]*'
 });
@@ -935,7 +1281,8 @@ function detectFurniture(text,features,offer={},origin='JSON'){
    if(id==='table'&&/журнальн[а-я]*\s+$/.test(before))continue;
    if(id==='cabinet'&&/(?:прикроватн[а-я]*|тв[ -]?|телевизионн[а-я]*)\s*$/.test(before))continue;
    let status='present';
-   if(/(?:^|[.!?;]\s*|\s)не\s+$/.test(before)&&/^\s*,?\s*а\s+/.test(after)||negative.some(([a,b])=>m.index>=a&&m.index<b)||/^\s*(?:отсутствует|нет|не будет|не предусмотрен[а-я]*)/.test(after))status='absent';
+   if(furnitureUnseenMention(t.slice(0,m.index),m[0],t.slice(m.index+m[0].length)))status='unknown';
+   else if(/(?:^|[.!?;]\s*|\s)не\s+$/.test(before)&&/^\s*,?\s*а\s+/.test(after)||negative.some(([a,b])=>m.index>=a&&m.index<b)||/^\s*(?:отсутствует|нет|не будет|не предусмотрен[а-я]*)/.test(after))status='absent';
    else if(/(?:может|можно|планир[а-я]*|готов[аы]?)\s+(?:[а-я]+\s*){0,3}(?:установить|купить|привезти|поставить)\s*$|(?:будет установлен[ао]?|установит|установят|купим|привезем|поставим)\s*$/.test(before)||/^\s*(?:будет (?:установлен[ао]?|куплен[ао]?|привезен[ао]?|поставлен[ао]?)|установят|привезут|купят|(?:можно|планир[а-я]*)\s+(?:установить|купить|привезти|поставить))/.test(after))status='planned';
    const number=before.match(/(?:^|\s)(\d+)\s+(?:кухонн[а-я]*\s+|обеденн[а-я]*\s+)?$/)?.[1];
    const words={один:'1',одна:'1',одно:'1',два:'2',две:'2',три:'3',четыре:'4',пять:'5',шесть:'6',семь:'7',восемь:'8'};
@@ -1392,206 +1739,6 @@ function applyStudioProfile(text='',profile={}){
   return output.trim();
 }
 
-// Private operator facts. No source HTML, image bytes or credentials are stored
-// in revision snapshots. This module also supplies the shared JS schema guard.
-const factNumericFields=new Set('price deposit commission commissionAmount area rooms bedrooms livingRooms kitchen living bedroomArea occupants floor floors combinedWcs separateWcs buildingYear entrances ceiling balconies loggias prepayMonths contractMonths rentFreeMonths minMonths registrationMonths registrationPeople latitude longitude'.split(' '));
-const factBooleanFields=new Set('ready newRenovation separate children pets shortTerm pickup luggage arrival support isDemo eligibleForNew'.split(' '));
-const factListFields=new Set('features photos photoItems layouts transitDetails sourceDatesList photoEvidence photoAutoFeatures photoRejectedFeatures relatedOffers universityRoutes oneTimeFees'.split(' '));
-const factMapFields=new Set('featureCounts photoEdits sourceAudit sourceReadiness sourceDates photoFeatureBaseline studioProfile serviceConfirmations'.split(' '));
-const factTextFields=new Set('url source name district complex districtZh metro walk university uniTime uniMode route details style layout transit universities highlight description utilities registration registrationPolicy childrenPolicy petPolicy smokingPolicy guestPolicy subletPolicy shortTermPolicy campus region audience seller commissionStatus commissionSource commissionCurrency depositCurrency pricePeriod priceCurrency phraseNotes city address renovation windows bathroom buildingType buildingSeries floorType heating emergency leaseTerm sourceDescription railways lift resultId editorIdentity titleFormula sellerSource publicationStatus'.split(' '));
-const factTextOrNumberFields=new Set(['walk','uniTime']);
-const FACT_TRACKED_FIELDS=Object.freeze('price pricePeriod priceCurrency deposit depositCurrency commission commissionStatus commissionAmount commissionCurrency utilities prepayMonths contractMonths leaseTerm area living kitchen bedrooms livingRooms rooms floor floors layout metro walk transit university uniTime uniMode route campus universities universityRoutes latitude longitude address district city seller buildingType buildingYear renovation bathroom ceiling windows balconies loggias ready newRenovation features featureCounts childrenPolicy petPolicy smokingPolicy guestPolicy subletPolicy registrationPolicy registration registrationMonths registrationPeople pickup luggage arrival support'.split(' '));
-const factLabels={price:'Аренда',pricePeriod:'Период ставки',priceCurrency:'Валюта ставки',deposit:'Залог',depositCurrency:'Валюта залога',commission:'Комиссия, % · внутри команды',commissionAmount:'Фиксированная комиссия · внутри команды',commissionCurrency:'Валюта комиссии',commissionStatus:'Статус комиссии',utilities:'Коммунальные услуги',area:'Общая площадь',living:'Жилая площадь',kitchen:'Площадь кухни',rooms:'Комнаты',bedrooms:'Спальни',livingRooms:'Гостиные',floor:'Этаж',floors:'Этажность',layout:'Планировка',metro:'Основная станция',walk:'Пешком, минуты',transit:'Маршруты',features:'Мебель и техника',featureCounts:'Количество предметов',childrenPolicy:'Дети',petPolicy:'Животные',registrationPolicy:'Условия регистрации источника',registration:'Услуга регистрации',address:'Адрес',district:'Район',city:'Город',universities:'Вузы и маршруты',universityRoutes:'Маршруты к кампусам',contractMonths:'Срок договора',prepayMonths:'Месяцев предоплаты',leaseTerm:'Тип аренды',smokingPolicy:'Курение',guestPolicy:'Гости',subletPolicy:'Субаренда',registrationMonths:'Срок регистрации',registrationPeople:'Число регистраций',pickup:'Встреча',luggage:'Багаж',arrival:'Помощь по прибытии',support:'Поддержка'};
-const factLedgerStorageKey='most-fact-ledger-v1';
-const factClone=value=>JSON.parse(JSON.stringify(value));
-const factOwn=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
-const factIsObject=value=>!!value&&typeof value==='object'&&!Array.isArray(value)&&(Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null);
-function factJsonProblems(value,problems,depth=0,active=new Set()){
- if(depth>20){problems.push('Слишком глубокая структура карточки');return;}
- if(value===null||typeof value==='boolean')return;
- if(typeof value==='string'){if(value.length>8_000_000||value.includes('\0'))problems.push('Слишком длинный или некорректный текст карточки');return;}
- if(typeof value==='number'){if(!Number.isFinite(value))problems.push('Нечисловое значение карточки');return;}
- if(!Array.isArray(value)&&!factIsObject(value)){problems.push('Карточка должна содержать только JSON-значения');return;}
- if(active.has(value)){problems.push('Циклическая структура карточки');return;}
- if(Object.keys(value).length>5000){problems.push('Слишком большая коллекция карточки');return;}
- active.add(value);
- for(const [key,item]of Object.entries(value)){
-  if(item===undefined&&!Array.isArray(value))continue; // Omitted JSON properties in legacy callers.
-  if(['__proto__','constructor','prototype'].includes(key)){problems.push('Неверное имя поля карточки');continue;}
-  factJsonProblems(item,problems,depth+1,active);if(problems.length>30)break;
- }
- active.delete(value);
-}
-function validateListingFields(fields){
- const problems=[];
- if(!factIsObject(fields))return {valid:false,problems:['Поля объявления должны быть объектом']};
- factJsonProblems(fields,problems);
- for(const [key,value]of Object.entries(fields)){
-  if(value===null||value===undefined)continue;
-  if(factNumericFields.has(key)){
-   if(!['string','number'].includes(typeof value)){problems.push(key+': требуется число или пустое значение');continue;}
-   // Old text controls may contain source/manual prose. Preserve it for
-   // operator review; only an actual numeric literal is a numeric fact.
-   const number=factNumericValue(value);
-   if(typeof value==='string'&&/^[+-]?(?:nan|inf(?:inity)?)$/iu.test(value.trim()))problems.push(key+': требуется конечное число');
-   else if(['latitude','longitude'].includes(key)&&typeof value==='string'&&value.trim()&&number===undefined)problems.push(key+': требуются числовые координаты');
-   else if(number!==undefined){
-    const [minimum,maximum]=key==='latitude'?[-90,90]:key==='longitude'?[-180,180]:[0,1_000_000_000];
-    if(!Number.isFinite(number)||number<minimum||number>maximum)problems.push(key+': число вне допустимого диапазона');
-   }
-  }else if(factBooleanFields.has(key)&&typeof value!=='boolean')problems.push(key+': требуется логическая отметка');
-  else if(factListFields.has(key)&&!Array.isArray(value))problems.push(key+': требуется список');
-  else if(factMapFields.has(key)&&!factIsObject(value))problems.push(key+': требуется объект');
-  else if(factTextOrNumberFields.has(key)&&!['string','number'].includes(typeof value))problems.push(key+': требуется текст или число минут');
-  else if(factTextFields.has(key)&&!factTextOrNumberFields.has(key)&&typeof value!=='string')problems.push(key+': требуется текст');
- }
- for(const key of ['features','photos','photoAutoFeatures','photoRejectedFeatures'])if(Array.isArray(fields[key])&&fields[key].some(value=>typeof value!=='string'))problems.push(key+': список должен содержать текстовые значения');
- if(factIsObject(fields.featureCounts)&&Object.values(fields.featureCounts).some(value=>!['number','string'].includes(typeof value)||!/^\d+(?:\.\d+)?$/u.test(String(value))))problems.push('featureCounts: неверное количество предметов');
- if(!problems.length&&JSON.stringify(fields).length>16_000_000)problems.push('Поля объявления больше 16 МБ');
- return {valid:!problems.length,problems:[...new Set(problems)]};
-}
-function assertListingFields(fields){const result=validateListingFields(fields);if(!result.valid)throw TypeError('Неверные поля объявления: '+result.problems.join(' · '));return fields;}
-function factStoredValue(value,key){
- if(key!=='universityRoutes'||!Array.isArray(value))return value;
- const scalar=['name','university','campus','campusId','address','latitude','longitude','time','mode','transport','line','routeDistanceKm','method','checkedAt','sourceUrl','accessMinutes','egressMinutes','transfers'];
- const keep=(row,keys)=>Object.fromEntries(keys.filter(name=>row&&['string','number','boolean'].includes(typeof row[name])).map(name=>[name,typeof row[name]==='string'?row[name].slice(0,2000):row[name]]));
- return value.slice(0,10).filter(factIsObject).map(row=>({...keep(row,scalar),...(Array.isArray(row.stops)?{stops:row.stops.slice(0,3).filter(factIsObject).map(stop=>keep(stop,['name','address','latitude','longitude']))}:{}),...(Array.isArray(row.segments)?{segments:row.segments.slice(0,8).filter(factIsObject).map(segment=>keep(segment,['mode','transport','from','to','minutes']))}:{})}));
-}
-function factSnapshot(fields){assertListingFields(fields);return factClone(Object.fromEntries(FACT_TRACKED_FIELDS.filter(key=>fields[key]!==undefined).map(key=>[key,factStoredValue(fields[key],key)])));}
-function factCanonical(value,key){
- if(factNumericFields.has(key)||factTextOrNumberFields.has(key)){const number=factNumericValue(value);if(number!==undefined)return number;}
- if(key==='features'&&Array.isArray(value))return [...new Set(value)].sort();
- if(key==='featureCounts'&&factIsObject(value))return Object.fromEntries(Object.keys(value).sort().map(name=>[name,Number(value[name])]));
- return value;
-}
-function factNumericValue(value){if(typeof value==='number')return value;if(typeof value==='string'){const literal=value.trim();if(/^-?(?:\d+|\d{1,3}(?:\s+\d{3})+)(?:[.,]\d+)?$/u.test(literal))return Number(literal.replace(/\s+/gu,'').replace(',','.'));}return undefined;}
-function factEqual(left,right,key){return JSON.stringify(factCanonical(left,key))===JSON.stringify(factCanonical(right,key));}
-function compareFactSnapshots(previous={},current={}){
- return FACT_TRACKED_FIELDS.filter(key=>!factEqual(previous[key],current[key],key)).map(field=>({field,before:previous[field]??null,after:current[field]??null}));
-}
-function factTimestamp(value){if(typeof value!=='string'||!/^\d{4}-\d\d-\d\dT/u.test(value)||!/(?:Z|[+-]\d\d:\d\d)$/u.test(value)||!Number.isFinite(Date.parse(value)))throw Error('Неверная дата версии фактов');return value;}
-function factSourceUrl(value){try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?url.origin+url.pathname:'';}catch{return '';}}
-function factLedgerKey(fields={}){
- const url=factSourceUrl(fields.url);if(url)return 'url:'+url.replace(/\/+$/u,'');
- for(const key of ['resultId','editorIdentity','id'])if(typeof fields[key]==='string'&&/^[a-zA-Z0-9_-]{1,100}$/u.test(fields[key]))return key+':'+fields[key];
- return '';
-}
-function sourceFactEvidence(fields={},options={}){
- const rows=Array.isArray(fields.sourceAudit?.fields)?fields.sourceAudit.fields:[],confirmed=factIsObject(options.confirmed)?options.confirmed:{},output=[];
- const observedAt=options.observedAt||fields.sourceObservedAt||null;
- for(const key of FACT_TRACKED_FIELDS){
-  if(fields[key]===undefined)continue;
-  const witnesses=rows.filter(row=>row&&row.field===key),matching=witnesses.find(row=>factEqual(row.value,fields[key],key)&&rentalWitnessComparable(row,{currency:fields.priceCurrency,period:fields.pricePeriod},key));
-  const confirmation=confirmed[key]&&factEqual(confirmed[key].value,fields[key],key)?confirmed[key]:null;
-  output.push({field:key,value:factClone(factStoredValue(fields[key],key)),origin:matching?'source':'manual',source:matching?String(matching.source||'Источник').slice(0,200):'Ручной ввод',sourceUrl:matching?factSourceUrl(matching.sourceUrl||fields.url):'',
-   text:matching?String(matching.text??'').slice(0,700):'',observedAt:typeof observedAt==='string'?observedAt:null,checkedAt:confirmation?.at||null,checkedBy:confirmation?.actor||null});
- }
- for(const row of Array.isArray(fields.sourceAudit?.furniture)?fields.sourceAudit.furniture:[]){
-  if(!row||typeof row.id!=='string')continue;
-  const present=Array.isArray(fields.features)&&fields.features.includes(row.id),value=present;
-  const witness=(Array.isArray(row.matches)?row.matches:[]).find(item=>item&&typeof item.text==='string'),field='features.'+row.id;
-  const confirmation=confirmed[field]&&confirmed[field].value===value?confirmed[field]:null;
-  const matched=witness&&(row.status==='present'&&present||row.status==='absent'&&!present);
-  output.push({field,label:String(row.label||row.id).slice(0,150),value,origin:matched?'source':'manual',source:matched?String(witness.source||'Источник').slice(0,200):'Ручная/фото отметка',sourceUrl:matched?factSourceUrl(fields.url):'',text:witness?String(witness.text).slice(0,700):'',observedAt:typeof observedAt==='string'?observedAt:null,checkedAt:confirmation?.at||null,checkedBy:confirmation?.actor||null});
- }
- return output;
-}
-function findFactConflicts(fields={}){
- const conflicts=[],rows=Array.isArray(fields.sourceAudit?.fields)?fields.sourceAudit.fields:[];
- const add=row=>{const key=JSON.stringify([row.field,row.kind,row.values]);if(!conflicts.some(value=>value.signature===key))conflicts.push({...row,signature:key});};
- for(const key of FACT_TRACKED_FIELDS){
-  const witnesses=rows.filter(row=>row&&row.field===key&&row.value!==undefined),values=[];
-  for(const row of witnesses)if(!values.some(value=>factEqual(value.value,row.value,key)&&value.currency===row.currency&&value.period===row.period))values.push({value:factClone(row.value),source:String(row.source||'Источник').slice(0,200),text:String(row.text??'').slice(0,700),...(row.currency?{currency:row.currency}:{}),...(row.period?{period:row.period}:{})});
-  const disagreements=values.filter(row=>values.some(other=>rentalWitnessComparable(row,other,key)&&!factEqual(row.value,other.value,key)));
-  if(disagreements.length>1)add({field:key,kind:'sources',message:'Источники расходятся',values:disagreements});
-  const comparable=values.filter(row=>rentalWitnessComparable(row,{currency:fields.priceCurrency,period:fields.pricePeriod},key));
-  if(fields[key]!==undefined&&fields[key]!==''&&fields[key]!==null&&comparable.length&&!comparable.some(value=>factEqual(value.value,fields[key],key)))add({field:key,kind:'manual',message:'Ручное значение отличается от источника',values:[...comparable,{value:factClone(fields[key]),source:'Текущее поле',text:''}]});
- }
- for(const conflict of Array.isArray(fields.sourceAudit?.conflicts)?fields.sourceAudit.conflicts:[]){
-  if(conflict&&typeof conflict.field==='string')add({field:conflict.field,kind:'source-audit',message:String(conflict.message||conflict.reason||'Противоречие источника').slice(0,500),values:[]});
- }
- for(const row of Array.isArray(fields.sourceAudit?.furniture)?fields.sourceAudit.furniture:[]){
-  if(!row||typeof row.id!=='string')continue;
-  if(row.status==='conflict'||['absent','planned'].includes(row.status)&&fields.features?.includes(row.id))add({field:'features.'+row.id,kind:'equipment',message:(row.label||row.id)+': отметка мебели расходится с исходными свидетельствами',values:(row.matches||[]).slice(0,20).map(item=>({value:row.status,source:String(item.source||'Источник'),text:String(item.text||'').slice(0,700)}))});
- }
- return conflicts.map(({signature,...row})=>row);
-}
-function createFactRevision(fields,options={}){
- const key=factLedgerKey(fields);if(!key)throw Error('Сначала создайте карточку или укажите ссылку источника');
- const actor=typeof options.actor==='string'?options.actor.trim():'';if(!actor||actor.length>100)throw Error('Укажите автора версии до 100 знаков');
- const kind=options.kind||'manual';if(!['save','import','manual','confirm','restore'].includes(kind))throw Error('Неверный тип версии фактов');
- const at=factTimestamp(options.at||new Date().toISOString()),snapshot=factSnapshot(fields),previous=options.previous?.fields||{},changes=compareFactSnapshots(previous,snapshot);
- const version=Math.max(0,Number(options.previous?.revision)||0)+1;
- const changed=new Set(changes.map(row=>row.field));if(options.confirmedField)changed.add(options.confirmedField);
- return {version:1,id:key+':'+version,key,revision:version,kind,actor,at,fields:snapshot,changes,
-  evidence:sourceFactEvidence(fields,{observedAt:kind==='import'?at:options.observedAt,confirmed:options.confirmed}).filter(row=>changed.has(row.field))};
-}
-function serviceClaimChecklist(fields={},options={}){
- const positive=value=>Number(value)>0?String(Number(value)):'';
- const prefs=options.prefs||{},receipts=factIsObject(options.receipts)?options.receipts:{},now=options.now===undefined?Date.now():Date.parse(options.now),claims=[{id:'registration',label:'Содействие регистрации по прибытии',value:{service:'arrival-registration-assistance',months:positive(fields.registrationMonths),people:positive(fields.registrationPeople)}}];
- if(fields.pickup===true)claims.push({id:'pickup',label:'Бесплатная встреча и доставка до заселения',value:{included:true,luggage:fields.luggage===true}});
- if(fields.arrival===true)claims.push({id:'arrival',label:'Бесплатная помощь с процедурами по прибытии',value:{included:true}});
- if(fields.support===true)claims.push({id:'support',label:'Поддержка и преимущества студии',value:{included:true,text:typeof prefs.benefits==='string'?prefs.benefits.slice(0,5000):''}});
- const rows=claims.map(claim=>{const receipt=receipts[claim.id],stamp=typeof receipt?.at==='string'?Date.parse(receipt.at):NaN,actor=typeof receipt?.actor==='string'?receipt.actor.trim():'',ageDays=Number.isFinite(stamp)&&Number.isFinite(now)?Math.floor((now-stamp)/86400000):null;
-  const same=!!receipt&&JSON.stringify(receipt.value)===JSON.stringify(claim.value),confirmed=same&&!!actor&&actor.length<=100&&ageDays!==null&&ageDays>=0&&ageDays<=30;
-  return {...claim,confirmed,checkedAt:confirmed?receipt.at:null,checkedBy:confirmed?actor:null,reason:!receipt?'Нет подтверждения':!same?'Объём услуги изменился':ageDays===null?'Неверная дата':ageDays<0?'Дата находится в будущем':ageDays>30?'Подтверждение старше 30 дней':'Не указан автор'};
- });
- const missing=rows.filter(row=>!row.confirmed);return {ready:!missing.length,claims:rows,missing:missing.map(row=>({id:row.id,label:row.label,reason:row.reason}))};
-}
-function setupFactLedger({mount,read,write,getFields,getPreferences=()=>({}),onServiceReceiptsChange,onApplyField,clearServerCache,getServerRevisions,toast=()=>{}}={}){
- if(!mount)return null;
- const make=(tag,text,attributes={})=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;Object.assign(node,attributes);return node;};
- let storage=read(factLedgerStorageKey,{version:1,entries:{},confirmations:{}}),remote=[],remoteEpoch=0,lastKey='',lastServiceReceipts={};
- if(!factIsObject(storage)||!factIsObject(storage.entries)||!factIsObject(storage.confirmations))storage={version:1,entries:{},confirmations:{}};
- const shell=make('details'),summary=make('summary','Факты: версии, источники и противоречия'),body=make('div',undefined,{className:'fact-ledger-body'});shell.append(summary,body);mount.classList.add('fact-ledger');mount.replaceChildren(shell);
- const actorLabel=make('label','Автор изменения'),actor=make('input',undefined,{value:read('most-fact-author','Оператор Mac'),maxLength:100,type:'text'});actor.setAttribute('aria-label','Автор изменения');actorLabel.append(actor);body.append(actorLabel);
- actor.onchange=()=>write('most-fact-author',actor.value.trim());
- const status=make('p','Снимки цен и условий не содержат исходный HTML или фотографии.',{className:'small'});status.setAttribute('role','status');body.append(status);
- const toolbar=make('div',undefined,{className:'fact-ledger-actions'});body.append(toolbar);
- const action=(parent,title,callback)=>{const button=make('button',title,{type:'button',className:'btn'});button.onclick=callback;parent.append(button);return button;};
- const versions=make('select');versions.setAttribute('aria-label','Версия фактов для сравнения');body.append(versions);
- const differences=make('div',undefined,{className:'fact-ledger-diff'}),servicesBox=make('div',undefined,{className:'fact-service-checklist'}),conflictsBox=make('div'),evidenceBox=make('div');body.append(differences,servicesBox,conflictsBox,evidenceBox);
- const show=value=>value===undefined||value===null||value===''?'Не указано':typeof value==='object'?JSON.stringify(value):String(value);
- function notify(message){status.textContent=message;toast(message);}
- function rows(){const fields=getFields(),key=factLedgerKey(fields);const local=Array.isArray(storage.entries[key])?storage.entries[key]:[];return [...local,...remote.filter(row=>row.resultId===fields.resultId&&!local.some(item=>item.at===row.at&&JSON.stringify(item.fields)===JSON.stringify(row.fields)))].sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,100);}
- function drawDifference(){differences.replaceChildren();const previous=rows().find(row=>row.id===versions.value);if(!previous)return;const changes=compareFactSnapshots(previous.fields,factSnapshot(getFields()));if(!changes.length){differences.textContent='Цена и условия совпадают с выбранным снимком.';return;}const list=make('dl');for(const row of changes){list.append(make('dt',factLabels[row.field]||row.field),make('dd',show(row.before)+' → '+show(row.after)));}differences.append(list);}
- function render(){
-  const fields=getFields(),key=factLedgerKey(fields),entries=rows(),selectedVersion=versions.value;lastKey=key;lastServiceReceipts=storage.serviceConfirmations?.[key]||fields.serviceConfirmations||{};versions.replaceChildren();for(const row of entries)versions.append(make('option',new Date(row.at).toLocaleString('ru-RU')+' · '+row.actor+' · '+row.kind,{value:row.id}));if(entries.some(row=>row.id===selectedVersion))versions.value=selectedVersion;drawDifference();
-  servicesBox.replaceChildren(make('h3','Услуги перед публикацией'),make('p','Это подтверждение услуг нашей студии. Отказ собственника в регистрации не считается подтверждением или опровержением нашей помощи. Даты сохраняются по каждой услуге; объём и срок действия проверяются заново при изменении.',{className:'small'}));
-  const serviceState=checkServices();
-  for(const claim of serviceState.claims){const label=make('label'),check=make('input',undefined,{type:'checkbox',checked:claim.confirmed});check.setAttribute('aria-label','Подтвердить услугу: '+claim.label);label.append(check,document.createTextNode(claim.label+' · '+(claim.confirmed?new Date(claim.checkedAt).toLocaleString('ru-RU')+' · '+claim.checkedBy:claim.reason)));check.onchange=()=>confirmService(claim.id,claim.value,check.checked,key);servicesBox.append(label);}
-  conflictsBox.replaceChildren(make('h3','Противоречия'));
-  const conflicts=findFactConflicts(fields);if(!conflicts.length)conflictsBox.append(make('p','Среди доступных структурированных свидетельств расхождения не найдены. Это не проверка всей исходной страницы.',{className:'small'}));
-  for(const row of conflicts){const article=make('article',undefined,{className:'fact-ledger-conflict'});article.append(make('strong',(factLabels[row.field]||row.field)+' · '+row.message));for(const value of row.values)article.append(make('p',value.source+': '+show(value.value)+(value.text?' · '+value.text:'')));conflictsBox.append(article);}
-  evidenceBox.replaceChildren(make('h3','Источники и дата проверки'));
-  const evidence=sourceFactEvidence(fields,{confirmed:storage.confirmations[key]||{},observedAt:storage.observations?.[key]||entries.find(row=>row.kind==='import')?.at});
-  const table=make('table'),thead=make('thead'),tr=make('tr');for(const title of ['Факт','Текущее значение','Источник','Проверка'])tr.append(make('th',title));thead.append(tr);table.append(thead);const tbody=make('tbody');table.append(tbody);
-  for(const row of evidence){const tr=make('tr'),value=make('td',show(row.value)),source=make('td'),checked=make('td');tr.append(make('th',row.label||factLabels[row.field]||row.field),value,source,checked);source.append(make('span',row.source));if(row.sourceUrl){const link=make('a','Открыть источник',{href:row.sourceUrl,target:'_blank',rel:'noopener noreferrer'});source.append(link);}if(row.text)source.append(make('p',row.text,{className:'small'}));checked.append(make('p',row.checkedAt?new Date(row.checkedAt).toLocaleString('ru-RU')+' · '+row.checkedBy:'Не подтверждено оператором',{className:'small'}));action(checked,'Подтвердить текущий факт',()=>{if(factLedgerKey(getFields())!==key)return notify('Карточка изменилась. Обновите источники фактов.');confirmField(row.field,row.value);});tbody.append(tr);}
-  const scroll=make('div',undefined,{className:'fact-ledger-table'});scroll.append(table);evidenceBox.append(scroll);
-  if(onApplyField&&conflicts.some(row=>row.kind==='manual')){
-   const choose=make('div');choose.append(make('p','Значение источника принимается только явным действием. Ручной ввод автоматически не перезаписывается.',{className:'small'}));
-   for(const row of conflicts.filter(item=>item.kind==='manual'))for(const witness of row.values.filter(item=>item.source!=='Текущее поле'&&['string','number','boolean'].includes(typeof item.value)))action(choose,'Принять '+(factLabels[row.field]||row.field)+': '+show(witness.value),async()=>{try{if(factLedgerKey(getFields())!==key)throw Error('Карточка изменилась. Обновите источники фактов.');await onApplyField(row.field,factClone(witness.value));if(factLedgerKey(getFields())!==key)throw Error('Карточка изменилась. Повторите проверку фактов.');observe('restore');}catch(error){notify(error.message);}});
-   conflictsBox.append(choose);
-  }
- }
- function persist(){return write(factLedgerStorageKey,storage)!==false;}
- function serviceReceipts(){return factClone(lastServiceReceipts);}
- function checkServices(){const fields=getFields(),key=factLedgerKey(fields),receipts=storage.serviceConfirmations?.[key]||fields.serviceConfirmations||{};return serviceClaimChecklist(fields,{prefs:getPreferences(),receipts});}
- function confirmService(id,expectedValue,checked,key){try{if(factLedgerKey(getFields())!==key)throw Error('Карточка изменилась. Обновите перечень услуг.');const claim=checkServices().claims.find(row=>row.id===id);if(!claim||JSON.stringify(claim.value)!==JSON.stringify(expectedValue))throw Error('Объём услуги изменился. Проверьте актуальные условия.');const who=actor.value.trim();if(!who||who.length>100)throw Error('Укажите автора подтверждения');const values={...(storage.serviceConfirmations?.[key]||getFields().serviceConfirmations||{})};if(checked)values[id]={value:factClone(claim.value),actor:who,at:new Date().toISOString()};else delete values[id];storage.serviceConfirmations={...(storage.serviceConfirmations||{}),[key]:values};if(!persist())return;lastKey=key;onServiceReceiptsChange?.(factClone(values));render();notify(checked?'Услуга подтверждена с датой и автором':'Подтверждение услуги снято');}catch(error){render();notify(error.message);}}
- function observe(kind='manual',who=actor.value,confirmedField){
-  try{const fields=getFields(),key=factLedgerKey(fields),previous=storage.entries[key]?.[0],revision=createFactRevision(fields,{kind,actor:who,previous,confirmed:storage.confirmations[key]||{},confirmedField,observedAt:storage.observations?.[key]});if(kind==='import')storage.observations={...(storage.observations||{}),[key]:revision.at};if(previous&&!revision.changes.length&&kind!=='confirm'){if(kind==='import')persist();render();return previous;}
-   const entries=Object.fromEntries(Object.entries(storage.entries).filter(([name])=>name!==key).slice(-39));entries[key]=[revision,...(storage.entries[key]||[])].slice(0,100);storage={...storage,entries};if(!persist())return null;render();return revision;
-  }catch(error){notify(error.message);return null;}
- }
- function confirmField(field,expectedValue){try{const fields=getFields(),key=factLedgerKey(fields),evidence=sourceFactEvidence(fields).find(row=>row.field===field);if(!key||!evidence)throw Error('Факт недоступен');if(arguments.length>1&&!factEqual(expectedValue,evidence.value,field)){render();throw Error('Факт изменился. Проверьте актуальное значение перед подтверждением.');}const who=actor.value.trim();if(!who||who.length>100)throw Error('Укажите автора проверки');storage.confirmations[key]={...(storage.confirmations[key]||{}),[field]:{value:evidence.value,actor:who,at:new Date().toISOString()}};if(!persist())return;observe('confirm',who,field);notify('Текущий факт подтверждён. После изменения значения подтверждение потребуется заново.');}catch(error){notify(error.message);}}
- function refresh(){const epoch=++remoteEpoch,id=getFields().resultId;remote=[];render();if(getServerRevisions&&id)Promise.resolve(getServerRevisions(id)).then(value=>{if(epoch!==remoteEpoch)return;remote=Array.isArray(value?.revisions)?value.revisions:Array.isArray(value)?value:[];render();}).catch(error=>{if(epoch===remoteEpoch)status.textContent='Локальные версии доступны. Серверная история: '+error.message;});}
- versions.onchange=drawDifference;action(toolbar,'Зафиксировать текущие факты',()=>{if(observe('manual'))notify('Снимок цены и условий сохранён с автором');});action(toolbar,'Обновить версии и сравнение',refresh);
- const cache=make('details'),cacheTitle=make('summary','Очистить только кеш импорта'),cacheNote=make('p','Карточки, словарь, история, настройки и фотографии сохраняются. Следующий импорт перечитает исходную страницу.',{className:'small'}),cacheLabel=make('label'),cacheCheck=make('input',undefined,{type:'checkbox'});cacheCheck.setAttribute('aria-label','Подтверждаю очистку только кеша импорта');cacheLabel.append(cacheCheck,document.createTextNode('Подтверждаю очистку только кеша импорта'));cache.append(cacheTitle,cacheNote,cacheLabel);body.append(cache);
- action(cache,'Очистить кеш этого браузера',()=>{if(!cacheCheck.checked)return notify('Подтвердите очистку кеша');if(write('most-cache',{})!==false)notify('Кеш исходных страниц браузера очищен. Карточки и словарь сохранены.');});
- if(clearServerCache)action(cache,'Очистить кеш исходных страниц на Mac',async()=>{if(!cacheCheck.checked)return notify('Подтвердите очистку кеша');try{const result=await clearServerCache();notify('Кеш Mac очищен: '+(result.cleared||0)+' записей. Карточки, словарь и фото сохранены.');}catch(error){notify(error.message);}});
- render();return {observe,refresh,confirmField,checkServices,serviceReceipts,open:()=>{shell.open=true;servicesBox.scrollIntoView?.({block:'nearest',behavior:'smooth'});},history:()=>factClone(rows()),validate:()=>validateListingFields(getFields())};
-}
-
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
 const engineCommunityKey=value=>String(value).toLowerCase().replaceAll('ё','е');
 const engineCommunityMeanings=new Map(Object.entries(COMMUNITY_RENTAL_RULES).map(([ru,zh])=>[engineCommunityKey(ru),zh]));
@@ -1913,15 +2060,16 @@ function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(v.subletPolicy==='no')push('📝 不得将公寓转租给他人');
   if(v.shortTermPolicy==='no')push('📅 不接受按日短租');
   section('service');
+  const serviceChecks=serviceClaimChecklist(v,{prefs,receipts:v.serviceConfirmations}),confirmedService=id=>serviceChecks.claims.some(row=>row.id===id&&row.confirmed);
   {
     let registration='抵达登记（临时居住登记）：提供办理协助';
-    if(positive('registrationMonths'))registration+='（'+v.registrationMonths+'个月）';
-    if(positive('registrationPeople'))registration+='，最多'+v.registrationPeople+'人';
+    if(confirmedService('registration')&&positive('registrationMonths'))registration+='（'+v.registrationMonths+'个月）';
+    if(confirmedService('registration')&&positive('registrationPeople'))registration+='，最多'+v.registrationPeople+'人';
     push('','✈️ '+registration+'。');
   }
-  if(v.pickup)push('🚕 免费接送到入住地点'+(v.luggage?'，协助搬运行李':'')+'。');
-  if(v.arrival)push('📋 免费协助了解抵达后的相关手续。');
-  if(v.support&&prefs.benefits)push('','🇨🇳 我们的优势：',prefs.benefits);
+  if(v.pickup&&confirmedService('pickup'))push('🚕 免费接送到入住地点'+(v.luggage?'，协助搬运行李':'')+'。');
+  if(v.arrival&&confirmedService('arrival'))push('📋 免费协助了解抵达后的相关手续。');
+  if(v.support&&prefs.benefits&&confirmedService('support'))push('','🇨🇳 我们的优势：',prefs.benefits);
   section('contact');
   if(prefs.contact)push('','📩 联系我们：'+prefs.contact);
   else push('',wording('📩 欢迎中文咨询，了解房源详情并预约看房！','💌 想了解租赁条件或安排看房？欢迎用中文私信我们！','📨 欢迎中文留言咨询，我们协助了解房源并预约看房。'));
@@ -1968,6 +2116,7 @@ function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   if(audienceLead)body=audienceLead+'\n\n'+body;
   titles=titles.map(title=>applyStudioProfile(title,studioProfile));body=applyStudioProfile(body,studioProfile);
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
+  try{assertClientServiceClaims({fields:{...v,serviceBenefits:typeof prefs.benefits==='string'?prefs.benefits:''},titles,body,tags:renderedTags});}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';tagSuggestions=[];}
   if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
   return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo};
 }
@@ -2530,6 +2679,7 @@ function clearPublicationDataCache(){publicationDataCache.clear();}
 const publicationDataClone=value=>JSON.parse(JSON.stringify(value));
 
 function resolvePublicationData(card={},input={},assets={}){
+  const serviceContext=card;
   card=clientPublicationCard(card);
   // Data depends on the card, brand and dictionary, not the node positions.
   // Keep a bounded detached cache; mutable dictionaries and Moscow midnight
@@ -2561,7 +2711,7 @@ function resolvePublicationData(card={},input={},assets={}){
     for(let stop=0;stop<3;stop++){const bind=prefix+'Stop'+(stop+1);data[bind]=route?.stops?.[stop]||'';data.links[bind]=safePublicationLink(route?.stopDetails?.[stop]?.links?.yandex);}
   }
   for(const key of Object.keys(data))if(typeof data[key]==='string'&&key!=='wechatUrl'&&key!=='mapUrl')data[key]=sanitizeClientText(redactPublicationPhones(data[key]));
-  const result=clientPublicationCard(data);publicationDataCache.set(cacheKey,result);
+  const result=clientPublicationCard(data,{serviceContext});publicationDataCache.set(cacheKey,result);
   while(publicationDataCache.size>4)publicationDataCache.delete(publicationDataCache.keys().next().value);
   return publicationDataClone(result);
 }
@@ -2705,6 +2855,13 @@ const dceClone=value=>JSON.parse(JSON.stringify(value));
 const dceFinite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const dceClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 
+function designCanvasRenderInputs(surfaceId,design,card,assets={}){
+ return {surfaceId,design:JSON.stringify(design),card:JSON.stringify(card),rules:JSON.stringify(assets.rules||{}),day:Math.floor((Date.now()+10800000)/86400000),photos:(Array.isArray(assets.photos)?assets.photos:[]).map(value=>typeof value==='string'?value:value?.dataUrl||value?.url||''),mapImage:assets.mapImage||assets.map||'',mapAttribution:assets.mapAttribution||'',logo:assets.logo||'',avatar:assets.avatar||''};
+}
+function designCanvasRenderInputsEqual(a,b){
+ return !!a&&!!b&&['surfaceId','design','card','rules','day','mapImage','mapAttribution','logo','avatar'].every(key=>a[key]===b[key])&&a.photos.length===b.photos.length&&a.photos.every((value,index)=>value===b.photos[index]);
+}
+
 // Pointer movement is converted from the displayed page into its export units.
 function designCanvasDelta(start,current,bounds,surface){
   const width=dceFinite(bounds?.width),height=dceFinite(bounds?.height);
@@ -2768,9 +2925,10 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   const button=(text,id,action)=>{const node=make('button',text,{type:'button',class:'btn',id});node.onclick=action;return node;};
   const select=(id,choices)=>{const node=make('select','',{id});for(const [value,text] of choices)node.append(make('option',text,{value}));return node;};
   const field=(title,input)=>{const wrap=make('label',title);wrap.htmlFor=input.id;wrap.append(input);return wrap;};
-  const normal=()=>normalizePublicationDesign(getDesign());
+  let designSourceKey='';
+  const normal=()=>{const source=getDesign();designSourceKey=JSON.stringify(source);return normalizePublicationDesign(source);};
   let draft=normal(),surfaceId=Object.keys(draft.surfaces||{})[0]||'intro',selection=new Set(),history=designCanvasHistory(draft);
-  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='';
+  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='',lastDrawnInputs=null,pendingDrawInputs=null;
   const host=make('section','',{class:'design-canvas-editor',id:'designCanvasEditor','aria-label':'Редактор расположения блоков'});
   const title=make('div','',{class:'design-canvas-heading'});title.append(make('h3','Редактор макета'),make('p','Перемещайте блоки и меняйте их размеры. Текст из полей карточки подставляется заново для каждого объявления.',{class:'muted'}));
   const toolbar=make('div','',{class:'design-canvas-toolbar'}),surfaces=select('designCanvasSurface',[]),zooms=select('designCanvasZoom',[['fit','По ширине'],['25','25%'],['50','50%'],['75','75%'],['100','100%']]);
@@ -2854,7 +3012,19 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   }
   function refreshLayers(){const focused=layers.contains(document.activeElement)?document.activeElement?.dataset.nodeId:null;layers.replaceChildren();for(const node of [...surface().nodes].sort((a,b)=>(b.z||0)-(a.z||0))){const b=button((node.visible===false?'◌ ':node.locked?'🔒 ':'')+nodeName(node),'',event=>selectNode(node,event));b.removeAttribute('id');b.dataset.nodeId=node.id;b.setAttribute('aria-pressed',String(selection.has(node.id)));layers.append(b);}if(focused)[...layers.children].find(node=>node.dataset.nodeId===focused)?.focus({preventScroll:true});}
   function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;const key=[s.width,s.height,scale,showGrid,selection.size].join('|');if(key===dimensionsKey)return;dimensionsKey=key;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
-  async function draw(){const epoch=++renderEpoch,s=surface();if(!s||destroyed)return;const design=dceClone(draft),card=dceClone(getCard()||{});const buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;try{const assets=await getAssets();const result=await renderPage(buffer,surfaceId,design,card,assets||{});if(destroyed||epoch!==renderEpoch)return;canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');}catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}}
+  async function draw(){
+    const epoch=++renderEpoch,s=surface(),id=surfaceId;if(!s||destroyed)return;
+    const design=dceClone(draft),card=dceClone(getCard()||{}),buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;let inputs;
+    try{
+      const request=getAssets(),assets=await request;inputs=designCanvasRenderInputs(id,design,card,assets||{});pendingDrawInputs=inputs;
+      const result=await renderPage(buffer,id,design,card,assets||{});if(destroyed||epoch!==renderEpoch||id!==surfaceId)return;
+      // Synchronous asset getters can change while a renderer awaits images.
+      // Async getters are guarded by refresh's epoch without starting a second fetch.
+      const currentAssets=typeof request?.then==='function'?assets:getAssets()||{};
+      if(inputs.card!==JSON.stringify(getCard()||{})||inputs.design!==JSON.stringify(draft)||!designCanvasRenderInputsEqual(inputs,designCanvasRenderInputs(id,draft,getCard()||{},currentAssets))){host.dataset.previewReady='false';queueRender();return;}
+      canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);lastDrawnInputs=inputs;host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');
+    }catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}finally{if(pendingDrawInputs===inputs)pendingDrawInputs=null;}
+  }
   function queueRender(){if(renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
   function refreshUI(){if(destroyed)return;dimensions();backgroundInput.value=surface().background||'#07162b';refreshOverlay();refreshLayers();refreshInspector();undo.disabled=!history.canUndo();redo.disabled=!history.canRedo();queueRender();}
   function addNode(type){const s=surface();if(s.nodes.length>=80)return toast('На одном полотне можно разместить до 80 блоков.');const ids=new Set(s.nodes.map(node=>node.id));let count=1,id;do{id='custom-'+type+'-'+count++;}while(ids.has(id));s.nodes.push({id,type,x:Math.min(60,s.width-120),y:Math.min(60,s.height-100),w:Math.min(type==='text'?500:420,s.width-60),h:type==='text'?100:220,text:type==='text'?'自定义文字':'',bind:type==='image'?'photo1':'',photoIndex:0,visible:true,z:Math.max(0,...s.nodes.map(n=>n.z||0))+1,style:{fontSize:42,color:'#ffffff',fontFamily:'sans',fontWeight:600,align:'left',opacity:1,background:type==='rect'?'#12345b':''}});selection=new Set([id]);commit('add');}
@@ -2867,11 +3037,26 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   function surfaceOptions(){surfaces.replaceChildren();for(const [id,s] of Object.entries(draft.surfaces||{}))surfaces.append(make('option',surfaceNames[id]||s.label||id,{value:id}));}
   function clearPreview(){host.dataset.previewReady='false';canvas.width=surface().width;canvas.height=surface().height;const context=canvas.getContext('2d');context.fillStyle=surface().background||'#07162b';context.fillRect(0,0,canvas.width,canvas.height);warnings.textContent='Обновляем предпросмотр…';}
   function setSurface(id){if(destroyed||!draft.surfaces[id])return false;if(id===surfaceId)return true;if(gesture)finishGesture({pointerId:gesture.pointerId},true);surfaceId=id;surfaces.value=id;selection.clear();++renderEpoch;clearPreview();refreshUI();return true;}
-  function refresh({resetHistory=false}={}){if(destroyed)return;gesture=null;++renderEpoch;draft=normal();if(!draft.surfaces[surfaceId])surfaceId=Object.keys(draft.surfaces)[0];selection=new Set([...selection].filter(id=>surface()?.nodes.some(node=>node.id===id)));if(resetHistory)history.reset(draft);else if(JSON.stringify(draft)!==JSON.stringify(history.value()))history.push(draft);surfaceOptions();surfaces.value=surfaceId;clearPreview();refreshUI();}
+  function refreshAssets(){
+    if(destroyed)return;const card=getCard()||{},assets=getAssets()||{};
+    if(assets&&typeof assets.then==='function'){assets.catch?.(()=>{});++renderEpoch;host.dataset.previewReady='false';queueRender();return;}
+    const inputs=designCanvasRenderInputs(surfaceId,draft,card,assets);
+    if(designCanvasRenderInputsEqual(inputs,pendingDrawInputs)||!pendingDrawInputs&&designCanvasRenderInputsEqual(inputs,lastDrawnInputs))return;
+    ++renderEpoch;if(lastDrawnInputs&&inputs.card!==lastDrawnInputs.card)clearPreview();else host.dataset.previewReady='false';
+    if(!lastDrawnInputs||['surfaceId','card','design','rules','day'].some(key=>inputs[key]!==lastDrawnInputs[key])){refreshOverlay();refreshInspector();}
+    queueRender();
+  }
+  function refresh({resetHistory=false}={}){
+    if(destroyed)return;const source=getDesign(),sourceKey=JSON.stringify(source);
+    if(sourceKey===designSourceKey){if(resetHistory){history.reset(draft);undo.disabled=redo.disabled=true;}refreshAssets();return;}
+    designSourceKey=sourceKey;const next=normalizePublicationDesign(source);
+    if(JSON.stringify(next)===JSON.stringify(draft)){if(resetHistory){history.reset(draft);undo.disabled=redo.disabled=true;}refreshAssets();return;}
+    gesture=null;++renderEpoch;draft=next;if(!draft.surfaces[surfaceId])surfaceId=Object.keys(draft.surfaces)[0];selection=new Set([...selection].filter(id=>surface()?.nodes.some(node=>node.id===id)));if(resetHistory)history.reset(draft);else if(JSON.stringify(draft)!==JSON.stringify(history.value()))history.push(draft);surfaceOptions();surfaces.value=surfaceId;clearPreview();refreshUI();
+  }
   surfaceOptions();surfaces.value=surfaceId;
   if(typeof ResizeObserver==='function'){resizeObserver=new ResizeObserver(()=>dimensions());resizeObserver.observe(viewport);}else window.addEventListener('resize',dimensions);
   refreshUI();
-  return {refresh,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;++renderEpoch;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
+  return {refresh,refreshAssets,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;++renderEpoch;lastDrawnInputs=pendingDrawInputs=null;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
 }
 
 /* Shared publication design. Generated HTML contains escaped text and embedded images only. */
@@ -3003,7 +3188,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   if(!mount)return null;
   let template=defaultPublicationDesign(),photos=[],intro='',outro='',mapImage='',mapAttribution='',logo='',avatar='',photoCardKey='',lastRendered=null;
   let demo=false,revision=0,designEpoch=0,timer,busy=false,destroyed=false,templateTouched=false,dirty=false,proofUrl='',serverUpdated=null,legacyBackup=null;
-  let active='pdf',pdfSurface='pdfOverview',editor=null,serverReady=Promise.resolve(),brandLoadEpoch=0,storedBaseline=false,remoteChanged=false,draftBackup=null,reloadRendering=0,deferredSurfacePreview=false;
+  let active='pdf',pdfSurface='pdfOverview',editor=null,serverReady=Promise.resolve(),brandLoadEpoch=0,storedBaseline=false,remoteChanged=false,draftBackup=null,reloadRendering=0,deferredSurfacePreview=false,deferredHtmlPreview=false;
   const assetCache=new Map(),assetRoleEpoch={logo:0,avatar:0};let savedServerRules={};
   try{
     const stored=JSON.parse(localStorage.getItem(PS_STUDIO_KEY)||'null'),older=stored?null:JSON.parse(localStorage.getItem(PS_DESIGN_KEY)||'null');
@@ -3077,6 +3262,9 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
   function showImage(){const value=active==='intro'?intro:outro;imagePreview.hidden=!value;imageEmpty.hidden=!!value;imageDownload.disabled=busy||!value;if(value)imagePreview.src=value;else imagePreview.removeAttribute('src');}
   function queueRender(){clearTimeout(timer);timer=setTimeout(()=>render(false),250);}
   function requestSurfacePreview(){if(active==='pdf')return;if(reloadRendering){deferredSurfacePreview=true;return;}queueRender();}
+  function currentHtmlSnapshot(snapshot){return !!snapshot&&!destroyed&&snapshot.key===presentationCardKey(current())&&snapshot.sourceDesignKey===JSON.stringify(template)&&snapshot.ruleKey===JSON.stringify(rules())&&snapshot.mapImage===mapImage&&snapshot.mapAttribution===mapAttribution&&snapshot.logo===logo&&snapshot.avatar===avatar&&snapshot.photos.length===photos.length&&photos.every((value,index)=>snapshot.photos[index]===value);}
+  function syncHtmlPreview(){if(!frameWrap.open||!currentHtmlSnapshot(lastRendered)){frame.removeAttribute('srcdoc');return false;}if(frame.srcdoc!==lastRendered.html)frame.srcdoc=lastRendered.html;return true;}
+  frameWrap.addEventListener('toggle',()=>{if(!syncHtmlPreview()&&frameWrap.open&&!destroyed){if(reloadRendering)deferredHtmlPreview=true;else queueRender();}});
   function clearCardAssetsForKey(key){if(photoCardKey===key)return;photos=[];mapImage='';mapAttribution='';intro='';outro='';photoCardKey=key;lastRendered=null;mount.dataset.photosReady='false';frame.removeAttribute('srcdoc');imagePreview.removeAttribute('src');showImage();}
   async function loadBrandAssets(valid){const epoch=++brandLoadEpoch;const values={};for(const role of ['logo','avatar']){const id=template.brand[role+'AssetId'];if(!id){values[role]='';continue;}let value=assetCache.get(id);if(!value&&api){try{const result=await api('design-images/'+id);value=safePresentationImage(result.dataUrl);if(value)assetCache.set(id,value);}catch{value='';}}if(!valid()||epoch!==brandLoadEpoch)return false;values[role]=value||'';}logo=values.logo;avatar=values.avatar;syncInputs();return true;}
   async function render(reload=false,options={}){
@@ -3086,21 +3274,21 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
     // Settle that initial request before taking the asset revision, and cancel
     // its queued lightweight repaint so it cannot supersede a slow refresh.
     if(reload){try{await serverReady;}catch{}if(destroyed)return false;clearTimeout(timer);}
-    const version=++revision,epoch=designEpoch,card=JSON.parse(JSON.stringify(current())),key=presentationCardKey(card),ruleKey=JSON.stringify(rules()),rawDesign=normalizePublicationDesign(template);let mapFailed=false;clearCardAssetsForKey(key);
-    const valid=()=>version===revision&&epoch===designEpoch&&!destroyed&&presentationCardKey(current())===key&&JSON.stringify(rules())===ruleKey;
+    const version=++revision,epoch=designEpoch,card=JSON.parse(JSON.stringify(current())),key=presentationCardKey(card),ruleKey=JSON.stringify(rules()),sourceDesignKey=JSON.stringify(template),rawDesign=normalizePublicationDesign(template);let mapFailed=false;clearCardAssetsForKey(key);
+    const valid=()=>version===revision&&epoch===designEpoch&&!destroyed&&presentationCardKey(current())===key&&JSON.stringify(rules())===ruleKey&&JSON.stringify(template)===sourceDesignKey;
     try{
       const design=presentationClientDesign(rawDesign);
       if(reload){mount.dataset.photosReady='false';status.textContent='Готовим фотографии и предпросмотр…';const values=demo?(photos.length?photos:[{dataUrl:demoPhoto()}]):await getPhotos?.()||[];if(!valid())return false;const safe=await compressPresentationPhotos(values,psCompressedPhoto,valid);if(!valid())return false;photos=safe;photoCardKey=key;mount.dataset.photosReady='true';performance.mark?.('redcn-designer-photos-ready');mapImage='';mapAttribution='';if(!demo&&presentationCardData(card).mapUrl&&getMapImage)try{const result=await getMapImage(card,design);if(!valid())return false;mapImage=safePresentationImage(typeof result==='string'?result:result?.dataUrl);mapAttribution=typeof result==='object'?psSafeString(result?.attribution,300):'';}catch{mapFailed=true;}}
       else if(photoCardKey!==key){photos=[];mapImage='';mapAttribution='';photoCardKey=key;}
       if(!await loadBrandAssets(valid)||!valid())return false;
       const imageAssets=assets(),imageKind=Object.hasOwn(options,'imageKind')?options.imageKind:active==='pdf'?null:active,designKey=JSON.stringify(design),previous=lastRendered;
-      const sameInputs=previous?.key===key&&previous.designKey===designKey&&previous.ruleKey===ruleKey&&previous.mapImage===mapImage&&previous.logo===logo&&previous.avatar===avatar&&previous.photos?.length===photos.length&&photos.every((value,index)=>previous.photos[index]===value);
+      const sameInputs=previous?.key===key&&previous.designKey===designKey&&previous.ruleKey===ruleKey&&previous.mapImage===mapImage&&previous.mapAttribution===mapAttribution&&previous.logo===logo&&previous.avatar===avatar&&previous.photos?.length===photos.length&&photos.every((value,index)=>previous.photos[index]===value);
       const rasters=sameInputs&&previous[imageKind]?{intro:imageKind==='intro'?previous.intro:'',outro:imageKind==='outro'?previous.outro:''}:await preparePresentationRaster(imageKind,{card,design,photos,mapImage,assets:imageAssets},renderPresentationImage,valid);if(!rasters||!valid())return false;
-      intro=rasters.intro||(sameInputs?previous.intro:'');outro=rasters.outro||(sameInputs?previous.outro:'');lastRendered={key,card,template:design,designKey,ruleKey,photos:photos.slice(),mapImage,logo,avatar,intro,outro,imageKind,html:buildPublicationHtml(card,design,imageAssets)};if(frame.srcdoc!==lastRendered.html)frame.srcdoc=lastRendered.html;showImage();if(!sameInputs)editor?.refresh();
+      intro=rasters.intro||(sameInputs?previous.intro:'');outro=rasters.outro||(sameInputs?previous.outro:'');lastRendered={key,card,template:design,designKey,sourceDesignKey,ruleKey,photos:photos.slice(),mapImage,mapAttribution,logo,avatar,intro,outro,imageKind,html:buildPublicationHtml(card,design,imageAssets)};syncHtmlPreview();showImage();if(!sameInputs)editor?.refresh();
       status.textContent=demo?'Демонстрационный макет · не реальное предложение.':photos.length?'Предпросмотр обновлён · '+photos.length+' фото. '+(dirty?'Изменения шаблона ещё не сохранены на Mac.':'Общий шаблон применяется к данным карточки.'):'Предпросмотр без фото. Выберите фотографии карточки и обновите макет.';
       if(mapFailed)status.textContent+=' Карта недоступна; адрес и координаты сохранены.';const warnings=resolvePublicationData(card,design,imageAssets).warnings||[];if(warnings.length)status.textContent+=' Проверьте перевод названий в готовом тексте.';if(remoteChanged)status.textContent+=' Общий шаблон на Mac изменён. Загрузите сохранённую версию перед следующей записью.';return true;
     }catch(error){if(valid()){status.textContent=error.message;toast(error.message);}return false;}
-    }finally{if(reload){reloadRendering--;if(!reloadRendering&&deferredSurfacePreview){deferredSurfacePreview=false;if(!destroyed&&active!=='pdf'&&lastRendered?.imageKind!==active)queueRender();}}}
+    }finally{if(reload){reloadRendering--;if(!reloadRendering){const surfacePending=deferredSurfacePreview&&active!=='pdf'&&lastRendered?.imageKind!==active,htmlPending=deferredHtmlPreview&&frameWrap.open&&!currentHtmlSnapshot(lastRendered);deferredSurfacePreview=deferredHtmlPreview=false;if(!destroyed&&(surfacePending||htmlPending))queueRender();}}}
   }
   async function savedSnapshot(snapshot){const resultId=await ensureCard();if(!resultId)throw new Error('Сначала сохраните карточку в редакторе');if(presentationCardKey(current())!==snapshot.key)throw new Error('Карточка изменилась. Обновите макет и повторите экспорт.');return resultId;}
   async function action(run){if(busy||destroyed)return;clearTimeout(timer);busy=true;for(const control of [refresh,sample,save,html,proof,pdf,imageDownload])control.disabled=true;try{await run();}catch(error){if(!destroyed){status.textContent=error.message;toast(error.message);}}finally{busy=false;if(!destroyed){for(const control of [refresh,sample,save,html,proof,pdf])control.disabled=false;showImage();}}}

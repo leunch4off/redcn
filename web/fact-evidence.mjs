@@ -6,6 +6,16 @@ const furniturePatterns={
  ac:'кондиционер[а-я]*',internet:'wi[ -]?fi|wifi|интернет[а-я]*',fridge:'холодильник[а-я]*',stove:'(?:электро|газо)?плит[а-я]*|варочн[а-я]*\\s+(?:панел[а-я]*|плит[а-я]*)',oven:'духовк[а-я]*|духов[а-я]*\\s+шкаф[а-я]*',hood:'вытяжк[а-я]*',sink:'(?:кухонн[а-я]*\\s+)?(?:раковин[а-я]*|мойк[а-я]*)',washbasin:'раковин[а-я]*|умывальник[а-я]*|рукомойник[а-я]*',microwave:'микроволнов[а-я]*(?:\\s+печ[а-я]*)?|свч',dishwasher:'посудомо[а-я]*(?:\\s+машин[а-я]*)?',kettle:'чайник[а-я]*',table:'обеденн[а-я]*\\s+стол[а-я]*|стол(?:а|ом|ы|ов)?',chairs:'стул[а-я]*|стуль[а-я]*',washer:'стиральн[а-я]*(?:\\s+машин[а-я]*)?|стиралк[а-я]*',dryer:'сушильн[а-я]*(?:\\s+машин[а-я]*)?',bath:'ванн(?:а|у|ой|ы|е)',shower:'душ(?:а|ем)?|душев[а-я]*\\s+кабин[а-я]*',closet:'гардеробн[а-я]*',pantry:'кладов[а-я]*',shelves:'стеллаж[а-я]*|полк(?:а|и|ами|ах|ок|у)',computer:'компьютер[а-я]*|моноблок[а-я]*',projector:'проектор[а-я]*',homeCinema:'домашн[а-я]*\\s+кинотеатр[а-я]*',piano:'пианино|фортепиано|роял[а-я]*|цифров[а-я]*\\s+пианино',balcony:'балкон[а-я]*',loggia:'лоджи[а-я]*',kitchenFurniture:'мебел[а-я]*\\s+на\\s+кухне|кухонн[а-я]*\\s+(?:мебел[а-я]*|гарнитур[а-я]*|шкаф[а-я]*)|шкаф[а-я]*\\s+на\\s+кухн[а-я]*',roomFurniture:'мебел[а-я]*\\s+в\\s+комнат[а-я]*',mattress:'матрас[а-я]*'
 };
 const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasWasher',ac:'hasConditioner',tv:'hasTv',internet:'hasInternet',bath:'hasBathtub',shower:'hasShower',kitchenFurniture:'hasKitchenFurniture',roomFurniture:'hasFurniture'};
+function furnitureUnseenMention(before,term,after){
+ const boundary=/[;.!?\n。；]|\s+(?:но|зато|однако|but|however)\s+|但是|不过|但/iu;
+ const left=before.split(boundary).at(-1)||'',right=after.split(boundary)[0]||'',scope=left+term+right;
+ // A direct availability predicate belongs to this object. It must not be
+ // invalidated by another coordinated object that is outside the photograph.
+ const direct=/(?:^|\s)(?:есть|имеется|имеются|оборудован[а-я]*|оснащен[а-я]*|укомплектован[а-я]*|установлен[а-я]*)\s*$/iu.exec(left);
+ if(direct&&!/(?:^|\s)(?:не|нет|без)\s*$/iu.test(left.slice(0,direct.index))||/^\s*(?:есть|имеется|имеются|установлен[а-я]*|оборудован[а-я]*|оснащен[а-я]*)(?:\s|$)/iu.test(right))return false;
+ if(/не\s*(?:вид(?:ен|на|но|ны|им[а-я]*)|показан[а-я]*|показыва[а-я]*|разгляд[а-я]*|различим[а-я]*|попал[а-я]*\s+в\s+кадр)|вне\s+кадра|not\s+(?:visible|seen|shown|pictured|in\s+(?:the\s+)?(?:photo|picture|image|frame))|(?:can(?:not|['’]t)|could\s+not)\s+see|unseen|out\s+of\s+(?:the\s+)?(?:frame|view)|isn['’]?t\s+visible|看不到|看不见|看不見|不可见|不可見|未显示|未顯示|未展示|照片外/iu.test(scope))return true;
+ return /на\s+(?:фото|снимк[а-я]*|фотограф[а-я]*)|в\s+кадре|photo|picture|image|frame|照片|图片|圖片/iu.test(scope)&&/(?:^|\s)(?:нет|без|отсутству[а-я]*|no|without|absent|missing)(?:\s|$)|没有|沒有|未见|未見/iu.test(scope);
+}
 Object.assign(furniturePatterns,{
  coffeeTable:'журнальн[а-я]*\\s+стол(?:ик[а-я]*|[а-я]*)',dresser:'комод[а-я]*',cabinet:'буфет[а-я]*|тумб[а-я]*',shoeCabinet:'обувниц[а-я]*|шкаф[а-я]*\\s+для\\s+обуви',ottoman:'пуф(?:ик)?[а-я]*|банкетк[а-я]*',bench:'скам(?:ья|ьи|ей|ью|ейк[а-я]*)',mirror:'зеркал[а-я]*',curtains:'штор[а-я]*',dryingRack:'сушилк[а-я]*\\s+для\\s+белья',iron:'утюг[а-я]*',vacuum:'пылесос[а-я]*',coffeeMachine:'кофемашин[а-я]*|кофевар[а-я]*',toaster:'тостер[а-я]*',router:'роутер[а-я]*|маршрутизатор[а-я]*',monitor:'монитор[а-я]*',speakers:'колонк[а-я]*|акустическ[а-я]*\\s+систем[а-я]*',waterHeater:'водонагревател[а-я]*|бойлер[а-я]*',waterFilter:'(?:фильтр[а-я]*|систем[а-я]*\\s+фильтрации)\\s+(?:для\\s+)?вод[а-я]*'
 });
@@ -30,7 +40,8 @@ export function detectFurniture(text,features,offer={},origin='JSON'){
    if(id==='table'&&/журнальн[а-я]*\s+$/.test(before))continue;
    if(id==='cabinet'&&/(?:прикроватн[а-я]*|тв[ -]?|телевизионн[а-я]*)\s*$/.test(before))continue;
    let status='present';
-   if(/(?:^|[.!?;]\s*|\s)не\s+$/.test(before)&&/^\s*,?\s*а\s+/.test(after)||negative.some(([a,b])=>m.index>=a&&m.index<b)||/^\s*(?:отсутствует|нет|не будет|не предусмотрен[а-я]*)/.test(after))status='absent';
+   if(furnitureUnseenMention(t.slice(0,m.index),m[0],t.slice(m.index+m[0].length)))status='unknown';
+   else if(/(?:^|[.!?;]\s*|\s)не\s+$/.test(before)&&/^\s*,?\s*а\s+/.test(after)||negative.some(([a,b])=>m.index>=a&&m.index<b)||/^\s*(?:отсутствует|нет|не будет|не предусмотрен[а-я]*)/.test(after))status='absent';
    else if(/(?:может|можно|планир[а-я]*|готов[аы]?)\s+(?:[а-я]+\s*){0,3}(?:установить|купить|привезти|поставить)\s*$|(?:будет установлен[ао]?|установит|установят|купим|привезем|поставим)\s*$/.test(before)||/^\s*(?:будет (?:установлен[ао]?|куплен[ао]?|привезен[ао]?|поставлен[ао]?)|установят|привезут|купят|(?:можно|планир[а-я]*)\s+(?:установить|купить|привезти|поставить))/.test(after))status='planned';
    const number=before.match(/(?:^|\s)(\d+)\s+(?:кухонн[а-я]*\s+|обеденн[а-я]*\s+)?$/)?.[1];
    const words={один:'1',одна:'1',одно:'1',два:'2',две:'2',три:'3',четыре:'4',пять:'5',шесть:'6',семь:'7',восемь:'8'};

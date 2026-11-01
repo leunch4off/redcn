@@ -54,12 +54,14 @@ test('anonymous card identities stay separate and Node CLI rejects malformed inp
  assert.equal(result.status,2);assert.match(result.stderr,/price/);assert.equal(result.stdout,'');
 });
 test('agency service checklist records each current claim independently of landlord registration refusal',()=>{
- const fields={registration:'assist',registrationMonths:'3',registrationPeople:'2',registrationPolicy:'not_available',pickup:true,luggage:true,arrival:true,support:true},prefs={benefits:'中文支持'};
+ const fields={editorIdentity:'service-a',registration:'assist',registrationMonths:'3',registrationPeople:'2',registrationPolicy:'not_available',pickup:true,luggage:true,arrival:true,support:true},prefs={benefits:'中文支持'};
  const initial=serviceClaimChecklist(fields,{prefs,now:at});assert.equal(initial.ready,false);assert.deepEqual(initial.claims.map(row=>row.id),['registration','pickup','arrival','support']);
- const receipts=Object.fromEntries(initial.claims.map(row=>[row.id,{value:row.value,actor:'Евгений',at}]));
+ const receipts=Object.fromEntries(initial.claims.map(row=>[row.id,{value:row.value,actor:'Евгений',at,cardKey:factLedgerKey(fields)}]));
  const checked=serviceClaimChecklist(fields,{prefs,receipts,now:'2026-11-01T11:00:00.000Z'});assert.equal(checked.ready,true);assert(checked.claims.every(row=>row.checkedAt===at&&row.checkedBy==='Евгений'));
  const scope=serviceClaimChecklist({...fields,registrationPeople:'3',luggage:false},{prefs,receipts,now:at});assert.deepEqual(scope.missing.map(row=>row.id),['registration','pickup']);
  assert.equal(serviceClaimChecklist(fields,{prefs:{benefits:'Новая услуга'},receipts,now:at}).missing[0].id,'support');
  assert.equal(serviceClaimChecklist(fields,{prefs,receipts,now:'2026-12-02T11:00:00.000Z'}).ready,false);
  assert.equal(serviceClaimChecklist(fields,{prefs,receipts,now:'2026-10-31T11:00:00.000Z'}).ready,false);
+ assert.equal(serviceClaimChecklist({...fields,editorIdentity:'another-card'},{prefs,receipts,now:at}).ready,false);
+ assert.equal(serviceClaimChecklist(fields,{prefs,receipts:Object.fromEntries(Object.entries(receipts).map(([key,row])=>[key,{...row,cardKey:undefined}])),now:at}).ready,false);
 });

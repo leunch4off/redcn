@@ -8,6 +8,7 @@ from pathlib import Path
 import unittest
 
 import test_twenty_editor_browser as editor_fixture
+import test_language_studio_browser as local_fixture
 
 
 class ServiceChecklistBuiltEditor(unittest.TestCase):
@@ -126,6 +127,40 @@ class ServiceChecklistBuiltEditor(unittest.TestCase):
         self.assertIn('Объём услуги изменился',support.locator('..').inner_text())
         self.assertEqual(self.fields()['serviceConfirmations']['support'],before)
         self.reload_editor();self.assertFalse(support.is_checked())
+
+
+class ServiceChecklistLocalSave(unittest.TestCase):
+    setUpClass=classmethod(local_fixture.LanguageStudioAcceptance.setUpClass.__func__)
+    tearDownClass=classmethod(local_fixture.LanguageStudioAcceptance.tearDownClass.__func__)
+    setUp=local_fixture.LanguageStudioAcceptance.setUp
+    tearDown=local_fixture.LanguageStudioAcceptance.tearDown
+    open_editor=local_fixture.LanguageStudioAcceptance.open_editor
+    seed=editor_fixture.TwentyEditorBrowserAcceptance.seed
+    fields=editor_fixture.TwentyEditorBrowserAcceptance.fields
+
+    def test_unsourced_receipt_survives_first_mac_save_then_real_presentation_html(self):
+        self.open_editor()
+        self.page.locator('nav button[data-tab="history"]').click()
+        self.page.locator('#captureSnapshots').uncheck()
+        self.page.locator('nav button[data-tab="editor"]').click()
+        self.seed();self.page.locator('#support').uncheck();self.page.locator('#pickup').check()
+        self.page.locator('#factLedgerMount>details>summary').click()
+        pickup=self.page.get_by_label('Подтвердить услугу: Бесплатная встреча и доставка до заселения',exact=True)
+        pickup.check()
+        receipt=self.fields()['serviceConfirmations']['pickup']
+        self.assertTrue(receipt['cardKey'].startswith('editorIdentity:'))
+        self.page.locator('#generate').click()
+        self.page.wait_for_function("document.getElementById('output').value.includes('免费接送到入住地点')")
+        self.page.locator('#save').click()
+        self.page.wait_for_function("/^[a-f0-9]{32}$/.test(JSON.parse(localStorage.getItem('most-draft'))?.fields?.resultId||'')")
+        self.assertEqual(self.fields()['serviceConfirmations']['pickup'],receipt);self.assertTrue(pickup.is_checked())
+        self.page.locator('#openPresentation').click()
+        self.page.locator('#presentationHtml').wait_for(state='visible')
+        with self.page.expect_download() as downloaded:self.page.locator('#presentationHtml').click()
+        html=Path(downloaded.value.path()).read_text(encoding='utf-8')
+        self.assertIn('免费接送到入住地点',html)
+        self.assertNotIn('serviceConfirmations',html)
+        self.assertNotIn(receipt['actor'],html)
 
 
 if __name__=='__main__':unittest.main()

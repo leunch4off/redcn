@@ -10,6 +10,7 @@ const rules={...DICTIONARY,...input.rules};
 if(input.operation==='translate'){process.stdout.write(JSON.stringify(translateDraft(input.text||'',{rules,mode:input.mode||'draft',entries:input.entries||[]})));process.exit(0);}
 const extracted=extractFacts(input.text||'',rules);
 const fields={style:'detailed',registration:'assist',support:true,...extracted.facts,...input.data};
+fields.serviceBenefits=String(input.prefs?.benefits??DEFAULT_PREFS.benefits);
 fields.templateMode ??= 'catalog';
 fields.copyVariant ??= fields.titleVariant || 0;
 fields.tagVariant ??= fields.titleVariant || 0;

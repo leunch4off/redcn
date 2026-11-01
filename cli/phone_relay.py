@@ -380,6 +380,12 @@ def list_cards(directory,after=0):
         titles=result.get('titles')
         title=titles[0] if isinstance(titles,list) and titles else titles if isinstance(titles,str) else ''
         summary={};needs_review=False
+        from service_claims import assert_service_claims,ServiceClaimReview,safe_service_view
+        try:assert_service_claims(result)
+        except ServiceClaimReview:
+            needs_review=True
+            safe=safe_service_view(result);safe_titles=safe.get('titles')
+            title=safe_titles[0] if isinstance(safe_titles,list) and safe_titles else safe_titles if isinstance(safe_titles,str) else ''
         for key,value in {'title':title,'price':fields.get('price',''),'metro':fields.get('metro',''),'area':fields.get('area','')}.items():
             if isinstance(value,str):
                 try:summary[key]=sanitize_text(value)
@@ -392,16 +398,33 @@ def list_cards(directory,after=0):
 
 def public_card(directory,result_id):
     import local_server
-    from client_publication import client_card
+    from client_publication import client_card,PublicationReviewRequired
+    from service_claims import ServiceClaimReview,safe_service_view,service_authorization
     result=local_server.read_result(directory,result_id)
     if result is None or result.get('fields',{}).get('isDemo') is True:return None
     db=redcn.open_cache(directory)
     try:updated=db.execute('SELECT updated FROM results WHERE id=?',(result_id,)).fetchone()[0]
     finally:db.close()
-    return client_card({**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),'media':card_media(directory,result)})
+    raw={**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),'media':card_media(directory,result)}
+    try:
+        projected=client_card(raw)
+    except PublicationReviewRequired as error:
+        if not isinstance(error.__cause__,ServiceClaimReview):raise
+        projected=client_card(safe_service_view(raw))
+        projected.update(publicationNeedsReview=True,publicationReviewReason='Неподтверждённые обещания услуг скрыты. На Mac подтвердите актуальный объём услуг с датой и автором или создайте описание заново.')
+    projected.pop('serviceAuthorization',None)
+    if not projected.get('publicationNeedsReview'):
+        authorization=service_authorization(result.get('fields',{}))
+        if authorization:projected['serviceAuthorization']=authorization
+    return projected
 
 
 def card_zip(directory,result_id,variant='original'):
+    # A review-safe detail view is not approval to export the old private post.
+    import local_server
+    from client_publication import client_card
+    raw=local_server.read_result(directory,result_id)
+    if raw is not None:client_card(raw)
     card=public_card(directory,result_id)
     if not card:raise ValueError('Карточка не найдена')
     if variant not in ('original','crop','prepared'):raise ValueError('Неверный вариант фотографий')

@@ -9,6 +9,10 @@ import hashlib
 from html.parser import HTMLParser
 import json
 import math
+import os
+import signal
+import subprocess
+import sys
 from pathlib import Path
 import re
 import secrets
@@ -36,6 +40,8 @@ _MIMES = {
     '.ply': 'application/octet-stream', '.stl': 'model/stl', '.zip': 'application/zip',
     '.dxf': 'application/dxf', '.ifc': 'application/x-step',
 }
+PDF_TOTAL_TIMEOUT = 90
+PDF_CLEANUP_RESERVE = 1.5
 _pdf_lock = threading.Lock()
 _file_lock = threading.RLock()
 _EXPECTED_UNSET = object()
@@ -563,6 +569,7 @@ class _PublicationText(HTMLParser):
         self.in_style = False
 
     def handle_starttag(self, tag, attrs):
+        if tag in ('div','p','section','article','header','footer','li','br','h1','h2','h3','h4','h5','h6'):self.text.append('\n')
         if tag == 'style':self.in_style = True
         self.metadata.extend(value for key,value in attrs if value and not (key == 'src' and value.startswith('data:image/')))
 
@@ -570,6 +577,7 @@ class _PublicationText(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag == 'style':self.in_style = False
+        if tag in ('div','p','section','article','header','footer','li','h1','h2','h3','h4','h5','h6'):self.text.append('\n')
 
     def handle_data(self, value):
         (self.metadata if self.in_style else self.text).append(value)
@@ -577,54 +585,163 @@ class _PublicationText(HTMLParser):
     def handle_comment(self, value):self.metadata.append(value)
 
 
-def _assert_public_html(html):
-    from client_publication import assert_public_text
+def _assert_public_html(html,card=None):
+    from client_publication import assert_public_text,assert_card_services
     parser = _PublicationText()
     parser.feed(html);parser.close()
     # Check both natural spacing and exact composition across inline elements.
     assert_public_text(''.join(parser.text))
     assert_public_text(' '.join(parser.text))
     for value in parser.metadata:assert_public_text(value)
+    assert_card_services(card or {},texts=[''.join(parser.text),*parser.metadata])
 
 
-def _publication_card(directory, result_id):
+def _publication_card(directory, result_id, *, private=False):
     from client_publication import client_card
     _card(directory,result_id)
     with sqlite3.connect(Path(directory)/'listings.sqlite3', timeout=15) as connection:
         row=connection.execute('SELECT payload FROM results WHERE id=?',(result_id,)).fetchone()
-    return client_card(json.loads(row[0]))
+    card=json.loads(row[0]);projected=client_card(card)
+    return card if private else projected
 
 
-def _render_pdf(html, browser_channel):
-    if browser_channel not in ('chrome', 'chromium'):
-        raise ValueError('Неверный браузер PDF')
+def _pdf_worker_command(browser_channel):
+    # Source HTML must never enter argv, a named file or a shared Chrome profile.
+    return [sys.executable,str(Path(__file__).with_name('pdf_render_worker.py')),browser_channel]
+
+
+def _pdf_process_snapshot(timeout,pids=None):
+    """Read only ownership identifiers, never command lines or environment."""
+    if os.name!='posix' or timeout<=0:return {}
     try:
-        from playwright.sync_api import sync_playwright, Error
-    except ImportError as error:
-        raise ValueError('Для PDF установите .venv/bin/python -m pip install -r cli/requirements-browser.txt') from error
-    with _pdf_lock:
+        command=['ps','-axo','pid=,ppid=,pgid=,lstart='] if pids is None else ['ps','-p',','.join(str(pid) for pid in pids),'-o','pid=,ppid=,pgid=,lstart=']
+        rows=subprocess.run(command,capture_output=True,text=True,timeout=timeout)
+    except (OSError,subprocess.TimeoutExpired):return {}
+    output={}
+    if rows.returncode:return output
+    for line in rows.stdout.splitlines():
+        parts=line.split(None,3)
+        if len(parts)!=4:continue
+        try:pid,parent,group=map(int,parts[:3])
+        except ValueError:continue
+        output[pid]=(parent,group,' '.join(parts[3].split()))
+    return output
+
+
+class _PdfOwnedProcesses:
+    """Track only the new worker's descendants, including detached Chrome."""
+    def __init__(self,process):
+        self.process=process;self.identities={}
+
+    def refresh(self,deadline,*,known_only=False):
+        rows=_pdf_process_snapshot(max(0,min(.08,deadline-time.monotonic())),
+                                   set(self.identities)|{self.process.pid} if known_only else None)
+        root=rows.get(self.process.pid)
+        if root and (self.process.pid in self.identities or self.process.poll() is None):
+            if self.process.pid not in self.identities:self.identities[self.process.pid]=root[2]
+        live={pid for pid,birth in self.identities.items() if pid in rows and rows[pid][2]==birth}
+        changed=True
+        while changed:
+            changed=False
+            for pid,row in rows.items():
+                if pid not in live and row[0] in live:
+                    self.identities[pid]=row[2];live.add(pid);changed=True
+        return {pid:rows[pid] for pid in live}
+
+    def signal(self,signum,deadline):
+        if os.name=='posix':
+            live=self.refresh(deadline,known_only=True)
+            groups={row[1] for pid,row in live.items() if row[1] in live}
+            # Popen owns this session even before the first ps snapshot returns.
+            if self.process.poll() is None:groups.add(self.process.pid)
+            for group in groups:
+                try:os.killpg(group,signum)
+                except ProcessLookupError:pass
+            for pid,row in live.items():
+                if row[1] in groups:continue
+                try:os.kill(pid,signum)
+                except ProcessLookupError:pass
+        elif os.name=='nt':
+            remaining=deadline-time.monotonic()
+            if remaining>0 and self.process.poll() is None:
+                try:subprocess.run(['taskkill','/PID',str(self.process.pid),'/T','/F'],capture_output=True,timeout=min(remaining,.5))
+                except (OSError,subprocess.TimeoutExpired):self.process.kill()
+        elif self.process.poll() is None:self.process.kill()
+
+    def stop(self,deadline):
+        self.refresh(deadline)
+        self.signal(signal.SIGTERM,deadline)
+        remaining=max(0,deadline-time.monotonic())
+        grace=min(deadline-min(.2,remaining*.4),time.monotonic()+.3)
+        while time.monotonic()<grace:
+            if self.process.poll() is not None and not self.refresh(grace,known_only=True):return
+            time.sleep(min(.02,max(0,grace-time.monotonic())))
+        self.signal(signal.SIGKILL if os.name=='posix' else signal.SIGTERM,deadline)
+        remaining=deadline-time.monotonic()
+        if remaining>0:
+            try:self.process.wait(timeout=remaining)
+            except subprocess.TimeoutExpired:pass
+
+
+def _render_pdf(html, browser_channel, *, timeout=PDF_TOTAL_TIMEOUT):
+    """One wall deadline includes the queue, Chrome, printing and cleanup."""
+    if browser_channel not in ('chrome','chromium'):raise ValueError('Неверный браузер PDF')
+    if isinstance(timeout,bool) or not isinstance(timeout,(int,float)) or not math.isfinite(timeout) or not 0<timeout<=120:
+        raise ValueError('Общий срок PDF: больше нуля и до 120 секунд')
+    deadline=time.monotonic()+timeout
+    if not _pdf_lock.acquire(timeout=max(0,deadline-time.monotonic())):
+        raise TimeoutError('Очередь PDF не освободилась в пределах общего срока. Повторите запрос.')
+    process=None;tree=None
+    try:
+        reserve=min(PDF_CLEANUP_RESERVE,timeout*.4)
+        execution_deadline=deadline-reserve
+        if execution_deadline<=time.monotonic():raise TimeoutError('Общий срок PDF истёк в очереди. Повторите запрос.')
+        environment=os.environ.copy()
+        # Playwright debug output can contain set_content input; never enable it
+        # for a private publication worker, even if the parent has DEBUG set.
+        for key in ('DEBUG','PWDEBUG'):environment.pop(key,None)
         try:
-            with sync_playwright() as playwright:
-                browser = playwright.chromium.launch(channel='chrome' if browser_channel == 'chrome' else None, headless=True, timeout=45000)
-                try:
-                    context = browser.new_context(java_script_enabled=False, offline=True, service_workers='block')
-                    context.route('**/*', lambda route: route.abort())
-                    page = context.new_page()
-                    page.set_content(html, wait_until='load', timeout=30000)
-                    # This fixed Playwright expression only waits for decoded data
-                    # images and installed fonts; page-authored JavaScript stays off.
-                    page.evaluate('async () => { let timer; try { await Promise.race([(async()=>{ await document.fonts.ready; await Promise.all(Array.from(document.images, image => image.decode())); })(), new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("Шрифты или изображения не подготовлены за 15 секунд")),15000);})]); } finally { clearTimeout(timer); } }')
-                    content = page.pdf(format='A4', print_background=True, prefer_css_page_size=True)
-                    context.close()
-                finally:
-                    browser.close()
-        except Error as error:
-            raise ValueError('Не удалось создать PDF в Chrome: ' + str(error)[:400]) from error
-    if not content.startswith(b'%PDF-'):
-        raise ValueError('Chrome не вернул PDF')
-    if len(content) > MAX_ATTACHMENT:
-        raise ValueError('Созданный PDF превышает 40 МБ; уменьшите число или размер фотографий')
-    return content
+            process=subprocess.Popen(_pdf_worker_command(browser_channel),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                                     start_new_session=os.name=='posix',env=environment,bufsize=0)
+        except OSError:raise ValueError('Не удалось запустить изолированный процесс PDF') from None
+        tree=_PdfOwnedProcesses(process)
+        tree.refresh(execution_deadline)
+        first=True;payload=html.encode('utf-8')
+        while True:
+            remaining=execution_deadline-time.monotonic()
+            if remaining<=0:raise TimeoutError('Создание PDF превысило общий срок. Собственные процессы Chrome остановлены; повторите запрос.')
+            try:
+                content,errors=process.communicate(input=payload if first else None,timeout=min(.15,remaining))
+                break
+            except subprocess.TimeoutExpired as pending:
+                if pending.stdout and len(pending.stdout)>MAX_ATTACHMENT:raise ValueError('Созданный PDF превышает 40 МБ')
+                if pending.stderr and len(pending.stderr)>65536:raise ValueError('Изолированный процесс PDF завершился с ошибкой')
+                tree.refresh(execution_deadline)
+            finally:first=False
+        if process.returncode:
+            try:code=json.loads(errors[-4096:]).get('error')
+            except (ValueError,AttributeError):code=None
+            messages={'dependency':'Для PDF установите .venv/bin/python -m pip install -r cli/requirements-browser.txt',
+                      'validation':'Проверьте статический HTML перед созданием PDF',
+                      'too_large':'Созданный PDF превышает 40 МБ; уменьшите число или размер фотографий',
+                      'invalid_pdf':'Chrome не вернул PDF'}
+            raise ValueError(messages.get(code,'Chrome не смог создать PDF. Повторите запрос или проверьте установленный браузер.'))
+        if not content.startswith(b'%PDF-'):raise ValueError('Chrome не вернул PDF')
+        if len(content)>MAX_ATTACHMENT:raise ValueError('Созданный PDF превышает 40 МБ; уменьшите число или размер фотографий')
+        if time.monotonic()>=execution_deadline:raise TimeoutError('Создание PDF превысило общий срок. Повторите запрос.')
+        return content
+    finally:
+        try:
+            if tree is not None:tree.stop(deadline)
+        finally:
+            if process is not None:
+                # Never call an unbounded communicate() in cleanup: an orphaned
+                # renderer may retain a pipe even after its direct owner exits.
+                for stream in (process.stdin,process.stdout,process.stderr):
+                    if stream is not None:
+                        try:stream.close()
+                        except OSError:pass
+            _pdf_lock.release()
 
 
 @_serialize_files
@@ -655,12 +772,12 @@ def _export_template(template):
 
 def create_export(directory, result_id, html, kind, browser_channel='chrome', *, template=None):
     from client_publication import PUBLICATION_POLICY_VERSION
-    _publication_card(directory, result_id)
+    card=_publication_card(directory, result_id,private=True)
     template=_export_template(template)
     if kind not in ('html', 'pdf'):
         raise ValueError('Формат экспорта: html/pdf')
     validate_html(html)
-    _assert_public_html(html)
+    _assert_public_html(html,card)
     content = html.encode('utf-8') if kind == 'html' else _render_pdf(html, browser_channel)
     mime = 'text/html; charset=utf-8' if kind == 'html' else 'application/pdf'
     return _persist_export(directory, result_id, content, kind, mime, policy_version=PUBLICATION_POLICY_VERSION,template=template)
