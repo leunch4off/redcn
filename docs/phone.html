@@ -1262,7 +1262,7 @@ function setupDictionaryReview({mount,api,getRules=()=>({}),onUseRule,translateP
  search.oninput=renderTerms;renderTerms();
  return {refresh,render,pronunciations:()=>searchPronunciation(search.value),
   proposeFromKnowledge:async value=>{if(!value||typeof value.ru!=='string'||typeof value.zh!=='string')throw Error('Нужна пара RU → 中文 из заметки');ru.value=value.ru.slice(0,200);zh.value=value.zh.slice(0,2000);source.value=String(value.source||'Замечание из базы знаний').slice(0,2000);proposalOrigin='knowledge';shell.open=true;if(!loaded)await refresh();draftNote.textContent='Замечание из базы знаний. Проверьте пример до/после, предложите пару и затем отдельно утвердите её.';},
-  clear:()=>{epoch++;loaded=false;state={revision:0,entries:[],rules:{},events:[]};ru.value='';zh.value='';source.value='';render();}};
+  clear:()=>{epoch++;loaded=false;state={revision:0,entries:[],rules:{},events:[]};ru.value='';zh.value='';source.value='';render();setBusy(false);}};
 }
 
 const DOSSIER_MAX_BYTES=128*1024*1024;

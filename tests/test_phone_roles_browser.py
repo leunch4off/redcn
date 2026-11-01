@@ -5,6 +5,7 @@ import unittest
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import test_phone_browser as fixture
+import dictionary_reviews
 
 
 class PhoneRoleBrowserAcceptance(unittest.TestCase):
@@ -19,11 +20,23 @@ class PhoneRoleBrowserAcceptance(unittest.TestCase):
         state=self.phone.pairing.list_sessions();self.phone.pairing.manage_session(state['sessions'][0]['id'],role=role,expected_revision=state['revision'])
 
     def test_dictionary_initializer_exists_after_reconnect_without_reloading_document(self):
-        self.connect();self.page.locator('#phoneTabs [data-phone-view="setup"]').click();self.page.locator('#phoneDictionaryMount .dictionary-review').first.wait_for(state='visible')
+        self.connect()
+        with self.page.expect_response(lambda response:response.url.endswith('/api/phone/dictionary-reviews') and response.request.method=='GET' and response.status==200):
+            self.page.locator('#phoneTabs [data-phone-view="setup"]').click()
+        self.page.locator('#phoneDictionaryMount .dictionary-review').first.wait_for(state='visible')
         self.page.wait_for_function("document.getElementById('phoneDictionaryMount').textContent.includes('Версия общего словаря:')")
-        self.phone.pairing.revoke();self.page.locator('#phoneTabs [data-phone-view="cards"]').click();self.page.locator('#phonePair').wait_for(state='visible')
+        self.phone.pairing.revoke()
+        # The ordinary feed poll observes revocation. The navigation disappears
+        # as soon as the 401 arrives, so clicking it here would be a race.
+        self.page.locator('#phonePair').wait_for(state='visible',timeout=15000)
+        dictionary_reviews.mutate(self.directory,{'action':'propose','expectedRevision':0,'ru':'шкаф','zh':'衣柜','source':'Обновление между сессиями'},actor='fixture-operator')
         _,manual,_=self.phone.pairing.current();self.page.locator('#phonePairCode').fill(manual);self.page.locator('#phonePairSubmit').click();self.page.locator('#phoneWorkspace').wait_for(state='visible')
-        self.page.locator('#phoneTabs [data-phone-view="setup"]').click();self.page.wait_for_function("document.getElementById('phoneDictionaryMount').textContent.includes('Версия общего словаря:')");self.assert_mobile_fit()
+        self.page.locator('#phoneCards .listing-card').first.wait_for(state='visible')
+        with self.page.expect_response(lambda response:response.url.endswith('/api/phone/dictionary-reviews') and response.request.method=='GET' and response.status==200) as refreshed:
+            self.page.locator('#phoneTabs [data-phone-view="setup"]').click()
+        self.assertEqual(refreshed.value.json()['revision'],1,'Reconnect must make a fresh authenticated dictionary GET')
+        self.page.wait_for_function("document.getElementById('phoneDictionaryMount').textContent.includes('Версия общего словаря: 1')")
+        self.assertIn('шкаф → 衣柜',self.page.locator('#phoneDictionaryMount').text_content());self.assert_mobile_fit()
 
     def test_role_change_arrives_with_normal_feed_and_viewer_photos_do_not_unhide_edit_controls(self):
         self.connect();self.grant('viewer');self.page.locator('#phoneRefresh').click();self.page.wait_for_function("document.getElementById('phoneRoleStatus').textContent.includes('читатель')")

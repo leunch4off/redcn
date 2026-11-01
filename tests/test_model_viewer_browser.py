@@ -1,6 +1,7 @@
 """Isolated browser acceptance: licensed public scan, never user attachments."""
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
+import re
 from pathlib import Path
 import threading
 import unittest
@@ -11,7 +12,7 @@ import {setupModelViewer,parseModelPreview,pickModelPoint,modelViewRotation} fro
 window.modelMessages=[];window.modelBlobCalls=0;
 const directory='/tests/fixtures/3d/';
 window.modelUI=setupModelViewer({mount:document.getElementById('mount'),getAttachments:()=>[{id:'public-ply',name:'abalone-scan.geometry.ply',category:'lidar',bytes:225393},{id:'public-glb',name:'abalone-scan.geometry.glb',category:'lidar',bytes:110928},{id:'private-contract-not-requested',name:'contract.obj',category:'contract',bytes:12}],getBlob:async row=>{modelBlobCalls++;return await (await fetch(directory+row.name)).blob();},toast:text=>modelMessages.push(text)});
-window.modelPickLocations=async()=>{const response=await fetch(directory+'abalone-scan.geometry.ply'),model=parseModelPreview(await response.arrayBuffer(),'scan.ply'),rotation=modelViewRotation(-.45,-.25),hits=[];for(let x=-.65;x<=.65;x+=.08)for(let y=-.65;y<=.65;y+=.08)if(pickModelPoint(model,x,y,rotation))hits.push({x,y});const chosen=[hits[0],hits[Math.floor(hits.length*.8)]],canvas=document.querySelector('canvas'),rect=canvas.getBoundingClientRect(),aspect=rect.width/rect.height;return chosen.map(point=>({x:rect.x+(point.x*.82/Math.max(1,aspect)+1)*rect.width/2,y:rect.y+(1-point.y*.82/Math.max(1,1/aspect))*rect.height/2}));};
+window.modelPickLocations=async()=>{const response=await fetch(directory+'abalone-scan.geometry.ply'),model=parseModelPreview(await response.arrayBuffer(),'scan.ply'),rotation=modelViewRotation(-.45,-.25),hits=[];for(let x=-.65;x<=.65;x+=.08)for(let y=-.65;y<=.65;y+=.08){const surface=pickModelPoint(model,x,y,rotation);if(surface)hits.push({x,y,surface});}const chosen=[hits[0],hits[Math.floor(hits.length*.8)]],canvas=document.querySelector('canvas'),rect=canvas.getBoundingClientRect(),aspect=rect.width/rect.height;return {meters:Math.hypot(...chosen[0].surface.map((value,i)=>value-chosen[1].surface[i])),points:chosen.map(point=>({x:rect.x+(point.x*.82/Math.max(1,aspect)+1)*rect.width/2,y:rect.y+(1-point.y*.82/Math.max(1,1/aspect))*rect.height/2}))};};
 window.modelReady=true;
 </script></html>'''
 
@@ -119,13 +120,26 @@ class ModelViewerBrowserAcceptance(unittest.TestCase):
         self.assertFalse(self.page.get_by_role('button', name='Выбрать две точки', exact=True).is_enabled())
         self.page.get_by_label('Единицы исходной модели', exact=True).select_option('m')
         self.page.get_by_role('button', name='Выбрать две точки', exact=True).click()
-        for point in self.page.evaluate('modelPickLocations()'):
+        self.assertEqual(self.page.get_by_label('Единицы исходной модели', exact=True).input_value(), 'm')
+        self.assertEqual(self.page.get_by_role('button', name='Замер включён · выберите точки', exact=True).get_attribute('aria-pressed'), 'true')
+        canvas = self.page.locator('canvas')
+        canvas.scroll_into_view_if_needed()
+        points = self.page.evaluate('modelPickLocations()')
+        canvas_top = canvas.bounding_box()['y']
+        for index, point in enumerate(points['points']):
+            self.assertTrue(self.page.evaluate("point=>point.x>0&&point.x<innerWidth&&point.y>0&&point.y<innerHeight&&document.elementFromPoint(point.x,point.y)===document.querySelector('canvas')", point), 'A real surface click must reach the visible canvas')
             self.page.mouse.click(point['x'], point['y'])
-        self.assertIn('≈', self.page.locator('output').inner_text())
-        self.assertIn('Не инженерный', self.page.locator('output').inner_text())
+            if index == 0:
+                self.assertIn('Первая точка выбрана', self.page.locator('output').inner_text())
+            self.assertAlmostEqual(canvas.bounding_box()['y'], canvas_top, delta=.1, msg='Focusing a surface must not scroll and shift the second measurement point')
+        output = self.page.locator('output').inner_text()
+        self.assertIn('≈', output)
+        self.assertIn('Не инженерный', output)
+        measured = float(re.search(r'≈\s*([\d\s,.\u00a0\u202f]+)\s*м', output)[1].replace('\u00a0','').replace('\u202f','').replace(' ','').replace(',','.'))
+        self.assertGreater(measured, 0)
+        self.assertAlmostEqual(measured, points['meters'], delta=.001)
         self.page.get_by_label('Единицы исходной модели', exact=True).select_option('cm')
         self.assertNotIn('≈', self.page.locator('output').inner_text())
-        canvas = self.page.locator('canvas')
         canvas.focus()
         self.page.keyboard.press('ArrowRight')
         self.page.keyboard.press('Shift+ArrowUp')

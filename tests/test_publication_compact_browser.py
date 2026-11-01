@@ -10,11 +10,11 @@ PHOTO_SCRIPT='''<script type="module">
 import {setupPhotos} from '/web/photo-ui.mjs';
 const url='https://images.cdn-cian.ru/images/accepted-fixture.jpg',originalId='a'.repeat(64),manualId='b'.repeat(64),ocrId='c'.repeat(64);
 const original={id:originalId,kind:'original',width:600,height:600,mime:'image/png'};
-window.fixtureUrl=url;window.photoCalls=[];window.photoMessages=[];
+window.fixtureUrl=url;window.photoCalls=[];window.photoMessages=[];window.pauseAccepted=false;
 window.photoChoice={original,selected:{id:manualId,kind:'crop',originalId,verification:'manual',margins:{top:0,left:0,right:0,bottom:0},width:500,height:500,mime:'image/png'},reason:'manual'};
 const read=(key,fallback)=>['most-photo-analyze','most-photo-autoload'].includes(key)?false:JSON.parse(localStorage.getItem(key)||'null')??fallback;
 const write=(key,value)=>{localStorage.setItem(key,JSON.stringify(value));return true;};
-window.photoUI=setupPhotos({local:true,hosted:false,read,write,api:async(path,data)=>{photoCalls.push(data);if(data.action==='load')return original;if(data.action==='accepted')return photoChoice;throw Error('Unexpected fixture action');},toast:value=>photoMessages.push(value),onChange:()=>write('fixture-edits',photoUI.state()),getPost:()=>({title:'实拍房源',body:'房源资料',fields:{}}),onFeatures:()=>{}});
+window.photoUI=setupPhotos({local:true,hosted:false,read,write,api:async(path,data)=>{photoCalls.push(data);if(data.action==='load')return original;if(data.action==='accepted'){const value=photoChoice;if(pauseAccepted){pauseAccepted=false;return new Promise(resolve=>{window.releaseAccepted=()=>resolve(value);});}return value;}throw Error('Unexpected fixture action');},toast:value=>photoMessages.push(value),onChange:()=>write('fixture-edits',photoUI.state()),getPost:()=>({title:'实拍房源',body:'房源资料',fields:{}}),onFeatures:()=>{}});
 photoUI.setSources([url],read('fixture-edits',{}));
 window.photoPrepare=async()=>{const rows=await photoUI.presentationPhotos();photoUI.refresh();const bitmap=await createImageBitmap(await(await fetch(rows[0].dataUrl)).blob());const result={width:bitmap.width,height:bitmap.height,selection:rows[0].selection,originalId:rows[0].originalId,selectedId:rows[0].selectedId};bitmap.close();return result;};
 window.photoReady=true;
@@ -77,13 +77,15 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
 
     def test_effective_map_selection_and_inspector_match_canvas_then_manual_geometry_stays(self):
         self.page.goto(self.url+'/layout',wait_until='domcontentloaded');self.page.wait_for_function("document.getElementById('designCanvasEditor')?.dataset.previewReady==='true'")
-        self.assertAlmostEqual(float(self.page.locator('[data-node-id="outro-map"]').first.evaluate('el=>parseFloat(el.style.height)')),1268/1920*100,places=5)
+        # CSSOM serializes percentages to roughly six significant digits. This
+        # tolerance is below 0.002 output px; saved/inspector values stay exact.
+        self.assertAlmostEqual(float(self.page.locator('[data-node-id="outro-map"]').first.evaluate('el=>parseFloat(el.style.height)')),1268/1920*100,delta=.0001)
         self.page.locator('#designCanvasLayers [data-node-id="outro-map"]').click()
         self.assertEqual(self.page.locator('#designCanvas-h').input_value(),'1268')
         self.page.locator('#designCanvas-h').fill('1100');self.page.locator('#designCanvas-h').dispatch_event('change')
         self.page.evaluate("compactSetRoutes('МГУ | 40 | public')")
         self.assertEqual(self.page.evaluate("compactGeometry().nodes.find(node=>node.id==='outro-map').h"),1100)
-        self.assertAlmostEqual(float(self.page.locator('#designCanvasOverlay [data-node-id="outro-map"]').evaluate('el=>parseFloat(el.style.height)')),1100/1920*100,places=5)
+        self.assertAlmostEqual(float(self.page.locator('#designCanvasOverlay [data-node-id="outro-map"]').evaluate('el=>parseFloat(el.style.height)')),1100/1920*100,delta=.0001)
         self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),394)
 
     def test_backend_manual_crop_is_used_without_replacing_original_and_reset_survives_reload(self):
@@ -105,6 +107,17 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
         result=self.page.evaluate('photoPrepare()');self.assertEqual((result['width'],result['selection']),(600,'original'))
         self.page.evaluate("photoChoice.selected.verificationEvidence.postOcr='not-detected';photoUI.setSources([fixtureUrl],{})")
         result=self.page.evaluate('photoPrepare()');self.assertEqual((result['width'],result['selection']),(560,'ocr-checked'))
+
+    def test_publication_waits_for_pending_cache_crop_decision_instead_of_leaking_old_manual_copy(self):
+        self.open_photos()
+        self.assertEqual(self.page.evaluate('photoPrepare()')['selection'],'manual')
+        self.page.evaluate("photoChoice={original:{id:'a'.repeat(64)},selected:{kind:'crop',id:'c'.repeat(64),originalId:'a'.repeat(64),verification:'ocr-checked',verificationEvidence:{knownRegionsExcluded:true,postOcr:'mark-detected'}},reason:'ocr-checked'};pauseAccepted=true;photoUI.setSources([fixtureUrl],{})")
+        self.page.wait_for_function("typeof releaseAccepted==='function'")
+        self.page.evaluate("() => {window.pendingPreparedPhoto=photoPrepare();return true;}")
+        self.assertEqual(self.page.evaluate("async()=>Promise.race([pendingPreparedPhoto.then(()=> 'finished'),new Promise(resolve=>setTimeout(()=>resolve('pending'),60))])"),'pending')
+        result=self.page.evaluate('async()=>{releaseAccepted();return await pendingPreparedPhoto;}')
+        self.assertEqual((result['width'],result['height'],result['selection']),(600,600,'original'))
+        self.assertEqual(result['originalId'],'a'*64)
 
 
 if __name__=='__main__':unittest.main()

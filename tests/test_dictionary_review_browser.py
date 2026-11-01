@@ -90,6 +90,34 @@ class DictionaryReviewBrowserTests(unittest.TestCase):
         self.page.wait_for_function("document.querySelector('.dictionary-review [role=status]').textContent.includes('другом устройстве')")
         self.assertEqual(self.page.get_by_label('Русская фраза исправления',exact=True).input_value(),'стол');self.assertEqual(reviews.snapshot(self.directory)['revision'],1)
 
+    def test_clear_during_delayed_refresh_unblocks_new_read_and_discards_old_response(self):
+        reads=[]
+        self.page.on('request',lambda request:reads.append(request.url) if request.url.endswith('/api/dictionary-reviews') and request.method=='GET' else None)
+        self.page.evaluate('''async()=>{
+          const {setupDictionaryReview}=await import('/web/dictionary-review.mjs');
+          const mount=document.createElement('div');mount.id='dictionaryResetMount';document.body.append(mount);
+          window.dictionaryResetReads=0;
+          window.dictionaryResetUI=setupDictionaryReview({mount,api:async(path,data)=>{
+            if(data)throw Error('This controlled fixture allows reads only');
+            const first=++window.dictionaryResetReads===1;
+            const response=await fetch('/api/'+path);const value=await response.json();
+            if(first)await new Promise(resolve=>window.releaseOldDictionary=resolve);
+            return value;
+          }});
+          window.oldDictionaryRefresh=window.dictionaryResetUI.refresh();
+        }''')
+        self.page.wait_for_function("typeof window.releaseOldDictionary==='function'")
+        self.assertTrue(self.page.locator('#dictionaryResetMount').get_by_role('button',name='Обновить общий словарь',exact=True).is_disabled())
+        self.page.evaluate('window.dictionaryResetUI.clear()')
+        self.assertTrue(self.page.locator('#dictionaryResetMount').get_by_role('button',name='Обновить общий словарь',exact=True).is_enabled())
+        reviews.mutate(self.directory,{'action':'propose','expectedRevision':0,'ru':'шкаф','zh':'衣柜','source':'Новая сессия'},actor='new-fixture-session')
+        self.assertTrue(self.page.evaluate('window.dictionaryResetUI.refresh()'),'Clear must let the next session refresh while the old read is still pending')
+        self.assertEqual(self.page.evaluate('window.dictionaryResetReads'),2);self.assertEqual(len(reads),2,'Both refreshes must perform real fixture HTTP GETs')
+        self.assertIn('Версия общего словаря: 1',self.page.locator('#dictionaryResetMount').text_content())
+        self.assertFalse(self.page.evaluate('window.releaseOldDictionary();window.oldDictionaryRefresh'))
+        self.assertIn('Версия общего словаря: 1',self.page.locator('#dictionaryResetMount').text_content(),'The delayed old revision must not replace the new session')
+        self.assertIn('шкаф → 衣柜',self.page.locator('#dictionaryResetMount').text_content())
+
     def test_pronunciation_has_sourced_pinyin_source_links_and_honest_unknown_state_on_393px(self):
         self.page.locator('.pronunciation-review>summary').click();self.page.get_by_label('Поиск проверенного произношения',exact=True).fill('卧室')
         self.assertEqual(self.page.locator('.pronunciation-list article').count(),1);self.assertIn('wò shì',self.page.locator('.pronunciation-list').inner_text())
