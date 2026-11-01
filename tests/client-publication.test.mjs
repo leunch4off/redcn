@@ -35,3 +35,9 @@ test('unresolved source conflicts block stale claims but allow clean publication
 });
 
 test('internal listing envelope is reduced to property/photo identity rather than raw source text',()=>{const raw={body:'租金65000',listing:{url:'https://www.cian.ru/rent/flat/1/',images:['https://images.cdn-cian.ru/images/one.jpg'],text:'Квартира52м² комиссия50%',fields:{commission:50},metadata:{fee:'SOURCE_PRIVATE'}}};const safe=clientPublicationCard(raw);assert.deepEqual(safe.listing,{url:raw.listing.url,images:raw.listing.images});assert.equal(raw.listing.text,'Квартира52м² комиссия50%');});
+
+test('workflow, service receipts and review history remain private at every nested level',()=>{
+ const privateData={workflow:{assignee:'private'},serviceConfirmations:{pickup:{actor:'private'}},factLedger:{source:'private'},publicationApproval:{actor:'private'}};
+ const card={body:'正文',fields:{price:80000,...privateData,nested:{...privateData,area:52}},...privateData};
+ const safe=clientPublicationCard(card);assert.equal(JSON.stringify(safe).includes('private'),false);assert.equal(safe.fields.nested.area,52);assert.equal(card.fields.workflow.assignee,'private');
+});

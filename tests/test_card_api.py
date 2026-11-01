@@ -45,6 +45,8 @@ class CardDocumentRoutes(unittest.TestCase):
         except urllib.error.HTTPError as error:return error.code,error.read(),error.headers
 
     def test_pairing_boundary_csrf_binary_integrity_and_dossier_persistence(self):
+        pairing=self.phone.pairing
+        pairing.manage_session(pairing.list_sessions()['sessions'][0]['id'],role='owner',expected_revision=pairing.list_sessions()['revision'])
         path='card-archive/'+self.card
         self.assertEqual(self.request(path,auth=False)[0],401)
         self.assertEqual(self.request(path,{'action':'update','status':'rented','notes':'Сдана 30 октября'},csrf=False)[0],403)

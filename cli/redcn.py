@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Public listing import, local cache and shared JS generation. Python 3.10+, Node 22+."""
 import argparse
+import base64
+import errno
+import http.client
 import hashlib
 import html
 from html.parser import HTMLParser
@@ -46,6 +49,7 @@ def normalize_url(raw):
 
 
 def allowed_url(url, images=False, resolve=True):
+    if not isinstance(url,str) or not url or len(url)>8192 or re.search(r'[\x00-\x20\x7f]',url):raise ValueError('Неверная или слишком длинная ссылка источника')
     parsed = urllib.parse.urlsplit(url)
     host = (parsed.hostname or '').lower()
     allowed = IMAGE_HOSTS if images else LISTING_HOSTS
@@ -69,7 +73,24 @@ class CheckedRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def fetch_bytes(url, images=False):
+def _transient_http_error(error):
+    if isinstance(error, urllib.error.HTTPError):return error.code in (500,502,503,504)
+    reason=getattr(error,'reason',error)
+    if isinstance(reason,ssl.SSLError):return False
+    if isinstance(reason,(TimeoutError,ConnectionResetError,ConnectionRefusedError,ConnectionAbortedError,BrokenPipeError)):return True
+    if isinstance(reason,socket.gaierror):return reason.errno==getattr(socket,'EAI_AGAIN',-3)
+    return isinstance(reason,OSError) and reason.errno in (errno.ETIMEDOUT,errno.ECONNRESET,errno.ECONNREFUSED,errno.ECONNABORTED,errno.ENETUNREACH,errno.EHOSTUNREACH,errno.EPIPE)
+
+
+def _http_status(status, attempt, reason=''):
+    from job_progress import emit
+    suffix=' после временной ошибки сети' if reason=='network' else ' после тайм-аута' if reason=='timeout' else ' после временного ответа сервера' if reason.startswith('http-') else ''
+    emit(status, 'HTTP: попытка '+str(attempt)+' из 2'+suffix+'…',stage='navigate',httpAttempt=attempt,httpMaxAttempts=2,httpReason=reason)
+
+
+def _fetch_bytes_direct(url, images=False, *, timeout=30, cancel=None, status=None):
+    """Two attempts within a cooperative socket/read budget; no protection retries."""
+    deadline=time.monotonic()+timeout
     url = allowed_url(url, images=images)
     request = urllib.request.Request(url, headers={'User-Agent': 'redcn/3.0 (single listing import)', 'Accept': 'image/*' if images else 'text/html'})
     # Python.org macOS installs may have no root bundle. Keep TLS verification;
@@ -79,23 +100,107 @@ def fetch_bytes(url, images=False):
         context=ssl.create_default_context(cafile=certifi.where())
     except ImportError: context=ssl.create_default_context()
     opener = urllib.request.build_opener(CheckedRedirect(images),urllib.request.HTTPSHandler(context=context))
+    retry_reason=''
     for attempt in range(2):
+        if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+        remaining=deadline-time.monotonic()
+        if remaining<=0:raise TimeoutError('Истёк общий срок HTTP-загрузки')
+        _http_status(status,attempt+1,retry_reason)
         try:
-            with opener.open(request, timeout=15) as response:
+            with opener.open(request, timeout=min(15,remaining)) as response:
                 content_type = response.headers.get_content_type()
                 if images and content_type not in ('image/jpeg', 'image/png', 'image/webp'):
                     raise ValueError('Неподдерживаемый формат фото: ' + content_type)
                 if not images and content_type not in ('text/html', 'application/xhtml+xml'):
                     raise ValueError('Источник вернул не HTML')
                 limit = MAX_IMAGE if images else MAX_HTML
-                content = response.read(limit + 1)
-                if len(content) > limit:
-                    raise ValueError('Файл превышает ограничение размера')
+                if isinstance(response,http.client.HTTPResponse):
+                    chunks=[];size=0
+                    while True:
+                        if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+                        remaining=deadline-time.monotonic()
+                        if remaining<=0:raise TimeoutError('Истёк общий срок HTTP-загрузки')
+                        try:response.fp.raw._sock.settimeout(max(.01,remaining))
+                        except AttributeError:pass
+                        chunk=response.read1(min(65536,limit+1-size))
+                        if not chunk:break
+                        chunks.append(chunk);size+=len(chunk)
+                        if size>limit:raise ValueError('Файл превышает ограничение размера')
+                    content=b''.join(chunks)
+                else:
+                    # Test transports and image adapters can provide a bounded
+                    # read implementation rather than an HTTPResponse object.
+                    content = response.read(limit + 1)
+                    if len(content) > limit:raise ValueError('Файл превышает ограничение размера')
                 return content, content_type
-        except (TimeoutError,urllib.error.URLError) as error:
-            if attempt == 0 and (isinstance(error,TimeoutError) or isinstance(getattr(error,'reason',None),TimeoutError)):
+        except (OSError,urllib.error.URLError) as error:
+            if attempt == 0 and _transient_http_error(error) and deadline-time.monotonic()>.15:
+                retry_reason='http-'+str(error.code) if isinstance(error,urllib.error.HTTPError) else 'timeout' if isinstance(getattr(error,'reason',error),TimeoutError) else 'network'
+                if cancel:
+                    if cancel.wait(.15):raise ValueError('Импорт отменён')
+                else:time.sleep(.15)
                 continue
             raise
+
+
+def _http_worker_command():
+    return [sys.executable,str(ROOT/'cli/http_fetch_worker.py')]
+
+
+def fetch_bytes(url, images=False, *, timeout=30, cancel=None, status=None):
+    if isinstance(timeout,bool) or not isinstance(timeout,(int,float)) or not 0<timeout<=60:raise ValueError('Срок HTTP-загрузки: больше нуля и до 60 секунд')
+    if images:return _fetch_bytes_direct(url,images=True,timeout=timeout,cancel=cancel,status=status)
+    url=allowed_url(url,resolve=False)
+    if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+    # A process boundary makes the listing deadline real even while DNS,
+    # certificate negotiation or slowly streamed headers block urllib.
+    deadline=time.monotonic()+timeout
+    process=subprocess.Popen(_http_worker_command(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8')
+    payload=json.dumps({'url':url,'timeout':timeout},ensure_ascii=False)
+    first=True;seen_events=set()
+    try:
+        while True:
+            if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+            remaining=deadline-time.monotonic()
+            if remaining<=0:raise TimeoutError('HTTP-загрузка не завершилась за '+str(timeout)+' с. Повторите запрос или вставьте текст объявления.')
+            try:
+                output,events=process.communicate(input=payload if first else None,timeout=min(.2,remaining));break
+            except subprocess.TimeoutExpired as pending:
+                events=pending.stderr or ''
+                if isinstance(events,bytes):events=events.decode('utf-8',errors='replace')
+                if pending.stdout and len(pending.stdout)>18_000_000:raise ValueError('Ответ HTTP-загрузчика превышает ограничение размера')
+            finally:first=False
+            for line in events.splitlines():
+                if line in seen_events:continue
+                seen_events.add(line)
+                try:
+                    event=json.loads(line)
+                    if event.get('event')=='attempt' and event.get('attempt') in (1,2):_http_status(status,event['attempt'],str(event.get('reason',''))[:40])
+                except (ValueError,TypeError,AttributeError):pass
+        for line in events.splitlines():
+            if line in seen_events:continue
+            try:
+                event=json.loads(line)
+                if event.get('event')=='attempt' and event.get('attempt') in (1,2):_http_status(status,event['attempt'],str(event.get('reason',''))[:40])
+            except (ValueError,TypeError,AttributeError):pass
+        if process.returncode or len(output)>18_000_000:raise ValueError('Изолированный HTTP-загрузчик не вернул допустимый ответ')
+        try:result=json.loads(output)
+        except ValueError:raise ValueError('HTTP-загрузчик вернул неверный ответ') from None
+        if result.get('ok'):
+            try:content=base64.b64decode(result['content'],validate=True)
+            except (ValueError,TypeError,KeyError):raise ValueError('HTTP-загрузчик вернул неверные данные') from None
+            if len(content)>MAX_HTML:raise ValueError('Файл превышает ограничение размера')
+            if result.get('contentType') not in ('text/html','application/xhtml+xml'):raise ValueError('Источник вернул не HTML')
+            return content,result['contentType']
+        error=result.get('error') or {};message=str(error.get('message') or 'Не удалось получить страницу')[:800]
+        if error.get('kind')=='http':raise urllib.error.HTTPError(url,int(error.get('status',0)),message,{},None)
+        if error.get('kind')=='timeout':raise TimeoutError(message)
+        if error.get('kind')=='tls':raise urllib.error.URLError(ssl.SSLCertVerificationError(message))
+        if error.get('kind')=='network':raise urllib.error.URLError(message)
+        raise ValueError(message)
+    finally:
+        if process.poll() is None:process.kill()
+        process.communicate()
 
 
 
@@ -145,6 +250,12 @@ class ListingHTML(HTMLParser):
 
 def parse_html(markup, base_url):
     if len(markup.encode('utf-8')) > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
+    parser = ListingHTML()
+    parser.feed(markup)
+    # Inspect visible text before the structured adapter can return early.
+    # A script filename containing captcha is not a visible challenge.
+    if re.search(r'verify you are human|проверка браузера|доступ ограничен|checking your browser|подтвердите[, ]+что вы|пройдите проверку|вы не робот|проверяем.{0,30}браузер', ''.join(parser.parts)[:12000], re.I):
+        raise ChallengeError('Источник запросил проверку браузера. Откройте его в обычном Chrome вручную или вставьте текст; автоматически защита не обходится.')
     if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card|data-marker=["\x27]item-view/(?:title-info|main-gallery|item-params|item-description|item-price)', markup):
         from node_runtime import resolve_node, NodeRuntimeError
         try: node = resolve_node()
@@ -156,11 +267,6 @@ def parse_html(markup, base_url):
             if result.get('text'):
                 result['url'] = result.get('url') or base_url
                 return result
-    parser = ListingHTML()
-    parser.feed(markup)
-    # A script named captcha.js is not evidence of a visible challenge.
-    if re.search(r'verify you are human|проверка браузера|доступ ограничен|checking your browser|подтвердите[, ]+что вы|пройдите проверку|вы не робот|проверяем.{0,30}браузер', ''.join(parser.parts)[:12000], re.I):
-        raise ChallengeError('Источник запросил проверку браузера. Пройдите её в окне Chrome; автоматически защита не обходится.')
     descriptions = []
     def walk(value):
         if isinstance(value, list):
@@ -210,6 +316,7 @@ def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=
     from job_progress import emit
     if browser_scroll not in ('sections', 'page'):
         raise ValueError('Режим прокрутки Chrome: sections или page')
+    if cancel and cancel.is_set():raise ValueError('Импорт отменён')
     # Resolve only on a network miss; cached pages remain available offline.
     url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
@@ -225,18 +332,23 @@ def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=
     if loader != 'chrome':
         try:
             emit(status,'Загружаем исходную страницу объявления по HTTP…',stage='navigate',maxTotalSeconds=30)
-            content, _ = fetch_bytes(url)
+            content, _ = fetch_bytes(url,cancel=cancel,status=status) if cancel is not None or status is not None else fetch_bytes(url)
             emit(status,'Страница получена. Читаем описание, цену, площадь и фотографии…',stage='extract')
             result = parse_html(content.decode('utf-8', errors='replace'), url)
             if not re.search(r'\d[\d\s\xa0,.]*\s*(?:м²|м2|кв\.?\s*м|㎡)', result['text'], re.I) or not re.search(r'\d[\d\s\xa0]*\s*(?:₽|руб)', result['text'], re.I):
                 result = None
                 raise ValueError('HTTP-страница не содержит площади и цены; возможно, нужен JavaScript. Используйте Chrome или --input.')
         except (OSError, ValueError) as error:
+            if cancel and cancel.is_set():raise ValueError('Импорт отменён') from None
+            reason=getattr(error,'reason',error)
+            if isinstance(error,ChallengeError) or isinstance(error,urllib.error.HTTPError) and error.code in (401,403,429) or isinstance(reason,ssl.SSLError):
+                raise ChallengeError('Источник требует внимания: '+('HTTP '+str(error.code) if isinstance(error,urllib.error.HTTPError) else 'проверка HTTPS' if isinstance(reason,ssl.SSLError) else 'проверка браузера')+'. Откройте источник в обычном Chrome вручную или вставьте текст объявления. Автоматический повтор остановлен.') from None
             if loader == 'http': raise
             emit(status,'HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180],stage='browser')
     if result is None:
         from browser_import import load_browser
         result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel, scroll_strategy=browser_scroll)
+    if cancel and cancel.is_set():raise ValueError('Импорт отменён')
     connection.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (url, time.time(), json.dumps(result, ensure_ascii=False)))
     connection.commit()
     return {**result, 'cached': False}
@@ -292,6 +404,9 @@ def batch_publication_decision(listing, url):
 
 
 def generate(text, data=None, rules=None, prefs=None):
+    from fact_ledger import validate_listing_fields
+    if not isinstance(text, str):raise ValueError('Исходный текст объявления должен быть строкой')
+    validate_listing_fields(data if data is not None else {})
     from node_runtime import resolve_node
     node = resolve_node()
     try:

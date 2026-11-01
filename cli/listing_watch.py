@@ -1,4 +1,4 @@
-"""Small persistent Cian search inbox; a discovery never imports a full card.
+"""Persistent saved-search inbox; a discovery never imports a full card.
 
 The caller authenticates HTTP requests. Public HTML, the undocumented search
 endpoint and an ordinary Chrome session are distinct, explicit adapters. No
@@ -26,14 +26,18 @@ import urllib.error
 import urllib.request
 
 import redcn
+from search_adapters import platform_for_url
+from search_adapters import avito as avito_search
+from search_adapters import cian as cian_search
+from activity_log import record_attempt, record_import_attempt, list_attempts, safe_error
 
 API_URL = 'https://api.cian.ru/search-offers/v2/search-offers-desktop/'
 DEFAULT_SEARCH_URL = 'https://www.cian.ru/cat.php?deal_type=rent&engine_version=2&offer_type=flat&region=1&type=4&sort=creation_date_desc&p=1'
 MAX_BYTES = 8_000_000
-MAX_ITEMS = 100
+MAX_ITEMS = 800
 MAX_SEEN = 50_000
 MAX_PAGES = 2
-_ID = re.compile(r'cian:\d{1,18}')
+_ID = re.compile(r'(?:cian:\d{1,18}|avito:\d{1,20})')
 _OFFER_PATH = re.compile(r'^/(rent|sale)/flat/(\d{1,18})/?$')
 _CHALLENGE = re.compile(r'verify you are human|доступ ограничен|проверка браузера|подтвердите.{0,20}что вы|вы не робот|checking your browser|пройдите проверку', re.I)
 _dns_lock = threading.Lock()
@@ -54,11 +58,15 @@ def _db(directory):
         CREATE TABLE IF NOT EXISTS watch_sources (id TEXT PRIMARY KEY, baseline_at REAL, last_run REAL, last_success REAL, next_run REAL, failures INTEGER DEFAULT 0, error TEXT DEFAULT '', attention INTEGER DEFAULT 0, seen_count INTEGER DEFAULT 0, new_count INTEGER DEFAULT 0, run_count INTEGER DEFAULT 0);
         CREATE TABLE IF NOT EXISTS watch_offers (source_id TEXT, id TEXT, payload TEXT NOT NULL, first_seen REAL NOT NULL, last_seen REAL NOT NULL, is_new INTEGER NOT NULL, read_at REAL, PRIMARY KEY(source_id,id));
         CREATE INDEX IF NOT EXISTS watch_new ON watch_offers(source_id,is_new,first_seen,id);
+        CREATE TABLE IF NOT EXISTS watch_notifications (id TEXT PRIMARY KEY, source_id TEXT NOT NULL, offer_id TEXT NOT NULL, created REAL NOT NULL, payload TEXT NOT NULL, read_at REAL);
+        CREATE TABLE IF NOT EXISTS watch_receipts (source_id TEXT PRIMARY KEY,payload TEXT NOT NULL);
     ''')
+    if 'decision' not in {row[1] for row in db.execute('PRAGMA table_info(watch_offers)')}:db.execute("ALTER TABLE watch_offers ADD COLUMN decision TEXT NOT NULL DEFAULT 'accepted'")
     return db
 
 
 def normalize_search_url(raw):
+    if isinstance(raw,str) and re.search(r'https://(?:www\.)?avito\.ru(?=/)',raw):return avito_search.normalize_search_url(raw)
     if not isinstance(raw, str) or len(raw) > 4096: raise ValueError('Нужна ссылка поиска ЦИАН до 4096 символов')
     # html.unescape(raw) would corrupt a literal &region= into ®ion=. A pasted
     # URL is not an HTML document; decode only the actual escaped ampersand.
@@ -81,206 +89,81 @@ def _page_url(url, page):
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(values + [('p', str(page))]), ''))
 
 
-def api_query(url, page=1):
-    """Only mapped filters are accepted; never silently broaden a saved search."""
-    params = parse_qs(urlsplit(url).query)
-    allowed = {'deal_type', 'offer_type', 'engine_version', 'region', 'type', 'for_day', 'sort', 'p', 'currency', 'minprice', 'maxprice'} | {'room'+str(i) for i in (0,1,2,3,4,5,6,7,9)}
-    if set(params) - allowed or urlsplit(url).path != '/cat.php':
-        raise ValueError('Внутренний API не сопоставляет все фильтры этой ссылки. Выберите HTML или Chrome.')
-    if any(len(values)!=1 for key,values in params.items() if key!='region'):
-        raise ValueError('API-режим не принимает неоднозначные повторные фильтры')
-    if params.get('offer_type', ['flat'])[0] != 'flat' or params.get('deal_type', ['rent'])[0] not in ('rent', 'sale'):
-        raise ValueError('API-режим поддерживает только квартиры в аренду или на продажу')
-    if params.get('for_day',['0'])[0] not in ('0','1','!1') or any(params[key][0] not in ('0','1') for key in params if key.startswith('room')):
-        raise ValueError('Неизвестное значение фильтра комнат или срока аренды')
-    if params.get('engine_version',['2'])[0]!='2' or params.get('type',['4'])[0] not in ('1','4'):
-        raise ValueError('API-режим не сопоставляет этот тип поиска. Выберите HTML или Chrome.')
-    regions = ','.join(params.get('region', ['1'])).split(',')
-    if not regions or len(regions) > 10 or any(not v.isdigit() or not 0 < int(v) <= 1_000_000 for v in regions):
-        raise ValueError('Неверный регион поиска')
-    if params.get('currency', ['2'])[0] != '2': raise ValueError('Для API-режима выберите рубли')
-    query = {'_type':'flatrent' if params.get('deal_type', ['rent'])[0]=='rent' else 'flatsale', 'engine_version':{'type':'term','value':2}, 'region':{'type':'terms','value':list(map(int, regions))}, 'sort':{'type':'term','value':'creation_date_desc'}, 'page':{'type':'term','value':page}, 'currency':{'type':'term','value':2}}
-    if query['_type'] == 'flatrent': query['for_day'] = {'type':'term','value':'1' if params.get('for_day', ['0'])[0]=='1' else '!1'}
-    rooms = [i for i in (0,1,2,3,4,5,6,7,9) if params.get('room'+str(i), ['0'])[0]=='1']
-    if rooms: query['room'] = {'type':'terms','value':rooms}
-    price = {}
-    for key, target in [('minprice','gte'), ('maxprice','lte')]:
-        if key in params:
-            raw = params[key][0]
-            if not raw.isdigit() or not 0 <= int(raw) <= 1_000_000_000: raise ValueError('Неверная цена в фильтре')
-            price[target] = int(raw)
-    if 'gte' in price and 'lte' in price and price['gte'] > price['lte']: raise ValueError('Неверный диапазон цены')
-    if price: query['price'] = {'type':'range','value':price}
-    return {'jsonQuery':query}
+def canonical_search_offer(raw):
+    return avito_search.canonical_offer(raw) if platform_for_url(raw)=='avito' else _canonical_offer(raw)
 
 
-def _text(value, limit=400):
-    return re.sub(r'\s+', ' ', str(value)).strip()[:limit] if isinstance(value, (str, int, float)) and not isinstance(value, bool) else ''
+def normalized_filters(value=None):
+    value={} if value is None else value
+    if not isinstance(value,dict) or set(value)-{'minRent','maxRent','minArea','maxArea','rooms','districts'}:raise ValueError('Неверные фильтры кандидатов')
+    result={}
+    for key in ('minRent','maxRent','minArea','maxArea'):
+        raw=value.get(key)
+        if raw in (None,''):continue
+        number=_number(raw)
+        if number is None:raise ValueError('Фильтр '+key+' должен быть неотрицательным числом')
+        result[key]=number
+    for low,high in (('minRent','maxRent'),('minArea','maxArea')):
+        if low in result and high in result and result[low]>result[high]:raise ValueError('Минимальный фильтр больше максимального')
+    rooms=value.get('rooms',[])
+    if not isinstance(rooms,list) or len(rooms)>21 or any(type(room) is not int or not 0<=room<=20 for room in rooms):raise ValueError('Комнаты: список целых от 0 до 20')
+    if rooms:result['rooms']=sorted(set(rooms))
+    districts=value.get('districts',[])
+    if not isinstance(districts,list) or len(districts)>20 or any(not isinstance(item,str) or not item.strip() or len(item)>150 or re.search(r'[\x00-\x1f]',item) for item in districts):raise ValueError('Районы: до 20 названий')
+    if districts:result['districts']=list(dict.fromkeys(item.strip() for item in districts))
+    return result
 
 
-def _number(value):
-    if isinstance(value, bool): return None
-    try: value = float(str(value).replace(',', '.'))
-    except (ValueError, TypeError): return None
-    return value if math.isfinite(value) and 0 <= value <= 1_000_000_000 else None
+def candidate_decision(item,filters=None):
+    filters=normalized_filters(filters);rejected=[];pending=[];passed=[]
+    if item.get('publicationStatus') in ('archived','removed','inactive'):rejected.append('Объявление снято или находится в архиве')
+    for field,low,high,label in (('price','minRent','maxRent','Месячная аренда'),('area','minArea','maxArea','Площадь')):
+        if low not in filters and high not in filters:continue
+        value=_number(item.get(field))
+        if field=='price' and (item.get('currency') not in ('RUB','RUR') or item.get('pricePeriod')!='month'):
+            pending.append('Период или валюта аренды не подтверждены для месячного рублёвого фильтра');continue
+        if value is None:pending.append(label+' не указана');continue
+        if low in filters and value<filters[low]:rejected.append(label+' ниже минимума '+str(filters[low]))
+        elif high in filters and value>filters[high]:rejected.append(label+' выше максимума '+str(filters[high]))
+        else:passed.append(label+' соответствует диапазону')
+    if filters.get('rooms'):
+        rooms=_number(item.get('rooms'))
+        if rooms is None:pending.append('Количество комнат не указано')
+        elif rooms not in filters['rooms']:rejected.append('Количество комнат не входит в выбранный список')
+        else:passed.append('Количество комнат соответствует выбору')
+    if filters.get('districts'):
+        district=_text(item.get('district'),150)
+        normalize=lambda text:re.sub(r'^(?:р-н|район)\s*','',text.strip().casefold())
+        if not district:pending.append('Район источником не подтверждён')
+        elif normalize(district) not in {normalize(text) for text in filters['districts']}:rejected.append('Район не входит в выбранный список')
+        else:passed.append('Район соответствует выбору')
+    state='rejected' if rejected else 'pending' if pending else 'accepted'
+    return {'state':state,'reasons':rejected+pending+passed or ['Дополнительные фильтры не заданы; доступна ручная проверка ссылки']}
 
 
-def _publication(value):
-    """Keep timezone-less/relative labels as labels, not fabricated timestamps."""
-    label = _text(value, 160)
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        stamp = value / 1000 if value > 100_000_000_000 else value
-        if 946684800 <= stamp <= time.time()+86400:
-            return datetime.fromtimestamp(stamp, timezone.utc).isoformat().replace('+00:00', 'Z'), label
-    if isinstance(value, str):
-        try:
-            if re.fullmatch(r'\d{4}-\d{2}-\d{2}', value):
-                return datetime.strptime(value, '%Y-%m-%d').date().isoformat(), value
-            if re.fullmatch(r'\d{4}-\d{2}-\d{2}T[0-9:.]+(?:Z|[+-]\d{2}:\d{2})', value):
-                parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
-                return parsed.astimezone(timezone.utc).isoformat().replace('+00:00','Z'), value
-        except (ValueError, OverflowError): pass
-    return None, label
+# Compatibility names for the public saved-search contract. Provider parsing
+# lives in its own adapter rather than growing the shared scheduler.
+api_query=cian_search.api_query
+_text=cian_search._text
+_number=cian_search._number
+_publication=cian_search._publication
+_canonical_offer=cian_search._canonical_offer
+_offer=cian_search._offer
+_unique_items=cian_search._unique_items
 
 
-def _canonical_offer(url, cian_id=None,deal_type='rent'):
-    if url:
-        if not isinstance(url,str):return None
-        if url.startswith('/') and not url.startswith('//'):url=urljoin('https://www.cian.ru/',url)
-        parsed = urlsplit(redcn.allowed_url(url, resolve=False)); match = _OFFER_PATH.fullmatch(parsed.path)
-        if not match or not (parsed.hostname == 'cian.ru' or (parsed.hostname or '').endswith('.cian.ru')): return None
-        if cian_id is not None and str(cian_id) != match[2]: return None
-        return 'cian:'+match[2], 'https://www.cian.ru/'+match[1]+'/flat/'+match[2]+'/'
-    if cian_id is not None and re.fullmatch(r'\d{1,18}', str(cian_id)):
-        return 'cian:'+str(cian_id), 'https://www.cian.ru/'+deal_type+'/flat/'+str(cian_id)+'/'
-    return None
-
-
-def _offer(row,deal_type='rent'):
-    if not isinstance(row, dict): return None
-    try: identity = _canonical_offer(row.get('fullUrl') or row.get('url'), row.get('cianId'),deal_type)
-    except ValueError: return None
-    if not identity: return None
-    bargain = row.get('bargainTerms') if isinstance(row.get('bargainTerms'), dict) else {}
-    metro = ''
-    geo = row.get('geo') if isinstance(row.get('geo'), dict) else {}
-    underground = geo.get('undergrounds')
-    if isinstance(underground, list) and underground and isinstance(underground[0], dict): metro = _text(underground[0].get('name'))
-    field = next((key for key in ('datePublished','publishedAt','publicationDate','creationDate','addedTimestamp') if row.get(key) not in (None,'')), None)
-    published, label = _publication(row[field]) if field else (None, '')
-    price=bargain.get('priceRur')
-    if price is None and bargain.get('currency') in ('rur','rub','RUB',2):price=bargain.get('price')
-    price=_number(price)
-    return {'id':identity[0], 'url':identity[1], 'title':_text(row.get('title') or row.get('formattedFullAddress') or row.get('seoTitle') or 'Объявление ЦИАН'), 'price':price,'currency':'RUB' if price is not None else None, 'area':_number(row.get('totalArea')), 'metro':metro, 'publishedAt':published, 'publishedLabel':label, 'publicationDateSource':field}
-
-
-def _json_offers(value,deal_type='rent'):
-    output = []
-    def walk(item, depth=0):
-        if depth > 20: return
-        if isinstance(item, dict):
-            for key, children in item.items():
-                if key == 'offersSerialized' or key == 'offers' and any(k in item for k in ('offersCount','offerCount','aggregatedCount')):
-                    if isinstance(children, list): output.extend(filter(None, (_offer(row,deal_type) for row in children[:MAX_ITEMS])))
-                elif key not in ('suggestOffersSerializedList','suggestOffers','recommendations','relatedOffers') and isinstance(children, (dict,list)): walk(children, depth+1)
-        elif isinstance(item, list):
-            for child in item[:1000]: walk(child, depth+1)
-    walk(value); return output[:MAX_ITEMS]
-
-
-def _unique_items(rows):
-    output={}
-    for row in rows:
-        if row['id'] not in output:output[row['id']]=dict(row)
-        else:
-            for key,value in row.items():
-                if output[row['id']].get(key) in (None,'') and value not in (None,''):output[row['id']][key]=value
-    return list(output.values())[:MAX_ITEMS]
-
-
-class _SearchRows(list):
-    def __init__(self,rows,confirmed_empty=False):
-        super().__init__(rows);self.confirmed_empty=confirmed_empty
-
-
-def _confirmed_empty_api(value):
-    if not isinstance(value,dict) or not isinstance(value.get('data'),dict):return False
-    data=value['data']
-    if data.get('offersSerialized')!=[] or not any(type(data.get(key)) is int and data[key]==0 for key in ('offerCount','offersCount')):return False
-    for part in (value,data):
-        if any(re.search(r'error|captcha|challenge|verification',key,re.I) and field for key,field in part.items()):return False
-        if part.get('success') is False or part.get('status') in ('error','challenge','captcha','failed'):return False
-        if _CHALLENGE.search(str(part.get('message',''))):return False
-    return True
-
-
-class _SearchHTML(HTMLParser):
-    def __init__(self, base):
-        super().__init__(convert_charrefs=True); self.base=base; self.stack=[]; self.card=None; self.card_depth=None; self.rows=[]; self.scripts=[]; self.script=None; self.visible=[]
-
-    def handle_starttag(self, tag, attrs):
-        attrs=dict(attrs); name=attrs.get('data-name', '')+' '+attrs.get('data-testid', '')
-        unrelated=any(re.search(r'recommend|suggest|similar', n, re.I) for _,n in self.stack) or bool(re.search(r'recommend|suggest|similar', name,re.I))
-        if self.card is None and not unrelated and re.search(r'\b(?:CardComponent|OfferCard|offer-card)\b',name):
-            self.card={'text':[], 'urls':[], 'dates':[]}; self.card_depth=len(self.stack)
-        if tag=='script': self.script=[]
-        if self.card is not None and not unrelated:
-            if tag=='a' and 'href' in attrs: self.card['urls'].append(urljoin(self.base,attrs['href']))
-            if attrs.get('itemprop')=='datePublished' and (attrs.get('datetime') or attrs.get('content')): self.card['dates'].append(attrs.get('datetime') or attrs['content'])
-        if tag not in ('br','meta','link','img','input','source','hr','area','base','embed','param','track','wbr'):
-            self.stack.append((tag,name))
-
-    def handle_data(self, value):
-        if self.script is not None: self.script.append(value)
-        else:
-            self.visible.append(value)
-            if self.card is not None: self.card['text'].append(value)
-
-    def handle_endtag(self, tag):
-        if tag=='script' and self.script is not None: self.scripts.append(''.join(self.script)); self.script=None
-        at=next((i for i in range(len(self.stack)-1,-1,-1) if self.stack[i][0]==tag),None)
-        if at is None: return
-        if self.card is not None and at <= self.card_depth:
-            row=None
-            for url in self.card['urls']:
-                try: identity=_canonical_offer(url)
-                except ValueError: continue
-                if identity:
-                    field={'fullUrl':identity[1], 'title':_text(' '.join(self.card['text']),240)}
-                    if self.card['dates']: field['datePublished']=self.card['dates'][0]
-                    row=_offer(field); break
-            if row:self.rows.append(row)
-            self.card=None;self.card_depth=None
-        del self.stack[at:]
+def parse_cian_search(content,source_url,mime='text/html'):
+    try:return cian_search.parse_search(content,source_url,mime)
+    except cian_search.NeedsAttention as error:raise NeedsAttention(str(error)) from None
 
 
 def parse_search(content, source_url, mime='text/html'):
-    if not isinstance(content,(bytes,str)): raise ValueError('Некорректный ответ поиска')
-    markup=content.decode('utf-8','replace') if isinstance(content,bytes) else content
-    deal_type='sale' if parse_qs(urlsplit(source_url).query).get('deal_type')==['sale'] or urlsplit(source_url).path.startswith('/kupit-') else 'rent'
-    if len(markup.encode())>MAX_BYTES: raise ValueError('Поисковый ответ превышает 8 МБ')
-    confirmed_empty=False
-    if 'json' in mime:
-        try:
-            value=json.loads(markup);rows=_json_offers(value,deal_type);confirmed_empty=_confirmed_empty_api(value)
-        except ValueError: raise ValueError('Внутренний API вернул некорректный JSON') from None
-    else:
-        parser=_SearchHTML(source_url);parser.feed(markup)
-        if _CHALLENGE.search(' '.join(parser.visible)[:12000]): raise NeedsAttention('ЦИАН требует ручной проверки браузера. Автоматический обход не выполняется.')
-        rows=[]
-        decoder=json.JSONDecoder()
-        for script in parser.scripts:
-            try: rows.extend(_json_offers(json.loads(script),deal_type))
-            except ValueError:
-                # Parse JSON object literals in the known config assignment;
-                # JavaScript is never evaluated by the HTTP adapter.
-                if '_cianConfig' not in script: continue
-                for marker in re.finditer(r'(?:\bpush\s*\(\s*|=\s*)([\[{])',script):
-                    try: value,_=decoder.raw_decode(script[marker.start(1):])
-                    except ValueError: continue
-                    rows.extend(_json_offers(value,deal_type))
-        if not rows: rows=parser.rows
-    return _SearchRows(_unique_items(rows),confirmed_empty=confirmed_empty and not rows)
+    if platform_for_url(source_url)=='avito':
+        try:return avito_search.parse_search(content,source_url,mime)
+        except ValueError as error:
+            if str(error).startswith('SEARCH_NEEDS_ATTENTION:'):raise NeedsAttention('Авито требует ручной проверки; автоматический обход не выполняется.') from None
+            raise
+    return parse_cian_search(content,source_url,mime)
 
 
 def _addresses(host):
@@ -307,7 +190,8 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None
 
 
-def _http_page(url, data=None):
+def _http_page(url, data=None, budget=12):
+    end=time.monotonic()+max(.1,min(12,budget))
     redcn.allowed_url(url,resolve=False); host=urlsplit(url).hostname
     addresses=_addresses(host)
     try:
@@ -320,10 +204,12 @@ def _http_page(url, data=None):
     payload=json.dumps(data).encode() if data is not None else None
     if payload is not None:headers['Content-Type']='application/json'
     try:
-        with opener.open(urllib.request.Request(url,data=payload,headers=headers),timeout=12) as response:
+        remaining=end-time.monotonic()
+        if remaining<=0:raise TimeoutError('Поисковый ответ не завершился в срок')
+        with opener.open(urllib.request.Request(url,data=payload,headers=headers),timeout=remaining) as response:
             # read1 returns available data rather than filling an entire buffer;
             # an indefinitely trickling body cannot reset a per-read timeout.
-            end=time.monotonic()+12;parts=[];size=0
+            parts=[];size=0
             while size<=MAX_BYTES:
                 remaining=end-time.monotonic()
                 if remaining<=0:raise TimeoutError('Поисковый ответ не завершился за 12 секунд')
@@ -372,6 +258,7 @@ def allowed_search_navigation(url,source_url,resolve=None):
     source_host=urlsplit(source).hostname;target_host=urlsplit(target).hostname
     hosts={source_host}
     if source_host in ('cian.ru','www.cian.ru'):hosts.update(('cian.ru','www.cian.ru'))
+    if source_host in ('avito.ru','www.avito.ru'):hosts.update(('avito.ru','www.avito.ru'))
     if target_host not in hosts:raise ValueError('Переход на другой хост поиска запрещён')
     # Pagination and tracking are normalized away, while semantic filters must
     # remain the same. A redirect cannot silently replace the saved query.
@@ -395,8 +282,24 @@ def guard_search_navigation(route,source_url,on_block=None):
 
 
 def fetch_search(config, directory, cancel, browser_channel='chrome'):
-    """One saved search, at most two pages and never individual ad visits."""
+    """One saved search, explicitly bounded pages; never individual ad visits."""
     url=config['searchUrl'];rows=[];pages=0;adapter=config['adapter'];confirmed_empty=False
+    platform=platform_for_url(url);max_pages=config.get('maxPages',MAX_PAGES)
+    if type(max_pages) is not int or not 1<=max_pages<=8:raise ValueError('Охват поиска: от 1 до 8 страниц')
+    if platform=='avito' and adapter=='api':raise ValueError('Для Авито поддержаны публичный HTML и обычный Chrome; доступного API выдачи не заявлено')
+    started=time.monotonic();deadline=started+30;stop_reason='page-limit';known=set(config.get('knownIds',[]));cutoff=config.get('stopBeforePublished');old_pages=0;page_counts=[]
+    def boundary(found):
+        nonlocal old_pages
+        old=bool(found) and bool(known) and all(item.get('id') in known for item in found)
+        if old and type(cutoff) in (int,float):
+            for item in found:
+                value=item.get('publishedAt')
+                try:stamp=datetime.fromisoformat(value.replace('Z','+00:00')).timestamp() if isinstance(value,str) and len(value)>10 and re.search(r'(?:Z|[+-]\d{2}:\d{2})$',value) else None
+                except ValueError:stamp=None
+                if stamp is None or stamp>cutoff:old=False;break
+        else:old=False
+        old_pages=old_pages+1 if old else 0
+        return old_pages>=2
     if adapter=='chrome':
         from browser_import import _browser_lock
         try:from playwright.sync_api import sync_playwright
@@ -405,7 +308,6 @@ def fetch_search(config, directory, cancel, browser_channel='chrome'):
         try:
             redcn.allowed_url(url,resolve=False);_addresses(urlsplit(url).hostname)
             profile=Path(directory)/(browser_channel+'-profile');profile.mkdir(parents=True,exist_ok=True,mode=0o700)
-            deadline=time.monotonic()+35
             with sync_playwright() as runtime:
                 context=runtime.chromium.launch_persistent_context(str(profile),channel='chrome' if browser_channel=='chrome' else None,headless=False,accept_downloads=False,service_workers='block',timeout=20000)
                 try:
@@ -417,6 +319,7 @@ def fetch_search(config, directory, cancel, browser_channel='chrome'):
                     page=context.new_page();page.set_default_timeout(1500)
                     api_results={};current_page=[1]
                     def response_seen(request):
+                        if platform!='cian':return
                         try:
                             response=request.response()
                             if response is None:return
@@ -426,8 +329,9 @@ def fetch_search(config, directory, cancel, browser_channel='chrome'):
                     # Inspect only completed responses so reading JSON cannot
                     # turn a pending API request into an unbounded body wait.
                     page.on('requestfinished',response_seen)
-                    for index in range(1,MAX_PAGES+1):
+                    for index in range(1,max_pages+1):
                         if cancel.is_set():raise ValueError('Мониторинг остановлен')
+                        if time.monotonic()+1>=deadline:stop_reason='time-budget';break
                         current_page[0]=index
                         try:response=page.goto(_page_url(url,index),wait_until='commit',timeout=max(1000,int(min(15,deadline-time.monotonic())*1000)))
                         except Exception:
@@ -442,25 +346,33 @@ def fetch_search(config, directory, cancel, browser_channel='chrome'):
                             if _CHALLENGE.search(snapshot['text']):raise NeedsAttention('В Chrome появилась проверка ЦИАН. Пройдите её вручную при следующей ручной загрузке; обход не выполняется.')
                             observed=api_results.get(index)
                             found=observed if observed is not None else parse_search(snapshot['html'],url)
-                            if not found and not getattr(found,'confirmed_empty',False):found=list(filter(None,(_offer(item) for item in snapshot['links'])))
+                            if platform=='cian' and not found and not getattr(found,'confirmed_empty',False):found=list(filter(None,(_offer(item) for item in snapshot['links'])))
                             if found or getattr(found,'confirmed_empty',False):break
                             page.wait_for_timeout(200)
                         pages+=1
                         confirmed_empty=confirmed_empty or getattr(found,'confirmed_empty',False)
-                        if not found:break
-                        rows.extend(found)
-                        if time.monotonic()+2>=deadline:break
+                        if not found:stop_reason='confirmed-empty' if getattr(found,'confirmed_empty',False) else 'unrecognized-page';break
+                        rows.extend(found);page_counts.append(len(found))
+                        if boundary(found):stop_reason='known-date-boundary';break
+                        if time.monotonic()+2>=deadline:stop_reason='time-budget';break
                 finally:context.close()
         finally:_browser_lock.release()
     else:
-        for index in range(1,MAX_PAGES+1):
+        for index in range(1,max_pages+1):
             if cancel.is_set():raise ValueError('Мониторинг остановлен')
-            content,mime=_http_page(API_URL,api_query(url,index)) if adapter=='api' else _http_page(_page_url(url,index))
+            if time.monotonic()+1>=deadline:stop_reason='time-budget';break
+            try:content,mime=_http_page(API_URL,api_query(url,index),budget=deadline-time.monotonic()) if adapter=='api' else _http_page(_page_url(url,index),budget=deadline-time.monotonic())
+            except TimeoutError:
+                if rows:stop_reason='time-budget';break
+                raise
             found=parse_search(content,url,mime);pages+=1
             confirmed_empty=confirmed_empty or getattr(found,'confirmed_empty',False)
-            if not found:break
-            rows.extend(found)
-    return {'items':_unique_items(rows), 'pages':pages, 'coverage':'first-2-pages', 'adapter':adapter,'confirmedEmpty':confirmed_empty and not rows}
+            if not found:stop_reason='confirmed-empty' if getattr(found,'confirmed_empty',False) else 'unrecognized-page';break
+            rows.extend(found);page_counts.append(len(found))
+            if boundary(found):stop_reason='known-date-boundary';break
+    unique=_unique_items(rows)
+    return {'items':unique, 'pages':pages, 'coverage':'first-2-pages' if max_pages==2 else 'bounded-pages', 'adapter':adapter,'platform':platform,'confirmedEmpty':confirmed_empty and not rows,
+        'coverageInfo':{'requestedPages':max_pages,'visitedPages':pages,'stopReason':stop_reason,'partial':stop_reason not in ('confirmed-empty','known-date-boundary'),'seconds':round(time.monotonic()-started,6),'budgetSeconds':35,'pageItems':page_counts,'duplicateCount':len(rows)-len(unique),'unknownPublicationDates':sum(not row.get('publishedAt') for row in unique),'gapCount':None}}
 
 
 def _source_command():
@@ -512,7 +424,7 @@ def fetch_search_bounded(config,directory,cancel,browser_channel='chrome',timeou
                 output,_stderr=process.communicate(input=payload if first else None,timeout=min(.2,remaining))
                 break
             except subprocess.TimeoutExpired:first=False
-        if len(output)>1_000_000:raise ValueError('Поиск вернул слишком большой служебный ответ')
+        if len(output)>3_000_000:raise ValueError('Поиск вернул слишком большой служебный ответ')
         try:value=json.loads(output)
         except ValueError:raise ValueError('Собственный процесс поиска не вернул корректный результат') from None
         if value.get('error'):
@@ -529,9 +441,12 @@ def fetch_search_bounded(config,directory,cancel,browser_channel='chrome',timeou
 
 def _search_worker():
     try:
-        value=json.loads(sys.stdin.read(20_001));config=value['config']
+        value=json.loads(sys.stdin.read(64_001));config=value['config']
         config['searchUrl']=normalize_search_url(config['searchUrl'])
         if config.get('adapter') not in ('html','api','chrome'):raise ValueError('Неизвестный источник мониторинга')
+        if type(config.get('maxPages',2)) is not int or not 1<=config.get('maxPages',2)<=8:raise ValueError('Охват поиска: от 1 до 8 страниц')
+        known=config.get('knownIds',[])
+        if not isinstance(known,list) or len(known)>500 or any(not isinstance(item,str) or not _ID.fullmatch(item) for item in known):raise ValueError('Неверная контрольная граница поиска')
         channel=value.get('browserChannel','chrome')
         if channel not in ('chrome','chromium'):raise ValueError('Неверный браузер')
         # The first termination request unwinds the ordinary context's finally;
@@ -570,38 +485,52 @@ class ListingWatch:
         if any(worker.is_alive() and worker is not threading.current_thread() for worker in threads):
             raise RuntimeError('Собственная проверка поиска ещё завершает работу; повторите остановку позднее')
 
-    def _config(self,db):return json.loads(db.execute('SELECT payload FROM watch_config WHERE id=1').fetchone()[0])
+    def _config(self,db):
+        saved=json.loads(db.execute('SELECT payload FROM watch_config WHERE id=1').fetchone()[0])
+        return {'enabled':False,'searchUrl':'','adapter':'html','intervalMinutes':60,'maxPages':2,'filters':{},'notifications':{'enabled':False,'channel':'in-app'},**saved}
 
     @staticmethod
     def _source(config):return hashlib.sha256(config['searchUrl'].encode()).hexdigest()[:24] if config['searchUrl'] else ''
 
     def configure(self,data):
-        if not isinstance(data,dict) or set(data)-{'enabled','searchUrl','intervalMinutes','adapter'}:raise ValueError('Неверные параметры мониторинга')
+        if not isinstance(data,dict) or set(data)-{'enabled','searchUrl','intervalMinutes','adapter','maxPages','filters','notifications'}:raise ValueError('Неверные параметры мониторинга')
         with self._lock,_db(self.directory) as db:
             config=self._config(db);config.update(data)
             if type(config['enabled']) is not bool:raise ValueError('Неверный флаг включения')
             if type(config['intervalMinutes']) is not int or not 60<=config['intervalMinutes']<=1440:raise ValueError('Интервал: от 60 до 1440 минут')
             if config['adapter'] not in ('html','api','chrome'):raise ValueError('Неизвестный источник мониторинга')
+            if type(config['maxPages']) is not int or not 1<=config['maxPages']<=8:raise ValueError('Охват: от 1 до 8 страниц; расширение задаётся явно')
+            config['filters']=normalized_filters(config['filters'])
+            notices=config['notifications']
+            if not isinstance(notices,dict) or set(notices)-{'enabled','channel'} or type(notices.get('enabled')) is not bool or notices.get('channel')!='in-app':raise ValueError('Доступен только явно включаемый внутренний канал приложения; внешние адреса не принимаются')
             config['searchUrl']=normalize_search_url(config['searchUrl']) if config['searchUrl'] else ''
-            if config['enabled'] and not config['searchUrl']:raise ValueError('Сначала сохраните ссылку поиска ЦИАН')
+            if config['enabled'] and not config['searchUrl']:raise ValueError('Сначала сохраните ссылку поиска ЦИАН или Авито')
+            if config['adapter']=='api' and platform_for_url(config['searchUrl'])=='avito':raise ValueError('API выдачи Авито не подключён. Выберите публичный HTML или обычный Chrome.')
             if config['adapter']=='api' and config['searchUrl']:api_query(config['searchUrl'])
             source=self._source(config)
             db.execute('UPDATE watch_config SET payload=? WHERE id=1',(json.dumps(config),))
             if source:
                 db.execute('INSERT OR IGNORE INTO watch_sources(id,next_run) VALUES(?,?)',(source,self.now()))
                 if config['enabled']:db.execute('UPDATE watch_sources SET next_run=COALESCE(next_run,?) WHERE id=?',(self.now(),source))
+                for row in db.execute('SELECT id,payload FROM watch_offers WHERE source_id=?',(source,)).fetchall():
+                    item=json.loads(row['payload']);decision=candidate_decision(item,config['filters']);item['decision']=decision['state'];item['decisionReasons']=decision['reasons'];db.execute('UPDATE watch_offers SET payload=?,decision=? WHERE source_id=? AND id=?',(json.dumps(item,ensure_ascii=False),decision['state'],source,row['id']))
         self._wake.set();return self.status()
 
     def status(self):
         with self._lock,_db(self.directory) as db:
             config=self._config(db);source=self._source(config);row=db.execute('SELECT * FROM watch_sources WHERE id=?',(source,)).fetchone();info=dict(row) if row else {}
-            counts=db.execute('SELECT COUNT(*),SUM(is_new),SUM(CASE WHEN is_new=1 AND read_at IS NULL THEN 1 ELSE 0 END) FROM watch_offers WHERE source_id=?',(source,)).fetchone()
+            counts=db.execute("SELECT COUNT(*),SUM(CASE WHEN is_new=1 AND decision='accepted' THEN 1 ELSE 0 END),SUM(CASE WHEN is_new=1 AND read_at IS NULL AND decision='accepted' THEN 1 ELSE 0 END) FROM watch_offers WHERE source_id=?",(source,)).fetchone()
+            receipt=db.execute('SELECT payload FROM watch_receipts WHERE source_id=?',(source,)).fetchone();coverage=json.loads(receipt[0]) if receipt else {}
+            decision_counts={row[0]:row[1] for row in db.execute('SELECT decision,COUNT(*) FROM watch_offers WHERE source_id=? GROUP BY decision',(source,))}
+            notification_count=db.execute('SELECT COUNT(*) FROM watch_notifications WHERE source_id=? AND read_at IS NULL',(source,)).fetchone()[0]
             state='checking' if self._checking or self._force else 'disabled' if not config['enabled'] else 'needs_attention' if info.get('attention') else 'error' if info.get('error') else 'idle'
-            return {'config':config,'state':state,'baselineComplete':info.get('baseline_at') is not None,'baselineAt':info.get('baseline_at'),'lastRun':info.get('last_run'),'lastSuccess':info.get('last_success'),'nextRun':info.get('next_run') if config['enabled'] else None,'error':info.get('error',''),'coverage':'first-2-pages','coverageNote':'Проверяются только первые две страницы по дате. Полный охват всех объявлений не гарантируется.','unreadCount':counts[2] or 0,'newCount':counts[1] or 0,'totalSeen':counts[0],'lastSeenCount':info.get('seen_count',0),'runCount':info.get('run_count',0),'consecutiveFailures':info.get('failures',0)}
+            stop_titles={'page-limit':'достигнут заданный предел','time-budget':'истёк срок прохода','known-date-boundary':'достигнута граница известных публикаций','confirmed-empty':'источник подтвердил конец выдачи','unrecognized-page':'следующая страница не распознана','unknown':'причина не измерена'}
+            note=('Последний сохранённый проход: '+str(coverage.get('visitedPages',0))+' из '+str(coverage.get('requestedPages',config['maxPages']))+' страниц; остановка: '+stop_titles.get(coverage.get('stopReason'),'причина не измерена')+'. ') if coverage else ('Заданный предел: '+str(config['maxPages'])+' страниц. ')
+            return {'config':config,'state':state,'platform':platform_for_url(config['searchUrl']),'baselineComplete':info.get('baseline_at') is not None,'baselineAt':info.get('baseline_at'),'lastRun':info.get('last_run'),'lastSuccess':info.get('last_success'),'nextRun':info.get('next_run') if config['enabled'] else None,'error':info.get('error',''),'coverage':'first-2-pages' if config['maxPages']==2 else 'bounded-pages','coverageInfo':coverage,'coverageNote':note+'Проверяется ограниченная часть сохранённого поиска; полный каталог и отсутствие пропусков не гарантируются.','unreadCount':counts[2] or 0,'newCount':counts[1] or 0,'totalSeen':counts[0],'decisionCounts':decision_counts,'notificationsUnreadCount':notification_count,'lastSeenCount':info.get('seen_count',0),'runCount':info.get('run_count',0),'consecutiveFailures':info.get('failures',0)}
 
     def request_check(self):
         with self._lock:
-            if not self.status()['config']['searchUrl']:raise ValueError('Сначала сохраните поисковую ссылку ЦИАН')
+            if not self.status()['config']['searchUrl']:raise ValueError('Сначала сохраните поисковую ссылку ЦИАН или Авито')
             if self._checking or self._force:return self.status()
             self._force=True;self.start();self._wake.set()
         return self.status()
@@ -626,18 +555,24 @@ class ListingWatch:
                 if force and info.get('last_run') is not None and now-info['last_run']<10:return self.status()
                 self._checking=True
                 db.execute('UPDATE watch_sources SET last_run=?,next_run=? WHERE id=?',(now,now+config['intervalMinutes']*60,source))
+                known_ids=[row[0] for row in db.execute('SELECT id FROM watch_offers WHERE source_id=? ORDER BY last_seen DESC LIMIT 500',(source,))]
+            operation_started=time.monotonic();fetch_seconds=None;store_seconds=None;attempt_error=None;attempt_outcome='error'
             try:
-                result=self.fetch(dict(config),self._stop)
+                fetch_config={**config,'knownIds':known_ids,'stopBeforePublished':info.get('last_success')}
+                result=self.fetch(fetch_config,self._stop);fetch_seconds=time.monotonic()-operation_started
                 if self._stop.is_set():return self.status()
                 if not isinstance(result,dict) or not isinstance(result.get('items'),list):raise ValueError('Источник вернул некорректный список')
                 items=[];seen=set()
                 for item in result['items'][:MAX_ITEMS]:
                     if not isinstance(item,dict):continue
-                    identity=_canonical_offer(item.get('url'))
+                    identity=canonical_search_offer(item.get('url'))
                     if not identity or item.get('id')!=identity[0] or identity[0] in seen:continue
-                    seen.add(identity[0]);items.append({key:item.get(key) for key in ('id','url','title','price','currency','area','metro','publishedAt','publishedLabel','publicationDateSource')})
+                    if platform_for_url(identity[1])!=platform_for_url(config['searchUrl']):continue
+                    seen.add(identity[0]);published,label=_publication(item.get('publishedAt'))
+                    clean={'id':identity[0],'url':identity[1],'platform':platform_for_url(identity[1]),'title':_text(item.get('title'),400),'price':_number(item.get('price')),'currency':item.get('currency') if item.get('currency') in ('RUB','RUR','USD','EUR') else None,'pricePeriod':item.get('pricePeriod') if item.get('pricePeriod') in ('month','day','week','year','sale') else 'unknown','area':_number(item.get('area')),'rooms':_number(item.get('rooms')),'metro':_text(item.get('metro'),150),'district':_text(item.get('district'),150),'address':_text(item.get('address'),400),'publishedAt':published,'publishedLabel':_text(item.get('publishedLabel'),160) or label,'publicationDateSource':_text(item.get('publicationDateSource'),100),'publicationStatus':item.get('publicationStatus') if item.get('publicationStatus') in ('active','removed','archived','inactive') else 'unknown'}
+                    decision=candidate_decision(clean,config['filters']);clean.update(decision=decision['state'],decisionReasons=decision['reasons']);items.append(clean)
                 if not items and result.get('confirmedEmpty') is not True:raise NeedsAttention('Поиск не дал распознанных объявлений. Базовый снимок не создан; проверьте фильтры, разметку или доступ в Chrome.')
-                stamp=self.now();new_count=0
+                stamp=self.now();new_count=0;store_started=time.monotonic()
                 with self._lock,_db(self.directory) as db:
                     if self._stop.is_set():raise ValueError('Мониторинг остановлен')
                     baseline=info.get('baseline_at')
@@ -657,36 +592,53 @@ class ListingWatch:
                                 else:is_new=datetime.fromisoformat(published.replace('Z','+00:00')).timestamp()>baseline
                             except ValueError:pass
                         if not existing:
-                            db.execute('INSERT INTO watch_offers VALUES(?,?,?,?,?,?,NULL)',(source,item['id'],json.dumps(item,ensure_ascii=False),stamp,stamp,int(is_new)));new_count+=int(is_new)
-                        else:db.execute('UPDATE watch_offers SET payload=?,last_seen=? WHERE source_id=? AND id=?',(json.dumps(item,ensure_ascii=False),stamp,source,item['id']))
+                            db.execute('INSERT INTO watch_offers(source_id,id,payload,first_seen,last_seen,is_new,read_at,decision) VALUES(?,?,?,?,?,?,NULL,?)',(source,item['id'],json.dumps(item,ensure_ascii=False),stamp,stamp,int(is_new),item['decision']));new_count+=int(is_new and item['decision']=='accepted')
+                            if is_new and item['decision']=='accepted' and config['notifications']['enabled']:
+                                notification_id=hashlib.sha256((source+'|'+item['id']).encode()).hexdigest()[:32]
+                                payload={key:item[key] for key in ('id','url','title','platform')}
+                                db.execute('INSERT OR IGNORE INTO watch_notifications VALUES(?,?,?,?,?,NULL)',(notification_id,source,item['id'],stamp,json.dumps(payload,ensure_ascii=False)))
+                        else:db.execute('UPDATE watch_offers SET payload=?,last_seen=?,decision=? WHERE source_id=? AND id=?',(json.dumps(item,ensure_ascii=False),stamp,item['decision'],source,item['id']))
                     if self._stop.is_set():raise ValueError('Мониторинг остановлен')
                     db.execute('UPDATE watch_sources SET baseline_at=COALESCE(baseline_at,?),last_success=?,next_run=?,failures=0,error=\'\',attention=0,seen_count=?,new_count=?,run_count=run_count+1 WHERE id=?',(stamp,stamp,stamp+config['intervalMinutes']*60,len(items),new_count,source))
+                    raw_coverage=result.get('coverageInfo') if isinstance(result.get('coverageInfo'),dict) else {}
+                    pages=result.get('pages') if type(result.get('pages')) is int else raw_coverage.get('visitedPages',0);pages=max(0,min(config['maxPages'],pages)) if type(pages) is int else 0
+                    reason=raw_coverage.get('stopReason');reason=reason if reason in ('page-limit','time-budget','known-date-boundary','confirmed-empty','unrecognized-page') else 'unknown'
+                    page_counts=raw_coverage.get('pageItems',[]);page_counts=page_counts if isinstance(page_counts,list) and len(page_counts)<=8 and all(type(count) is int and 0<=count<=MAX_ITEMS for count in page_counts) else []
+                    duplicate_count=raw_coverage.get('duplicateCount');duplicate_count=duplicate_count if type(duplicate_count) is int and 0<=duplicate_count<=MAX_ITEMS*8 else None
+                    coverage={'requestedPages':config['maxPages'],'visitedPages':pages,'stopReason':reason,'partial':reason not in ('known-date-boundary','confirmed-empty'),'recognizedItems':len(items),'budgetSeconds':35,'pageItems':page_counts,'duplicateCount':duplicate_count,'unknownPublicationDates':sum(not item.get('publishedAt') for item in items),'gapCount':None}
+                    db.execute('INSERT OR REPLACE INTO watch_receipts VALUES(?,?)',(source,json.dumps(coverage)))
+                store_seconds=time.monotonic()-store_started;attempt_outcome='partial' if reason in ('time-budget','unrecognized-page') else 'done'
             except Exception as error:
+                attempt_error=error;attempt_outcome='needs_attention' if isinstance(error,NeedsAttention) else 'error'
+                if fetch_seconds is None:fetch_seconds=time.monotonic()-operation_started
                 if not self._stop.is_set():
                     with self._lock,_db(self.directory) as db:
                         failures=info.get('failures',0)+1;delay=min(24*3600,config['intervalMinutes']*60*2**min(failures,4))
-                        message=str(error)[:300] if isinstance(error,(ValueError,TimeoutError)) else 'Не удалось проверить источник: '+type(error).__name__
+                        _code,message=safe_error(error)
                         db.execute('UPDATE watch_sources SET failures=?,error=?,attention=?,next_run=?,run_count=run_count+1 WHERE id=?',(failures,message,int(isinstance(error,NeedsAttention)),self.now()+delay,source))
             finally:
                 with self._lock:self._checking=False
+                try:record_attempt(self.directory,kind='watch',source_url=config['searchUrl'],started=now,elapsed=min(7200,time.monotonic()-operation_started),outcome='cancelled' if self._stop.is_set() else attempt_outcome,stages={key:value for key,value in (('fetch',fetch_seconds),('store',store_seconds)) if value is not None},error=attempt_error)
+                except (OSError,ValueError,sqlite3.Error):pass
         finally:
             with self._lock:self._owner=None
             self._run_lock.release()
         return self.status()
 
     def list_items(self,category='new',limit=50,before=None):
-        if category not in ('new','all') or isinstance(limit,bool):raise ValueError('Неверная категория списка')
+        if category not in ('new','all','accepted','rejected','pending') or isinstance(limit,bool):raise ValueError('Неверная категория списка')
         try:limit=int(limit)
         except (ValueError,TypeError):raise ValueError('Неверный размер страницы') from None
         if not 1<=limit<=100:raise ValueError('Размер страницы: от 1 до 100')
         args=[];where='source_id=?'
         with self._lock,_db(self.directory) as db:
             args.append(self._source(self._config(db)))
-            if category=='new':where+=' AND is_new=1'
+            if category=='new':where+=" AND is_new=1 AND decision='accepted'"
+            elif category in ('accepted','rejected','pending'):where+=' AND decision=?';args.append(category)
             if before:
-                match=re.fullmatch(r'(\d+(?:\.\d+)?):cian:(\d{1,18})',str(before))
+                match=re.fullmatch(r'(\d+(?:\.\d+)?):((?:cian:\d{1,18}|avito:\d{1,20}))',str(before))
                 if not match:raise ValueError('Неверный курсор списка')
-                stamp=float(match[1]);identity='cian:'+match[2];where+=' AND (first_seen<? OR (first_seen=? AND id<?))';args.extend([stamp,stamp,identity])
+                stamp=float(match[1]);identity=match[2];where+=' AND (first_seen<? OR (first_seen=? AND id<?))';args.extend([stamp,stamp,identity])
             rows=db.execute('SELECT * FROM watch_offers WHERE '+where+' ORDER BY first_seen DESC,id DESC LIMIT ?',(*args,limit+1)).fetchall();more=len(rows)>limit;rows=rows[:limit]
             items=[{**json.loads(row['payload']),'firstSeen':row['first_seen'],'lastSeen':row['last_seen'],'read':row['read_at'] is not None,'isNew':bool(row['is_new'])} for row in rows]
         cursor=repr(rows[-1]['first_seen'])+':'+rows[-1]['id'] if more and rows else None
@@ -698,8 +650,15 @@ class ListingWatch:
         if not isinstance(ids,list) or len(ids)>100 or any(not isinstance(value,str) or not _ID.fullmatch(value) for value in ids):raise ValueError('Неверные ID объявлений')
         with self._lock,_db(self.directory) as db:
             source=self._source(self._config(db))
-            for identity in set(ids):db.execute('UPDATE watch_offers SET read_at=? WHERE source_id=? AND id=?',(self.now(),source,identity))
+            for identity in set(ids):
+                db.execute('UPDATE watch_offers SET read_at=? WHERE source_id=? AND id=?',(self.now(),source,identity))
+                db.execute('UPDATE watch_notifications SET read_at=? WHERE source_id=? AND offer_id=?',(self.now(),source,identity))
         return self.status()
+
+    def notifications(self):
+        with self._lock,_db(self.directory) as db:
+            source=self._source(self._config(db));rows=db.execute('SELECT id,created,payload,read_at FROM watch_notifications WHERE source_id=? ORDER BY created DESC,id DESC LIMIT 100',(source,)).fetchall()
+        return {'channel':'in-app','items':[{'notificationId':row['id'],'created':row['created'],'read':row['read_at'] is not None,**json.loads(row['payload'])} for row in rows]}
 
     def dispatch(self,path,data=None,query=None):
         query=query or {}
@@ -709,6 +668,8 @@ class ListingWatch:
         elif path=='listing-watch/items' and data is None:value=self.list_items(first('category','new'),first('limit',50),first('before'))
         elif path=='listing-watch/check' and data is not None:value=self.request_check()
         elif path=='listing-watch/read' and data is not None:value=self.mark_read(data.get('ids'))
+        elif path=='listing-watch/notifications' and data is None:value=self.notifications()
+        elif path=='activity-log' and data is None:value=list_attempts(self.directory,kind=first('kind','all'),limit=first('limit',50),before=first('before'))
         else:return None
         return 200,value,'application/json; charset=utf-8',{}
 

@@ -4,6 +4,8 @@ import {UNIVERSITY_CATALOG,resolveUniversity,resolveCampus} from './university-c
 // result and never establish bus numbers, travelling time, or road distance.
 export const UNIVERSITY_ROUTE_LIMIT=10;
 export const UNIVERSITY_ROUTE_STOP_LIMIT=3;
+export const UNIVERSITY_ROUTE_SEGMENT_LIMIT=8;
+export const UNIVERSITY_ROUTE_METHODS=Object.freeze(['unknown','manual-confirmed','provider','estimate']);
 const universityRouteModes={unknown:'出行方式待确认',public:'公共交通',metro:'地铁',bus:'公交',walk:'步行',car:'驾车',bike:'骑行'};
 const universityRouteText=(value,max=240)=>typeof value==='string'?value.trim().slice(0,max):'';
 const universityRouteNumber=value=>{
@@ -15,6 +17,22 @@ const universityRouteClone=value=>JSON.parse(JSON.stringify(value));
 const universityRouteCampusById=new Map(UNIVERSITY_CATALOG.campuses.map(row=>[row.id,row]));
 const universityRouteSchoolById=new Map(UNIVERSITY_CATALOG.universities.map(row=>[row.id,row]));
 function universityRouteMode(value){const aliases={'步行':'walk','乘坐地铁':'metro','地铁':'metro','乘坐公交':'bus','公交':'bus','公共交通':'public','驾车':'car','骑行':'bike'};const mode=aliases[value]||value;return Object.hasOwn(universityRouteModes,mode)?mode:'unknown';}
+function universityRouteInteger(value,maximum){const n=universityRouteNumber(value);return n!==null&&Number.isInteger(n)&&n>=0&&n<=maximum?n:'';}
+function universityRouteEvidenceUrl(value){const text=universityRouteText(value,2048);try{const url=new URL(text);return url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&['', '443'].includes(url.port)?text:'';}catch{return '';}}
+function universityRouteDate(value){const text=universityRouteText(value,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return '';const stamp=Date.parse(text+'T00:00:00Z');return Number.isFinite(stamp)&&new Date(stamp).toISOString().slice(0,10)===text?text:'';}
+function universityRouteMoscowDay(value){if(!Number.isFinite(value))return '';const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value));return ['year','month','day'].map(key=>parts.find(part=>part.type===key)?.value||'').join('-');}
+function universityRouteAddressKey(value){return universityRouteText(value,500).toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[^\p{L}\d]/gu,'');}
+
+export function universityRouteVerification(row={},options={}){
+  const method=UNIVERSITY_ROUTE_METHODS.includes(row.method)?row.method:'unknown',checkedAt=universityRouteDate(row.checkedAt),sourceUrl=universityRouteEvidenceUrl(row.sourceUrl);
+  const now=options.now===undefined?Date.now():typeof options.now==='string'?Date.parse(options.now):Number(options.now),nowDay=universityRouteMoscowDay(now),stamp=checkedAt?Date.parse(checkedAt+'T00:00:00Z'):NaN;
+  const ageDays=Number.isFinite(stamp)&&nowDay?Math.floor((Date.parse(nowDay+'T00:00:00Z')-stamp)/86400000):null,maxAgeDays=Number.isFinite(options.maxAgeDays)&&options.maxAgeDays>=0?options.maxAgeDays:30;
+  const future=ageDays!==null&&ageDays<0,stale=ageDays!==null&&ageDays>maxAgeDays,estimated=method==='estimate';
+  const issues=[];if(method==='unknown')issues.push('Способ проверки маршрута не указан.');if(!checkedAt)issues.push('Дата проверки маршрута не указана.');if(!nowDay)issues.push('Текущая дата недоступна: актуальность маршрута не подтверждена.');if(future)issues.push('Дата проверки маршрута находится в будущем.');if(stale)issues.push('Маршрут старше '+maxAgeDays+' дней: требуется повторная проверка.');if(method==='provider'&&!sourceUrl)issues.push('Для результата сервиса маршрутов нужен URL источника.');
+  const names={unknown:'核验方式待确认','manual-confirmed':'人工核验',provider:'路线服务资料',estimate:'估算'},ru={unknown:'Способ не указан','manual-confirmed':'Ручная проверка',provider:'Данные маршрутного сервиса',estimate:'Оценка'};
+  return {method,checkedAt,sourceUrl,ageDays,estimated,stale,future,verified:['manual-confirmed','provider'].includes(method)&&!!checkedAt&&!!nowDay&&!future&&!stale&&(method!=='provider'||!!sourceUrl),issues,
+    label:names[method]+(checkedAt?' · '+checkedAt:' · 日期待确认')+(stale?' · 需重新核验':''),summary:ru[method]+(checkedAt?' · '+checkedAt:' · дата не указана')+(stale?' · устарел':'')};
+}
 
 export function universityRouteCoordinates(latitude,longitude){
   const lat=universityRouteNumber(latitude),lon=universityRouteNumber(longitude);
@@ -76,7 +94,9 @@ export function normalizeUniversityRoutes(fields={}){
   return rows.slice(0,UNIVERSITY_ROUTE_LIMIT).filter(row=>row&&typeof row==='object'&&!Array.isArray(row)).map(row=>{
     const coordinate=(value,limit)=>{const number=universityRouteNumber(value);return number!==null&&Math.abs(number)<=limit?number:'';},distance=universityRouteNumber(row.routeDistanceKm),campusId=universityRouteText(row.campusId,100);
     const stops=(Array.isArray(row.stops)?row.stops:typeof row.stops==='string'?row.stops.split('\n').map(line=>{const [name,latitude='',longitude='']=line.split('|').map(value=>value.trim());return {name,latitude,longitude};}):[]).slice(0,UNIVERSITY_ROUTE_STOP_LIMIT).map(stop=>typeof stop==='string'?{name:stop}:stop).filter(stop=>stop&&typeof stop==='object'&&!Array.isArray(stop)).map(stop=>({name:universityRouteText(stop.name),latitude:coordinate(stop.latitude,90),longitude:coordinate(stop.longitude,180)})).filter(stop=>stop.name);
-    return {name:universityRouteText(row.name||row.university),campus:universityRouteText(row.campus),campusId:universityRouteCampusById.has(campusId)?campusId:'',address:universityRouteText(row.address,500),latitude:coordinate(row.latitude,90),longitude:coordinate(row.longitude,180),time:universityRouteText(row.time,80),mode:universityRouteMode(row.mode),transport:universityRouteText(row.transport||row.line,600),routeDistanceKm:distance!==null&&distance>=0&&distance<=20000?distance:'',stops};
+    const segments=(Array.isArray(row.segments)?row.segments:[]).slice(0,UNIVERSITY_ROUTE_SEGMENT_LIMIT).filter(segment=>segment&&typeof segment==='object'&&!Array.isArray(segment)).map(segment=>({mode:universityRouteMode(segment.mode),transport:universityRouteText(segment.transport,160),from:universityRouteText(segment.from,160),to:universityRouteText(segment.to,160),minutes:universityRouteInteger(segment.minutes,1440)})).filter(segment=>segment.transport||segment.from||segment.to||segment.minutes!=='');
+    return {name:universityRouteText(row.name||row.university),campus:universityRouteText(row.campus),campusId:universityRouteCampusById.has(campusId)?campusId:'',address:universityRouteText(row.address,500),latitude:coordinate(row.latitude,90),longitude:coordinate(row.longitude,180),time:universityRouteText(row.time,80),mode:universityRouteMode(row.mode),transport:universityRouteText(row.transport||row.line,600),routeDistanceKm:distance!==null&&distance>=0&&distance<=20000?distance:'',stops,
+      method:UNIVERSITY_ROUTE_METHODS.includes(row.method)?row.method:'unknown',checkedAt:universityRouteDate(row.checkedAt),sourceUrl:universityRouteEvidenceUrl(row.sourceUrl),accessMinutes:universityRouteInteger(row.accessMinutes,180),egressMinutes:universityRouteInteger(row.egressMinutes,180),transfers:universityRouteInteger(row.transfers,12),segments};
   }).filter(row=>row.name||row.campus||row.campusId||row.address);
 }
 
@@ -95,8 +115,9 @@ function universityRouteTimeLabel(value,translate){
 export function resolveUniversityRoutes(fields={},options={}){
   const f=fields&&typeof fields==='object'?fields:{},translate=typeof options.translate==='function'?options.translate:value=>String(value??''),city=universityRouteText(f.city)||'Москва',origin={...universityRouteCoordinates(f.latitude,f.longitude),address:universityRouteText(f.address,500)};
   return normalizeUniversityRoutes(f).map(row=>{
-    const warnings=[],university=resolveUniversity(row.name),namedCampus=resolveCampus(row.campus||row.name),campus=universityRouteCampusById.get(row.campusId)||namedCampus,mismatch=!!(university&&campus&&university.id!==campus.universityId||namedCampus&&campus&&namedCampus.id!==campus.id);
+    const warnings=[],university=resolveUniversity(row.name),namedCampus=resolveCampus(row.campus||row.name),campus=universityRouteCampusById.get(row.campusId)||namedCampus,addressMismatch=!!(campus&&row.address&&campus.addressRu&&universityRouteAddressKey(row.address)!==universityRouteAddressKey(campus.addressRu)),mismatch=!!(university&&campus&&university.id!==campus.universityId||namedCampus&&campus&&namedCampus.id!==campus.id||addressMismatch);
     if(mismatch)warnings.push('Вуз и выбранный кампус не совпадают. Уточните место назначения.');
+    if(addressMismatch)warnings.push('Адрес отличается от выбранного корпуса. Выберите правильный корпус либо явно задайте свой адрес без чужого campusId.');
     const selectedCampus=mismatch?null:campus,parent=selectedCampus?universityRouteSchoolById.get(selectedCampus.universityId):null;
     const destinationPoint=mismatch?null:universityRouteCoordinates(row.latitude,row.longitude),destinationAddress=mismatch?'':row.address||selectedCampus?.addressRu||'';
     const rawTitle=row.name||(parent?.ru)||row.campus||'院校/校区',translatedTitle=translate(rawTitle),title=translatedTitle!==rawTitle?translatedTitle:university?.zh||parent?.zh||selectedCampus?.zh||translatedTitle;
@@ -110,7 +131,15 @@ export function resolveUniversityRoutes(fields={},options={}){
       {name:row.transport,label:transport||modeLabel,links:{yandex:'',google:'',osm:''}},
       {name:destination.name,label:campusTitle||title,links:{yandex:links.yandexKind==='search'?links.yandex:universityStopLinks(destination,city).yandex,google:universityStopLinks(destination,city).google,osm:links.osm}}
     ];
-    return {...row,title,campusTitle,destination,confirmedDestination,time:time.label,timeLabel:time.label,confirmedTime:time.confirmed,modeLabel,transport,transportLabel:transport?modeLabel+' · '+transport:'',distanceKm,distanceKind,distanceLabel:universityRouteDistanceLabel(distanceKm,distanceKind),straightLineKm:computed,stops:stopDetails.map(stop=>stop.label),stopDetails,links,warnings};
+    const verification=universityRouteVerification(row,options);
+    if(row.time||row.routeDistanceKm!==''||row.segments.length)warnings.push(...verification.issues);
+    const segmentLabels=row.segments.map(segment=>[universityRouteModes[segment.mode],segment.transport,segment.from&&segment.to?segment.from+' → '+segment.to:segment.from||segment.to,segment.minutes!==''?segment.minutes+'分钟':''].filter(Boolean).join(' · '));
+    const partsLabel=[row.accessMinutes!==''?'到站步行'+row.accessMinutes+'分钟':'',row.egressMinutes!==''?'下车后步行'+row.egressMinutes+'分钟':'',row.transfers!==''?'换乘'+row.transfers+'次':''].filter(Boolean).join(' · ');
+    const timeLabel=verification.estimated&&time.confirmed?'预估'+time.label:time.label;
+    const nowStamp=options.now===undefined?Date.now():typeof options.now==='string'?Date.parse(options.now):Number(options.now),calculatedAt=universityRouteMoscowDay(nowStamp);
+    const distanceMethod=distanceKind==='straight-line'?'haversine':distanceKind==='provided-route'?'provided':'unknown',distanceCheckedAt=distanceMethod==='haversine'?calculatedAt:verification.checkedAt;
+    const distanceEvidenceLabel=distanceMethod==='haversine'?'直线估算 · Haversine公式 · 计算日期'+(distanceCheckedAt||'待确认')+'（非实际路线）':distanceMethod==='provided'?'路线距离（已填资料）· 资料日期'+(distanceCheckedAt||'待确认'):'';
+    return {...row,title,campusTitle,destination,selectedCampusId:selectedCampus?.id||'',confirmedDestination,time:timeLabel,timeLabel,confirmedTime:time.confirmed&&!verification.estimated,modeLabel,transport,transportLabel:transport?modeLabel+' · '+transport:'',distanceKm,distanceKind,distanceLabel:universityRouteDistanceLabel(distanceKm,distanceKind),distanceMethod,distanceCheckedAt,distanceEvidenceLabel,straightLineKm:computed,stops:stopDetails.map(stop=>stop.label),stopDetails,links,warnings,verification,verificationLabel:verification.label,partsLabel,segmentLabels};
   });
 }
 
@@ -122,7 +151,11 @@ export function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},
   const emit=()=>{if(!destroyed)onChange(universityRouteClone(normalizeUniversityRoutes({universityRoutes:rows})));};
   function preview(container){
     const f=getFields()||{},resolved=resolveUniversityRoutes({...f,universityRoutes:rows},{translate});container.replaceChildren();
-    for(const route of resolved){const block=make('div','','university-route-preview-row');block.append(make('strong',route.title),make('p',[route.distanceLabel,route.timeLabel,route.transportLabel].filter(Boolean).join(' · '),'muted'));
+    for(const route of resolved){const block=make('div','','university-route-preview-row');block.append(make('strong',route.title),make('p',[route.campusTitle||route.destination.address,route.distanceLabel,route.timeLabel,route.transportLabel].filter(Boolean).join(' · '),'muted'),make('p',route.verification.summary,'muted'));
+      if(route.distanceEvidenceLabel)block.append(make('p',route.distanceEvidenceLabel,'muted'));
+      if(route.partsLabel)block.append(make('p',route.partsLabel));
+      for(const segment of route.segmentLabels)block.append(make('p',segment,'muted'));
+      if(route.verification.sourceUrl){const source=make('a','Источник проверки маршрута');source.href=route.verification.sourceUrl;source.target='_blank';source.rel='noopener noreferrer';block.append(source);}
       for(const [kind,label]of [['yandex',route.links.yandexKind==='route'?'Яндекс: маршрут':'Яндекс: найти кампус'],['google',route.links.googleKind==='route'?'Google: маршрут':'Google: найти кампус'],['osm','OpenStreetMap: место']])if(route.links[kind]){const a=make('a',label);a.href=route.links[kind];a.target='_blank';a.rel='noopener noreferrer';block.append(a);}
       for(const stop of route.stopDetails.filter(value=>value.name&&value.links.yandex)){const a=make('a','Ориентир: '+stop.label);a.href=stop.links.yandex;a.target='_blank';a.rel='noopener noreferrer';block.append(a);}
       for(const warning of route.warnings)block.append(make('p',warning,'university-route-warning'));container.append(block);
@@ -139,12 +172,17 @@ export function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},
       input('name','Вуз',{placeholder:'МГУ / РУДН / своё название'});
       const selectLabel=make('label','Адрес из справочника'),selection=make('select');selection.setAttribute('aria-label','Кампус из справочника · маршрут '+(index+1));selection.append(new Option('Свой кампус / адрес',''));
       for(const school of UNIVERSITY_CATALOG.universities){const campuses=UNIVERSITY_CATALOG.campuses.filter(value=>value.universityId===school.id);if(!campuses.length)continue;const group=make('optgroup');group.label=school.ru;for(const campus of campuses)group.append(new Option(campus.ru,campus.id));selection.append(group);}selection.value=row.campusId||'';
-      selection.onchange=()=>{const selected=universityRouteCampusById.get(selection.value);row.campusId=selection.value;if(selected){row.name=universityRouteSchoolById.get(selected.universityId)?.ru||row.name;row.campus=selected.ru;row.address=selected.addressRu||'';row.latitude=row.longitude=row.routeDistanceKm=row.time=row.transport='';row.stops=[];}emit();render();};selectLabel.append(selection);grid.append(selectLabel);
+      selection.onchange=()=>{const selected=universityRouteCampusById.get(selection.value);row.campusId=selection.value;if(selected){row.name=universityRouteSchoolById.get(selected.universityId)?.ru||row.name;row.campus=selected.ru;row.address=selected.addressRu||'';row.latitude=row.longitude=row.routeDistanceKm=row.time=row.transport=row.checkedAt=row.sourceUrl=row.accessMinutes=row.egressMinutes=row.transfers='';row.method='unknown';row.stops=[];row.segments=[];}emit();render();};selectLabel.append(selection);grid.append(selectLabel);
       input('campus','Кампус / корпус',{placeholder:'Конкретное место обучения'});input('address','Адрес кампуса',{placeholder:'Официальный адрес выбранного корпуса'});
       input('latitude','Широта кампуса',{type:'number',placeholder:'55.702…'});input('longitude','Долгота кампуса',{type:'number',placeholder:'37.530…'});
       input('time','Подтверждённое время, мин',{placeholder:'40–55'});
       const modeLabel=make('label','Способ поездки'),mode=make('select');mode.setAttribute('aria-label','Способ поездки · маршрут '+(index+1));for(const [value,label]of [['unknown','Не указан'],['public','Общественный транспорт'],['metro','Метро'],['bus','Автобус'],['walk','Пешком'],['car','Автомобиль'],['bike','Велосипед']])mode.append(new Option(label,value));mode.value=row.mode||'unknown';mode.onchange=()=>{row.mode=mode.value;update();};modeLabel.append(mode);grid.append(modeLabel);
       input('transport','Автобусы / пересадки',{placeholder:'Автобус №… → метро…',area:true});input('routeDistanceKm','Проверенная длина маршрута, км',{type:'number',placeholder:'Из карты; пусто — считать только прямую'});
+      const methodLabel=make('label','Как проверено'),method=make('select');method.setAttribute('aria-label','Способ проверки · маршрут '+(index+1));for(const [value,label]of [['unknown','Не записан'],['manual-confirmed','Проверено оператором'],['provider','Данные маршрутного сервиса'],['estimate','Приблизительная оценка']])method.append(new Option(label,value));method.value=row.method||'unknown';method.onchange=()=>{row.method=method.value;update();};methodLabel.append(method);grid.append(methodLabel);
+      input('checkedAt','Дата проверки',{type:'date'});input('sourceUrl','HTTPS-источник маршрута',{type:'url',placeholder:'Ссылка на проверенный маршрут'});
+      input('accessMinutes','Пешком от дома до транспорта, мин',{type:'number'});input('egressMinutes','Пешком от транспорта до корпуса, мин',{type:'number'});input('transfers','Количество пересадок',{type:'number'});
+      const segmentLabel=make('label','Участки: до 8 строк «walk/bus/metro/public/car/bike | минуты | откуда | куда | транспорт»'),segments=make('textarea');segments.rows=4;segments.setAttribute('aria-label','Участки маршрута · маршрут '+(index+1));segments.value=(row.segments||[]).map(segment=>[segment.mode,segment.minutes,segment.from,segment.to,segment.transport].join(' | ')).join('\n');segments.oninput=()=>{row.segments=segments.value.split('\n').filter(line=>line.trim()).slice(0,UNIVERSITY_ROUTE_SEGMENT_LIMIT).map(line=>{const [mode='unknown',minutes='',from='',to='',transport='']=line.split('|').map(value=>value.trim());return {mode,minutes,from,to,transport};});update();};segmentLabel.append(segments);grid.append(segmentLabel);
+      const campusRecord=universityRouteCampusById.get(row.campusId)||resolveCampus(row.campus);if(campusRecord){const refs=(campusRecord.sourceIds||[]).map(id=>UNIVERSITY_CATALOG.sources.find(source=>source.id===id)).filter(Boolean);const bibliography=make('div','','university-route-campus-sources');bibliography.append(make('p','Адрес и название корпуса · срез справочника '+UNIVERSITY_CATALOG.asOf,'muted'));for(const ref of refs){const a=make('a',ref.publisher+' · проверено '+ref.verifiedAt+(ref.evidenceType==='official-university'?' · сайт учреждения':' · официальный образовательный портал'));a.href=ref.url;a.target='_blank';a.rel='noopener noreferrer';bibliography.append(a);}grid.append(bibliography);}
       const stopLabel=make('label','Остановки / ориентиры: до трёх строк «название | широта | долгота»'),stops=make('textarea');stops.rows=3;stops.setAttribute('aria-label','Остановки и координаты · маршрут '+(index+1));stops.value=(Array.isArray(row.stops)?row.stops:[]).map(stop=>[stop.name,stop.latitude??'',stop.longitude??''].join(' | ')).join('\n');stops.oninput=()=>{row.stops=stops.value.split('\n').slice(0,UNIVERSITY_ROUTE_STOP_LIMIT).map(line=>{const [name,latitude='',longitude='']=line.split('|').map(value=>value.trim());return {name,latitude,longitude};});update();};stopLabel.append(stops);grid.append(stopLabel);
       const remove=make('button','Убрать маршрут','btn');remove.type='button';remove.onclick=()=>{rows.splice(index,1);emit();render();};detail.append(remove);list.append(detail);
     });list.append(previews);preview(previews);

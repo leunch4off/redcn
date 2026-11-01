@@ -318,6 +318,8 @@ class PhotoAIHTTPBoundaryTests(unittest.TestCase):
 
     def test_config_and_analyze_require_csrf_same_origin_and_valid_local_model_config(self):
         self.pair(); card_id = self.add_card()
+        pairing=self.server.pairing
+        pairing.manage_session(pairing.list_sessions()['sessions'][0]['id'],role='owner',expected_revision=pairing.list_sessions()['revision'])
         with patch.object(self.controller, 'prepare_card', return_value='b'*32) as prepare:
             for headers in ({'X-Phone-CSRF': 'wrong'}, {'Origin': 'https://foreign.example'}):
                 for path, data in (('/api/phone/photo-ai', {'enabled': True}),

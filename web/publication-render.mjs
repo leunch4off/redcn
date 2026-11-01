@@ -1,5 +1,5 @@
 import {sanitizeClientText} from './client-publication.mjs';
-import {normalizePublicationDesign,resolvePublicationData,publicationNodeText,publicationNodeLink,PUBLICATION_FONT_STACKS} from './publication-model.mjs';
+import {normalizePublicationDesign,resolvePublicationData,publicationNodeText,publicationNodeLink,publicationSurfaceLayout,PUBLICATION_FONT_STACKS} from './publication-model.mjs';
 
 const publicationEscape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const publicationImageValue=value=>typeof value==='string'?value:value?.dataUrl||'';
@@ -68,7 +68,7 @@ function publicationDrawRoute(ctx,node,route,theme,warnings){
 }
 
 export async function renderPublicationPage(canvas,surfaceId,input,card={},assets={}){
-  const design=normalizePublicationDesign(input),surface=design.surfaces[surfaceId]||design.surfaces.pdfOverview,data=publicationPageData(card,design,assets,surface.id),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
+  const design=normalizePublicationDesign(input),id=design.surfaces[surfaceId]?surfaceId:'pdfOverview',data=publicationPageData(card,design,assets,id),surface=publicationSurfaceLayout(design,id,data),warnings=[...data.warnings.map(message=>({code:'translation-review',message}))],photos=publicationPhotoList(assets);
   canvas.width=surface.width;canvas.height=surface.height;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas 2D недоступен');ctx.fillStyle=surface.background;ctx.fillRect(0,0,canvas.width,canvas.height);
   for(const node of publicationSurfaceNodes(surface)){
     if(publicationBoundEmpty(node,data)||surface.id==='pdfGallery'&&node.type==='image'&&!publicationNodeImage(node,data,assets,photos))continue;ctx.save();ctx.translate(node.x,node.y);ctx.globalAlpha=node.style.opacity;
@@ -84,7 +84,7 @@ export async function renderPublicationPage(canvas,surfaceId,input,card={},asset
     }
     ctx.restore();
   }
-  return {warnings,data,width:surface.width,height:surface.height};
+  return {warnings,data,surface,width:surface.width,height:surface.height};
 }
 
 function publicationNodeCss(node,surface){const s=node.style,fit=publicationFit('',node);return 'left:'+node.x/surface.width*100+'%;top:'+node.y/surface.height*100+'%;width:'+node.w/surface.width*100+'%;height:'+node.h/surface.height*100+'%;opacity:'+s.opacity+';z-index:'+node.z+';border-radius:'+s.radius/surface.width*100+'cqw;color:'+s.color+';font-family:'+PUBLICATION_FONT_STACKS[s.fontFamily]+';font-weight:'+s.fontWeight+';text-align:'+s.align+';line-height:'+s.lineHeight+';font-size:'+fit.size/surface.width*100+'cqw;';}
@@ -120,7 +120,7 @@ export function publicationDocumentPages(card={},input={},assets={}){
     while(remaining){const chunks=publicationDescriptionSlice(remaining,continuationBody);pages.push({surface:continuation,data:{...data,body:chunks[0]},photos});remaining=chunks[1];if(pages.length>40)throw Error('Описание требует слишком много страниц. Уменьшите шрифт или увеличьте текстовый блок.');}
   }
   if(photos.length){for(let at=0;at<photos.length;at+=5)pages.push({surface:design.surfaces.pdfGallery,data:{...data},photos:photos.slice(at,at+5)});}
-  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:design.surfaces.pdfLocation,data:{...data},photos});
+  if(data.address||data.latitude!==null||data.routes.length)pages.push({surface:publicationSurfaceLayout(design,'pdfLocation',data),data:{...data},photos});
   return {design,data,pages};
 }
 

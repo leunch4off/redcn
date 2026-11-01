@@ -1,0 +1,28 @@
+{
+  "name": "IridescenceAbalone geometry-only scan fixture",
+  "capture": "photogrammetry (public shell scan, not an apartment or LiDAR)",
+  "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/IridescenceAbalone/glTF-Binary/IridescenceAbalone.glb",
+  "sourceReadme": "https://github.com/KhronosGroup/glTF-Sample-Assets/blob/main/Models/IridescenceAbalone/README.md",
+  "sourceSha256": "d15ab000d3b04f177e101b2a36aacbf1c99490fc9bfe3868d481d75736946bab",
+  "sourceBytes": 9300744,
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "copyright": [
+    "2015 Abby Crawford: everything",
+    "2023 Eric Chadwick: materials"
+  ],
+  "changes": "Removed materials, images, normals, UVs and metadata; applied source static scene transform. Preserved every mesh vertex and triangle. Exported geometry-only ASCII PLY and uncompressed GLB. No resampling or invented geometry.",
+  "declaredUnits": null,
+  "vertexCount": 3159,
+  "triangleCount": 6036,
+  "files": {
+    "abalone-scan.geometry.ply": {
+      "bytes": 225393,
+      "sha256": "a7d82a11383338c4c08ac686b2c5b8a8655bb235979d5931fc6a572e5801293a"
+    },
+    "abalone-scan.geometry.glb": {
+      "bytes": 110928,
+      "sha256": "287d14a15536948f66e85101d9e42621d686031cbc8a60733d1dd1ed00aaf179"
+    }
+  }
+}

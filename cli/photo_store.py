@@ -57,6 +57,7 @@ def _connection(directory):
     connection=sqlite3.connect(directory/'media.sqlite3',timeout=15)
     connection.execute('CREATE TABLE IF NOT EXISTS assets (id TEXT PRIMARY KEY, mime TEXT, metadata TEXT)')
     connection.execute('CREATE TABLE IF NOT EXISTS photo_urls (url TEXT PRIMARY KEY, id TEXT)')
+    connection.execute('CREATE TABLE IF NOT EXISTS crop_links (original_id TEXT,asset_id TEXT,verification TEXT,metadata TEXT,created REAL,PRIMARY KEY(original_id,asset_id,verification))')
     return connection
 
 
@@ -66,16 +67,21 @@ def _save(directory,content,mime,metadata):
     if not path.exists():
         with tempfile.NamedTemporaryFile(dir=folder,delete=False) as f: f.write(content);temp=Path(f.name)
         temp.replace(path)
-    if metadata.get('kind')=='original':
-        with _connection(directory) as db:
-            existing=db.execute('SELECT metadata FROM assets WHERE id=?',(digest,)).fetchone()
-        if existing:
-            try:
-                previous=json.loads(existing[0])
-                if previous.get('kind')=='original':metadata={**previous,**metadata}
-            except (ValueError,TypeError):pass
+    with _connection(directory) as db:
+        existing=db.execute('SELECT metadata FROM assets WHERE id=?',(digest,)).fetchone()
+    previous={}
+    if existing:
+        try:previous=json.loads(existing[0])
+        except (ValueError,TypeError):pass
+    if metadata.get('kind')=='original' and previous.get('kind')=='original':metadata={**previous,**metadata}
     metadata={**metadata,'id':digest,'mime':mime,'bytes':len(content)}
-    with _connection(directory) as db: db.execute('INSERT OR REPLACE INTO assets VALUES (?,?,?)',(digest,mime,json.dumps(metadata,ensure_ascii=False)))
+    with _connection(directory) as db:
+        if metadata.get('kind')=='crop':
+            db.execute('INSERT OR REPLACE INTO crop_links VALUES(?,?,?,?,?)',(metadata.get('originalId'),digest,str(metadata.get('verification','unknown'))[:40],json.dumps(metadata,ensure_ascii=False),time.time()))
+        # One byte sequence may be both an original and another photo's crop.
+        # Preserve the original row; the derivative association lives separately.
+        if not(previous.get('kind')=='original' and metadata.get('kind')=='crop'):
+            db.execute('INSERT OR REPLACE INTO assets VALUES (?,?,?)',(digest,mime,json.dumps(metadata,ensure_ascii=False)))
     return metadata
 
 
@@ -355,6 +361,9 @@ def crop_photo(directory,digest,margins=None,*,cancel=None,deadline=None,min_con
             try: rows,_=recognize(cropped,directory,**options);remaining=watermark_boxes(rows,allow_id_footer);verification='mark-remains' if remaining else 'ocr-checked'
             except (OSError,ValueError,subprocess.SubprocessError):verification='not-checked'
         buffer=io.BytesIO();cropped.save(buffer,'JPEG',quality=95,subsampling=0)
+        if buffer.getvalue()==content:
+            cropped.close()
+            return {**original,'originalId':digest,'status':'unchanged','message':'Границы не изменили исходные байты. Оригинал сохранён без новой производной.'}
         metadata=_save(directory,buffer.getvalue(),'image/jpeg',{**_source_metadata(original),'kind':'crop','originalId':digest,'sourceUrl':original['sourceUrl'],'width':cropped.width,'height':cropped.height,'margins':margins,'rect':rect,'ocr':engine,'verification':verification,'cropMethod':'normalized-ocr-edge' if engine else 'manual','coordinateSpace':'exif-transposed-normalized','originalWidth':image.width,'originalHeight':image.height,'markState':'known-mark-excluded' if verification=='ocr-checked' else 'requires-review','cleanlinessConfirmed':False,'verificationEvidence':{'knownRegionsExcluded':bool(engine) and all((box['x']+box['width'])*image.width<=rect[0] or box['x']*image.width>=rect[2] or (box['y']+box['height'])*image.height<=rect[1] or box['y']*image.height>=rect[3] for box in boxes),'postOcr':'mark-detected' if remaining else 'not-detected' if verification=='ocr-checked' else 'not-checked'},'retainedArea':round(cropped.width*cropped.height/(image.width*image.height),4)})
         cropped.close()
         return {**metadata,'status':'review' if verification in ('mark-remains','not-checked') else 'cropped','boxes':boxes,'remaining':remaining,'message': 'В копии ещё распознаётся метка: проверьте кадр.' if remaining else 'Копия кадрирована; оригинал сохранён.'}
@@ -384,7 +393,7 @@ def auto_crop_photo(directory,digest,*,cancel=None,max_seconds=AUTO_CROP_SECONDS
         with _connection(directory) as db:
             db.execute('CREATE TABLE IF NOT EXISTS auto_crop_decisions (original_id TEXT,policy TEXT,decision TEXT,PRIMARY KEY(original_id,policy))')
             row=db.execute('SELECT decision FROM auto_crop_decisions WHERE original_id=? AND policy=?',(digest,policy)).fetchone()
-            manual_rows=db.execute('SELECT metadata FROM assets WHERE instr(metadata,?)>0 ORDER BY rowid DESC',(digest,)).fetchall()
+            manual_rows=db.execute('SELECT metadata FROM crop_links WHERE original_id=? ORDER BY created DESC',(digest,)).fetchall()+db.execute('SELECT metadata FROM assets WHERE instr(metadata,?)>0 ORDER BY rowid DESC',(digest,)).fetchall()
         # An operator's explicit crop has priority over a later automatic pass.
         for raw, in manual_rows:
             try:
@@ -491,3 +500,86 @@ def near_duplicate_candidates(directory,digests,*,distance_limit=10):
                 'distance':distance,'bits':256,'algorithm':'central-dhash256-v1',
                 'status':'candidate','requiresReview':True,'action':'retain-both'})
     return sorted(pairs,key=lambda row:(row['distance'],row['leftId'],row['rightId']))
+
+
+def accepted_photo_for_url(directory, url, *, margins=None, prefer_original=False, verify_bytes=True, original=None):
+    """Select cached evidence only; no download, crop or OCR.
+
+    Polling may use verify_bytes=False: delivery through asset() still verifies
+    the selected bytes. A saved per-card margin never selects a different crop.
+    """
+    url=redcn.allowed_url(url,images=True,resolve=False)
+    if margins is not None:
+        if not isinstance(margins,dict):raise ValueError('Неверные сохранённые границы кадра')
+        crop_rect(1000,1000,margins)
+        margins={key:float(margins.get(key,0)) for key in ('left','top','right','bottom')}
+    with _connection(directory) as db:
+        row=db.execute('SELECT id FROM photo_urls WHERE url=?',(url,)).fetchone()
+        if not row:raise ValueError('Оригинал фотографии ещё не сохранён')
+        candidates=db.execute('SELECT metadata FROM crop_links WHERE original_id=? ORDER BY created DESC',(row[0],)).fetchall()+db.execute('SELECT metadata FROM assets ORDER BY rowid DESC').fetchall()
+        if not verify_bytes and (not isinstance(original,dict) or original.get('id')!=row[0]):
+            raw=db.execute('SELECT metadata FROM assets WHERE id=?',(row[0],)).fetchone();original=json.loads(raw[0]) if raw else {}
+    if verify_bytes:original=asset(directory,row[0])[2]
+    if original.get('kind')!='original':raise ValueError('URL не связан с оригиналом фотографии')
+    chosen=None
+    for verification in (() if prefer_original else ('manual',) if margins is not None else ('manual','ocr-checked')):
+        for raw, in candidates:
+            try:
+                meta=json.loads(raw)
+                if meta.get('kind')!='crop' or meta.get('originalId')!=original['id'] or meta.get('verification')!=verification:continue
+                if not isinstance(meta.get('margins'),dict):continue
+                rectangle=crop_rect(original['width'],original['height'],meta['margins'])
+                if (rectangle[2]-rectangle[0],rectangle[3]-rectangle[1])!=(meta.get('width'),meta.get('height')):continue
+                if margins is not None and {key:float((meta.get('margins') or {}).get(key,0)) for key in margins}!=margins:continue
+                if verification=='ocr-checked':
+                    evidence=meta.get('verificationEvidence') or {}
+                    if evidence.get('knownRegionsExcluded') is not True or evidence.get('postOcr')!='not-detected':continue
+                if verify_bytes:asset(directory,meta['id'])  # Byte identity, not a mutable shared metadata row.
+                else:
+                    target=Path(directory)/'media'/meta['id']
+                    if target.is_symlink() or not target.is_file():continue
+                chosen=meta;break
+            except (KeyError,ValueError,TypeError,OSError):continue
+        if chosen:break
+    keys=('id','mime','bytes','width','height','sourceUrl','kind','originalId','verification','margins','rect','markState','cleanlinessConfirmed')
+    def compact(meta):
+        result={key:meta[key] for key in keys if key in meta}
+        if meta.get('verification')=='ocr-checked':
+            proof=meta.get('verificationEvidence') or {}
+            result['verificationEvidence']={'knownRegionsExcluded':proof.get('knownRegionsExcluded') is True,
+                'postOcr':'not-detected' if proof.get('postOcr')=='not-detected' else 'not-checked'}
+        return result
+    return {'original':compact(original),'selected':compact(chosen or original),
+            'reason':chosen['verification'] if chosen else 'explicit-original' if prefer_original else 'manual-not-cached' if margins is not None else 'original'}
+
+
+def exact_photo_duplicates(directory, *, maximum_cards=1000):
+    """Cross-card equality is verified by SHA-256 bytes, not visual similarity."""
+    if type(maximum_cards) is not int or not 1<=maximum_cards<=5000:raise ValueError('Лимит карточек: 1–5000')
+    path=Path(directory)/'listings.sqlite3'
+    if not path.exists():return {'groups':[],'cardsChecked':0,'truncated':False,'action':'retain-all'}
+    with sqlite3.connect('file:'+str(path)+'?mode=ro',uri=True,timeout=15) as db:
+        db.execute('PRAGMA query_only=ON')
+        try:cards=db.execute('SELECT id,payload FROM results ORDER BY updated DESC,id LIMIT ?',(maximum_cards+1,)).fetchall()
+        except sqlite3.OperationalError:return {'groups':[],'cardsChecked':0,'truncated':False,'action':'retain-all'}
+    with _connection(directory) as db:urls=dict(db.execute('SELECT url,id FROM photo_urls'))
+    groups={}
+    for card_id,raw in cards[:maximum_cards]:
+        try:card=json.loads(raw)
+        except (ValueError,TypeError):continue
+        fields=card.get('fields') or {};listing=card.get('listing') or {}
+        photos=fields.get('photos',listing.get('images',[]))
+        if not isinstance(photos,list):continue
+        for url in dict.fromkeys(item for item in photos if isinstance(item,str)):
+            digest=urls.get(url)
+            if digest:groups.setdefault(digest,[]).append({'cardId':card_id,'sourceUrl':url})
+    result=[]
+    for digest,refs in sorted(groups.items()):
+        if len({ref['cardId'] for ref in refs})<2:continue
+        try:content,_,meta=asset(directory,digest)
+        except (ValueError,OSError):continue
+        if meta.get('kind')!='original':continue
+        result.append({'sha256':digest,'bytes':len(content),'references':refs,
+                       'verified':True,'action':'retain-all'})
+    return {'groups':result,'cardsChecked':min(len(cards),maximum_cards),
+            'truncated':len(cards)>maximum_cards,'action':'retain-all'}

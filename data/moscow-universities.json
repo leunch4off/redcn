@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "asOf": "2026-10-30",
+  "asOf": "2026-11-01",
   "coverage": "Verified Moscow and Moscow Oblast higher-education reference snapshot; not an exhaustive registry or popularity ranking.",
   "note": "A Chinese admissions page proves an audience, not a measured Chinese student share. A campus address is a study destination, never evidence that an apartment is nearby.",
   "universities": [
@@ -1867,13 +1867,26 @@
       "region": "Москва",
       "city": "Москва",
       "sourceIds": [
-        "uni-src-mgimo-ai"
+        "uni-src-mgimo-ai",
+        "campus-primary-mgimo-main-campus",
+        "campus-primary-mgimo-career-contacts"
       ],
       "translationStatus": "editorial",
-      "addressStatus": "official",
+      "addressStatus": "institution-verified",
       "locationType": "teaching_campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mgimo-main-campus",
+          "campus-primary-mgimo-career-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "teaching-campus",
+        "method": "institution-search-excerpt",
+        "note": "Документ университета прямо называет основной кампус на проспекте Вернадского 76. Актуальная контактная страница Центра карьеры подтверждает тот же адрес; назначение каждого корпуса не выводится из общего кампуса."
+      }
     },
     {
       "id": "mgimo-odintsovo",
@@ -2084,13 +2097,24 @@
       "region": "Москва",
       "city": "Москва",
       "sourceIds": [
-        "uni-src-markhi-cn"
+        "uni-src-markhi-cn",
+        "campus-primary-marhi-common"
       ],
       "translationStatus": "editorial",
-      "addressStatus": "official",
+      "addressStatus": "institution-verified",
       "locationType": "teaching_building",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-marhi-common"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "teaching-building",
+        "method": "institution-page",
+        "note": "Учебно-административный корпус на Рождественке 11/4, корпус 1, строение 4 назван в местах практической подготовки и итоговой аттестации."
+      }
     },
     {
       "id": "kosygin-main",
@@ -2127,13 +2151,24 @@
       "region": "Москва",
       "city": "Москва",
       "sourceIds": [
-        "uni-src-rgust-cn"
+        "uni-src-rgust-cn",
+        "campus-primary-rgust-classrooms"
       ],
       "translationStatus": "editorial",
-      "addressStatus": "official",
+      "addressStatus": "institution-verified",
       "locationType": "teaching_building",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-rgust-classrooms"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "teaching-building",
+        "method": "institution-page",
+        "note": "Инвентарная таблица прямо указывает учебные аудитории 303–412 по адресу Лосиноостровская 49, строение 1."
+      }
     },
     {
       "id": "gup-radio",
@@ -2148,13 +2183,24 @@
       "region": "Москва",
       "city": "Москва",
       "sourceIds": [
-        "uni-src-gup-cn"
+        "uni-src-gup-cn",
+        "campus-primary-gup-common"
       ],
       "translationStatus": "editorial",
-      "addressStatus": "official",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-gup-common"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-page",
+        "note": "Радио 10А, строение 2 указан как юридический и фактический адрес, а также как учебный корпус. Радио 10, строение 2 и Радио 10А, строение 1 — отдельные объекты."
+      }
     },
     {
       "id": "bmstu-baumanskaya",
@@ -2192,16 +2238,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-mai-cn"
+        "tech-mai-cn",
+        "campus-primary-mai-arrival"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
-      "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
+      "note": "Волоколамское шоссе 4, корпус 30 прямо назван Главным административным корпусом. Это место обращения, а не подтверждение учебного корпуса конкретного института.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mai-arrival"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "administrative-address",
+        "method": "institution-search-excerpt",
+        "note": "Волоколамское шоссе 4, корпус 30 прямо назван Главным административным корпусом. Это место обращения, а не подтверждение учебного корпуса конкретного института."
+      }
     },
     {
       "id": "mpei-krasnokazarmennaya",
@@ -2237,16 +2294,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-mephi-cn"
+        "tech-mephi-cn",
+        "campus-primary-mephi-contacts"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mephi-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-page",
+        "note": "Контактная таблица университета указывает Москва, Каширское шоссе 31. Отдельные корпуса и аудитории в этой записи не определены."
+      }
     },
     {
       "id": "mipt-dolgoprudny",
@@ -2261,16 +2329,27 @@
       "city": "Долгопрудный",
       "region": "Московская область",
       "sourceIds": [
-        "tech-mipt-cn"
+        "tech-mipt-cn",
+        "campus-primary-mipt-admissions-contacts"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
-      "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
+      "note": "Институтский переулок 9, Главный корпус, второй этаж указан для приёмной кампании. Вне кампании комиссия указывает Аудиторный корпус, переулок 7; это не замена сохранённой локации и не юридический адрес МФТИ.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mipt-admissions-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "main-building-admissions-address",
+        "method": "institution-page",
+        "note": "Институтский переулок 9, Главный корпус, второй этаж указан для приёмной кампании. Вне кампании комиссия указывает Аудиторный корпус, переулок 7; это не замена сохранённой локации и не юридический адрес МФТИ."
+      }
     },
     {
       "id": "mgsu-yaroslavskoe",
@@ -2284,16 +2363,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-mgsu-cn"
+        "tech-mgsu-cn",
+        "campus-primary-mgsu-contacts"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mgsu-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-page",
+        "note": "Раздел «Наш адрес» указывает Ярославское шоссе 26. Страница не задаёт отдельный корпус или актуальную принадлежность факультетов."
+      }
     },
     {
       "id": "mirea-vernadskogo78",
@@ -2422,16 +2512,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-stankin-cn"
+        "tech-stankin-cn",
+        "campus-primary-stankin-common"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-stankin-common"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-page",
+        "note": "Вадковский переулок 3А указан как юридический, фактический адрес и место образовательной деятельности. Адрес приёмной комиссии Вадковский 1 — отдельный объект."
+      }
     },
     {
       "id": "mtusi-aviamotornaya",
@@ -2445,16 +2546,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-mtusi-cn"
+        "tech-mtusi-cn",
+        "campus-primary-mtusi-ipk-contacts"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mtusi-ipk-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "legal-address",
+        "method": "institution-search-excerpt",
+        "note": "Авиамоторная 8А указана именно как юридический адрес МТУСИ. Занятия ИПК и приведённые на странице координаты относятся к Народного Ополчения 32 и не переносятся на Авиамоторную."
+      }
     },
     {
       "id": "moscow-polytech-semenovskaya",
@@ -2569,16 +2681,27 @@
       "city": "Зеленоград",
       "region": "Москва",
       "sourceIds": [
-        "tech-miet-cn"
+        "tech-miet-cn",
+        "campus-primary-miet-contacts"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-miet-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-page",
+        "note": "Общий адрес — Зеленоград, площадь Шокина, дом 1. Адрес приёма документов отдельно уточняет строение 2, Дом культуры, и не подставляется вместо общей локации."
+      }
     },
     {
       "id": "madi-leningradsky",
@@ -2667,16 +2790,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-gubkin-cn"
+        "tech-gubkin-cn",
+        "campus-primary-gubkin-lab-contacts"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-gubkin-lab-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "legal-address",
+        "method": "institution-page",
+        "note": "Университетская лаборатория указывает Ленинский проспект 65, корпус 1; этот же адрес приведён в юридических реквизитах. Адрес приёмной комиссии 63/2, корпус 1 не смешивается с ним."
+      }
     },
     {
       "id": "timiryazev-timiryazevskaya",
@@ -2694,16 +2828,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-timir-cn"
+        "tech-timir-cn",
+        "campus-primary-timiryazev-directory"
       ],
       "translationStatus": "editorial",
-      "addressNormalization": "editorial-from-official-zh",
-      "addressStatus": "official-source",
+      "addressNormalization": "editorial-from-institution-address",
+      "addressStatus": "institution-verified",
       "locationType": "main_address",
       "note": "Официальный контактный/приёмный адрес; нужный учебный корпус следует уточнять у университета.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-timiryazev-directory"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-page",
+        "note": "Общие контакты и отдел документационного обеспечения указывают Тимирязевскую 49. Номер конкретного учебного корпуса не установлен этой записью."
+      }
     },
     {
       "id": "guz-kazakova1",
@@ -2904,13 +3049,24 @@
       "locationType": "contact_address",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-12e588b40e"
+        "hum-12e588b40e",
+        "campus-primary-mpgu-contacts"
       ],
       "notes": "Источник называет приёмную комиссию; тип учебного корпуса здесь отдельно не заявляется.",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mpgu-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "admissions-address",
+        "method": "institution-search-excerpt",
+        "note": "Контактная страница отделяет главный корпус на Малой Пироговской 1/1 от приёмной комиссии и подготовительных курсов на Вернадского 88. Личный приём абитуриентов имеет сезонный график."
+      }
     },
     {
       "id": "pushkin-volgina",
@@ -2928,14 +3084,25 @@
       "locationType": "teaching_building",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-91720d3bb6"
+        "hum-91720d3bb6",
+        "campus-primary-pushkin-common"
       ],
       "notes": "Официальный китайский профиль описывает единый учебный комплекс, соединённый с общежитием.",
-      "addressNormalization": "editorial-from-official-zh",
+      "addressNormalization": "editorial-from-institution-address",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-pushkin-common"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "teaching-building",
+        "method": "institution-page",
+        "note": "Академика Волгина 6 указан как адрес организации и место образовательной деятельности, практической подготовки и итоговой аттестации."
+      }
     },
     {
       "id": "mgppu-sretenka",
@@ -3071,14 +3238,25 @@
       "locationType": "teaching_building",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-fc5f59ddfa"
+        "hum-fc5f59ddfa",
+        "campus-primary-fa-student-contacts"
       ],
       "notes": "Официальный китайский профиль прямо перечисляет учебные корпуса; состав факультетов следует проверять отдельно.",
-      "addressNormalization": "editorial-from-official-zh",
+      "addressNormalization": "editorial-from-institution-address",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-fa-student-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "faculty-address",
+        "method": "institution-search-excerpt",
+        "note": "Ленинградский проспект 49/2 указан отдельно от Ленинградского 49. Источник подтверждает факультетский контактный адрес, не состав всех кафедр и не доступность здания во время ремонта."
+      }
     },
     {
       "id": "fa-kibalchicha",
@@ -3095,14 +3273,25 @@
       "locationType": "teaching_building",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-fc5f59ddfa"
+        "hum-fc5f59ddfa",
+        "campus-primary-fa-kibalchicha-dpo"
       ],
       "notes": "Официальный китайский профиль прямо перечисляет учебные корпуса; состав факультетов следует проверять отдельно.",
-      "addressNormalization": "editorial-from-official-zh",
+      "addressNormalization": "editorial-from-institution-address",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-fa-kibalchicha-dpo"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "teaching-building",
+        "method": "institution-search-excerpt",
+        "note": "Образовательная программа прямо указывает проведение занятий на улице Кибальчича 1. Одна программа не доказывает расположение всех факультетов."
+      }
     },
     {
       "id": "fa-zlatoustinsky",
@@ -3112,27 +3301,38 @@
       "aliases": [
         "Финуниверситет Малый Златоустинский"
       ],
-      "addressRu": "Москва, Малый Златоустинский переулок, д. 7",
-      "addressZh": "小兹拉托乌斯京巷7号",
+      "addressRu": "Москва, Малый Златоустинский переулок, д. 7, стр. 1",
+      "addressZh": "小兹拉托乌斯京巷7号1号楼",
       "city": "Москва",
       "region": "Москва",
       "locationType": "teaching_building",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-fc5f59ddfa"
+        "hum-fc5f59ddfa",
+        "campus-primary-fa-classrooms"
       ],
-      "notes": "Официальный китайский профиль прямо перечисляет учебные корпуса; состав факультетов следует проверять отдельно.",
-      "addressNormalization": "editorial-from-official-zh",
+      "notes": "В инвентарной таблице учебные аудитории и компьютерные классы указаны по адресу Малый Златоустинский переулок 7, строение 1.",
+      "addressNormalization": "editorial-from-institution-address",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-fa-classrooms"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "teaching-building",
+        "method": "institution-search-excerpt",
+        "note": "В инвентарной таблице учебные аудитории и компьютерные классы указаны по адресу Малый Златоустинский переулок 7, строение 1."
+      }
     },
     {
       "id": "sechenov-pirogovskaya",
       "universityId": "sechenov",
       "ru": "Сеченовский университет — адрес ректората",
-      "zh": "谢切诺夫大学大皮罗戈夫街主址",
+      "zh": "谢切诺夫大学大皮罗戈夫街行政楼",
       "aliases": [
         "Сеченова Большая Пироговская"
       ],
@@ -3140,17 +3340,28 @@
       "addressZh": "莫斯科市大皮罗戈夫街2号4号楼",
       "city": "Москва",
       "region": "Москва",
-      "locationType": "main_address",
+      "locationType": "administrative",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-bbbda532db"
+        "hum-bbbda532db",
+        "campus-primary-sechenov-buildings"
       ],
-      "notes": "Официальный контактный адрес/адрес подачи документов, не утверждение о корпусе конкретного факультета.",
-      "addressNormalization": "editorial-from-official-zh",
+      "notes": "Большая Пироговская 2, строение 4 назван ректоратом. Это административная локация, а не юридический адрес и не учебный корпус любого факультета.",
+      "addressNormalization": "editorial-from-institution-address",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-sechenov-buildings"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "administrative-address",
+        "method": "institution-page",
+        "note": "Большая Пироговская 2, строение 4 назван ректоратом. Это административная локация, а не юридический адрес и не учебный корпус любого факультета."
+      }
     },
     {
       "id": "pirogov-ostrovityanova",
@@ -3217,13 +3428,24 @@
       "locationType": "main_address",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-6c2dc850b7"
+        "hum-6c2dc850b7",
+        "campus-primary-gnesin-contacts"
       ],
       "notes": "Адрес учреждения не доказывает близость конкретной квартиры или обучение нужного факультета в этом здании.",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-gnesin-contacts"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-search-excerpt",
+        "note": "Контакты академии указывают Поварскую 30–36, строение 1. Это сохранённый общий адрес, не подмена отдельного корпуса на Поварской 38, строение 1, где расположена приёмная комиссия."
+      }
     },
     {
       "id": "vgik-wilhelm-pieck",
@@ -3257,20 +3479,31 @@
         "МГПУ Сельхоз",
         "МГПУ Сельскохозяйственный"
       ],
-      "addressRu": "Москва, 2-й Сельскохозяйственный проезд, д.4",
+      "addressRu": "Москва, 2-й Сельскохозяйственный проезд, д. 4, корп. 1",
       "addressZh": "",
       "city": "Москва",
       "region": "Москва",
       "locationType": "main_address",
       "translationStatus": "editorial",
       "sourceIds": [
-        "hum-mgpu-student-address"
+        "hum-mgpu-student-address",
+        "campus-primary-mgpu-common"
       ],
       "notes": "Главный административныйадрес; необъявляетсяместомобучениялюбогофакультета.",
       "kind": "campus",
       "proximityVerified": false,
-      "addressStatus": "official-source",
-      "aliasesStatus": "editorial-search-aliases"
+      "addressStatus": "institution-verified",
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-mgpu-common"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "institution-address",
+        "method": "institution-search-excerpt",
+        "note": "Адрес организации указан как 2-й Сельскохозяйственный проезд 4, корпус 1. Корпус 2 с приёмной комиссией и студенческим центром перечисляется отдельно и не объединяется с корпусом 1."
+      }
     },
     {
       "id": "rgsu-wilhelm-pieck",
@@ -3309,16 +3542,27 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "last-guu-address"
+        "last-guu-address",
+        "campus-primary-guu-dpo-office"
       ],
       "translationStatus": "editorial",
-      "addressStatus": "official-source",
+      "addressStatus": "institution-verified",
       "addressNormalization": "official-ru-literal",
-      "locationType": "main_address",
-      "note": "Официальный адрес приёмной комиссии; нужный учебный корпус уточняется по расписанию.",
+      "locationType": "contact_address",
+      "note": "Официальный каталог ГУУ указывает офис приёма по адресу Рязанский проспект 99, строение 4. Это контактная локация; утверждение о главном учебном корпусе или всех факультетах из неё не делается.",
       "kind": "campus",
       "proximityVerified": false,
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "addressEvidence": {
+        "sourceIds": [
+          "campus-primary-guu-dpo-office"
+        ],
+        "checkedAt": "2026-11-01",
+        "type": "official-university",
+        "scope": "admissions-address",
+        "method": "institution-search-excerpt",
+        "note": "Официальный каталог ГУУ указывает офис приёма по адресу Рязанский проспект 99, строение 4. Это контактная локация; утверждение о главном учебном корпусе или всех факультетах из неё не делается."
+      }
     },
     {
       "id": "mgik-khimki",
@@ -5068,6 +5312,476 @@
         "teaching-building",
         "teaching-address"
       ]
+    },
+    {
+      "id": "campus-primary-marhi-common",
+      "url": "https://marhi.ru/sveden/common/",
+      "title": "МАРХИ — основные сведения и учебно-административный корпус",
+      "publisher": "marhi.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "markhi",
+      "supports": [
+        "campus-address",
+        "teaching-building"
+      ],
+      "campusIds": [
+        "markhi-main"
+      ],
+      "note": "Учебно-административный корпус на Рождественке 11/4, корпус 1, строение 4 назван в местах практической подготовки и итоговой аттестации."
+    },
+    {
+      "id": "campus-primary-rgust-classrooms",
+      "url": "https://rgust.ru/sveden/objects/cabinets/study_rooms.html",
+      "title": "РГУ СоцТех — оборудованные учебные кабинеты",
+      "publisher": "rgust.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "rgust",
+      "supports": [
+        "campus-address",
+        "teaching-building"
+      ],
+      "campusIds": [
+        "rgust-main"
+      ],
+      "note": "Инвентарная таблица прямо указывает учебные аудитории 303–412 по адресу Лосиноостровская 49, строение 1."
+    },
+    {
+      "id": "campus-primary-gup-common",
+      "url": "https://eduprosvet.ru/sveden/common/",
+      "title": "Университет просвещения — основные сведения",
+      "publisher": "eduprosvet.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "gup",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "gup-radio"
+      ],
+      "note": "Радио 10А, строение 2 указан как юридический и фактический адрес, а также как учебный корпус. Радио 10, строение 2 и Радио 10А, строение 1 — отдельные объекты."
+    },
+    {
+      "id": "campus-primary-mai-arrival",
+      "url": "https://sng.mai.ru/bitrix/templates/sng_onepager/doc/%D0%98%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F%20%D0%BF%D0%BE%20%D0%BF%D1%80%D0%B8%D0%B5%D0%B7%D0%B4%D1%83%20%D0%A1%D0%9D%D0%93.pdf",
+      "title": "МАИ — инструкция по приезду, Главный административный корпус",
+      "publisher": "sng.mai.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mai",
+      "supports": [
+        "campus-address",
+        "administrative-address"
+      ],
+      "campusIds": [
+        "mai-volokolamskoe"
+      ],
+      "note": "Волоколамское шоссе 4, корпус 30 прямо назван Главным административным корпусом. Это место обращения, а не подтверждение учебного корпуса конкретного института.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-mephi-contacts",
+      "url": "https://mephi.ru/about/contacts",
+      "title": "НИЯУ МИФИ — контакты",
+      "publisher": "mephi.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "mephi",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "mephi-kashirskoe"
+      ],
+      "note": "Контактная таблица университета указывает Москва, Каширское шоссе 31. Отдельные корпуса и аудитории в этой записи не определены."
+    },
+    {
+      "id": "campus-primary-mipt-admissions-contacts",
+      "url": "https://pk.mipt.ru/contacts/",
+      "title": "МФТИ — контакты приёмной комиссии",
+      "publisher": "pk.mipt.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "mipt",
+      "supports": [
+        "campus-address",
+        "main-building-admissions-address"
+      ],
+      "campusIds": [
+        "mipt-dolgoprudny"
+      ],
+      "note": "Институтский переулок 9, Главный корпус, второй этаж указан для приёмной кампании. Вне кампании комиссия указывает Аудиторный корпус, переулок 7; это не замена сохранённой локации и не юридический адрес МФТИ."
+    },
+    {
+      "id": "campus-primary-mgsu-contacts",
+      "url": "https://mgsu.ru/contacts/",
+      "title": "НИУ МГСУ — контакты",
+      "publisher": "mgsu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "mgsu",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "mgsu-yaroslavskoe"
+      ],
+      "note": "Раздел «Наш адрес» указывает Ярославское шоссе 26. Страница не задаёт отдельный корпус или актуальную принадлежность факультетов."
+    },
+    {
+      "id": "campus-primary-stankin-common",
+      "url": "https://stankin.ru/sveden/common",
+      "title": "МГТУ СТАНКИН — основные сведения",
+      "publisher": "stankin.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "stankin",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "stankin-vadkovsky"
+      ],
+      "note": "Вадковский переулок 3А указан как юридический, фактический адрес и место образовательной деятельности. Адрес приёмной комиссии Вадковский 1 — отдельный объект."
+    },
+    {
+      "id": "campus-primary-mtusi-ipk-contacts",
+      "url": "https://ipk.mtuci.ru/contacts/",
+      "title": "МТУСИ — юридический адрес в контактах ИПК",
+      "publisher": "ipk.mtuci.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mtusi",
+      "supports": [
+        "campus-address",
+        "legal-address"
+      ],
+      "campusIds": [
+        "mtusi-aviamotornaya"
+      ],
+      "note": "Авиамоторная 8А указана именно как юридический адрес МТУСИ. Занятия ИПК и приведённые на странице координаты относятся к Народного Ополчения 32 и не переносятся на Авиамоторную.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-miet-contacts",
+      "url": "https://www.miet.ru/contacts/?contacts=%D0%9E%D0%B1%D1%89%D0%B8%D0%B5",
+      "title": "МИЭТ — контактная информация",
+      "publisher": "www.miet.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "miet",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "miet-zelenograd"
+      ],
+      "note": "Общий адрес — Зеленоград, площадь Шокина, дом 1. Адрес приёма документов отдельно уточняет строение 2, Дом культуры, и не подставляется вместо общей локации."
+    },
+    {
+      "id": "campus-primary-gubkin-lab-contacts",
+      "url": "https://lab.gubkin.ru/contact",
+      "title": "РГУ нефти и газа имени Губкина — адрес университетской лаборатории и реквизиты",
+      "publisher": "lab.gubkin.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "gubkin",
+      "supports": [
+        "campus-address",
+        "legal-address"
+      ],
+      "campusIds": [
+        "gubkin-leninsky"
+      ],
+      "note": "Университетская лаборатория указывает Ленинский проспект 65, корпус 1; этот же адрес приведён в юридических реквизитах. Адрес приёмной комиссии 63/2, корпус 1 не смешивается с ним."
+    },
+    {
+      "id": "campus-primary-timiryazev-directory",
+      "url": "https://www.timacad.ru/phone",
+      "title": "РГАУ-МСХА — общие контакты университета",
+      "publisher": "www.timacad.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "timiryazev",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "timiryazev-timiryazevskaya"
+      ],
+      "note": "Общие контакты и отдел документационного обеспечения указывают Тимирязевскую 49. Номер конкретного учебного корпуса не установлен этой записью."
+    },
+    {
+      "id": "campus-primary-pushkin-common",
+      "url": "https://www.pushkin.institute/sveden/common/",
+      "title": "Институт Пушкина — основные сведения и места образовательной деятельности",
+      "publisher": "www.pushkin.institute",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "pushkin",
+      "supports": [
+        "campus-address",
+        "teaching-building"
+      ],
+      "campusIds": [
+        "pushkin-volgina"
+      ],
+      "note": "Академика Волгина 6 указан как адрес организации и место образовательной деятельности, практической подготовки и итоговой аттестации."
+    },
+    {
+      "id": "campus-primary-fa-student-contacts",
+      "url": "https://www.fa.ru/for-students/free/contacts/",
+      "title": "Финансовый университет — контакты факультетов для студентов",
+      "publisher": "www.fa.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "fa",
+      "supports": [
+        "campus-address",
+        "faculty-address"
+      ],
+      "campusIds": [
+        "fa-leningradsky"
+      ],
+      "note": "Ленинградский проспект 49/2 указан отдельно от Ленинградского 49. Источник подтверждает факультетский контактный адрес, не состав всех кафедр и не доступность здания во время ремонта.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-fa-kibalchicha-dpo",
+      "url": "https://www.fa.ru/for-applicants/educational-programs/dpo/rkuefb/",
+      "title": "Финансовый университет — место обучения на Кибальчича 1",
+      "publisher": "www.fa.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "fa",
+      "supports": [
+        "campus-address",
+        "teaching-building"
+      ],
+      "campusIds": [
+        "fa-kibalchicha"
+      ],
+      "note": "Образовательная программа прямо указывает проведение занятий на улице Кибальчича 1. Одна программа не доказывает расположение всех факультетов.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-fa-classrooms",
+      "url": "https://www.fa.ru/sveden/objects/",
+      "title": "Финансовый университет — учебные аудитории и материальная база",
+      "publisher": "www.fa.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "fa",
+      "supports": [
+        "campus-address",
+        "teaching-building"
+      ],
+      "campusIds": [
+        "fa-zlatoustinsky"
+      ],
+      "note": "В инвентарной таблице учебные аудитории и компьютерные классы указаны по адресу Малый Златоустинский переулок 7, строение 1.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-sechenov-buildings",
+      "url": "https://www.sechenov.ru/contacts/building/",
+      "title": "Сеченовский университет — здания и помещения, ректорат",
+      "publisher": "www.sechenov.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "evidenceType": "official-university",
+      "institutionId": "sechenov",
+      "supports": [
+        "campus-address",
+        "administrative-address"
+      ],
+      "campusIds": [
+        "sechenov-pirogovskaya"
+      ],
+      "note": "Большая Пироговская 2, строение 4 назван ректоратом. Это административная локация, а не юридический адрес и не учебный корпус любого факультета."
+    },
+    {
+      "id": "campus-primary-mgimo-main-campus",
+      "url": "https://mgimo.ru/upload/2021/10/mgimo-priority-2030.pdf",
+      "title": "МГИМО — программа Приоритет-2030, основной кампус",
+      "publisher": "mgimo.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mgimo",
+      "supports": [
+        "campus-address",
+        "teaching-campus"
+      ],
+      "campusIds": [
+        "mgimo-vernadskogo"
+      ],
+      "note": "Документ университета прямо называет основной кампус на проспекте Вернадского 76. Актуальная контактная страница Центра карьеры подтверждает тот же адрес; назначение каждого корпуса не выводится из общего кампуса.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-mpgu-contacts",
+      "url": "https://mpgu.su/kontaktyi/",
+      "title": "МПГУ — контакты, приёмная комиссия на Вернадского",
+      "publisher": "mpgu.su",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mpgu",
+      "supports": [
+        "campus-address",
+        "admissions-address"
+      ],
+      "campusIds": [
+        "mpgu-vernadskogo88"
+      ],
+      "note": "Контактная страница отделяет главный корпус на Малой Пироговской 1/1 от приёмной комиссии и подготовительных курсов на Вернадского 88. Личный приём абитуриентов имеет сезонный график.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-gnesin-contacts",
+      "url": "https://gnesin-academy.ru/events/contacts/",
+      "title": "РАМ имени Гнесиных — контакты на Поварской",
+      "publisher": "gnesin-academy.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "gnesin",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "gnesin-povarskaya"
+      ],
+      "note": "Контакты академии указывают Поварскую 30–36, строение 1. Это сохранённый общий адрес, не подмена отдельного корпуса на Поварской 38, строение 1, где расположена приёмная комиссия.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-mgpu-common",
+      "url": "https://www.mgpu.ru/sveden/common/",
+      "title": "МГПУ — основные сведения, адрес организации",
+      "publisher": "www.mgpu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mgpu",
+      "supports": [
+        "campus-address",
+        "institution-address"
+      ],
+      "campusIds": [
+        "mgpu-selkhoz"
+      ],
+      "note": "Адрес организации указан как 2-й Сельскохозяйственный проезд 4, корпус 1. Корпус 2 с приёмной комиссией и студенческим центром перечисляется отдельно и не объединяется с корпусом 1.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-guu-dpo-office",
+      "url": "https://dpo.guu.ru/catalog/magistracy",
+      "title": "ГУУ — контакты приёмного офиса",
+      "publisher": "dpo.guu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "guu",
+      "supports": [
+        "campus-address",
+        "admissions-address"
+      ],
+      "campusIds": [
+        "guu-ryazansky"
+      ],
+      "note": "Официальный каталог ГУУ указывает офис приёма по адресу Рязанский проспект 99, строение 4. Это контактная локация; утверждение о главном учебном корпусе или всех факультетах из неё не делается.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "campus-primary-mgimo-career-contacts",
+      "url": "https://career.mgimo.ru/page/staticpage/show_static_page.seam?staticPageId=323",
+      "title": "Центр карьеры МГИМО — адрес на Вернадского 76",
+      "publisher": "career.mgimo.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mgimo",
+      "supports": [
+        "campus-address"
+      ],
+      "campusIds": [
+        "mgimo-vernadskogo"
+      ],
+      "note": "Центр карьеры указывает проспект Вернадского 76, кабинет 1020. Страница подтверждает адрес, не идентифицирует все корпуса кампуса.",
+      "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
     }
   ],
   "unavailablePages": [

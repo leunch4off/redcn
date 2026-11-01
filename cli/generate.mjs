@@ -1,7 +1,11 @@
 import {DICTIONARY,DEFAULT_PREFS,FEATURES,extractFacts,generateListing,translateDraft} from '../web/engine.mjs';
 import {resolvePhotoFurniture} from '../web/fact-evidence.mjs';
+import {validateListingFields} from '../web/fact-ledger.mjs';
 let raw='';for await(const chunk of process.stdin)raw+=chunk;
 const input=JSON.parse(raw);
+if(!input||typeof input!=='object'||Array.isArray(input)||input.text!==undefined&&typeof input.text!=='string'){process.stderr.write('Нужен объект запроса с исходным текстом');process.exit(2);}
+const validation=validateListingFields(input.data??{});
+if(!validation.valid){process.stderr.write(validation.problems.join('\n'));process.exit(2);}
 const rules={...DICTIONARY,...input.rules};
 if(input.operation==='translate'){process.stdout.write(JSON.stringify(translateDraft(input.text||'',{rules,mode:input.mode||'draft',entries:input.entries||[]})));process.exit(0);}
 const extracted=extractFacts(input.text||'',rules);

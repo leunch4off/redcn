@@ -46,6 +46,8 @@ class WorkspaceHTTPTests(unittest.TestCase):
 
     def test_ten_manual_jobs_finish_recording_but_eleventh_import_still_works(self):
         self.pair()
+        pairing=self.server.pairing
+        pairing.manage_session(pairing.list_sessions()['sessions'][0]['id'],role='owner',expected_revision=pairing.list_sessions()['revision'])
         self.request('/api/phone/import-diagnostics', {'action':'arm','target':10})
         with patch('node_runtime.resolve_node',side_effect=ValueError('isolated preflight fixture')):
             for n in range(10):

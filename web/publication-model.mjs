@@ -236,6 +236,38 @@ export function normalizePublicationDesign(input={}){
 }
 
 export function publicationPage(design,id){return normalizePublicationDesign(design).surfaces[PUBLICATION_SURFACES.includes(id)?id:'pdfOverview'];}
+
+// Automatic compaction is a derived view, never a mutation of the saved design.
+// A changed position, binding or literal text is an explicit operator choice.
+const publicationSameAutomaticNode=(node,base)=>!!base&&['type','bind','text','x','y','w','h'].every(key=>node[key]===base[key]);
+let publicationLayoutBaseline=null;
+export function publicationSurfaceLayout(input,surfaceId,data={}){
+  const design=normalizePublicationDesign(input),source=design.surfaces[surfaceId]||design.surfaces.pdfOverview;
+  const surface={...source,nodes:source.nodes.map(node=>({...node,style:{...node.style}}))};
+  if(!['pdfLocation','outro'].includes(surface.id))return surface;
+  const baseline=(publicationLayoutBaseline||=(publicationBaseSurfaces()))[surface.id],defaults=new Map(baseline.nodes.map(node=>[node.id,node]));
+  if(surface.width!==baseline.width||surface.height!==baseline.height)return surface;
+  const routeKey=node=>/^route([12])(?:Title|Time|Distance|Transport|Yandex|Google|OSM|Stops|Stop[123])?$/.exec(node.bind||'')?.[1];
+  const confirmed=index=>data['route'+index]?.confirmedTime===true;
+  const automatic=node=>publicationSameAutomaticNode(node,defaults.get(node.id));
+  for(const node of surface.nodes){const route=routeKey(node);if(route&&!confirmed(route)&&automatic(node))node.visible=false;}
+  if(confirmed(1)||confirmed(2))return surface;
+  const headingIds=surface.id==='outro'?['routes-title','routes-subtitle']:['routes-heading'];
+  for(const node of surface.nodes)if(headingIds.includes(node.id)&&automatic(node))node.visible=false;
+  const zoneNodes=source.nodes.filter(node=>routeKey(node)||headingIds.includes(node.id));
+  // Custom content or a deliberate route arrangement keeps its empty space.
+  if(zoneNodes.some(node=>node.visible!==false&&!automatic(node)))return surface;
+  const map=surface.nodes.find(node=>node.type==='map'),attribution=surface.nodes.find(node=>node.bind==='mapAttribution');
+  if(!map||map.visible===false||!attribution||!automatic(map)||!automatic(attribution))return surface;
+  const bounds=surface.id==='outro'?{x:42,y:197,w:1001,h:1268}:{x:76,y:326,w:1432,h:565};
+  const intersects=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+  const extra={x:bounds.x,y:map.y+map.h,w:bounds.w,h:bounds.y+bounds.h-(map.y+map.h)};
+  // Never enlarge the map over a new or manually positioned visible object.
+  if(surface.nodes.some(node=>node.visible!==false&&node!==map&&node!==attribution&&!automatic(node)&&intersects(node,extra)))return surface;
+  Object.assign(map,bounds);
+  attribution.w=bounds.w;attribution.y=surface.id==='outro'?1486:907;
+  return surface;
+}
 const publicationNumeric=value=>value!==''&&value!=null&&typeof value!=='boolean'&&Number.isFinite(Number(value))?Number(value):null;
 const publicationZh=(value,rules)=>translate(publicationSafeString(String(value??''),40000),rules);
 const publicationMode={walk:'步行',metro:'地铁',bus:'公交',public:'公共交通',car:'驾车',unknown:'出行方式待确认','步行':'步行','乘坐地铁':'地铁','乘坐公交':'公交'};

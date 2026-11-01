@@ -84,7 +84,7 @@ class ParserChecks(unittest.TestCase):
 
     def test_http_adapter_reads_at_most_two_search_pages_and_never_offer_pages(self):
         calls=[]
-        def network(url,data=None):
+        def network(url,data=None,**kwargs):
             calls.append((url,data));return json.dumps({'data':{'offersSerialized':[{'cianId':100+len(calls)}]}}).encode(),'application/json'
         config={'searchUrl':watch.normalize_search_url(URL),'adapter':'api'}
         with patch.object(watch,'_http_page',network):result=watch.fetch_search(config,Path('/tmp/unused-watch'),threading.Event())

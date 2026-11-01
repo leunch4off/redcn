@@ -22,6 +22,7 @@ import zipfile
 import redcn
 import photo_store
 import http_delivery
+import access_roles
 
 PAIR_TTL = 600
 SESSION_TTL = 30 * 86400
@@ -65,9 +66,70 @@ class PairingState:
         try:
             self.data=json.loads(self.path.read_text())
             if not isinstance(self.data.get('secret'),str) or not isinstance(self.data.get('sessions'),dict):raise ValueError()
-        except (OSError,ValueError,TypeError):
+        except (OSError,ValueError,TypeError,AttributeError):
             self.data={'secret':secrets.token_hex(32),'sessions':{},'pair':None}
             self._save()
+
+    @staticmethod
+    def _digest(token):
+        return hashlib.sha256(token.encode()).hexdigest() if isinstance(token,str) and re.fullmatch(r'[A-Za-z0-9_-]{40,80}',token) else None
+
+    def _active(self,digest):
+        expires=self.data['sessions'].get(digest)
+        return type(expires) in (int,float) and math.isfinite(expires) and expires>time.time()
+
+    def _revision(self):
+        value=self.data.get('accessRevision',0)
+        return value if type(value) is int and value>=0 else 0
+
+    def _changed(self):
+        self.data['accessRevision']=self._revision()+1
+
+    def role(self,token):
+        with self.lock:
+            digest=self._digest(token)
+            if not digest or not self._active(digest):return None
+            roles=self.data.get('roles',{})
+            if not isinstance(roles,dict):return None
+            value=roles.get(digest,'editor')
+            return value if isinstance(value,str) and value in access_roles.ROLES else None
+
+    def actor(self,token):
+        return 'phone:'+self._digest(token) if self.role(token) else None
+
+    def list_sessions(self):
+        with self.lock:
+            roles=self.data.get('roles',{});devices=self.data.get('devices',{})
+            sessions=[]
+            for digest,expires in self.data['sessions'].items():
+                if not isinstance(digest,str) or not re.fullmatch(r'[a-f0-9]{64}',digest) or not self._active(digest):continue
+                role=roles.get(digest,'editor') if isinstance(roles,dict) else None
+                info=devices.get(digest,{}) if isinstance(devices,dict) else {}
+                label=info.get('label','') if isinstance(info,dict) else ''
+                created=info.get('created') if isinstance(info,dict) else None
+                sessions.append({'id':digest,'role':role if isinstance(role,str) and role in access_roles.ROLES else 'unknown',
+                    'label':label if isinstance(label,str) else '', 'expires':expires,
+                    'created':created if type(created) in (int,float) and math.isfinite(created) else None})
+            return {'revision':self._revision(),'sessions':sorted(sessions,key=lambda row:(row['created'] or 0,row['id']))}
+
+    def manage_session(self,session_id,role=None,label=None,revoke=False,expected_revision=None):
+        with self.lock:
+            if type(expected_revision) is not int or expected_revision<0:raise ValueError('Нужна актуальная версия списка устройств')
+            if expected_revision!=self._revision():raise access_roles.AccessRoleConflict('Права устройств изменились. Обновите список и повторите действие.')
+            if not isinstance(session_id,str) or not re.fullmatch(r'[a-f0-9]{64}',session_id) or not self._active(session_id):raise ValueError('Активное устройство не найдено')
+            if not revoke and (not isinstance(role,str) or role not in access_roles.ROLES):raise ValueError('Неизвестная роль устройства')
+            if label is not None and (not isinstance(label,str) or len(label)>80 or any(ord(char)<32 or ord(char)==127 for char in label)):raise ValueError('Название устройства: до 80 символов без управляющих знаков')
+            if revoke:
+                self.data['sessions'].pop(session_id,None)
+                for key in ('roles','devices'):
+                    if isinstance(self.data.get(key),dict):self.data[key].pop(session_id,None)
+            else:
+                if not isinstance(self.data.get('roles'),dict):self.data['roles']={}
+                if not isinstance(self.data.get('devices'),dict):self.data['devices']={}
+                self.data['roles'][session_id]=role
+                previous=self.data['devices'].get(session_id,{})
+                self.data['devices'][session_id]={**(previous if isinstance(previous,dict) else {}),**({'label':label.strip()} if label is not None else {})}
+            self._changed();self._save();return self.list_sessions()
 
     def _save(self):
         with tempfile.NamedTemporaryFile(mode='w',dir=self.path.parent,encoding='utf-8',delete=False) as output:
@@ -109,22 +171,31 @@ class PairingState:
             if item.get('expires',0)<=now or not hmac.compare_digest(item.get(key,''),hashlib.sha256(value.encode()).hexdigest()):raise ValueError('Код неверный, истёк или уже использован. На Mac нажмите «Телефон» и введите текущие 8 цифр.')
             self.data['pair']=None;self._pair_memory=None
             token=secrets.token_urlsafe(32);digest=hashlib.sha256(token.encode()).hexdigest()
-            self.data['sessions']={key:value for key,value in self.data['sessions'].items() if value>now}
-            self.data['sessions'][digest]=now+SESSION_TTL;self._save()
+            self.data['sessions']={key:value for key,value in self.data['sessions'].items() if self._active(key)}
+            self.data['sessions'][digest]=now+SESSION_TTL
+            for key in ('roles','devices'):
+                current=self.data.get(key,{})
+                self.data[key]={item:value for item,value in current.items() if item in self.data['sessions']} if isinstance(current,dict) else {item:None for item in self.data['sessions']} if key=='roles' else {}
+            self.data['roles'][digest]='editor';self.data['devices'][digest]={'label':'','created':now}
+            self._changed();self._save()
             return token
 
     def authorized(self,token):
-        if not isinstance(token,str) or not re.fullmatch(r'[A-Za-z0-9_-]{40,80}',token):return False
-        with self.lock:return self.data['sessions'].get(hashlib.sha256(token.encode()).hexdigest(),0)>time.time()
+        digest=self._digest(token)
+        with self.lock:return bool(digest and self._active(digest))
 
     def csrf(self,token):
         return hmac.new(self.data['secret'].encode(),('csrf:'+token).encode(),hashlib.sha256).hexdigest()
 
     def revoke(self,token=None):
         with self.lock:
-            if token:self.data['sessions'].pop(hashlib.sha256(token.encode()).hexdigest(),None)
-            else:self.data['sessions']={};self.data['pair']=None;self._pair_memory=None
-            self._save()
+            if token:
+                digest=self._digest(token);self.data['sessions'].pop(digest,None)
+                for key in ('roles','devices'):
+                    if isinstance(self.data.get(key),dict):self.data[key].pop(digest,None)
+            else:
+                self.data['sessions']={};self.data['roles']={};self.data['devices']={};self.data['pair']=None;self._pair_memory=None
+            self._changed();self._save()
 
 
 PROFILE_DATA={'style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','audience'}
@@ -194,6 +265,9 @@ def cache_photos(directory,result,report=None,cancel=None):
     from job_progress import emit
     urls=source_images(result)
     sources=photo_source_items(result)
+    edits=(result.get('fields') or {}).get('photoEdits') or {}
+    manual_crops=edits.get('crops') if isinstance(edits.get('crops'),dict) else {}
+    original_choices=edits.get('originals') if isinstance(edits.get('originals'),list) else []
     if cancel and cancel.is_set():raise ValueError('Загрузка отменена')
     def load(url):
         if cancel and cancel.is_set():return {'sourceUrl':url,'error':'Загрузка отменена'}
@@ -221,7 +295,13 @@ def cache_photos(directory,result,report=None,cancel=None):
         else:
             emit(report,'Проверяем фото '+str(index)+' из '+str(len(media))+': метка у края, затем повторный OCR',stage='crop',completed=index-1,total=len(media))
             try:
-                decision=photo_store.auto_crop_photo(directory,row['id'],cancel=cancel,deadline=end)
+                url=urls[index-1]
+                if url in original_choices:decision={'autoStatus':'skipped','reason':'explicit-original','message':'Оператор выбрал оригинал.'}
+                elif url in manual_crops:
+                    if not isinstance(manual_crops[url],dict):raise ValueError('Неверная сохранённая ручная граница кадра')
+                    decision=photo_store.crop_photo(directory,row['id'],manual_crops[url],cancel=cancel,deadline=end)
+                    decision['autoStatus']='manual' if decision.get('kind')=='crop' else 'unchanged'
+                else:decision=photo_store.auto_crop_photo(directory,row['id'],cancel=cancel,deadline=end)
                 state=decision.get('autoStatus','unavailable')
                 row['autoCrop']={key:decision[key] for key in ('autoStatus','cached','message','reason','id') if key in decision}
                 if state in ('cropped','unchanged','review','manual'):processing['checked']+=1
@@ -249,22 +329,23 @@ def original_metadata(directory):
 
 def card_media(directory,result,include_crops=True,originals_by_url=None):
     metadata=original_metadata(directory) if originals_by_url is None else originals_by_url
-    originals=[metadata[url] for url in source_images(result) if url in metadata]
-    crops={};original_ids={row['id'] for row in originals}
-    if include_crops and original_ids:
-        with photo_store._connection(directory) as db:
-            for raw, in db.execute('SELECT metadata FROM assets ORDER BY rowid DESC'):
-                try:meta=json.loads(raw)
-                except ValueError:continue
-                original=meta.get('originalId')
-                if meta.get('kind')=='crop' and original in original_ids and meta.get('verification') in ('manual','ocr-checked') and re.fullmatch(r'[a-f0-9]{64}',str(meta.get('id',''))) and (Path(directory)/'media'/meta['id']).is_file():
-                    if original not in crops or (meta.get('verification')=='manual' and crops[original].get('verification')!='manual'):crops[original]=meta
+    originals=[{**metadata[url],'sourceUrl':url} for url in source_images(result) if url in metadata]
+    edits=(result.get('fields') or {}).get('photoEdits') or {}
+    margins=edits.get('crops') if isinstance(edits.get('crops'),dict) else {}
+    explicit=edits.get('originals') if isinstance(edits.get('originals'),list) else []
     def public(row):
         return {**{k:row[k] for k in ('id','mime','width','height','bytes','sourceUrl','kind','verification') if k in row},'url':'/api/phone/media/'+row['id'],'downloadUrl':'/api/phone/media/'+row['id']+'?download=1'}
     output=[]
     for original in originals:
         item=public(original)
-        if original['id'] in crops:item['crop']=public(crops[original['id']])
+        if include_crops:
+            try:
+                if original['sourceUrl'] in margins and not isinstance(margins[original['sourceUrl']],dict):raise ValueError('Неверная сохранённая ручная граница кадра')
+                accepted=photo_store.accepted_photo_for_url(directory,original['sourceUrl'],margins=margins.get(original['sourceUrl']),prefer_original=original['sourceUrl'] in explicit,verify_bytes=False,original=original)
+                selected=accepted['selected']
+                if selected.get('kind')=='crop':item['crop']=public({**selected,'sourceUrl':original['sourceUrl']})
+                item['selectionReason']=accepted['reason']
+            except (ValueError,OSError,TypeError,KeyError):item['selectionReason']='unavailable'
         output.append(item)
     return output
 
@@ -376,6 +457,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 cookies=SimpleCookie();cookies.load(self.headers.get('Cookie',''));self.session=cookies[COOKIE].value if COOKIE in cookies else ''
             except Exception:self.session=''
             if auth and not state.authorized(self.session):self.respond(401,{'paired':False,'error':'Подключите телефон по ссылке с Mac'});return False
+            self.role=state.role(self.session) if auth else None
+            self.actor=state.actor(self.session) if auth else None
+            if auth and not self.role:self.respond(403,{'error':'Роль устройства неизвестна. Проверьте права на Mac.','code':'ROLE_FORBIDDEN'});return False
             if csrf and not hmac.compare_digest(self.headers.get('X-Phone-CSRF',''),state.csrf(self.session)):
                 self.respond(403,{'error':'Обновите приложение телефона'});return False
             return True
@@ -383,6 +467,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
             path=urlsplit(self.path).path
             public=path in ('/phone','/phone/','/phone/pair','/phone/manifest.webmanifest','/phone/sw.js','/phone/designer.mjs','/phone/routes.mjs','/phone/icon-192.png','/phone/icon-512.png','/phone/apple-touch-icon.png','/phone/icons/icon-192.png','/phone/icons/icon-512.png','/phone/icons/apple-touch-icon.png')
             if not self.permitted(auth=not public):return
+            relative=path.removeprefix('/api/phone/')
+            if not public and (not path.startswith('/api/phone/') or not access_roles.phone_route_allowed(self.role,'GET',relative)):
+                self.respond(403,{'error':'У этой роли нет доступа к данному действию.','code':'ROLE_FORBIDDEN'});return
             try:
                 if public:
                     if path=='/phone':self.respond(302,b'','text/plain',{'Location':'/phone/'});return
@@ -394,17 +481,39 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if path.startswith('/api/phone/'):
                     import card_api
                     import language_service
+                    if self.role=='viewer':
+                        asset_match=re.fullmatch(r'(media|previews|exports)/([a-f0-9]{32,64})',relative)
+                        if asset_match and not access_roles.viewer_asset_allowed(directory,'export' if asset_match[1]=='exports' else 'media',asset_match[2]):
+                            self.respond(403,{'error':'Материал не относится к доступной клиентской карточке.','code':'ROLE_FORBIDDEN'});return
+                        export_match=re.fullmatch(r'card-exports/([a-f0-9]{32})',relative)
+                        if export_match:
+                            if export_match[1] not in {card_id for card_id,_ in access_roles._read_cards(directory)}:self.respond(404,{'error':'Карточка не найдена'});return
+                            document=card_api.dispatch(directory,relative,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
+                            if document:
+                                status,value,mime,headers=document
+                                value={'exports':[row for row in value.get('exports',[]) if not row.get('requiresRegeneration') and access_roles.viewer_asset_allowed(directory,'export',row.get('id'))]}
+                                self.respond(status,value,mime,headers);return
                     workspace=getattr(controller,'workspace_api',None)
-                    document=workspace(path.removeprefix('/api/phone/'),namespace='phone',query=parse_qs(urlsplit(self.path).query)) if callable(workspace) else None
+                    document=workspace(relative,namespace='phone',query=parse_qs(urlsplit(self.path).query),actor=self.actor) if callable(workspace) else None
                     if document:self.respond(*document);return
-                    document=language_service.dispatch(directory,path.removeprefix('/api/phone/'))
+                    document=language_service.dispatch(directory,path.removeprefix('/api/phone/'),actor=self.actor)
                     if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
-                    if document:self.respond(*document);return
-                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':2,'activeJob':latest_job_info()});return
+                    if document:
+                        if self.role=='editor' and re.fullmatch(r'dossier-options/[a-f0-9]{32}',relative):
+                            status,value,mime,headers=document
+                            value={**value,'attachments':[row for row in value.get('attachments',[]) if row.get('category')!='contract' and row.get('shareable') is not False]}
+                            document=status,value,mime,headers
+                        self.respond(*document);return
+                if path=='/api/phone/state':self.respond(200,{'paired':True,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':3,'role':self.role,'capabilities':access_roles.capabilities(self.role),'activeJob':latest_job_info() if self.role!='viewer' else None});return
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
-                    self.respond(200,list_cards(directory,after));return
+                    feed=list_cards(directory,after)
+                    if self.role=='viewer':
+                        visible={card_id for card_id,_ in access_roles._read_cards(directory)}
+                        feed['cards']=[row for row in feed['cards'] if row['id'] in visible]
+                    feed.update(role=self.role,capabilities=access_roles.capabilities(self.role))
+                    self.respond(200,feed);return
                 match=re.fullmatch(r'/api/phone/previews/([a-f0-9]{64})',path)
                 if match:
                     from media_preview import preview
@@ -412,10 +521,13 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})(\.zip)?',path)
                 if match:
                     result_id,download=match.groups()
+                    if self.role=='viewer' and result_id not in {card_id for card_id,_ in access_roles._read_cards(directory)}:
+                        self.respond(404,{'error':'Карточка не найдена'});return
                     if download:
                         variant=parse_qs(urlsplit(self.path).query).get('variant',['original'])[0]
                         self.respond(200,card_zip(directory,result_id,variant),'application/zip',{'Content-Disposition':f'attachment; filename="redcn-{result_id[:8]}.zip"'});return
                     card=public_card(directory,result_id)
+                    if card and self.role=='viewer':card=access_roles.viewer_card(card)
                     self.respond(200 if card else 404,card or {'error':'Карточка не найдена'});return
                 match=re.fullmatch(r'/api/phone/media/([a-f0-9]{64})',path)
                 if match:
@@ -427,16 +539,18 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if match:
                     job=controller.job_status(match[1]);self.respond(200 if job else 404,job or {'error':'Задача не найдена'});return
                 self.respond(404,{'error':'Не найдено'})
-            except (ValueError,TypeError,OSError) as error:self.respond(400,{'error':str(error)})
+            except (ValueError,TypeError,OSError) as error:self.respond(400,{'error':'Клиентский материал сейчас недоступен. Обратитесь к владельцу на Mac.' if self.role=='viewer' else str(error)})
         def do_POST(self):
             path=urlsplit(self.path).path;pair=path=='/api/phone/pair'
             if not self.permitted(auth=not pair,csrf=not pair):return
+            relative=path.removeprefix('/api/phone/')
+            if not pair and (not path.startswith('/api/phone/') or not access_roles.phone_route_allowed(self.role,'POST',relative)):
+                self.respond(403,{'error':'У этой роли нет доступа к данному действию.','code':'ROLE_FORBIDDEN'});return
             try:
                 if self.headers.get_content_type()!='application/json':raise ValueError('Нужен JSON')
                 size=int(self.headers.get('Content-Length','0'))
                 import card_api
                 import language_service
-                relative=path.removeprefix('/api/phone/')
                 language_route=relative=='translate' or re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)',relative)
                 limit=card_api.request_limit(relative) or (256_000 if language_route else 100_000)
                 if not 1<=size<=limit:raise ValueError('Превышен размер запроса')
@@ -445,11 +559,14 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if pair:
                     token=state.pair(data.get('code'),self.client_address[0]);cookie=f'{COOKIE}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_TTL}'
                     if self.secure:cookie+='; Secure'
-                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info()},headers={'Set-Cookie':cookie});return
+                    role=state.role(token)
+                    self.respond(200,{'paired':True,'csrfToken':state.csrf(token),'activeJob':latest_job_info(),'role':role,'capabilities':access_roles.capabilities(role)},headers={'Set-Cookie':cookie});return
+                if not access_roles.phone_route_allowed(self.role,'POST',relative,data):
+                    self.respond(403,{'error':'У этой роли нет доступа к данному действию.','code':'ROLE_FORBIDDEN'});return
                 workspace=getattr(controller,'workspace_api',None)
-                document=workspace(relative,data,namespace='phone') if callable(workspace) else None
+                document=workspace(relative,data,namespace='phone',actor=self.actor) if callable(workspace) else None
                 if document:self.respond(*document);return
-                document=language_service.dispatch(directory,relative,data)
+                document=language_service.dispatch(directory,relative,data,actor=self.actor)
                 if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                 if document:self.respond(*document);return
@@ -459,7 +576,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     # Phone requests a source; browser selection, dictionary and arbitrary
                     # override data remain controlled by the Mac, not an untrusted payload.
                     params={**load_profile(directory),'url':data.get('url',''),'loader':data.get('loader','chrome'),'timeout':data.get('timeout',180)}
-                    self.respond(202,{'job_id':controller.start_import(params)});return
+                    self.respond(202,{'job_id':controller.start_import(params,actor=self.actor)});return
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/prepare',path)
                 if match:self.respond(202,{'job_id':controller.prepare_card(match[1])});return
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/analyze',path)

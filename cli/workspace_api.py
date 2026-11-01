@@ -23,7 +23,7 @@ class WorkspaceAPI:
         self.watch.close()
         self.diagnostics.close()
 
-    def _save_routes(self, card_id, data):
+    def _save_routes(self, card_id, data, *, actor='Mac owner'):
         import language_service
         from university_routes import validate_routes
         if set(data) != {'routes', 'expectedUpdated'}:
@@ -45,11 +45,28 @@ class WorkspaceAPI:
         if not isinstance(card, dict) or not isinstance(card.get('fields'), dict) or card['fields'].get('isDemo') is True:
             raise ValueError('Нужна настоящая сохранённая карточка')
         card['fields']['universityRoutes'] = rows
-        return language_service._save(self.directory, card_id, row[1], card)
+        return language_service._save(self.directory, card_id, row[1], card, actor=actor)
 
-    def dispatch(self, path, data=None, *, namespace='local', query=None):
+    def dispatch(self, path, data=None, *, namespace='local', query=None, actor=None):
         import language_service
         try:
+            import publication_review
+            document=publication_review.dispatch(self.directory,path,data,actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone'))
+            if document:return document
+            import dictionary_reviews
+            document=dictionary_reviews.dispatch(self.directory,path,data,actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone'))
+            if document:return document
+            if re.fullmatch(r'fact-revisions/[a-f0-9]{32}',path) and data is None:
+                from fact_ledger import list_fact_revisions
+                return 200,{'revisions':list_fact_revisions(self.directory,path.rsplit('/',1)[-1])},'application/json; charset=utf-8',{}
+            if path=='import-cache' and data is not None:
+                if namespace!='local' or data.get('confirm')!='clear-import-cache':raise ValueError('Подтвердите очистку только кеша в редакторе Mac')
+                from fact_ledger import clear_import_cache
+                return 200,clear_import_cache(self.directory),'application/json; charset=utf-8',{}
+            if path=='table-export' and data is not None:
+                from table_export import export_table
+                content,mime,name=export_table(data)
+                return 200,content,mime,{'Content-Disposition':'attachment; filename="'+name+'"'}
             if path == 'photo-ai':
                 from photo_ai_settings import load_config, save_config
                 value = load_config(self.directory) if data is None else save_config(self.directory, data)
@@ -75,7 +92,7 @@ class WorkspaceAPI:
                 return 200, content, mime, {'Content-Disposition': 'attachment; filename="tg.zip"'}
             match = re.fullmatch(r'cards/([a-f0-9]{32})/routes', path)
             if match and data is not None:
-                return 200, self._save_routes(match[1], data), 'application/json; charset=utf-8', {}
+                return 200, self._save_routes(match[1], data, actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone')), 'application/json; charset=utf-8', {}
         except language_service.LanguageConflict as error:
             return 409, {'error': str(error)}, 'application/json; charset=utf-8', {}
         except language_service.MissingCard as error:

@@ -13,7 +13,7 @@ export function setupInsights({read,write,toast,onRule}){
    const card=document.createElement('article'),title=document.createElement('strong'),meta=document.createElement('p'),text=document.createElement('p'),button=document.createElement('button');card.className='task';title.textContent=item.title||item.type;meta.className='muted';meta.textContent=item.type+' · '+(item.status==='reviewed'?'Проверено':'Требует проверки')+' · встречалось '+item.seen+' раз';text.className='kb-body';text.textContent=item.text;card.append(title,meta,text);
    const source=safeSource(item.source);if(source){const a=document.createElement('a');a.href=source;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Источник ↗';card.append(a);}
    button.className='btn';button.textContent=item.status==='reviewed'?'Отметить непроверенным':'Подтвердить запись';button.onclick=()=>{knowledge=knowledge.map(r=>r.id===item.id?{...r,status:r.status==='reviewed'?'unreviewed':'reviewed'}:r);persistKB();renderKnowledge();};card.append(button);
-   if(item.ru&&item.cn){const apply=document.createElement('button');apply.className='btn';apply.textContent='Добавить RU → CN в словарь';apply.disabled=item.status!=='reviewed';apply.onclick=()=>{onRule(item.ru,item.cn);toast('Подтверждённая пара добавлена в словарь');};card.append(apply);}
+   if(item.ru&&item.cn){const apply=document.createElement('button');apply.className='btn';apply.textContent='Передать пару на утверждение';apply.disabled=item.status!=='reviewed';apply.onclick=()=>{onRule(item.ru,item.cn,item);toast('Пара передана на отдельное утверждение словаря');};card.append(apply);}
    el('kbList').append(card);
   }
  }

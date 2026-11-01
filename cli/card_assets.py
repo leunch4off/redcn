@@ -77,6 +77,9 @@ def _db(directory):
     # Additive certification only: original exports and user files stay intact.
     connection.execute('CREATE TABLE IF NOT EXISTS export_publication_policy (export_id TEXT PRIMARY KEY, version TEXT NOT NULL, digest TEXT NOT NULL)')
     connection.execute('CREATE TABLE IF NOT EXISTS design_images (id TEXT PRIMARY KEY, role TEXT, name TEXT, mime TEXT, width INTEGER, height INTEGER, size INTEGER, created REAL, digest TEXT, original_digest TEXT, original_mime TEXT, original_size INTEGER)')
+    connection.execute('CREATE TABLE IF NOT EXISTS restored_designs (card_id TEXT PRIMARY KEY, payload TEXT, created REAL)')
+    connection.execute('CREATE TABLE IF NOT EXISTS restored_manifests (card_id TEXT PRIMARY KEY, payload TEXT, created REAL)')
+    connection.execute('CREATE TABLE IF NOT EXISTS export_design_snapshots (export_id TEXT PRIMARY KEY, payload TEXT, created REAL)')
     return connection
 
 
@@ -625,7 +628,7 @@ def _render_pdf(html, browser_channel):
 
 
 @_serialize_files
-def _persist_export(directory, result_id, content, kind, mime, *, policy_version=None):
+def _persist_export(directory, result_id, content, kind, mime, *, policy_version=None, template=None):
     # The shared file lock protects only bytes + database references. Rendering
     # runs outside it so phones can still fetch contracts during a PDF job.
     digest = _write(directory, content)
@@ -636,20 +639,31 @@ def _persist_export(directory, result_id, content, kind, mime, *, policy_version
         connection.execute('INSERT INTO exports VALUES (?,?,?,?,?,?,?,?)', (export_id, result_id, kind, name, mime, len(content), stamp, digest))
         if policy_version:
             connection.execute('INSERT INTO export_publication_policy VALUES (?,?,?)',(export_id,policy_version,digest))
+        if template is not None:
+            connection.execute('INSERT INTO export_design_snapshots(export_id,payload,created) VALUES(?,?,?)',(export_id,json.dumps(template,ensure_ascii=False,allow_nan=False),stamp))
     return {'id': export_id, 'result_id': result_id, 'kind': kind, 'name': name, 'mime': mime, 'bytes': len(content), 'created': stamp,
             'publicationPolicyVersion':policy_version,'requiresRegeneration':not bool(policy_version)}
 
 
-def create_export(directory, result_id, html, kind, browser_channel='chrome'):
+def _export_template(template):
+    if template is None:return None
+    from publication_schema import validate_publication_template
+    value=validate_publication_template(template)
+    if len(json.dumps(value,ensure_ascii=False,allow_nan=False).encode())>MAX_TEMPLATE_V2:raise ValueError('Шаблон превышает 256 КБ')
+    return value
+
+
+def create_export(directory, result_id, html, kind, browser_channel='chrome', *, template=None):
     from client_publication import PUBLICATION_POLICY_VERSION
     _publication_card(directory, result_id)
+    template=_export_template(template)
     if kind not in ('html', 'pdf'):
         raise ValueError('Формат экспорта: html/pdf')
     validate_html(html)
     _assert_public_html(html)
     content = html.encode('utf-8') if kind == 'html' else _render_pdf(html, browser_channel)
     mime = 'text/html; charset=utf-8' if kind == 'html' else 'application/pdf'
-    return _persist_export(directory, result_id, content, kind, mime, policy_version=PUBLICATION_POLICY_VERSION)
+    return _persist_export(directory, result_id, content, kind, mime, policy_version=PUBLICATION_POLICY_VERSION,template=template)
 
 
 @_serialize_files
@@ -678,9 +692,10 @@ def list_exports(directory, result_id):
              'requiresRegeneration':row[7] != PUBLICATION_POLICY_VERSION or row[8] != row[9]} for row in rows]
 
 
-def create_image_export(directory, result_id, data, kind, *, publication_policy_version=None):
+def create_image_export(directory, result_id, data, kind, *, publication_policy_version=None,template=None):
     from client_publication import PUBLICATION_POLICY_VERSION
     _publication_card(directory, result_id)
+    template=_export_template(template)
     if publication_policy_version != PUBLICATION_POLICY_VERSION:
         raise ValueError('Обновите страницу «Дизайн» и создайте изображение заново по действующему правилу публикации.')
     if kind not in ('intro', 'outro'):
@@ -705,4 +720,4 @@ def create_image_export(directory, result_id, data, kind, *, publication_policy_
         image.info.clear()
         output=io.BytesIO();image.save(output,format='PNG');content=output.getvalue()
     finally:image.close()
-    return _persist_export(directory, result_id, content, kind, 'image/png', policy_version=PUBLICATION_POLICY_VERSION)
+    return _persist_export(directory, result_id, content, kind, 'image/png', policy_version=PUBLICATION_POLICY_VERSION,template=template)

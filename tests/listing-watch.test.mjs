@@ -14,6 +14,18 @@ test('watch configuration accepts search URLs without treating an offer as a sea
   for(const input of ['https://www.cian.ru/rent/flat/123/','https://evil.test/cat.php','https://www.cian.ru/login/','https://pass@www.cian.ru/cat.php','http://www.cian.ru/cat.php'])assert.equal(safeWatchSearchUrl(input),'',input);
 });
 
+test('Avito search and canonical offers have their own strict path contract',()=>{
+  assert.equal(safeWatchOfferUrl('https://avito.ru/moskva/kvartiry/2-k._test_7462093377?context=private#x'),'https://www.avito.ru/moskva/kvartiry/2-k._test_7462093377');
+  assert.equal(safeWatchSearchUrl('https://www.avito.ru/moskva/kvartiry?f=preserved#x'),'https://www.avito.ru/moskva/kvartiry?f=preserved');
+  for(const value of ['https://www.avito.ru/profile','https://www.avito.ru/moskva/kvartiry/test_1','https://avito.ru.evil.test/moskva/kvartiry','https://token@avito.ru/moskva/kvartiry'])assert.equal(safeWatchSearchUrl(value),'',value);
+  for(const value of ['https://www.avito.ru/profile/test_1','https://www.avito.ru/moskva/kvartiry','http://avito.ru/moskva/kvartiry/test_1','https://www.avito.ru:444/moskva/kvartiry/test_1'])assert.equal(safeWatchOfferUrl(value),'',value);
+});
+
+test('triage reasons and Avito period stay bounded literal fields',()=>{
+  const row=normalizeWatchItem({id:'avito:1',url:'https://www.avito.ru/moskva/kvartiry/test_1',price:85000,currency:'RUB',pricePeriod:'month',decision:'pending',decisionReasons:['Район не указан','<script>alert(1)</script>',null,{}],publicationStatus:'removed',district:'район Ясенево'});
+  assert.equal(row.platform,'avito');assert.equal(row.decision,'pending');assert.equal(row.publicationStatus,'removed');assert.match(row.price,/мес\.$/);assert.deepEqual(row.decisionReasons,['Район не указан','<script>alert(1)</script>']);
+});
+
 test('publication dates never fall back to first seen or infer a missing publication time',()=>{
   const row=normalizeWatchItem({id:'cian:123',url:'https://www.cian.ru/rent/flat/123/',firstSeen:1793401200,publishedAt:null,publishedLabel:'Сегодня',isNew:true});
   assert.equal(row.publishedAt,null);assert.equal(row.publishedLabel,'Сегодня');assert.equal(row.firstSeen,1793401200);

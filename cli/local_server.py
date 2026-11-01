@@ -21,6 +21,7 @@ import photo_store
 import card_api
 import language_service
 import http_delivery
+from fact_ledger import validate_result_fields, record_fact_revision
 from source_readiness import source_readiness
 
 
@@ -61,13 +62,15 @@ def history_rows(directory, entry_id=None, image=False):
     finally: connection.close()
 
 
-def save_result(directory, result, result_id=None):
+def save_result(directory, result, result_id=None, *, actor='operator', kind='save'):
+    validate_result_fields(result)
     result_id = result_id or secrets.token_hex(16)
     if not re.fullmatch(r'[a-f0-9]{32}', result_id): raise ValueError('Неверный ID карточки')
     connection = redcn.open_cache(directory)
     try:
         connection.execute('CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, updated REAL, payload TEXT)')
         connection.execute('INSERT OR REPLACE INTO results VALUES (?,max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),?)', (result_id, time.time(), json.dumps(result, ensure_ascii=False)))
+        record_fact_revision(connection, result_id, result.get('fields', {}), actor=actor, kind=kind)
         connection.commit()
     finally: connection.close()
     return result_id
@@ -141,7 +144,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         learn=status=='ready' and not any((download_failed,failed,skipped)) and inventory.get('state')!='partial'
         return learn,{'mediaStatus':status,'photoProcessing':processing,'partial':not learn,'warnings':warnings}
 
-    def run_import(job_id, params, cancel):
+    def run_import(job_id, params, cancel, actor):
+        attempt_started, attempt_clock = time.time(), time.monotonic()
         def report(message, **fields):
             with lock:
                 jobs[job_id].update(message=message)
@@ -182,7 +186,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if cancel.is_set(): raise ValueError('Импорт отменён')
             from phone_relay import cache_photos
             result['mediaStatus']='loading'
-            result_id = save_result(directory, result)
+            result_id = save_result(directory, result, actor=actor, kind='import')
             cache_photos(directory,result,report,cancel)
             from photo_generation import photo_revision
             photo_generated=photo_revision(directory,result,text=listing['text'],rules=params.get('rules'),prefs=params.get('prefs'),report=report,cancel=cancel)
@@ -205,7 +209,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     current=read_result(directory,result_id)
                     if current and current.get('mediaStatus')=='loading':
                         current['mediaStatus']='cancelled' if cancel.is_set() else 'error'
-                        save_result(directory,current,result_id)
+                        save_result(directory,current,result_id,actor=actor,kind='import')
                 except (OSError,ValueError,sqlite3.Error):pass
             with lock: jobs[job_id].update(state='error', message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
         finally:
@@ -219,9 +223,17 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                         'success' if success else 'cancelled' if cancel.is_set() else 'error',
                         progress=measured, capture=(listing or {}).get('capture'), error=failure)
             except (OSError, ValueError, sqlite3.Error):pass
+            try:
+                from activity_log import record_import_attempt
+                stages = {row['id']:row.get('elapsedSeconds', 0) for row in measured.get('stages', []) if isinstance(row,dict) and isinstance(row.get('id'),str)}
+                outcome = 'cancelled' if cancel.is_set() else 'partial' if success and not learn else 'done' if success else 'needs_attention' if failure and type(failure).__name__ == 'NeedsAttention' else 'error'
+                record_import_attempt(directory,source_url=params['url'],started=attempt_started,elapsed=min(7200,time.monotonic()-attempt_clock),outcome=outcome,stages=stages,error=failure)
+            except (OSError, ValueError, sqlite3.Error):pass
             if connection is not None:connection.close()
 
-    def start_import(params):
+    def start_import(params, *, actor='Mac owner'):
+        if not isinstance(actor,str) or not actor.strip() or len(actor)>100:
+            raise ValueError('У импорта должен быть проверенный автор до 100 знаков')
         params=dict(params)
         params['url']=redcn.normalize_url(params.get('url',''))
         if params.get('loader','auto') not in ('auto','http','chrome'):raise ValueError('Неверный режим загрузки')
@@ -241,7 +253,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                          'tracker':JobProgress(timing_history,profile_key)}
             try:audit_tokens[job_id] = workspace.diagnostics.begin(job_id, params['url'], manual=True)
             except (OSError, ValueError, sqlite3.Error):pass
-        threading.Thread(target=run_import,args=(job_id,params,cancel),daemon=True).start()
+        threading.Thread(target=run_import,args=(job_id,params,cancel,actor),daemon=True).start()
         return job_id
 
     def job_status(job_id):
@@ -337,6 +349,11 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 self.respond(200,identity);return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
+                if path == '/api/local/phone-sessions':
+                    from access_roles import dispatch_sessions
+                    relay = self.server.phone_relay.server
+                    if relay is None:self.respond(409,{'error':'Сначала включите телефонный доступ на Mac'});return
+                    self.respond(*dispatch_sessions(relay.pairing));return
                 try:
                     document=workspace.dispatch(path.removeprefix('/api/local/'), query=parse_qs(urlsplit(self.path).query))
                     if document:self.respond(*document);return
@@ -395,11 +412,20 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if self.headers.get_content_type() != 'application/json': raise ValueError('Нужен JSON')
                 size = int(self.headers.get('Content-Length','0'))
                 relative=urlsplit(self.path).path.removeprefix('/api/local/')
-                limit=card_api.request_limit(relative) or (16_100_000 if relative=='photo' else 4_500_000 if relative=='history' else 1_000_000)
+                limit=card_api.request_limit(relative) or (16_100_000 if relative=='photo' else 8_100_000 if relative=='table-export' else 4_500_000 if relative=='history' else 1_000_000)
                 if not 1 <= size <= limit: raise ValueError('Превышен размер запроса')
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                if relative == 'phone-sessions':
+                    from access_roles import dispatch_sessions
+                    relay = self.server.phone_relay.server
+                    if relay is None:self.respond(409,{'error':'Сначала включите телефонный доступ на Mac'});return
+                    self.respond(*dispatch_sessions(relay.pairing,data));return
+                if relative == 'import-cache':
+                    with lock:
+                        if any(job['state']=='running' for job in jobs.values()):
+                            self.respond(409,{'error':'Дождитесь завершения текущего импорта перед очисткой кеша'});return
                 document=workspace.dispatch(relative,data)
                 if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data)
@@ -415,6 +441,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                         result=photo_store.analyze_photo(directory,data.get('id'))
                     elif data.get('action')=='attach':
                         result=photo_store.attach_photo(directory,data.get('url',''),data.get('data'))
+                    elif data.get('action')=='accepted':
+                        result=photo_store.accepted_photo_for_url(directory,data.get('url',''))
                     else: raise ValueError('Неверное действие с фотографией')
                     self.respond(200,result);return
                 if path == '/api/local/history':

@@ -1,4 +1,5 @@
 import {sanitizeClientText,containsClientCommission} from './client-publication.mjs';
+import {validateListingFields} from './fact-ledger.mjs';
 import {suggestTags} from './content-tools.mjs';
 import {readSourceHtml,sourceFieldFacts} from './source-import.mjs';
 import {normalizeRussian,detectFurniture,detectConditions,resolvePhotoFurniture} from './fact-evidence.mjs';
@@ -186,7 +187,8 @@ export function extractUniversityReferences(text){
   if(foundCampuses.length===1)fields.campus=foundCampuses[0].ru;
   return {fields,evidence,universities:references,campuses:foundCampuses};
 }
-export function generateListing(v,rules=DICTIONARY,prefs=DEFAULT_PREFS) {
+export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
+  const schema=validateListingFields(v);if(!schema.valid)return {titles:[],body:'',tags:'',problems:schema.problems,unknown:[],tagSuggestions:[],semanticWarnings:[]};
   v={...v};
   const roomInfo=roomTerminology(v),semanticWarnings=[...roomInfo.warnings],studioProfile=normalizeListingStudioProfile(v.studioProfile);
   const photoFacts=resolvePhotoFurniture(v,FEATURES);

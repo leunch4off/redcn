@@ -220,7 +220,9 @@ def _read(directory, card_id):
     return card, row[0]
 
 
-def _save(directory, card_id, original_payload, card):
+def _save(directory, card_id, original_payload, card, *, actor='Mac owner', kind='save'):
+    from fact_ledger import validate_result_fields, record_fact_revision
+    validate_result_fields(card)
     encoded = json.dumps(card, ensure_ascii=False)
     connection = redcn.open_cache(Path(directory))
     try:
@@ -230,6 +232,7 @@ def _save(directory, card_id, original_payload, card):
         if not changed:
             connection.rollback()
             raise LanguageConflict('Карточка изменилась во время обработки. Обновите её и повторите действие.')
+        record_fact_revision(connection, card_id, card.get('fields', {}), actor=actor, kind=kind)
         connection.commit()
     finally:
         connection.close()
@@ -249,7 +252,7 @@ def _variant(value):
         return 0
 
 
-def rewrite(directory, card_id, data):
+def rewrite(directory, card_id, data, *, actor='Mac owner'):
     part = _part(data.get('part', 'all'), all_parts=True)
     previous, original_payload = _read(directory, card_id)
     fields = copy.deepcopy(previous.get('fields', {}))
@@ -299,10 +302,10 @@ def rewrite(directory, card_id, data):
     if isinstance(info.get('manualParts'), list):
         info['manualParts'] = [name for name in info['manualParts'] if name not in targets]
     card['templateInfo'] = info
-    return _save(directory, card_id, original_payload, card)
+    return _save(directory, card_id, original_payload, card, actor=actor)
 
 
-def edit_text(directory, card_id, data):
+def edit_text(directory, card_id, data, *, actor='Mac owner'):
     part = _part(data.get('part'))
     text = _text(data.get('text'), LIMITS[part], 'Текст карточки', empty=part=='tags')
     source = _text(data['sourceRu'], MAX_SOURCE, 'Русский черновик', empty=True) if 'sourceRu' in data else None
@@ -321,10 +324,10 @@ def edit_text(directory, card_id, data):
     manual = [name for name in info.get('manualParts', []) if name in PARTS] if isinstance(info.get('manualParts'), list) else []
     info['manualParts'] = list(dict.fromkeys([*manual, part]))
     card['templateInfo'] = info
-    return _save(directory, card_id, original_payload, card)
+    return _save(directory, card_id, original_payload, card, actor=actor)
 
 
-def dispatch(directory, path, data=None):
+def dispatch(directory, path, data=None, *, actor='Mac owner'):
     """Caller must already enforce desktop token or paired session plus CSRF."""
     catalog = re.fullmatch(r'language/catalog/(title|description|tags)', path)
     if path not in ('language', 'language/search', 'translate', 'universities', 'universities/search') and not catalog and not re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)', path):
@@ -353,7 +356,7 @@ def dispatch(directory, path, data=None):
             match = re.fullmatch(r'cards/([a-f0-9]{32})/(rewrite|edit-text)', path)
             if not match or data is None:
                 return None
-            result = (rewrite if match[2]=='rewrite' else edit_text)(directory, match[1], data)
+            result = (rewrite if match[2]=='rewrite' else edit_text)(directory, match[1], data, actor=actor)
         return 200, result, 'application/json; charset=utf-8', {}
     except LanguageConflict as error:
         return 409, {'error': str(error)}, 'application/json; charset=utf-8', {}

@@ -9,13 +9,19 @@ import json
 import math
 from pathlib import Path
 import re
+from datetime import date
+from urllib.parse import urlsplit
 
 MAX_ROUTES = 10
 MAX_STOPS = 3
+MAX_SEGMENTS = 8
 _MODES = {'unknown', 'public', 'metro', 'bus', 'walk', 'car', 'bike'}
+_METHODS = {'unknown', 'manual-confirmed', 'provider', 'estimate'}
 _FIELDS = {'name', 'campus', 'campusId', 'address', 'latitude', 'longitude',
-           'time', 'mode', 'transport', 'routeDistanceKm', 'stops'}
+           'time', 'mode', 'transport', 'routeDistanceKm', 'stops', 'method',
+           'checkedAt', 'sourceUrl', 'accessMinutes', 'egressMinutes', 'transfers', 'segments'}
 _STOP_FIELDS = {'name', 'latitude', 'longitude'}
+_SEGMENT_FIELDS = {'mode', 'transport', 'from', 'to', 'minutes'}
 
 
 @lru_cache(maxsize=1)
@@ -65,6 +71,30 @@ def validate_routes(value):
         mode = _text(row.get('mode', 'unknown'), 'mode', 20)
         if mode not in _MODES:
             raise ValueError('Неверный способ поездки')
+        method = _text(row.get('method', 'unknown'), 'method', 30)
+        if method not in _METHODS:
+            raise ValueError('Неизвестный способ проверки маршрута')
+        checked_at = _text(row.get('checkedAt', ''), 'checkedAt', 10)
+        if checked_at:
+            try:
+                if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', checked_at):
+                    raise ValueError()
+                date.fromisoformat(checked_at)
+            except ValueError as error:
+                raise ValueError('Неверная дата проверки маршрута') from error
+        source_url = _text(row.get('sourceUrl', ''), 'sourceUrl', 2048)
+        if source_url:
+            try:
+                parsed = urlsplit(source_url)
+                if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password or parsed.port not in (None, 443):
+                    raise ValueError()
+            except ValueError as error:
+                raise ValueError('Источник маршрута должен быть обычной HTTPS-ссылкой') from error
+        def integer(value, field, maximum):
+            result = _number(value, field, 0, maximum)
+            if result != '' and not isinstance(result, int):
+                raise ValueError('Нужно целое число в поле маршрута «' + field + '»')
+            return result
         stops = row.get('stops', [])
         if not isinstance(stops, list) or len(stops) > MAX_STOPS:
             raise ValueError('Нужно не более трёх остановок / ориентиров маршрута')
@@ -77,6 +107,23 @@ def validate_routes(value):
                      'longitude': _number(stop.get('longitude', ''), 'stop.longitude', -180, 180)}
             if clean['name']:
                 clean_stops.append(clean)
+        segments = row.get('segments', [])
+        if not isinstance(segments, list) or len(segments) > MAX_SEGMENTS:
+            raise ValueError('Нужно не более восьми участков маршрута')
+        clean_segments = []
+        for segment in segments:
+            if not isinstance(segment, dict) or set(segment) - _SEGMENT_FIELDS:
+                raise ValueError('Неверные поля участка маршрута')
+            segment_mode = _text(segment.get('mode', 'unknown'), 'segment.mode', 20)
+            if segment_mode not in _MODES:
+                raise ValueError('Неверный транспорт участка маршрута')
+            part = {'mode': segment_mode,
+                    'transport': _text(segment.get('transport', ''), 'segment.transport', 160),
+                    'from': _text(segment.get('from', ''), 'segment.from', 160),
+                    'to': _text(segment.get('to', ''), 'segment.to', 160),
+                    'minutes': integer(segment.get('minutes', ''), 'segment.minutes', 1440)}
+            if any(part[key] for key in ('transport', 'from', 'to')) or part['minutes'] != '':
+                clean_segments.append(part)
         clean = {
             'name': _text(row.get('name', ''), 'name', 240),
             'campus': _text(row.get('campus', ''), 'campus', 240),
@@ -89,6 +136,13 @@ def validate_routes(value):
             'transport': _text(row.get('transport', ''), 'transport', 600),
             'routeDistanceKm': _number(row.get('routeDistanceKm', ''), 'routeDistanceKm', 0, 20000),
             'stops': clean_stops,
+            'method': method,
+            'checkedAt': checked_at,
+            'sourceUrl': source_url,
+            'accessMinutes': integer(row.get('accessMinutes', ''), 'accessMinutes', 180),
+            'egressMinutes': integer(row.get('egressMinutes', ''), 'egressMinutes', 180),
+            'transfers': integer(row.get('transfers', ''), 'transfers', 12),
+            'segments': clean_segments,
         }
         if any(clean[key] for key in ('name', 'campus', 'campusId', 'address')):
             output.append(clean)

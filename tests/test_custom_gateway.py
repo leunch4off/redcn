@@ -141,7 +141,7 @@ class CustomGatewayLifecycle(unittest.TestCase):
         self.assertEqual(status,200);self.assertIn('; Secure',headers['Set-Cookie'])
         cookie=headers['Set-Cookie'].split(';')[0]
         self.assertEqual(self.request('/api/phone/cards',headers={'Cookie':cookie})[0],200)
-        self.assertEqual(self.request('/api/local/phone',headers={'Cookie':cookie})[0],404)
+        self.assertEqual(self.request('/api/local/phone',headers={'Cookie':cookie})[0],403,'paired devices cannot access the desktop namespace')
         self.assertEqual(self.request('/phone/',origin=SECOND)[0],403)
         self.assertEqual(self.request('/phone/',headers={'Origin':SECOND})[0],403)
         self.manager.disable_remote()
