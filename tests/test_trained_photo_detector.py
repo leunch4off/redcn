@@ -65,14 +65,14 @@ class TrainedDetectorTests(unittest.TestCase):
 
     def test_selected_provider_bypasses_ollama_and_apple(self):
         from PIL import Image
-        with Image.new('RGB',(32,32)) as image, \
+        with tempfile.TemporaryDirectory() as folder, Image.new('RGB',(32,32)) as image, \
                 patch('photo_ai_settings.load_config', return_value={'enabled':True,'model':detector.MODEL}), \
                 patch.object(detector,'analyze',return_value={'provider':'yolox-trained','autoApply':False}) as analyze, \
                 patch('photo_ai_runtime.ensure_started',side_effect=AssertionError('Ollama must not start')), \
                 patch.object(vision_photo,'native_classify',side_effect=AssertionError('Apple fallback must not run')):
-            result=vision_photo.analyze_image(image,'/unused',content=b'fixture',mime='image/png')
+            result=vision_photo.analyze_image(image,folder,content=b'fixture',mime='image/png')
         self.assertEqual(result['provider'],'yolox-trained'); self.assertFalse(result['autoApply'])
-        self.assertEqual(analyze.call_args.args[:3],(b'fixture','image/png','/unused'))
+        self.assertEqual(analyze.call_args.args[:3],(b'fixture','image/png',folder))
 
     def test_parent_forces_review_policy_even_if_worker_sets_old_auto_flags(self):
         class Process:

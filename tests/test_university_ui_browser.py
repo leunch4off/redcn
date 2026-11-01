@@ -85,6 +85,15 @@ class UniversityReferenceAcceptance(unittest.TestCase):
         self.page.locator('#university').fill('МГУ');self.page.locator('#universitySuggestions button').first.click()
         self.assertEqual(self.page.locator('#campus').input_value(),'Мой непроверенный кампус')
 
+    def test_chinese_statistics_and_personal_accounts_keep_historical_scope_without_changing_apartment(self):
+        self.open_editor();self.page.locator('#price').fill('81000');self.page.locator('#metro').fill('Прокшино')
+        self.page.locator('nav [data-tab="knowledge"]').click();self.page.locator('#universityKind').select_option('university');self.page.locator('#universitySearch').fill('РУДН')
+        rudn=self.page.locator('#universityResults [data-reference-id="rudn"]');rudn.wait_for();rudn.locator('.university-china-data > summary').click()
+        text=rudn.inner_text();self.assertRegex(text,r'1\s612 студентов из КНР');self.assertIn('2024-06-20',text);self.assertIn('2026-11-01',text);self.assertIn('蔡怡清',text);self.assertIn('沉潇婷',text);self.assertIn('не имеют общего знаменателя',text)
+        self.page.locator('#universitySearch').fill('МАИ');mai=self.page.locator('#universityResults [data-reference-id="mai"]');mai.wait_for();mai.locator('.university-china-data > summary').click()
+        self.assertIn('Более 650',mai.inner_text());self.assertIn('Гостевая летняя школа',mai.inner_text());self.assertIn('не доказывают результаты обучения',mai.inner_text())
+        self.assertEqual(self.page.locator('#price').input_value(),'81000');self.assertEqual(self.page.locator('#metro').input_value(),'Прокшино');self.assertEqual(self.page.locator('#uniTime').input_value(),'');self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
+
     def test_selected_school_appears_in_title_and_body_without_invented_proximity(self):
         self.open_editor()
         self.page.locator('#price').fill('80000');self.page.locator('#area').fill('50');self.page.locator('#rooms').fill('2')

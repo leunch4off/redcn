@@ -2,7 +2,7 @@
 CONFIG = {
     'id': 'avito',
     'stability': ['[data-marker="item-view/title-info"]','[data-marker="item-view/item-price"]','[data-marker="item-view/item-price-container"]','[data-marker="item-view/item-params"]','[data-marker="item-view/item-description"]','[data-marker="item-view/item-address"]'],
-    'parserVersion': 'avito-v1',
+    'parserVersion': 'avito-v2-gallery-variants',
     'metadataTokens': [],
     'fields': ['[data-marker="'+name+'"]' for name in (
         'item-view/title-info','item-view/item-price','item-view/item-price-container',

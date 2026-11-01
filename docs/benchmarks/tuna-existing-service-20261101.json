@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-11-01",
+  "collection": "Parent operator read-only native service registry, known plist metadata and kernel/process metadata; no auth/config/log contents retained",
+  "origin": "https://free-quail-5273.a.tuna.free",
+  "upstream": "127.0.0.1:8767",
+  "officialRegisteredService": {
+    "name": "redcn-phone",
+    "scope": 1,
+    "state": "running",
+    "pid": 1445,
+    "executable": "/opt/homebrew/bin/tuna",
+    "currentUserMatches": true,
+    "domainMatches": true,
+    "explicitPhoneUpstream": true,
+    "inspectDisabled": true
+  },
+  "existingUserLaunchAgent": {
+    "label": "redcn-phone",
+    "runAtLoad": true,
+    "keepAlive": true,
+    "mode": "0600",
+    "createdAtEpochSeconds": 1793385713.620922,
+    "modifiedAtEpochSeconds": 1793385713.6211517,
+    "predatesCurrentMacBoot": true
+  },
+  "currentMacBootEpochSeconds": 1793542797,
+  "processStartedAfterCurrentBoot": true,
+  "installerNativeReadOnlyVerification": {
+    "unitTestsPassed": 18,
+    "nativePlistValid": true,
+    "serviceRegistryDecision": "already-managed",
+    "registeredServiceCount": 1,
+    "processMetadataExactMatch": true,
+    "canInstallWithoutOverwrite": false,
+    "newAgentPlistPresent": false,
+    "activationCommandsProposed": 0
+  },
+  "newAutostartInstalledInThisPass": false,
+  "competingAgentCreated": false,
+  "serviceRestartedInThisPass": false,
+  "macRebootedInThisPass": false,
+  "automaticLaunchCauseIndependentlyProven": false,
+  "limits": [
+    "Existing managed service running after a real Mac boot; no new reboot experiment performed",
+    "User LaunchAgent availability starts with the user session, not before login",
+    "Raw registry Args/File/Log, authentication, environment and log contents not retained"
+  ]
+}

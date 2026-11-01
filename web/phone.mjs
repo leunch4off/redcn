@@ -13,6 +13,8 @@ import {phoneRoleCapabilities} from './access-roles.mjs';
 import {setupDossierTransfer} from './dossier-transfer.mjs';
 import {setupPublicationReview} from './publication-review.mjs';
 import {setupLearningStudio} from './learning-studio.mjs';
+import {setupCityPois} from './city-pois.mjs';
+import {createPhoneDesignerLoader} from './phone-designer-loader.mjs';
 
 window.redcnPhoneBoot?.started();
 const ph=id=>document.getElementById(id);
@@ -22,8 +24,11 @@ let phoneDictionaryUI=null;
 let phoneDossierUI=null,phoneDossierCard=null,phoneDossierRole=null;
 let phonePublicationReviewUI=null,phoneRoleRefreshing=null;
 let phoneLearningUI=null;
+let phoneCityPoisUI=null;
 const phoneFeedViews=new Map();let phoneFeedSignature='';
 const phoneState={authEpoch:0,paired:false,csrf:'',cards:new Map(),cursor:null,hasMore:false,view:'cards',detail:null,detailId:null,media:[],photo:0,variant:'prepared',job:null,jobResult:null,lastSync:0,polling:false};
+const phoneDesignerLoader=createPhoneDesignerLoader({importModule:()=>import('/phone/designer.mjs'),getState:()=>({epoch:phoneState.authEpoch,paired:phoneState.paired,canEdit:phoneCanEdit(),saveData:navigator.connection?.saveData===true})});
+let phoneDesignerWarmEpoch=null;
 let phoneJobProgressTimer=0,phoneJobLatest=null,phoneJobLast=null;
 const phoneWriting={revision:0,draftRevision:0,busy:false,capabilities:null,loading:null};
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
@@ -60,6 +65,8 @@ function phoneApplyRole(state){
  const previous=phoneState.role,caps=phoneRoleCapabilities(state);phoneState.role=caps.role||'legacy';phoneState.access=caps;
  const edit=caps.supported?caps.editCards:true,owner=caps.supported&&caps.role==='owner';
  if(!edit){phoneLearningUI?.destroy();phoneLearningUI=null;}ph('phoneLearningMount')?.classList.toggle('hidden',!edit);
+ if(!edit){phoneCityPoisUI?.destroy();phoneCityPoisUI=null;}ph('phoneCityPoisSection')?.classList.toggle('hidden',!edit);
+ if(!edit){phoneDesignerLoader.invalidate();phoneDesignerWarmEpoch=null;ph('phoneDesignMount').dataset.editorReady='false';ph('phoneDesignMount').dataset.editorStage='forbidden';}
  phoneLearningUI?.setPermissions();
  const toggle=(id,show)=>{const node=ph(id);if(node)node.classList.toggle('hidden',!show);};
  for(const view of ['import','watch','design'])document.querySelectorAll('[data-phone-view="'+view+'"]').forEach(node=>node.classList.toggle('hidden',!edit));
@@ -68,14 +75,14 @@ function phoneApplyRole(state){
  if(!owner){phoneArchiveUI?.destroy();phoneArchiveUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;}
  if(!edit){phoneDictionaryUI?.clear();phonePublicationReviewUI?.clear();phoneRoutesUI?.destroy();phoneRoutesUI=null;phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;phoneResetWriting();clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneState.job=null;phoneJobLatest=phoneJobLast=null;ph('phoneJob').classList.add('hidden');}
  ph('phoneRewriteAll')?.closest('section')?.classList.toggle('hidden',!edit);
- const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v24 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
+ const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v25 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
  if(!edit&&['import','watch','design'].includes(phoneState.view))phoneView('cards');
  if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
  return !!previous&&previous!==phoneState.role;
 }
 const phoneCanEdit=()=>phoneState.access?.supported?phoneState.access.editCards:phoneState.role!=='viewer';
 async function phoneRefreshRole(){if(phoneRoleRefreshing||!phoneState.paired)return phoneRoleRefreshing;const epoch=phoneState.authEpoch;const pending=phoneApi('state').then(state=>{if(epoch!==phoneState.authEpoch)return;phoneState.csrf=state.csrfToken||phoneState.csrf;const changed=phoneApplyRole(state);if(changed&&phoneState.detailId)return phoneOpenCard(phoneState.detailId,{keepScroll:true});}).finally(()=>{if(phoneRoleRefreshing===pending)phoneRoleRefreshing=null;});phoneRoleRefreshing=pending;return pending;}
-function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){phoneDictionaryUI?.clear();phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobStageTime','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
+function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){phoneCityPoisUI?.destroy();phoneCityPoisUI=null;ph('phoneCityPoisSection')?.classList.add('hidden');phoneDesignerLoader.invalidate();phoneDesignerWarmEpoch=null;ph('phoneDesignMount').dataset.editorReady='false';ph('phoneDesignMount').dataset.editorStage='signed-out';phoneDictionaryUI?.clear();phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
 // The first usable feed has a shared budget; PDF and attachment work keep their
 // longer operation deadlines and cannot make initial navigation wait for them.
 async function phoneApi(path,data,{deadline=0}={}){
@@ -146,14 +153,14 @@ async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
 async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
   if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneResetWriting();phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='prepared';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=acceptAuthenticatedClientCard(card);phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=acceptAuthenticatedClientCard(card);phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phonePrewarmDesigner();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
 function phoneRenderMedia(){
   const card=phoneState.detail;if(!card)return;
   const all=Array.isArray(card.media)?card.media:[],crops=all.filter(row=>row.crop&&phoneAsset(row.crop.url)),prepared=phoneState.variant==='prepared';
-  phoneState.media=(prepared?all.map(row=>row.crop&&phoneAsset(row.crop.url)?{...row.crop,sourceUrl:row.sourceUrl}:row):all).filter(row=>phoneAsset(row.url));phoneState.photo=Math.min(phoneState.photo,Math.max(0,phoneState.media.length-1));
+  phoneState.media=(prepared?all.map(row=>{const selected=row.prepared&&phoneAsset(row.prepared.url)?row.prepared:row.crop&&phoneAsset(row.crop.url)?row.crop:row;return {...selected,sourceUrl:row.sourceUrl};}):all).filter(row=>phoneAsset(row.url));phoneState.photo=Math.min(phoneState.photo,Math.max(0,phoneState.media.length-1));
   ph('phonePhotoVariants').classList.toggle('hidden',!all.length);for(const [variant,id] of [['original','phoneOriginalVariant'],['prepared','phoneCropVariant']]){const selected=phoneState.variant===variant;ph(id).classList.toggle('active',selected);ph(id).setAttribute('aria-pressed',String(selected));}
   ph('phonePhotos').replaceChildren();for(const [index,row] of phoneState.media.entries()){const figure=document.createElement('figure');figure.className='phone-slide';const image=document.createElement('img');image.src=phoneAsset(row.url);image.alt='Фотография квартиры '+(index+1);image.loading=index?'lazy':'eager';figure.append(image);ph('phonePhotos').append(figure);}
   const count=phoneState.media.length,batch=photoBatchSummary(card,count,crops.length,prepared),expected=batch.expected;
@@ -212,6 +219,7 @@ function phoneWritingButtons(){
   ph('phoneApplyDraft').disabled=disabled||!ph('phoneChineseDraft').value.trim();
 }
 function phoneResetWriting(){
+  const designMount=ph('phoneDesignMount');designMount.dataset.photosReady='false';designMount.dataset.photosStage='idle';delete designMount.dataset.photosFetchMs;
   phoneLearningUI?.clear();
   phonePublicationReviewUI?.clear();if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
   phoneWriting.revision++;phoneWriting.draftRevision++;phoneWriting.busy=false;if(!phoneState.paired){phoneWriting.capabilities=null;phoneWriting.loading=null;}
@@ -329,7 +337,8 @@ function phoneInitializeLearning(){
  }
  return phoneLearningUI;
 }
-function phoneInitializeDictionary(){phoneInitializeLearning();if(!phoneDictionaryUI)phoneDictionaryUI=setupDictionaryReview({mount:ph('phoneDictionaryMount'),api:phoneApi,getRules:()=>({}),translatePhrase:text=>phoneApi('translate',{text,part:'body'}),toast:phoneToast});return phoneDictionaryUI;}
+function phoneInitializeCityPois(){if(!phoneState.paired||!phoneCanEdit())return null;if(!phoneCityPoisUI){let section=ph('phoneCityPoisSection');if(!section){section=document.createElement('details');section.id='phoneCityPoisSection';section.className='surface';const summary=document.createElement('summary');summary.textContent='Городские места · координаты и источники';const mount=document.createElement('div');mount.id='phoneCityPoisMount';section.append(summary,mount);ph('phoneSetupView').append(section);}section.classList.remove('hidden');phoneCityPoisUI=setupCityPois({mount:ph('phoneCityPoisMount')});}return phoneCityPoisUI;}
+function phoneInitializeDictionary(){phoneInitializeLearning();phoneInitializeCityPois();if(!phoneDictionaryUI)phoneDictionaryUI=setupDictionaryReview({mount:ph('phoneDictionaryMount'),api:phoneApi,getRules:()=>({}),translatePhrase:text=>phoneApi('translate',{text,part:'body'}),toast:phoneToast});return phoneDictionaryUI;}
 ph('phoneReconnect').onclick=()=>phoneStart();
 ph('phoneLoadRetry').onclick=()=>phoneStart();
 
@@ -338,8 +347,8 @@ async function phoneDownloadAsset(asset){cardDownloadBlob(await phoneExportBlob(
 async function phonePresentationPhotos(){
  const id=phoneState.detailId,epoch=phoneState.authEpoch,rows=(phoneState.detail?.media||[]).slice(0,30),photos=new Array(rows.length),started=performance.now();let next=0,failed=false;
  const valid=()=>epoch===phoneState.authEpoch&&id===phoneState.detailId,mount=ph('phoneDesignMount');mount.dataset.photosStage='fetching';performance.mark?.('redcn-designer-photo-fetch-start');
- try{await Promise.all(Array.from({length:Math.min(3,rows.length)},async()=>{while(next<rows.length&&!failed){if(!valid())throw Error('Выбрана другая карточка');const index=next++,original=rows[index],selected=original.crop||original,path=phoneAsset(selected.url);if(!path)continue;
-  try{const dataUrl=await withRequestDeadline(15000,async(signal,scope)=>{const response=await fetch(path,{credentials:'same-origin',cache:'no-store',signal});scope.throwIfAborted();if(!valid())throw Error('Выбрана другая карточка');if(!response.ok)throw Error('Фотография недоступна на Mac');const blob=await response.blob();scope.throwIfAborted();return cardPhotoDataUrl(blob);});if(!valid())throw Error('Выбрана другая карточка');photos[index]={dataUrl};}catch(error){failed=true;throw error;}
+ try{await Promise.all(Array.from({length:Math.min(3,rows.length)},async()=>{while(next<rows.length&&!failed){if(!valid())throw Error('Выбрана другая карточка');const index=next++,original=rows[index],selected=original.prepared||original.crop||original,path=phoneAsset(selected.url);if(!path)continue;
+  try{const dataUrl=await withRequestDeadline(15000,async(signal,scope)=>{const response=await fetch(path,{credentials:'same-origin',cache:'no-store',signal});scope.throwIfAborted();if(!valid())throw Error('Выбрана другая карточка');if(!response.ok)throw Error('Фотография недоступна на Mac');const blob=await response.blob();scope.throwIfAborted();return cardPhotoDataUrl(blob);});if(!valid())throw Error('Выбрана другая карточка');photos[index]={dataUrl,originalId:original.id,selectedId:selected.id,selection:original.selectionReason||selected.verification||'original'};}catch(error){failed=true;throw error;}
  }}));if(!valid())throw Error('Выбрана другая карточка');mount.dataset.photosStage='decoded';mount.dataset.photosFetchMs=String(Math.round(performance.now()-started));performance.mark?.('redcn-designer-photo-fetch-ready');return photos.filter(Boolean);
  }catch(error){failed=true;if(valid())mount.dataset.photosStage='error';throw error;}
 }
@@ -372,24 +381,36 @@ if(!phoneFilesUI)phoneFilesUI=setupCardFiles({mount:ph('phoneFilesMount'),getCar
 if(phoneCanEdit()&&!phonePublicationReviewUI)phonePublicationReviewUI=setupPublicationReview({mount:ph('phonePublicationReviewMount'),api:phoneApi,getCardId:()=>phoneState.detailId,toast:phoneToast});
 if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
 }
+function phonePrewarmDesigner(){
+  const epoch=phoneState.authEpoch,mount=ph('phoneDesignMount');
+  if(!phoneState.paired||!phoneCanEdit()||navigator.connection?.saveData===true||phoneDesignerWarmEpoch===epoch)return;
+  phoneDesignerWarmEpoch=epoch;mount.dataset.moduleStage='warming';performance.mark?.('redcn-designer-module-warm-start');
+  phoneDesignerLoader.prewarm().then(module=>{if(epoch!==phoneState.authEpoch||!phoneState.paired||!phoneCanEdit())return;mount.dataset.moduleStage=module?'ready':'unavailable';if(module)performance.mark?.('redcn-designer-module-warm-ready');});
+}
 function phoneInitializeDesigner(){
-  if(!phoneCanEdit())return Promise.resolve(null);
+  if(!phoneState.paired||!phoneCanEdit())return Promise.resolve(null);
   if(phoneDesignInitializing)return phoneDesignInitializing;
   if(phonePresentationUI)return Promise.resolve(phonePresentationUI);
-  const epoch=phoneState.authEpoch;
-  ph('phoneDesignMount').textContent='Загружаем редактор оформления…';
+  const epoch=phoneState.authEpoch,mount=ph('phoneDesignMount'),started=performance.now();
+  mount.textContent='Загружаем редактор и общий шаблон оформления…';mount.dataset.editorReady='false';mount.dataset.editorStage='loading';mount.dataset.templateStage='loading';delete mount.dataset.templateErrorCode;delete mount.dataset.templateHttpStatus;delete mount.dataset.templateReadMs;mount.dataset.photosReady='false';performance.mark?.('redcn-designer-editor-start');
+  // Start the authenticated read while the public module is still loading.
+  // Settle errors immediately so a slow module cannot cause an unhandled reject.
+  const templateCurrent=()=>epoch===phoneState.authEpoch&&phoneState.paired&&phoneCanEdit()&&mount.dataset.editorStage==='loading';
+  const prefetched=phoneApi('design').then(value=>{if(templateCurrent()){mount.dataset.templateStage='ready';mount.dataset.templateReadMs=String(Math.round(performance.now()-started));if(!mount.querySelector('#designCanvasEditor'))mount.textContent='Общий шаблон загружен. Загружаем редактор оформления…';}return {value};},error=>{if(templateCurrent()){mount.dataset.templateStage='error';mount.dataset.templateReadMs=String(Math.round(performance.now()-started));mount.dataset.templateErrorCode=error.code||'REQUEST_ERROR';if(error.status)mount.dataset.templateHttpStatus=String(error.status);if(!mount.querySelector('#designCanvasEditor'))mount.textContent='Общий шаблон не загрузился. '+error.message;}return {error};});
   const ready=(async()=>{
-    const {setupPresentationStudio}=await import('/phone/designer.mjs');
-    if(epoch!==phoneState.authEpoch||!phoneState.paired||!phoneCanEdit())return null;
-    let initialRead=null;
-    const api=(path,data)=>{const request=phoneApi(path,data);if(path==='design'&&!data)initialRead=request;return request;};
-    const studio=setupPresentationStudio({mount:ph('phoneDesignMount'),getCard:()=>phoneState.detail||{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});
+    const moduleStarted=performance.now(),module=await phoneDesignerLoader.load();mount.dataset.moduleWaitMs=String(Math.round(performance.now()-moduleStarted));performance.mark?.('redcn-designer-module-ready');
+    if(!module||epoch!==phoneState.authEpoch||!phoneState.paired||!phoneCanEdit())return null;
+    let initialRead=null,usedPrefetch=false;
+    const api=(path,data)=>{const initial=path==='design'&&!data&&!usedPrefetch;if(initial)usedPrefetch=true;const request=initial?prefetched.then(result=>{if(result.error)throw result.error;return result.value;}):phoneApi(path,data);if(initial)initialRead=request;return request;};
+    const setupStarted=performance.now(),studio=module.setupPresentationStudio({mount,getCard:()=>phoneState.detail||{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});mount.dataset.setupSyncMs=String(Math.round(performance.now()-setupStarted));performance.mark?.('redcn-designer-setup-sync-ready');
     phonePresentationUI=studio;
-    await (initialRead||Promise.resolve()).catch(()=>{});
-    return epoch===phoneState.authEpoch&&studio===phonePresentationUI?studio:null;
+    try{await (initialRead||Promise.resolve());if(!await studio.ready())throw Error('Текущее полотно ещё не готово. Повторите открытие редактора.');}
+    catch(error){if(epoch===phoneState.authEpoch&&studio===phonePresentationUI){studio.destroy();phonePresentationUI=null;mount.dataset.editorStage='error';mount.textContent='Не удалось загрузить общий шаблон. Откройте раздел дизайна ещё раз. '+error.message;}throw error;}
+    if(epoch!==phoneState.authEpoch||!phoneState.paired||!phoneCanEdit()||studio!==phonePresentationUI)return null;
+    mount.dataset.moduleStage='ready';mount.dataset.editorReady='true';mount.dataset.editorStage='ready';mount.dataset.editorMs=String(Math.round(performance.now()-started));performance.mark?.('redcn-designer-editor-ready');return studio;
   })();
   phoneDesignInitializing=ready;
-  const finish=()=>{if(phoneDesignInitializing===ready)phoneDesignInitializing=null;};ready.then(finish,finish);return ready;
+  const finish=()=>{if(phoneDesignInitializing===ready)phoneDesignInitializing=null;};ready.then(finish,error=>{if(phoneDesignInitializing===ready&&epoch===phoneState.authEpoch&&phoneState.paired&&phoneCanEdit()){mount.dataset.editorReady='false';if(mount.dataset.editorStage==='loading'){mount.dataset.editorStage='error';mount.textContent='Редактор не загрузился. Проверьте связь и откройте раздел ещё раз. '+error.message;}}finish();});return ready;
 }
 ph('phoneDesignCard').onclick=()=>phoneView('design');
 ph('phoneNetworkHelp').textContent=location.protocol==='https:'?'Внешняя HTTPS-ссылка работает через мобильный интернет; Mac должен оставаться включённым.':'Локальный адрес работает в одной сети с Mac. Для мобильного интернета используйте внешнюю HTTPS-ссылку из раздела «Телефон» на компьютере.';

@@ -16,13 +16,14 @@ _MEDIA = r'[a-f0-9]{64}'
 _VIEW_GET = (r'state', r'cards', rf'cards/{_CARD}(?:\.zip)?',
              rf'(?:media|previews)/{_MEDIA}', rf'card-exports/{_CARD}', rf'exports/{_ASSET}')
 _EDITOR_GET = (r'learning', r'language', r'language/catalog/(?:title|description|tags)',
-               r'universities', r'listing-watch', r'listing-watch/items',
+               r'universities', r'city-pois', r'listing-watch', r'listing-watch/items',
                r'listing-watch/notifications',r'activity-log',rf'fact-revisions/{_CARD}',rf'jobs/{_CARD}',
                r'import-diagnostics', r'photo-ai', r'design', rf'design-images/{_CARD}',
                rf'dossier-(?:options|design)/{_CARD}', r'photo-duplicates',
                r'dictionary-reviews',rf'publication-review/{_CARD}')
 _EDITOR_POST = (r'learning', r'logout', r'import', rf'cards/{_CARD}/(?:prepare|analyze|routes|rewrite|edit-text)',
-                r'language/search', r'universities/search', r'translate',
+                r'university-route-cache/(?:lookup|remember)',
+                r'language/search', r'universities/search', r'city-pois/search', r'translate',
                 r'listing-watch/read', r'card-export', r'listing-map',r'design',r'design-images',
                 rf'dossier-client/{_CARD}', r'dictionary-reviews',r'table-export',rf'publication-review/{_CARD}')
 _OWNER_GET = (r'import-diagnostics/tg\.zip', rf'dossier-backup/{_CARD}',rf'card-archive/{_CARD}',rf'card-attachments/{_CARD}/{_ASSET}')
@@ -53,6 +54,9 @@ def phone_route_allowed(role, method, path, data=None):
         return False
     if not re.fullmatch(r'[a-zA-Z0-9_./-]+', path) or '..' in path or path.startswith('/'):
         return False
+    # Whole-workspace export and archive inspection require the desktop token,
+    # including when a paired phone carries the owner role.
+    if path.startswith('workspace-backup'):return False
     if path=='learning' and method=='POST' and isinstance(data,dict) and data.get('action')=='scheduler-config' and role!='owner':
         return False
     if method == 'GET':

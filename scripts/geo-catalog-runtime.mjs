@@ -1,6 +1,6 @@
 // Runtime is kept separate so catalog refreshes never change lookup behavior.
 const geoFold = value => String(value ?? '').normalize('NFC').toLocaleLowerCase('ru').replaceAll('ё','е').replace(/\s+/g,' ').trim();
-const geoKinds = {metro:'地铁站',street:'街道',stop:'公交站'};
+const geoKinds = {metro:'地铁站',street:'街道',stop:'公交站',line:'地铁线路'};
 let geoByName=null;
 function geoNameIndex(){
   if(!geoByName){
@@ -14,6 +14,14 @@ export function resolveGeo(name,kind=''){
   const key=geoFold(name);if(!key)return undefined;
   const rows=geoNameIndex().get(key)||[];
   return rows.find(row=>(!kind||row.kind===kind)&&row.translationStatus==='reviewed')||rows.find(row=>!kind||row.kind===kind);
+}
+export function resolveGeoLine(name){
+  const key=geoFold(name).replace(/\s+линия$/u,'');
+  const row=GEO_CATALOG.lines.find(line=>line.officialNameEvidence&&geoFold(line.ru).replace(/\s+линия$/u,'')===key);
+  return row?{...row,kind:'line'}:undefined;
+}
+export function officialGeoNames(){
+  return (GEO_CATALOG.officialNameCatalog||[]).map(row=>({...row,sourceIds:[...(row.sourceIds||[])]}));
 }
 export function geoLabel(row,{includeRussian=true}={}){
   if(!row)return '';
@@ -36,7 +44,7 @@ export function getGeoStats(){
     stop:records.filter(r=>r.kind==='stop').length,metroNames:new Set(records.filter(r=>r.kind==='metro').map(r=>geoFold(r.ru))).size,
     translated:records.filter(r=>r.zh).length,translatedMetroNames:new Set(records.filter(r=>r.kind==='metro'&&r.zh).map(r=>geoFold(r.ru))).size,
     reviewed:records.filter(r=>r.translationStatus==='reviewed').length,reviewedNames:new Set(records.filter(r=>r.translationStatus==='reviewed').map(r=>geoFold(r.ru))).size,
-    updatedAt:GEO_CATALOG.updatedAt,coverage:GEO_CATALOG.coverage,sources:GEO_CATALOG.sources,translationSources:GEO_CATALOG.translationSources||[]};
+    updatedAt:GEO_CATALOG.updatedAt,coverage:GEO_CATALOG.coverage,sources:GEO_CATALOG.sources,translationSources:GEO_CATALOG.translationSources||[],officialNames:officialGeoNames(),officialNamesCoverage:GEO_CATALOG.officialNamesCoverage||{complete:false}};
 }
 function geoTrie(names){
   const root=new Map();
@@ -44,11 +52,18 @@ function geoTrie(names){
   return root;
 }
 let geoNameTrie=null;
+let geoNameStarts=null;
+function geoCatalogCanStart(text){
+  if(!geoNameStarts)geoNameStarts=new Set([...geoNameIndex().keys()].filter(name=>name.length>2).map(name=>name[0]));
+  for(let index=0;index<text.length;index++)if(geoNameStarts.has(text[index])&&!geoWordCharacter(text[index-1]))return true;
+  return false;
+}
 function geoCatalogMatcher(){
   if(!geoNameTrie)geoNameTrie=geoTrie([...geoNameIndex().keys()].filter(name=>name.length>2));
   return geoNameTrie;
 }
 const geoRegexCache=new Map();
+export function geoTranslationCacheStats(){return {nameIndexReady:geoByName!==null,catalogTrieReady:geoNameTrie!==null,customMatchers:geoRegexCache.size};}
 const geoEmptyOverrides=Object.freeze({});
 function geoMatcher(supplied){
   const key=JSON.stringify([...supplied]);
@@ -74,14 +89,16 @@ export function translateGeo(text,overrides=geoEmptyOverrides,{includeRussian=tr
   if(supplied.has(geoFold(original)))return supplied.get(geoFold(original));
   const exact=resolveGeo(original);
   if(exact)return geoLabel(exact,{includeRussian});
+  const line=resolveGeoLine(original);
+  if(line)return geoLabel(line,{includeRussian});
   // Full names only. Never turn Юго-Западная into a made-up mixed name.
   // Existing non-geographic dictionary terms are handled by the caller.
   // A trie avoids a megabyte regular expression and keeps unknown input cheap.
-  const folded=original.toLocaleLowerCase('ru').replaceAll('ё','е'),customTrie=geoMatcher(supplied),catalogTrie=geoCatalogMatcher();
+  const folded=original.toLocaleLowerCase('ru').replaceAll('ё','е'),customTrie=geoMatcher(supplied),catalogTrie=geoCatalogCanStart(folded)?geoCatalogMatcher():null;
   let output='',cursor=0;
   for(let start=0;start<folded.length;start++){
     if(geoWordCharacter(folded[start-1]))continue;
-    const geographic=geoMatchAt(catalogTrie,folded,start),custom=geoMatchAt(customTrie,folded,start);
+    const geographic=catalogTrie?geoMatchAt(catalogTrie,folded,start):null,custom=geoMatchAt(customTrie,folded,start);
     const match=custom&&(!geographic||custom.end>=geographic.end)?custom:geographic;
     if(!match)continue;
     output+=original.slice(cursor,start)+(supplied.has(match.key)?supplied.get(match.key):geoLabel(resolveGeo(match.key),{includeRussian}));

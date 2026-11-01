@@ -10,6 +10,25 @@ SPEC.loader.exec_module(geo)
 
 
 class GeoImportTests(unittest.TestCase):
+    def test_official_supplement_verifies_only_named_line_and_preserves_rgb_and_snapshot_scope(self):
+        catalog={'sources': [], 'lines':[{'id':'171','ru':' Рублёво-Архангельская','color':'646464','serviceStatus':'not_verified'}], 'records':[
+            {'id':'named','kind':'metro','ru':'Звенигородская','lines':['171'],'serviceStatus':'not_verified'},
+            {'id':'other-line','kind':'metro','ru':'Народное Ополчение','lines':['97'],'serviceStatus':'not_verified'},
+            {'id':'future','kind':'metro','ru':'Ильинская','lines':['171'],'serviceStatus':'not_verified'},
+            {'id':'zh','kind':'metro','ru':'Митино','lines':['3'],'zh':'community','translationStatus':'community','translationLicense':'community-license'}]}
+        geo.apply_official_evidence(catalog)
+        self.assertEqual(catalog['lines'][0]['officialNumber'],'17')
+        self.assertEqual(catalog['lines'][0]['color'],'646464')
+        self.assertEqual(catalog['lines'][0]['colorStatus'],'snapshot-rgb-not-officially-verified')
+        self.assertEqual(catalog['records'][0]['serviceStatus'],'passenger-service-confirmed')
+        self.assertEqual(catalog['records'][1]['serviceStatus'],'not_verified')
+        self.assertEqual(catalog['records'][2]['serviceStatus'],'not_verified')
+        self.assertEqual(catalog['records'][3]['zh'],'米金诺')
+        self.assertEqual(catalog['records'][3]['translationVerifiedAt'],'2026-11-01')
+        self.assertNotIn('translationLicense',catalog['records'][3])
+        geo.apply_official_evidence(catalog)
+        self.assertEqual(len(catalog['sources']),4,'rendering is idempotent')
+
     def test_hh_requires_moscow_and_preserves_interchange_rows(self):
         raw = json.dumps({'id': '1', 'lines': [{'id': '1', 'name': 'Line', 'stations': [
             {'id': '1.1', 'name': 'Тест', 'lat': 55, 'lng': 37},

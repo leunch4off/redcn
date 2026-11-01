@@ -1,4 +1,4 @@
-import {photoSources,photoSourceUrl} from '../media-core.mjs';
+import {photoSources,photoSourceUrl,observedPhotoItem,observedPhotoPicture,mergeObservedPhotoItems} from '../media-core.mjs';
 import {readRelatedHtml} from '../related.mjs';
 import {rentalNumber,rentalAmount,rentalPeriod,rentalCurrency,rentalCommission,rentalSeller,explicitRentalLayout,retainRentalWitness,rentalWitnessConflicts} from './rental-values.mjs';
 // Only data-name / id / data-marker and literal JSON data are read. No page code runs.
@@ -12,7 +12,7 @@ const cianTravelTime=value=>typeof value==='number'||typeof value==='string'?/^(
 export function readCianHtml(input) {
   if(typeof input!=='string'||input.length>8_000_000)throw Error('HTML должен быть текстом размером до 8 МБ');
   const at=input.search(/<!doctype\s+html|<html\b/i),html=at>=0?input.slice(at):input;
-  const records=[],ld=[],offers=[],images=[],galleryImages=[],stack=[],seen=new Set();let title='';
+  const records=[],ld=[],offers=[],images=[],galleryImages=[],galleryItems=[],stack=[],seen=new Set();let title='';
   for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)){
     const code=match[2];
     if(/application\/ld\+json/i.test(match[1])){try{ld.push(JSON.parse(code));}catch{}}
@@ -22,7 +22,7 @@ export function readCianHtml(input) {
     }
   }
   const clean=html.replace(/<!--[^]*?-->/g,'').replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,'').replace(/<svg\b([^>]*)>[\s\S]*?<\/svg\s*>/gi,'<svg$1></svg>');
-  const finish=node=>{if(!node.capture)return;const text=sourceClean(node.parts.join('')).replace(/\s*(?:Свернуть|Развернуть)\s*$/,'');if(node.name==='title'&&!title)title=text;const key=node.name+'|'+text+'|'+(node.href||'')+'|'+(node.mode||'');if(text&&!seen.has(key)){seen.add(key);records.push({name:node.name,text,href:node.href||'',...(node.mode?{mode:node.mode}:{})});}};
+  const finish=node=>{if(node.pictureAttrs?.length){const item=observedPhotoPicture(node.pictureAttrs,{platform:'cian',order:galleryItems.length});if(item)galleryItems.push(item);}if(!node.capture)return;const text=sourceClean(node.parts.join('')).replace(/\s*(?:Свернуть|Развернуть)\s*$/,'');if(node.name==='title'&&!title)title=text;const key=node.name+'|'+text+'|'+(node.href||'')+'|'+(node.mode||'');if(text&&!seen.has(key)){seen.add(key);records.push({name:node.name,text,href:node.href||'',...(node.mode?{mode:node.mode}:{})});}};
   for(const token of clean.matchAll(/<[^>]*>|[^<]+/g)){
     const value=token[0];
     if(value[0]!=='<'){for(const node of stack)if(node.capture&&node.length<50000){node.parts.push(value);node.length+=value.length;}continue;}
@@ -45,9 +45,12 @@ export function readCianHtml(input) {
       const srcset=(attrs['data-srcset']||attrs.srcset||'').split(',').map(part=>{const [url,size='0']=part.trim().split(/\s+/);return {url,weight:parseFloat(size)||0};}).sort((a,b)=>b.weight-a.weight);
       const candidates=tag==='a'?[/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(attrs.href||'')?attrs.href:null]:[attrs['data-original'],attrs['data-src'],...srcset.map(row=>row.url),attrs.src];
       const candidate=candidates.map(value=>photoSourceUrl(value)).find(Boolean);if(candidate)galleryImages.push(candidate);
+      const picture=tag!=='a'?[...stack].reverse().find(node=>node.tag==='picture'):null;
+      if(picture)picture.pictureAttrs.push({...picture.pictureIdentity,...attrs});
+      else{const observed=observedPhotoItem({...attrs,...(tag==='a'?{imageHref:candidate}:{})},{platform:'cian',order:galleryItems.length});if(observed)galleryItems.push(observed);}
     }
     if(tag==='br'||/^(div|p|li|h[1-6]|span|dt|dd)$/.test(tag))for(const node of stack)if(node.capture)node.parts.push('\n');
-    if(!sourceVoid.has(tag)&&!value.endsWith('/>'))stack.push({tag,name,excluded,gallery,capture:!excluded&&(SOURCE_NAMES.has(name)||name==='title'),parts:[],length:0,href:''});
+    if(!sourceVoid.has(tag)&&!value.endsWith('/>'))stack.push({tag,name,excluded,gallery,...(tag==='picture'?{pictureAttrs:[],pictureIdentity:{'data-photo-id':attrs['data-photo-id'],'data-image-id':attrs['data-image-id']}}:{}),capture:!excluded&&(SOURCE_NAMES.has(name)||name==='title'),parts:[],length:0,href:''});
   }
   for(const node of stack.reverse())finish(node);
   const first=name=>records.find(r=>r.name===name)?.text||'';
@@ -65,7 +68,7 @@ export function readCianHtml(input) {
   };
   for(const [index,photo]of(Array.isArray(offer?.photos)?offer.photos:[]).entries())addPhoto(photo,index);
   for(const [index,photo]of(Array.isArray(offer?.cianLayouts)?offer.cianLayouts:[]).entries())addPhoto(photo,index,true);
-  const photoItems=mediaItems.filter(p=>!p.isLayout&&!p.isCianLayout),layouts=mediaItems.filter(p=>p.isLayout||p.isCianLayout);
+  const layouts=mediaItems.filter(p=>p.isLayout||p.isCianLayout),photoItems=mergeObservedPhotoItems(mediaItems.filter(p=>!p.isLayout&&!p.isCianLayout),galleryItems,layouts);
   if(!photoItems.length)for(const item of ld){if(Array.isArray(item?.image))images.push(...item.image);else if(typeof item?.image==='string')images.push(item.image);}
   const layoutUrls=new Set(layouts.flatMap(p=>Object.values(p.variants)));
   const safeImages=photoItems.length?photoItems.map(p=>p.url):photoSources(galleryImages.length?galleryImages:images).filter(url=>!layoutUrls.has(url));
@@ -77,7 +80,7 @@ export function readCianHtml(input) {
   const ldOffer=entity?.offers&&!Array.isArray(entity.offers)?entity.offers:{};
   const specification=ldOffer?.priceSpecification||{};
   const jsonLd={};for(const [key,value]of Object.entries({price:ldOffer.price??specification.price,currency:ldOffer.priceCurrency??specification.priceCurrency,paymentPeriod:specification.billingDuration??specification.unitText??specification.unitCode,rooms:entity?.numberOfRooms,bedrooms:entity?.numberOfBedrooms,area:entity?.floorSize?.value}))if(['string','number'].includes(typeof value))jsonLd[key]=value;
-  return {version:1,platform:'cian',title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,photoItems,layouts,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,jsonLd,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length}};
+  return {version:1,platform:'cian',title,description,text:sourceClean(text).slice(0,50000),url,images:safeImages,photoItems,layouts,related:readRelatedHtml(html,url,url),records:picked,offer:offer?selected:null,jsonLd,stats:{records:records.length,jsonStates:offers.length,duplicateDocuments:(html.match(/<!doctype\s+html/gi)||[]).length,adapter:'cian-v2-gallery-variants'}};
 }
 
 export function cianFieldFacts(source) {

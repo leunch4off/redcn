@@ -138,7 +138,7 @@ class LocalServerTests(unittest.TestCase):
 
     def test_controller_identity_accepts_optional_release_but_rejects_mismatched_protocol(self):
         identity=self.request('/api/local/health',token=False)
-        self.assertEqual(identity['release'],'v24')
+        self.assertEqual(identity['release'],'v25')
         self.assertTrue(local_server.matching_server(self.directory,self.server.server_port,'chrome'))
         for metadata in ({key:value for key,value in identity.items() if key!='release'}, {**identity,'release':'future-compatible-release','optionalStatus':'ready'}, {**identity,'protocol':99}):
             with self.subTest(metadata=metadata),patch.object(local_server.urllib.request,'build_opener') as opener:
@@ -162,6 +162,26 @@ class LocalServerTests(unittest.TestCase):
         self.assertNotIn(self.token,json.dumps(health));self.assertNotIn(str(self.directory),json.dumps(health))
         with self.assertRaises(urllib.error.HTTPError) as caught: self.request('/api/local/health',extra={'Origin':'https://evil.example'},token=False)
         self.assertEqual(caught.exception.code,403)
+
+    def test_health_counts_active_work_without_returning_job_or_source(self):
+        started,release=threading.Event(),threading.Event()
+        def load(*args,**kwargs):
+            started.set()
+            if not release.wait(5): raise TimeoutError('Disposable import fixture was not released')
+            return {'url':URL,'text':TEXT,'images':[],'cached':False}
+        with patch.object(redcn,'load_listing',side_effect=load):
+            try:
+                job=self.request('/api/local/import',{'url':URL})
+                self.assertTrue(started.wait(2))
+                health=self.request('/api/local/health',token=False)
+                self.assertEqual(health['activeJobs'],1)
+                self.assertNotIn(URL,json.dumps(health))
+                self.assertNotIn(job['job_id'],json.dumps(health))
+            finally: release.set()
+            for _ in range(100):
+                if self.request('/api/local/health',token=False)['activeJobs']==0: break
+                time.sleep(.02)
+            else: self.fail('Completed fixture still counted as active')
 
     def test_job_to_durable_link_and_saved_word_notes(self):
         with patch.object(redcn,'load_listing',return_value={'url':URL,'text':TEXT,'images':[],'cached':False}):

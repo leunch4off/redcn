@@ -9,6 +9,10 @@ import math
 from pathlib import Path
 
 BASE_MODEL = 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
+INFERENCE_MODELS = {
+    (896,24,14,2): BASE_MODEL,
+    (1536,28,12,2): 'mlx-community/Qwen2.5-1.5B-Instruct-4bit',
+}
 LORA = {'rank': 8, 'scale': 16.0, 'dropout': 0.0,
         'keys': ['self_attn.q_proj', 'self_attn.v_proj']}
 LAYERS = 24
@@ -42,6 +46,20 @@ def expected_parameters(config):
         raise ValueError('Only the pinned Qwen2.5 0.5B architecture is supported')
     hidden, layers, heads, kv_heads = dimensions
     return layers*LORA['rank']*((hidden+hidden)+(hidden+hidden//heads*kv_heads))
+
+
+def inference_model(config):
+    """Permit only the two researched text architectures for optional inference.
+
+Training still uses the exact 0.5B contract above. Selecting a different base
+does not make an existing adapter compatible or approve that model's quality.
+"""
+    if not isinstance(config,dict) or config.get('model_type') != 'qwen2':
+        raise ValueError('Unsupported local text architecture')
+    shape=tuple(config.get(key) for key in ('hidden_size','num_hidden_layers','num_attention_heads','num_key_value_heads'))
+    if shape not in INFERENCE_MODELS:
+        raise ValueError('Unsupported local text architecture')
+    return INFERENCE_MODELS[shape]
 
 
 def validate_dataset(value):

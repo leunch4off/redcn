@@ -11,6 +11,11 @@ import sqlite3
 
 
 class WorkspaceAPI:
+    @staticmethod
+    def request_limit(path):
+        from workspace_backup import request_limit
+        return request_limit(path)
+
     def __init__(self, directory, *, browser_channel='chrome'):
         from listing_watch import ListingWatch
         from import_diagnostics import ImportDiagnostics
@@ -50,11 +55,17 @@ class WorkspaceAPI:
     def dispatch(self, path, data=None, *, namespace='local', query=None, actor=None):
         import language_service
         try:
+            import workspace_backup
+            document=workspace_backup.dispatch(self.directory,path,data,namespace=namespace)
+            if document:return document
             import publication_review
             document=publication_review.dispatch(self.directory,path,data,actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone'))
             if document:return document
             import dictionary_reviews
             document=dictionary_reviews.dispatch(self.directory,path,data,actor=actor or ('Mac owner' if namespace=='local' else 'paired-phone'))
+            if document:return document
+            import university_route_cache
+            document=university_route_cache.dispatch(self.directory,path,data)
             if document:return document
             if re.fullmatch(r'fact-revisions/[a-f0-9]{32}',path) and data is None:
                 from fact_ledger import list_fact_revisions

@@ -17,7 +17,7 @@ export function setupLanguageStudio({local=false,api,getRules=()=>({}),onApplyTe
   const refresh=button('Обновить показатели','languageRefresh');
   studio.append(stats,refresh);
   const searchRow=node('div','',{class:'language-grid'}),query=node('input','',{id:'dictionarySearch',type:'search',maxlength:200,placeholder:'Например: духовка, снять квартиру, 地铁'});
-  const scope=select('dictionaryScope',[['all','Вся база'],['open','Открытый словарь'],['rental','Аренда и быт'],['custom','Мои правила'],['geo','География Москвы']]);
+  const scope=select('dictionaryScope',[['all','Вся база'],['open','Открытый словарь'],['rental','Аренда и быт'],['custom','Мои правила'],['geo','География Москвы'],['city-pois','Городские места и источники']]);
   const qwrap=node('div'),swrap=node('div');qwrap.append(label('Поиск RU / 中文','dictionarySearch'),query);swrap.append(label('Раздел','dictionaryScope'),scope);searchRow.append(qwrap,swrap);
   const searchStatus=node('p','Введите слово или фразу. На странице не больше 40 результатов.',{id:'dictionaryStatus',class:'muted',role:'status'});
   const results=node('div','',{id:'dictionaryResults',class:'language-results'});

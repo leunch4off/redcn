@@ -19,6 +19,14 @@ export function setupUniversityUI({local=false,api,onSelect=()=>{},toast=()=>{}}
       const kinds={'official-enrollment':'Официальное упоминание студентов КНР','official-student-testimonials':'Истории китайских студентов на сайте вуза','official-chinese-page':'Официальная китайская страница','official-international-admissions':'Международный приём; наличие студентов КНР не установлено','institution-social-channel':'Официальный канал вуза'};
       const details=make('details','','university-evidence');details.append(make('summary','Основание включения: '+(kinds[row.chinaEvidence.type]||row.chinaEvidence.type)),make('p',row.chinaEvidence.note||'См. указанные источники.','muted'));fragment.append(details);
     }
+    if(row.chinaStudentEvidence){
+      const history=row.chinaStudentEvidence,details=make('details','','university-evidence university-china-data');details.append(make('summary','Китайские студенты · исторические данные и личные истории'),make('p','Публикации относятся к разным годам и не имеют общего знаменателя. Эти числа не используются как рейтинг популярности.','muted'));
+      const links=record=>{for(const id of record.sourceIds){const source=sourceMap.get(id);if(!source?.url)continue;const link=make('a',source.publisher+' · публикация '+record.publishedAt+' · проверено '+record.verifiedAt,'university-source');link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';details.append(link);}};
+      for(const record of history.statistics){const value=new Intl.NumberFormat('ru-RU').format(record.value);details.append(make('h4',(record.relation==='greater-than'?'Более ':'')+value+' студентов из КНР'),make('p','Число сообщено вузом в публикации '+record.publishedAt+'. Отдельная дата измерения не указана; разбивки по кампусам и уровням нет.','muted'),make('p',record.noteRu,'muted'));links(record);}
+      const programs={'degree-student':'Обучение по программе высшего образования','degree-alumnus':'История выпускницы / выпускника','visiting-summer-school':'Гостевая летняя школа · краткосрочная программа'};
+      for(const record of history.accounts){details.append(make('h4',record.personName),make('p',programs[record.programType],'muted'),make('p',record.summaryRu),make('p',record.scopeNoteRu,'muted'));links(record);}
+      fragment.append(details);
+    }
     const address=[row.addressRu,row.region].filter(Boolean).join(' · ');
     if(address)fragment.append(make('p',address,'muted'));
     const ids=row.sourceIds||[];

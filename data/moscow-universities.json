@@ -26,7 +26,8 @@
       "sourceIds": [
         "uni-src-msu-admissions",
         "uni-src-msu-china",
-        "uni-src-portal-index"
+        "uni-src-portal-index",
+        "china-count-msu-2024"
       ],
       "chinaEvidence": {
         "type": "official-enrollment",
@@ -36,7 +37,31 @@
         "note": "Официальное сообщение МГУ о визите делегации КНР в апреле 2024 года подтверждает обучение студентов из Китая. Исторические числа не используются как текущий рейтинг."
       },
       "translationStatus": "official",
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "chinaStudentEvidence": {
+        "coverage": "historical-institution-reported-non-exhaustive",
+        "rankingAllowed": false,
+        "statistics": [
+          {
+            "id": "msu-cn-enrolled-2024",
+            "population": "PRC-students",
+            "metric": "enrolled-students",
+            "value": 7000,
+            "relation": "greater-than",
+            "denominator": null,
+            "measurementDate": null,
+            "publishedAt": "2024-05-28",
+            "verifiedAt": "2026-11-01",
+            "programScope": "not-separated-by-level",
+            "campusScope": "not-separated-by-campus",
+            "sourceIds": [
+              "china-count-msu-2024"
+            ],
+            "noteRu": "Высказывание сотрудника МГУ о студентах из КНР, опубликованное институтом. Это историческая нижняя граница; отдельные уровни и кампусы не выделены."
+          }
+        ],
+        "accounts": []
+      }
     },
     {
       "id": "hse",
@@ -82,7 +107,8 @@
       "city": "Москва",
       "sourceIds": [
         "uni-src-rudn-cn",
-        "uni-src-rudn-campus"
+        "uni-src-rudn-campus",
+        "china-count-rudn-2024"
       ],
       "chinaEvidence": {
         "type": "official-chinese-page",
@@ -92,7 +118,58 @@
         "note": "Официальная китайская страница для иностранных поступающих; число студентов КНР и популярность не установлены."
       },
       "translationStatus": "official",
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "chinaStudentEvidence": {
+        "coverage": "historical-institution-reported-non-exhaustive",
+        "rankingAllowed": false,
+        "statistics": [
+          {
+            "id": "rudn-cn-enrolled-2024",
+            "population": "PRC-students",
+            "metric": "enrolled-students",
+            "value": 1612,
+            "relation": "reported-exact",
+            "denominator": null,
+            "measurementDate": null,
+            "publishedAt": "2024-06-20",
+            "verifiedAt": "2026-11-01",
+            "programScope": "not-separated-by-level",
+            "campusScope": "not-separated-by-campus",
+            "sourceIds": [
+              "china-count-rudn-2024"
+            ],
+            "noteRu": "Число китайских студентов, сообщённое университетом в публикации. Самостоятельная дата переписи и разбивка по кампусам/уровням не указаны."
+          }
+        ],
+        "accounts": [
+          {
+            "id": "rudn-cai-yiqing-2024",
+            "personName": "蔡怡清 (Cai Yiqing)",
+            "programType": "degree-student",
+            "evidenceType": "official-published-firsthand-account",
+            "publishedAt": "2024-06-20",
+            "verifiedAt": "2026-11-01",
+            "sourceIds": [
+              "china-count-rudn-2024"
+            ],
+            "summaryRu": "Рассказывает о выборе магистратуры по филологии и помощи с московским транспортом в первые дни после приезда.",
+            "scopeNoteRu": "Личный рассказ, опубликованный вузом; не репрезентативная оценка всех студентов."
+          },
+          {
+            "id": "rudn-chen-xiaoting-2024",
+            "personName": "沉潇婷 (Chen Xiaoting)",
+            "programType": "degree-alumnus",
+            "evidenceType": "official-published-firsthand-account",
+            "publishedAt": "2024-06-20",
+            "verifiedAt": "2026-11-01",
+            "sourceIds": [
+              "china-count-rudn-2024"
+            ],
+            "summaryRu": "Вспоминает магистратуру: дистанционный первый год, затем приезд в Москву и общение в университетской среде.",
+            "scopeNoteRu": "Ретроспективный рассказ выпускницы 2022 года. Имя сохранено в написании первичного источника."
+          }
+        ]
+      }
     },
     {
       "id": "mgimo",
@@ -366,7 +443,9 @@
       "city": "Москва",
       "region": "Москва",
       "sourceIds": [
-        "tech-mai-cn"
+        "tech-mai-cn",
+        "china-count-mai-2025",
+        "china-account-mai-summer-2025"
       ],
       "chinaEvidence": {
         "type": "official-chinese-page",
@@ -377,7 +456,45 @@
       },
       "translationStatus": "official",
       "kind": "university",
-      "aliasesStatus": "editorial-search-aliases"
+      "aliasesStatus": "editorial-search-aliases",
+      "chinaStudentEvidence": {
+        "coverage": "historical-institution-reported-non-exhaustive",
+        "rankingAllowed": false,
+        "statistics": [
+          {
+            "id": "mai-cn-enrolled-2025",
+            "population": "PRC-students",
+            "metric": "enrolled-students",
+            "value": 650,
+            "relation": "greater-than",
+            "denominator": null,
+            "measurementDate": null,
+            "publishedAt": "2025-10-03",
+            "verifiedAt": "2026-11-01",
+            "programScope": "not-separated-by-level",
+            "campusScope": "not-separated-by-campus",
+            "sourceIds": [
+              "china-count-mai-2025"
+            ],
+            "noteRu": "Общее число обучающихся из Китая вместе с новым набором. Упомянутые рядом 797 — все иностранные первокурсники, а не китайские студенты; точного знаменателя нет."
+          }
+        ],
+        "accounts": [
+          {
+            "id": "mai-zhang-yuxin-summer-2025",
+            "personName": "Чжан Юйсинь",
+            "programType": "visiting-summer-school",
+            "evidenceType": "official-published-firsthand-account",
+            "publishedAt": "2025-07-09",
+            "verifiedAt": "2026-11-01",
+            "sourceIds": [
+              "china-account-mai-summer-2025"
+            ],
+            "summaryRu": "Участница из Чжэцзянского университета объясняет выбор летней школы желанием разобраться в профессиональных вопросах авиаинженерии.",
+            "scopeNoteRu": "Краткосрочная гостевая программа. Её ожидания не доказывают результаты обучения или зачисление в МАИ на программу высшего образования."
+          }
+        ]
+      }
     },
     {
       "id": "mpei",
@@ -3635,6 +3752,220 @@
       ],
       "proximityVerified": false,
       "aliasesStatus": "editorial-search-aliases"
+    },
+    {
+      "id": "msu-physics",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — физический факультет, главный корпус",
+      "zh": "莫斯科国立大学物理系主楼",
+      "aliases": [
+        "МГУ физфак",
+        "МГУ физический факультет"
+      ],
+      "addressRu": "Москва, Ленинские горы, д. 1, стр. 2",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-msu-physics",
+        "location-msu-physics-address"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "latitude": 55.699876,
+      "longitude": 37.529543,
+      "coordinateEvidence": {
+        "method": "official-published-point",
+        "scope": "building",
+        "sourceIds": [
+          "location-msu-physics"
+        ],
+        "checkedAt": "2026-11-01",
+        "accuracyMeters": null,
+        "accuracyStatus": "not-published",
+        "publishedPrecision": "6 decimal places",
+        "entranceVerified": false,
+        "note": "Опубликованная точка карты лаборатории физфака, строение 2. Страница содержит старые публикации; адрес корпуса отдельно подтверждён текущей контактной страницей факультета. Доступность входа и точность не установлены."
+      }
+    },
+    {
+      "id": "msu-sternberg",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — Государственный астрономический институт имени П. К. Штернберга",
+      "zh": "莫斯科国立大学施特恩贝格天文研究所",
+      "aliases": [
+        "ГАИШ МГУ",
+        "МГУ ГАИШ",
+        "Sternberg Astronomical Institute"
+      ],
+      "addressRu": "Москва, Университетский проспект, д. 13",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-msu-sternberg"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "latitude": 55.701111111,
+      "longitude": 37.5425,
+      "coordinateEvidence": {
+        "method": "official-published-point",
+        "scope": "building",
+        "sourceIds": [
+          "location-msu-sternberg"
+        ],
+        "checkedAt": "2026-11-01",
+        "accuracyMeters": null,
+        "accuracyStatus": "not-published",
+        "publishedPrecision": "1 arcsecond",
+        "entranceVerified": false,
+        "note": "Исходные координаты 55°42′4″ с.ш.,37°32′33″ в.д. переведены из градусов/минут/секунд. Разрядность не означает известную точность или точку входа. Старые маршруты троллейбуса не импортируются."
+      }
+    },
+    {
+      "id": "mai-corps6",
+      "kind": "campus",
+      "universityId": "mai",
+      "ru": "МАИ — корпус №6, место проведения конференции",
+      "zh": "莫斯科航空学院第六楼（会议地点）",
+      "aliases": [
+        "МАИ корпус 6",
+        "МАИ Волоколамское 4 корпус 6"
+      ],
+      "addressRu": "Москва, Волоколамское шоссе, д. 4, корп. 6",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "conference_venue",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-mai-corps6"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "latitude": 55.810254,
+      "longitude": 37.498375,
+      "coordinateEvidence": {
+        "method": "official-published-point",
+        "scope": "building",
+        "sourceIds": [
+          "location-mai-corps6"
+        ],
+        "checkedAt": "2026-11-01",
+        "accuracyMeters": null,
+        "accuracyStatus": "not-published",
+        "publishedPrecision": "6 decimal places",
+        "entranceVerified": false,
+        "note": "Точка для навигатора опубликована организаторами конференции МАИ для корпуса 6. Это не корпус 30 и не доказательство места занятий любого факультета. Первичный индексированный текст проверен, полный HTTP-ответ недоступен."
+      },
+      "locationEvidenceScope": "conference-venue"
+    },
+    {
+      "id": "mtusi-opolcheniya32",
+      "kind": "campus",
+      "universityId": "mtusi",
+      "ru": "МТУСИ — институт повышения квалификации, Народного Ополчения",
+      "zh": "莫斯科通信与信息学技术大学继续教育学院",
+      "aliases": [
+        "МТУСИ Народного Ополчения",
+        "ИПК МТУСИ"
+      ],
+      "addressRu": "Москва, ул. Народного Ополчения, д. 32",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-mtusi-opolcheniya32"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases",
+      "latitude": 55.783983333,
+      "longitude": 37.4819,
+      "coordinateEvidence": {
+        "method": "official-published-point",
+        "scope": "building",
+        "sourceIds": [
+          "location-mtusi-opolcheniya32"
+        ],
+        "checkedAt": "2026-11-01",
+        "accuracyMeters": null,
+        "accuracyStatus": "not-published",
+        "publishedPrecision": "0.001 arcminute",
+        "entranceVerified": false,
+        "note": "Исходные координаты N55°47,039′ E037°28,914′ относятся к учебному адресу Народного Ополчения 32, а не юридическому Авиамоторная 8А. Точность и конкретный доступный вход не подтверждены."
+      }
+    },
+    {
+      "id": "msu-physics-optics",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — корпус нелинейной оптики физического факультета",
+      "zh": "莫斯科国立大学物理系非线性光学楼",
+      "aliases": [
+        "МГУ нелинейная оптика корпус"
+      ],
+      "addressRu": "Москва, Ленинские горы, д. 1, стр. 62",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-msu-physics-address"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases"
+    },
+    {
+      "id": "msu-physics-cryogenics",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — криогенный корпус физического факультета",
+      "zh": "莫斯科国立大学物理系低温实验楼",
+      "aliases": [
+        "МГУ криогенный корпус"
+      ],
+      "addressRu": "Москва, Ленинские горы, д. 1, стр. 8",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-msu-physics-address"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases"
+    },
+    {
+      "id": "msu-physics-shared",
+      "kind": "campus",
+      "universityId": "msu",
+      "ru": "МГУ — центр коллективного пользования физического факультета",
+      "zh": "莫斯科国立大学物理系共享研究中心",
+      "aliases": [
+        "Физфак МГУ строение 35"
+      ],
+      "addressRu": "Москва, Ленинские горы, д. 1, стр. 35",
+      "region": "Москва",
+      "city": "Москва",
+      "locationType": "teaching_building",
+      "translationStatus": "editorial",
+      "addressStatus": "official-source",
+      "sourceIds": [
+        "location-msu-physics-address"
+      ],
+      "proximityVerified": false,
+      "aliasesStatus": "editorial-search-aliases"
     }
   ],
   "sources": [
@@ -5782,6 +6113,183 @@
       ],
       "note": "Центр карьеры указывает проспект Вернадского 76, кабинет 1020. Страница подтверждает адрес, не идентифицирует все корпуса кампуса.",
       "directFetchStatus": "Full body not retrieved; verification uses the indexed institution excerpt. No response status or file hash asserted."
+    },
+    {
+      "id": "location-msu-physics",
+      "url": "https://engineering.phys.msu.ru/en/contacts/how-to-get",
+      "title": "МГУ — физический факультет, главный корпус — официальный адрес и опубликованная точка",
+      "publisher": "engineering.phys.msu.ru",
+      "language": "en",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "msu",
+      "supports": [
+        "campus-address",
+        "published-coordinate"
+      ],
+      "campusIds": [
+        "msu-physics"
+      ],
+      "note": "Опубликованная точка карты лаборатории физфака, строение 2. Страница содержит старые публикации; адрес корпуса отдельно подтверждён текущей контактной страницей факультета. Доступность входа и точность не установлены.",
+      "directFetchStatus": "Public institution text inspected; no byte-level response hash asserted."
+    },
+    {
+      "id": "location-msu-sternberg",
+      "url": "https://www.sai.msu.ru/contacts.html",
+      "title": "МГУ — Государственный астрономический институт имени П. К. Штернберга — официальный адрес и опубликованная точка",
+      "publisher": "sai.msu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "msu",
+      "supports": [
+        "campus-address",
+        "published-coordinate"
+      ],
+      "campusIds": [
+        "msu-sternberg"
+      ],
+      "note": "Исходные координаты 55°42′4″ с.ш.,37°32′33″ в.д. переведены из градусов/минут/секунд. Разрядность не означает известную точность или точку входа. Старые маршруты троллейбуса не импортируются.",
+      "directFetchStatus": "Public institution text inspected; no byte-level response hash asserted."
+    },
+    {
+      "id": "location-mai-corps6",
+      "url": "https://aik.mai.ru/contacts",
+      "title": "МАИ — корпус №6, место проведения конференции — официальный адрес и опубликованная точка",
+      "publisher": "aik.mai.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "institutionId": "mai",
+      "supports": [
+        "campus-address",
+        "published-coordinate"
+      ],
+      "campusIds": [
+        "mai-corps6"
+      ],
+      "note": "Точка для навигатора опубликована организаторами конференции МАИ для корпуса 6. Это не корпус 30 и не доказательство места занятий любого факультета. Первичный индексированный текст проверен, полный HTTP-ответ недоступен.",
+      "directFetchStatus": "Public institution text inspected; no byte-level response hash asserted."
+    },
+    {
+      "id": "location-mtusi-opolcheniya32",
+      "url": "https://ipk.mtuci.ru/contacts/",
+      "title": "МТУСИ — институт повышения квалификации, Народного Ополчения — официальный адрес и опубликованная точка",
+      "publisher": "ipk.mtuci.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "mtusi",
+      "supports": [
+        "campus-address",
+        "published-coordinate"
+      ],
+      "campusIds": [
+        "mtusi-opolcheniya32"
+      ],
+      "note": "Исходные координаты N55°47,039′ E037°28,914′ относятся к учебному адресу Народного Ополчения 32, а не юридическому Авиамоторная 8А. Точность и конкретный доступный вход не подтверждены.",
+      "directFetchStatus": "Public institution text inspected; no byte-level response hash asserted."
+    },
+    {
+      "id": "location-msu-physics-address",
+      "url": "https://www.phys.msu.ru/kontakty.php",
+      "title": "МГУ, физический факультет — адреса корпусов",
+      "publisher": "phys.msu.ru",
+      "language": "ru",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-page-text",
+      "evidenceType": "official-university",
+      "institutionId": "msu",
+      "supports": [
+        "campus-address"
+      ],
+      "campusIds": [
+        "msu-physics",
+        "msu-physics-optics",
+        "msu-physics-cryogenics",
+        "msu-physics-shared"
+      ],
+      "note": "Текущая контактная страница факультета перечисляет главный корпус 2, нелинейную оптику 62, криогенный корпус 8 и центр коллективного пользования 35. Координаты соседних зданий не заимствуются.",
+      "directFetchStatus": "Public institution text inspected; no byte-level response hash asserted."
+    },
+    {
+      "id": "china-count-msu-2024",
+      "url": "https://iaas.msu.ru/news/smi/zaveduyushhij-kafedroj-kitajskoj-filologii-isaa-mgu-dal-intervyu-zhurnalu-kitaj/",
+      "title": "ИСАА МГУ — интервью о студентах из КНР",
+      "publisher": "ИСАА МГУ",
+      "language": "ru",
+      "publishedAt": "2024-05-28",
+      "institutionId": "msu",
+      "supports": [
+        "Chinese-nationality-enrollment"
+      ],
+      "retrievalMethod": "primary-page-text",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "evidenceType": "official-university",
+      "directFetchStatus": "Primary published text inspected; no byte-level complete-response hash asserted."
+    },
+    {
+      "id": "china-count-mai-2025",
+      "url": "https://mai.ru/press/news/detail.php?ID=186212",
+      "title": "Почти 800 иностранцев стали студентами МАИ в 2025 году",
+      "publisher": "МАИ",
+      "language": "ru",
+      "publishedAt": "2025-10-03",
+      "institutionId": "mai",
+      "supports": [
+        "Chinese-nationality-enrollment"
+      ],
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "evidenceType": "official-university",
+      "directFetchStatus": "Primary published text inspected; no byte-level complete-response hash asserted."
+    },
+    {
+      "id": "china-count-rudn-2024",
+      "url": "https://cn.rudn.ru/media/news/education/why-do-students-from-china-go-to-study-in-russia",
+      "title": "为什么中国留学生来俄罗斯学习？",
+      "publisher": "РУДН, официальный китайский сайт",
+      "language": "zh",
+      "publishedAt": "2024-06-20",
+      "institutionId": "rudn",
+      "supports": [
+        "Chinese-nationality-enrollment",
+        "firsthand-student-account"
+      ],
+      "retrievalMethod": "primary-page-text",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "evidenceType": "official-university",
+      "directFetchStatus": "Primary published text inspected; no byte-level complete-response hash asserted."
+    },
+    {
+      "id": "china-account-mai-summer-2025",
+      "url": "https://mai.ru/press/news/detail.php?ID=185473",
+      "title": "МАИ открыл летнюю аэрокосмическую школу для студентов из Китая",
+      "publisher": "МАИ",
+      "language": "ru",
+      "publishedAt": "2025-07-09",
+      "institutionId": "mai",
+      "supports": [
+        "firsthand-student-account",
+        "visiting-summer-school"
+      ],
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "verifiedAt": "2026-11-01",
+      "evidenceType": "official-university",
+      "directFetchStatus": "Primary published text inspected; no byte-level complete-response hash asserted."
     }
   ],
   "unavailablePages": [

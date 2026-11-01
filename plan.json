@@ -1,6 +1,6 @@
 {
   "project": "redcn",
-  "version": 21,
+  "version": 22,
   "total": 334,
   "tasks": [
     {
@@ -1847,8 +1847,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/GEO-ROUTES-PRIMARY-AUDIT-2026-11-01.md",
+        "data/moscow-transit-verified.json",
+        "tests/test_geo_catalog.py"
+      ]
     },
     {
       "id": "RCN-116",
@@ -2213,8 +2217,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_route_cache.py",
+        "tests/test_university_route_cache.py",
+        "tests/test_university_route_cache_browser.py",
+        "docs/RELEASE-v25.md"
+      ]
     },
     {
       "id": "RCN-138",
@@ -2237,8 +2246,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "data/city-pois.json",
+        "tests/test_city_pois.py",
+        "docs/CITY-PLACES-AND-CHINESE-STUDENT-EVIDENCE-2026-11-01.md"
+      ]
     },
     {
       "id": "RCN-140",
@@ -3523,8 +3536,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/gallery_coverage.py",
+        "tests/test_gallery_coverage.py",
+        "docs/benchmarks/photo-pipeline-staging-20261101.json"
+      ]
     },
     {
       "id": "RCN-216",
@@ -4339,8 +4356,12 @@
       "acceptance": "Сравнить качество,лицензию,память и скорость прямого перевода с текущим промежуточным английским на фиксированной выборке.",
       "priority": "P1",
       "depends_on": [],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/LOCAL-TEXT-QUALITY-2026-11-01.md",
+        "docs/benchmarks/text-quality-20261101-native-comparison-final.json",
+        "docs/DIRECT-TRANSLATION-PILOT-2026-11-01.md"
+      ]
     },
     {
       "id": "RCN-264",
@@ -4458,8 +4479,12 @@
       "acceptance": "Добавлять датированную статистику и подтверждённые отзывы; рейтинг популярности не строить по наличию китайской страницы или общему числу иностранцев.",
       "priority": "P1",
       "depends_on": [],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "data/moscow-universities.json",
+        "tests/test_chinese_student_evidence.py",
+        "docs/CITY-PLACES-AND-CHINESE-STUDENT-EVIDENCE-2026-11-01.md"
+      ]
     },
     {
       "id": "RCN-273",
@@ -5240,8 +5265,12 @@
         "RCN-308",
         "RCN-310"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/PHOTO-NATIVE-M2-2026-11-01.md",
+        "cli/photo_native_runtime.py",
+        "docs/benchmarks/photo-native-m2-20261101-v25.json"
+      ]
     },
     {
       "id": "RCN-318",
@@ -5459,40 +5488,77 @@
         "RCN-328",
         "RCN-329"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "docs/SOURCE-RESEARCH-2026-11-01.md — наблюдаемые варианты и ограничения качества превью",
-        "cli/photo_store.py; tests/test_photo_provenance.py — происхождение и сохранность уже покрыты частично; единый выбор для всех форматов требует отдельной приёмки"
+        "cli/photo_store.py; tests/test_photo_provenance.py — происхождение и сохранность уже покрыты частично; единый выбор для всех форматов требует отдельной приёмки",
+        "cli/photo_variants.py",
+        "tests/test_dossier_variants_backup.py",
+        "tests/test_photo_variant_browser.py",
+        "docs/benchmarks/photo-pipeline-staging-20261101.json"
       ]
-    }
-    ,{
+    },
+    {
       "id": "RCN-331",
       "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
       "title": "Приёмка двуязычного текстового адаптера",
       "acceptance": "Измерить качество RU→ZH и ZH→RU на независимых размеченных объявлениях: мебель, отрицания, цена, единицы, метро и условия. Проверить оригинальность нескольких подач одной квартиры и отсутствие новых утверждений. Сравнить базу и адаптер; снижение loss или три короткие пробы не означают редакционную приёмку. До приёмки доступны только проверяемые черновики.",
-      "priority": "P0", "depends_on": ["RCN-332"], "status": "planned",
-      "evidence": ["cli/local_text_model.py", "scripts/train-local-text-model.py", "scripts/evaluate-local-text-model.py", "docs/LOCAL-LEARNING-v24.md"]
-    },{
+      "priority": "P0",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/local_text_model.py",
+        "scripts/train-local-text-model.py",
+        "scripts/evaluate-local-text-model.py",
+        "docs/LOCAL-LEARNING-v24.md"
+      ]
+    },
+    {
       "id": "RCN-332",
       "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
       "title": "Локальная память правок с проверкой и контрольными точками",
       "acceptance": "Правки текста, словаря, переводы, ручная мебель и наблюдения тегов сохраняются в частной памяти Mac. Неутверждённое не обучает веса; исправления заменяют принятый вариант только после проверки. Группы одной квартиры не пересекают train/validation. Фоновое обучение ограничено, уступает импорту и запросам, сохраняет checkpoint и завершается вместе с сервером. Приёмка включает контрактные тесты и экран 393×852.",
-      "priority": "P0", "depends_on": [], "status": "done",
-      "evidence": ["cli/learning_memory.py; cli/learning_scheduler.py; cli/learning_service.py", "web/learning-studio.mjs", "tests/test_learning_memory.py; tests/test_learning_scheduler.py; tests/test_learning_service.py", "tests/test_learning_studio_browser.py — три проверки в Chrome на Mac, 393×852", "docs/LOCAL-LEARNING-v24.md"]
-    },{
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/learning_memory.py; cli/learning_scheduler.py; cli/learning_service.py",
+        "web/learning-studio.mjs",
+        "tests/test_learning_memory.py; tests/test_learning_scheduler.py; tests/test_learning_service.py",
+        "tests/test_learning_studio_browser.py — три проверки в Chrome на Mac, 393×852",
+        "docs/LOCAL-LEARNING-v24.md"
+      ]
+    },
+    {
       "id": "RCN-333",
       "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
       "title": "Одна ошибка фото не сокращает весь альбом",
       "acceptance": "На регрессионном альбоме из 19 фото список fields из одной обложки не перекрывает listing.images. Ошибка скачивания или обрезки отдельного кадра сохраняет остальные оригиналы; ZIP включает необрезанные оригиналы с причинами. Повтор использует сохранённые файлы, ошибки и численность видны на телефоне. Контрактная проверка не устанавливает причину конкретного живого прогона.",
-      "priority": "P0", "depends_on": [], "status": "done",
-      "evidence": ["cli/phone_relay.py; cli/redcn.py; web/source-adapters/cian.mjs", "web/media-core.mjs; web/photo-ui.mjs; web/photo-batch-status.mjs", "tests/test_photo_batch_reliability.py; tests/photo-export-fallback.test.mjs; tests/photo-batch-status.test.mjs"]
-    },{
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py; cli/redcn.py; web/source-adapters/cian.mjs",
+        "web/media-core.mjs; web/photo-ui.mjs; web/photo-batch-status.mjs",
+        "tests/test_photo_batch_reliability.py; tests/photo-export-fallback.test.mjs; tests/photo-batch-status.test.mjs"
+      ]
+    },
+    {
       "id": "RCN-334",
       "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
       "title": "Проверка рекомендаций тегов по накопленной статистике",
       "acceptance": "Накопить датированные наблюдения по реальным публикациям, отличать просмотры поста от популярности и эффекта отдельного тега. Сравнить рекомендации с контролем по сопоставимым объектам; малое число примеров и приблизительные значения остаются явно обозначенными. Подходящий тег выбирается по фактам квартиры раньше статистического ранжирования.",
-      "priority": "P1", "depends_on": ["RCN-332"], "status": "planned",
-      "evidence": ["cli/learning_memory.py — ручные наблюдения и ранжирование без утверждения причинности", "tests/test_learning_memory.py"]
+      "priority": "P1",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/learning_memory.py — ручные наблюдения и ранжирование без утверждения причинности",
+        "tests/test_learning_memory.py"
+      ]
     }
   ],
   "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",

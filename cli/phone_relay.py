@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import secrets
 import socket
+import sqlite3
 import tempfile
 import threading
 import time
@@ -229,12 +230,21 @@ def photo_source_items(result):
     output={}
     for holder in (listing,fields):
         rows=holder.get('photoItems',[])
+        if holder is fields and 'photoItems' in fields and isinstance(rows,list) and not rows:
+            # Match editor snapshot semantics: an explicit empty group list
+            # clears prior photo provenance. Keep known layouts excluded.
+            output={url:row for url,row in output.items() if row.get('isLayout') is True or row.get('isCianLayout') is True}
+            continue
         for row in rows if isinstance(rows,list) else []:
             if not isinstance(row,dict):continue
             try:url=redcn.allowed_url(row.get('url'),images=True,resolve=False)
             except (ValueError,TypeError):continue
             previous=output.get(url,{})
-            output[url]={**previous,**row,'url':url}
+            # An editor can replace a source group without repeating every old
+            # field. A different literal ID cannot inherit its predecessor's
+            # candidate witnesses merely because the canonical URL is shared.
+            conflict=previous.get('photoId') is not None and row.get('photoId') is not None and str(previous['photoId'])!=str(row['photoId'])
+            output[url]={**({} if conflict else previous),**row,'url':url}
             # A layout identification is not silently undone by an old clone.
             for key in ('isLayout','isCianLayout'):
                 if previous.get(key) is True:output[url][key]=True
@@ -277,8 +287,13 @@ def cache_photos(directory,result,report=None,cancel=None):
     def load(url):
         if cancel and cancel.is_set():return {'sourceUrl':url,'error':'Загрузка отменена'}
         try:
-            saved=photo_store.load_photo(directory,url,source=sources[url]) if url in sources else photo_store.load_photo(directory,url)
-            return {**saved,'sourceUrl':url}
+            if url in sources:
+                source=sources[url];variants=source.get('variants',{}) if isinstance(source.get('variants'),dict) else {}
+                observed=source.get('observedVariants',[]) if isinstance(source.get('observedVariants'),list) else []
+                choices={value for value in [url,*variants.values(),*[row.get('url') for row in observed if isinstance(row,dict)]] if isinstance(value,str) and value}
+                saved=photo_store.load_observed_photo(directory,url,source,cancel=cancel) if source.get('photoId') and len(choices)>1 else photo_store.load_photo(directory,url,source=source)
+            else:saved=photo_store.load_photo(directory,url)
+            return {**saved,'actualSourceUrl':saved.get('sourceUrl',url),'sourceUrl':url}
         except Exception as error:
             # A decoder, SQLite or crop provider failure belongs to this photo,
             # never to the remaining album. KeyboardInterrupt/SystemExit still
@@ -290,7 +305,8 @@ def cache_photos(directory,result,report=None,cancel=None):
         futures={pool.submit(load,url):url for url in urls}
         for future in as_completed(futures):
             by_url[futures[future]]=future.result()
-            emit(report,'Фотографии: '+str(len(by_url))+' из '+str(len(urls))+' получено',stage='photos',completed=len(by_url),total=len(urls))
+            saved=sum(bool(row.get('id')) and not row.get('error') for row in by_url.values());failed=sum(bool(row.get('error')) for row in by_url.values())
+            emit(report,'Фотографии: обработано '+str(len(by_url))+' из '+str(len(urls))+'; сохранено '+str(saved)+'; ошибок '+str(failed),stage='photos',completed=len(by_url),total=len(urls))
     media=[by_url[url] for url in urls]
     result['media']=media;result['mediaStatus']='partial' if any(row.get('error') for row in media) else 'ready'
     if cancel and cancel.is_set():
@@ -310,7 +326,10 @@ def cache_photos(directory,result,report=None,cancel=None):
                     if not isinstance(manual_crops[url],dict):raise ValueError('Неверная сохранённая ручная граница кадра')
                     decision=photo_store.crop_photo(directory,row['id'],manual_crops[url],cancel=cancel,deadline=end)
                     decision['autoStatus']='manual' if decision.get('kind')=='crop' else 'unchanged'
-                else:decision=photo_store.auto_crop_photo(directory,row['id'],cancel=cancel,deadline=end)
+                else:
+                    accepted=photo_store.accepted_photo_for_url(directory,url,verify_bytes=False,original=row,source=sources.get(url))
+                    chosen_original=accepted.get('selectedOriginal',accepted.get('original',{}))
+                    decision=photo_store.auto_crop_photo(directory,chosen_original.get('id',row['id']),cancel=cancel,deadline=end)
                 state=decision.get('autoStatus','unavailable')
                 row['autoCrop']={key:decision[key] for key in ('autoStatus','cached','message','reason','id','errorClass') if key in decision}
                 if state in ('cropped','unchanged','review','manual'):processing['checked']+=1
@@ -353,27 +372,37 @@ def original_metadata(directory):
         for url,digest,raw in db.execute('SELECT p.url,a.id,a.metadata FROM photo_urls p JOIN assets a ON a.id=p.id'):
             try:meta=json.loads(raw)
             except ValueError:continue
-            if meta.get('id')==digest and re.fullmatch(r'[a-f0-9]{64}',digest) and (Path(directory)/'media'/digest).is_file():output[url]=meta
+            if meta.get('id')==digest and re.fullmatch(r'[a-f0-9]{64}',digest) and (Path(directory)/'media'/digest).is_file():output[url]={**meta,'sourceUrl':url}
     return output
 
 
 def card_media(directory,result,include_crops=True,originals_by_url=None):
     metadata=original_metadata(directory) if originals_by_url is None else originals_by_url
-    originals=[{**metadata[url],'sourceUrl':url} for url in source_images(result) if url in metadata]
+    sources=photo_source_items(result)
+    originals=[]
+    for url in source_images(result):
+        original=metadata.get(url)
+        if not original:
+            try:original=photo_store.cached_observed_original(directory,url,verify_bytes=False,source=sources.get(url))
+            except (OSError,ValueError,sqlite3.Error):original=None
+        if original:originals.append({**original,'actualSourceUrl':original.get('sourceUrl',url),'sourceUrl':url})
     edits=(result.get('fields') or {}).get('photoEdits') or {}
     margins=edits.get('crops') if isinstance(edits.get('crops'),dict) else {}
     explicit=edits.get('originals') if isinstance(edits.get('originals'),list) else []
     def public(row):
-        return {**{k:row[k] for k in ('id','mime','width','height','bytes','sourceUrl','kind','verification') if k in row},'url':'/api/phone/media/'+row['id'],'downloadUrl':'/api/phone/media/'+row['id']+'?download=1'}
+        return {**{k:row[k] for k in ('id','mime','width','height','bytes','sourceUrl','actualSourceUrl','originalId','photoId','kind','verification') if k in row},'url':'/api/phone/media/'+row['id'],'downloadUrl':'/api/phone/media/'+row['id']+'?download=1'}
     output=[]
     for original in originals:
         item=public(original)
         if include_crops:
             try:
                 if original['sourceUrl'] in margins and not isinstance(margins[original['sourceUrl']],dict):raise ValueError('Неверная сохранённая ручная граница кадра')
-                accepted=photo_store.accepted_photo_for_url(directory,original['sourceUrl'],margins=margins.get(original['sourceUrl']),prefer_original=original['sourceUrl'] in explicit,verify_bytes=False,original=original)
+                accepted=photo_store.accepted_photo_for_url(directory,original['sourceUrl'],margins=margins.get(original['sourceUrl']),prefer_original=original['sourceUrl'] in explicit,verify_bytes=False,original=original,source=sources.get(original['sourceUrl']))
                 selected=accepted['selected']
-                if selected.get('kind')=='crop':item['crop']=public({**selected,'sourceUrl':original['sourceUrl']})
+                prepared=public({**selected,'sourceUrl':original['sourceUrl'],'actualSourceUrl':selected.get('sourceUrl',original['actualSourceUrl'])})
+                item['prepared']=prepared
+                if selected.get('kind')=='crop':item['crop']=prepared
+                if accepted.get('variantSelection'):item['variantSelection']=accepted['variantSelection']
                 item['selectionReason']=accepted['reason']
             except (ValueError,OSError,TypeError,KeyError):item['selectionReason']='unavailable'
         output.append(item)
@@ -407,6 +436,16 @@ def list_cards(directory,after=0):
         fields=result.get('fields',{}) if isinstance(result.get('fields'),dict) else {}
         if fields.get('isDemo') is True:continue
         media=card_media(directory,result,include_crops=False,originals_by_url=metadata)
+        cover_id=media[0]['id'] if media else None
+        if media:
+            edits=fields.get('photoEdits',{}) if isinstance(fields.get('photoEdits'),dict) else {}
+            saved_crops=edits.get('crops') if isinstance(edits.get('crops'),dict) else {}
+            try:
+                accepted=photo_store.accepted_photo_for_url(directory,media[0]['sourceUrl'],
+                    margins=saved_crops.get(media[0]['sourceUrl']),
+                    prefer_original=media[0]['sourceUrl'] in (edits.get('originals') or []),verify_bytes=False,original=media[0],source=photo_source_items(result).get(media[0]['sourceUrl']))
+                cover_id=accepted['selected']['id']
+            except (ValueError,OSError,TypeError,KeyError):pass
         titles=result.get('titles')
         title=titles[0] if isinstance(titles,list) and titles else titles if isinstance(titles,str) else ''
         summary={};needs_review=False
@@ -421,7 +460,7 @@ def list_cards(directory,after=0):
                 try:summary[key]=sanitize_text(value)
                 except PublicationReviewRequired:summary[key]='';needs_review=True
             else:summary[key]=value if key in ('price','area') and type(value) in (int,float) and math.isfinite(value) else ''
-        cards.append({'id':result_id,'updated':updated,**summary,'publicationNeedsReview':needs_review,'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+media[0]['id'] if media else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
+        cards.append({'id':result_id,'updated':updated,**summary,'publicationNeedsReview':needs_review,'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+cover_id if cover_id else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
     cursor=(repr(rows[-1][1])+':'+rows[-1][0]) if has_more and rows else (repr(upper)+':'+'f'*32)
     return {'cards':cards,'cursor':cursor,'serverTime':upper,'hasMore':has_more}
 
@@ -463,7 +502,7 @@ def card_zip(directory,result_id,variant='original'):
     with zipfile.ZipFile(stream,'w',compression=zipfile.ZIP_STORED) as archive:
         for n,item in enumerate(card['media'],1):
             if variant=='crop' and not item.get('crop'):continue
-            selected=item.get('crop',item) if variant=='prepared' else item['crop'] if variant=='crop' else item
+            selected=item.get('prepared') or item.get('crop',item) if variant=='prepared' else item['crop'] if variant=='crop' else item
             try:data,mime,_=photo_store.asset(directory,selected['id'])
             except (OSError,ValueError) as error:
                 manifest.append({'sourceUrl':item.get('sourceUrl'),'kind':selected.get('kind','original'),'error':str(error)[:300] or 'Сохранённый файл недоступен','stage':'export'})
@@ -471,7 +510,7 @@ def card_zip(directory,result_id,variant='original'):
             total+=len(data)
             if total>MAX_ZIP_BYTES:raise ValueError('Пакет больше 120 МБ. Скачайте фотографии по отдельности.')
             extension={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[mime];name=f'{n:02}.{extension}'
-            archive.writestr(name,data);saved+=1;manifest.append({'name':name,'sourceUrl':item.get('sourceUrl'),'kind':selected.get('kind','original')})
+            archive.writestr(name,data);saved+=1;manifest.append({'name':name,'sourceUrl':item.get('sourceUrl'),'actualSourceUrl':selected.get('actualSourceUrl',selected.get('sourceUrl')),'kind':selected.get('kind','original'),'selectedId':selected['id'],'originalId':item['id'],'selectionReason':item.get('selectionReason','original')})
         if not saved:raise ValueError('Проверенные кадрированные копии ещё не готовы' if variant=='crop' else 'Фотографии ещё не сохранены на Mac')
         archive.writestr('post.txt','\n\n'.join([*(card.get('titles') or [])[:1],card.get('body',''),card.get('tags','')]))
         archive.writestr('manifest.json',json.dumps(manifest,ensure_ascii=False,indent=2))

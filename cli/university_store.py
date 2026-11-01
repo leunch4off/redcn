@@ -6,10 +6,12 @@ catalogue tables; card, phone profile and private dossier databases are untouche
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import sqlite3
 import unicodedata
+from datetime import date
 from urllib.parse import urlsplit
 
 
@@ -82,7 +84,13 @@ def read_catalog(path=None):
             raise ValueError('Неверная ссылка источника вуза')
         if source.get('status')!='verified':
             raise ValueError('В каталог допускаются только проверенные источники')
-        _string(source.get('verifiedAt'), 'source.verifiedAt', 50)
+        verified = _string(source.get('verifiedAt'), 'source.verifiedAt', 10)
+        try:
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', verified) or date.fromisoformat(verified)>date.today():
+                raise ValueError()
+        except ValueError as error:
+            raise ValueError('Неверная дата подтверждения источника вуза') from error
+    source_records = {source['id']: source for source in value['sources']}
     university_ids = set()
     for university in value['universities']:
         if not isinstance(university, dict):
@@ -91,13 +99,14 @@ def read_catalog(path=None):
         if identifier in university_ids:
             raise ValueError('Повтор ID вуза')
         university_ids.add(identifier)
-        _validate_place(university, source_ids)
+        _validate_place(university, source_records)
         evidence = university.get('chinaEvidence')
         if not isinstance(evidence, dict) or evidence.get('type') not in (
                 'official-chinese-page', 'official-enrollment', 'official-student-testimonials',
                 'official-international-admissions', 'institution-social-channel'):
             raise ValueError('Неверное основание включения вуза')
         _references(evidence.get('sourceIds'), source_ids)
+        _validate_china_student_evidence(university, source_records)
     campus_ids = set()
     for campus in value['campuses']:
         if not isinstance(campus, dict):
@@ -108,7 +117,7 @@ def read_catalog(path=None):
         campus_ids.add(identifier)
         if _id(campus.get('universityId')) not in university_ids:
             raise ValueError('Кампус ссылается на неизвестный вуз')
-        _validate_place(campus, source_ids)
+        _validate_place(campus, source_records)
         _string(campus.get('addressRu'), 'campus.addressRu', 1000)
     return value, hashlib.sha256(raw).hexdigest()
 
@@ -123,6 +132,87 @@ def _validate_place(value, sources):
     if value.get('translationStatus') not in ('official', 'editorial'):
         raise ValueError('Неверный статус китайского названия')
     _references(value.get('sourceIds'), sources)
+    _validate_coordinates(value, sources)
+
+
+def _validate_coordinates(value, sources):
+    """A published building point is not a measured entrance or geocoder guess."""
+    coordinates = [value.get('latitude'), value.get('longitude')]
+    if coordinates == [None, None]:
+        if value.get('coordinateEvidence') is not None:
+            raise ValueError('Основание координат без самой точки')
+        return
+    for number, bound in zip(coordinates, (90, 180)):
+        if isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number) or abs(number)>bound:
+            raise ValueError('Нужна полная допустимая пара координат кампуса')
+    evidence = value.get('coordinateEvidence')
+    if not isinstance(evidence, dict) or evidence.get('method')!='official-published-point' or evidence.get('scope') not in ('building', 'institution', 'campus'):
+        raise ValueError('Для координат нужен первичный источник и область точки')
+    _references(evidence.get('sourceIds'), sources)
+    if any(identifier not in value['sourceIds'] for identifier in evidence['sourceIds']):
+        raise ValueError('Источник координат должен относиться к выбранному корпусу')
+    for identifier in evidence['sourceIds']:
+        source = sources[identifier]
+        if value.get('id') not in source.get('campusIds', []) or 'published-coordinate' not in source.get('supports', []) or source.get('verifiedAt')!=evidence.get('checkedAt'):
+            raise ValueError('Источник не подтверждает точку именно выбранного корпуса на указанную дату')
+    checked = evidence.get('checkedAt')
+    try:
+        if not isinstance(checked, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', checked) or date.fromisoformat(checked)>date.today():
+            raise ValueError()
+    except ValueError as error:
+        raise ValueError('Неверная дата проверки координат') from error
+    accuracy = evidence.get('accuracyMeters')
+    if accuracy is None:
+        if evidence.get('accuracyStatus')!='not-published':
+            raise ValueError('Неизвестная точность должна быть явно обозначена')
+    elif isinstance(accuracy, bool) or not isinstance(accuracy, (int, float)) or not math.isfinite(accuracy) or not 0<accuracy<=10000 or evidence.get('accuracyStatus')!='published':
+        raise ValueError('Неверная опубликованная точность координат')
+    _string(evidence.get('publishedPrecision'), 'coordinateEvidence.publishedPrecision', 200)
+    if evidence.get('entranceVerified') is not False:
+        raise ValueError('Точка корпуса не подтверждает конкретный доступный вход')
+
+
+def _validate_china_student_evidence(university, sources):
+    evidence=university.get('chinaStudentEvidence')
+    if evidence is None:
+        return
+    if not isinstance(evidence,dict) or set(evidence)!={'coverage','rankingAllowed','statistics','accounts'} or evidence['coverage']!='historical-institution-reported-non-exhaustive' or evidence['rankingAllowed'] is not False:
+        raise ValueError('Исторические данные студентов не должны превращаться в рейтинг')
+    ids=set()
+    def dated_source(row, support):
+        identifier=_id(row.get('id'))
+        if identifier in ids:
+            raise ValueError('Повтор ID исторического свидетельства')
+        ids.add(identifier)
+        _references(row.get('sourceIds'),sources)
+        for key in ('publishedAt','verifiedAt'):
+            text=_string(row.get(key),'chinaStudentEvidence.'+key,10)
+            try:
+                if not re.fullmatch(r'\d{4}-\d{2}-\d{2}',text) or date.fromisoformat(text)>date.today():
+                    raise ValueError()
+            except ValueError as error:
+                raise ValueError('Неверная дата исторического свидетельства студентов') from error
+        if row['publishedAt']>row['verifiedAt']:
+            raise ValueError('Проверка не может предшествовать публикации')
+        for identifier in row['sourceIds']:
+            source=sources[identifier]
+            if identifier not in university['sourceIds'] or source.get('institutionId')!=university['id'] or source.get('evidenceType')!='official-university' or support not in source.get('supports',[]) or source.get('publishedAt')!=row['publishedAt'] or source.get('verifiedAt')!=row['verifiedAt']:
+                raise ValueError('Историческое свидетельство должно иметь источник именно этого вуза и даты')
+    if not isinstance(evidence['statistics'],list) or len(evidence['statistics'])>50 or not isinstance(evidence['accounts'],list) or len(evidence['accounts'])>50:
+        raise ValueError('Слишком много исторических свидетельств')
+    statistic_fields={'id','population','metric','value','relation','denominator','measurementDate','publishedAt','verifiedAt','programScope','campusScope','sourceIds','noteRu'}
+    for row in evidence['statistics']:
+        if not isinstance(row,dict) or set(row)!=statistic_fields or row['population']!='PRC-students' or row['metric']!='enrolled-students' or row['relation'] not in ('greater-than','reported-exact') or type(row['value']) is not int or not 0<=row['value']<=1_000_000 or row['denominator'] is not None or row['measurementDate'] is not None or row['programScope']!='not-separated-by-level' or row['campusScope']!='not-separated-by-campus':
+            raise ValueError('Китайские обучающиеся, иностранный набор и гостевые программы считаются раздельно')
+        _string(row.get('noteRu'),'chinaStudentEvidence.noteRu',1500)
+        dated_source(row,'Chinese-nationality-enrollment')
+    account_fields={'id','personName','programType','evidenceType','publishedAt','verifiedAt','sourceIds','summaryRu','scopeNoteRu'}
+    for row in evidence['accounts']:
+        if not isinstance(row,dict) or set(row)!=account_fields or row['evidenceType']!='official-published-firsthand-account' or row['programType'] not in ('degree-student','degree-alumnus','visiting-summer-school'):
+            raise ValueError('Неверный тип опубликованной истории студента')
+        for key,limit in (('personName',300),('summaryRu',1500),('scopeNoteRu',1500)):
+            _string(row.get(key),'chinaStudentEvidence.'+key,limit)
+        dated_source(row,'firsthand-student-account')
 
 
 def _connect(directory):
@@ -151,6 +241,7 @@ def _connect(directory):
 def _search_text(row, parent=None):
     values = [row['ru'], row['zh'], *row.get('aliases', []), row.get('addressRu', ''),
               row.get('addressZh', ''), row.get('city', ''), row.get('region', '')]
+    values.extend(record['personName'] for record in row.get('chinaStudentEvidence',{}).get('accounts',[]))
     if parent:
         values.extend([parent['ru'], parent['zh'], *parent.get('aliases', [])])
     return fold('\n'.join(values))

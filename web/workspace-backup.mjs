@@ -1,0 +1,23 @@
+export const WORKSPACE_INSPECT_MAX_BYTES=64*1024*1024;
+export function validateWorkspaceBackupFile(file){
+ if(!file||typeof file.name!=='string'||!file.name.toLowerCase().endsWith('.zip')||!Number.isSafeInteger(file.size)||file.size<1||file.size>WORKSPACE_INSPECT_MAX_BYTES)throw Error('Выберите ZIP до 64 МБ. Копии до 512 МБ проверяются через CLI на Mac.');
+ return file;
+}
+export function workspaceBackupSummary(value){
+ if(!value||value.type!=='redcn-private-workspace'||value.version!==1||typeof value.sha256!=='string'||! /^[a-f0-9]{64}$/u.test(value.sha256)||!['cards','photos','photoVariantDecisions','attachments','exports','dictionaryRules','learningExamples','bytes'].every(key=>Number.isSafeInteger(value[key])&&value[key]>=0)||value.requiresNewWorkspace!==true||value.devicesMustPairAgain!==true||value.clientMaterialsRequireRegeneration!==true)throw Error('Сервер не подтвердил состав и контрольные суммы копии.');
+ return `Проверено: ${value.cards} карточек · ${value.photos} фото · ${value.photoVariantDecisions} решений по вариантам фото · ${value.attachments} вложений · ${value.exports} версий материалов · ${value.dictionaryRules} правил · ${value.learningExamples} учебных примеров. SHA-256: ${value.sha256}.`;
+}
+function workspaceBackupBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('Не удалось прочитать ZIP'));reader.onabort=()=>reject(Error('Чтение отменено'));reader.readAsDataURL(file);});}
+export function setupWorkspaceBackup({mount,api,getBlob,downloadBlob,toast=()=>{}}={}){
+ if(!mount)return null;
+ const make=(tag,text='',className='')=>{const node=document.createElement(tag);node.textContent=text;if(className)node.className=className;return node;};
+ const shell=make('details','','card workspace-backup'),summary=make('summary','Резервная копия всей рабочей базы'),body=make('div'),note=make('p','Приватный ZIP: все сохранённые карточки, оригиналы и подрезки фото, договоры, заметки, версии материалов, общий дизайн, словарь и учебная память. Устройства и доступы не переносятся.','muted'),status=make('p','Копирование начинается по нажатию. Состав проверяется перед скачиванием.','muted'),download=make('button','Скачать полную ZIP-копию','btn'),inspect=make('button','Проверить скачанный ZIP','btn'),file=make('input'),restore=make('p','Восстановление: на Mac через CLI только в новую папку. Сначала проверьте ZIP, затем выполните инструкцию ниже. Текущая рабочая база сохраняется.','muted'),command=make('pre','python3 cli/workspace_backup.py restore /path/to/backup.zip --destination /path/to/new-workspace');
+ download.type=inspect.type='button';file.type='file';file.accept='.zip,application/zip';file.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');command.style.whiteSpace='pre-wrap';command.style.overflowWrap='anywhere';body.append(note,download,inspect,file,status,restore,command);shell.append(summary,body);mount.replaceChildren(shell);
+ let busy=false,destroyed=false;
+ const message=text=>{if(!destroyed){status.textContent=text;toast(text);}};
+ async function run(operation){if(busy||destroyed)return;busy=true;download.disabled=inspect.disabled=true;try{await operation();}catch(error){message(error.message||'Копирование не завершено');}finally{busy=false;if(!destroyed)download.disabled=inspect.disabled=false;}}
+ download.onclick=()=>run(async()=>{if(typeof getBlob!=='function'||typeof downloadBlob!=='function')throw Error('Полная копия доступна в редакторе Mac');status.textContent='Читаем карточки, фото, вложения, дизайн и память. При изменении базы потребуется повторить экспорт…';const blob=await getBlob('workspace-backup.zip');if(destroyed)return;downloadBlob(blob,'redcn-private-workspace-'+new Date().toISOString().slice(0,10)+'.zip');message('Полная приватная копия скачана. Перед переносом проверьте ZIP этой кнопкой или через CLI.');});
+ inspect.onclick=()=>{if(!busy&&!destroyed)file.click();};
+ file.onchange=()=>run(async()=>{try{const selected=validateWorkspaceBackupFile(file.files[0]);if(typeof api!=='function')throw Error('Проверка доступна в редакторе Mac');status.textContent='Проверяем ZIP, вложенные досье и SHA-256 каждого файла. База не изменяется…';const value=await api('workspace-backup/inspect',{data:await workspaceBackupBase64(selected)});message(workspaceBackupSummary(value)+' Восстановление требует новой папки и повторного подключения телефонов; клиентские PDF пересоздайте.');}finally{file.value='';}});
+ return {destroy(){destroyed=true;mount.replaceChildren();}};
+}

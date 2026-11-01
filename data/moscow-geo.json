@@ -803,7 +803,32 @@
       ],
       "lat": 55.780704,
       "lng": 37.469844,
-      "serviceStatus": "not_verified"
+      "serviceStatus": "passenger-service-confirmed",
+      "officialLineNumbers": [
+        "17"
+      ],
+      "serviceEvidence": {
+        "sourceIds": [
+          "mosmetro-ra-service-2026"
+        ],
+        "verifiedAt": "2026-11-01",
+        "scope": "named-station-service-only"
+      },
+      "officialMembershipEvidence": [
+        {
+          "ru": "Бульвар Генерала Карбышева",
+          "lineKey": "rublevo-arkhangelskaya",
+          "sourceIds": [
+            "mosmetro-numbering-17"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "lineNameRu": "Рублёво-Архангельская",
+          "lineNumber": "17"
+        }
+      ]
     },
     {
       "id": "hh:9.170",
@@ -1350,7 +1375,25 @@
       "lng": 37.5395,
       "serviceStatus": "not_verified",
       "translationSource": "https://zh.wikipedia.org/w/index.php?title=加里宁-松采沃线&oldid=87202765",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationLicense": "CC-BY-SA-4.0",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Деловой центр",
+          "lineKey": "solntsevskaya",
+          "sourceIds": [
+            "mosmetro-delovoy-filyovskaya",
+            "mosmetro-delovoy-ra",
+            "mosmetro-navigation-17"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "407",
+          "lineNameRu": "Солнцевская",
+          "lineNumber": "8А"
+        }
+      ]
     },
     {
       "id": "hh:171.972",
@@ -1364,9 +1407,36 @@
       ],
       "lat": 55.747222,
       "lng": 37.532222,
-      "serviceStatus": "not_verified",
+      "serviceStatus": "passenger-service-confirmed",
       "translationSource": "https://zh.wikipedia.org/w/index.php?title=加里宁-松采沃线&oldid=87202765",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationLicense": "CC-BY-SA-4.0",
+      "officialLineNumbers": [
+        "17"
+      ],
+      "serviceEvidence": {
+        "sourceIds": [
+          "mosmetro-ra-service-2026"
+        ],
+        "verifiedAt": "2026-11-01",
+        "scope": "named-station-service-only"
+      },
+      "officialMembershipEvidence": [
+        {
+          "ru": "Деловой центр",
+          "lineKey": "rublevo-arkhangelskaya",
+          "sourceIds": [
+            "mosmetro-numbering-17",
+            "mosmetro-delovoy-ra"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "686",
+          "lineNameRu": "Рублёво-Архангельская",
+          "lineNumber": "17"
+        }
+      ]
     },
     {
       "id": "hh:4.172",
@@ -1612,7 +1682,32 @@
       ],
       "lat": 55.766102,
       "lng": 37.509393,
-      "serviceStatus": "not_verified"
+      "serviceStatus": "passenger-service-confirmed",
+      "officialLineNumbers": [
+        "17"
+      ],
+      "serviceEvidence": {
+        "sourceIds": [
+          "mosmetro-ra-service-2026"
+        ],
+        "verifiedAt": "2026-11-01",
+        "scope": "named-station-service-only"
+      },
+      "officialMembershipEvidence": [
+        {
+          "ru": "Звенигородская",
+          "lineKey": "rublevo-arkhangelskaya",
+          "sourceIds": [
+            "mosmetro-numbering-17"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "lineNameRu": "Рублёво-Архангельская",
+          "lineNumber": "17"
+        }
+      ]
     },
     {
       "id": "hh:137.964",
@@ -1827,7 +1922,23 @@
       "lat": 55.653056,
       "lng": 37.598333,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Каховская",
+          "lineKey": "bolshaya-koltsevaya",
+          "sourceIds": [
+            "mosmetro-kakhovskaya"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "266",
+          "lineNameRu": "Большая кольцевая",
+          "lineNumber": null
+        }
+      ]
     },
     {
       "id": "hh:11.46",
@@ -2111,7 +2222,23 @@
       "lat": 55.599411,
       "lng": 37.479586,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Корниловская",
+          "lineKey": "troitskaya",
+          "sourceIds": [
+            "mosmetro-kornilovskaya"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "639",
+          "lineNameRu": "Троицкая",
+          "lineNumber": "16"
+        }
+      ]
     },
     {
       "id": "hh:135.861",
@@ -3217,7 +3344,7 @@
       "kind": "metro",
       "ru": "Митино",
       "zh": "米金诺",
-      "translationStatus": "community",
+      "translationStatus": "reviewed",
       "source": "hh-metro",
       "lines": [
         "3"
@@ -3225,8 +3352,18 @@
       "lat": 55.846098,
       "lng": 37.36122,
       "serviceStatus": "not_verified",
-      "translationSource": "https://zh.wikipedia.org/w/index.php?title=莫斯科地铁车站列表&oldid=91601299",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationSource": "https://transport.mos.ru/mostrans/all_news/123135",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-transport-published-example",
+      "translationEvidence": {
+        "sourceIds": [
+          "mos-transport-zh-2025"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "official-transport-published-station-name",
+        "sourceLocator": "Explicit station-name example",
+        "applicationNote": ""
+      }
     },
     {
       "id": "hh:135.852",
@@ -3466,9 +3603,34 @@
       ],
       "lat": 55.775444,
       "lng": 37.484165,
-      "serviceStatus": "not_verified",
+      "serviceStatus": "passenger-service-confirmed",
       "translationSource": "https://zh.wikipedia.org/w/index.php?title=大環線&oldid=94860733",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationLicense": "CC-BY-SA-4.0",
+      "officialLineNumbers": [
+        "17"
+      ],
+      "serviceEvidence": {
+        "sourceIds": [
+          "mosmetro-ra-service-2026"
+        ],
+        "verifiedAt": "2026-11-01",
+        "scope": "named-station-service-only"
+      },
+      "officialMembershipEvidence": [
+        {
+          "ru": "Народное Ополчение",
+          "lineKey": "rublevo-arkhangelskaya",
+          "sourceIds": [
+            "mosmetro-numbering-17"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "lineNameRu": "Рублёво-Архангельская",
+          "lineNumber": "17"
+        }
+      ]
     },
     {
       "id": "hh:97.806",
@@ -3751,7 +3913,23 @@
       "lat": 55.560094,
       "lng": 37.469807,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Новомосковская",
+          "lineKey": "troitskaya",
+          "sourceIds": [
+            "mosmetro-novomoskovskaya",
+            "mosmetro-indicators"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "lineNameRu": "Троицкая",
+          "lineNumber": "16"
+        }
+      ]
     },
     {
       "id": "hh:1.681",
@@ -4754,8 +4932,8 @@
       "id": "hh:9.115",
       "kind": "metro",
       "ru": "Полянка",
-      "zh": "林地",
-      "translationStatus": "community",
+      "zh": "珀梁卡",
+      "translationStatus": "reviewed",
       "source": "hh-metro",
       "lines": [
         "9"
@@ -4763,8 +4941,18 @@
       "lat": 55.736795,
       "lng": 37.618594,
       "serviceStatus": "not_verified",
-      "translationSource": "https://zh.wikipedia.org/w/index.php?title=莫斯科地铁车站列表&oldid=91601299",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationSource": "https://transport.mos.ru/mostrans/all_news/123135",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-transport-published-example",
+      "translationEvidence": {
+        "sourceIds": [
+          "mos-transport-zh-2025"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "official-transport-published-station-name",
+        "sourceLocator": "Explicit station-name example",
+        "applicationNote": ""
+      }
     },
     {
       "id": "hh:1.919",
@@ -4779,7 +4967,22 @@
       "lat": 55.552538,
       "lng": 37.490978,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Потапово",
+          "lineKey": "sokolnicheskaya",
+          "sourceIds": [
+            "mosmetro-potapovo"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "lineNameRu": "Сокольническая",
+          "lineNumber": "1"
+        }
+      ]
     },
     {
       "id": "hh:9.116",
@@ -4826,7 +5029,23 @@
       "lat": 55.5813,
       "lng": 37.4425,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Прокшино",
+          "lineKey": "sokolnicheskaya",
+          "sourceIds": [
+            "mosmetro-prokshino"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "37",
+          "lineNameRu": "Сокольническая",
+          "lineNumber": "1"
+        }
+      ]
     },
     {
       "id": "hh:7.62",
@@ -4857,7 +5076,18 @@
       "lat": 55.676549,
       "lng": 37.504584,
       "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "hh:97.814",
@@ -4872,7 +5102,18 @@
       "lat": 55.677778,
       "lng": 37.505,
       "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "hh:5.119",
@@ -5281,7 +5522,23 @@
       "lat": 55.6227,
       "lng": 37.424,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Саларьево",
+          "lineKey": "sokolnicheskaya",
+          "sourceIds": [
+            "mosmetro-salaryevo"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "35",
+          "lineNameRu": "Сокольническая",
+          "lineNumber": "1"
+        }
+      ]
     },
     {
       "id": "hh:136.880",
@@ -5340,7 +5597,23 @@
       "lat": 55.651451,
       "lng": 37.59809,
       "serviceStatus": "not_verified",
-      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs"
+      "translationSource": "https://github.com/leunch4off/redcn/blob/a6de6b54d0256cc4838040951db9617233c53dad/web/engine.mjs",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Севастопольская",
+          "lineKey": "serpukhovsko-timiryazevskaya",
+          "sourceIds": [
+            "mosmetro-sevastopolskaya"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "229",
+          "lineNameRu": "Серпуховско-Тимирязевская",
+          "lineNumber": null
+        }
+      ]
     },
     {
       "id": "hh:10.597",
@@ -6106,7 +6379,18 @@
       "lat": 55.6459,
       "lng": 37.4725,
       "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-university-guide-station-name",
+        "sourceLocator": "Printed page 2, avenue 98: 《特罗帕廖沃》站",
+        "applicationNote": ""
+      }
     },
     {
       "id": "hh:10.177",
@@ -6358,7 +6642,23 @@
       "lng": 37.507556,
       "serviceStatus": "not_verified",
       "translationSource": "https://zh.wikipedia.org/w/index.php?title=特羅伊茨克線&oldid=94239095",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationLicense": "CC-BY-SA-4.0",
+      "officialMembershipEvidence": [
+        {
+          "ru": "Университет Дружбы Народов",
+          "lineKey": "troitskaya",
+          "sourceIds": [
+            "mosmetro-rudn"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "officialStationId": "635",
+          "lineNameRu": "Троицкая",
+          "lineNumber": "16"
+        }
+      ]
     },
     {
       "id": "hh:135.862",
@@ -6791,9 +7091,34 @@
       ],
       "lat": 55.7575,
       "lng": 37.525556,
-      "serviceStatus": "not_verified",
+      "serviceStatus": "passenger-service-confirmed",
       "translationSource": "https://zh.wikipedia.org/w/index.php?title=大環線&oldid=94860733",
-      "translationLicense": "CC-BY-SA-4.0"
+      "translationLicense": "CC-BY-SA-4.0",
+      "officialLineNumbers": [
+        "17"
+      ],
+      "serviceEvidence": {
+        "sourceIds": [
+          "mosmetro-ra-service-2026"
+        ],
+        "verifiedAt": "2026-11-01",
+        "scope": "named-station-service-only"
+      },
+      "officialMembershipEvidence": [
+        {
+          "ru": "Шелепиха",
+          "lineKey": "rublevo-arkhangelskaya",
+          "sourceIds": [
+            "mosmetro-numbering-17"
+          ],
+          "checkedAt": "2026-11-01",
+          "evidenceType": "official-transport",
+          "scope": "station-line-membership",
+          "translationStatus": "unchanged",
+          "lineNameRu": "Рублёво-Архангельская",
+          "lineNumber": "17"
+        }
+      ]
     },
     {
       "id": "hh:131.688",
@@ -6998,7 +7323,18 @@
       "lat": 55.663146,
       "lng": 37.482852,
       "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-university-guide-station-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 《西南》站",
+        "applicationNote": ""
+      }
     },
     {
       "id": "hh:9.163",
@@ -100955,7 +101291,18 @@
       "source": "osm-moscow",
       "lat": 55.6892793,
       "lng": 37.5313796,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:node:1571714576",
@@ -100966,7 +101313,18 @@
       "source": "osm-moscow",
       "lat": 55.6999063,
       "lng": 37.5465036,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:node:2510642196",
@@ -100977,7 +101335,18 @@
       "source": "osm-moscow",
       "lat": 55.7014534,
       "lng": 37.5459009,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:node:9804392217",
@@ -100988,7 +101357,18 @@
       "source": "osm-moscow",
       "lat": 55.6893702,
       "lng": 37.5307778,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:relation:7480156",
@@ -100999,7 +101379,18 @@
       "source": "osm-moscow",
       "lat": 55.6772263,
       "lng": 37.5060644,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:way:906406666",
@@ -101010,7 +101401,18 @@
       "source": "osm-moscow",
       "lat": 55.678431,
       "lng": 37.5039291,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:node:9883702736",
@@ -118691,7 +119093,18 @@
       "source": "osm-moscow",
       "lat": 55.6471969,
       "lng": 37.4691217,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-university-guide-station-name",
+        "sourceLocator": "Printed page 2, avenue 98: 《特罗帕廖沃》站",
+        "applicationNote": ""
+      }
     },
     {
       "id": "osm:node:8760668070",
@@ -118702,7 +119115,18 @@
       "source": "osm-moscow",
       "lat": 55.6464237,
       "lng": 37.4683863,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-university-guide-station-name",
+        "sourceLocator": "Printed page 2, avenue 98: 《特罗帕廖沃》站",
+        "applicationNote": ""
+      }
     },
     {
       "id": "osm:way:306489567",
@@ -118713,7 +119137,18 @@
       "source": "osm-moscow",
       "lat": 55.6458572,
       "lng": 37.4725218,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-university-guide-station-name",
+        "sourceLocator": "Printed page 2, avenue 98: 《特罗帕廖沃》站",
+        "applicationNote": ""
+      }
     },
     {
       "id": "osm:node:2507100660",
@@ -150054,7 +150489,18 @@
       "source": "osm-moscow",
       "lat": 55.6636471,
       "lng": 37.4832141,
-      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf"
+      "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-university-guide-station-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 《西南》站",
+        "applicationNote": ""
+      }
     },
     {
       "id": "osm:node:8760668064",
@@ -191257,7 +191703,18 @@
       "lat": 55.7006143,
       "lng": 37.5463256,
       "translationSource": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
-      "segments": 110
+      "segments": 110,
+      "translationVerifiedAt": "2026-11-01",
+      "translationAuthority": "official-university-published-name",
+      "translationEvidence": {
+        "sourceIds": [
+          "ranepa-cn-name-guide"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "published-avenue-name",
+        "sourceLocator": "Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号",
+        "applicationNote": "Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name."
+      }
     },
     {
       "id": "osm:way:27147560",
@@ -212770,61 +213227,191 @@
       "id": "8",
       "ru": "Калининская",
       "color": "FFCD1C",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "加里宁线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Калининская",
+        "zh": "加里宁线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "2",
       "ru": "Замоскворецкая",
       "color": "4FB04F",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "莫斯科河畔线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Замоскворецкая",
+        "zh": "莫斯科河畔线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "6",
       "ru": "Калужско-Рижская",
       "color": "F07E24",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "卡卢加-里加线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Калужско-Рижская",
+        "zh": "卡卢加-里加线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "1",
       "ru": "Сокольническая",
       "color": "E42313",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "驯隼人村庄线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Сокольническая",
+        "zh": "驯隼人村庄线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "3",
       "ru": "Арбатско-Покровская",
       "color": "0072BA",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "阿尔巴特-圣母帡幪节线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Арбатско-Покровская",
+        "zh": "阿尔巴特-圣母帡幪节线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "4",
       "ru": "Филевская",
       "color": "1EBCEF",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "菲利线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Филёвская",
+        "zh": "菲利线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "9",
       "ru": "Серпуховско-Тимирязевская",
       "color": "ADACAC",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "谢尔普霍夫-季米里亚泽夫线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Серпуховско-Тимирязевская",
+        "zh": "谢尔普霍夫-季米里亚泽夫线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "7",
       "ru": "Таганско-Краснопресненская",
       "color": "943E90",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "塔甘卡-红普列斯妮娅线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Таганско-Краснопресненская",
+        "zh": "塔甘卡-红普列斯妮娅线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "5",
       "ru": "Кольцевая",
       "color": "915133",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "环状线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Кольцевая",
+        "zh": "环状线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "10",
       "ru": "Люблинско-Дмитровская",
       "color": "BED12C",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "柳布林诺-德米特罗夫线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Люблинско-Дмитровская",
+        "zh": "柳布林诺-德米特罗夫线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "11",
@@ -212836,31 +213423,96 @@
       "id": "12",
       "ru": "Бутовская",
       "color": "BAC8E8",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "布托沃线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Бутовская",
+        "zh": "布托沃线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "133",
       "ru": "Солнцевская",
       "color": "FFCD1C",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "太阳线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Солнцевская",
+        "zh": "太阳线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "95",
       "ru": "МЦК",
       "color": "CC4C6E",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "莫斯科中央环线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "МЦК",
+        "zh": "莫斯科中央环线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "97",
       "ru": "Большая кольцевая линия",
       "color": "88CDCF",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "大环线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Большая кольцевая",
+        "zh": "大环线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "98",
       "ru": "Некрасовская",
       "color": "CC0066",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "涅克拉索夫线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Некрасовская",
+        "zh": "涅克拉索夫线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "131",
@@ -212890,13 +213542,37 @@
       "id": "137",
       "ru": "Троицкая",
       "color": "03795F",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "zh": "特罗伊茨克线",
+      "translationStatus": "official-legend",
+      "officialNameEvidence": {
+        "ru": "Троицкая",
+        "zh": "特罗伊茨克线",
+        "translationStatus": "official-legend",
+        "sourceIds": [
+          "mosmetro-chinese-map-pdf"
+        ],
+        "checkedAt": "2026-11-01",
+        "scope": "printed-line-name-only",
+        "mapVersionDate": null
+      }
     },
     {
       "id": "171",
-      "ru": " Рублёво-Архангельская",
+      "ru": "Рублёво-Архангельская",
       "color": "646464",
-      "serviceStatus": "not_verified"
+      "serviceStatus": "not_verified",
+      "officialNumber": "17",
+      "officialColorName": "графитовый",
+      "officialEvidence": {
+        "sourceIds": [
+          "mosmetro-ra-service-2026",
+          "mosmetro-ra-color-2026"
+        ],
+        "verifiedAt": "2026-11-01",
+        "scope": "number-and-color-name"
+      },
+      "colorStatus": "snapshot-rgb-not-officially-verified"
     }
   ],
   "sources": [
@@ -212921,6 +213597,234 @@
       "attributionUrl": "https://www.openstreetmap.org/copyright",
       "asOf": "2026-10-30T08:15:20Z",
       "query": "[out:json][timeout:160];area(3600102269)->.m;\n(way(area.m)[highway][name];nwr(area.m)[highway=bus_stop][name];\nnwr(area.m)[railway=tram_stop][name];nwr(area.m)[public_transport=platform][name];);\nout center tags;"
+    },
+    {
+      "id": "mosmetro-ra-service-2026",
+      "url": "https://mosmetro.ru/news/details/10491",
+      "publisher": "Московский метрополитен",
+      "title": "Мобильная сеть на первом участке Рублёво-Архангельской линии",
+      "publishedAt": "2026-09-07",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "coverage": "Five named line 17 stations in passenger service. Coordinates and full-network completeness are not verified."
+    },
+    {
+      "id": "mosmetro-ra-color-2026",
+      "url": "https://mosmetro.ru/news/details/10521",
+      "publisher": "Московский метрополитен",
+      "title": "Новый цвет схемы — графитовый",
+      "publishedAt": "2026-09-10",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "coverage": "Official color name only; numeric RGB palette is not published in this evidence."
+    },
+    {
+      "id": "mos-transport-zh-2025",
+      "url": "https://transport.mos.ru/mostrans/all_news/123135",
+      "publisher": "Департамент транспорта Москвы",
+      "title": "Схема метро на китайском языке",
+      "publishedAt": "2025-01-30",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "coverage": "The two explicit Chinese station-name examples. The complete attached Chinese map was unavailable to fetch; no other names are promoted."
+    },
+    {
+      "id": "ranepa-cn-name-guide",
+      "url": "https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf",
+      "publisher": "Президентская академия РАНХиГС",
+      "title": "总统学院 留学生指南 — названия на печатной странице 2",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "evidenceType": "official-university",
+      "coverage": "Printed page 2 explicitly names 西南 and 特罗帕廖沃 as stations and 维尔纳德斯基大道 as an avenue. This verifies published name spelling only, not transport-operator nomenclature or service.",
+      "directFetchStatus": "The 59,570,740-byte public PDF exceeds the web extraction limit; verification used its indexed primary text. A slow partial download was stopped; no complete-body hash is asserted."
+    },
+    {
+      "id": "mosmetro-novomoskovskaya",
+      "url": "https://mosmetro.ru/passengers/information/stations/39",
+      "title": "Справочник станций — Новомосковская, Сокольническая линия",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-indicators",
+      "url": "https://www.mosmetro.ru/news/details/6402",
+      "title": "Цветные индикаторы линий: Новомосковская, линии 1 и 16",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "publishedAt": "2025-02-23"
+    },
+    {
+      "id": "mosmetro-salaryevo",
+      "url": "https://mosmetro.ru/passengers/information/stations/35",
+      "title": "Справочник станций — Саларьево",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-prokshino",
+      "url": "https://mosmetro.ru/passengers/information/stations/37",
+      "title": "Справочник станций — Прокшино",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-rudn",
+      "url": "https://mosmetro.ru/passengers/information/stations/635",
+      "title": "Справочник станций — Университет Дружбы Народов",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-kornilovskaya",
+      "url": "https://mosmetro.ru/passengers/information/stations/639",
+      "title": "Справочник станций — Корниловская",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-potapovo",
+      "url": "https://mosmetro.ru/news/details/6746",
+      "title": "Пассажиропоток станции Потапово Сокольнической линии",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "publishedAt": "2025-04-25"
+    },
+    {
+      "id": "mosmetro-kakhovskaya",
+      "url": "https://mosmetro.ru/passengers/information/stations/266",
+      "title": "Справочник станций — Каховская, Большая кольцевая линия",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-sevastopolskaya",
+      "url": "https://mosmetro.ru/passengers/information/stations/229",
+      "title": "Справочник станций — Севастопольская",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-delovoy-filyovskaya",
+      "url": "https://mosmetro.ru/passengers/information/stations/140",
+      "title": "Справочник станций — Деловой центр, Филёвская линия",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-delovoy-ra",
+      "url": "https://mosmetro.ru/passengers/information/stations/686",
+      "title": "Справочник станций — Деловой центр, Рублёво-Архангельская линия",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-numbering-17",
+      "url": "https://mosmetro.ru/news/details/10491",
+      "title": "Пять действующих станций линии 17",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "publishedAt": "2026-09-07"
+    },
+    {
+      "id": "mosmetro-navigation-17",
+      "url": "https://mosmetro.ru/news/details/9178",
+      "title": "Навигация линий 4А, 8А, 14 и будущей 17",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "publishedAt": "2026-03-20"
+    },
+    {
+      "id": "mosmetro-line-colors",
+      "url": "https://www.mosmetro.ru/news/details/2828",
+      "title": "Выбранные цвета Троицкой, Рублёво-Архангельской и Бирюлёвской линий",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "publishedAt": "2023-06-14"
+    },
+    {
+      "id": "mosmetro-current-graphite",
+      "url": "https://mosmetro.ru/news/details/10521",
+      "title": "Графитовая Рублёво-Архангельская линия на обновлённой схеме",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified",
+      "publishedAt": "2026-09-10"
+    },
+    {
+      "id": "mosmetro-kakhovskaya-retired",
+      "url": "https://www.mosmetro.ru/news/details/7574",
+      "title": "Бывшая Каховская линия стала частью БКЛ",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "primary-search-excerpt",
+      "status": "verified"
+    },
+    {
+      "id": "transport-chinese-map-page",
+      "url": "https://transport.mos.ru/metro/ch",
+      "title": "Официальная схема Московского метрополитена на китайском языке",
+      "publisher": "Департамент транспорта Москвы",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-page",
+      "status": "verified"
+    },
+    {
+      "id": "mosmetro-chinese-map-pdf",
+      "url": "https://mosmetro.ru/static/etp-new/docs/metro/metro_map_china-v1.pdf",
+      "title": "Официальная китайская схема: извлекаемая текстовая легенда линий",
+      "publisher": "Московский метрополитен",
+      "evidenceType": "official-transport",
+      "verifiedAt": "2026-11-01",
+      "retrievalMethod": "web-primary-pdf-text",
+      "status": "verified",
+      "limitations": "Text extraction exposes line legend; outlined station labels and the map version date were not verified. This file is not a current-service certificate and is not copied as artwork."
     }
   ],
   "updatedAt": "2026-10-30T08:18:37.151750+00:00",
@@ -212999,5 +213903,458 @@
       "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
       "join_method": "Whole-name phonetic identity and route-order comparison against current HH D1; source is a Chinese route diagram rather than a bilingual table."
     }
-  ]
+  ],
+  "officialNameCatalog": [
+    {
+      "ru": "Митино",
+      "zh": "米金诺",
+      "sourceIds": [
+        "mos-transport-zh-2025"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "official-transport-published-station-name"
+    },
+    {
+      "ru": "Полянка",
+      "zh": "珀梁卡",
+      "sourceIds": [
+        "mos-transport-zh-2025"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "official-transport-published-station-name"
+    },
+    {
+      "ru": "Юго-Западная",
+      "zh": "西南",
+      "sourceIds": [
+        "ranepa-cn-name-guide"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "published-university-guide-station-name"
+    },
+    {
+      "ru": "Тропарёво",
+      "zh": "特罗帕廖沃",
+      "sourceIds": [
+        "ranepa-cn-name-guide"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "published-university-guide-station-name"
+    },
+    {
+      "ru": "Проспект Вернадского",
+      "zh": "维尔纳德斯基大道",
+      "sourceIds": [
+        "ranepa-cn-name-guide"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "published-avenue-name"
+    },
+    {
+      "ru": "Сокольническая",
+      "zh": "驯隼人村庄线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Замоскворецкая",
+      "zh": "莫斯科河畔线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Арбатско-Покровская",
+      "zh": "阿尔巴特-圣母帡幪节线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Филёвская",
+      "zh": "菲利线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Кольцевая",
+      "zh": "环状线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Калужско-Рижская",
+      "zh": "卡卢加-里加线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Таганско-Краснопресненская",
+      "zh": "塔甘卡-红普列斯妮娅线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Калининская",
+      "zh": "加里宁线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Солнцевская",
+      "zh": "太阳线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Серпуховско-Тимирязевская",
+      "zh": "谢尔普霍夫-季米里亚泽夫线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Люблинско-Дмитровская",
+      "zh": "柳布林诺-德米特罗夫线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Большая кольцевая",
+      "zh": "大环线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Бутовская",
+      "zh": "布托沃线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "МЦК",
+      "zh": "莫斯科中央环线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Некрасовская",
+      "zh": "涅克拉索夫线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    },
+    {
+      "ru": "Троицкая",
+      "zh": "特罗伊茨克线",
+      "translationStatus": "official-legend",
+      "sourceIds": [
+        "mosmetro-chinese-map-pdf"
+      ],
+      "checkedAt": "2026-11-01",
+      "scope": "printed-line-name-only",
+      "mapVersionDate": null
+    }
+  ],
+  "officialStationLineAssertions": [
+    {
+      "ru": "Новомосковская",
+      "lineKey": "sokolnicheskaya",
+      "sourceIds": [
+        "mosmetro-novomoskovskaya",
+        "mosmetro-indicators"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "39",
+      "lineNameRu": "Сокольническая",
+      "lineNumber": "1"
+    },
+    {
+      "ru": "Новомосковская",
+      "lineKey": "troitskaya",
+      "sourceIds": [
+        "mosmetro-novomoskovskaya",
+        "mosmetro-indicators"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "lineNameRu": "Троицкая",
+      "lineNumber": "16"
+    },
+    {
+      "ru": "Саларьево",
+      "lineKey": "sokolnicheskaya",
+      "sourceIds": [
+        "mosmetro-salaryevo"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "35",
+      "lineNameRu": "Сокольническая",
+      "lineNumber": "1"
+    },
+    {
+      "ru": "Прокшино",
+      "lineKey": "sokolnicheskaya",
+      "sourceIds": [
+        "mosmetro-prokshino"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "37",
+      "lineNameRu": "Сокольническая",
+      "lineNumber": "1"
+    },
+    {
+      "ru": "Потапово",
+      "lineKey": "sokolnicheskaya",
+      "sourceIds": [
+        "mosmetro-potapovo"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "lineNameRu": "Сокольническая",
+      "lineNumber": "1"
+    },
+    {
+      "ru": "Университет Дружбы Народов",
+      "lineKey": "troitskaya",
+      "sourceIds": [
+        "mosmetro-rudn"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "635",
+      "lineNameRu": "Троицкая",
+      "lineNumber": "16"
+    },
+    {
+      "ru": "Корниловская",
+      "lineKey": "troitskaya",
+      "sourceIds": [
+        "mosmetro-kornilovskaya"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "639",
+      "lineNameRu": "Троицкая",
+      "lineNumber": "16"
+    },
+    {
+      "ru": "Каховская",
+      "lineKey": "bolshaya-koltsevaya",
+      "sourceIds": [
+        "mosmetro-kakhovskaya"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "266",
+      "lineNameRu": "Большая кольцевая",
+      "lineNumber": null
+    },
+    {
+      "ru": "Севастопольская",
+      "lineKey": "serpukhovsko-timiryazevskaya",
+      "sourceIds": [
+        "mosmetro-sevastopolskaya"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "229",
+      "lineNameRu": "Серпуховско-Тимирязевская",
+      "lineNumber": null
+    },
+    {
+      "ru": "Деловой центр",
+      "lineKey": "filyovskaya-branch",
+      "sourceIds": [
+        "mosmetro-delovoy-filyovskaya",
+        "mosmetro-navigation-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "140",
+      "lineNameRu": "Филёвская",
+      "lineNumber": "4А"
+    },
+    {
+      "ru": "Деловой центр",
+      "lineKey": "solntsevskaya",
+      "sourceIds": [
+        "mosmetro-delovoy-filyovskaya",
+        "mosmetro-delovoy-ra",
+        "mosmetro-navigation-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "407",
+      "lineNameRu": "Солнцевская",
+      "lineNumber": "8А"
+    },
+    {
+      "ru": "Деловой центр",
+      "lineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "mosmetro-numbering-17",
+        "mosmetro-delovoy-ra"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "officialStationId": "686",
+      "lineNameRu": "Рублёво-Архангельская",
+      "lineNumber": "17"
+    },
+    {
+      "ru": "Шелепиха",
+      "lineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "mosmetro-numbering-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "lineNameRu": "Рублёво-Архангельская",
+      "lineNumber": "17"
+    },
+    {
+      "ru": "Звенигородская",
+      "lineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "mosmetro-numbering-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "lineNameRu": "Рублёво-Архангельская",
+      "lineNumber": "17"
+    },
+    {
+      "ru": "Народное Ополчение",
+      "lineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "mosmetro-numbering-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "lineNameRu": "Рублёво-Архангельская",
+      "lineNumber": "17"
+    },
+    {
+      "ru": "Бульвар Генерала Карбышева",
+      "lineKey": "rublevo-arkhangelskaya",
+      "sourceIds": [
+        "mosmetro-numbering-17"
+      ],
+      "checkedAt": "2026-11-01",
+      "evidenceType": "official-transport",
+      "scope": "station-line-membership",
+      "translationStatus": "unchanged",
+      "lineNameRu": "Рублёво-Архангельская",
+      "lineNumber": "17"
+    }
+  ],
+  "officialNamesCoverage": {
+    "complete": false,
+    "scope": "Explicit published names with source and verification date; community, studio and untranslated entries remain separate."
+  }
 }

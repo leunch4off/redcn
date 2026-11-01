@@ -65,7 +65,7 @@ export function designCanvasHistory(initial,limit=40){
   };
 }
 
-export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceChange,getCard=()=>({}),getAssets=()=>({}),renderPage=renderPublicationPage,toast=()=>{}}={}){
+export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceChange,getCard=()=>({}),getAssets=()=>({}),renderPage=renderPublicationPage,toast=()=>{},deferInitialRender=false}={}){
   if(!mount||typeof getDesign!=='function')return {refresh:()=>{},setSurface:()=>{},destroy:()=>{},selectedNode:()=>null};
   const change=onChange||setDesign||(()=>{}),surfaceNames={pdfOverview:'PDF · Объект и агент',pdfGallery:'PDF · Фотографии',pdfLocation:'PDF · Расположение',intro:'Intro · Обложка',outro:'Outro · Карта и маршруты'};
   const typeNames={text:'Текст',image:'Фотография',rect:'Плашка',line:'Линия',logo:'Логотип',avatar:'Аватар',map:'Карта',route:'Маршрут',facts:'Характеристики'};
@@ -79,6 +79,7 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   const normal=()=>{const source=getDesign();designSourceKey=JSON.stringify(source);return normalizePublicationDesign(source);};
   let draft=normal(),surfaceId=Object.keys(draft.surfaces||{})[0]||'intro',selection=new Set(),history=designCanvasHistory(draft);
   let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='',lastDrawnInputs=null,pendingDrawInputs=null;
+  let renderEnabled=!deferInitialRender;const readyWaiters=new Set();
   const host=make('section','',{class:'design-canvas-editor',id:'designCanvasEditor','aria-label':'Редактор расположения блоков'});
   const title=make('div','',{class:'design-canvas-heading'});title.append(make('h3','Редактор макета'),make('p','Перемещайте блоки и меняйте их размеры. Текст из полей карточки подставляется заново для каждого объявления.',{class:'muted'}));
   const toolbar=make('div','',{class:'design-canvas-toolbar'}),surfaces=select('designCanvasSurface',[]),zooms=select('designCanvasZoom',[['fit','По ширине'],['25','25%'],['50','50%'],['75','75%'],['100','100%']]);
@@ -163,7 +164,7 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   function refreshLayers(){const focused=layers.contains(document.activeElement)?document.activeElement?.dataset.nodeId:null;layers.replaceChildren();for(const node of [...surface().nodes].sort((a,b)=>(b.z||0)-(a.z||0))){const b=button((node.visible===false?'◌ ':node.locked?'🔒 ':'')+nodeName(node),'',event=>selectNode(node,event));b.removeAttribute('id');b.dataset.nodeId=node.id;b.setAttribute('aria-pressed',String(selection.has(node.id)));layers.append(b);}if(focused)[...layers.children].find(node=>node.dataset.nodeId===focused)?.focus({preventScroll:true});}
   function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;const key=[s.width,s.height,scale,showGrid,selection.size].join('|');if(key===dimensionsKey)return;dimensionsKey=key;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
   async function draw(){
-    const epoch=++renderEpoch,s=surface(),id=surfaceId;if(!s||destroyed)return;
+    const epoch=++renderEpoch,s=surface(),id=surfaceId,started=performance.now();if(!s||destroyed)return;
     const design=dceClone(draft),card=dceClone(getCard()||{}),buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;let inputs;
     try{
       const request=getAssets(),assets=await request;inputs=designCanvasRenderInputs(id,design,card,assets||{});pendingDrawInputs=inputs;
@@ -172,10 +173,17 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
       // Async getters are guarded by refresh's epoch without starting a second fetch.
       const currentAssets=typeof request?.then==='function'?assets:getAssets()||{};
       if(inputs.card!==JSON.stringify(getCard()||{})||inputs.design!==JSON.stringify(draft)||!designCanvasRenderInputsEqual(inputs,designCanvasRenderInputs(id,draft,getCard()||{},currentAssets))){host.dataset.previewReady='false';queueRender();return;}
-      canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);lastDrawnInputs=inputs;host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');
-    }catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}finally{if(pendingDrawInputs===inputs)pendingDrawInputs=null;}
+      canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);lastDrawnInputs=inputs;host.dataset.previewReady='true';host.dataset.drawMs=String(Math.round(performance.now()-started));host.dataset.drawCount=String((Number(host.dataset.drawCount)||0)+1);performance.mark?.('redcn-designer-canvas-ready');settleReady(inputs,true);warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');
+    }catch(error){if(epoch===renderEpoch&&!destroyed){warnings.textContent=error.message||'Не удалось построить полотно';settleReady(null,false);}}finally{if(pendingDrawInputs===inputs)pendingDrawInputs=null;}
   }
-  function queueRender(){if(renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
+  function settleReady(inputs,success){for(const waiter of readyWaiters){waiter.resolve(success&&designCanvasRenderInputsEqual(waiter.inputs,inputs));readyWaiters.delete(waiter);}}
+  async function ready(){
+    if(destroyed)return false;renderEnabled=true;const card=dceClone(getCard()||{}),design=dceClone(draft),id=surfaceId,assets=await getAssets();
+    if(destroyed||id!==surfaceId||JSON.stringify(card)!==JSON.stringify(getCard()||{})||JSON.stringify(design)!==JSON.stringify(draft))return false;
+    const inputs=designCanvasRenderInputs(id,design,card,assets||{});if(designCanvasRenderInputsEqual(inputs,lastDrawnInputs))return true;
+    const result=new Promise(resolve=>readyWaiters.add({inputs,resolve}));queueRender();return result;
+  }
+  function queueRender(){if(!renderEnabled||renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
   function refreshUI(){if(destroyed)return;dimensions();backgroundInput.value=surface().background||'#07162b';refreshOverlay();refreshLayers();refreshInspector();undo.disabled=!history.canUndo();redo.disabled=!history.canRedo();queueRender();}
   function addNode(type){const s=surface();if(s.nodes.length>=80)return toast('На одном полотне можно разместить до 80 блоков.');const ids=new Set(s.nodes.map(node=>node.id));let count=1,id;do{id='custom-'+type+'-'+count++;}while(ids.has(id));s.nodes.push({id,type,x:Math.min(60,s.width-120),y:Math.min(60,s.height-100),w:Math.min(type==='text'?500:420,s.width-60),h:type==='text'?100:220,text:type==='text'?'自定义文字':'',bind:type==='image'?'photo1':'',photoIndex:0,visible:true,z:Math.max(0,...s.nodes.map(n=>n.z||0))+1,style:{fontSize:42,color:'#ffffff',fontFamily:'sans',fontWeight:600,align:'left',opacity:1,background:type==='rect'?'#12345b':''}});selection=new Set([id]);commit('add');}
   function duplicateNodes(){const s=surface(),copies=s.nodes.filter(node=>selection.has(node.id));if(s.nodes.length+copies.length>80)return toast('Недостаточно места: на одном полотне допускается до 80 блоков.');const ids=new Set(s.nodes.map(node=>node.id)),added=[];let z=Math.max(0,...s.nodes.map(n=>n.z||0));for(const original of copies){let i=1,id;do{id=original.id+'-copy-'+i++;}while(ids.has(id));ids.add(id);const node={...dceClone(original),id,z:++z,locked:false,x:Math.min(s.width-original.w,original.x+24),y:Math.min(s.height-original.h,original.y+24)};s.nodes.push(node);added.push(id);}selection=new Set(added);commit('duplicate');}
@@ -197,7 +205,7 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
     queueRender();
   }
   function refresh({resetHistory=false}={}){
-    if(destroyed)return;const source=getDesign(),sourceKey=JSON.stringify(source);
+    if(destroyed)return;renderEnabled=true;const source=getDesign(),sourceKey=JSON.stringify(source);
     if(sourceKey===designSourceKey){if(resetHistory){history.reset(draft);undo.disabled=redo.disabled=true;}refreshAssets();return;}
     designSourceKey=sourceKey;const next=normalizePublicationDesign(source);
     if(JSON.stringify(next)===JSON.stringify(draft)){if(resetHistory){history.reset(draft);undo.disabled=redo.disabled=true;}refreshAssets();return;}
@@ -206,5 +214,5 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   surfaceOptions();surfaces.value=surfaceId;
   if(typeof ResizeObserver==='function'){resizeObserver=new ResizeObserver(()=>dimensions());resizeObserver.observe(viewport);}else window.addEventListener('resize',dimensions);
   refreshUI();
-  return {refresh,refreshAssets,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;++renderEpoch;lastDrawnInputs=pendingDrawInputs=null;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
+  return {ready,refresh,refreshAssets,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;settleReady(null,false);++renderEpoch;lastDrawnInputs=pendingDrawInputs=null;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
 }

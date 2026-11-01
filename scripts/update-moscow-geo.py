@@ -164,6 +164,99 @@ def source(identifier, url, raw, coverage, **extra):
         'sha256': hashlib.sha256(raw).hexdigest(), 'coverage': coverage, **extra}
 
 
+def apply_official_evidence(catalog, path=None):
+    """Apply only explicitly checked facts, keeping snapshot IDs and RGB scope.
+
+    A line-level news item never verifies all stations, coordinates or the full
+    city registry. The supplement survives later HH/OSM refreshes.
+    """
+    path = Path(path or ROOT/'data/moscow-transit-verified.json')
+    if not path.exists():
+        return catalog
+    evidence = json.loads(path.read_text(encoding='utf-8'))
+    if evidence.get('version')!=1:
+        raise ValueError('Unsupported transit evidence version')
+    checked = dt.date.fromisoformat(evidence['verifiedAt'])
+    if checked>dt.date.today():
+        raise ValueError('Transit evidence cannot be verified in the future')
+    sources = {row['id']: row for row in catalog.get('sources', [])}
+    new_sources = {row['id']: row for row in evidence['sources']}
+    for row in new_sources.values():
+        url = urllib.parse.urlsplit(row['url'])
+        if url.scheme!='https' or url.hostname not in ('mosmetro.ru', 'www.mosmetro.ru', 'transport.mos.ru', 'www.ranepa.ru', 'ranepa.ru') or url.username or url.password:
+            raise ValueError('Name/transport evidence must be an official primary source')
+        if row['verifiedAt']!=evidence['verifiedAt']:
+            raise ValueError('Mismatched evidence verification date')
+    sources.update(new_sources)
+    catalog['sources'] = list(sources.values())
+    for fact in evidence['lines']:
+        if any(identifier not in new_sources for identifier in fact['sourceIds']):
+            raise ValueError('Unknown official transit source')
+        line = next((row for row in catalog['lines'] if row['id']==fact['snapshotId'] and norm(row['ru'])==norm(fact['ru'])), None)
+        if line is None:
+            continue
+        line.update(ru=fact['ru'], officialNumber=fact['officialNumber'], officialColorName=fact['officialColorName'],
+            officialEvidence={'sourceIds': fact['sourceIds'], 'verifiedAt': evidence['verifiedAt'], 'scope': 'number-and-color-name'},
+            colorStatus='snapshot-rgb-not-officially-verified')
+        for row in catalog['records']:
+            if row['kind']=='metro' and fact['snapshotId'] in row.get('lines', []) and norm(row['ru']) in {norm(name) for name in fact['stations']}:
+                row.update(officialLineNumbers=[fact['officialNumber']], serviceStatus='passenger-service-confirmed',
+                    serviceEvidence={'sourceIds': fact['sourceIds'][:1], 'verifiedAt': evidence['verifiedAt'], 'scope': 'named-station-service-only'})
+    for fact in evidence['translations']:
+        source = new_sources[fact['sourceId']]
+        for row in catalog['records']:
+            if row['kind'] in fact.get('applyKinds', ['metro']) and norm(row['ru'])==norm(fact['ru']):
+                row.update(zh=fact['zh'], translationStatus='reviewed', translationSource=source['url'],
+                    translationVerifiedAt=evidence['verifiedAt'], translationAuthority='official-university-published-name' if source.get('evidenceType')=='official-university' else 'official-transport-published-example',
+                    translationEvidence={'sourceIds': [source['id']], 'checkedAt': evidence['verifiedAt'], 'scope': fact.get('scope', 'official-transport-published-station-name'), 'sourceLocator': fact.get('sourceLocator', 'Explicit station-name example'), 'applicationNote': fact.get('applicationNote', '')})
+                row.pop('translationLicense', None)
+    catalog['officialNameCatalog']=[{'ru':fact['ru'], 'zh':fact['zh'], 'sourceIds':[fact['sourceId']], 'checkedAt':evidence['verifiedAt'], 'scope':fact.get('scope','official-transport-published-station-name')} for fact in evidence['translations']]
+    return catalog
+
+
+def apply_official_line_catalog(catalog, path=None):
+    """Wire the bounded researched legend and exact membership pairs into runtime.
+
+    Branch numbers apply only to asserted stations. A historical printed legend
+    cannot establish RGB values, present service or other station translations.
+    """
+    path = Path(path or ROOT/'data/metro-official-evidence.json')
+    if not path.exists():
+        return catalog
+    evidence = json.loads(path.read_text(encoding='utf-8'))
+    if evidence.get('version')!=1 or evidence['coverage'].get('complete') is not False:
+        raise ValueError('Unsupported bounded official line evidence')
+    sources={row['id']:row for row in catalog.get('sources',[])}
+    sources.update({row['id']:row for row in evidence['sources']})
+    def line_key(value):
+        return re.sub(r'\s+линия$', '', norm(value))
+    matched_lines={fact['key']:[line for line in catalog['lines'] if line_key(line['ru'])==line_key(fact['ru'])] for fact in evidence['lines']}
+    line_facts={fact['key']:fact for fact in evidence['lines']}
+    assertions=[]
+    for fact in evidence['stationLineAssertions']:
+        if any(identifier not in sources for identifier in fact['sourceIds']):
+            raise ValueError('Unknown source in official station-line membership')
+        ids={line['id'] for line in matched_lines[fact['lineKey']]}
+        claim={**fact,'lineNameRu':line_facts[fact['lineKey']]['ru'],'lineNumber':line_facts[fact['lineKey']].get('number')}
+        assertions.append(claim)
+        for row in catalog['records']:
+            if row['kind']=='metro' and norm(row['ru'])==norm(fact['ru']) and ids.intersection(row.get('lines', [])):
+                previous=row.setdefault('officialMembershipEvidence',[])
+                previous[:]=[item for item in previous if item['lineKey']!=fact['lineKey']]
+                previous.append(claim)
+    names=catalog.setdefault('officialNameCatalog',[])
+    for fact in evidence['officialChineseLineNames']:
+        if any(identifier not in sources for identifier in fact['sourceIds']):
+            raise ValueError('Unknown source in official line name')
+        for line in catalog['lines']:
+            if line_key(line['ru'])==line_key(fact['ru']):
+                line.update(zh=fact['zh'],translationStatus='official-legend',officialNameEvidence=dict(fact))
+        names[:]=[item for item in names if not(item['scope']=='printed-line-name-only' and line_key(item['ru'])==line_key(fact['ru']))]
+        names.append(dict(fact))
+    catalog.update(sources=list(sources.values()),officialStationLineAssertions=assertions,officialNamesCoverage={'complete':False,'scope':'Explicit published names with source and verification date; community, studio and untranslated entries remain separate.'})
+    return catalog
+
+
 def render_module(catalog):
     template = (ROOT / 'scripts/geo-catalog-runtime.mjs').read_text(encoding='utf-8')
     return '// Generated by scripts/update-moscow-geo.py. Edit the source catalog via the importer.\nexport const GEO_CATALOG = ' + json.dumps(catalog, ensure_ascii=False, separators=(',', ':')) + ';\n' + template
@@ -231,10 +324,12 @@ def main(argv=None):
     changed=any((args.hh_file,args.download_hh,args.osm_file,args.download_osm,args.metro_export,args.street_export,args.stop_export))
     catalog.update(records=sorted(rows, key=lambda r: (r['kind'], norm(r['ru']), r['id'])), sources=list(sources.values()),
         updatedAt=dt.datetime.now(dt.timezone.utc).isoformat() if changed or not catalog.get('updatedAt') else catalog['updatedAt'], coverage='Source snapshots; official exhaustive Moscow registry not asserted')
+    apply_official_evidence(catalog)
+    apply_official_line_catalog(catalog)
     module = render_module(catalog)
     atomic_write(output, json.dumps(catalog, ensure_ascii=False, indent=2) + '\n')
     atomic_write(ROOT / 'web/geo-catalog.mjs', module)
-    print(json.dumps({'records': len(rows), **{k: sum(r['kind'] == k for r in rows) for k in ('metro', 'street', 'stop')}, 'sources': list(sources)}, ensure_ascii=False))
+    print(json.dumps({'records': len(rows), **{k: sum(r['kind'] == k for r in rows) for k in ('metro', 'street', 'stop')}, 'sources': [source['id'] for source in catalog['sources']]}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

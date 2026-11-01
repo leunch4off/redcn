@@ -1,4 +1,4 @@
-import {photoSources} from '../media-core.mjs';
+import {photoSources,observedPhotoItem,observedPhotoPicture,mergeObservedPhotoItems} from '../media-core.mjs';
 import {listingDocument,listingText,listingDescendants,listingClean} from './html.mjs';
 import {rentalAmount,rentalPeriod,rentalCurrency,rentalCommission,rentalSeller,explicitRentalLayout,retainRentalWitness,rentalWitnessConflicts,rentalWitnessComparable,rentalWitnessValue} from './rental-values.mjs';
 
@@ -21,7 +21,7 @@ export function avitoPublicationStatus(source){
 export const isAvitoNewCandidate=source=>avitoPublicationStatus(source)==='active';
 
 export function readAvitoHtml(input,{url=''}={}){
- const {nodes}=listingDocument(input),records=[],groups=[],images=[],seen=new Set();
+ const {nodes}=listingDocument(input),records=[],groups=[],images=[],galleryItems=[],seen=new Set(),seenPictures=new Set();
  const add=(name,text,extra={})=>{text=listingClean(text);const key=name+'|'+text;if(text&&!seen.has(key)){seen.add(key);records.push({name,text,href:'',...extra});}};
  const marker=(name)=>nodes.filter(n=>avitoMark(n)===name);
  const title=listingText(marker('item-view/title-info')[0]||nodes.find(n=>n.tag==='h1')||{tag:'div',attrs:{},children:[]});
@@ -69,10 +69,13 @@ export function readAvitoHtml(input,{url=''}={}){
  }
  for(const gallery of marker('item-view/main-gallery'))for(const n of listingDescendants(gallery)){
   if(!['img','source','a'].includes(n.tag))continue;
-  for(const key of ['data-original','data-src'])if(n.attrs[key])images.push(n.attrs[key]);
-  for(const key of ['data-srcset','srcset'])for(const part of (n.attrs[key]||'').split(','))if(part.trim())images.push(part.trim().split(/\s+/)[0]);
-  if(n.tag!=='a'&&n.attrs.src)images.push(n.attrs.src);
-  if(n.tag==='a'&&/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(n.attrs.href||''))images.push(n.attrs.href);
+  let picture=n.parent;while(picture&&picture!==gallery&&picture.tag!=='picture')picture=picture.parent;
+  if(picture?.tag==='picture'&&n.tag!=='a'){
+   if(seenPictures.has(picture))continue;seenPictures.add(picture);
+   const item=observedPhotoPicture(listingDescendants(picture).filter(node=>['img','source'].includes(node.tag)).map(node=>({...picture.attrs,...node.attrs})),{base:url,platform:'avito',order:galleryItems.length});if(item){galleryItems.push(item);images.push(item.url);}continue;
+  }
+  const attrs=n.tag==='a'?{imageHref:/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(n.attrs.href||'')?n.attrs.href:''}:n.attrs;
+  const item=observedPhotoItem(attrs,{base:url,platform:'avito',order:galleryItems.length});if(item){galleryItems.push(item);images.push(item.url);}
  }
  // OG/share images may be composites or recommendation content. Use only the
  // primary gallery; an empty gallery is reported rather than filled with avatars.
@@ -82,7 +85,7 @@ export function readAvitoHtml(input,{url=''}={}){
  if(description&&!groups.some(g=>g.section==='description'))groups.push({section:'description',label:'Описание',text:description,rows:[]});
  const selected=records.filter(r=>!['Coordinates'].includes(r.name));
  const safeGroups=groups.map(({signature,...g})=>g);
- const source={version:1,platform:'avito',title,description,url:sourceUrl,text:listingClean(selected.map(r=>r.text).join('\n')).slice(0,50000),images:photoSources(images,sourceUrl),related:[],records,offer:null,sections:safeGroups,stats:{records:records.length,jsonStates:0,duplicateDocuments:(input.match(/<!doctype\s+html/gi)||[]).length,adapter:'avito-v1'}};
+ const source={version:1,platform:'avito',title,description,url:sourceUrl,text:listingClean(selected.map(r=>r.text).join('\n')).slice(0,50000),images:photoSources(images,sourceUrl),photoItems:mergeObservedPhotoItems([],galleryItems),related:[],records,offer:null,sections:safeGroups,stats:{records:records.length,jsonStates:0,duplicateDocuments:(input.match(/<!doctype\s+html/gi)||[]).length,adapter:'avito-v2-gallery-variants'}};
  source.publicationStatus=avitoPublicationStatus(source);
  const extracted=avitoFieldFacts(source);source.permissions=extracted.permissions;source.equipment=extracted.equipment;
  return source;
@@ -143,6 +146,7 @@ export function avitoFieldFacts(source){
  if(routes.length){put('metro',routes[0].name,{name:'UndergroundItem'});put('transit',[...new Set(routes.map(r=>[r.name,r.time,r.mode,''].join(' | ')))].join('\n'),{name:'UndergroundItem'});if(routes[0].mode==='walk')put('walk',routes[0].time,{name:'UndergroundItem'});else facts.walk='';if(routes.some(r=>r.mode==='unknown'))warnings.push('Авито: у части маршрутов не подписан способ пути.');}
  if(routes.length)put('transitDetails',routes,{name:'UndergroundItem'});
  if(source.description)put('sourceDescription',source.description,{name:'Description'});
+ if(source.photoItems?.length)put('photoItems',source.photoItems,{name:'Avito main-gallery'});
  if(source.url)put('url',source.url,{name:'URL'});if(facts.address)put('name',facts.address,{name:'AddressItem'});
  if(!source.images?.length)warnings.push('Авито: фото основного альбома пока не найдены; нужна загрузка галереи в Chrome.');
  const conflicts=rentalWitnessConflicts(evidence,'Авито');

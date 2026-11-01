@@ -7,10 +7,13 @@ from job_progress import emit
 
 _browser_lock = threading.Lock()
 
-from browser_dom import source_scripts
+from browser_dom import source_scripts, gallery_scroll_script,gallery_sweep_script
 from source_adapters import adapter_for
+from gallery_coverage import gallery_coverage, observed_images,merge_gallery_items
 
 SNAPSHOT, SECTION_PROBE = source_scripts(adapter_for('https://www.cian.ru/'))
+GALLERY_SCROLL=gallery_scroll_script(adapter_for('https://www.cian.ru/'))
+GALLERY_SWEEP=gallery_sweep_script(adapter_for('https://www.cian.ru/'))
 
 # A bounded scroll triggers ordinary lazy loading without opening galleries,
 # clicking consent/verification controls or running any source-supplied code.
@@ -68,7 +71,7 @@ def _section_reason(state):
 
 def capture_sections(page, initial, deadline, validate_url, status=None, cancel=None,
                      budget=6, section_wait=1.5, poll_ms=80,
-                     snapshot_script=SNAPSHOT, section_probe=SECTION_PROBE):
+                     snapshot_script=SNAPSHOT, section_probe=SECTION_PROBE,gallery_scroll=GALLERY_SCROLL,gallery_sweep=GALLERY_SWEEP):
     """Probe every section atomically, then spend a bounded follow-up budget.
 
     Initial all-section observations are made in SNAPSHOT itself. A single
@@ -82,7 +85,7 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
     kinds=('gallery','description','characteristics')
     labels={'gallery':'фотографии','description':'описание квартиры','characteristics':'характеристики, мебель и техника'}
     preflight=initial.get('sectionStates');from_snapshot=isinstance(preflight,dict) and all(kind in preflight for kind in kinds)
-    captures=0
+    captures=0;album_states=[initial.get('galleryState',{})];gallery_items=list(initial.get('galleryPhotos',[]));gallery_moves=0;gallery_restore=None;gallery_swept=False
     try:
         _checked_page(page,validate_url,cancel)
         if not from_snapshot:
@@ -127,6 +130,8 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                 if unavailable:raise ValueError('Объявление стало недоступно во время чтения.')
                 if ready:snapshot=current
                 images.extend(current.get('images',[]))
+                gallery_items.extend(current.get('galleryPhotos',[]));gallery_items=gallery_items[-1200:]
+                if section=='gallery':album_states.append(current.get('galleryState',{}))
                 # A full read can verify newly loaded later sections too.
                 observed=current.get('sectionStates')
                 if isinstance(observed,dict):
@@ -135,6 +140,15 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                     if isinstance(observed.get(section),dict):state=observed[section]
                     for future in kinds[index+1:]:
                         if isinstance(observed.get(future),dict):preflight[future]=observed[future]
+                if section=='gallery':
+                    album=state.get('album',{}) if isinstance(state.get('album'),dict) else {}
+                    album_states.append(album)
+                    coverage=gallery_coverage(album_states,list(dict.fromkeys(images)))
+                    if album.get('scrollable') and not gallery_swept and time.monotonic()<phase_end and coverage['state']!='complete':
+                        sweep=_browser_read(page,gallery_sweep,{'budgetMs':min(1800,max(1,(phase_end-time.monotonic())*1000)),'maxMoves':40},kind='gallery-sweep',measurements=measurements)
+                        gallery_swept=True;gallery_moves+=sweep.get('moves',0)
+                        images.extend(sweep.get('images',[]));gallery_items.extend(sweep.get('galleryPhotos',[]));album_states.extend(sweep.get('galleryStates',[]))
+                        state['gallerySweepBounded']=sweep.get('bounded') is True
                 if state.get('ready'):break
                 if state.get('targetReady') and isinstance(state.get('nextPendingIndex'),int) and state['nextPendingIndex']>=0:
                     target_index=state['nextPendingIndex'];moved=False;continue
@@ -148,16 +162,19 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
             note={'ready':'Блок готов: ','not_found':'При проверке блок не найден: ','partial':'Блок пока неполный: ','not_visited_budget':'Блок не проверен: исчерпан бюджет — '}[reason]
             emit(status,note+labels[section]+'. Найдено кандидатов фото: '+str(len(set(images)))+'.',stage='scroll',section=section,completed=len(sections),sectionReady=reason=='ready',sectionState=reason)
     finally:
-        if not page.is_closed():_browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
+        if not page.is_closed():
+            if gallery_restore is not None:_browser_read(page,gallery_scroll,{'restore':gallery_restore},kind='restore-gallery-scroll',measurements=measurements)
+            _browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
     elapsed=max(0,time.monotonic()-started)
     complete=len(sections)==3 and all(row.get('ready') for row in sections) and (from_snapshot or captures>0)
-    return {**snapshot,'images':list(dict.fromkeys(images))[:180]}, {
+    return {**snapshot,'images':list(dict.fromkeys(images))[:180],'galleryPhotos':gallery_items}, {
         'version':3,'strategy':'sections','sections':sections,'completed':complete,'bounded':not complete,'pageBottomReached':False,
         'scrolls':sum(row['blocksVisited'] for row in sections),'imageCandidates':len(set(images)),
         'seconds':round(elapsed,3),'activeSeconds':round(max(0,elapsed-manual_seconds),3),
         'budgetSeconds':budget,'budgetOverrunSeconds':round(max(0,elapsed-manual_seconds-budget),3),
         'preflightSource':'snapshot' if from_snapshot else 'batched-probe','fullSnapshotReads':captures,'browserCalls':measurements,
         'browserCallSeconds':round(sum(row['seconds'] for row in measurements),6),
+        'galleryCoverage':gallery_coverage(album_states,list(dict.fromkeys(images))),'galleryMoves':gallery_moves,
     }
 
 
@@ -181,7 +198,7 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
     report = status
     measurements=[];started=time.monotonic()
     snapshot = initial
-    images = list(initial.get('images', []))
+    images = list(initial.get('images', []));album_states=[initial.get('galleryState',{})];gallery_items=list(initial.get('galleryPhotos',[]))
     end = min(deadline, time.monotonic() + budget)
     scrolls = 0
     bottom_stable = 0
@@ -221,6 +238,8 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
             if ready:
                 snapshot = current
             images.extend(current.get('images', []))
+            gallery_items.extend(current.get('galleryPhotos',[]));gallery_items=gallery_items[-1200:]
+            album_states.append(current.get('galleryState',{}))
             emit(report,'Прокрутка '+str(scrolls)+': найдено фото '+str(len(set(images)))+'. Проверяем конец страницы; предел '+str(max_scrolls)+' прохода.',stage='scroll',completed=scrolls)
             signature = (position.get('height'), tuple(dict.fromkeys(images)),
                          listing_signature(current))
@@ -235,11 +254,12 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
     finally:
         if not page.is_closed():
             _browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
-    return {**snapshot, 'images': list(dict.fromkeys(images))[:180]}, {
+    return {**snapshot, 'images': list(dict.fromkeys(images))[:180],'galleryPhotos':gallery_items}, {
         'version': 1, 'scrolls': scrolls, 'completed': bottom_stable >= 2,
         'bounded': bottom_stable < 2, 'imageCandidates': len(set(images)),
         'seconds':round(max(0,time.monotonic()-started),3),'browserCalls':measurements,
         'browserCallSeconds':round(sum(row['seconds'] for row in measurements),6),
+        'galleryCoverage':gallery_coverage(album_states,list(dict.fromkeys(images))),
     }
 
 
@@ -265,7 +285,10 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
         from playwright.sync_api import sync_playwright, Error, TimeoutError as BrowserTimeout
     except ImportError as error:
         raise ValueError('Для Chrome установите: python3 -m venv .venv && .venv/bin/python -m pip install -r cli/requirements-browser.txt\nЗатем: .venv/bin/python cli/redcn.py --browser --open') from error
-    snapshot_script, section_probe = source_scripts(adapter_for(url))
+    config=adapter_for(url)
+    snapshot_script, section_probe = source_scripts(config)
+    gallery_scroll=gallery_scroll_script(config)
+    gallery_sweep=gallery_sweep_script(config)
     report = status
     if channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     if scroll_strategy not in ('sections','page'): raise ValueError('Прокрутка Chrome: sections или page')
@@ -350,7 +373,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                             section_attempted = True
                             snapshot, section_capture = capture_sections(page, snapshot, deadline,
                                 validate_url, status=report, cancel=cancel,
-                                snapshot_script=snapshot_script, section_probe=section_probe)
+                                snapshot_script=snapshot_script, section_probe=section_probe,gallery_scroll=gallery_scroll,gallery_sweep=gallery_sweep)
                             ready, challenge, unavailable = listing_ready(snapshot)
                     current = snapshot['text'] or snapshot['fallback']
                     fingerprint=listing_signature(snapshot)
@@ -405,17 +428,24 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         result = parse_html(snapshot.get('metadata','')+snapshot.get('sourceHtml','')+'<p>'+escape(current)+'</p>'+snapshot.get('relatedHtml',''), url)
                         # Visible summary includes price, floor and transit absent from JSON-LD.
                         result['text'] = current[:40000]
-                        for image in snapshot['images']:
-                            try:
-                                image = validate_url(urljoin(page.url, image), images=True, resolve=False)
-                                if image not in result['images']: result['images'].append(image)
-                            except ValueError: pass
-                        result['images'] = result['images'][:30]
+                        known=result.get('photoItems',[])
+                        structured=len([row for row in known if isinstance(row,dict) and row.get('source')=='CIAN offer']) if isinstance(known,list) else 0
+                        result['photoItems']=merge_gallery_items(known,snapshot.get('galleryPhotos',[]),validate_url,page.url,result.get('layouts',[]))
+                        if isinstance(result.get('fields'),dict) and result['photoItems']:result['fields']['photoItems']=result['photoItems']
+                        collected=observed_images([*result.get('images',[]),*snapshot.get('images',[])],validate_url,page.url,result.get('photoItems',[]),result.get('layouts',[]))
+                        album_states=[snapshot.get('galleryState',{}),capture.get('galleryCoverage',{})]
+                        capture['galleryCoverage']=gallery_coverage(album_states,collected,structured_count=structured or None)
+                        result['images'] = collected[:30]
                         result['loader'] = 'chrome'
                         result['browser_channel'] = channel
                         capture['stabilityMethod']='adapter-fields' if snapshot.get('stabilityKey') else 'fallback-text'
                         capture['loadTimings']={'browserStartSeconds':round(browser_start_seconds,6),'navigationSeconds':round(navigation_seconds,6),'browserCalls':load_calls,'browserCallSeconds':round(sum(row['seconds'] for row in load_calls),6)}
                         result['capture'] = capture
+                        coverage=capture['galleryCoverage']
+                        if coverage['missing'] or coverage['overLimit']:
+                            emit(report,'Альбом неполный: найдено '+str(coverage['observed'])+' из '+str(coverage['expected'] or '?')+' фото; сохранено ссылок '+str(coverage['retained'])+'. Пропущено '+str(coverage['missing'] or 0)+', сверх лимита '+str(coverage['overLimit'])+'.',stage='extract',albumPartial=True)
+                        elif coverage['state']=='unknown':
+                            emit(report,'Найдено '+str(coverage['observed'])+' фото. Полнота альбома не подтверждена: надёжный общий счётчик отсутствует или противоречив.',stage='extract',albumPartial=False)
                         if capture['bounded']:
                             emit(report,'Лимит прокрутки достигнут: сохранены доступные данные. Проверьте полноту фотографий в карточке.',stage='extract')
                         emit(report,'Объявление прочитано. Закрываем окно Chrome и передаём данные генератору…',stage='extract')

@@ -33,6 +33,18 @@ class LearningMemoryTests(unittest.TestCase):
         self.assertFalse(other.status()['weightsUpdated'])
         self.assertFalse(other.status()['automaticPromotion'])
 
+    def test_recent_generated_kind_is_bounded_and_group_isolated_with_description_default(self):
+        self.memory.record('description',{'text':'第一段说明','language':'zh'},source='generated',group_id='a')
+        title=self.memory.record('title',{'text':'第一标题','language':'zh'},source='generated',group_id='a')
+        self.memory.record('title',{'text':'其他公寓','language':'zh'},source='generated',group_id='b')
+        self.assertEqual(self.memory.recent_generated('a',1),['第一段说明'])
+        self.assertEqual(self.memory.recent_generated('a',kind='title'),['第一标题'])
+        self.memory.review(title['id'],'rejected')
+        self.assertEqual(self.memory.recent_generated('a',kind='title'),['第一标题'])
+        self.assertEqual(self.memory.status()['approvedExamples'],0)
+        for kind in ('dictionary',"title' OR 1=1"):
+            with self.assertRaises(ValueError):self.memory.recent_generated('a',kind=kind)
+
     def test_correction_supersedes_in_one_transaction_and_preserves_audit(self):
         first = self.memory.record('dictionary', {'ru':'варочная панель','zh':'烤箱'},
                                    status='approved', group_id='vocabulary')

@@ -187,7 +187,7 @@ def machine_translate(text, rules, timeout):
 def search(directory, data):
     query = _text(data.get('query'), 200, 'Поисковый запрос')
     scope = data.get('scope', 'all')
-    if scope not in ('all', 'open', 'rental', 'geo', 'custom', 'universities'):
+    if scope not in ('all', 'open', 'rental', 'geo', 'custom', 'universities', 'city-pois'):
         raise ValueError('Неизвестная область словаря')
     limit, offset = data.get('limit', 40), data.get('offset', 0)
     if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 100:
@@ -197,6 +197,9 @@ def search(directory, data):
     if scope=='universities':
         import university_store
         return university_store.search(directory, query, limit=limit, offset=offset)
+    if scope=='city-pois':
+        import city_poi_store
+        return city_poi_store.search(directory,query,limit=limit,offset=offset)
     return node_language({'action': 'search', 'query': query, 'scope': scope,
         'limit': limit, 'offset': offset, 'rules': _profile(directory).get('rules', {})})
 
@@ -348,10 +351,16 @@ def edit_text(directory, card_id, data, *, actor='Mac owner'):
 def dispatch(directory, path, data=None, *, actor='Mac owner'):
     """Caller must already enforce desktop token or paired session plus CSRF."""
     catalog = re.fullmatch(r'language/catalog/(title|description|tags)', path)
-    if path not in ('language', 'language/search', 'translate', 'universities', 'universities/search') and not catalog and not re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)', path):
+    if path not in ('language', 'language/search', 'translate', 'universities', 'universities/search', 'city-pois', 'city-pois/search') and not catalog and not re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)', path):
         return None
     try:
-        if path=='universities' and data is None:
+        if path=='city-pois' and data is None:
+            import city_poi_store
+            result=city_poi_store.stats(directory)
+        elif path=='city-pois/search' and data is not None:
+            import city_poi_store
+            result=city_poi_store.search(directory,data.get('query',''),category=data.get('category',''),limit=data.get('limit',30),offset=data.get('offset',0))
+        elif path=='universities' and data is None:
             import university_store
             result = university_store.stats(directory)
         elif path=='universities/search' and data is not None:

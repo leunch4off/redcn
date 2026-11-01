@@ -17,13 +17,16 @@ import {editorStartup} from './editor-state.mjs';
 import {setupLanguageStudio} from './language-studio.mjs';
 import {getLexiconStats,setExtendedLexicon} from './ru-zh-translator.mjs';
 import {setupUniversityUI} from './university-ui.mjs';
+import {CITY_POIS,setupCityPois,searchCityPois} from './city-pois.mjs';
 import {setupUniversityRoutes} from './university-routes.mjs';
+import {createUniversityRouteCacheCallbacks} from './university-route-cache-client.mjs';
 import {setupListingWatch} from './listing-watch.mjs';
 import {setupImportDiagnostics} from './import-diagnostics.mjs';
 import {setupContentStudio} from './content-studio.mjs';
 import {renderInitialPayment} from './initial-payment.mjs';
 import {setupWorkflow} from './workflow.mjs';
 import {setupAccessRoles} from './access-roles.mjs';
+import {setupWorkspaceBackup} from './workspace-backup.mjs';
 import {setupPublicationReview} from './publication-review.mjs';
 import {setupImportErrors} from './import-errors.mjs';
 import {setupCommuteCompare} from './commute-compare.mjs';
@@ -264,7 +267,7 @@ if(staticHosting&&!localHosting){$('importStatus').textContent='GitHub Pages: в
 // Local desktop backend is available only in the loopback-served build.
 function noteEntries(){return $('phraseNotes').value.split('\n').map(line=>line.split('|').map(s=>s.trim())).filter(parts=>parts.length>=2&&parts[0]&&parts[1]).map(([zh,ru,...alternatives])=>({zh,ru,alternatives:alternatives.filter(Boolean)}));}
 $('phraseNotes').addEventListener('input',()=>wordEditor?.render());
-async function localApi(path,data){return withRequestDeadline(path==='translate'||path==='learning'&&['generate-preview','translate-preview'].includes(data?.action)?65000:/^(?:card-export|dossier-import|listing-map)$/.test(path)?120000:15000,async(signal,scope)=>{const response=await fetch('/api/local/'+path,{method:data?'POST':'GET',headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||'',...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});const value=await response.json();scope.throwIfAborted();if(!response.ok){const error=Error(value.error||'Ошибка локального сервера');error.status=response.status;throw error;}return value;});}
+async function localApi(path,data){return withRequestDeadline(path==='translate'||path==='learning'&&['generate-preview','translate-preview'].includes(data?.action)?65000:/^(?:card-export|dossier-import|listing-map|workspace-backup\/inspect)$/.test(path)?120000:15000,async(signal,scope)=>{const response=await fetch('/api/local/'+path,{method:data?'POST':'GET',headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||'',...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{}),signal});const value=await response.json();scope.throwIfAborted();if(!response.ok){const error=Error(value.error||'Ошибка локального сервера');error.status=response.status;throw error;}return value;});}
 function applyGenerated(value,kind='restore'){if(!value.fields||!Array.isArray(value.titles)||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Неверный результат');populate({...value.fields,...sourceEditorMetadata(value.fields,value.listing),photos:listingPhotoSources(value)});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);loadedContent(kind);saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);}
 function showLocalLink(id){const changed=localResultId!==id;localResultId=id;if(changed){archiveUI?.refresh();cardFilesUI?.refresh();}if(current){const item=objects.find(o=>o.id===current);if(item){item.resultId=id;write('most-objects',objects);}}$('localResult').classList.remove('hidden');$('resultLink').href='/listing/'+id;$('resultLink').textContent=location.origin+'/listing/'+id;try{const u=new URL($('url').value);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)){$('sourceLink').href=u.href;$('sourceLink').classList.remove('hidden');}else $('sourceLink').classList.add('hidden');}catch{$('sourceLink').classList.add('hidden');}}
 async function importLocal(){if(importing)return;importErrorsUI?.clear();importing=true;$('import').disabled=true;$('cancelImport').classList.remove('hidden');try{const old=snapshot(),data={};for(const key of ['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','phraseNotes'])data[key]=old[key];const start=await localApi('import',{url:$('url').value,loader:$('localLoader').value,browser_channel:$('localBrowser').value,timeout:Number($('localTimeout').value),refresh:$('localRefresh').checked,data,rules,prefs});localJob=start.job_id;while(true){const job=await localApi('jobs/'+localJob);$('importStatus').textContent=job.message;if(job.state==='error'){const failure=Error(job.message);failure.stage=job.progress?.stage;throw failure;}if(job.state==='done'){const result=await localApi('results/'+job.result_id),feedback=importCompletionFeedback(job,result);applyGenerated(result,'import');showLocalLink(job.result_id);saveDraft();history.pushState({},'', '/listing/'+job.result_id);$('importStatus').textContent=feedback.message||job.message||'Карточка готова.';$('review').textContent=[feedback.sourceMessage,'Карточка загружена. Проверьте факты, словарь и условия; время до вузов добавляется после проверки.'].filter(Boolean).join(' ');toast(feedback.sourcePartial?'Карточка создана. Сбор исходной страницы частичный — подробности показаны над карточкой.':feedback.photoPartial?'Карточка создана. Фотографии подготовлены частично.':'Заголовки, описание и теги готовы. Ссылка карточки сохранена.');break;}await new Promise(resolve=>setTimeout(resolve,1000));}}catch(error){$('importStatus').textContent=error.message;importErrorsUI?.show(error,{stage:error.stage});}finally{importing=false;localJob=null;$('import').disabled=false;$('cancelImport').classList.add('hidden');}}
@@ -299,6 +302,7 @@ renderPhotos();relatedUI.render();
 
 function renderGeoCatalog(){const stats=getGeoStats();$('geoSummary').textContent=`Записей станций по линиям: ${stats.metro} (${stats.metroNames} названий, ${stats.translatedMetroNames} с китайским вариантом) · улиц и дорог: ${stats.street} · остановочных объектов: ${stats.stop}. Срез: ${stats.updatedAt}. Полнота: ${typeof stats.coverage==='string'?stats.coverage:'см. источники'}`;const rows=searchGeo($('geoSearch').value,{kind:$('geoKind').value,limit:30});$('geoResults').replaceChildren();for(const row of rows){const el=document.createElement('div');el.className='tag-item';el.textContent=row.ru+' → '+(row.zh||'Русское название сохранено целиком')+' · '+row.translationStatus;$('geoResults').append(el);}}
 $('geoSearch').oninput=renderGeoCatalog;$('geoKind').onchange=renderGeoCatalog;
+setupCityPois({mount:$('cityPoisMount')});
 
 function applyPhotoFeatures(observation){
  const conflicted=new Set((sourceAudit?.furniture||[]).filter(row=>['absent','planned','conflict'].includes(row.status)).map(row=>row.id));
@@ -348,11 +352,13 @@ async function ensureStaticLanguageResource(){
   return staticLanguageRequest;
 }
 async function searchDesktopLanguage(query,{scope='all',offset=0,limit=40}={}){
+  if(scope==='city-pois')return searchCityPois(query,{offset,limit});
   const q=languageSearchFold(query),rows=[];let resource=null;
   if(['all','open'].includes(scope))resource=await ensureStaticLanguageResource();
   if(['all','custom'].includes(scope))for(const [ru,zh] of Object.entries(personalRules()))rows.push({ru,zh,sourceId:'custom',reviewed:true});
   if(['all','rental'].includes(scope))for(const [ru,zh] of Object.entries(DICTIONARY))rows.push({ru,zh,sourceId:'rental-core',reviewed:true});
   if(['all','geo'].includes(scope))for(const row of GEO_CATALOG.records)rows.push({...row,sourceId:row.source||'geo-catalog',reviewed:row.translationStatus==='reviewed'});
+  if(scope==='all')for(const row of CITY_POIS.places)rows.push({...row,sourceId:'city-pois',reviewed:false});
   if(resource)for(const [ru,zh,sourceId,sourcePage] of resource.entries)rows.push({ru,zh,sourceId:sourceId||'wiktionary',sourcePage,reviewed:false});
   const lemma=staticLanguageForms?.get(q),seen=new Set();
   const found=rows.filter(row=>{const ru=languageSearchFold(row.ru),zh=languageSearchFold(row.zh);if(!ru.includes(q)&&!zh.includes(q)&&(!lemma||ru!==lemma))return false;const key=ru+'\0'+zh+'\0'+row.sourceId;if(seen.has(key))return false;seen.add(key);return true;});
@@ -426,7 +432,7 @@ universityUI=setupUniversityUI({local:localHosting,api:localApi,toast,onSelect:(
 
 // Routes are an editable draft; existing source text is never replaced here.
 function universityRouteFields(){return Object.fromEntries(['latitude','longitude','address','city','metro','university','campus','universities','uniTime','uniMode','route'].map(key=>[key,$(key).value]));}
-universityRoutesUI=setupUniversityRoutes({mount:$('universityRoutesMount'),getFields:universityRouteFields,translate:value=>translateDraft(value,{rules}).text,onChange:rows=>{universityRouteDraft=rows;editorRevision++;saveDraft();}});
+universityRoutesUI=setupUniversityRoutes({mount:$('universityRoutesMount'),getFields:universityRouteFields,translate:value=>translateDraft(value,{rules}).text,onChange:rows=>{universityRouteDraft=rows;editorRevision++;saveDraft();},...createUniversityRouteCacheCallbacks(localHosting?localApi:null)});
 universityRoutesUI.refresh({...universityRouteFields(),...(Array.isArray(universityRouteDraft)?{universityRoutes:universityRouteDraft}:{})});
 for(const id of ['university','campus'])$(id).addEventListener('change',()=>universityRoutesUI?.setPrimary({university:$('university').value,campus:$('campus').value}));
 $('universities').addEventListener('change',()=>{universityRoutesUI.refresh(universityRouteFields());universityRouteDraft=universityRoutesUI.value();editorRevision++;saveDraft();});
@@ -444,7 +450,7 @@ workflowUI=setupWorkflow({mount:$('workflowMount'),getObjects:()=>objects,saveOb
 commuteCompareUI=setupCommuteCompare({mount:$('commuteCompareMount'),getObjects:()=>objects,onOpen:openLibraryWorkflowCard,toast});
 async function localWorkspaceBlob(path,data){
  if(!localHosting)throw Error('Операция доступна на сервере Mac');
- if(!/^(?:table-export|dossier-(?:backup|client)\/[a-f0-9]{32})$/.test(path))throw Error('Неверный адрес файла');
+ if(!/^(?:table-export|workspace-backup\.zip|dossier-(?:backup|client)\/[a-f0-9]{32})$/.test(path))throw Error('Неверный адрес файла');
  return withRequestDeadline(120000,async(signal,scope)=>{const response=await fetch('/api/local/'+path,{method:data?'POST':'GET',headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||'',...(data?{'Content-Type':'application/json'}:{})},cache:'no-store',signal,...(data?{body:JSON.stringify(data)}:{})});if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'Не удалось подготовить файл');}const blob=await response.blob();scope.throwIfAborted();return blob;});
 }
 tableExportUI=setupTableExport({mount:$('tableExportMount'),getObjects:()=>objects,getXlsx:localHosting?rows=>localWorkspaceBlob('table-export',{format:'xlsx',rows}):null,toast});
@@ -456,6 +462,7 @@ dictionaryReviewUI=setupDictionaryReview({mount:$('dictionaryReviewMount'),api:l
  translatePhrase:localHosting?text=>localApi('translate',{text,part:'body'}):text=>Promise.resolve(translateDraft(text,{rules,mode:'draft'})),toast});
 publicationReviewUI=setupPublicationReview({mount:$('publicationReviewMount'),api:localHosting?localApi:null,getCardId:()=>localResultId,toast});
 accessRolesUI=setupAccessRoles({mount:$('accessRolesMount'),api:localHosting?localApi:null,toast});
+if(localHosting){const backupMount=document.createElement('div');$('accessRolesMount').after(backupMount);setupWorkspaceBackup({mount:backupMount,api:localApi,getBlob:localWorkspaceBlob,downloadBlob:cardDownloadBlob,toast});}
 importErrorsUI=setupImportErrors({mount:$('importErrorsMount'),getUrl:()=>$('url').value,onPaste:()=>{$('sourceAnalysis').open=true;$('source').focus();},onRetry:()=>importLocal(),toast});
 if(localHosting){
  const memoryMount=document.createElement('div');$('knowledge').prepend(memoryMount);

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "rows": [
+    {
+      "job": "qwen-0.5b-base",
+      "activeImportsBefore": 0,
+      "exitCode": 0,
+      "processWallSeconds": 6.7973221669999475,
+      "firstProbeResponseWallSeconds": 2.451410334000684,
+      "reportFile": "qwen-0.5b-base.json",
+      "reportSha256": "24ea4a3eed68a20220f2c1f6dca7e6e997f2082207f24fd3b4b5a01fcf804320"
+    },
+    {
+      "job": "qwen-0.5b-balanced",
+      "activeImportsBefore": 0,
+      "exitCode": 0,
+      "processWallSeconds": 6.1140519999999015,
+      "firstProbeResponseWallSeconds": 1.4278650420001213,
+      "reportFile": "qwen-0.5b-balanced.json",
+      "reportSha256": "ce538b01bdce4fe28f9c45500dd5209632fdfa0fb65a933c6b4ccea46323cc6d"
+    },
+    {
+      "job": "qwen-1.5b-base",
+      "activeImportsBefore": 0,
+      "exitCode": 0,
+      "processWallSeconds": 12.680663209000159,
+      "firstProbeResponseWallSeconds": 2.1575301250004486,
+      "reportFile": "qwen-1.5b-base.json",
+      "reportSha256": "853f626fd5aff3bd84f69d4934adc5a4dcc07cac408038a6c1a4f12dc76e3d00"
+    },
+    {
+      "job": "argos-ru-en-zh",
+      "activeImportsBefore": 0,
+      "exitCode": 0,
+      "processWallSeconds": 3.575008834000073,
+      "firstProbeResponseWallSeconds": 0.8597580420000668,
+      "reportFile": "argos-ru-en-zh.json",
+      "reportSha256": "1f919cd66768820190b4084116833474b8806b4a336832c9df134eca3dc7a190"
+    }
+  ]
+}

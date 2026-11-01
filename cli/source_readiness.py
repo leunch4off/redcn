@@ -1,5 +1,6 @@
 """Public, text-free summary of what the browser actually checked."""
 import math
+from gallery_coverage import normalized_coverage
 
 SECTIONS = ('gallery', 'description', 'characteristics')
 LABELS = {'gallery': 'Фотографии', 'description': 'Описание', 'characteristics': 'Характеристики'}
@@ -34,11 +35,16 @@ def source_readiness(listing):
                       'not_found': 'раздел не обнаружен при проверке',
                       'partial': 'полнота раздела не подтверждена'}[reason]
             warnings.append(LABELS[name] + ' — ' + detail + '.')
-    complete = all(row['ready'] for row in sections) and capture.get('completed') is not False
+    album=normalized_coverage(capture.get('galleryCoverage') or capture.get('gallery'))
+    album_partial=bool(album and (album['missing'] or album['overLimit']))
+    if album_partial:
+        warnings.append('Альбом — найдено '+str(album['observed'])+' из '+str(album['expected'] or '?')+' фото; не найдено '+str(album['missing'] or 0)+', сверх лимита '+str(album['overLimit'])+'.')
+    complete = all(row['ready'] for row in sections) and capture.get('completed') is not False and not album_partial
     if not complete and not warnings:
         warnings.append('Разделы обнаружены, но итоговая проверка сбора не завершена.')
     result = {'state': 'ready' if complete else 'partial', 'completed': complete,
               'partial': not complete, 'sections': sections, 'warnings': warnings}
+    if album:result['gallery']=album
     for key in ('seconds', 'activeSeconds', 'budgetSeconds', 'budgetOverrunSeconds'):
         value = capture.get(key)
         if type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 7200:

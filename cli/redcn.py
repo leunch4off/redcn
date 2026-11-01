@@ -349,6 +349,8 @@ def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=
         from browser_import import load_browser
         result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel, scroll_strategy=browser_scroll)
     if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+    from source_adapters import adapter_for
+    result['parserVersion']=adapter_for(url)['parserVersion']
     connection.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (url, time.time(), json.dumps(result, ensure_ascii=False)))
     connection.commit()
     return {**result, 'cached': False}
@@ -428,8 +430,15 @@ def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=Non
     metadata={row.get('url'):row for row in photo_items or [] if isinstance(row,dict) and isinstance(row.get('url'),str)}
     for index, url in enumerate(urls[:30], 1):
         try:
-            content, kind = fetch_bytes(url, images=True)
             import photo_store
+            source=metadata.get(url);media_dir=cache_dir or directory/'.redcn-media';original=None
+            variants=source.get('variants',{}) if isinstance(source,dict) and isinstance(source.get('variants'),dict) else {}
+            observed=source.get('observedVariants',[]) if isinstance(source,dict) and isinstance(source.get('observedVariants'),list) else []
+            observed_urls={value for value in [url,*variants.values(),*[row.get('url') for row in observed if isinstance(row,dict)]] if isinstance(value,str) and value}
+            if source and source.get('photoId') and len(observed_urls)>1:
+                original=photo_store.load_observed_photo(media_dir,url,source)
+                content,kind,_=photo_store.asset(media_dir,original['id'])
+            else:content,kind=fetch_bytes(url,images=True)
             kind=photo_store.image_mime(content)
             valid = (kind == 'image/jpeg' and content.startswith(b'\xff\xd8\xff')) or (kind == 'image/png' and content.startswith(b'\x89PNG\r\n\x1a\n')) or (kind == 'image/webp' and content.startswith(b'RIFF') and content[8:12] == b'WEBP')
             if not valid:
@@ -440,16 +449,29 @@ def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=Non
             if not path.exists():
                 path.write_bytes(content)
             row={'url': url, 'path': str(path), 'sha256': digest}
-            if crop or crop_bottom is not None:
+            if original:row.update(originalId=original['id'],actualSourceUrl=original.get('sourceUrl',url),observedFallback=original.get('observedFallback',False),**{key:original[key] for key in ('variantStatus','variantReason','variantGroupSha','variantDecisionSha') if key in original})
+            if crop or crop_bottom is not None or original:
                 try:
                     import base64
-                    import photo_store
-                    media_dir=cache_dir or directory/'.redcn-media'
-                    original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode(),**({'source':metadata[url]} if url in metadata else {}))
-                    edited=photo_store.crop_photo(media_dir,original['id'],{'bottom':crop_bottom} if crop_bottom is not None else None)
-                    row['crop']=edited
-                    if edited.get('kind')=='crop':
-                        copy_path=directory/f'{index:02d}-crop-{edited["id"][:12]}.jpg';copy_path.write_bytes(photo_store.asset(media_dir,edited['id'])[0]);row['crop_path']=str(copy_path)
+                    if original is None:original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode(),source=source,manual=False)
+                    row.update(originalId=original['id'],actualSourceUrl=original.get('sourceUrl',url))
+                    if crop or crop_bottom is not None:
+                        try:
+                            choice=photo_store.accepted_photo_for_url(media_dir,url,source=source)
+                            target=original['id'] if crop_bottom is not None else choice['selectedOriginal']['id']
+                            if crop_bottom is None and choice.get('reason')=='manual':edited=choice['selected']
+                            else:edited=photo_store.crop_photo(media_dir,target,{'bottom':crop_bottom} if crop_bottom is not None else None)
+                            row['crop']=edited
+                        except Exception as error:
+                            row['crop']={'status':'review','autoStatus':'unavailable','message':str(error)[:300] or 'Оригинал сохранён; кадрирование недоступно','errorClass':type(error).__name__}
+                    choice=photo_store.accepted_photo_for_url(media_dir,url,source=source)
+                    selected=choice['selected'];row.update(selectedId=selected['id'],selectionReason=choice['reason'])
+                    if selected['id']!=original['id']:
+                        prepared_content,prepared_mime,_=photo_store.asset(media_dir,selected['id'])
+                        extension={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[prepared_mime]
+                        label='crop' if selected.get('kind')=='crop' else 'prepared'
+                        copy_path=directory/f'{index:02d}-{label}-{selected["id"][:12]}.{extension}';copy_path.write_bytes(prepared_content);row['prepared_path']=str(copy_path)
+                        if selected.get('kind')=='crop':row['crop_path']=str(copy_path)
                 except Exception as error:
                     # The original has already been saved. A crop failure must
                     # not replace its successful manifest entry with an error.

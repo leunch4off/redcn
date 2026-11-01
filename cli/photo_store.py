@@ -61,6 +61,19 @@ def _connection(directory):
     return connection
 
 
+def _merge_original_metadata(previous,current):
+    # Pixel-identical URLs can belong to different source groups. Preserve
+    # byte/crop facts, but never relabel old URL witnesses with a new photoId.
+    identity_changed=previous.get('photoId') is not None and current.get('photoId') is not None and str(previous['photoId'])!=str(current['photoId'])
+    unknown_alias=current.get('sourceUrl') is not None and previous.get('sourceUrl')!=current['sourceUrl'] and current.get('photoId') is None
+    if identity_changed or unknown_alias:
+        previous={key:value for key,value in previous.items() if key not in ('photoId','order','variants','observedVariants','identitySource')}
+    output={**previous,**current}
+    for key in ('isLayout','isCianLayout'):
+        if previous.get(key) is True:output[key]=True
+    return output
+
+
 def _save(directory,content,mime,metadata):
     digest=hashlib.sha256(content).hexdigest();folder=Path(directory)/'media';folder.mkdir(parents=True,exist_ok=True)
     path=folder/digest
@@ -73,7 +86,7 @@ def _save(directory,content,mime,metadata):
     if existing:
         try:previous=json.loads(existing[0])
         except (ValueError,TypeError):pass
-    if metadata.get('kind')=='original' and previous.get('kind')=='original':metadata={**previous,**metadata}
+    if metadata.get('kind')=='original' and previous.get('kind')=='original':metadata=_merge_original_metadata(previous,metadata)
     metadata={**metadata,'id':digest,'mime':mime,'bytes':len(content)}
     with _connection(directory) as db:
         if metadata.get('kind')=='crop':
@@ -136,19 +149,67 @@ def _source_metadata(source):
                 try:safe[key]=redcn.allowed_url(variants[key],images=True,resolve=False)
                 except ValueError:pass
         if safe:selected['variants']=safe
+    observed=source.get('observedVariants')
+    if isinstance(observed,list):
+        safe=[]
+        for row in observed[:60]:
+            if not isinstance(row,dict) or row.get('source') not in ('data-original','data-src','data-srcset','srcset','currentSrc','src','href'):continue
+            try:url=redcn.allowed_url(row.get('url'),images=True,resolve=False)
+            except (ValueError,TypeError):continue
+            if not any(item['url']==url for item in safe):safe.append({'url':url,'source':row['source']})
+        if safe:selected['observedVariants']=safe[:60]
+    if source.get('identitySource') in ('platform-photo-id','observed-dom-node','observed-picture'):selected['identitySource']=source['identitySource']
     return selected
 
 
 def _annotate_source(directory,metadata,source):
     selected=_source_metadata(source)
     if not selected:return metadata
-    metadata={**metadata,**selected}
+    metadata=_merge_original_metadata(metadata,selected)
     with _connection(directory) as db:
         db.execute('UPDATE assets SET metadata=? WHERE id=?',(json.dumps(metadata,ensure_ascii=False),metadata['id']))
     return metadata
 
 
-def load_photo(directory,url,refresh=False,*,source=None):
+def cached_observed_original(directory,url,*,verify_bytes=True,source=None,allow_unscoped_variants=False):
+    """A resolution-eligible observed fallback, never an invented full image."""
+    from photo_variants import variant_decision
+    if source is None and not allow_unscoped_variants:return None
+    decision=variant_decision(directory,url,source=source,verify_bytes=verify_bytes)
+    selected=decision.get('selected') if isinstance(decision,dict) else None
+    if not decision or decision.get('status')!='selected' or not isinstance(selected,dict) or selected.get('quality',{}).get('resolutionEligible') is not True:return None
+    if verify_bytes:metadata=asset(directory,selected['id'])[2]
+    else:
+        with _connection(directory) as db:row=db.execute('SELECT metadata FROM assets WHERE id=?',(selected['id'],)).fetchone()
+        metadata=json.loads(row[0]) if row else {}
+    if metadata.get('kind')!='original' or metadata.get('id')!=selected['id']:return None
+    return {**metadata,'sourceUrl':selected['url'],'requestedSourceUrl':url,'observedFallback':selected['url']!=url,'cached':True}
+
+
+def load_observed_photo(directory,url,source,*,refresh=False,cancel=None,max_seconds=8):
+    """Probe a source-declared group once, keeping each candidate's own bytes."""
+    from photo_variants import probe_variants
+    observed=source.get('observedVariants') if isinstance(source,dict) and isinstance(source.get('observedVariants'),list) else []
+    variants=source.get('variants') if isinstance(source,dict) and isinstance(source.get('variants'),dict) else {}
+    urls={value for value in [url,*variants.values(),*[row.get('url') for row in observed if isinstance(row,dict)]] if isinstance(value,str) and value}
+    if not source.get('photoId') or len(urls)<=1:return load_photo(directory,url,refresh=refresh,source=source)
+    original=None
+    if not refresh:
+        with _connection(directory) as db:cached=db.execute('SELECT id FROM photo_urls WHERE url=?',(url,)).fetchone()
+        if cached:
+            try:original={**asset(directory,cached[0])[2],'sourceUrl':url}
+            except (OSError,ValueError):pass
+    decision=probe_variants(directory,url,source,original=original,refresh=refresh,cancel=cancel,max_seconds=max_seconds)
+    canonical=next((row for row in decision['candidates'] if row['url']==url and row.get('status')=='available'),None)
+    selected=canonical or (decision.get('selected') if decision.get('status')=='selected' else None)
+    if not selected:raise ValueError('Наблюдаемые варианты фото недоступны или доступны только маленькие превью. Оригинал не подменён миниатюрой.')
+    metadata=asset(directory,selected['id'])[2]
+    return {**metadata,**_source_metadata(source),'sourceUrl':selected['url'],'requestedSourceUrl':url,'cached':decision.get('cached',False),
+        'observedFallback':selected['url']!=url,'variantStatus':decision['status'],'variantReason':decision['reason'],
+        'variantGroupSha':decision['groupSha'],'variantDecisionSha':decision['decisionSha']}
+
+
+def load_photo(directory,url,refresh=False,*,source=None,network_timeout=None,cancel=None,allow_observed_fallback=True):
     url=redcn.allowed_url(url,images=True,resolve=False)
     _source_metadata(source)
     with _guard: lock=_photo_locks.setdefault(url,threading.Lock())
@@ -156,9 +217,17 @@ def load_photo(directory,url,refresh=False,*,source=None):
         if not refresh:
             with _connection(directory) as db: row=db.execute('SELECT id FROM photo_urls WHERE url=?',(url,)).fetchone()
             if row:
-                try:return {**_annotate_source(directory,asset(directory,row[0])[2],source),'cached':True}
+                try:return {**_annotate_source(directory,asset(directory,row[0])[2],source),'sourceUrl':url,'cached':True}
                 except (OSError,ValueError):pass
-        content,reported_mime=redcn.fetch_bytes(url,images=True)
+            elif allow_observed_fallback:
+                try:
+                    fallback=cached_observed_original(directory,url,source=source)
+                    if fallback:return fallback
+                except (OSError,ValueError,sqlite3.Error):pass
+        options={}
+        if network_timeout is not None:options['timeout']=network_timeout
+        if cancel is not None:options['cancel']=cancel
+        content,reported_mime=redcn.fetch_bytes(url,images=True,**options)
         image=open_photo(content)
         try:
             mime,metadata=_original_metadata(content,image,reported_mime)
@@ -168,7 +237,7 @@ def load_photo(directory,url,refresh=False,*,source=None):
         return {**result,'cached':False}
 
 
-def attach_photo(directory,url,data,*,source=None):
+def attach_photo(directory,url,data,*,source=None,manual=True):
     url=redcn.allowed_url(url,images=True,resolve=False)
     if not isinstance(data,str) or not re.match(r'^data:image/(?:jpeg|png|webp);base64,',data):raise ValueError('Нужна фотография JPEG/PNG/WebP')
     try:content=base64.b64decode(data.split(',',1)[1],validate=True)
@@ -177,7 +246,7 @@ def attach_photo(directory,url,data,*,source=None):
     image=open_photo(content)
     try:
         mime,metadata=_original_metadata(content,image,data[5:data.index(';')])
-        result=_save(directory,content,mime,{**metadata,'sourceUrl':url,'attached':True,**_source_metadata(source)})
+        result=_save(directory,content,mime,{**metadata,'sourceUrl':url,**({'attached':True} if manual else {}),**_source_metadata(source)})
     finally:image.close()
     with _connection(directory) as db:db.execute('INSERT OR REPLACE INTO photo_urls VALUES (?,?)',(url,result['id']))
     return result
@@ -529,46 +598,83 @@ def near_duplicate_candidates(directory,digests,*,distance_limit=10):
     return sorted(pairs,key=lambda row:(row['distance'],row['leftId'],row['rightId']))
 
 
-def accepted_photo_for_url(directory, url, *, margins=None, prefer_original=False, verify_bytes=True, original=None):
+def accepted_photo_for_url(directory, url, *, margins=None, prefer_original=False, verify_bytes=True, original=None,source=None,allow_unscoped_variants=False):
     """Select cached evidence only; no download, crop or OCR.
 
     Polling may use verify_bytes=False: delivery through asset() still verifies
     the selected bytes. A saved per-card margin never selects a different crop.
     """
     url=redcn.allowed_url(url,images=True,resolve=False)
+    if source is not None:_source_metadata(source)
     if margins is not None:
         if not isinstance(margins,dict):raise ValueError('Неверные сохранённые границы кадра')
         crop_rect(1000,1000,margins)
         margins={key:float(margins.get(key,0)) for key in ('left','top','right','bottom')}
     with _connection(directory) as db:
         row=db.execute('SELECT id FROM photo_urls WHERE url=?',(url,)).fetchone()
-        if not row:raise ValueError('Оригинал фотографии ещё не сохранён')
-        candidates=db.execute('SELECT metadata FROM crop_links WHERE original_id=? ORDER BY created DESC',(row[0],)).fetchall()+db.execute('SELECT metadata FROM assets ORDER BY rowid DESC').fetchall()
+        canonical_mapped=row is not None
+        if not row:
+            original=cached_observed_original(directory,url,verify_bytes=verify_bytes,source=source,allow_unscoped_variants=allow_unscoped_variants)
+            if not original:raise ValueError('Оригинал фотографии ещё не сохранён')
+            row=(original['id'],)
+        candidates=db.execute('SELECT metadata FROM crop_links WHERE original_id=? ORDER BY created DESC',(row[0],)).fetchall()+db.execute('SELECT metadata FROM assets WHERE instr(metadata,?)>0 ORDER BY rowid DESC',(row[0],)).fetchall()
         if not verify_bytes and (not isinstance(original,dict) or original.get('id')!=row[0]):
             raw=db.execute('SELECT metadata FROM assets WHERE id=?',(row[0],)).fetchone();original=json.loads(raw[0]) if raw else {}
+    actual_url=url if canonical_mapped else original.get('sourceUrl',url)
     if verify_bytes:original=asset(directory,row[0])[2]
+    original={**original,'sourceUrl':actual_url}
     if original.get('kind')!='original':raise ValueError('URL не связан с оригиналом фотографии')
-    chosen=None
-    for verification in (() if prefer_original else ('manual',) if margins is not None else ('manual','ocr-checked')):
-        for raw, in candidates:
-            try:
-                meta=json.loads(raw)
-                if meta.get('kind')!='crop' or meta.get('originalId')!=original['id'] or meta.get('verification')!=verification:continue
-                if not isinstance(meta.get('margins'),dict):continue
-                rectangle=crop_rect(original['width'],original['height'],meta['margins'])
-                if (rectangle[2]-rectangle[0],rectangle[3]-rectangle[1])!=(meta.get('width'),meta.get('height')):continue
-                if margins is not None and {key:float((meta.get('margins') or {}).get(key,0)) for key in margins}!=margins:continue
-                if verification=='ocr-checked':
-                    evidence=meta.get('verificationEvidence') or {}
-                    if evidence.get('knownRegionsExcluded') is not True or evidence.get('postOcr')!='not-detected':continue
-                if verify_bytes:asset(directory,meta['id'])  # Byte identity, not a mutable shared metadata row.
+    if isinstance(source,dict) and source.get('photoId'):original={**original,'photoId':str(source['photoId'])}
+    def choose_crop(base,verifications):
+        for verification in verifications:
+            for raw, in candidates:
+                try:
+                    meta=json.loads(raw)
+                    if meta.get('kind')!='crop' or meta.get('originalId')!=base['id'] or meta.get('verification')!=verification:continue
+                    if not isinstance(meta.get('margins'),dict):continue
+                    rectangle=crop_rect(base['width'],base['height'],meta['margins'])
+                    if (rectangle[2]-rectangle[0],rectangle[3]-rectangle[1])!=(meta.get('width'),meta.get('height')):continue
+                    if margins is not None and {key:float((meta.get('margins') or {}).get(key,0)) for key in margins}!=margins:continue
+                    if verification=='ocr-checked':
+                        evidence=meta.get('verificationEvidence') or {}
+                        if evidence.get('knownRegionsExcluded') is not True or evidence.get('postOcr')!='not-detected':continue
+                    if verify_bytes:asset(directory,meta['id'])
+                    else:
+                        target=Path(directory)/'media'/meta['id']
+                        if target.is_symlink() or not target.is_file():continue
+                    return meta
+                except (KeyError,ValueError,TypeError,OSError):continue
+        return None
+    selected_original=original;variant_proof=None;decision=None
+    chosen=choose_crop(original,('manual',)) if not prefer_original else None
+    if not chosen and not prefer_original and margins is None:
+        try:
+            from photo_variants import variant_decision
+            decision=variant_decision(directory,url,source=source,verify_bytes=verify_bytes) if source is not None or allow_unscoped_variants else None
+            canonical=next((row for row in decision.get('candidates',[]) if row.get('url')==url and row.get('status')=='available'),None) if isinstance(decision,dict) else None
+            if canonical and canonical.get('id')!=original['id']:decision=None
+            if decision and canonical is None and original.get('sourceUrl')==url and min(original.get('width',0),original.get('height',0))>=480 and original.get('width',0)*original.get('height',0)>=400_000:decision=None
+            if original.get('attached') is True:decision=None
+            selected=decision.get('selected') if isinstance(decision,dict) else None
+            if (decision and decision.get('status')=='selected' and isinstance(selected,dict)
+                    and selected.get('quality',{}).get('resolutionEligible') is True and (selected.get('id')!=original['id'] or selected.get('url')!=url)):
+                if verify_bytes:selected_original=asset(directory,selected['id'])[2]
                 else:
-                    target=Path(directory)/'media'/meta['id']
-                    if target.is_symlink() or not target.is_file():continue
-                chosen=meta;break
-            except (KeyError,ValueError,TypeError,OSError):continue
-        if chosen:break
-    keys=('id','mime','bytes','width','height','sourceUrl','kind','originalId','verification','margins','rect','markState','cleanlinessConfirmed')
+                    with _connection(directory) as db:
+                        saved=db.execute('SELECT metadata FROM assets WHERE id=?',(selected['id'],)).fetchone()
+                    selected_original=json.loads(saved[0]) if saved else original
+                if selected_original.get('id')==selected.get('id'):selected_original={**selected_original,'sourceUrl':selected['url'],'photoId':decision['photoId']}
+                if selected_original.get('id')==selected['id'] and selected_original.get('kind')=='original':
+                    if selected_original['id']!=original['id']:
+                        with _connection(directory) as db:candidates+=db.execute('SELECT metadata FROM crop_links WHERE original_id=? ORDER BY created DESC',(selected_original['id'],)).fetchall()+db.execute('SELECT metadata FROM assets WHERE instr(metadata,?)>0 ORDER BY rowid DESC',(selected_original['id'],)).fetchall()
+                    variant_proof={'photoId':decision['photoId'],'canonicalOriginalId':original['id'],
+                        'sourceOriginalId':selected['id'],'selectedUrl':selected['url'],'groupSha':decision['groupSha'],
+                        'decisionSha':decision['decisionSha'],'policy':decision['policy'],'reason':decision['reason'],
+                        'quality':selected['quality'],'cleanlinessConfirmed':selected.get('cleanlinessConfirmed') is True}
+                else:selected_original=original
+        except (OSError,ValueError,TypeError,KeyError,sqlite3.Error):selected_original=original
+        chosen=choose_crop(selected_original,('manual','ocr-checked'))
+    keys=('id','mime','bytes','width','height','sourceUrl','kind','originalId','photoId','verification','margins','rect','markState','cleanlinessConfirmed')
     def compact(meta):
         result={key:meta[key] for key in keys if key in meta}
         if meta.get('verification')=='ocr-checked':
@@ -576,8 +682,14 @@ def accepted_photo_for_url(directory, url, *, margins=None, prefer_original=Fals
             result['verificationEvidence']={'knownRegionsExcluded':proof.get('knownRegionsExcluded') is True,
                 'postOcr':'not-detected' if proof.get('postOcr')=='not-detected' else 'not-checked'}
         return result
-    return {'original':compact(original),'selected':compact(chosen or original),
-            'reason':chosen['verification'] if chosen else 'explicit-original' if prefer_original else 'manual-not-cached' if margins is not None else 'original'}
+    selected_view={**(chosen or selected_original),'sourceUrl':selected_original['sourceUrl']}
+    output={'original':compact(original),'selectedOriginal':compact(selected_original),'selected':compact(selected_view),
+            'reason':chosen['verification'] if chosen else 'explicit-original' if prefer_original else 'manual-not-cached' if margins is not None else 'observed-variant' if variant_proof else 'original'}
+    if variant_proof:output['variantSelection']=variant_proof
+    if decision:
+        output['variantReview']={key:decision[key] for key in ('photoId','policy','groupSha','decisionSha','status','reason','truncated','retryable') if key in decision}
+        output['variantReview']['candidates']=[{key:row[key] for key in ('url','id','provenance','status','availability','mime','mimeEvidence','width','height','bytes','quality','markState','cleanlinessConfirmed','reason','errorClass','message') if key in row} for row in decision.get('candidates',[]) if isinstance(row,dict)]
+    return output
 
 
 def exact_photo_duplicates(directory, *, maximum_cards=1000):

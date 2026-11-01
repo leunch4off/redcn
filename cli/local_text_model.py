@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 
-from text_model_contract import BASE_MODEL, EXPECTED_TRAINABLE, expected_parameters, file_sha
+from text_model_contract import BASE_MODEL, EXPECTED_TRAINABLE, expected_parameters, inference_model, file_sha
 
 MAX_INPUT = 40_000
 MAX_OUTPUT = 100_000
@@ -92,6 +92,7 @@ def generate(request, directory, *, cancel=None, deadline=None):
         model = Path(config['modelPath'])
         if not python.is_file() or not model.is_dir() or not (model/'config.json').is_file():
             return _response('unavailable', 'Локальная текстовая модель ещё не установлена')
+        identity=inference_model(json.loads((model/'config.json').read_text()))
         budget = config['maxSeconds'] if deadline is None else min(config['maxSeconds'], deadline-time.monotonic())
         if budget <= 0 or (cancel is not None and cancel.is_set()):
             return _response('unavailable', 'Время генерации истекло или запрос отменён')
@@ -123,7 +124,7 @@ def generate(request, directory, *, cancel=None, deadline=None):
                 if process.returncode or len(stdout) > MAX_OUTPUT:
                     return _response('unavailable', 'Локальная текстовая модель не смогла обработать запрос')
                 result = json.loads(stdout)
-                if not isinstance(result, dict) or result.get('model') != BASE_MODEL or not isinstance(result.get('text'), str):
+                if not isinstance(result, dict) or result.get('model') != identity or not isinstance(result.get('text'), str):
                     return _response('unavailable', 'Неверный ответ локальной текстовой модели')
                 result.update(status='review', autoApply=False, elapsedSeconds=time.monotonic()-started)
                 return result
@@ -145,11 +146,14 @@ def worker(model_path, adapter_path, request):
     from mlx_lm.sample_utils import make_sampler
     request = clean_request(request)
     model_path = Path(model_path)
-    expected_parameters(json.loads((model_path/'config.json').read_text()))
+    model_config=json.loads((model_path/'config.json').read_text())
+    identity=inference_model(model_config)
     mx.set_memory_limit(2_500_000_000)
     mx.set_cache_limit(64_000_000)
     adapter_sha = None
     if adapter_path != '-':
+        # A trained 0.5B adapter cannot be attached to the 1.5B candidate.
+        expected_parameters(model_config)
         adapter = Path(adapter_path)
         receipt_path = adapter/'trainreceipt.json'
         if not receipt_path.is_file() or receipt_path.is_symlink() or receipt_path.stat().st_size > 2_000_000:
@@ -169,7 +173,7 @@ def worker(model_path, adapter_path, request):
         raise ValueError('Prompt exceeds the bounded local context')
     response = mlx_generate(model, tokenizer, prompt=prompt, max_tokens=request['maxTokens'],
         sampler=make_sampler(temp=request['temperature'], top_p=.9), verbose=False)
-    return {'status': 'review', 'text': response, 'model': BASE_MODEL, 'adapterSha256': adapter_sha,
+    return {'status': 'review', 'text': response, 'model': identity, 'adapterSha256': adapter_sha,
         'autoApply': False, 'message': 'Локальный черновик: проверьте факты и китайскую формулировку перед публикацией.'}
 
 

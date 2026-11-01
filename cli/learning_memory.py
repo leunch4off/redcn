@@ -280,11 +280,16 @@ class LearningMemory:
                 'weightsUpdated': False, 'automaticPromotion': False,
                 'lastCheckpoint': {'updatedAt': last[0], **json.loads(last[1])} if last else None}
 
-    def recent_generated(self, group_id, limit=10):
-        if not isinstance(group_id,str) or not 1<=len(group_id)<=2000 or type(limit) is not int or not 1<=limit<=30:
+    def recent_generated(self, group_id, limit=10, *, kind='description'):
+        """Return same-card history for avoidance, never approved training data.
+
+        The default preserves callers that previously requested descriptions.
+        Pending/rejected generated variants still help avoid repeating a title.
+        """
+        if not isinstance(group_id,str) or not 1<=len(group_id)<=2000 or type(limit) is not int or not 1<=limit<=30 or not isinstance(kind,str) or kind not in {'description','title'}:
             raise ValueError('Неверная группа истории генерации')
         with self._db() as db:
-            rows=db.execute("SELECT payload FROM examples WHERE group_id=? AND source='generated' AND kind='description' ORDER BY created DESC LIMIT ?",(_hash(group_id),limit)).fetchall()
+            rows=db.execute("SELECT payload FROM examples WHERE group_id=? AND source='generated' AND kind=? ORDER BY created DESC,rowid DESC LIMIT ?",(_hash(group_id),kind,limit)).fetchall()
         return [json.loads(row[0])['text'] for row in rows]
 
     def retrieve(self, query, limit=6):

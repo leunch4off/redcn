@@ -124,7 +124,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v24', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v25', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
@@ -354,7 +354,10 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if not self.permitted(): return
             path = urlsplit(self.path).path
             if path == '/api/local/health':
-                self.respond(200,identity);return
+                # Read-only aggregate for safe release checks; no job identifiers,
+                # source URLs, pairing material or card contents leave this route.
+                with lock: active_jobs=sum(job.get('state')=='running' for job in jobs.values())
+                self.respond(200,{**identity,'activeJobs':active_jobs});return
             if path.startswith('/api/local/'):
                 if not self.permitted(api=True): return
                 if path == '/api/local/phone-sessions':
@@ -422,7 +425,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if self.headers.get_content_type() != 'application/json': raise ValueError('Нужен JSON')
                 size = int(self.headers.get('Content-Length','0'))
                 relative=urlsplit(self.path).path.removeprefix('/api/local/')
-                limit=card_api.request_limit(relative) or (16_100_000 if relative=='photo' else 8_100_000 if relative=='table-export' else 4_500_000 if relative=='history' else 1_000_000)
+                limit=workspace.request_limit(relative) or card_api.request_limit(relative) or (16_100_000 if relative=='photo' else 8_100_000 if relative=='table-export' else 4_500_000 if relative=='history' else 1_000_000)
                 if not 1 <= size <= limit: raise ValueError('Превышен размер запроса')
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
@@ -448,7 +451,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if document:self.respond(*document);return
                 if path == '/api/local/photo':
                     if data.get('action','load')=='load':
-                        result=photo_store.load_photo(directory,data.get('url',''),data.get('refresh') is True)
+                        result=photo_store.load_photo(directory,data.get('url',''),data.get('refresh') is True,**({'source':data['source']} if data.get('source') is not None else {}))
                     elif data.get('action')=='crop':
                         result=photo_store.crop_photo(directory,data.get('id'),data.get('margins'))
                     elif data.get('action')=='analyze':
@@ -456,7 +459,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     elif data.get('action')=='attach':
                         result=photo_store.attach_photo(directory,data.get('url',''),data.get('data'))
                     elif data.get('action')=='accepted':
-                        result=photo_store.accepted_photo_for_url(directory,data.get('url',''))
+                        result=photo_store.accepted_photo_for_url(directory,data.get('url',''),source=data.get('source'),allow_unscoped_variants=data.get('allowUnscopedVariants') is True)
                     else: raise ValueError('Неверное действие с фотографией')
                     self.respond(200,result);return
                 if path == '/api/local/history':

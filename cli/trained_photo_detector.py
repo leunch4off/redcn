@@ -10,6 +10,11 @@ import sys
 import time
 import warnings
 
+if __name__ == '__main__' and sys.flags.isolated:
+    # -I excludes PYTHONPATH/user-site and the working directory. The only
+    # additional application code is this worker's own fixed CLI directory.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from local_photo_ai import FEATURE_LABELS
 
 MODEL = 'redcn-furniture-v1'
@@ -55,8 +60,9 @@ def load_artifact(directory):
 
 def cache_identity(directory):
     try:
+        from photo_native_runtime import cache_identity as runtime_identity
         _, receipt_sha = load_artifact(directory)
-        return MODEL_SHA+':'+receipt_sha
+        return MODEL_SHA+':'+receipt_sha+':'+runtime_identity(directory)
     except (OSError, ValueError, TypeError, AttributeError):
         return 'unavailable'
 
@@ -145,7 +151,9 @@ def _infer(directory, content, mime):
         raise ValueError('Неверный выход обученной модели')
     digest = hashlib.sha256(content).hexdigest()
     candidates = decode(outputs[0][0].tolist(), width, height, digest)
+    import platform
     return {'status': 'review', 'provider': 'yolox-trained', 'model': MODEL,
+        'runtimeArchitecture': platform.machine(),
         'engine': 'redcn · обученная компактная модель · проверка', 'originalId': digest,
         'candidates': candidates, 'autoApply': False,
         'unknownIds': [key for key in FEATURE_LABELS if key != 'bed' and key not in {row['id'] for row in candidates}],
@@ -165,7 +173,8 @@ def _unavailable():
 def analyze(content, mime, directory, *, cancel=None, deadline=None):
     if cancel is not None and cancel.is_set():
         raise ValueError('Анализ отменён')
-    remaining = 20 if deadline is None else min(20, deadline-time.monotonic())
+    started = time.monotonic()
+    remaining = 20 if deadline is None else min(20, deadline-started)
     if remaining <= 0:
         raise ValueError('Время анализа фото истекло')
     if not isinstance(content, bytes) or not 0 < len(content) <= MAX_BYTES:
@@ -173,9 +182,15 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None):
     request = json.dumps({'content': base64.b64encode(content).decode(), 'mime': mime}).encode()
     process = None
     try:
-        process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), '--worker', str(directory)],
+        from photo_native_runtime import runtime_command, NativeRuntimeError
+        try:
+            command, runtime = runtime_command(directory, deadline=started+remaining)
+        except NativeRuntimeError as error:
+            return {**_unavailable(), 'message': str(error)+'; фото не проверено.',
+                'errorCode': error.code, 'runtime': {'selection': 'native-arm', 'status': 'invalid'}}
+        process = subprocess.Popen([*command, str(Path(__file__).resolve()), '--worker', str(directory)],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
-        finish = time.monotonic()+remaining
+        finish = started+remaining
         pending = request
         while True:
             if cancel is not None and cancel.is_set():
@@ -193,6 +208,10 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None):
         result = json.loads(stdout)
         if not isinstance(result, dict) or result.get('provider') != 'yolox-trained' or result.get('model') != MODEL:
             return _unavailable()
+        if runtime.get('selection') == 'native-arm' and result.get('runtimeArchitecture') != 'arm64':
+            return {**_unavailable(), 'message': 'ARM runtime вернул несовпадающую архитектуру; фото не проверено.',
+                'errorCode': 'PHOTO_NATIVE_RUNTIME_ARCHITECTURE', 'runtime': {**runtime, 'status': 'invalid'}}
+        result['runtime'] = {**runtime, 'workerArchitecture': result.get('runtimeArchitecture', 'unknown')}
         # Enforce publication policy even when loading an older worker/cache.
         result['autoApply'] = False
         for row in result.get('candidates', []):

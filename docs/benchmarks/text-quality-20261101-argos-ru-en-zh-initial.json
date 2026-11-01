@@ -1,0 +1,349 @@
+{
+  "version": 1,
+  "probeVersion": "authored-heldout-v1-18",
+  "probeSha256": "7235774d47f19b14cae155144eb3f429e0fe99e331fbdc8aab2f30e3d48f64de",
+  "selectedProbeIds": [
+    "ru-zh-equipment-negation",
+    "ru-zh-unconfirmed",
+    "ru-zh-numeric-units",
+    "ru-zh-registration-conditional",
+    "ru-zh-permissions",
+    "ru-zh-rent-deposit",
+    "ru-zh-transit",
+    "zh-ru-equipment-negation",
+    "zh-ru-unconfirmed",
+    "zh-ru-numeric-units",
+    "zh-ru-conditional",
+    "zh-ru-kitchen",
+    "zh-ru-bed-negation",
+    "zh-ru-rent-deposit",
+    "json-price-area",
+    "json-unknown-equipment",
+    "json-two-bedrooms",
+    "json-negative-equipment"
+  ],
+  "backend": "argos",
+  "model": "existing-argos-ru-en-zh",
+  "elapsedSeconds": 3.509668707999481,
+  "runtimePath": "/Users/n1estate/Downloads/redcn-v5/.venv-translate/bin/python",
+  "peakMemoryBytes": null,
+  "limits": {
+    "seconds": 600,
+    "tokens": 200
+  },
+  "rows": [
+    {
+      "id": "ru-zh-equipment-negation",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "有冰箱和微波炉,但没有洗碗机.",
+      "seconds": 0.6664250000003449,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "zh",
+          "han": 13,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "dishwasher",
+          "fridge",
+          "microwave"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-unconfirmed",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "尚未证实存在空调。 有沙发.",
+      "seconds": 0.36759804199937207,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Изменено наличие, отрицание или условие: aircon",
+          "В переводе не сохранено условие или неопределённость"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 11,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "aircon",
+          "sofa"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-numeric-units",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "租金每月88300卢布,面积47.2平方米,7层公寓.",
+      "seconds": 0.48604250000062166,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "zh",
+          "han": 14,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-registration-conditional",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "只有在得到批准后才能进行临时登记。",
+      "seconds": 0.47075945799952024,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Изменено наличие, отрицание или условие: registration",
+          "В переводе не сохранено условие или неопределённость"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 16,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "registration"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-permissions",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "可带孩子入住. 不允许携带宠物入住.",
+      "seconds": 0.5413420419999966,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "zh",
+          "han": 15,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "children",
+          "pets"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-rent-deposit",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "没有家具的公寓。 贷款42000卢布,每月租76000卢布.",
+      "seconds": 0.5582184169998072,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Проверьте, что суммы аренды и залога сохранили своё значение"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 16,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-transit",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "地铁开通11分钟. 2号机车开往公园站.",
+      "seconds": 0.4190107499998703,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "zh",
+          "han": 14,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-equipment-negation",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "zh-ru-unconfirmed",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "zh-ru-numeric-units",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "zh-ru-conditional",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "zh-ru-kitchen",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "zh-ru-bed-negation",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "zh-ru-rent-deposit",
+      "task": "zh-ru",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "json-price-area",
+      "task": "listing",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "json-unknown-equipment",
+      "task": "listing",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "json-two-bedrooms",
+      "task": "listing",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    },
+    {
+      "id": "json-negative-equipment",
+      "task": "listing",
+      "status": "unsupported",
+      "reason": "Existing Argos route supports RU→EN→ZH only"
+    }
+  ],
+  "summary": {
+    "all": {
+      "applicable": 7,
+      "measured": 7,
+      "checksPassed": 4,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": 0.48604250000062166,
+      "maxSeconds": 0.6664250000003449
+    },
+    "ru-zh": {
+      "applicable": 7,
+      "measured": 7,
+      "checksPassed": 4,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": 0.48604250000062166,
+      "maxSeconds": 0.6664250000003449
+    },
+    "zh-ru": {
+      "applicable": 0,
+      "measured": 0,
+      "checksPassed": 0,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": null,
+      "maxSeconds": null
+    },
+    "listing": {
+      "applicable": 0,
+      "measured": 0,
+      "checksPassed": 0,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": null,
+      "maxSeconds": null
+    }
+  },
+  "automaticPromotion": false,
+  "nativeLanguageReviewCompleted": false,
+  "limitations": [
+    "These are development probes, not unseen native-reviewed benchmarks.",
+    "Known concept, number, language and JSON checks do not establish all semantic accuracy.",
+    "Compare the same probeSha256 and task subgroup; Argos does not support this project's reverse direction or JSON writing."
+  ]
+}

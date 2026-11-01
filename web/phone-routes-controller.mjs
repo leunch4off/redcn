@@ -1,3 +1,4 @@
+import {createUniversityRouteCacheCallbacks} from './university-route-cache-client.mjs';
 const prClone=value=>JSON.parse(JSON.stringify(value));
 const prId=card=>typeof card?.id==='string'&&/^[a-f0-9]{32}$/.test(card.id)?card.id:'';
 const prStamp=card=>typeof card?.updated==='number'&&Number.isFinite(card.updated)&&card.updated>=0?card.updated:null;
@@ -47,7 +48,7 @@ export function setupPhoneUniversityRoutes({mount,getCard=()=>null,api,onSaved=(
       if(!moduleReady)moduleReady=Promise.resolve().then(loadModule).catch(error=>{moduleReady=null;throw error;});
       const module=await moduleReady;if(destroyed||auth!==authEpoch||view!==viewEpoch||active!==id||!details.open)return;
       if(typeof module.setupUniversityRoutes!=='function')throw Error('Форма маршрутов недоступна.');removeWidget();
-      widget=module.setupUniversityRoutes({mount:body,getFields:()=>store.fields(entry),onChange:rows=>{if(!destroyed&&auth===authEpoch&&view===viewEpoch&&active===id){store.edit(id,rows);update();}}});widgetId=id;renderedKey=prFieldsKey(entry);
+      widget=module.setupUniversityRoutes({mount:body,getFields:()=>store.fields(entry),onChange:rows=>{if(!destroyed&&auth===authEpoch&&view===viewEpoch&&active===id){store.edit(id,rows);update();}},...createUniversityRouteCacheCallbacks(api)});widgetId=id;renderedKey=prFieldsKey(entry);
     }catch(error){if(!destroyed&&auth===authEpoch&&view===viewEpoch&&active===id)loadError=String(error?.message||'Не удалось открыть маршруты.');}
     finally{if(!destroyed&&auth===authEpoch&&view===viewEpoch){loading=false;update();}}
   }

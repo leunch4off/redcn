@@ -9,8 +9,16 @@ function readinessOf(value){
   return candidates.find(row=>row&&typeof row==='object'&&['ready','partial','unknown'].includes(row.state))||null;
 }
 
+function albumStatus(value){
+ if(!value||typeof value!=='object'||!Number.isInteger(value.observed)||value.observed<0||value.observed>1800)return null;
+ const expected=value.expected===null?null:Number.isInteger(value.expected)&&value.expected>0&&value.expected<=400?value.expected:null,observed=value.observed,limit=Number.isInteger(value.limit)&&value.limit>0&&value.limit<=180?value.limit:30;
+ const missing=expected===null?null:Math.max(0,expected-observed),countConflict=value.countConflict===true||expected!==null&&observed>expected,state=missing?'partial':expected===null||countConflict?'unknown':'complete';
+ const countEvidence=(Array.isArray(value.countEvidence)?value.countEvidence:[]).filter(row=>row&&Number.isInteger(row.count)&&row.count>0&&row.count<=400&&['aria-setsize','aria-label','gallery-text','data-photo-count','data-image-count','data-total','structured-photo-list'].includes(row.source)).slice(0,30).map(row=>({count:row.count,source:row.source}));
+ return {version:1,state,observed,expected,missing,countConflict,countEvidence,limit,retained:Math.min(observed,limit),overLimit:Math.max(0,observed-limit),completenessVerified:state==='complete'};
+}
+
 export function sourceReadinessFeedback(value,fallback){
-  const readiness=readinessOf(value)||readinessOf(fallback),partial=!!(value&&value.sourcePartial===true)||!!(readiness&&(readiness.partial===true||readiness.state==='partial'));
+  const readiness=readinessOf(value)||readinessOf(fallback),album=albumStatus(readiness?.gallery),partial=!!(value&&value.sourcePartial===true)||!!(readiness&&(readiness.partial===true||readiness.state==='partial'))||!!(album&&(album.missing||album.overLimit));
   const state=partial?'partial':readiness?readiness.state:'',details=[];
   if(partial){
     const rows=Array.isArray(readiness&&readiness.sections)?readiness.sections:[];
@@ -20,7 +28,11 @@ export function sourceReadinessFeedback(value,fallback){
       details.push(sectionNames[name]+' — '+(sectionReasons[row.reason]||'полнота раздела не подтверждена')+'.');
     }
   }
-  const message=partial?['Сбор исходной страницы частичный.',...details].join(' '):state==='unknown'?'Полнота исходной страницы не проверялась.':'';
+  if(album){
+    if(album.missing||album.overLimit)details.push('Альбом — найдено '+album.observed+' из '+(album.expected??'?')+' фото; не найдено '+(album.missing||0)+', сверх лимита '+album.overLimit+'.');
+    else if(album.state==='unknown')details.push('Альбом — найдено '+album.observed+' фото; полнота не подтверждена'+(album.countConflict?': счётчики противоречивы.':': общий счётчик отсутствует.'));
+  }
+  const message=partial?['Сбор исходной страницы частичный.',...details].join(' '):state==='unknown'?['Полнота исходной страницы не проверялась.',...details].join(' '):details.join(' ');
   return {state,partial,details,message};
 }
 
@@ -43,10 +55,12 @@ function metadataMedia(value,layout){
   return value.slice(0,400).filter(row=>row&&typeof row==='object').map(row=>{
     const url=metadataUrl(row.url);if(!url)return null;
     const item={url,isLayout:layout||row.isLayout===true,isCianLayout:layout||row.isCianLayout===true};
-    if(typeof row.photoId==='string'||typeof row.photoId==='number')item.photoId=String(row.photoId).slice(0,40);
+    if(typeof row.photoId==='string'||typeof row.photoId==='number')item.photoId=String(row.photoId).slice(0,100);
     if(Number.isInteger(row.order)&&row.order>=0)item.order=row.order;
     if(typeof row.source==='string')item.source=row.source.slice(0,80);
+    if(['platform-photo-id','observed-dom-node','observed-picture'].includes(row.identitySource))item.identitySource=row.identitySource;
     if(row.variants&&typeof row.variants==='object'){item.variants={};for(const key of ['fullUrl','thumbnailUrl','thumbnail2Url','miniUrl']){const variant=metadataUrl(row.variants[key]);if(variant)item.variants[key]=variant;}}
+    if(Array.isArray(row.observedVariants))item.observedVariants=row.observedVariants.slice(0,60).filter(value=>value&&['data-original','data-src','data-srcset','srcset','currentSrc','src','href'].includes(value.source)&&metadataUrl(value.url)).map(value=>({url:metadataUrl(value.url),source:value.source}));
     return item;
   }).filter(Boolean);
 }
@@ -83,6 +97,7 @@ export function sourceEditorMetadata(fields,listing){
         output[key].sections.push({name,reason,found:typeof row.found==='boolean'?row.found:null,visited:row.visited===true,ready:row.ready===true&&reason==='ready'});
       }
       output[key].warnings=feedback.details;
+      const album=albumStatus(value.gallery);if(album)output[key].gallery=album;
       for(const measurement of ['seconds','activeSeconds','budgetSeconds','budgetOverrunSeconds'])if(typeof value[measurement]==='number'&&Number.isFinite(value[measurement])&&value[measurement]>=0&&value[measurement]<=7200)output[key][measurement]=value[measurement];
     }else if(key==='photoItems'||key==='layouts'){
       const rows=metadataMedia(value,key==='layouts');if(rows)output[key]=rows;

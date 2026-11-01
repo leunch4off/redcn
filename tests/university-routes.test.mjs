@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import {normalizeUniversityRoutes,resolveUniversityRoutes,universityStraightLineKm,universityRouteCoordinates,universityMapLinks,universityStopLinks} from '../web/university-routes.mjs';
 import {UNIVERSITY_CATALOG} from '../web/university-catalog.mjs';
 
+test('only the explicitly selected verified building supplies a published point with provenance',()=>{
+  const fields={latitude:55.7,longitude:37.5,universityRoutes:[{name:'МГУ',campusId:'msu-physics',mode:'public'}]};
+  const row=resolveUniversityRoutes(fields)[0];assert.equal(row.destination.latitude,55.699876);assert.equal(row.destinationPointSource,'catalogue');assert.equal(row.destinationPointEvidence.accuracyMeters,null);assert.equal(row.destinationPointEvidence.entranceVerified,false);assert.equal(row.links.yandexKind,'route');assert.equal(row.confirmedTime,false);assert.equal(row.transport,'');assert.equal(row.distanceKind,'straight-line');
+  const partial=resolveUniversityRoutes({...fields,universityRoutes:[{...fields.universityRoutes[0],latitude:55.8}]})[0];assert.equal(partial.destinationPointSource,'');assert.equal(partial.straightLineKm,null);
+  const manual=resolveUniversityRoutes({...fields,universityRoutes:[{...fields.universityRoutes[0],latitude:55.8,longitude:37.8}]})[0];assert.equal(manual.destinationPointSource,'manual');assert.equal(manual.destination.latitude,55.8);assert.equal(manual.destinationPointEvidence,null);
+  const mismatch=resolveUniversityRoutes({...fields,universityRoutes:[{name:'МГУ',campusId:'msu-physics',address:'Другой корпус'}]})[0];assert.equal(mismatch.destinationPointSource,'');assert.equal(mismatch.links.yandex,'');
+  const universityOnly=resolveUniversityRoutes({latitude:55.7,longitude:37.5,university:'МГУ'})[0];assert.equal(universityOnly.destinationPointSource,'');assert.equal(universityOnly.straightLineKm,null);
+});
+
 test('legacy university rows retain explicit duration, transport and selected campus without inventing a route',()=>{
   const fields={university:'МГУ',campus:'МГУ — Главное здание',universities:'МГУ | 40-55 | public | Автобус 119\nРУДН | | | '};
   const normalized=normalizeUniversityRoutes(fields);assert.equal(normalized.length,2);assert.equal(normalized[0].campus,fields.campus);assert.equal(normalized[0].transport,'Автобус 119');

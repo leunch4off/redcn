@@ -59,6 +59,17 @@ class UniversityStoreTests(unittest.TestCase):
         self.assertFalse(stats['available'])
         self.assertFalse(self.directory.exists())
 
+    def test_published_points_require_paired_coordinates_source_date_and_honest_accuracy(self):
+        self.value['sources'][0].update(campusIds=['one-campus'],supports=['published-coordinate'])
+        campus=self.value['campuses'][0]
+        campus.update(latitude=55.7,longitude=37.5,coordinateEvidence={'method':'official-published-point','scope':'building','sourceIds':['official-one'],'checkedAt':'2026-10-30','accuracyMeters':None,'accuracyStatus':'not-published','publishedPrecision':'6 decimal places','entranceVerified':False})
+        self.write()
+        self.assertEqual(store.read_catalog(self.catalog)[0]['campuses'][0]['latitude'],55.7)
+        original=copy.deepcopy(campus)
+        for change in (lambda row:row.update(longitude=None),lambda row:row.update(latitude=True),lambda row:row['coordinateEvidence'].update(sourceIds=['missing']),lambda row:row['coordinateEvidence'].update(checkedAt='2099-01-01'),lambda row:row['coordinateEvidence'].update(accuracyStatus='exact'),lambda row:row['coordinateEvidence'].update(entranceVerified=True)):
+            self.value['campuses'][0]=copy.deepcopy(original);change(self.value['campuses'][0]);self.write()
+            with self.subTest(campus=self.value['campuses'][0]),self.assertRaises(ValueError):store.read_catalog(self.catalog)
+
     def test_lazy_refresh_is_idempotent_and_counts_actual_records_and_evidence(self):
         self.assertFalse(self.directory.exists())
         first = store.stats(self.directory, self.catalog)
@@ -113,6 +124,8 @@ class UniversityStoreTests(unittest.TestCase):
         mutations = [lambda value: value['campuses'][0].update(universityId='missing'),
             lambda value: value['universities'].append(value['universities'][0]),
             lambda value: value['sources'][0].update(url='javascript:alert(1)'),
+            lambda value: value['sources'][0].update(verifiedAt='not-a-date'),
+            lambda value: value['sources'][0].update(verifiedAt='2099-01-01'),
             lambda value: value['universities'][0].update(sourceIds=['missing']),
             lambda value: value['universities'][0].update(region='Санкт-Петербург')]
         for mutate in mutations:

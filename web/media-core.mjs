@@ -2,13 +2,45 @@ import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
 // Shared URL, crop and archive rules. Originals and edited copies are distinct.
 export function photoSourceUrl(raw,base=''){
   if(raw&&typeof raw==='object')raw=raw.sourceUrl||raw.originalUrl||raw.url||raw.fullUrl;
-  if(typeof raw!=='string')return null;
+  if(typeof raw!=='string'||!raw.trim())return null;
   try{const u=new URL(raw.startsWith('//')?'https:'+raw:raw,base||undefined);
     if(u.protocol!=='https:'||u.username||u.password||u.port||!/(^|\.)(cian\.ru|cdn-cian\.ru|ciancdn\.ru|avito\.ru|avito\.st)$/i.test(u.hostname))return null;
     u.hash='';return u.href;
   }catch{return null;}
 }
 export function photoSources(values,base=''){return [...new Set((Array.isArray(values)?values:[]).map(v=>photoSourceUrl(v,base)).filter(Boolean))].slice(0,30);}
+
+// A group contains only variants literally exposed by one gallery image node.
+// A local DOM identity is explicitly distinguished from a platform photo ID.
+export function observedPhotoItem(attrs={}, {base='',platform='',order=0}={}){
+ const set=['data-srcset','srcset'].flatMap(key=>String(attrs[key]||'').split(',').map(part=>{const [url,size='0']=part.trim().split(/\s+/);return {url,source:key,weight:parseFloat(size)||0};})).sort((a,b)=>b.weight-a.weight);
+ const raw=[{url:attrs['data-original'],source:'data-original'},{url:attrs['data-src'],source:'data-src'},...set.map(row=>({url:row.url,source:row.source})),{url:attrs.currentSrc,source:'currentSrc'},{url:attrs.src,source:'src'},{url:attrs.imageHref,source:'href'}];
+ const observedVariants=[];for(const row of raw){const url=photoSourceUrl(row.url,base);if(url&&!observedVariants.some(item=>item.url===url))observedVariants.push({url,source:row.source});}
+ if(!observedVariants.length)return null;
+ const url=observedVariants[0].url,declared=attrs['data-photo-id']||attrs['data-image-id'];let photoId=typeof declared==='string'&&/^[A-Za-z0-9_.:-]{1,100}$/.test(declared)?declared:'';
+ if(!photoId){let scope=base;try{const parsed=new URL(base);scope=parsed.origin+parsed.pathname;}catch{}let hash=2166136261;for(const char of platform+'|'+scope+'|'+url){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619);}photoId='dom-'+(hash>>>0).toString(16).padStart(8,'0');}
+ return {url,photoId,order,isLayout:false,isCianLayout:false,variants:{},observedVariants:observedVariants.slice(0,60),identitySource:photoId===declared?'platform-photo-id':'observed-dom-node',source:platform+' gallery DOM'};
+}
+
+export function mergeObservedPhotoItems(existing=[],observations=[],layouts=[]){
+ const output=existing.map(row=>({...row,variants:{...row.variants},...(Array.isArray(row.observedVariants)?{observedVariants:row.observedVariants.map(value=>({...value}))}:{})}));
+ const urls=row=>[row.url,...Object.values(row.variants||{}),...(row.observedVariants||[]).map(item=>item.url)].filter(Boolean);
+ const excluded=new Set(layouts.flatMap(urls));
+ for(const row of observations){if(!row||!row.url||urls(row).some(url=>excluded.has(url)))continue;const variants=urls(row),match=output.find(item=>urls(item).some(url=>variants.includes(url))||row.identitySource==='platform-photo-id'&&item.photoId===row.photoId&&(item.identitySource==='platform-photo-id'||item.source==='CIAN offer'));
+  if(match){match.observedVariants??=[];for(const value of row.observedVariants||[])if(!match.observedVariants.some(item=>item.url===value.url))match.observedVariants.push({...value});match.observedVariants=match.observedVariants.slice(0,60);}
+  else output.push({...row,order:output.length});
+ }
+ return output.slice(0,400);
+}
+
+export function observedPhotoPicture(attributeRows=[],options={}){
+ const rows=attributeRows.map(attrs=>observedPhotoItem(attrs,options)).filter(Boolean);if(!rows.length)return null;
+ const output={...rows[0],observedVariants:[]},declared=rows.filter(row=>row.identitySource==='platform-photo-id').map(row=>row.photoId);
+ if(declared.length&&new Set(declared).size===1){output.photoId=declared[0];output.identitySource='platform-photo-id';}
+ else output.identitySource='observed-picture';
+ for(const row of rows)for(const variant of row.observedVariants)if(!output.observedVariants.some(item=>item.url===variant.url))output.observedVariants.push({...variant});
+ output.observedVariants=output.observedVariants.slice(0,60);return output;
+}
 export function listingPhotoSources(value={}){
  const fields=value.fields||{},listing=value.listing||{};
  return photoSources([...(Array.isArray(fields.photos)?fields.photos:[]),
@@ -26,10 +58,11 @@ export function cropRectangle(width,height,margins={}){
 export function photoFileName(index,mime,cropped=false){return String(index+1).padStart(2,'0')+(cropped?'-crop':'-original')+'.'+({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[mime]||'jpg');}
 export function photoExportAsset(item,prepared=false){
  const useCrop=prepared&&!item.preferOriginal&&!!item.cropBlob;
- const blob=useCrop?item.cropBlob:item.blob;
+ const useVariant=prepared&&!item.preferOriginal&&!useCrop&&!!item.variantBlob;
+ const blob=useCrop?item.cropBlob:useVariant?item.variantBlob:item.blob;
  if(!blob)throw Error('Оригинал фотографии ещё не загружен');
- return {blob,kind:useCrop?'crop':'original',crop:useCrop?item.cropMeta||null:null,
-  reason:useCrop?'prepared':item.preferOriginal?'original-selected':prepared?'original-fallback':'original-requested'};
+ return {blob,kind:useCrop?'crop':useVariant?'variant':'original',crop:useCrop?item.cropMeta||null:null,variant:useVariant?item.variantMeta||null:null,
+  reason:useCrop?'prepared':useVariant?'observed-variant':item.preferOriginal?'original-selected':prepared?'original-fallback':'original-requested'};
 }
 const mediaCrcTable=Array.from({length:256},(_,n)=>{for(let i=0;i<8;i++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function mediaCrc(bytes){let c=0xffffffff;for(const b of bytes)c=mediaCrcTable[(c^b)&255]^(c>>>8);return(c^0xffffffff)>>>0;}

@@ -15,3 +15,23 @@
 .writing-button{min-height:44px;max-width:100%;padding:10px 14px;border:1px solid #d9e2ce;border-radius:12px;background:#f5f8ee;color:#4d6940;font:inherit;font-size:13px;text-align:left;cursor:pointer;margin:0 0 10px}.writing-button:disabled{opacity:.5;cursor:wait}.writing-studio{overflow-wrap:anywhere}.writing-studio h2{font-size:18px}.writing-studio .button{margin:10px 0;min-height:44px;font-size:14px;white-space:normal}.writing-studio details{border-top:1px solid var(--line);margin-top:18px;padding-top:4px}.writing-studio summary{min-height:44px;padding:14px 0;font-size:14px;line-height:1.6;cursor:pointer}.writing-studio label{display:block;font-size:13px;line-height:1.6;margin:18px 0 8px}.writing-studio textarea,.writing-studio select{box-sizing:border-box;width:100%;max-width:100%;min-width:0;border:1px solid #dfe5d6;border-radius:12px;padding:12px;background:#fffef9;color:#35482f;font:inherit;font-size:16px;line-height:1.7}.writing-studio textarea{resize:vertical;min-height:110px}.writing-studio select{min-height:48px}.writing-studio .quiet,.writing-studio .language-stats,.writing-studio .translation-review{font-size:12px;line-height:1.75}.language-stats{padding:12px;background:#f4f7ee;border-radius:10px;color:#6c7e5f}.translation-review{white-space:pre-wrap;color:#697b5d;margin:12px 0}.translation-review[data-state=review]{color:#94613e}.translation-review[data-state=error],#phoneWritingStatus[data-state=error]{color:#a04f3e}#phoneWritingStatus{font-size:13px;line-height:1.7;white-space:pre-wrap}
 
 .connection-diagnostic{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.6 ui-monospace,monospace;user-select:text;padding:12px;background:#fff;border-radius:12px}#phoneDiagnostics{margin-top:14px}#phoneDiagnostics summary{min-height:44px;padding:10px 0;cursor:pointer}
+
+/* Text-entry controls keep their width and focus space on the iPhone viewport.
+   A 16px text size prevents Safari from zooming the page when typing. */
+html{scroll-padding-top:100px;scroll-padding-bottom:130px}
+.phone-main input,.phone-main textarea,.phone-main select{scroll-margin-top:100px;scroll-margin-bottom:130px}
+.phone-main textarea:focus-visible,.phone-main select:focus-visible{outline:3px solid #9bb48d;outline-offset:3px}
+#phoneLearningMount{max-width:100%;min-width:0;margin-bottom:20px}
+.learning-studio{max-width:100%;min-width:0;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fffef9;overflow-wrap:anywhere}
+.learning-studio>summary{min-height:44px;padding:8px 0;font-size:15px;line-height:1.7;cursor:pointer;font-weight:600}
+.learning-studio h3{font-size:16px;line-height:1.6;margin:24px 0 12px}
+.learning-studio p{font-size:13px;line-height:1.75;white-space:pre-wrap;max-width:100%}
+.learning-studio label{display:block;max-width:100%;min-width:0;font-size:13px;line-height:1.7;margin:16px 0 10px}
+.learning-studio input:not([type=checkbox]),.learning-studio textarea,.learning-studio select{box-sizing:border-box;display:block;width:100%;max-width:100%;min-width:0;min-height:48px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:#35482f;font:inherit;font-size:16px;line-height:1.65}
+.learning-studio input[type=checkbox]{width:22px;height:22px;margin:0 8px 0 0;vertical-align:middle;accent-color:var(--green)}
+.learning-studio textarea{resize:vertical;min-height:96px}
+.learning-studio .output-options{display:flex;flex-wrap:wrap;gap:8px;max-width:100%;min-width:0;margin:16px 0}
+.learning-studio .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;max-width:100%;padding:12px 14px;border:1px solid #d4ddcb;border-radius:12px;background:#f6f8f1;color:#4a6540;font:inherit;font-size:14px;line-height:1.5;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.learning-studio .card-file-row>div{min-width:0;max-width:100%}
+.learning-studio .card-file-row strong{font-size:14px;line-height:1.7}
+.learning-studio [hidden]{display:none!important}

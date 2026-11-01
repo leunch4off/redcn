@@ -119,7 +119,14 @@ export function resolveUniversityRoutes(fields={},options={}){
     if(mismatch)warnings.push('Вуз и выбранный кампус не совпадают. Уточните место назначения.');
     if(addressMismatch)warnings.push('Адрес отличается от выбранного корпуса. Выберите правильный корпус либо явно задайте свой адрес без чужого campusId.');
     const selectedCampus=mismatch?null:campus,parent=selectedCampus?universityRouteSchoolById.get(selectedCampus.universityId):null;
-    const destinationPoint=mismatch?null:universityRouteCoordinates(row.latitude,row.longitude),destinationAddress=mismatch?'':row.address||selectedCampus?.addressRu||'';
+    // Only an explicitly resolved building may supply a catalogue point. A
+    // university name alone must never silently choose its main/legal address.
+    // A partial manually entered pair must not borrow its other half either.
+    const hasManualPoint=row.latitude!==''||row.longitude!=='',manualPoint=universityRouteCoordinates(row.latitude,row.longitude),catalogEvidence=selectedCampus?.coordinateEvidence;
+    const catalogPoint=!hasManualPoint&&catalogEvidence?.method==='official-published-point'&&catalogEvidence?.checkedAt&&catalogEvidence?.sourceIds?.length?universityRouteCoordinates(selectedCampus.latitude,selectedCampus.longitude):null;
+    const destinationPoint=mismatch?null:manualPoint||catalogPoint,destinationAddress=mismatch?'':row.address||selectedCampus?.addressRu||'',destinationPointSource=destinationPoint?(manualPoint?'manual':'catalogue'):'';
+    const destinationPointEvidence=destinationPointSource==='catalogue'?universityRouteClone(catalogEvidence):null;
+    if(destinationPointSource==='catalogue')warnings.push('Использована опубликованная точка выбранного корпуса; точность и доступный вход не подтверждены.');
     const rawTitle=row.name||(parent?.ru)||row.campus||'院校/校区',translatedTitle=translate(rawTitle),title=translatedTitle!==rawTitle?translatedTitle:university?.zh||parent?.zh||selectedCampus?.zh||translatedTitle;
     const rawCampus=row.campus||selectedCampus?.ru||'',translatedCampus=translate(rawCampus),campusTitle=translatedCampus!==rawCampus?translatedCampus:selectedCampus?.zh||translatedCampus,destination={name:selectedCampus?.ru||row.campus||row.name,address:destinationAddress,...destinationPoint};
     const confirmedDestination=!!(destinationPoint||destinationAddress),time=universityRouteTimeLabel(row.time,translate);
@@ -139,13 +146,14 @@ export function resolveUniversityRoutes(fields={},options={}){
     const nowStamp=options.now===undefined?Date.now():typeof options.now==='string'?Date.parse(options.now):Number(options.now),calculatedAt=universityRouteMoscowDay(nowStamp);
     const distanceMethod=distanceKind==='straight-line'?'haversine':distanceKind==='provided-route'?'provided':'unknown',distanceCheckedAt=distanceMethod==='haversine'?calculatedAt:verification.checkedAt;
     const distanceEvidenceLabel=distanceMethod==='haversine'?'直线估算 · Haversine公式 · 计算日期'+(distanceCheckedAt||'待确认')+'（非实际路线）':distanceMethod==='provided'?'路线距离（已填资料）· 资料日期'+(distanceCheckedAt||'待确认'):'';
-    return {...row,title,campusTitle,destination,selectedCampusId:selectedCampus?.id||'',confirmedDestination,time:timeLabel,timeLabel,confirmedTime:time.confirmed&&!verification.estimated,modeLabel,transport,transportLabel:transport?modeLabel+' · '+transport:'',distanceKm,distanceKind,distanceLabel:universityRouteDistanceLabel(distanceKm,distanceKind),distanceMethod,distanceCheckedAt,distanceEvidenceLabel,straightLineKm:computed,stops:stopDetails.map(stop=>stop.label),stopDetails,links,warnings,verification,verificationLabel:verification.label,partsLabel,segmentLabels};
+    return {...row,title,campusTitle,destination,destinationPointSource,destinationPointEvidence,selectedCampusId:selectedCampus?.id||'',confirmedDestination,time:timeLabel,timeLabel,confirmedTime:time.confirmed&&!verification.estimated,modeLabel,transport,transportLabel:transport?modeLabel+' · '+transport:'',distanceKm,distanceKind,distanceLabel:universityRouteDistanceLabel(distanceKm,distanceKind),distanceMethod,distanceCheckedAt,distanceEvidenceLabel,straightLineKm:computed,stops:stopDetails.map(stop=>stop.label),stopDetails,links,warnings,verification,verificationLabel:verification.label,partsLabel,segmentLabels};
   });
 }
 
-export function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},translate=value=>String(value??'')}={}){
+export function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},translate=value=>String(value??''),lookupCached=null,rememberCached=null}={}){
   if(!mount)return {value:()=>[],refresh:()=>{},setPrimary:()=>{},destroy:()=>{}};
   let rows=[],destroyed=false;
+  const cacheFingerprint=row=>{const fields=getFields()||{};return JSON.stringify({row,origin:[fields.latitude??'',fields.longitude??'',fields.address??'']});};
   const make=(tag,text='',className='')=>{const element=document.createElement(tag);element.textContent=text;if(className)element.className=className;return element;};
   const shell=make('section','','university-route-editor'),heading=make('h3','Вузы, транспорт и кнопки карт'),note=make('p','Укажите конкретный кампус. Время, номера автобусов и остановки сохраняются только из ваших подтверждённых данных. Расчёт по координатам — расстояние по прямой, а актуальный маршрут откроется в картах.','muted'),list=make('div','','university-route-list'),add=make('button','Добавить вуз / маршрут','btn');add.type='button';shell.append(heading,note,list,add);mount.replaceChildren(shell);
   const emit=()=>{if(!destroyed)onChange(universityRouteClone(normalizeUniversityRoutes({universityRoutes:rows})));};
@@ -167,7 +175,8 @@ export function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},
     const previews=make('div','','university-route-previews');
     rows.forEach((row,index)=>{
       const detail=make('details','','university-route-entry'),summary=make('summary',(row.name||row.campus||'Новый вуз')+' · маршрут '+(index+1)),grid=make('div','','university-route-fields');detail.open=!row.name;detail.append(summary,grid);
-      const update=()=>{summary.textContent=(row.name||row.campus||'Новый вуз')+' · маршрут '+(index+1);emit();preview(previews);};
+      const cacheButtons=new Set(),cachePending=new Set(),refreshCacheButtons=()=>{for(const button of cacheButtons)button.disabled=cachePending.has(button)||!row.campusId||row.mode==='unknown';};
+      const update=()=>{summary.textContent=(row.name||row.campus||'Новый вуз')+' · маршрут '+(index+1);refreshCacheButtons();emit();preview(previews);};
       function input(key,label,{placeholder='',type='text',area=false}={}){const wrapper=make('label',label),control=make(area?'textarea':'input');if(!area)control.type=type;control.value=row[key]??'';control.placeholder=placeholder;control.setAttribute('aria-label',label+' · маршрут '+(index+1));if(type==='number'){control.step='any';control.inputMode='decimal';}if(area)control.rows=3;control.addEventListener('input',()=>{row[key]=control.value;update();});wrapper.append(control);grid.append(wrapper);return control;}
       input('name','Вуз',{placeholder:'МГУ / РУДН / своё название'});
       const selectLabel=make('label','Адрес из справочника'),selection=make('select');selection.setAttribute('aria-label','Кампус из справочника · маршрут '+(index+1));selection.append(new Option('Свой кампус / адрес',''));
@@ -185,6 +194,13 @@ export function setupUniversityRoutes({mount,getFields=()=>({}),onChange=()=>{},
       const campusRecord=universityRouteCampusById.get(row.campusId)||resolveCampus(row.campus);if(campusRecord){const refs=(campusRecord.sourceIds||[]).map(id=>UNIVERSITY_CATALOG.sources.find(source=>source.id===id)).filter(Boolean);const bibliography=make('div','','university-route-campus-sources');bibliography.append(make('p','Адрес и название корпуса · срез справочника '+UNIVERSITY_CATALOG.asOf,'muted'));for(const ref of refs){const a=make('a',ref.publisher+' · проверено '+ref.verifiedAt+(ref.evidenceType==='official-university'?' · сайт учреждения':' · официальный образовательный портал'));a.href=ref.url;a.target='_blank';a.rel='noopener noreferrer';bibliography.append(a);}grid.append(bibliography);}
       const stopLabel=make('label','Остановки / ориентиры: до трёх строк «название | широта | долгота»'),stops=make('textarea');stops.rows=3;stops.setAttribute('aria-label','Остановки и координаты · маршрут '+(index+1));stops.value=(Array.isArray(row.stops)?row.stops:[]).map(stop=>[stop.name,stop.latitude??'',stop.longitude??''].join(' | ')).join('\n');stops.oninput=()=>{row.stops=stops.value.split('\n').slice(0,UNIVERSITY_ROUTE_STOP_LIMIT).map(line=>{const [name,latitude='',longitude='']=line.split('|').map(value=>value.trim());return {name,latitude,longitude};});update();};stopLabel.append(stops);grid.append(stopLabel);
       const remove=make('button','Убрать маршрут','btn');remove.type='button';remove.onclick=()=>{rows.splice(index,1);emit();render();};detail.append(remove);list.append(detail);
+      if(typeof lookupCached==='function'||typeof rememberCached==='function'){
+        const cacheStatus=make('p','','muted');
+        for(const [callback,label,reuse]of [[lookupCached,'Взять недавний проверенный маршрут',true],[rememberCached,'Запомнить проверенный маршрут на 1 час',false]])if(typeof callback==='function'){
+          const button=make('button',label,'btn');button.type='button';cacheButtons.add(button);refreshCacheButtons();
+          button.onclick=async()=>{cachePending.add(button);refreshCacheButtons();cacheStatus.textContent='Проверяем кеш маршрута…';const requested=cacheFingerprint(row);try{const result=await callback(universityRouteClone(row),universityRouteClone(getFields()||{}));if(destroyed||!rows.includes(row))return;if(cacheFingerprint(row)!==requested){cacheStatus.textContent='Поля изменились во время запроса. Результат кеша не применён.';return;}if(reuse){if(result?.hit&&result.route){const cached=normalizeUniversityRoutes({universityRoutes:[result.route]})[0];if(!cached)throw Error('В кеше нет допустимого маршрута.');rows[rows.indexOf(row)]=cached;emit();render();}else cacheStatus.textContent=result?.reason==='expired'?'Срок кеша истёк. Проверьте маршрут в картах.':'Для этой исходной точки, корпуса, транспорта и источника нет свежего маршрута.';}else cacheStatus.textContent='Маршрут сохранён на 1 час; дата проверки и источник сохраняются.';}catch(error){if(!destroyed)cacheStatus.textContent=error?.message||'Кеш маршрутов недоступен.';}finally{cachePending.delete(button);if(!destroyed&&rows.includes(row))refreshCacheButtons();}};detail.append(button);
+        }detail.append(cacheStatus);
+      }
     });list.append(previews);preview(previews);
   }
   function refresh(fields=getFields()){rows=normalizeUniversityRoutes(fields);render();}

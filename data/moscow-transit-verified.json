@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "verifiedAt": "2026-11-01",
+  "coverage": "Small, explicitly checked primary-source supplement; not a complete metro, street or stop registry.",
+  "sources": [
+    {"id":"mosmetro-ra-service-2026","url":"https://mosmetro.ru/news/details/10491","publisher":"Московский метрополитен","title":"Мобильная сеть на первом участке Рублёво-Архангельской линии","publishedAt":"2026-09-07","verifiedAt":"2026-11-01","retrievalMethod":"primary-search-excerpt","coverage":"Five named line 17 stations in passenger service. Coordinates and full-network completeness are not verified."},
+    {"id":"mosmetro-ra-color-2026","url":"https://mosmetro.ru/news/details/10521","publisher":"Московский метрополитен","title":"Новый цвет схемы — графитовый","publishedAt":"2026-09-10","verifiedAt":"2026-11-01","retrievalMethod":"primary-search-excerpt","coverage":"Official color name only; numeric RGB palette is not published in this evidence."},
+    {"id":"mos-transport-zh-2025","url":"https://transport.mos.ru/mostrans/all_news/123135","publisher":"Департамент транспорта Москвы","title":"Схема метро на китайском языке","publishedAt":"2025-01-30","verifiedAt":"2026-11-01","retrievalMethod":"primary-search-excerpt","coverage":"The two explicit Chinese station-name examples. The complete attached Chinese map was unavailable to fetch; no other names are promoted."},
+    {"id":"ranepa-cn-name-guide","url":"https://www.ranepa.ru/upload/doc/1/Гид%20для%20иностранных%20студентов%20китай%2001271400.pdf","publisher":"Президентская академия РАНХиГС","title":"总统学院 留学生指南 — названия на печатной странице 2","verifiedAt":"2026-11-01","retrievalMethod":"primary-search-excerpt","evidenceType":"official-university","coverage":"Printed page 2 explicitly names 西南 and 特罗帕廖沃 as stations and 维尔纳德斯基大道 as an avenue. This verifies published name spelling only, not transport-operator nomenclature or service.","directFetchStatus":"The 59,570,740-byte public PDF exceeds the web extraction limit; verification used its indexed primary text. A slow partial download was stopped; no complete-body hash is asserted."}
+  ],
+  "lines": [
+    {"snapshotId":"171","ru":"Рублёво-Архангельская","officialNumber":"17","officialColorName":"графитовый","sourceIds":["mosmetro-ra-service-2026","mosmetro-ra-color-2026"],"stations":["Деловой центр","Шелепиха","Звенигородская","Народное Ополчение","Бульвар Генерала Карбышева"]}
+  ],
+  "translations": [
+    {"ru":"Митино","zh":"米金诺","sourceId":"mos-transport-zh-2025"},
+    {"ru":"Полянка","zh":"珀梁卡","sourceId":"mos-transport-zh-2025"},
+    {"ru":"Юго-Западная","zh":"西南","sourceId":"ranepa-cn-name-guide","scope":"published-university-guide-station-name","sourceLocator":"Printed page 2, Moscow buildings: 《西南》站","applyKinds":["metro","stop","street"]},
+    {"ru":"Тропарёво","zh":"特罗帕廖沃","sourceId":"ranepa-cn-name-guide","scope":"published-university-guide-station-name","sourceLocator":"Printed page 2, avenue 98: 《特罗帕廖沃》站","applyKinds":["metro","stop","street"]},
+    {"ru":"Проспект Вернадского","zh":"维尔纳德斯基大道","sourceId":"ranepa-cn-name-guide","scope":"published-avenue-name","sourceLocator":"Printed page 2, Moscow buildings: 维尔纳德斯基大道82号 and 98号","applicationNote":"Station and stop labels reuse the same avenue proper name; this is not an operator-certified Chinese station name.","applyKinds":["metro","stop","street"]}
+  ]
+}

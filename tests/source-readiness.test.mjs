@@ -93,3 +93,9 @@ test('source snapshot metadata cannot retain raw DOM, credentials, unknown neste
   assert.doesNotMatch(JSON.stringify(metadata),/PRIVATE|rawHtml|cookies|offer|capture/);
   assert.equal(metadata.photoItems.length,1);assert.equal(metadata.photoItems[0].variants.fullUrl,undefined);assert.equal(metadata.layouts[0].isLayout,true);assert.equal(metadata.transitDetails[0].id,5);
 });
+
+test('photo group identity survives long literal IDs and lazy-srcset witnesses across editor saves',()=>{
+ const row={url:'https://images.cdn-cian.ru/images/primary.jpg',photoId:'platform-'.padEnd(90,'7'),observedVariants:[{url:'https://images.cdn-cian.ru/images/lazy.webp',source:'data-srcset'}]};
+ const saved=sourceEditorMetadata(sourceEditorMetadata({photoItems:[row]}));
+ assert.equal(saved.photoItems[0].photoId,row.photoId);assert.deepEqual(saved.photoItems[0].observedVariants,row.observedVariants);
+});
