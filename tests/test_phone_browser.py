@@ -174,6 +174,8 @@ class PhoneBrowserAcceptance(unittest.TestCase):
             self.page.goto('http://127.0.0.1:'+str(self.controller.server_port))
             for tab in ['editor','rules','library','settings','history','analytics','knowledge','roadmap']:
                 self.page.locator('aside nav [data-tab="'+tab+'"]').click()
+                if tab=='roadmap':
+                    self.page.wait_for_function("document.getElementById('roadmapList').children.length>0")
                 self.assert_mobile_fit()
             try:
                 self.page.locator('aside nav [data-tab="editor"]').click()
