@@ -62,6 +62,9 @@ function clientCheckDisputedFacts(card){
 }
 export function clientPublicationCard(card={}){
  clientCheckDisputedFacts(card);
+ const paymentFields=card?.fields&&typeof card.fields==='object'?card.fields:card;
+ if(Number(paymentFields?.price)>0)for(const [key,unit]of[['pricePeriod','month'],['priceCurrency','RUB']])if(paymentFields[key]&&paymentFields[key]!==unit)throw new ClientPublicationReviewRequired(key+': '+paymentFields[key],'Перед публикацией подтвердите месячную ставку в рублях');
+ if(Number(paymentFields?.deposit)>0&&paymentFields.depositCurrency&&paymentFields.depositCurrency!=='RUB')throw new ClientPublicationReviewRequired('depositCurrency: '+paymentFields.depositCurrency,'Перед публикацией подтвердите валюту залога');
  const active=new Set();
  function project(value,key='',depth=0){
   if(depth>32)throw TypeError('Слишком глубокая модель публикации');

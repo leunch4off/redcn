@@ -81,6 +81,15 @@ def _check_disputed(card):
 
 def client_card(card):
     _check_disputed(card)
+    fields=card.get('fields') if isinstance(card,dict) and isinstance(card.get('fields'),dict) else card
+    if isinstance(fields,dict):
+        def positive(value):
+            try:return float(value)>0
+            except (TypeError,ValueError,OverflowError):return False
+        if positive(fields.get('price')):
+            for key,unit in (('pricePeriod','month'),('priceCurrency','RUB')):
+                if fields.get(key) and fields[key]!=unit:raise PublicationReviewRequired(key+': '+str(fields[key]),'Перед публикацией подтвердите месячную ставку в рублях')
+        if positive(fields.get('deposit')) and fields.get('depositCurrency') and fields['depositCurrency']!='RUB':raise PublicationReviewRequired('depositCurrency: '+str(fields['depositCurrency']),'Перед публикацией подтвердите валюту залога')
     active=set()
     def project(value,depth=0):
         if depth>32:raise TypeError('Слишком глубокая модель публикации')

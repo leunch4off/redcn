@@ -4,6 +4,14 @@ import {readFile} from 'node:fs/promises';
 import {sanitizeClientText,containsClientCommission,clientPublicationCard,ClientPublicationReviewRequired,PUBLICATION_POLICY_VERSION} from '../web/client-publication.mjs';
 import {generateListing} from '../web/engine.mjs';
 const cases=JSON.parse(await readFile(new URL('fixtures/client-publication-policy.json',import.meta.url),'utf8'));
+test('private initial-payment calculation and raw oneoff fees never enter client exports',()=>{
+ const raw={body:'租金80,000₽',fields:{price:'80000',deposit:'40000',oneTimeFees:[{label:'Комиссия',amount:'40000'}],initialPayment:{total:160000},paymentCalculation:{fee:40000}}};
+ const safe=clientPublicationCard(raw);assert.deepEqual(safe.fields,{price:'80000',deposit:'40000'});assert.equal(raw.fields.initialPayment.total,160000);
+});
+test('old or edited client exports cannot relabel explicit daily or foreign payment units as rubles per month',()=>{
+ for(const fields of [{price:3500,pricePeriod:'day'},{price:80000,priceCurrency:'unknown'},{deposit:1000,depositCurrency:'USD'}])assert.throws(()=>clientPublicationCard({fields,body:'租金80,000₽'}),ClientPublicationReviewRequired);
+ assert.equal(clientPublicationCard({fields:{price:80000,deposit:0,depositCurrency:'unknown'},body:'租金80,000₽'}).body,'租金80,000₽');
+});
 test('one public policy removes isolated fee clauses while keeping all other financial facts',()=>{
  for(const row of cases){if(row.review){assert.throws(()=>sanitizeClientText(row.input),error=>error instanceof ClientPublicationReviewRequired&&row.input.includes(error.fragment));continue;}assert.equal(sanitizeClientText(row.input),row.output,row.input);assert(!containsClientCommission(row.output));}
 });
