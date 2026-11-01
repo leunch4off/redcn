@@ -131,6 +131,7 @@ class TextStreamTests(unittest.TestCase):
                     patch.object(runtime,'write_progress',side_effect=lambda path,value:records.append(ai_telemetry.sanitize_ai(value))):
                 result=runtime.worker(model,'-',{**REQUEST,'maxTokens':768,'seed':99},progress_path=model/'progress.json')
         self.assertEqual(seeds,[99]);self.assertEqual(result['text'],'你好世界')
+        self.assertEqual(samplers,[{'temp':REQUEST.get('temperature',.75),'top_p':.9}])
         self.assertEqual(result['ai']['generatedTokens'],3)
         self.assertEqual(result['ai']['tokensPerSecond'],6)
         self.assertEqual(result['ai']['generationSeconds'],.5)

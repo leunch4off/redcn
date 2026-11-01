@@ -45,9 +45,9 @@ def request_for(probe, history, seed, policy):
             previous_body=previous['body'], previous_title=previous['title'],
             recent_titles=[row['title'] for row in history[-6:]])
         return {'messages': messages, 'maxTokens': policy['listingMaxTokens'],
-                'temperature': policy['listingTemperature'], 'seed': seed}
+                'temperature': policy['listingTemperature'], 'topP': policy['topP'], 'seed': seed}
     return {'messages': probe['messages'], 'maxTokens': policy['translationMaxTokens'],
-            'temperature': policy['translationTemperature'], 'seed': seed}
+            'temperature': policy['translationTemperature'], 'topP': policy['topP'], 'seed': seed}
 
 
 def assess(probe, text):

@@ -2,7 +2,7 @@
 
 Инструмент для подготовки китайских объявлений о московской недвижимости: импорт, проверка фактов, редактируемые шаблоны, фотографии, оформление и экспорт. Генератор по правилам работает без ключа внешнего ИИ. Локальные текстовая и фото-модели подключаются отдельно.
 
-Текущий выпуск: [v27 — обучение локального ИИ, рекламная подача и измерения](docs/RELEASE-v27.md), ветка [`feature/rcn-v8-knowledge-photos`](https://github.com/leunch4off/redcn/tree/feature/rcn-v8-knowledge-photos). Результаты проверки — в [VERIFICATION.md](docs/VERIFICATION.md) и checks [PR #6](https://github.com/leunch4off/redcn/pull/6).
+Текущий выпуск: [v28 — продолжение обучения, точные суммы и roadmap](docs/TRAINING-v28.md), ветка [`feature/rcn-v8-knowledge-photos`](https://github.com/leunch4off/redcn/tree/feature/rcn-v8-knowledge-photos). Результаты проверки — в [VERIFICATION.md](docs/VERIFICATION.md) и checks [PR #6](https://github.com/leunch4off/redcn/pull/6).
 
 | Режим | Возможности |
 | --- | --- |
@@ -12,6 +12,10 @@
 | `npm run dev` | Превью интерфейса на порту 3000; серверные функции Mac здесь не запускаются |
 
 Push в рабочую ветку сохраняет исходники и запускает CI. Обновление `main`, GitHub Pages и публикация приватного Sites выполняются отдельно.
+
+## Развитие и обучение
+
+[План следующего этапа](docs/DEVELOPMENT-PLAN-v28.md) связывает обучение текста и фото с развитием импорта, мобильного приложения, экспорта и восстановления. В [roadmap](ROADMAP.md) 364 постоянных задачи: 307 выполнены, 57 ожидают приёмки. [Аудит фотообучения](docs/PHOTO-TRAINING-READINESS-v28.md) показывает, какой разметки не хватает перед следующим экспериментом.
 
 ## Возможности
 

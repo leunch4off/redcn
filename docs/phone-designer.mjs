@@ -1916,7 +1916,13 @@ const safeVariant=value=>{const n=Number(value);return Number.isFinite(n)?Math.a
 
 
 function rubles(value) { return Number(value).toLocaleString('zh-CN',{maximumFractionDigits:2}); }
-function wan(value, digits=2) { return Number((Number(value)/10000).toFixed(digits))+'W'; }
+function wan(value, digits=6) {
+  const amount=Number(value);
+  // One kopeck is 0.000001W. Use the same currency rounding as rubles(),
+  // including half-kopeck ties, before converting the displayed amount.
+  const rounded=Number.isFinite(amount)?Number(amount.toLocaleString('zh-CN',{useGrouping:false,maximumFractionDigits:2})):amount;
+  return Number((rounded/10000).toFixed(digits))+'W';
+}
 function kind(v) {
   if (v.layout==='studio') return 'Studio';
   if (v.layout==='euro2') return '一室一厅';
@@ -2016,7 +2022,7 @@ function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   let titles=[
     ['🔥莫斯科'+price+layout,area,main?metro+(main.time?' '+(modes[main.mode]||'')+main.time+'分钟':''):null].filter(Boolean).join('｜'),
     ['🏡莫斯科'+area+layout,featureSet.has('bed')?'独立大床':null,featureSet.has('ac')?'空调':null,price?'月租'+price:null].filter(Boolean).join('｜'),
-    sharingAllowed&&positive('price')?['🚨莫斯科'+price+'整套'+layout, '2人分摊参考：人均'+wan(Number(v.price)/2),area].filter(Boolean).join('｜'):
+    sharingAllowed&&positive('price')?['🚨莫斯科'+price+'整套'+layout, '2人分摊参考：人均'+wan(Math.round(Number(v.price)/2)),area].filter(Boolean).join('｜'):
       ['✈️莫斯科'+price+layout,metro?((main?.mode==='walk'&&Number(main.time)<=10)?'近':'')+metro:null,'协助抵达登记'].filter(Boolean).join('｜'),
   ];
   const variation=safeVariant(v.titleVariant);
@@ -2101,7 +2107,7 @@ function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   section('conditions');
   if(sharingAllowed&&positive('price')){
     push('','💸 合租预算参考：');
-    for(const n of [2,4])push(n+'人：约'+wan(Number(v.price)/n)+'（'+rubles(Math.round(Number(v.price)/n))+'₽）/人/月');
+    for(const n of [2,4]){const share=Math.round(Number(v.price)/n);push(n+'人：约'+wan(share)+'（'+rubles(share)+'₽）/人/月');}
     push('👥 以上仅为租金分摊示例，不含其他费用；入住人数及合租安排需与房东确认。');
   }
   const utilities={included:'💡 租金包含各项费用。',meters:'💡 物业费已包含，仅水电按表计费。',extra:'💡 物业及水电等费用另付，具体金额请确认。'};

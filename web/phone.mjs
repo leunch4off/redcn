@@ -80,7 +80,7 @@ function phoneApplyRole(state){
  if(!owner){phoneArchiveUI?.destroy();phoneArchiveUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;}
  if(!edit){phoneDictionaryUI?.clear();phonePublicationReviewUI?.clear();phoneRoutesUI?.destroy();phoneRoutesUI=null;phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;phoneResetWriting();clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneState.job=null;phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');}
  ph('phoneRewriteAll')?.closest('section')?.classList.toggle('hidden',!edit);
- const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v27 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
+ const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v28 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
  if(!edit&&['import','watch','design'].includes(phoneState.view))phoneView('cards');
  if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
  return !!previous&&previous!==phoneState.role;

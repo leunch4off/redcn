@@ -22,7 +22,7 @@ from learning_scheduler import active_imports, model_resource, _read, _write
 from model_promotion import CASES, POLICY, REPORT_VERSION, capture_inputs, compare_rows, promote, record_evaluation
 from advertising_evaluation import active_rules, assess, prepare_probes, request_for
 from rental_heldout_quality import load_cases
-from text_model_contract import expected_parameters
+from text_model_contract import expected_parameters, sampling_parameters
 from text_quality import parse_card
 
 
@@ -101,7 +101,8 @@ def run(args):
                 begin = time.monotonic()
                 chunks, limited, final_item = [], False, None
                 stream = stream_generate(model, tokenizer, prompt=prompt, max_tokens=request['maxTokens'],
-                    sampler=make_sampler(temp=request['temperature']), prefill_step_size=256)
+                    sampler=make_sampler(**sampling_parameters(request['temperature'], top_p=request['topP'])),
+                    prefill_step_size=256)
                 try:
                     for item in stream:
                         final_item = item
@@ -116,7 +117,7 @@ def run(args):
                 output = ''.join(chunks)
                 row = {'id': probe['id'], 'caseId': probe['caseId'], 'task': probe['task'],
                        'status': 'incomplete' if limited else 'measured', 'seed': seed,
-                       'maxTokens': request['maxTokens'], 'temperature': request['temperature'],
+                       'maxTokens': request['maxTokens'], 'temperature': request['temperature'], 'topP': request['topP'],
                        'backend': 'mlx', 'fallback': False,
                        'text': output, 'seconds': time.monotonic()-begin, 'checks': assess(probe, output)}
                 rows.append(row)

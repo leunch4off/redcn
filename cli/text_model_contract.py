@@ -9,6 +9,7 @@ import math
 from pathlib import Path
 
 BASE_MODEL = 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
+INFERENCE_TOP_P = .9
 INFERENCE_MODELS = {
     (896,24,14,2): BASE_MODEL,
     (1536,28,12,2): 'mlx-community/Qwen2.5-1.5B-Instruct-4bit',
@@ -18,6 +19,15 @@ LORA = {'rank': 8, 'scale': 16.0, 'dropout': 0.0,
 LAYERS = 24
 EXPECTED_TRAINABLE = 540_672
 MAX_DATASET_BYTES = 8_000_000
+
+
+def sampling_parameters(temperature, *, top_p=INFERENCE_TOP_P):
+    """One sampler contract for the production worker and paired evaluator."""
+    if type(temperature) not in (int, float) or not 0 <= temperature <= 1.2:
+        raise ValueError('Invalid text sampling temperature')
+    if type(top_p) not in (int, float) or top_p != INFERENCE_TOP_P:
+        raise ValueError('Text evaluation must use the production top-p')
+    return {'temp': temperature, 'top_p': INFERENCE_TOP_P}
 
 
 def canonical(value):

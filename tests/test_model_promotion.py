@@ -15,7 +15,7 @@ from rental_heldout_quality import load_cases
 from advertising_evaluation import prepare_probes, request_for
 from advertising_styles import ADVERTISING_SYSTEM
 from local_content import advertising_messages
-from text_model_contract import EXPECTED_TRAINABLE, file_sha
+from text_model_contract import EXPECTED_TRAINABLE, INFERENCE_TOP_P, file_sha, sampling_parameters
 
 
 def fixture_rows(corpus, prepared=None):
@@ -33,6 +33,7 @@ def fixture_rows(corpus, prepared=None):
         rows.append({'id': probe['id'], 'caseId': probe['caseId'], 'task': probe['task'],
                      'status': 'measured', 'text': text, 'seconds': 1.2, 'seed': promotion.POLICY['seed']+index,
                      'backend': 'mlx', 'fallback': False,
+                     'topP': promotion.POLICY['topP'],
                      'maxTokens': promotion.POLICY['listingMaxTokens' if probe['task'] == 'listing' else 'translationMaxTokens'],
                      'temperature': promotion.POLICY['listingTemperature' if probe['task'] == 'listing' else 'translationTemperature']})
     return rows
@@ -119,10 +120,24 @@ class PromotionTests(unittest.TestCase):
             self.assertEqual(request['messages'][0]['content'], ADVERTISING_SYSTEM)
             self.assertEqual(request['maxTokens'], 768)
             self.assertEqual(request['temperature'], .75)
+            self.assertEqual(request['topP'], INFERENCE_TOP_P)
+
+    def test_all_probes_bind_the_actual_production_sampling_contract(self):
+        for probe in self.prepared:
+            request = request_for(probe, [], 42, promotion.POLICY)
+            self.assertEqual(sampling_parameters(request['temperature'], top_p=request['topP']),
+                {'temp': request['temperature'], 'top_p': .9})
+        for value in (None, True, 0, .8, 1, float('nan')):
+            with self.assertRaises(ValueError):
+                sampling_parameters(.75, top_p=value)
+        rows = copy.deepcopy(self.rows)
+        for row in rows:
+            row.pop('topP')
+        self.assertFalse(promotion.compare_rows(self.corpus, self.baseline, rows)['accepted'])
 
     def test_fallback_or_legacy_inference_parameters_never_count_as_measured_model_probes(self):
         for changes in ({'fallback': True}, {'backend': 'grounded-advertising'},
-                        {'maxTokens': 512}, {'temperature': .35}):
+                        {'maxTokens': 512}, {'temperature': .35}, {'topP': 1}, {'topP': None}):
             rows = copy.deepcopy(self.rows)
             rows[2].update(changes)
             self.assertFalse(promotion.compare_rows(self.corpus, self.baseline, rows)['accepted'])

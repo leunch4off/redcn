@@ -14,7 +14,8 @@ import time
 
 from ai_telemetry import read_progress, sanitize_ai, write_progress
 from job_progress import emit
-from text_model_contract import BASE_MODEL, EXPECTED_TRAINABLE, expected_parameters, inference_model, file_sha
+from text_model_contract import (BASE_MODEL, EXPECTED_TRAINABLE, expected_parameters,
+                                inference_model, file_sha, sampling_parameters)
 
 MAX_INPUT = 40_000
 MAX_OUTPUT = 100_000
@@ -243,7 +244,7 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
 
     parts = []
     for response in stream_generate(model, tokenizer, prompt=prompt, max_tokens=request['maxTokens'],
-            sampler=make_sampler(temp=request['temperature'], top_p=.9), prompt_progress_callback=prefill):
+            sampler=make_sampler(**sampling_parameters(request['temperature'])), prompt_progress_callback=prefill):
         parts.append(response.text)
         measured = {'generatedTokens': response.generation_tokens,
             'tokensPerSecond': response.generation_tps, 'promptTokens': response.prompt_tokens,

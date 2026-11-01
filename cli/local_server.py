@@ -128,7 +128,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v27', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v28', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}

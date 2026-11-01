@@ -14,7 +14,7 @@ import time
 
 from rental_heldout_quality import check_training_disjoint, load_cases, variation_summary
 from advertising_evaluation import active_rules, assess, basis, prepare_probes
-from text_model_contract import EXPECTED_TRAINABLE, content_sha, file_sha, load_dataset
+from text_model_contract import EXPECTED_TRAINABLE, INFERENCE_TOP_P, content_sha, file_sha, load_dataset
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = ROOT/'data/quality/rental-heldout-v26.json'
@@ -26,6 +26,7 @@ REPORT_VERSION = 2
 POLICY = {'name': 'paired-independent-advertising-v2', 'seed': 20261102,
           'listingMaxTokens': 768, 'translationMaxTokens': 512,
           'listingTemperature': .75, 'translationTemperature': 0,
+          'topP': INFERENCE_TOP_P,
           'probeSeconds': 55, 'maximumAgeSeconds': 86400,
           'requiresEveryCandidateProbe': True, 'requiresStrictImprovement': True,
           'requiresThreeDistinctVariants': True, 'fallbackAllowed': False,
@@ -166,6 +167,7 @@ def compare_rows(corpus, baseline, candidate, *, prepared=None):
                     or row.get('backend') != 'mlx' or row.get('fallback') is not False
                     or row.get('maxTokens') != POLICY['listingMaxTokens' if probe['task'] == 'listing' else 'translationMaxTokens']
                     or row.get('temperature') != POLICY['listingTemperature' if probe['task'] == 'listing' else 'translationTemperature']
+                    or row.get('topP') != POLICY['topP']
                     or not isinstance(row.get('text'), str) or not 1 <= len(row['text']) <= 20_000
                     or type(row.get('seconds')) not in (float, int)
                     or not math.isfinite(row['seconds']) or not 0 <= row['seconds'] <= POLICY['probeSeconds']+1):
