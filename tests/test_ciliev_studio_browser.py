@@ -194,6 +194,9 @@ class CilievStudioAcceptance(unittest.TestCase):
         self.page.evaluate("window.studioRace.map('A')")
         self.page.wait_for_function('window.studioRace.results.A===true')
         self.assertIn('9 фото',self.page.locator('#presentationStatus').inner_text())
+        # HTML is parsed only when the operator opens its preview details.
+        self.page.locator('#presentationHtmlPreview > summary').click()
+        self.page.wait_for_function("document.getElementById('presentationPreview').srcdoc.includes(window.studioRace.mapImages.A)")
         self.assertTrue(self.page.evaluate("document.getElementById('presentationPreview').srcdoc.includes(window.studioRace.mapImages.A)"),'The delayed map raster must be embedded')
         self.page.evaluate("window.studioRace.start('B')")
         self.page.wait_for_function('!!window.studioRace.photos.B')

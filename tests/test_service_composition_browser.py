@@ -38,6 +38,7 @@ class ServiceCompositionBrowserAcceptance(unittest.TestCase):
         self.page.locator('#phoneDesignCard').click()
         self.page.locator('#designCanvasEditor').wait_for()
         self.page.wait_for_function("document.getElementById('presentationStatus').textContent.includes('2 фото')")
+        self.page.locator('#presentationHtmlPreview > summary').click()
         self.page.wait_for_function("document.getElementById('presentationPreview').srcdoc.includes('免费接送到入住地点')")
         self.page.locator('#phoneTabs [data-phone-view="cards"]').click()
         self.page.locator('#phoneCards .listing-card').first.click()
