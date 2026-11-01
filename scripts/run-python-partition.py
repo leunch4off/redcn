@@ -1,6 +1,7 @@
 """Run a deterministic module partition without dropping any discovered tests."""
 import argparse
 from collections import Counter
+import faulthandler
 import hashlib
 from pathlib import Path
 import re
@@ -38,8 +39,22 @@ def main():
     selected=groups[args.part]
     if not selected:raise RuntimeError('Empty test partition')
     print('Running partition',args.part+1,'of',args.parts,flush=True)
-    result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(selected))
-    missing_browser=[reason for _,reason in result.skipped if re.search(r'Playwright|(?:Optional|unavailable).{0,30}Chrome|Chrome.{0,30}(?:unavailable|acceptance)',reason,re.I)]
+    # Preserve a stack trace if an acceptance fixture stalls in a worker or
+    # server shutdown. The trace is diagnostic only: no test is skipped or
+    # shortened, and the workflow still owns the total execution deadline.
+    faulthandler.dump_traceback_later(120,repeat=True)
+    try:
+        result=unittest.TextTestRunner(verbosity=2).run(unittest.TestSuite(selected))
+    finally:
+        faulthandler.cancel_dump_traceback_later()
+    mac_pdf='test_card_assets.CardAssetTests.test_real_mac_chrome_pdf_from_static_unicode_html_and_embedded_photo'
+    missing_browser=[]
+    for case,reason in result.skipped:
+        if case.id()==mac_pdf and sys.platform!='darwin':
+            print('Expected platform-only skip:',case.id(),flush=True)
+            continue
+        if re.search(r'Playwright|(?:Optional|unavailable).{0,30}Chrome|Chrome.{0,30}(?:unavailable|acceptance)',reason,re.I):
+            missing_browser.append(reason)
     if missing_browser:print('Installed browser acceptance was skipped:',missing_browser,file=sys.stderr)
     return 0 if result.wasSuccessful() and not missing_browser else 1
 
