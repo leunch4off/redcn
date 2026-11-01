@@ -1,12 +1,22 @@
 """Create/save, dictionary replacement, undo and saved-card restore in Chrome."""
 import json
+import unittest
 import test_twenty_editor_browser as fixture
 
 
-class RequiredEditorRegression(fixture.TwentyEditorBrowserAcceptance):
+class RequiredEditorRegression(unittest.TestCase):
+    setUpClass = classmethod(fixture.TwentyEditorBrowserAcceptance.setUpClass.__func__)
+    tearDownClass = classmethod(fixture.TwentyEditorBrowserAcceptance.tearDownClass.__func__)
+    setUp = fixture.TwentyEditorBrowserAcceptance.setUp
+    tearDown = fixture.TwentyEditorBrowserAcceptance.tearDown
+    seed = fixture.TwentyEditorBrowserAcceptance.seed
+    fields = fixture.TwentyEditorBrowserAcceptance.fields
+
     def test_create_save_replace_and_restore(self):
         self.seed()
+        self.page.locator('[data-tab="history"]').click()
         self.page.locator('#captureSnapshots').uncheck()
+        self.page.locator('[data-tab="editor"]').click()
         self.page.locator('#name').fill('CI fixture apartment')
         self.page.locator('#save').click()
         self.page.wait_for_function("JSON.parse(localStorage.getItem('most-objects')||'[]').length===1")
