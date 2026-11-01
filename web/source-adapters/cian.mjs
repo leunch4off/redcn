@@ -12,7 +12,7 @@ const cianTravelTime=value=>typeof value==='number'||typeof value==='string'?/^(
 export function readCianHtml(input) {
   if(typeof input!=='string'||input.length>8_000_000)throw Error('HTML должен быть текстом размером до 8 МБ');
   const at=input.search(/<!doctype\s+html|<html\b/i),html=at>=0?input.slice(at):input;
-  const records=[],ld=[],offers=[],images=[],stack=[],seen=new Set();let title='';
+  const records=[],ld=[],offers=[],images=[],galleryImages=[],stack=[],seen=new Set();let title='';
   for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)){
     const code=match[2];
     if(/application\/ld\+json/i.test(match[1])){try{ld.push(JSON.parse(code));}catch{}}
@@ -31,14 +31,23 @@ export function readCianHtml(input) {
     for(const a of value.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g))attrs[a[1].toLowerCase()]=sourceDecode(a[2]??a[3]??a[4]);
     let name=attrs['data-name']||'';if(attrs.id==='description')name='Description';if(tag==='title')name='title';if(tag==='h1'&&!name)name='OfferTitle';
     const excluded=stack.some(n=>n.excluded)||/similar|recommend/i.test((attrs['data-name']||'')+' '+(attrs['data-marker']||''));
+    const gallery=!excluded&&(stack.some(n=>n.gallery)||['OfferGallery','Gallery'].includes(name));
     if(!excluded)for(const node of stack)if(node.name==='UndergroundItem'){
       if(tag==='a'&&attrs.href&&!node.href)node.href=attrs.href;
       const icon=(attrs['aria-label']||'')+' '+(attrs.title||'')+' '+(attrs['data-icon-name']||'');
       if(/пешком|walk/i.test(icon))node.mode='walk';else if(/автобус|общественн|transport|bus/i.test(icon))node.mode='public';else if(/автомобил|машине|bycar/i.test(icon))node.mode='car';
     }
     if(tag==='meta'&&/^(og:image|twitter:image)$/i.test(attrs.property||attrs.name||''))images.push(attrs.content);
+    // A scoped gallery is a real fallback when the offer JSON is absent or its
+    // shape changes. One OG/share image must not silently replace 19 gallery
+    // photos. Prefer the largest declared candidate for each image node.
+    if(gallery&&['img','source','a'].includes(tag)&&attrs['data-is-layout']!=='true'){
+      const srcset=(attrs['data-srcset']||attrs.srcset||'').split(',').map(part=>{const [url,size='0']=part.trim().split(/\s+/);return {url,weight:parseFloat(size)||0};}).sort((a,b)=>b.weight-a.weight);
+      const candidates=tag==='a'?[/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(attrs.href||'')?attrs.href:null]:[attrs['data-original'],attrs['data-src'],...srcset.map(row=>row.url),attrs.src];
+      const candidate=candidates.map(value=>photoSourceUrl(value)).find(Boolean);if(candidate)galleryImages.push(candidate);
+    }
     if(tag==='br'||/^(div|p|li|h[1-6]|span|dt|dd)$/.test(tag))for(const node of stack)if(node.capture)node.parts.push('\n');
-    if(!sourceVoid.has(tag)&&!value.endsWith('/>'))stack.push({tag,name,excluded,capture:!excluded&&(SOURCE_NAMES.has(name)||name==='title'),parts:[],length:0,href:''});
+    if(!sourceVoid.has(tag)&&!value.endsWith('/>'))stack.push({tag,name,excluded,gallery,capture:!excluded&&(SOURCE_NAMES.has(name)||name==='title'),parts:[],length:0,href:''});
   }
   for(const node of stack.reverse())finish(node);
   const first=name=>records.find(r=>r.name===name)?.text||'';
@@ -59,7 +68,7 @@ export function readCianHtml(input) {
   const photoItems=mediaItems.filter(p=>!p.isLayout&&!p.isCianLayout),layouts=mediaItems.filter(p=>p.isLayout||p.isCianLayout);
   if(!photoItems.length)for(const item of ld){if(Array.isArray(item?.image))images.push(...item.image);else if(typeof item?.image==='string')images.push(item.image);}
   const layoutUrls=new Set(layouts.flatMap(p=>Object.values(p.variants)));
-  const safeImages=photoItems.length?photoItems.map(p=>p.url):photoSources(images).filter(url=>!layoutUrls.has(url));
+  const safeImages=photoItems.length?photoItems.map(p=>p.url):photoSources(galleryImages.length?galleryImages:images).filter(url=>!layoutUrls.has(url));
   const url=ld.find(x=>typeof x?.offers?.url==='string')?.offers.url||(offer?.cianId?'https://www.cian.ru/rent/flat/'+offer.cianId+'/':'');
   // Keep a strict allowlist: no phones, account IDs, tokens, tracking or site config.
   const selected={};if(offer)for(const key of ['cianId','description','geo','isByHomeowner','isByAgent','totalArea','livingArea','kitchenArea','roomsCount','bedroomsCount','livingRoomsCount','layoutType','floorNumber','building','loggiasCount','balconiesCount','windowsViewType','separateWcsCount','combinedWcsCount','repairType','bargainTerms','hasFridge','hasDishwasher','hasWasher','hasFurniture','hasKitchenFurniture','hasConditioner','hasTv','hasInternet','hasBathtub','hasShower','hasLift','creationDate','publicationDate','editDate','timezone'])if(offer[key]!==undefined)selected[key]=offer[key];

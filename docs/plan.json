@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 20,
-  "total": 330,
+  "version": 21,
+  "total": 334,
   "tasks": [
     {
       "id": "RCN-001",
@@ -5464,6 +5464,35 @@
         "docs/SOURCE-RESEARCH-2026-11-01.md — наблюдаемые варианты и ограничения качества превью",
         "cli/photo_store.py; tests/test_photo_provenance.py — происхождение и сохранность уже покрыты частично; единый выбор для всех форматов требует отдельной приёмки"
       ]
+    }
+    ,{
+      "id": "RCN-331",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Приёмка двуязычного текстового адаптера",
+      "acceptance": "Измерить качество RU→ZH и ZH→RU на независимых размеченных объявлениях: мебель, отрицания, цена, единицы, метро и условия. Проверить оригинальность нескольких подач одной квартиры и отсутствие новых утверждений. Сравнить базу и адаптер; снижение loss или три короткие пробы не означают редакционную приёмку. До приёмки доступны только проверяемые черновики.",
+      "priority": "P0", "depends_on": ["RCN-332"], "status": "planned",
+      "evidence": ["cli/local_text_model.py", "scripts/train-local-text-model.py", "scripts/evaluate-local-text-model.py", "docs/LOCAL-LEARNING-v24.md"]
+    },{
+      "id": "RCN-332",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Локальная память правок с проверкой и контрольными точками",
+      "acceptance": "Правки текста, словаря, переводы, ручная мебель и наблюдения тегов сохраняются в частной памяти Mac. Неутверждённое не обучает веса; исправления заменяют принятый вариант только после проверки. Группы одной квартиры не пересекают train/validation. Фоновое обучение ограничено, уступает импорту и запросам, сохраняет checkpoint и завершается вместе с сервером. Приёмка включает контрактные тесты и экран 393×852.",
+      "priority": "P0", "depends_on": [], "status": "done",
+      "evidence": ["cli/learning_memory.py; cli/learning_scheduler.py; cli/learning_service.py", "web/learning-studio.mjs", "tests/test_learning_memory.py; tests/test_learning_scheduler.py; tests/test_learning_service.py", "tests/test_learning_studio_browser.py — три проверки в Chrome на Mac, 393×852", "docs/LOCAL-LEARNING-v24.md"]
+    },{
+      "id": "RCN-333",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Одна ошибка фото не сокращает весь альбом",
+      "acceptance": "На регрессионном альбоме из 19 фото список fields из одной обложки не перекрывает listing.images. Ошибка скачивания или обрезки отдельного кадра сохраняет остальные оригиналы; ZIP включает необрезанные оригиналы с причинами. Повтор использует сохранённые файлы, ошибки и численность видны на телефоне. Контрактная проверка не устанавливает причину конкретного живого прогона.",
+      "priority": "P0", "depends_on": [], "status": "done",
+      "evidence": ["cli/phone_relay.py; cli/redcn.py; web/source-adapters/cian.mjs", "web/media-core.mjs; web/photo-ui.mjs; web/photo-batch-status.mjs", "tests/test_photo_batch_reliability.py; tests/photo-export-fallback.test.mjs; tests/photo-batch-status.test.mjs"]
+    },{
+      "id": "RCN-334",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Проверка рекомендаций тегов по накопленной статистике",
+      "acceptance": "Накопить датированные наблюдения по реальным публикациям, отличать просмотры поста от популярности и эффекта отдельного тега. Сравнить рекомендации с контролем по сопоставимым объектам; малое число примеров и приблизительные значения остаются явно обозначенными. Подходящий тег выбирается по фактам квартиры раньше статистического ранжирования.",
+      "priority": "P1", "depends_on": ["RCN-332"], "status": "planned",
+      "evidence": ["cli/learning_memory.py — ручные наблюдения и ранжирование без утверждения причинности", "tests/test_learning_memory.py"]
     }
   ],
   "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",

@@ -174,6 +174,17 @@ def ollama_classify(image, model):
 
 
 def analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=None, deadline=None):
+    from learning_scheduler import model_resource, ModelBusy
+    try:
+        with model_resource(directory,kind='foreground',timeout=3):
+            return _analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline)
+    except ModelBusy:
+        return {'status':'unavailable','provider':'local','candidates':[],'autoApply':False,
+            'message':'Локальная модель занята. Повторите анализ фото через несколько секунд.',
+            'limitations':['Отсутствие результата не означает отсутствие предметов.']}
+
+
+def _analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=None, deadline=None):
     from photo_ai_settings import load_config
     if cancel is not None and cancel.is_set():raise ValueError('Анализ отменён')
     if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')

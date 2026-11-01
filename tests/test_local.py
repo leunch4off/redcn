@@ -138,7 +138,7 @@ class LocalServerTests(unittest.TestCase):
 
     def test_controller_identity_accepts_optional_release_but_rejects_mismatched_protocol(self):
         identity=self.request('/api/local/health',token=False)
-        self.assertEqual(identity['release'],'v23')
+        self.assertEqual(identity['release'],'v24')
         self.assertTrue(local_server.matching_server(self.directory,self.server.server_port,'chrome'))
         for metadata in ({key:value for key,value in identity.items() if key!='release'}, {**identity,'release':'future-compatible-release','optionalStatus':'ready'}, {**identity,'protocol':99}):
             with self.subTest(metadata=metadata),patch.object(local_server.urllib.request,'build_opener') as opener:

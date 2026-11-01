@@ -441,16 +441,21 @@ def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=Non
                 path.write_bytes(content)
             row={'url': url, 'path': str(path), 'sha256': digest}
             if crop or crop_bottom is not None:
-                import base64
-                import photo_store
-                media_dir=cache_dir or directory/'.redcn-media'
-                original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode(),**({'source':metadata[url]} if url in metadata else {}))
-                edited=photo_store.crop_photo(media_dir,original['id'],{'bottom':crop_bottom} if crop_bottom is not None else None)
-                row['crop']=edited
-                if edited.get('kind')=='crop':
-                    copy_path=directory/f'{index:02d}-crop-{edited["id"][:12]}.jpg';copy_path.write_bytes(photo_store.asset(media_dir,edited['id'])[0]);row['crop_path']=str(copy_path)
+                try:
+                    import base64
+                    import photo_store
+                    media_dir=cache_dir or directory/'.redcn-media'
+                    original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode(),**({'source':metadata[url]} if url in metadata else {}))
+                    edited=photo_store.crop_photo(media_dir,original['id'],{'bottom':crop_bottom} if crop_bottom is not None else None)
+                    row['crop']=edited
+                    if edited.get('kind')=='crop':
+                        copy_path=directory/f'{index:02d}-crop-{edited["id"][:12]}.jpg';copy_path.write_bytes(photo_store.asset(media_dir,edited['id'])[0]);row['crop_path']=str(copy_path)
+                except Exception as error:
+                    # The original has already been saved. A crop failure must
+                    # not replace its successful manifest entry with an error.
+                    row['crop']={'status':'review','autoStatus':'unavailable','message':str(error)[:300] or 'Оригинал сохранён; кадрирование недоступно','errorClass':type(error).__name__}
             results.append(row)
-        except (OSError, ValueError) as error:
+        except Exception as error:
             results.append({'url': url, 'error': str(error)})
     (directory / 'manifest.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
     return results

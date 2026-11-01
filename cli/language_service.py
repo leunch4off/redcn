@@ -112,6 +112,9 @@ def translate(directory, data):
     part = data.get('part', 'body')
     _part(part)
     profile = _profile(directory)
+    from learning_memory import LearningMemory
+    pairs = LearningMemory(directory).approved_glossary(text)
+    profile = {**profile, 'rules': {**profile.get('rules',{}), **{row['ru']:row['zh'] for row in pairs}}}
     started = time.monotonic()
     preview = node_language({'action': 'translate', 'text': text, 'part': part,
         'mode': 'draft', 'rules': profile.get('rules', {})})
@@ -324,7 +327,22 @@ def edit_text(directory, card_id, data, *, actor='Mac owner'):
     manual = [name for name in info.get('manualParts', []) if name in PARTS] if isinstance(info.get('manualParts'), list) else []
     info['manualParts'] = list(dict.fromkeys([*manual, part]))
     card['templateInfo'] = info
-    return _save(directory, card_id, original_payload, card, actor=actor)
+    saved = _save(directory, card_id, original_payload, card, actor=actor)
+    from learning_capture import capture_edit
+    group_id = card.get('fields',{}).get('editorIdentity') or card_id
+    try:
+        captured = capture_edit(directory, previous, card, group_id)
+    except (OSError, ValueError, redcn.sqlite3.Error):
+        captured = {'recorded':0,'skipped':1,'status':'unavailable',
+            'warning':'Карточка сохранена, но учебная память недоступна. Повторите запись примера позже.'}
+    if source and part in ('title', 'body'):
+        from learning_memory import LearningMemory
+        try:
+            LearningMemory(directory).record('translation', {'ru': source, 'zh': text},
+                source='user-edit', group_id=group_id)
+        except (OSError, ValueError, redcn.sqlite3.Error):
+            captured['skipped'] += 1
+    return {**saved, 'learningCapture': captured}
 
 
 def dispatch(directory, path, data=None, *, actor='Mac owner'):

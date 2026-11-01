@@ -9,6 +9,12 @@ export function photoSourceUrl(raw,base=''){
   }catch{return null;}
 }
 export function photoSources(values,base=''){return [...new Set((Array.isArray(values)?values:[]).map(v=>photoSourceUrl(v,base)).filter(Boolean))].slice(0,30);}
+export function listingPhotoSources(value={}){
+ const fields=value.fields||{},listing=value.listing||{};
+ return photoSources([...(Array.isArray(fields.photos)?fields.photos:[]),
+  ...(Array.isArray(listing.images)?listing.images:[]),
+  ...(Array.isArray(listing.photoItems)?listing.photoItems:[]).filter(row=>!row?.isLayout)]);
+}
 export function cropRectangle(width,height,margins={}){
   if(!Number.isInteger(width)||!Number.isInteger(height)||width<32||height<32||width*height>40_000_000)throw Error('Фото должно иметь размер от 32 px, до 40 мегапикселей');
   const result={left:0,top:0,right:0,bottom:0};
@@ -18,6 +24,13 @@ export function cropRectangle(width,height,margins={}){
   return {x,y,width:right-x,height:bottom-y};
 }
 export function photoFileName(index,mime,cropped=false){return String(index+1).padStart(2,'0')+(cropped?'-crop':'-original')+'.'+({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[mime]||'jpg');}
+export function photoExportAsset(item,prepared=false){
+ const useCrop=prepared&&!item.preferOriginal&&!!item.cropBlob;
+ const blob=useCrop?item.cropBlob:item.blob;
+ if(!blob)throw Error('Оригинал фотографии ещё не загружен');
+ return {blob,kind:useCrop?'crop':'original',crop:useCrop?item.cropMeta||null:null,
+  reason:useCrop?'prepared':item.preferOriginal?'original-selected':prepared?'original-fallback':'original-requested'};
+}
 const mediaCrcTable=Array.from({length:256},(_,n)=>{for(let i=0;i<8;i++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function mediaCrc(bytes){let c=0xffffffff;for(const b of bytes)c=mediaCrcTable[(c^b)&255]^(c>>>8);return(c^0xffffffff)>>>0;}
 export async function photoZip(files){

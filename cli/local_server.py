@@ -20,6 +20,7 @@ import redcn
 import photo_store
 import card_api
 import language_service
+import learning_service
 import http_delivery
 from fact_ledger import validate_result_fields, record_fact_revision
 from source_readiness import source_readiness
@@ -123,7 +124,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v23', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v24', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
@@ -133,7 +134,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         status=result.get('mediaStatus','pending')
         download_failed=processing.get('downloadFailed',0)
         failed=processing.get('failed',0)
-        skipped=processing.get('skipped',0)
+        skipped=processing.get('deferred',processing.get('skipped',0))
         warnings=[]
         inventory=result.get('photoInventory') or {}
         if inventory.get('state')=='partial':
@@ -235,6 +236,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if connection is not None:connection.close()
 
     def start_import(params, *, actor='Mac owner'):
+        from learning_scheduler import touch_foreground
+        touch_foreground(directory)
         if not isinstance(actor,str) or not actor.strip() or len(actor)>100:
             raise ValueError('У импорта должен быть проверенный автор до 100 знаков')
         params=dict(params)
@@ -273,6 +276,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         return {'id':selected,**job_status(selected)}
 
     def prepare_card(result_id,*,analyze=False):
+        from learning_scheduler import touch_foreground
+        touch_foreground(directory)
         from phone_relay import cache_photos
         result=read_result(directory,result_id)
         if not result or result.get('fields',{}).get('isDemo') is True:raise ValueError('Карточка не найдена')
@@ -362,6 +367,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     if document:self.respond(*document);return
                     document=language_service.dispatch(directory,path.removeprefix('/api/local/'))
                     if document:self.respond(*document);return
+                    document=learning_service.dispatch(directory,path.removeprefix('/api/local/'))
+                    if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/local/'),browser_channel=browser_channel)
                     if document:self.respond(*document);return
                 except (ValueError,TypeError,OSError) as error:
@@ -435,6 +442,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data)
                 if document:self.respond(*document);return
+                document=learning_service.dispatch(directory,relative,data)
+                if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,browser_channel=browser_channel)
                 if document:self.respond(*document);return
                 if path == '/api/local/photo':
@@ -495,6 +504,10 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
     from photo_ai_runtime import start_background
     start_background(directory)
+    from learning_scheduler import start_background as start_learning_background
+    def learning_busy():
+        with lock:return any(job['state']=='running' for job in jobs.values())
+    server.learning_scheduler=start_learning_background(directory,busy=learning_busy)
     server.daemon_threads = True
     server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card;server.latest_job=latest_job
     server.browser_channel=browser_channel
@@ -510,6 +523,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server.connection_diagnostics=ConnectionDiagnostics()
     close=server.server_close
     def close_all():
+        server.learning_scheduler.stop()
         workspace.close();server.connection_diagnostics.close();server.phone_relay.stop();close()
     server.server_close=close_all
     return server

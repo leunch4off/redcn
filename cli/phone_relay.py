@@ -244,7 +244,12 @@ def photo_source_items(result):
 def source_images(result):
     fields=result.get('fields',{}) if isinstance(result.get('fields'),dict) else {}
     listing=result.get('listing',{}) if isinstance(result.get('listing'),dict) else {}
-    values=fields.get('photos') or listing.get('images') or []
+    # A one-photo generated/editable field must not hide the source album. The
+    # explicit photoEdits.excluded list owns selection; photos is not an album
+    # completeness signal. Retain old source metadata when either list shrinks.
+    values=[]
+    for rows in (fields.get('photos'),listing.get('images'),list(photo_source_items(result))):
+        if isinstance(rows,list):values.extend(rows)
     edits=fields.get('photoEdits',{}) if isinstance(fields.get('photoEdits'),dict) else {}
     excluded=set(value for value in edits.get('excluded',[]) if isinstance(value,str))
     for url,item in photo_source_items(result).items():
@@ -271,8 +276,14 @@ def cache_photos(directory,result,report=None,cancel=None):
     if cancel and cancel.is_set():raise ValueError('Загрузка отменена')
     def load(url):
         if cancel and cancel.is_set():return {'sourceUrl':url,'error':'Загрузка отменена'}
-        try:return photo_store.load_photo(directory,url,source=sources[url]) if url in sources else photo_store.load_photo(directory,url)
-        except (OSError,ValueError,redcn.subprocess.SubprocessError) as error:return {'sourceUrl':url,'error':str(error)}
+        try:
+            saved=photo_store.load_photo(directory,url,source=sources[url]) if url in sources else photo_store.load_photo(directory,url)
+            return {**saved,'sourceUrl':url}
+        except Exception as error:
+            # A decoder, SQLite or crop provider failure belongs to this photo,
+            # never to the remaining album. KeyboardInterrupt/SystemExit still
+            # propagate; cooperative cancellation is checked after downloads.
+            return {'sourceUrl':url,'error':str(error)[:300] or 'Не удалось сохранить оригинал','errorClass':type(error).__name__}
     emit(report,'Сохраняем фотографии на Mac: '+str(len(urls)),stage='photos',completed=0,total=len(urls))
     by_url={}
     with ThreadPoolExecutor(max_workers=3) as pool:
@@ -284,15 +295,13 @@ def cache_photos(directory,result,report=None,cancel=None):
     result['media']=media;result['mediaStatus']='partial' if any(row.get('error') for row in media) else 'ready'
     if cancel and cancel.is_set():
         result['mediaStatus']='cancelled';raise ValueError('Загрузка отменена')
-    processing={'total':len(urls),'checked':0,'cropped':0,'manual':0,'review':0,'failed':0,'skipped':0,'downloadFailed':sum(bool(row.get('error')) for row in media)}
+    processing={'total':len(urls),'downloaded':sum(bool(row.get('id')) and not row.get('error') for row in media),'checked':0,'cropped':0,'unchanged':0,'manual':0,'review':0,'failed':0,'skipped':0,'deferred':0,'downloadFailed':sum(bool(row.get('error')) for row in media)}
     end=time.monotonic()+90
     emit(report,'Проверяем края фотографий и готовим безопасные копии',stage='crop',completed=0,total=len(media))
     for index,row in enumerate(media,1):
         if cancel and cancel.is_set():
             result['mediaStatus']='cancelled';raise ValueError('Загрузка отменена')
-        if row.get('error') or not row.get('id'):
-            processing['skipped']+=1
-        else:
+        if not row.get('error') and row.get('id'):
             emit(report,'Проверяем фото '+str(index)+' из '+str(len(media))+': метка у края, затем повторный OCR',stage='crop',completed=index-1,total=len(media))
             try:
                 url=urls[index-1]
@@ -303,17 +312,38 @@ def cache_photos(directory,result,report=None,cancel=None):
                     decision['autoStatus']='manual' if decision.get('kind')=='crop' else 'unchanged'
                 else:decision=photo_store.auto_crop_photo(directory,row['id'],cancel=cancel,deadline=end)
                 state=decision.get('autoStatus','unavailable')
-                row['autoCrop']={key:decision[key] for key in ('autoStatus','cached','message','reason','id') if key in decision}
+                row['autoCrop']={key:decision[key] for key in ('autoStatus','cached','message','reason','id','errorClass') if key in decision}
                 if state in ('cropped','unchanged','review','manual'):processing['checked']+=1
-                if state in ('cropped','review','manual','skipped'):processing[state]+=1
+                if state in ('cropped','unchanged','review','manual','skipped'):processing[state]+=1
                 elif state=='unavailable':processing['failed']+=1
-            except (OSError,ValueError,redcn.subprocess.SubprocessError) as error:
+                if state=='skipped' and decision.get('reason')=='time-budget':processing['deferred']+=1
+            except Exception as error:
                 if cancel and cancel.is_set():
                     result['mediaStatus']='cancelled';raise ValueError('Загрузка отменена') from error
-                processing['failed']+=1;row['autoCrop']={'autoStatus':'unavailable','message':'Оригинал сохранён; автоматическая проверка сейчас недоступна.'}
+                processing['failed']+=1;row['autoCrop']={'autoStatus':'unavailable','message':'Оригинал сохранён; автоматическая проверка сейчас недоступна. '+(str(error)[:200] or type(error).__name__),'errorClass':type(error).__name__}
         emit(report,'Фотографии подготовлены: '+str(index)+' из '+str(len(media))+'; безопасно обрезано '+str(processing['cropped']),stage='crop',completed=index,total=len(media))
     result['photoProcessing']=processing
+    result['mediaFailures']=media_failures(result)
+    emit(report,'Оригиналы сохранены: '+str(processing['downloaded'])+' из '+str(len(urls))+'. Ошибок загрузки: '+str(processing['downloadFailed'])+'; ошибок кадрирования: '+str(processing['failed'])+'.',stage='crop',completed=len(media),total=len(media))
     return result
+
+
+def media_failures(result):
+    """Bounded per-photo status, derived without reading private source pages."""
+    urls=source_images(result);active=set(urls);output=[]
+    rows=result.get('media',[])
+    for row in rows if isinstance(rows,list) else []:
+        if not isinstance(row,dict) or row.get('sourceUrl') not in active:continue
+        crop=row.get('autoCrop',{}) if isinstance(row.get('autoCrop'),dict) else {}
+        message=row.get('error') or (crop.get('message') if crop.get('autoStatus')=='unavailable' else '')
+        if not message and crop.get('autoStatus')=='unavailable':message='Проверка кадрирования недоступна. Оригинал сохранён.'
+        if not message and crop.get('autoStatus')=='skipped' and crop.get('reason')=='time-budget':message='Проверка кадрирования отложена: исчерпан срок обработки. Оригинал сохранён.'
+        if not message:continue
+        output.append({'index':urls.index(row['sourceUrl'])+1,'sourceUrl':row['sourceUrl'],
+            'stage':'download' if row.get('error') else 'crop','originalSaved':bool(row.get('id')),
+            'errorClass':str(row.get('errorClass') or crop.get('errorClass') or '')[:60],
+            'message':str(message)[:300]})
+    return output[:30]
 
 
 def original_metadata(directory):
@@ -405,7 +435,8 @@ def public_card(directory,result_id):
     db=redcn.open_cache(directory)
     try:updated=db.execute('SELECT updated FROM results WHERE id=?',(result_id,)).fetchone()[0]
     finally:db.close()
-    raw={**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),'media':card_media(directory,result)}
+    raw={**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),
+        'mediaFailures':media_failures(result),'media':card_media(directory,result)}
     try:
         projected=client_card(raw)
     except PublicationReviewRequired as error:
@@ -428,16 +459,20 @@ def card_zip(directory,result_id,variant='original'):
     card=public_card(directory,result_id)
     if not card:raise ValueError('Карточка не найдена')
     if variant not in ('original','crop','prepared'):raise ValueError('Неверный вариант фотографий')
-    stream=io.BytesIO();total=0;manifest=[]
+    stream=io.BytesIO();total=0;manifest=[];saved=0
     with zipfile.ZipFile(stream,'w',compression=zipfile.ZIP_STORED) as archive:
         for n,item in enumerate(card['media'],1):
             if variant=='crop' and not item.get('crop'):continue
             selected=item.get('crop',item) if variant=='prepared' else item['crop'] if variant=='crop' else item
-            data,mime,_=photo_store.asset(directory,selected['id']);total+=len(data)
+            try:data,mime,_=photo_store.asset(directory,selected['id'])
+            except (OSError,ValueError) as error:
+                manifest.append({'sourceUrl':item.get('sourceUrl'),'kind':selected.get('kind','original'),'error':str(error)[:300] or 'Сохранённый файл недоступен','stage':'export'})
+                continue
+            total+=len(data)
             if total>MAX_ZIP_BYTES:raise ValueError('Пакет больше 120 МБ. Скачайте фотографии по отдельности.')
             extension={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[mime];name=f'{n:02}.{extension}'
-            archive.writestr(name,data);manifest.append({'name':name,'sourceUrl':item.get('sourceUrl'),'kind':selected.get('kind','original')})
-        if not manifest:raise ValueError('Проверенные кадрированные копии ещё не готовы' if variant=='crop' else 'Фотографии ещё не сохранены на Mac')
+            archive.writestr(name,data);saved+=1;manifest.append({'name':name,'sourceUrl':item.get('sourceUrl'),'kind':selected.get('kind','original')})
+        if not saved:raise ValueError('Проверенные кадрированные копии ещё не готовы' if variant=='crop' else 'Фотографии ещё не сохранены на Mac')
         archive.writestr('post.txt','\n\n'.join([*(card.get('titles') or [])[:1],card.get('body',''),card.get('tags','')]))
         archive.writestr('manifest.json',json.dumps(manifest,ensure_ascii=False,indent=2))
     return stream.getvalue()
@@ -521,6 +556,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     if document:self.respond(*document);return
                     document=language_service.dispatch(directory,path.removeprefix('/api/phone/'),actor=self.actor)
                     if document:self.respond(*document);return
+                    import learning_service
+                    document=learning_service.dispatch(directory,path.removeprefix('/api/phone/'),actor=self.actor)
+                    if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/phone/'),namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                     if document:
                         if self.role=='editor' and re.fullmatch(r'dossier-options/[a-f0-9]{32}',relative):
@@ -574,7 +612,7 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 size=int(self.headers.get('Content-Length','0'))
                 import card_api
                 import language_service
-                language_route=relative=='translate' or re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)',relative)
+                language_route=relative in ('translate','learning') or re.fullmatch(r'cards/[a-f0-9]{32}/(?:rewrite|edit-text)',relative)
                 limit=card_api.request_limit(relative) or (256_000 if language_route else 100_000)
                 if not 1<=size<=limit:raise ValueError('Превышен размер запроса')
                 data=json.loads(self.rfile.read(size))
@@ -590,6 +628,9 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 document=workspace(relative,data,namespace='phone',actor=self.actor) if callable(workspace) else None
                 if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data,actor=self.actor)
+                if document:self.respond(*document);return
+                import learning_service
+                document=learning_service.dispatch(directory,relative,data,actor=self.actor)
                 if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,namespace='phone',browser_channel=getattr(controller,'browser_channel','chrome'))
                 if document:self.respond(*document);return
