@@ -128,12 +128,22 @@ class LocalServerTests(unittest.TestCase):
             self.assertEqual(caught.exception.code,403)
 
     def test_repeat_start_reuses_running_server_and_saved_link(self):
-        with patch.object(local_server.webbrowser,'open') as opened,patch.object(local_server,'create_server',wraps=local_server.create_server) as create:
+        with patch.object(local_server.webbrowser,'open') as opened,patch.object(local_server,'create_server',wraps=local_server.create_server) as create,patch.object(local_server.ThreadingHTTPServer,'serve_forever',side_effect=AssertionError('A repeated start must not serve a second controller')) as duplicate:
             self.assertEqual(local_server.serve(self.directory,self.server.server_port,result_id='a'*32),0)
             opened.assert_called_once_with(self.base+'/listing/'+'a'*32)
             self.assertEqual(create.call_count,1)
+            duplicate.assert_not_called()
         self.assertFalse(local_server.matching_server(self.directory/'different-data',self.server.server_port,'chrome'))
         self.assertFalse(local_server.matching_server(self.directory,self.server.server_port,'chromium'))
+
+    def test_controller_identity_accepts_optional_release_but_rejects_mismatched_protocol(self):
+        identity=self.request('/api/local/health',token=False)
+        self.assertEqual(identity['release'],'v23')
+        self.assertTrue(local_server.matching_server(self.directory,self.server.server_port,'chrome'))
+        for metadata in ({key:value for key,value in identity.items() if key!='release'}, {**identity,'release':'future-compatible-release','optionalStatus':'ready'}, {**identity,'protocol':99}):
+            with self.subTest(metadata=metadata),patch.object(local_server.urllib.request,'build_opener') as opener:
+                opener.return_value.open.return_value.__enter__.return_value.read.return_value=json.dumps(metadata).encode()
+                self.assertEqual(local_server.matching_server(self.directory,self.server.server_port,'chrome'),metadata['protocol']==identity['protocol'])
 
     def test_foreign_listener_is_kept_and_next_port_is_used(self):
         with socket.socket() as occupied:

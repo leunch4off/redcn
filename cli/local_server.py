@@ -519,7 +519,11 @@ def matching_server(directory, port, browser_channel):
     try:
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
         with opener.open(f'http://127.0.0.1:{port}/api/local/health',timeout=1) as response:
-            return json.loads(response.read(4097)) == expected
+            observed=json.loads(response.read(4097))
+            # Optional health metadata (for example the visible release) does
+            # not change controller ownership. Starting another controller for
+            # the same workspace could recover active jobs in the first one.
+            return isinstance(observed,dict) and all(observed.get(key)==value for key,value in expected.items())
     except (OSError,ValueError): return False
 
 
