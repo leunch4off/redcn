@@ -107,6 +107,9 @@ class DictionaryReviewBrowserTests(unittest.TestCase):
           window.oldDictionaryRefresh=window.dictionaryResetUI.refresh();
         }''')
         self.page.wait_for_function("typeof window.releaseOldDictionary==='function'")
+        # Show the controls through their real details disclosure. The held
+        # refresh is already busy, so the toggle cannot issue a second read.
+        self.page.locator('#dictionaryResetMount .dictionary-review > summary').first.click()
         self.assertTrue(self.page.locator('#dictionaryResetMount').get_by_role('button',name='Обновить общий словарь',exact=True).is_disabled())
         self.page.evaluate('window.dictionaryResetUI.clear()')
         self.assertTrue(self.page.locator('#dictionaryResetMount').get_by_role('button',name='Обновить общий словарь',exact=True).is_enabled())

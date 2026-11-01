@@ -1481,7 +1481,7 @@ function sourceFactEvidence(fields={},options={}){
  const observedAt=options.observedAt||fields.sourceObservedAt||null;
  for(const key of FACT_TRACKED_FIELDS){
   if(fields[key]===undefined)continue;
-  const witnesses=rows.filter(row=>row&&row.field===key),matching=witnesses.find(row=>factEqual(row.value,fields[key],key));
+  const witnesses=rows.filter(row=>row&&row.field===key),matching=witnesses.find(row=>factEqual(row.value,fields[key],key)&&rentalWitnessComparable(row,{currency:fields.priceCurrency,period:fields.pricePeriod},key));
   const confirmation=confirmed[key]&&factEqual(confirmed[key].value,fields[key],key)?confirmed[key]:null;
   output.push({field:key,value:factClone(factStoredValue(fields[key],key)),origin:matching?'source':'manual',source:matching?String(matching.source||'Источник').slice(0,200):'Ручной ввод',sourceUrl:matching?factSourceUrl(matching.sourceUrl||fields.url):'',
    text:matching?String(matching.text??'').slice(0,700):'',observedAt:typeof observedAt==='string'?observedAt:null,checkedAt:confirmation?.at||null,checkedBy:confirmation?.actor||null});
@@ -1501,9 +1501,11 @@ function findFactConflicts(fields={}){
  const add=row=>{const key=JSON.stringify([row.field,row.kind,row.values]);if(!conflicts.some(value=>value.signature===key))conflicts.push({...row,signature:key});};
  for(const key of FACT_TRACKED_FIELDS){
   const witnesses=rows.filter(row=>row&&row.field===key&&row.value!==undefined),values=[];
-  for(const row of witnesses)if(!values.some(value=>factEqual(value.value,row.value,key)))values.push({value:factClone(row.value),source:String(row.source||'Источник').slice(0,200),text:String(row.text??'').slice(0,700)});
-  if(values.length>1)add({field:key,kind:'sources',message:'Источники расходятся',values});
-  if(fields[key]!==undefined&&fields[key]!==''&&fields[key]!==null&&values.length&&!values.some(value=>factEqual(value.value,fields[key],key)))add({field:key,kind:'manual',message:'Ручное значение отличается от источника',values:[...values,{value:factClone(fields[key]),source:'Текущее поле',text:''}]});
+  for(const row of witnesses)if(!values.some(value=>factEqual(value.value,row.value,key)&&value.currency===row.currency&&value.period===row.period))values.push({value:factClone(row.value),source:String(row.source||'Источник').slice(0,200),text:String(row.text??'').slice(0,700),...(row.currency?{currency:row.currency}:{}),...(row.period?{period:row.period}:{})});
+  const disagreements=values.filter(row=>values.some(other=>rentalWitnessComparable(row,other,key)&&!factEqual(row.value,other.value,key)));
+  if(disagreements.length>1)add({field:key,kind:'sources',message:'Источники расходятся',values:disagreements});
+  const comparable=values.filter(row=>rentalWitnessComparable(row,{currency:fields.priceCurrency,period:fields.pricePeriod},key));
+  if(fields[key]!==undefined&&fields[key]!==''&&fields[key]!==null&&comparable.length&&!comparable.some(value=>factEqual(value.value,fields[key],key)))add({field:key,kind:'manual',message:'Ручное значение отличается от источника',values:[...comparable,{value:factClone(fields[key]),source:'Текущее поле',text:''}]});
  }
  for(const conflict of Array.isArray(fields.sourceAudit?.conflicts)?fields.sourceAudit.conflicts:[]){
   if(conflict&&typeof conflict.field==='string')add({field:conflict.field,kind:'source-audit',message:String(conflict.message||conflict.reason||'Противоречие источника').slice(0,500),values:[]});

@@ -426,6 +426,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     with lock:
                         if any(job['state']=='running' for job in jobs.values()):
                             self.respond(409,{'error':'Дождитесь завершения текущего импорта перед очисткой кеша'});return
+                        document=workspace.dispatch(relative,data)
+                    if document:self.respond(*document);return
                 document=workspace.dispatch(relative,data)
                 if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data)

@@ -1,6 +1,6 @@
 import {photoSources} from '../media-core.mjs';
 import {listingDocument,listingText,listingDescendants,listingClean} from './html.mjs';
-import {rentalAmount,rentalPeriod,rentalCurrency,rentalCommission,rentalSeller,explicitRentalLayout} from './rental-values.mjs';
+import {rentalAmount,rentalPeriod,rentalCurrency,rentalCommission,rentalSeller,explicitRentalLayout,retainRentalWitness,rentalWitnessConflicts,rentalWitnessComparable,rentalWitnessValue} from './rental-values.mjs';
 
 // Avito-specific selectors/labels stay here; generated CSS names are never used.
 const AVITO_GROUPS={'О квартире':'apartment','Условия аренды':'rental','Правила':'rules','О доме':'building','Расположение':'location','Особенности':'highlights','Описание':'description'};
@@ -90,12 +90,12 @@ export function readAvitoHtml(input,{url=''}={}){
 
 export function avitoFieldFacts(source){
  const facts={commission:'',commissionStatus:'unknown',commissionSource:'',seller:'unknown',sellerSource:'',pricePeriod:'unknown',priceCurrency:'unknown'},evidence=[],warnings=[],permissions={},equipment={},records=source.records||[],oneTimeFees=[];
- const put=(field,value,row)=>{if(value===undefined||value===null||value==='')return;if(facts[field]!==undefined&&!['','unknown'].includes(facts[field])&&String(facts[field])!==String(value)){warnings.push('Авито: разные значения поля '+field+'; требуется проверка.');return;}facts[field]=value;evidence.push({field,value,source:'Авито · '+(row?.section||row?.name||'HTML'),sourceUrl:source.url||'',text:String(row?.text??value).slice(0,700)});};
+ const put=(field,value,row,scope={})=>{if(value===undefined||value===null||value==='')return;const witness=retainRentalWitness(evidence,{field,value,source:'Авито · '+(row?.section||row?.name||'HTML'),sourceUrl:source.url||'',text:String(row?.text??value).slice(0,700),...scope});if(facts[field]!==undefined&&!['','unknown'].includes(facts[field])&&String(facts[field])!==String(value)){const selected=evidence.find(item=>item.field===field&&String(item.value)===String(facts[field]));if(value!=='unknown'&&rentalWitnessComparable(selected,witness,field)&&rentalWitnessValue(facts[field])!==rentalWitnessValue(value))warnings.push('Авито: разные значения поля '+field+'; требуется проверка.');return;}facts[field]=value;};
  const number=(field,value,row)=>{const n=avitoNumber(value);if(n!==undefined)put(field,n,row);};
  const fields={'Количество комнат':'rooms','Количество спален':'bedrooms','Спальни':'bedrooms','Количество гостиных':'livingRooms','Общая площадь':'area','Площадь кухни':'kitchen','Жилая площадь':'living','Тип дома':'buildingType','Год постройки':'buildingYear','Этажей в доме':'floors','Санузел':'bathroom','Ремонт':'renovation','Парковка':'parking','Балкон или лоджия':'balconyType','Тип комнат':'roomType','Количество жильцов':'occupants','Мебель':'furnitureText','Техника':'equipmentText','Интернет и ТВ':'internetText','Пассажирский лифт':'passengerLifts','Грузовой лифт':'freightLifts','Высота потолков':'ceiling','Район':'district','Город':'city','Адрес':'address'};
  for(const row of records){
   const text=row.text.replace(/\s+/g,' ').trim();
-  if(row.name==='PriceInfo'){const amount=rentalAmount(text);if(amount!=='')put('price',amount,row);put('pricePeriod',rentalPeriod(text),row);put('priceCurrency',rentalCurrency(text),row);}
+  if(row.name==='PriceInfo'){const amount=rentalAmount(text);if(amount!=='')put('price',amount,row,{currency:rentalCurrency(text),period:rentalPeriod(text)});put('pricePeriod',rentalPeriod(text),row);put('priceCurrency',rentalCurrency(text),row);}
   if(row.name==='OfferTitle'){
    const rooms=text.match(/(?:^|\s)(\d+)\s*-?\s*к[. -]/i),area=text.match(/(\d+(?:[.,]\d+)?)\s*м[²2]/i),floor=text.match(/(\d+)\s*\/\s*(\d+)\s*эт/i);
    if(rooms)put('rooms',rooms[1],row);if(area)put('area',area[1].replace(',','.'),row);if(floor){put('floor',floor[1],row);put('floors',floor[2],row);}const layout=explicitRentalLayout(text);if(layout)put('layout',layout,row);
@@ -145,5 +145,7 @@ export function avitoFieldFacts(source){
  if(source.description)put('sourceDescription',source.description,{name:'Description'});
  if(source.url)put('url',source.url,{name:'URL'});if(facts.address)put('name',facts.address,{name:'AddressItem'});
  if(!source.images?.length)warnings.push('Авито: фото основного альбома пока не найдены; нужна загрузка галереи в Chrome.');
- return {facts,evidence,warnings,permissions,equipment};
+ const conflicts=rentalWitnessConflicts(evidence,'Авито');
+ for(const conflict of conflicts)if(!warnings.includes(conflict.message))warnings.push(conflict.message);
+ return {facts,evidence,warnings,permissions,equipment,conflicts};
 }

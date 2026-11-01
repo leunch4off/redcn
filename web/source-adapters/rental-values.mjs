@@ -28,6 +28,31 @@ export function rentalCurrency(value){
  if(/(?:^|[^a-z])eur(?:$|[^a-z])/i.test(text)||/€|евро(?:\s|$)/i.test(text))return 'EUR';
  return 'unknown';
 }
+// Witnesses keep their own units. A daily dollar amount is not another
+// observation of a monthly ruble price, even when both are on the same page.
+export function rentalWitnessComparable(left,right,field=left?.field){
+ if(field!=='price')return true;
+ for(const key of ['currency','period'])if(left?.[key]&&left[key]!=='unknown'&&right?.[key]&&right[key]!=='unknown'&&left[key]!==right[key])return false;
+ return true;
+}
+export function rentalWitnessValue(value){
+ if(typeof value==='string'){const number=rentalNumber(value);return number!==''?number:value.trim().replace(/\s+/gu,' ').toLowerCase();}
+ return JSON.stringify(value);
+}
+export function retainRentalWitness(evidence,row){
+ const signature=JSON.stringify([row.field,row.source,row.value,row.currency,row.period,row.text]);
+ if(!evidence.some(item=>JSON.stringify([item.field,item.source,item.value,item.currency,item.period,item.text])===signature))evidence.push(row);
+ return row;
+}
+export function rentalWitnessConflicts(evidence,label){
+ const groups=new Map(),conflicts=[];
+ for(const row of evidence){if(!row||row.value===undefined||row.value===null||row.value===''||row.value==='unknown')continue;const rows=groups.get(row.field)||[];rows.push(row);groups.set(row.field,rows);}
+ for(const [field,rows]of groups){
+  const candidates=rows.filter(row=>rows.some(other=>rentalWitnessComparable(row,other,field)&&rentalWitnessValue(row.value)!==rentalWitnessValue(other.value)));
+  if(candidates.length>1)conflicts.push({field,status:'conflict',resolution:'operator_required',message:label+': разные значения поля '+field+'; требуется проверка.',candidates});
+ }
+ return conflicts;
+}
 export function rentalCommission(text){
  const value=String(text??'').trim();
  if(/^(?:нет|без комиссии|не взимается|отсутствует)$/i.test(value))return {percent:'0',status:'none'};

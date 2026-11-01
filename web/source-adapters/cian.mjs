@@ -1,6 +1,6 @@
 import {photoSources,photoSourceUrl} from '../media-core.mjs';
 import {readRelatedHtml} from '../related.mjs';
-import {rentalNumber,rentalAmount,rentalPeriod,rentalCurrency,rentalCommission,rentalSeller,explicitRentalLayout} from './rental-values.mjs';
+import {rentalNumber,rentalAmount,rentalPeriod,rentalCurrency,rentalCommission,rentalSeller,explicitRentalLayout,retainRentalWitness,rentalWitnessConflicts} from './rental-values.mjs';
 // Only data-name / id / data-marker and literal JSON data are read. No page code runs.
 const SOURCE_NAMES=new Set(['Description','OfferDescription','OfferTitleNew','OfferTitle','ObjectFactoidsItem','OfferSummaryInfoItem','FeaturesItem','FeaturesLayout','PriceInfo','OfferFactItem','AddressItem','AddressContainer','UndergroundItem','HomeownerInfo','HomeownerLayout','NoFeeLabelContainer','SellerType','AgentType']);
 const sourceDecode=s=>String(s||'').replace(/&(#x[\da-f]+|#\d+|nbsp|amp|quot|apos|lt|gt);/gi,(_,key)=>{if(key[0]==='#'){const n=key[1].toLowerCase()==='x'?parseInt(key.slice(2),16):parseInt(key.slice(1),10);return n>0&&n<=0x10ffff?String.fromCodePoint(n):'';}return ({nbsp:' ',amp:'&',quot:'"',apos:"'",lt:'<',gt:'>'})[key.toLowerCase()];});
@@ -73,7 +73,9 @@ export function readCianHtml(input) {
 
 export function cianFieldFacts(source) {
   const facts={},evidence=[],warnings=[],conflicts=[],blockedFields=[],o=source.offer||{},records=source.records||[];
-  const set=(field,value,where,raw)=>{if(value===undefined||value===null||value==='')return;facts[field]=typeof value==='number'?String(value):value;evidence.push({field,value:facts[field],source:where,sourceUrl:source.url||'',text:String(raw??value).slice(0,700)});};
+  const witness=(field,value,where,raw,scope={})=>{if(value===undefined||value===null||value==='')return;return retainRentalWitness(evidence,{field,value:typeof value==='number'?String(value):value,source:where,sourceUrl:source.url||'',text:String(raw??value).slice(0,700),...scope});};
+  const set=(field,value,where,raw,scope)=>{if(value===undefined||value===null||value==='')return;facts[field]=typeof value==='number'?String(value):value;witness(field,facts[field],where,raw,scope);};
+  const observe=(field,value,where,raw,scope)=>{if(facts[field]===undefined||facts[field]==='unknown')set(field,value,where,raw,scope);else witness(field,value,where,raw,scope);};
   for(const [field,key] of Object.entries({area:'totalArea',living:'livingArea',kitchen:'kitchenArea',rooms:'roomsCount',bedrooms:'bedroomsCount',livingRooms:'livingRoomsCount',floor:'floorNumber',balconies:'balconiesCount',loggias:'loggiasCount',combinedWcs:'combinedWcsCount',separateWcs:'separateWcsCount'})){
     const raw=o[key];
     if(raw===undefined||raw===null||typeof raw==='boolean'||String(raw).trim()==='')continue;
@@ -88,7 +90,7 @@ export function cianFieldFacts(source) {
   if(o.building?.buildYear!==undefined)set('buildingYear',o.building.buildYear,'JSON building.buildYear');
   if(o.building?.ceilingHeight!==undefined)set('ceiling',o.building.ceilingHeight,'JSON building.ceilingHeight');
 
-  const b=o.bargainTerms||{};for(const [f,k] of [['price','price'],['deposit','deposit'],['prepayMonths','prepayMonths']]){const value=rentalNumber(b[k]);if(value!=='')set(f,value,'JSON bargainTerms.'+k,b[k]);}
+  const b=o.bargainTerms||{};for(const [f,k] of [['price','price'],['deposit','deposit'],['prepayMonths','prepayMonths']]){const value=rentalNumber(b[k]);if(value!=='')set(f,value,'JSON bargainTerms.'+k,b[k],f==='price'?{currency:rentalCurrency(b.currency),period:rentalPeriod(b.paymentPeriod)}:{});}
   if(facts.deposit!==undefined)set('depositCurrency',rentalCurrency(b.depositCurrency??b.currency),'JSON bargainTerms.depositCurrency / currency',b.depositCurrency??b.currency??'unknown');
   const explicitFee=rentalNumber(b.clientFee);
   facts.commission='';facts.commissionStatus='unknown';facts.commissionSource='';
@@ -101,9 +103,9 @@ export function cianFieldFacts(source) {
   if(period!=='unknown')set('pricePeriod',period,'JSON bargainTerms.paymentPeriod',b.paymentPeriod);
   if(currency!=='unknown')set('priceCurrency',currency,'JSON bargainTerms.currency',b.currency);
   const ld=source.jsonLd||{};
-  for(const [field,key]of [['price','price'],['rooms','rooms'],['bedrooms','bedrooms'],['area','area']])if(facts[field]===undefined){const value=rentalNumber(ld[key]);if(value!=='')set(field,value,'JSON-LD '+key,ld[key]);}
-  if(facts.pricePeriod==='unknown'&&rentalPeriod(ld.paymentPeriod)!=='unknown')set('pricePeriod',rentalPeriod(ld.paymentPeriod),'JSON-LD priceSpecification',ld.paymentPeriod);
-  if(facts.priceCurrency==='unknown'&&rentalCurrency(ld.currency)!=='unknown')set('priceCurrency',rentalCurrency(ld.currency),'JSON-LD priceCurrency',ld.currency);
+  for(const [field,key]of [['price','price'],['rooms','rooms'],['bedrooms','bedrooms'],['area','area']]){const value=rentalNumber(ld[key]);if(value!=='')observe(field,value,'JSON-LD '+key,ld[key],field==='price'?{currency:rentalCurrency(ld.currency),period:rentalPeriod(ld.paymentPeriod)}:{});}
+  if(rentalPeriod(ld.paymentPeriod)!=='unknown')observe('pricePeriod',rentalPeriod(ld.paymentPeriod),'JSON-LD priceSpecification',ld.paymentPeriod);
+  if(rentalCurrency(ld.currency)!=='unknown')observe('priceCurrency',rentalCurrency(ld.currency),'JSON-LD priceCurrency',ld.currency);
   const layout=explicitRentalLayout([o.layoutType,...records.filter(r=>['OfferTitle','OfferTitleNew'].includes(r.name)).map(r=>r.text),source.description].filter(Boolean).join('\n'));
   if(layout)set('layout',layout,'CIAN explicit layout');
   if(b.utilitiesTerms){const u=b.utilitiesTerms;if(u.includedInPrice===true)set('utilities',u.flowMetersNotIncludedInPrice?'meters':'included','JSON utilitiesTerms');else if(u.includedInPrice===false)set('utilities','extra','JSON utilitiesTerms');}
@@ -112,23 +114,23 @@ export function cianFieldFacts(source) {
   if(addresses.length){set('address',addresses.map(a=>a.shortName||a.fullName||a.name).filter(Boolean).join(', '),'JSON geo.address');const district=addresses.find(a=>a.type==='raion');if(district)set('district',district.fullName||district.name,'JSON geo.address');const city=addresses.find(a=>a.type==='location');if(city)set('city',city.name,'JSON geo.address');}
   if(source.url)set('url',source.url,'JSON-LD / cianId');
   const labels={'Общая площадь':'area','Жилая площадь':'living','Площадь кухни':'kitchen','Количество комнат':'rooms','Количество спален':'bedrooms','Спальни':'bedrooms','Количество гостиных':'livingRooms','Год постройки':'buildingYear','Тип дома':'buildingType','Тип перекрытий':'floorType','Строительная серия':'buildingSeries','Подъезды':'entrances','Отопление':'heating','Аварийность':'emergency','Санузел':'bathroom','Вид из окон':'windows','Ремонт':'renovation','Высота потолков':'ceiling'};
-  for(const r of records.filter(r=>['ObjectFactoidsItem','OfferSummaryInfoItem'].includes(r.name))){const text=r.text.replace(/\s+/g,' ').replace(/:\s*/, ' ');if(/^Этаж\s/.test(text)){const m=text.match(/Этаж\s+(\d+)\s+из\s+(\d+)/);if(m){if(facts.floor===undefined)set('floor',m[1],r.name,text);if(facts.floors===undefined)set('floors',m[2],r.name,text);}}for(const [label,field] of Object.entries(labels))if(text.startsWith(label+' ')){let value=text.slice(label.length).trim();if(['area','living','kitchen','ceiling','rooms','bedrooms','livingRooms'].includes(field))value=value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',','.');if(value!==undefined&&facts[field]!==undefined&&String(facts[field]).toLowerCase()!==String(value).toLowerCase()){
+  for(const r of records.filter(r=>['ObjectFactoidsItem','OfferSummaryInfoItem'].includes(r.name))){const text=r.text.replace(/\s+/g,' ').replace(/:\s*/, ' ');if(/^Этаж\s/.test(text)){const m=text.match(/Этаж\s+(\d+)\s+из\s+(\d+)/);if(m){observe('floor',m[1],r.name,text);observe('floors',m[2],r.name,text);}}for(const [label,field] of Object.entries(labels))if(text.startsWith(label+' ')){let value=text.slice(label.length).trim();if(['area','living','kitchen','ceiling','rooms','bedrooms','livingRooms'].includes(field))value=value.match(/\d+(?:[.,]\d+)?/)?.[0]?.replace(',','.');witness(field,value,r.name,text);if(value!==undefined&&facts[field]!==undefined&&String(facts[field]).toLowerCase()!==String(value).toLowerCase()){
       const earlier=evidence.find(e=>e.field===field);conflicts.push({field,status:'conflict',resolution:'operator_required',candidates:[earlier,{field,value,source:r.name,text}]});
       if(!blockedFields.includes(field))blockedFields.push(field);warnings.push('Противоречие '+field+': '+facts[field]+' / '+value+'. Требуется проверка.');
     }else if(facts[field]===undefined)set(field,value,r.name,text);}}
   for(const row of records){const text=row.text.replace(/\s+/g,' ').trim();
     if(row.name==='PriceInfo'){
-      if(facts.price===undefined){const value=rentalAmount(text);if(value!=='')set('price',value,'PriceInfo',text);}
-      if(facts.pricePeriod==='unknown'&&rentalPeriod(text)!=='unknown')set('pricePeriod',rentalPeriod(text),'PriceInfo',text);
-      if(facts.priceCurrency==='unknown'&&rentalCurrency(text)!=='unknown')set('priceCurrency',rentalCurrency(text),'PriceInfo',text);
+      const value=rentalAmount(text);if(value!=='')observe('price',value,'PriceInfo',text,{currency:rentalCurrency(text),period:rentalPeriod(text)});
+      if(rentalPeriod(text)!=='unknown')observe('pricePeriod',rentalPeriod(text),'PriceInfo',text);
+      if(rentalCurrency(text)!=='unknown')observe('priceCurrency',rentalCurrency(text),'PriceInfo',text);
     }
-    if(['OfferTitle','OfferTitleNew'].includes(row.name)&&facts.rooms===undefined){const count=text.match(/(?:^|\s)(\d+)\s*[- ]?\s*(?:комн|комнат|к\.)/i);if(count)set('rooms',count[1],row.name,text);}
+    if(['OfferTitle','OfferTitleNew'].includes(row.name)){const count=text.match(/(?:^|\s)(\d+)\s*[- ]?\s*(?:комн|комнат|к\.)/i);if(count)observe('rooms',count[1],row.name,text);}
     if(row.name==='OfferFactItem'){
-      const deposit=text.match(/^(?:Залог|Депозит)\s*:?\s*(.*)$/i);if(deposit&&!/%/.test(deposit[1])){const value=/^(?:нет|без залога)$/i.test(deposit[1])?'0':rentalAmount(deposit[1]),currency=rentalCurrency(deposit[1]);if(value!==''&&facts.deposit===undefined){set('deposit',value,row.name,text);set('depositCurrency',currency,row.name,text);}else if(value!==''&&facts.deposit===value&&currency!=='unknown'&&facts.depositCurrency==='unknown')set('depositCurrency',currency,row.name,text);}
+      const deposit=text.match(/^(?:Залог|Депозит)\s*:?\s*(.*)$/i);if(deposit&&!/%/.test(deposit[1])){const value=/^(?:нет|без залога)$/i.test(deposit[1])?'0':rentalAmount(deposit[1]),currency=rentalCurrency(deposit[1]);if(value!==''){witness('deposit',value,row.name,text);witness('depositCurrency',currency,row.name,text);}if(value!==''&&facts.deposit===undefined){set('deposit',value,row.name,text);set('depositCurrency',currency,row.name,text);}else if(value!==''&&facts.deposit===value&&currency!=='unknown'&&facts.depositCurrency==='unknown')set('depositCurrency',currency,row.name,text);}
       const fee=text.match(/^Комиссия(?: с арендатора)?\s*:?\s*(.*)$/i);
-      if(fee&&facts.commissionStatus==='unknown'){const parsed=rentalCommission(fee[1]);if(parsed.percent!=='')set('commission',parsed.percent,row.name,text);facts.commissionStatus=parsed.status;facts.commissionSource=row.name;if(parsed.amount){set('commissionAmount',parsed.amount,row.name,text);set('commissionCurrency',parsed.currency,row.name,text);}}
+      if(fee){const parsed=rentalCommission(fee[1]);if(parsed.percent!=='')witness('commission',parsed.percent,row.name,text);if(parsed.amount){witness('commissionAmount',parsed.amount,row.name,text);witness('commissionCurrency',parsed.currency,row.name,text);}if(facts.commissionStatus==='unknown'){if(parsed.percent!=='')set('commission',parsed.percent,row.name,text);facts.commissionStatus=parsed.status;facts.commissionSource=row.name;if(parsed.amount){set('commissionAmount',parsed.amount,row.name,text);set('commissionCurrency',parsed.currency,row.name,text);}}}
     }
-    if(facts.seller==='unknown'&&['HomeownerInfo','SellerType','AgentType'].includes(row.name)){const role=rentalSeller(text.replace(/^(?:Автор|Продавец|Тип продавца)\s*:?\s*/i,''));if(role!=='unknown'){set('seller',role,row.name,text);facts.sellerSource=row.name;}}
+    if(['HomeownerInfo','SellerType','AgentType'].includes(row.name)){const role=rentalSeller(text.replace(/^(?:Автор|Продавец|Тип продавца)\s*:?\s*/i,''));if(role!=='unknown'){if(facts.seller==='unknown'){set('seller',role,row.name,text);facts.sellerSource=row.name;}else witness('seller',role,row.name,text);}}
   }
   if(facts.commissionStatus==='unknown')warnings.push('ЦИАН: процент комиссии не указан; ноль не предполагается.');
   if(facts.pricePeriod!=='unknown'&&facts.pricePeriod!=='month')warnings.push('ЦИАН: цена за '+facts.pricePeriod+', а не за месяц. Нужна проверка периода перед публикацией.');
@@ -149,5 +151,6 @@ export function cianFieldFacts(source) {
   for(const field of blockedFields)facts[field]='';
   if(source.description)set('sourceDescription',source.description,'#description / [data-name="Description"]');
   if(facts.address)set('name',facts.address,'Адрес объекта');
+  for(const conflict of rentalWitnessConflicts(evidence,'ЦИАН')){if(!conflicts.some(row=>row.field===conflict.field))conflicts.push(conflict);if(!warnings.includes(conflict.message))warnings.push(conflict.message);}
   return {facts,evidence,warnings,conflicts,blockedFields};
 }
