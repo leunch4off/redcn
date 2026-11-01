@@ -58,10 +58,10 @@
     "contract": "90-second total deadline; confirmed observed-child cessation; unknown metadata stays unknown; controlled completion protocol after Playwright cleanup; arbitrary unobserved detached processes not guaranteed stopped",
     "protocol": "redcn-pdf-v1",
     "focusedPython": {
-      "run": 35,
-      "passed": 34,
+      "run": 36,
+      "passed": 35,
       "macOnlySkipped": 1,
-      "seconds": 4.668
+      "seconds": 4.677
     },
     "stressCases": {
       "run": 15,
@@ -73,7 +73,15 @@
       "passed": 14,
       "seconds": 4.146
     },
-    "fullMatrixCases": 700,
-    "latestChecks": "https://github.com/leunch4off/redcn/pull/6"
+    "fullMatrixCases": 701,
+    "latestChecks": "https://github.com/leunch4off/redcn/pull/6",
+    "nativeFollowup": {
+      "sourceHead": "53ed8c5421ab2d13e53b4e233ed9e6b8ab001de6",
+      "run": 15,
+      "passed": 13,
+      "linuxOnlySkipped": 2,
+      "seconds": 15.841
+    },
+    "additionalRegression": "Index0 non-root discovery skips denied unrelated root metadata; known own PID denial remains unknown. Reproduced before fix and passed after."
   }
 }
