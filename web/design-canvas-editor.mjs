@@ -5,6 +5,13 @@ const dceClone=value=>JSON.parse(JSON.stringify(value));
 const dceFinite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const dceClamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 
+export function designCanvasRenderInputs(surfaceId,design,card,assets={}){
+ return {surfaceId,design:JSON.stringify(design),card:JSON.stringify(card),rules:JSON.stringify(assets.rules||{}),day:Math.floor((Date.now()+10800000)/86400000),photos:(Array.isArray(assets.photos)?assets.photos:[]).map(value=>typeof value==='string'?value:value?.dataUrl||value?.url||''),mapImage:assets.mapImage||assets.map||'',mapAttribution:assets.mapAttribution||'',logo:assets.logo||'',avatar:assets.avatar||''};
+}
+export function designCanvasRenderInputsEqual(a,b){
+ return !!a&&!!b&&['surfaceId','design','card','rules','day','mapImage','mapAttribution','logo','avatar'].every(key=>a[key]===b[key])&&a.photos.length===b.photos.length&&a.photos.every((value,index)=>value===b.photos[index]);
+}
+
 // Pointer movement is converted from the displayed page into its export units.
 export function designCanvasDelta(start,current,bounds,surface){
   const width=dceFinite(bounds?.width),height=dceFinite(bounds?.height);
@@ -68,9 +75,10 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   const button=(text,id,action)=>{const node=make('button',text,{type:'button',class:'btn',id});node.onclick=action;return node;};
   const select=(id,choices)=>{const node=make('select','',{id});for(const [value,text] of choices)node.append(make('option',text,{value}));return node;};
   const field=(title,input)=>{const wrap=make('label',title);wrap.htmlFor=input.id;wrap.append(input);return wrap;};
-  const normal=()=>normalizePublicationDesign(getDesign());
+  let designSourceKey='';
+  const normal=()=>{const source=getDesign();designSourceKey=JSON.stringify(source);return normalizePublicationDesign(source);};
   let draft=normal(),surfaceId=Object.keys(draft.surfaces||{})[0]||'intro',selection=new Set(),history=designCanvasHistory(draft);
-  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='';
+  let scale=1,zoom='fit',showGrid=true,snap=true,gesture=null,renderEpoch=0,renderFrame=null,destroyed=false,resizeObserver=null,layoutCacheKey='',layoutCacheValue=null,dimensionsKey='',lastDrawnInputs=null,pendingDrawInputs=null;
   const host=make('section','',{class:'design-canvas-editor',id:'designCanvasEditor','aria-label':'Редактор расположения блоков'});
   const title=make('div','',{class:'design-canvas-heading'});title.append(make('h3','Редактор макета'),make('p','Перемещайте блоки и меняйте их размеры. Текст из полей карточки подставляется заново для каждого объявления.',{class:'muted'}));
   const toolbar=make('div','',{class:'design-canvas-toolbar'}),surfaces=select('designCanvasSurface',[]),zooms=select('designCanvasZoom',[['fit','По ширине'],['25','25%'],['50','50%'],['75','75%'],['100','100%']]);
@@ -154,7 +162,19 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   }
   function refreshLayers(){const focused=layers.contains(document.activeElement)?document.activeElement?.dataset.nodeId:null;layers.replaceChildren();for(const node of [...surface().nodes].sort((a,b)=>(b.z||0)-(a.z||0))){const b=button((node.visible===false?'◌ ':node.locked?'🔒 ':'')+nodeName(node),'',event=>selectNode(node,event));b.removeAttribute('id');b.dataset.nodeId=node.id;b.setAttribute('aria-pressed',String(selection.has(node.id)));layers.append(b);}if(focused)[...layers.children].find(node=>node.dataset.nodeId===focused)?.focus({preventScroll:true});}
   function dimensions(){const s=surface();if(!s)return;const fit=Math.min(1,Math.max(.08,(viewport.clientWidth-28)/s.width));scale=zoom==='fit'?fit:Number(zoom)/100;const key=[s.width,s.height,scale,showGrid,selection.size].join('|');if(key===dimensionsKey)return;dimensionsKey=key;page.style.width=s.width*scale+'px';page.style.height=s.height*scale+'px';page.classList.toggle('has-grid',showGrid);page.style.setProperty('--dce-grid',String(40*scale)+'px');readout.textContent=`${s.width} × ${s.height} · ${Math.round(scale*100)}% · выделено ${selection.size}. Экспорт сохраняет полный размер.`;}
-  async function draw(){const epoch=++renderEpoch,s=surface();if(!s||destroyed)return;const design=dceClone(draft),card=dceClone(getCard()||{});const buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;try{const assets=await getAssets();const result=await renderPage(buffer,surfaceId,design,card,assets||{});if(destroyed||epoch!==renderEpoch)return;canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');}catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}}
+  async function draw(){
+    const epoch=++renderEpoch,s=surface(),id=surfaceId;if(!s||destroyed)return;
+    const design=dceClone(draft),card=dceClone(getCard()||{}),buffer=document.createElement('canvas');buffer.width=s.width;buffer.height=s.height;let inputs;
+    try{
+      const request=getAssets(),assets=await request;inputs=designCanvasRenderInputs(id,design,card,assets||{});pendingDrawInputs=inputs;
+      const result=await renderPage(buffer,id,design,card,assets||{});if(destroyed||epoch!==renderEpoch||id!==surfaceId)return;
+      // Synchronous asset getters can change while a renderer awaits images.
+      // Async getters are guarded by refresh's epoch without starting a second fetch.
+      const currentAssets=typeof request?.then==='function'?assets:getAssets()||{};
+      if(inputs.card!==JSON.stringify(getCard()||{})||inputs.design!==JSON.stringify(draft)||!designCanvasRenderInputsEqual(inputs,designCanvasRenderInputs(id,draft,getCard()||{},currentAssets))){host.dataset.previewReady='false';queueRender();return;}
+      canvas.width=s.width;canvas.height=s.height;canvas.getContext('2d').drawImage(buffer,0,0);lastDrawnInputs=inputs;host.dataset.previewReady='true';performance.mark?.('redcn-designer-canvas-ready');warnings.textContent=(result?.warnings||[]).slice(0,3).map(value=>typeof value==='string'?value:value.message||'Проверьте расположение блока').join(' · ');
+    }catch(error){if(epoch===renderEpoch&&!destroyed)warnings.textContent=error.message||'Не удалось построить полотно';}finally{if(pendingDrawInputs===inputs)pendingDrawInputs=null;}
+  }
   function queueRender(){if(renderFrame!==null)return;renderFrame=requestAnimationFrame(()=>{renderFrame=null;draw();});}
   function refreshUI(){if(destroyed)return;dimensions();backgroundInput.value=surface().background||'#07162b';refreshOverlay();refreshLayers();refreshInspector();undo.disabled=!history.canUndo();redo.disabled=!history.canRedo();queueRender();}
   function addNode(type){const s=surface();if(s.nodes.length>=80)return toast('На одном полотне можно разместить до 80 блоков.');const ids=new Set(s.nodes.map(node=>node.id));let count=1,id;do{id='custom-'+type+'-'+count++;}while(ids.has(id));s.nodes.push({id,type,x:Math.min(60,s.width-120),y:Math.min(60,s.height-100),w:Math.min(type==='text'?500:420,s.width-60),h:type==='text'?100:220,text:type==='text'?'自定义文字':'',bind:type==='image'?'photo1':'',photoIndex:0,visible:true,z:Math.max(0,...s.nodes.map(n=>n.z||0))+1,style:{fontSize:42,color:'#ffffff',fontFamily:'sans',fontWeight:600,align:'left',opacity:1,background:type==='rect'?'#12345b':''}});selection=new Set([id]);commit('add');}
@@ -167,9 +187,24 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   function surfaceOptions(){surfaces.replaceChildren();for(const [id,s] of Object.entries(draft.surfaces||{}))surfaces.append(make('option',surfaceNames[id]||s.label||id,{value:id}));}
   function clearPreview(){host.dataset.previewReady='false';canvas.width=surface().width;canvas.height=surface().height;const context=canvas.getContext('2d');context.fillStyle=surface().background||'#07162b';context.fillRect(0,0,canvas.width,canvas.height);warnings.textContent='Обновляем предпросмотр…';}
   function setSurface(id){if(destroyed||!draft.surfaces[id])return false;if(id===surfaceId)return true;if(gesture)finishGesture({pointerId:gesture.pointerId},true);surfaceId=id;surfaces.value=id;selection.clear();++renderEpoch;clearPreview();refreshUI();return true;}
-  function refresh({resetHistory=false}={}){if(destroyed)return;gesture=null;++renderEpoch;draft=normal();if(!draft.surfaces[surfaceId])surfaceId=Object.keys(draft.surfaces)[0];selection=new Set([...selection].filter(id=>surface()?.nodes.some(node=>node.id===id)));if(resetHistory)history.reset(draft);else if(JSON.stringify(draft)!==JSON.stringify(history.value()))history.push(draft);surfaceOptions();surfaces.value=surfaceId;clearPreview();refreshUI();}
+  function refreshAssets(){
+    if(destroyed)return;const card=getCard()||{},assets=getAssets()||{};
+    if(assets&&typeof assets.then==='function'){assets.catch?.(()=>{});++renderEpoch;host.dataset.previewReady='false';queueRender();return;}
+    const inputs=designCanvasRenderInputs(surfaceId,draft,card,assets);
+    if(designCanvasRenderInputsEqual(inputs,pendingDrawInputs)||!pendingDrawInputs&&designCanvasRenderInputsEqual(inputs,lastDrawnInputs))return;
+    ++renderEpoch;if(lastDrawnInputs&&inputs.card!==lastDrawnInputs.card)clearPreview();else host.dataset.previewReady='false';
+    if(!lastDrawnInputs||['surfaceId','card','design','rules','day'].some(key=>inputs[key]!==lastDrawnInputs[key])){refreshOverlay();refreshInspector();}
+    queueRender();
+  }
+  function refresh({resetHistory=false}={}){
+    if(destroyed)return;const source=getDesign(),sourceKey=JSON.stringify(source);
+    if(sourceKey===designSourceKey){if(resetHistory){history.reset(draft);undo.disabled=redo.disabled=true;}refreshAssets();return;}
+    designSourceKey=sourceKey;const next=normalizePublicationDesign(source);
+    if(JSON.stringify(next)===JSON.stringify(draft)){if(resetHistory){history.reset(draft);undo.disabled=redo.disabled=true;}refreshAssets();return;}
+    gesture=null;++renderEpoch;draft=next;if(!draft.surfaces[surfaceId])surfaceId=Object.keys(draft.surfaces)[0];selection=new Set([...selection].filter(id=>surface()?.nodes.some(node=>node.id===id)));if(resetHistory)history.reset(draft);else if(JSON.stringify(draft)!==JSON.stringify(history.value()))history.push(draft);surfaceOptions();surfaces.value=surfaceId;clearPreview();refreshUI();
+  }
   surfaceOptions();surfaces.value=surfaceId;
   if(typeof ResizeObserver==='function'){resizeObserver=new ResizeObserver(()=>dimensions());resizeObserver.observe(viewport);}else window.addEventListener('resize',dimensions);
   refreshUI();
-  return {refresh,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;++renderEpoch;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
+  return {refresh,refreshAssets,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;++renderEpoch;lastDrawnInputs=pendingDrawInputs=null;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
 }

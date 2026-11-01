@@ -35,9 +35,19 @@ import {setupPresentationStudio} from '/web/presentation-studio.mjs';
 import {cardPhotoDataUrl} from '/web/card-files.mjs';
 const nativeEncode=HTMLCanvasElement.prototype.toDataURL;
 window.rasterEncodes=[];HTMLCanvasElement.prototype.toDataURL=function(type,...args){if(type==='image/png'&&this.width===1080&&this.height===1920)rasterEncodes.push(document.getElementById('presentationTabintro')?.classList.contains('chosen')?'intro':'outro');return nativeEncode.call(this,type,...args);};
-const photo=await cardPhotoDataUrl(await(await fetch('/api/local/media/'+'a'.repeat(64))).blob());
-window.studio=setupPresentationStudio({mount:document.getElementById('mount'),getCard:()=>({titles:['实拍房源'],body:'公寓介绍',fields:{price:80000,area:54,metro:'Юго-Западная'}}),getPhotos:async()=>[{dataUrl:photo}]});
+window.studioPhoto=await cardPhotoDataUrl(await(await fetch('/api/local/media/'+'a'.repeat(64))).blob());
+window.studioCard={titles:['实拍房源'],body:'公寓介绍',fields:{price:80000,area:54,metro:'Юго-Западная'}};
+window.pauseStudioPhotos=false;
+window.replaceStudioPhoto=async key=>{studioPhoto=await cardPhotoDataUrl(await(await fetch('/api/local/media/'+key.repeat(64))).blob());};
+window.studio=setupPresentationStudio({mount:document.getElementById('mount'),getCard:()=>studioCard,getPhotos:async()=>{const value=studioPhoto;if(pauseStudioPhotos){pauseStudioPhotos=false;await new Promise(resolve=>{window.releaseStudioPhotos=resolve;});}return [{dataUrl:value}];}});
 await studio.refresh();window.studioReady=true;
+</script></html>'''
+REDRAW_HARNESS='''<!doctype html><html><meta charset="utf-8"><link rel="stylesheet" href="/web/design-canvas-editor.css"><div id="mount"></div><script type="module">
+import {setupDesignCanvasEditor} from '/web/design-canvas-editor.mjs';
+import {defaultPublicationDesign} from '/web/publication-model.mjs';
+window.redrawDesign=defaultPublicationDesign();window.redrawCard={body:'first'};window.redrawAssets={photos:['#ff0000']};window.redrawPaints=[];window.pauseRedraw=false;
+window.redrawEditor=setupDesignCanvasEditor({mount:document.getElementById('mount'),getDesign:()=>redrawDesign,getCard:()=>redrawCard,getAssets:()=>redrawAssets,renderPage:async(canvas,id,design,card,assets)=>{const color=assets.photos[0];redrawPaints.push({color,body:card.body});if(pauseRedraw){pauseRedraw=false;await new Promise(resolve=>{window.releaseRedraw=resolve;});}const context=canvas.getContext('2d');context.fillStyle=color;context.fillRect(0,0,canvas.width,canvas.height);return {};}});
+window.redrawPixel=()=>Array.from(document.getElementById('designCanvasPreview').getContext('2d').getImageData(10,10,1,1).data);
 </script></html>'''
 
 
@@ -61,8 +71,8 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
             def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
             def log_message(self,*args):pass
             def do_GET(self):
-                if self.path in ('/layout','/photos','/studio'):
-                    body=({'/layout':LAYOUT_HARNESS,'/photos':cls.photo_html,'/studio':STUDIO_HARNESS}[self.path]).encode();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body);return
+                if self.path in ('/layout','/photos','/studio','/redraw'):
+                    body=({'/layout':LAYOUT_HARNESS,'/photos':cls.photo_html,'/studio':STUDIO_HARNESS,'/redraw':REDRAW_HARNESS}[self.path]).encode();self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body);return
                 if self.path.startswith('/api/local/media/'):
                     body=cls.images.get(self.path.rsplit('/',1)[-1]);self.send_response(200 if body else 404);self.send_header('Content-Type','image/png');self.end_headers();self.wfile.write(body or b'');return
                 if self.path=='/styles.css':self.path='/web/styles.css'
@@ -142,6 +152,63 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
         self.page.evaluate('studio.refresh()')
         self.assertEqual(self.page.evaluate('rasterEncodes'),['intro','outro'])
         self.assertEqual(self.page.locator('#presentationImagePreview').get_attribute('src'),intro)
+
+    def test_closed_html_is_unparsed_then_opens_current_card_and_asset_refresh_keeps_layers(self):
+        self.page.goto(self.url+'/studio',wait_until='domcontentloaded')
+        self.page.wait_for_function("window.studioReady===true&&document.getElementById('designCanvasEditor')?.dataset.previewReady==='true'")
+        frame=self.page.locator('#presentationPreview')
+        self.assertIsNone(frame.get_attribute('srcdoc'))
+        self.assertEqual(self.page.frame_locator('#presentationPreview').locator('.publication-page').count(),0)
+        self.page.locator('#presentationHtmlPreview summary').click()
+        self.page.frame_locator('#presentationPreview').locator('body').filter(has_text='公寓介绍').wait_for()
+        self.page.locator('#presentationHtmlPreview summary').click()
+        self.page.wait_for_function("!document.getElementById('presentationPreview').hasAttribute('srcdoc')")
+        self.page.locator('#designCanvasSurface').select_option('pdfGallery')
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'")
+        self.page.evaluate("window.retainedLayer=document.querySelector('#designCanvasLayers button');window.galleryPixel=()=>Array.from(document.getElementById('designCanvasPreview').getContext('2d').getImageData(249,504,1,1).data)")
+        red=self.page.evaluate('galleryPixel()');self.assertGreater(red[0],200);self.assertLess(red[2],50)
+        self.page.evaluate('studio.refresh()')
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'")
+        self.assertTrue(self.page.evaluate("retainedLayer===document.querySelector('#designCanvasLayers button')&&retainedLayer.isConnected"))
+        self.page.evaluate("async()=>{await replaceStudioPhoto('b');await studio.refresh();}")
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'&&galleryPixel()[2]>200&&galleryPixel()[0]<50")
+        self.assertTrue(self.page.evaluate("retainedLayer===document.querySelector('#designCanvasLayers button')&&retainedLayer.isConnected"))
+        self.assertIsNone(frame.get_attribute('srcdoc'))
+        # Open while a new card is still loading: the previous HTML may not reappear.
+        self.page.evaluate("()=>{studioCard={...studioCard,body:'全新卡片内容'};pauseStudioPhotos=true;window.pendingStudio=studio.refresh();}")
+        self.page.wait_for_function("typeof releaseStudioPhotos==='function'")
+        self.page.locator('#presentationHtmlPreview summary').click()
+        self.assertIsNone(frame.get_attribute('srcdoc'))
+        self.page.evaluate('async()=>{releaseStudioPhotos();await pendingStudio;}')
+        self.page.frame_locator('#presentationPreview').locator('body').filter(has_text='全新卡片内容').wait_for()
+        self.assertNotIn('公寓介绍',self.page.frame_locator('#presentationPreview').locator('body').inner_text())
+        self.page.locator('#presentation-brand-agentName').fill('专属顾问')
+        self.page.locator('#presentation-brand-agentName').dispatch_event('change')
+        self.page.frame_locator('#presentationPreview').locator('body').filter(has_text='专属顾问').wait_for()
+        self.assertEqual(self.page.evaluate('rasterEncodes'),[])
+
+    def test_identical_refresh_skips_redraw_but_reverted_assets_cancel_pending_old_paint(self):
+        self.page.goto(self.url+'/redraw',wait_until='domcontentloaded')
+        self.page.wait_for_function("document.getElementById('designCanvasEditor')?.dataset.previewReady==='true'")
+        self.page.evaluate("window.retainedLayer=document.querySelector('#designCanvasLayers button');window.initialPaintCount=redrawPaints.length;redrawEditor.refresh();")
+        self.page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+        self.assertTrue(self.page.evaluate("redrawPaints.length===initialPaintCount&&retainedLayer===document.querySelector('#designCanvasLayers button')"))
+        self.page.evaluate("redrawAssets={photos:['#0000ff']};pauseRedraw=true;redrawEditor.refresh();")
+        self.page.wait_for_function("typeof releaseRedraw==='function'")
+        self.assertEqual(self.page.locator('#designCanvasEditor').get_attribute('data-preview-ready'),'false')
+        self.page.evaluate("redrawAssets={photos:['#ff0000']};redrawEditor.refresh();")
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'&&redrawPaints.length===initialPaintCount+2")
+        self.page.evaluate('releaseRedraw()')
+        self.page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+        self.assertEqual(self.page.evaluate('redrawPixel()'),[255,0,0,255])
+        self.page.evaluate("redrawAssets={photos:['#00ff00']};redrawEditor.refresh();")
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'&&redrawPixel()[1]===255")
+        self.assertTrue(self.page.evaluate("retainedLayer===document.querySelector('#designCanvasLayers button')&&retainedLayer.isConnected"))
+        self.page.evaluate("redrawCard={body:'second'};redrawEditor.refresh();")
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'&&redrawPaints.at(-1).body==='second'")
+        self.page.evaluate("redrawDesign.surfaces.pdfOverview.background='#112233';redrawEditor.refresh();")
+        self.page.wait_for_function("document.getElementById('designCanvasEditor').dataset.previewReady==='true'&&document.getElementById('designCanvasBackground').value==='#112233'")
+        self.assertFalse(self.page.evaluate('retainedLayer.isConnected'))
 
 
 if __name__=='__main__':unittest.main()

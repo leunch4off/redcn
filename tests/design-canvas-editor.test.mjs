@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {designCanvasDelta,moveDesignCanvasNodes,resizeDesignCanvasNode,alignDesignCanvasNodes,designCanvasHistory} from '../web/design-canvas-editor.mjs';
+import {designCanvasDelta,moveDesignCanvasNodes,resizeDesignCanvasNode,alignDesignCanvasNodes,designCanvasHistory,designCanvasRenderInputs,designCanvasRenderInputsEqual} from '../web/design-canvas-editor.mjs';
 import {defaultPublicationDesign,normalizePublicationDesign} from '../web/publication-model.mjs';
 
 const surface=()=>({width:1080,height:1920,background:'#06152e',nodes:[
@@ -8,6 +8,17 @@ const surface=()=>({width:1080,height:1920,background:'#06152e',nodes:[
  {id:'b',type:'image',x:400,y:400,w:500,h:900,bind:'photo1',z:1},
  {id:'locked',type:'logo',x:10,y:10,w:50,h:50,locked:true,z:3},
 ]});
+
+test('redraw dependencies ignore new equivalent wrappers but retain every rendered input and photo order',()=>{
+ const design=defaultPublicationDesign(),card={body:'房源',fields:{price:80000}},assets={photos:[{dataUrl:'data:image/png;base64,red'},'data:image/png;base64,blue'],rules:{Москва:'莫斯科'},mapImage:'map-a',mapAttribution:'map-source',logo:'logo-a',avatar:'avatar-a'};
+ const first=designCanvasRenderInputs('pdfGallery',design,card,assets),equal=designCanvasRenderInputs('pdfGallery',structuredClone(design),structuredClone(card),structuredClone(assets));
+ assert.equal(designCanvasRenderInputsEqual(first,equal),true);
+ for(const key of ['surfaceId','design','card','rules','day','mapImage','mapAttribution','logo','avatar'])assert.equal(designCanvasRenderInputsEqual(first,{...equal,[key]:key==='day'?equal.day+1:equal[key]+'changed'}),false,key);
+ assert.equal(designCanvasRenderInputsEqual(first,{...equal,photos:[...equal.photos].reverse()}),false);
+ assert.equal(designCanvasRenderInputsEqual(first,{...equal,photos:equal.photos.slice(1)}),false);
+ assets.photos[0].dataUrl='changed-outside';assert.equal(first.photos[0],'data:image/png;base64,red');
+ assert.equal(designCanvasRenderInputsEqual(first,null),false);
+});
 
 test('pointer coordinates retain export units at mobile and zoomed display sizes',()=>{
  assert.deepEqual(designCanvasDelta({x:20,y:30},{x:35,y:60},{width:270,height:480},surface()),{x:60,y:120});
