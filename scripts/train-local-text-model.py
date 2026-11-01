@@ -30,6 +30,18 @@ def atomic_json(path, value):
     os.replace(temporary, path)
 
 
+def training_row(rows, *, seed, step, sampling='random'):
+    """A step determines its row without mutable RNG state across resumes."""
+    if sampling == 'random':
+        return random.Random(seed+step).choice(rows)
+    if sampling != 'shuffled':
+        raise ValueError('Unknown training sampling mode')
+    epoch, offset = divmod(step, len(rows))
+    order = list(range(len(rows)))
+    random.Random(seed+epoch).shuffle(order)
+    return rows[order[offset]]
+
+
 def resume_receipt(output, args, model_path):
     output = Path(output)
     receipt_path = output/'trainreceipt.json'
@@ -44,6 +56,8 @@ def resume_receipt(output, args, model_path):
         'trainableParameters': EXPECTED_TRAINABLE, 'seed': args.seed, 'lora': LORA}
     if any(value.get(key) != item for key, item in expected.items()):
         raise ValueError('Checkpoint dataset, model, seed or adapter configuration changed')
+    if value.get('sampling', 'random') != getattr(args, 'sampling', 'random'):
+        raise ValueError('Checkpoint sampling mode changed')
     if value.get('limits', {}).get('maxSequenceLength') != args.max_seq_length or value.get('learningRate') != args.learning_rate:
         raise ValueError('Checkpoint token limit or learning rate changed')
     for filename, key in [('adapters.safetensors','adapterSha256'),
@@ -142,7 +156,7 @@ def run(args):
             if path.is_file() and not path.is_symlink()},
         'datasetSha256': file_sha(args.dataset), 'datasetContentSha256': content_sha(data),
         'trainableParameters': trainable, 'adapterTensorCount': len(actual),
-        'lora': LORA, 'layers': LAYERS, 'seed': args.seed,
+        'lora': LORA, 'layers': LAYERS, 'seed': args.seed, 'sampling': args.sampling,
         'learningRate': args.learning_rate, 'initialSha256': file_sha(output/'initial.safetensors'),
         'packages': {key: importlib.metadata.version(key) for key in ('mlx', 'mlx-lm')},
         'limits': {'seconds': args.max_seconds, 'steps': args.steps, 'maxSequenceLength': args.max_seq_length,
@@ -176,7 +190,7 @@ def run(args):
             if cancel_signal[0] or time.monotonic()-start >= args.max_seconds or (args.cancel_file and Path(args.cancel_file).exists()):
                 interrupted = True
                 break
-            row = random.Random(args.seed+step).choice(encoded['train'])
+            row = training_row(encoded['train'], seed=args.seed, step=step, sampling=args.sampling)
             model.train()
             loss, grads = gradient(model, mx.array([row['tokens']]), row['answerStart'])
             optimizer.update(model, grads)
@@ -220,10 +234,12 @@ def main():
     parser.add_argument('--eval-examples', type=int, default=8)
     parser.add_argument('--learning-rate', type=float, default=1e-4)
     parser.add_argument('--seed', type=int, default=20261101)
+    parser.add_argument('--sampling', choices=('random', 'shuffled'), default='random',
+        help='random preserves legacy sampling; shuffled visits each complete example once per epoch')
     parser.add_argument('--cancel-file')
     parser.add_argument('--resume-adapter')
     args = parser.parse_args()
-    if not 1 <= args.steps <= 2000 or not 30 <= args.max_seconds <= 3600 or not 64 <= args.max_seq_length <= 512:
+    if not 1 <= args.steps <= 2000 or not 30 <= args.max_seconds <= 3600 or not 64 <= args.max_seq_length <= 1024:
         parser.error('Bounded steps, seconds and sequence length are required')
     if not 2 <= args.eval_examples <= 32 or not 0 < args.learning_rate <= .001:
         parser.error('Invalid evaluation or learning-rate limit')
