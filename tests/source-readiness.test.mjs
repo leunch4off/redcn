@@ -17,6 +17,10 @@ test('normalized rental evidence survives editor persistence without serializing
   assert.equal(saved.oneTimeFees[0].amount,'1500');assert.equal(saved.transitDetails[0].time,'5–7');assert.equal(saved.transitDetails[0].url,fields.transitDetails[0].url);
   assert.doesNotMatch(JSON.stringify(saved),/PRIVATE|cookies|html|offer/);
 });
+test('source metadata preserves explicit bus mode and fractional observed travel minutes',()=>{
+ const fields={transitDetails:[{name:'Сокол',mode:'bus',time:'5.5',source:'CIAN geo.undergrounds'}]};
+ assert.deepEqual(sourceEditorMetadata(sourceEditorMetadata(fields)),fields);
+});
 
 test('completed operation keeps source gaps visible and never offers a photo retry for them',()=>{
   const job={state:'done',partial:true,photoPartial:false,sourcePartial:true,result_id:'a'.repeat(32),sourceReadiness:partialSource()},before=structuredClone(job);

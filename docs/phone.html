@@ -453,8 +453,8 @@ function sourceEditorMetadata(fields,listing){
       output[key]=value.slice(0,80).filter(row=>row&&typeof row==='object').map(row=>{
         const item={};for(const text of ['name','line','color','source']){const safe=metadataString(row[text],text==='name'?200:80);if(safe!==null)item[text]=safe;}
         if(typeof row.id==='string')item.id=row.id.slice(0,80);else if(typeof row.id==='number'&&Number.isFinite(row.id)||row.id===null)item.id=row.id;
-        if(['walk','public','car','unknown'].includes(row.mode))item.mode=row.mode;
-        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(typeof row.time==='string'&&/^\d{1,4}(?:[–-]\d{1,4})?$/.test(row.time))item.time=row.time;else if(row.time===null)item.time=null;
+        if(['walk','bus','metro','public','car','unknown'].includes(row.mode))item.mode=row.mode;
+        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(typeof row.time==='string'&&/^\d{1,4}(?:\.\d{1,2})?(?:[–-]\d{1,4}(?:\.\d{1,2})?)?$/.test(row.time))item.time=row.time;else if(row.time===null)item.time=null;
         const url=metadataUrl(row.url);if(url)item.url=url;
         return item;
       });

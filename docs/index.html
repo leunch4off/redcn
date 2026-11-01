@@ -373,8 +373,8 @@ function sourceEditorMetadata(fields,listing){
       output[key]=value.slice(0,80).filter(row=>row&&typeof row==='object').map(row=>{
         const item={};for(const text of ['name','line','color','source']){const safe=metadataString(row[text],text==='name'?200:80);if(safe!==null)item[text]=safe;}
         if(typeof row.id==='string')item.id=row.id.slice(0,80);else if(typeof row.id==='number'&&Number.isFinite(row.id)||row.id===null)item.id=row.id;
-        if(['walk','public','car','unknown'].includes(row.mode))item.mode=row.mode;
-        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(typeof row.time==='string'&&/^\d{1,4}(?:[–-]\d{1,4})?$/.test(row.time))item.time=row.time;else if(row.time===null)item.time=null;
+        if(['walk','bus','metro','public','car','unknown'].includes(row.mode))item.mode=row.mode;
+        if(typeof row.time==='number'&&Number.isFinite(row.time)&&row.time>=0&&row.time<=1440)item.time=row.time;else if(typeof row.time==='string'&&/^\d{1,4}(?:\.\d{1,2})?(?:[–-]\d{1,4}(?:\.\d{1,2})?)?$/.test(row.time))item.time=row.time;else if(row.time===null)item.time=null;
         const url=metadataUrl(row.url);if(url)item.url=url;
         return item;
       });
@@ -5764,8 +5764,9 @@ function renderTitles(){
   $('variants').replaceChildren();
   currentTitles.forEach((title,i)=>{const button=document.createElement('button');button.className='btn variant'+(i===titleIndex?' chosen':'');button.textContent=title;button.setAttribute('aria-pressed',String(i===titleIndex));button.onclick=()=>{contentStudioUI?.recordTitle($('outputTitle').value,'manual');titleIndex=i;$('outputTitle').value=title;contentStudioUI?.recordTitle(title,'selected');editorRevision++;renderTitles();saveDraft();syncPhoneCard();};$('variants').append(button);});
 }
+function clearPublicationDraft(){currentTitles=[];titleIndex=0;$('outputTitle').value='';$('output').value='';$('tags').value='';renderTitles();contentStudioUI?.markCommitted();}
 function generate(){
-  let result=generateListing(snapshot(),rules,prefs);if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');toast('Проверьте числовые поля');return;}
+  let result=generateListing(snapshot(),rules,prefs);if(result.problems.length){$('review').classList.add('error');$('review').textContent=result.problems.join(' · ');toast('Проверьте поля, валюту и период оплаты');return;}
   const recent=read('most-copy-fingerprints',{}),key=$('url').value||$('name').value||'draft',known=recent[key]||[];const fingerprint=text=>{let h=2166136261;for(const c of text)h=Math.imul(h^c.codePointAt(0),16777619);return(h>>>0).toString(16);};for(let attempt=0;attempt<128&&known.includes(fingerprint(result.body));attempt++){advanceVariant();result=generateListing(snapshot(),rules,prefs);}
   const expected=editorRevision;
   const commit=()=>{
@@ -5908,7 +5909,7 @@ $('demo').onclick=()=>{
     universities:'МГУ | 35–50 | public\nРУДН | 30–45 | public',
     highlight:'52㎡宽敞空间＋独立厨房＋双人学习区',description:'两个独立房间，厨房与居住区域分开。窗边设有学习桌，方便在家学习或远程办公。',
     features:['sofa','desk','fridge','oven','stove','bath'],utilities:'meters',registration:'assist',support:true});
-  current=null;generate();toast('Учебный пример загружен.');
+  current=null;clearPublicationDraft();generate();toast('Учебный пример загружен.');
 };
 function renderDemoNotice(){const notice=$('demoNotice');notice.classList.toggle('hidden',!isDemo);notice.textContent=isDemo?'Учебный пример: цена, мебель и маршруты заданы для знакомства с редактором. Загрузите ссылку или вставьте своё объявление, чтобы работать с квартирой.':'';}
 const startup=editorStartup({local:localHosting,pathname:location.pathname,draft:read('most-draft',null)});
@@ -5962,11 +5963,11 @@ function renderSourceAudit(){
 }
 $('registrationPolicy').addEventListener('change',()=>{renderSourceAudit();saveDraft();});
 $('importHtml').onclick=()=>$('htmlFile').click();
-$('htmlFile').onchange=async()=>{try{const file=$('htmlFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const raw=await file.text();const result=/<(?:!doctype|html|div|script)\b/i.test(raw)?analyzeListingSource(raw,rules):extractFacts(raw,rules),old=snapshot(),keep={};for(const key of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[key]=old[key];populate({...keep,...result.facts,source:result.facts.source||raw});current=null;advanceVariant();generate();$('sourceAnalysis').open=true;$('importStatus').textContent='HTML разобран локально: '+file.name;await historyUI?.record('import');toast('Поля и мебель заполнены. Проверьте предупреждения источника.');}catch(error){toast(error.message);}finally{$('htmlFile').value='';}};
+$('htmlFile').onchange=async()=>{try{const file=$('htmlFile').files[0];if(!file)return;if(file.size>8000000)throw Error('Файл больше 8 МБ');const raw=await file.text();const result=/<(?:!doctype|html|div|script)\b/i.test(raw)?analyzeListingSource(raw,rules):extractFacts(raw,rules),old=snapshot(),keep={};for(const key of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[key]=old[key];populate({...keep,...result.facts,source:result.facts.source||raw});current=null;clearPublicationDraft();advanceVariant();generate();$('sourceAnalysis').open=true;$('importStatus').textContent='HTML разобран локально: '+file.name;await historyUI?.record('import');toast('Поля и мебель заполнены. Проверьте предупреждения источника.');}catch(error){toast(error.message);}finally{$('htmlFile').value='';}};
 historyUI=setupHistory({read,write,getCurrent:historyCurrent,restore:entry=>{populate(entry.fields);current=objects.some(o=>o.id===entry.objectId)?entry.objectId:null;currentTitles=entry.titles||[entry.title];$('outputTitle').value=entry.title;$('output').value=entry.body;$('tags').value=entry.tags;renderTitles();loadedContent();saveDraft();tab('editor');},local:localHosting,api:localApi,toast});
 renderSourceAudit();
 
-function applySourceEnvelope(source){const old=snapshot(),keep={};for(const key of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[key]=old[key];const result=analyzeListingSource(source,rules);populate({...keep,...result.facts});current=null;advanceVariant();generate();$('sourceAnalysis').open=true;}
+function applySourceEnvelope(source){const old=snapshot(),keep={};for(const key of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[key]=old[key];const result=analyzeListingSource(source,rules);populate({...keep,...result.facts});current=null;clearPublicationDraft();advanceVariant();generate();$('sourceAnalysis').open=true;}
 
 photoUI=setupPhotos({local:localHosting,hosted:!staticHosting,api:localApi,toast,read,write,onChange:saveDraft,getPost:()=>({url:$('url').value,title:$('outputTitle').value,body:$('output').value,tags:$('tags').value,fields:snapshot()}),onFeatures:applyPhotoFeatures});
 relatedUI=setupRelated({getCurrent:snapshot,getObjects:()=>objects,getSource:()=>relatedOffers,onAdd:rows=>{relatedOffers=[...relatedOffers,...rows].filter((r,i,all)=>all.findIndex(x=>x.url===r.url)===i).slice(-40);saveDraft();},toast,onOpen:async row=>{try{await historyUI?.record('save');}catch(error){toast('Не удалось записать текущую версию: '+error.message);return;}if(row.libraryId){const object=objects.find(o=>o.id===row.libraryId);if(object){populate(object.fields||object);current=object.id;currentTitles=object.titles||[object.title];$('outputTitle').value=object.title||'';$('output').value=object.output||object.body||'';$('tags').value=object.tags||'';renderTitles();loadedContent();saveDraft();tab('editor');return;}}const old=snapshot(),keep={};for(const k of ['style','pickup','luggage','support','arrival','registration','phraseNotes'])keep[k]=old[k];populate({...keep,url:row.url});current=null;currentTitles=[];$('outputTitle').value='';$('output').value='';$('tags').value='';renderTitles();loadedContent();saveDraft();tab('editor');if(localHosting)await importLocal();else if(!staticHosting)$('import').click();else toast('Ссылка выбрана. Импортируйте HTML / JSON этой карточки или загрузите её в локальном redcn.');}});

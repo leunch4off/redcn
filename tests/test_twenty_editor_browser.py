@@ -138,6 +138,17 @@ class TwentyEditorBrowserAcceptance(unittest.TestCase):
         self.assertIn('валют',self.page.locator('#review').inner_text().lower())
         self.assertEqual(self.page.locator('#output').input_value(),before)
 
+    def test_loading_a_different_source_cannot_pair_old_manual_text_with_new_facts(self):
+        self.seed()
+        self.page.locator('#output').fill('OLD_MANUAL_PROPERTY')
+        html='<h1 data-name="OfferTitle">1-комнатная квартира 36 м²</h1><div data-name="PriceInfo">60 000 ₽ в месяц</div><div data-name="Description">Есть холодильник.</div>'
+        self.page.locator('#htmlFile').set_input_files({'name':'different.html','mimeType':'text/html','buffer':html.encode()})
+        self.page.wait_for_function("document.getElementById('importStatus').textContent.includes('HTML разобран локально')")
+        self.assertNotIn('OLD_MANUAL_PROPERTY',self.page.locator('#output').input_value())
+        self.assertEqual(self.page.locator('#price').input_value(),'60000')
+        self.assertEqual(self.page.locator('#area').input_value(),'36')
+        self.assertIn('60,000',self.page.locator('#output').input_value())
+
 
 if __name__ == '__main__':
     unittest.main()

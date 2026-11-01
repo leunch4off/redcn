@@ -1,6 +1,6 @@
 {
   "project": "redcn",
-  "version": 18,
+  "version": 19,
   "total": 330,
   "tasks": [
     {
@@ -178,8 +178,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-014",
@@ -190,8 +193,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-015",
@@ -202,8 +208,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-016",
@@ -214,8 +223,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-017",
@@ -226,8 +238,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-018",
@@ -304,8 +319,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-024",
@@ -316,8 +334,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-025",
@@ -328,8 +349,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-026",
@@ -340,8 +364,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-027",
@@ -352,8 +379,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs",
+        "tests/avito-corpus.test.mjs",
+        "cli/redcn.py: batch_publication_decision; tests/test_batch_publication.py"
+      ]
     },
     {
       "id": "RCN-028",
@@ -391,8 +423,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/avito-corpus.test.mjs"
+      ]
     },
     {
       "id": "RCN-031",
@@ -1082,8 +1117,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/initial-payment.mjs; tests/initial-payment.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-079",
@@ -1260,8 +1299,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-090",
@@ -1272,8 +1315,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-091",
@@ -1374,8 +1421,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-098",
@@ -1386,8 +1437,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-099",
@@ -1398,8 +1454,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-100",
@@ -1410,8 +1470,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-101",
@@ -1676,8 +1740,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs"
+      ]
     },
     {
       "id": "RCN-118",
@@ -4890,8 +4957,11 @@
       "depends_on": [
         "RCN-320"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/avito-corpus.test.mjs"
+      ]
     },
     {
       "id": "RCN-325",
