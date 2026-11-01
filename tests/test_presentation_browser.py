@@ -71,9 +71,12 @@ class PresentationAcceptance(unittest.TestCase):
             token=self.page.locator('meta[name="redcn-token"]').get_attribute('content')
             saved=self.context.request.get(base+'/api/local/card-exports/'+self.card_id,headers={'X-Redcn-Token':token}).json()['exports']
             self.assertEqual({item['kind'] for item in saved},{'html','pdf','intro','outro'})
-            # Phone receives all marketing exports and the private dossier only after pairing.
+            # The fixture explicitly grants owner before reading private notes
+            # and contracts; ordinary newly paired phones remain editors.
             code,_=self.phone.pairing.issue();self.page.set_viewport_size({'width':393,'height':852})
             self.page.goto(self.base+'/phone/pair#'+code)
+            self.page.locator('#phoneCards .listing-card').first.wait_for()
+            acceptance.grant_paired_role(self,'owner')
             self.page.locator('#phoneCards .listing-card').first.click()
             phone_archive=self.page.locator('#phoneArchiveMount')
             phone_archive.get_by_role('button',name='Скачать Договор.txt',exact=True).wait_for()

@@ -46,7 +46,7 @@ class PhoneTimeoutCompatibilityAcceptance(unittest.TestCase):
             token=audit.begin(format(index+1,'032x'),'https://www.cian.ru/rent/flat/'+str(80000000+index)+'/')
             audit.record(token,'fixture',stage='scroll',section='photos',completed=1,total=1)
             audit.complete(token,'success')
-        self.connect();source='https://www.cian.ru/rent/flat/300691182/'
+        self.connect();phone_fixture.grant_paired_role(self,'owner');source='https://www.cian.ru/rent/flat/300691182/'
         prepared={**self.result,'fields':{**self.result['fields'],'photos':[self.assets[0]['sourceUrl']]},'titles':['兼容旧版Safari的房源']}
         with patch.object(phone_fixture.redcn,'load_listing',return_value={'url':source,'text':'Квартира 54 м². Аренда 80 000 руб.','images':[self.assets[0]['sourceUrl']]}),patch.object(phone_fixture.redcn,'generate',return_value=prepared),patch.object(phone_fixture.photo_store,'load_photo',return_value=self.assets[0]),patch.object(phone_fixture.photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
             self.page.locator('#phoneTabs [data-phone-view="import"]').click()

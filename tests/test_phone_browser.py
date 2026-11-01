@@ -17,6 +17,16 @@ import photo_store
 import redcn
 
 
+def grant_paired_role(fixture,role):
+    """Explicit disposable-fixture grant; pairing itself remains editor-only."""
+    snapshot=fixture.phone.pairing.list_sessions()
+    fixture.assertEqual(len(snapshot['sessions']),1,'This fixture grants its one paired device only')
+    fixture.phone.pairing.manage_session(snapshot['sessions'][0]['id'],role=role,expected_revision=snapshot['revision'])
+    fixture.page.locator('#phoneRefresh').click()
+    expected={'owner':'владелец','editor':'редактор','viewer':'читатель'}[role]
+    fixture.page.wait_for_function("expected=>document.getElementById('phoneRoleStatus').textContent.includes(expected)",arg=expected)
+
+
 class PhoneBrowserAcceptance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

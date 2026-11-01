@@ -46,9 +46,10 @@ class WorkspaceBrowserAcceptance(unittest.TestCase):
         self.page.goto(self.desktop+'/listing/'+self.card_id,wait_until='domcontentloaded')
         self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'&&document.getElementById('output').value.includes('两间独立')")
 
-    def pair_phone(self):
+    def pair_phone(self,*,role='editor'):
         self.page.set_viewport_size({'width':393,'height':852})
         phone_fixture.PhoneBrowserAcceptance.connect(self)
+        if role!='editor':phone_fixture.grant_paired_role(self,role)
 
     def assert_fit(self):self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
 
@@ -79,7 +80,7 @@ class WorkspaceBrowserAcceptance(unittest.TestCase):
         self.assertEqual(self.controller.import_diagnostics.status()['completed'],0)
 
     def test_phone_lazy_routes_save_and_all_five_tabs_fit(self):
-        before=copy.deepcopy(self.read_card());self.pair_phone();self.assert_fit()
+        before=copy.deepcopy(self.read_card());self.pair_phone(role='owner');self.assert_fit()
         self.assertEqual(self.page.locator('#phoneTabs [data-phone-view]').count(),5);self.assertEqual(self.route_requests,[])
         self.page.locator('#phoneCards .listing-card').first.click()
         self.page.locator('#phoneRoutesMount .phone-route-controller > summary').wait_for()
@@ -111,7 +112,7 @@ class WorkspaceBrowserAcceptance(unittest.TestCase):
         audit.get_by_role('button',name='Начать 10 проверок',exact=True).click()
         self.page.wait_for_function("document.querySelector('#importDiagnosticsMount .import-audit-status').textContent.includes('Следующие ручные')")
         state=self.controller.import_diagnostics.status();self.assertEqual(state['state'],'armed');self.assertEqual(state['target'],10);self.assertEqual(state['completed'],0)
-        self.pair_phone();self.page.locator('#phoneTabs [data-phone-view="import"]').click()
+        self.pair_phone(role='owner');self.page.locator('#phoneTabs [data-phone-view="import"]').click()
         phone_audit=self.page.locator('#phoneImportDiagnostics');phone_audit.locator('.import-audit > summary').click()
         self.page.wait_for_function("document.querySelector('#phoneImportDiagnostics .import-audit-status').textContent.includes('Следующие ручные')")
         self.assertTrue(phone_audit.get_by_role('button',name='Начать 10 проверок',exact=True).is_disabled())
