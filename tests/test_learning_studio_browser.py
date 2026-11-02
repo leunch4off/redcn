@@ -158,17 +158,58 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.assertIn('Время: 2.4 с', text)
 
     def test_withdrawal_removes_approval_actions_and_shows_lineage(self):
+        def action_response(response,action):
+            return (response.url.endswith('/api/learning') and response.request.method=='POST'
+                and response.request.post_data_json.get('action')==action)
+        idle="document.querySelector('.learning-studio').getAttribute('aria-busy')==='false'"
         self.page.get_by_label('Что запомнить',exact=True).select_option('translation')
         self.page.get_by_label('Русский текст',exact=True).fill('Есть вымышленный стол')
         self.page.get_by_label('Китайский текст',exact=True).fill('有虚构书桌')
-        self.page.get_by_role('button',name='Запомнить',exact=True).click()
-        self.page.get_by_role('button',name='Происхождение и версии корпуса',exact=True).click()
-        self.page.wait_for_function("document.body.textContent.includes('operator')")
+        with self.page.expect_response(lambda response:action_response(response,'record')) as recorded:
+            self.page.get_by_role('button',name='Запомнить',exact=True).click()
+        self.assertEqual(recorded.value.status,200);event_id=recorded.value.json()['event']['id']
+        self.page.wait_for_function(idle)
+        with self.page.expect_response(lambda response:action_response(response,'provenance')) as original:
+            self.page.get_by_role('button',name='Происхождение и версии корпуса',exact=True).click()
+        self.assertEqual(original.value.json()['id'],event_id)
+        self.page.wait_for_function("document.querySelector('.learning-provenance')?.textContent.includes('operator')")
+        self.page.wait_for_function(idle)
+
+        # The initial counter already says "отозвано: 0". A broad substring
+        # wait cannot prove withdrawal completed and can click through busy
+        # refreshes. Hold this actual action so the causal boundary is tested.
+        self.page.evaluate('''() => {
+            const original=window.fetch.bind(window);
+            window.fetch=(url,options)=>{
+                if(options?.body && JSON.parse(options.body).action==='withdraw')
+                    return new Promise(resolve=>{window.releaseWithdrawal=()=>resolve(original(url,options));});
+                return original(url,options);
+            };
+        }''')
         self.page.get_by_role('button',name='Отозвать из обучения',exact=True).click()
-        self.page.wait_for_function("document.body.textContent.includes('отозван')")
-        self.page.locator('select').filter(has=self.page.locator('option[value="withdrawn"]')).select_option('withdrawn')
-        self.page.get_by_role('button',name='Происхождение и версии корпуса',exact=True).click()
-        self.page.wait_for_function("document.body.textContent.includes('Влияние на уже обученные веса не удалено')")
+        self.page.wait_for_function("typeof window.releaseWithdrawal==='function'")
+        self.assertEqual(self.page.locator('.learning-studio').get_attribute('aria-busy'),'true')
+        self.assertIsNone(learning_service.LearningMemory(Path(self.folder.name)).provenance(event_id)['withdrawal'])
+        with self.page.expect_response(lambda response:action_response(response,'withdraw')) as withdrawn:
+            self.page.evaluate('releaseWithdrawal()')
+        self.assertEqual(withdrawn.value.status,200)
+        self.assertTrue(withdrawn.value.json()['withdrawn'])
+        self.assertFalse(withdrawn.value.json()['existingWeightInfluenceRemoved'])
+        self.page.wait_for_function(idle)
+        with self.page.expect_response(lambda response:action_response(response,'list') and response.request.post_data_json.get('status')=='withdrawn') as filtered:
+            self.page.locator('select').filter(has=self.page.locator('option[value="withdrawn"]')).select_option('withdrawn')
+        self.assertEqual(filtered.value.status,200)
+        events=filtered.value.json()['events']
+        self.assertEqual([(row['id'],row['status']) for row in events],[(event_id,'withdrawn')])
+        self.page.wait_for_function(idle)
+        row=self.page.locator('.learning-studio article').filter(has_text='Есть вымышленный стол')
+        row.get_by_text('Перевод · отозвано из обучения',exact=True).wait_for()
+        with self.page.expect_response(lambda response:action_response(response,'provenance')) as lineage:
+            row.get_by_role('button',name='Происхождение и версии корпуса',exact=True).click()
+        self.assertEqual(lineage.value.status,200)
+        self.assertEqual(lineage.value.json()['id'],event_id)
+        self.assertIsNotNone(lineage.value.json()['withdrawal'])
+        row.locator('.learning-provenance').get_by_text('Разрешение отозвано. Влияние на уже обученные веса не удалено; затронутым моделям нужно переобучение.',exact=True).wait_for()
         self.assertEqual(self.page.get_by_role('button',name='Утвердить',exact=True).count(),0)
         self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth>innerWidth'))
 

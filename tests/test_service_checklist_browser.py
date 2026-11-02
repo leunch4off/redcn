@@ -66,6 +66,9 @@ class ServiceChecklistBuiltEditor(unittest.TestCase):
         receipt=self.confirm_registration()
         self.page.locator('#save').click()
         self.page.wait_for_function("JSON.parse(localStorage.getItem('most-objects'))?.[0]?.serviceConfirmations?.registration?.actor==='PRIVATE_SERVICE_AUTHOR'")
+        # The localStorage card is written before the asynchronous history
+        # transaction commits. Reload only after the successful save completes.
+        self.page.wait_for_function("document.getElementById('toast').textContent==='Объект сохранён' && !document.getElementById('toast').classList.contains('hidden')")
         saved=self.page.evaluate("JSON.parse(localStorage.getItem('most-objects'))[0]")
         self.assertEqual(saved['serviceConfirmations']['registration'],receipt)
         self.reload_editor()
