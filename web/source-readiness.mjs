@@ -21,14 +21,17 @@ function readinessOf(value){
 function albumStatus(value){
  if(!value||typeof value!=='object'||!Number.isInteger(value.observed)||value.observed<0||value.observed>1800)return null;
  const expected=value.expected===null?null:Number.isInteger(value.expected)&&value.expected>0&&value.expected<=400?value.expected:null,observed=value.observed,limit=Number.isInteger(value.limit)&&value.limit>0&&value.limit<=180?value.limit:30;
- const missing=expected===null?null:Math.max(0,expected-observed),countConflict=value.countConflict===true||expected!==null&&observed>expected,state=missing?'partial':expected===null||countConflict?'unknown':'complete';
+ const hasRoles=value.version===2||Object.hasOwn(value,'previewOnly')||Object.hasOwn(value,'mainLinksObserved');
+ const rolesValid=hasRoles&&Number.isInteger(value.previewOnly)&&value.previewOnly>=0&&Number.isInteger(value.mainLinksObserved)&&value.mainLinksObserved>=0&&value.previewOnly+value.mainLinksObserved<=observed;
+ const missing=expected===null?null:Math.max(0,expected-observed),countConflict=value.countConflict===true||expected!==null&&observed>expected;
+ const state=missing||rolesValid&&value.previewOnly?'partial':expected===null||countConflict||hasRoles&&(!rolesValid||value.mainLinksObserved+value.previewOnly<observed)?'unknown':'complete';
  const countEvidence=(Array.isArray(value.countEvidence)?value.countEvidence:[]).filter(row=>row&&Number.isInteger(row.count)&&row.count>0&&row.count<=400&&['aria-setsize','aria-label','gallery-text','data-photo-count','data-image-count','data-total','structured-photo-list'].includes(row.source)).slice(0,30).map(row=>({count:row.count,source:row.source}));
- return {version:1,state,observed,expected,missing,countConflict,countEvidence,limit,retained:Math.min(observed,limit),overLimit:Math.max(0,observed-limit),completenessVerified:state==='complete'};
+ return {version:hasRoles?2:1,state,observed,expected,missing,countConflict,countEvidence,limit,retained:Math.min(observed,limit),overLimit:Math.max(0,observed-limit),completenessVerified:state==='complete',...(rolesValid?{previewOnly:value.previewOnly,mainLinksObserved:value.mainLinksObserved}:{})};
 }
 
 export function sourceReadinessFeedback(value,fallback){
-  const readiness=readinessOf(value)||readinessOf(fallback),album=albumStatus(readiness?.gallery),partial=!!(value&&value.sourcePartial===true)||!!(readiness&&(readiness.partial===true||readiness.state==='partial'))||!!(album&&(album.missing||album.overLimit));
-  const state=partial?'partial':readiness?readiness.state:'',details=[];
+  const readiness=readinessOf(value)||readinessOf(fallback),album=albumStatus(readiness?.gallery),partial=!!(value&&value.sourcePartial===true)||!!(readiness&&(readiness.partial===true||readiness.state==='partial'))||!!(album&&(album.missing||album.overLimit||album.previewOnly));
+  const state=partial?'partial':album?.state==='unknown'?'unknown':readiness?readiness.state:'',details=[];
   if(partial){
     const rows=Array.isArray(readiness&&readiness.sections)?readiness.sections:[];
     for(const name of Object.keys(sectionNames)){
@@ -41,15 +44,16 @@ export function sourceReadinessFeedback(value,fallback){
   }
   if(album){
     if(album.missing||album.overLimit)details.push('Альбом — найдено '+album.observed+' из '+(album.expected??'?')+' фото; не найдено '+(album.missing||0)+', сверх лимита '+album.overLimit+'.');
-    else if(album.state==='unknown')details.push('Альбом — найдено '+album.observed+' фото; полнота не подтверждена'+(album.countConflict?': счётчики противоречивы.':': общий счётчик отсутствует.'));
+    if(album.previewOnly)details.push('У '+album.previewOnly+' фото пока найдены только миниатюры; ссылки на основные версии ещё не получены.');
+    else if(album.state==='unknown')details.push('Альбом — найдено '+album.observed+' фото; полнота не подтверждена'+(album.countConflict?': счётчики противоречивы.':album.expected===null?': общий счётчик отсутствует.':': основные версии некоторых фото ещё не подтверждены.'));
   }
   const message=partial?['Сбор исходной страницы частичный.',...details].join(' '):state==='unknown'?['Полнота исходной страницы не проверялась.',...details].join(' '):details.join(' ');
-  return {state,partial,details,message};
+  return {state,partial,galleryState:album?.state||'',details,message};
 }
 
 export function importCompletionFeedback(job,fallback){
   const source=sourceReadinessFeedback(job,fallback),photoPartial=typeof job.photoPartial==='boolean'?job.photoPartial:job.partial===true&&!source.partial;
-  const title=source.partial?'Карточка готова · исходная страница собрана частично':photoPartial?'Карточка готова · фото подготовлены частично':'Готово на Mac';
+  const title=source.partial?'Карточка готова · исходная страница собрана частично':source.state==='unknown'?'Данные прочитаны · полнота '+(source.galleryState==='unknown'?'фотографий':'источника')+' не подтверждена':photoPartial?'Карточка готова · фото подготовлены частично':'Готово на Mac';
   const message=[source.partial?'Карточка создана.':photoPartial?'Карточка готова.':'',source.message,photoPartial?'Фотографии подготовлены частично.':''].filter(Boolean).join(' ');
   return {title,message,sourceMessage:source.message,sourcePartial:source.partial,photoPartial,retryPhotos:photoPartial&&!!job.result_id};
 }
@@ -69,7 +73,7 @@ function metadataMedia(value,layout){
     if(typeof row.photoId==='string'||typeof row.photoId==='number')item.photoId=String(row.photoId).slice(0,100);
     if(Number.isInteger(row.order)&&row.order>=0)item.order=row.order;
     if(typeof row.source==='string')item.source=row.source.slice(0,80);
-    if(['platform-photo-id','observed-dom-node','observed-picture'].includes(row.identitySource))item.identitySource=row.identitySource;
+    if(['platform-photo-id','observed-dom-node','observed-picture','observed-cian-photo-url'].includes(row.identitySource))item.identitySource=row.identitySource;
     if(row.variants&&typeof row.variants==='object'){item.variants={};for(const key of ['fullUrl','thumbnailUrl','thumbnail2Url','miniUrl']){const variant=metadataUrl(row.variants[key]);if(variant)item.variants[key]=variant;}}
     if(Array.isArray(row.observedVariants))item.observedVariants=row.observedVariants.slice(0,60).filter(value=>value&&['data-original','data-src','data-srcset','srcset','currentSrc','src','href'].includes(value.source)&&metadataUrl(value.url)).map(value=>({url:metadataUrl(value.url),source:value.source}));
     return item;
@@ -103,7 +107,7 @@ export function sourceEditorMetadata(fields,listing){
     }else if(key==='sourceReadiness'){
       if(!value||!['ready','partial','unknown'].includes(value.state))continue;
       const feedback=sourceReadinessFeedback({sourceReadiness:value});
-      output[key]={state:feedback.state,partial:feedback.partial,completed:value.completed===true&&!feedback.partial,sections:[]};
+      output[key]={state:feedback.state,partial:feedback.partial,completed:value.completed===true&&feedback.state==='ready',sections:[]};
       for(const name of Object.keys(sectionNames)){
         const row=Array.isArray(value.sections)&&value.sections.find(item=>item&&(item.name||item.section)===name);if(!row)continue;
         const reason=['ready','partial','not_found','not_visited_budget'].includes(row.reason)?row.reason:row.ready===true?'ready':'partial';

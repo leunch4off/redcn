@@ -1,0 +1,574 @@
+{
+  "schemaVersion": 1,
+  "report": "photo-gallery-v29-followup",
+  "date": "2026-11-02",
+  "status": "native-passed-publication-installation-and-ci-pending",
+  "finalized": true,
+  "references": {
+    "issue": "https://github.com/leunch4off/redcn/issues/1",
+    "pullRequest": "https://github.com/leunch4off/redcn/pull/6",
+    "narrative": "docs/PHOTO-GALLERY-v29-FIX.md"
+  },
+  "privacy": {
+    "sourcePhotosIncluded": false,
+    "rawSourceHtmlIncluded": false,
+    "actualListingOrCardIdsIncluded": false,
+    "actualListingOrPhotoUrlsIncluded": false,
+    "privatePathsOrTokensIncluded": false,
+    "privateZipPublished": false
+  },
+  "sourceSnapshot": {
+    "baselineCommit": "86bd193f5b598717de2b18557b2a24b7f78ed33c",
+    "inputTransferEntryCount": 22,
+    "fileCount": 21,
+    "excludedSelfDocumentPaths": [
+      "docs/PHOTO-GALLERY-v29-FIX.md",
+      "docs/benchmarks/photo-gallery-v29-followup.json"
+    ],
+    "sha256": "63e93c319bcdc933c9a3139c7a9acd5a2c48f8b7c83c5f01c3d68383756cf147",
+    "hashEncoding": "SHA-256 of UTF-8 JSON file list, path-sorted, sorted object keys, compact separators, without self-document hashes",
+    "localReadOnlyIntegrityCheck": {
+      "checked": 21,
+      "matched": 21,
+      "testsRerun": false
+    },
+    "files": [
+      {
+        "path": "cli/browser_dom.py",
+        "sha256": "66e0dd1e4b0daca9c9cc0250d8d23e2a1db4102e65cad3463df5ab5d65f616e1"
+      },
+      {
+        "path": "cli/browser_import.py",
+        "sha256": "ffb232159254c64c62a588f85ee2002d4f4125a78f14d3c50561930c52d9945a"
+      },
+      {
+        "path": "cli/gallery_coverage.py",
+        "sha256": "513a8c68109d7d21b8ce2e90b3a556f225e9ba79f182d1cebca74e379372fa32"
+      },
+      {
+        "path": "cli/photo_store.py",
+        "sha256": "147c2f38188692e6133c27931315e1759f9123fb40576f61e8d1d37cbf542a28"
+      },
+      {
+        "path": "cli/source_adapters/cian.py",
+        "sha256": "7eb4f6c10efe75391d16a679bff3f8fb365ae0ee9737b465be0245fec26d3409"
+      },
+      {
+        "path": "cli/source_readiness.py",
+        "sha256": "b5f64ac7d278e370963d226b436bf154c54dfe2a0d914c8e4d250844a5a28376"
+      },
+      {
+        "path": "tests/cian-gallery-fullsize.test.mjs",
+        "sha256": "10208551de3d71258d1ab81b599bd4f20645df609c1b4c5cb7e2a32516813c0e"
+      },
+      {
+        "path": "tests/fixtures/cian-fullsize-v29-webarchive-manifest.json",
+        "sha256": "757aeb8fdfd0d1be9a0589b96a2db2cd24a6bb2a4a1db3aba5e474db6c8c95d6"
+      },
+      {
+        "path": "tests/fixtures/cian-gallery-10-layout-v29-fullsize.html",
+        "sha256": "f0c690c9ef0af5c9b31db2a23a6652d7562ec7f93f53530930e9c274f8a4b4fd"
+      },
+      {
+        "path": "tests/fixtures/cian-gallery-13-v29-fullsize.html",
+        "sha256": "a1ee22511f813fae0b062dd012b7dbdede3429faccd1e8d5dbb38a738087bcf2"
+      },
+      {
+        "path": "tests/gallery-coverage.test.mjs",
+        "sha256": "7a8661b0bed418922c550a72360de068b9e56ce0e02c9ad713896fead073dfa3"
+      },
+      {
+        "path": "tests/test_browser_capture.py",
+        "sha256": "cf764bfe7fdaa809dba02f3a9629b626d23faac5419355e19e1e10898cba5f9e"
+      },
+      {
+        "path": "tests/test_cian_fullsize_browser.py",
+        "sha256": "58ee5ed55ec74132d7e3785b7d2b94d778fd8854a0e4cd6c94d125f6504f8a3b"
+      },
+      {
+        "path": "tests/test_gallery_coverage.py",
+        "sha256": "34d9e51b55e483f4a62c54fd2c672e1a7466e3a4ada2ea60c2cddc9ac8a042ea"
+      },
+      {
+        "path": "tests/test_section_scroll.py",
+        "sha256": "fe3c4a02c616f1a9fc4f7fbaa4150490623e98e1e22d59991e429ab534c77fa4"
+      },
+      {
+        "path": "tests/test_source_adapters.py",
+        "sha256": "b97ad9bdce4dc5cb56886ffe152397e7740c98b4b1130483e41b15a1dec05e71"
+      },
+      {
+        "path": "web/app.js",
+        "sha256": "4eb3cb2dc149922332fa9ca246ba5370657c20a519cd5f50fafe66f9a4e68765"
+      },
+      {
+        "path": "web/media-core.mjs",
+        "sha256": "99c3c0f48b71b360bdda055fe8bd814ec6f8915960985eae25668ea344ca3e3a"
+      },
+      {
+        "path": "web/source-adapters/cian.mjs",
+        "sha256": "ce2d14d09db1becdffdfd5317f05a509f5364874a1f5167bacde3df1459d018a"
+      },
+      {
+        "path": "web/source-import.mjs",
+        "sha256": "44e223a487ff2a27ce593e84be9c69a5be109a7b4f76d558a2e8a4ca47e6e645"
+      },
+      {
+        "path": "web/source-readiness.mjs",
+        "sha256": "ceb33f90cb95eb44cfe91b372032591529d631dc227b3172b1bb46f9775bcbc5"
+      }
+    ]
+  },
+  "observedRegression": {
+    "evidenceScope": "private working-card and capture measurements; only aggregates are published",
+    "sourcePhotoCount": 13,
+    "savedUrlCount": 16,
+    "savedMainVersionCount": 3,
+    "savedThumbnailVersionCount": 13,
+    "savedMainDimensions": [
+      1280,
+      960
+    ],
+    "thumbnailDimensions": [
+      [
+        301,
+        226
+      ],
+      [
+        240,
+        320
+      ],
+      [
+        262,
+        349
+      ]
+    ],
+    "capture": {
+      "galleryProbeWallSeconds": 6.523911,
+      "galleryBudgetSeconds": 6,
+      "galleryMoves": 0,
+      "fullSnapshotReads": 0,
+      "totalCaptureSeconds": 13.384,
+      "recordedCompleted": true,
+      "coverageState": "unknown",
+      "observedUrls": 16,
+      "expectedPhotos": 13,
+      "recordedCompletionConsistentWithCoverage": false
+    }
+  },
+  "archiveEvidence": {
+    "origin": "redacted-user-webarchive",
+    "userSuppliedArchivesMatchMacArchives": true,
+    "measurementMethod": "Pillow decoder on embedded bytes after plistlib parsing; source page code was not executed",
+    "fixtureManifest": "tests/fixtures/cian-fullsize-v29-webarchive-manifest.json",
+    "sourceJsonPhotoPath": "defaultState.offerData.offer.photos",
+    "sourceJsonLayoutPath": "defaultState.offerData.offer.cianLayouts",
+    "variantFieldSuffixes": {
+      "fullUrl": "-1.jpg",
+      "thumbnailUrl": "-2.jpg",
+      "miniUrl": "-3.jpg",
+      "thumbnail2Url": "-4.jpg"
+    },
+    "variant3And4ByteMeasurementsAvailable": false,
+    "cases": [
+      {
+        "caseAlias": "A",
+        "originalArchiveSha256": "959febfe0d824640440c939819ff2224073823dbf0d406bb631eb0a6f26311e8",
+        "archiveBytes": 22140301,
+        "mainCount": 13,
+        "thumbnailCount": 13,
+        "separateLayoutCount": 0,
+        "actualFormat": "WEBP",
+        "mainDimensions": [
+          {
+            "width": 1280,
+            "height": 960,
+            "count": 9
+          },
+          {
+            "width": 720,
+            "height": 960,
+            "count": 4
+          }
+        ],
+        "thumbnailDimensions": [
+          {
+            "width": 301,
+            "height": 226,
+            "count": 9
+          },
+          {
+            "width": 240,
+            "height": 320,
+            "count": 3
+          },
+          {
+            "width": 262,
+            "height": 349,
+            "count": 1
+          }
+        ],
+        "externalThumbnailUniqueUrls": 12,
+        "externalThumbnailTags": 23
+      },
+      {
+        "caseAlias": "B",
+        "originalArchiveSha256": "e253bb3b65c5b540cda5ad001d4a13d19d0326b5d9a525dd07d73d313cb1c8ae",
+        "archiveBytes": 22314053,
+        "mainCount": 10,
+        "thumbnailCount": 10,
+        "separateLayoutCount": 1,
+        "actualFormat": "WEBP",
+        "mainDimensions": [
+          {
+            "width": 720,
+            "height": 960,
+            "count": 9
+          },
+          {
+            "width": 1040,
+            "height": 780,
+            "count": 1
+          }
+        ],
+        "thumbnailDimensions": [
+          {
+            "width": 262,
+            "height": 349,
+            "count": 9
+          },
+          {
+            "width": 260,
+            "height": 195,
+            "count": 1
+          }
+        ],
+        "layoutDimensions": [
+          679,
+          960
+        ],
+        "externalThumbnailUniqueUrls": 12,
+        "externalThumbnailTags": 23
+      }
+    ]
+  },
+  "repair": {
+    "status": "applied",
+    "authorizedCardCount": 1,
+    "source": "user-provided-webarchive",
+    "sourceCaseAlias": "A",
+    "beforePhotoUrlCount": 16,
+    "afterMainPhotoCount": 13,
+    "readbackShaChecks": 13,
+    "readbackShaMatches": 13,
+    "textPreserved": true,
+    "factFieldsPreserved": true,
+    "oldObservationCount": 15,
+    "oldObservationsPreserved": true,
+    "oldAssetsDeleted": 0,
+    "backupDatabaseCount": 2,
+    "originalPayloadBackupCreated": true,
+    "expectedPayloadChecked": true,
+    "compareAndSwapApplied": true,
+    "writeLockAndRecheckBeforeMediaWrites": true,
+    "atomicityScope": "card payload transaction; media caches are separate stores with backups",
+    "historicalCapturePreserved": true,
+    "galleryCompletenessSource": "verified archive photo list and read-back bytes",
+    "newOriginalsRequireAnalysis": true,
+    "differentShaCandidatesNotInherited": true,
+    "liveBrowserCaptureClaimed": false,
+    "sourceReadiness": "partial"
+  },
+  "repairedCardUiBeforeGeneralHotfix": {
+    "status": "passed",
+    "sourceScope": "installed baseline build after data repair, before general gallery code hotfix",
+    "commit": "86bd193f5b598717de2b18557b2a24b7f78ed33c",
+    "buildId": "a030b50bd95daadf98459212254f40ab57cc6fd20f9ab6a2a93fef22c6a1fc88",
+    "environment": "native Chrome on Mac",
+    "elapsedSeconds": 36.508,
+    "uiPhotoTiles": 13,
+    "originalsAvailable": 13,
+    "originalsExpected": 13,
+    "localMediaGetCount": 13,
+    "localMediaShaMatchesArchive": 13,
+    "zipDownloadMethod": "standard originals ZIP button",
+    "zipImageCount": 13,
+    "zipActualImageFormat": "WEBP",
+    "zipImageShaMatchesArchive": 13,
+    "zipSha256": "15b2313ee775a2787cb8d2442ea53baff1a0718490cf3cf9f19fd0302ee8ac32",
+    "lastPhotoDialog": {
+      "photoPosition": 13,
+      "width": 720,
+      "height": 960
+    },
+    "pageErrors": 0,
+    "localHttpErrors": 0,
+    "externalPreviewRequestsIntentionallyBlocked": 44,
+    "blockedMutations": 0,
+    "cardChanged": false,
+    "generalHotfixCaptureAcceptedByThisRun": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "failed",
+        "reason": "verifier policy blocked normal owner handoff",
+        "retainedInHistory": true,
+        "productFailureEstablished": false
+      },
+      {
+        "attempt": 2,
+        "status": "passed",
+        "verifierAllowlistCorrected": true,
+        "elapsedSeconds": 36.508
+      }
+    ]
+  },
+  "controlledTests": {
+    "liveSourceAcceptance": false,
+    "frontendBeforeCacheGuard": {
+      "environment": "local Node",
+      "scope": "eight-module stage before browser-cache version guard",
+      "passed": 71,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedSeconds": 4.516387659,
+      "finalSnapshotCoverageClaimed": false
+    },
+    "frontendAfterCacheGuard": {
+      "environment": "local Node",
+      "scope": "cian-gallery-fullsize, gallery-coverage, source-readiness",
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedSeconds": 0.127365991,
+      "broadFinalRunClaimed": false
+    },
+    "appSyntaxCheck": {
+      "status": "passed",
+      "command": "node --check web/app.js"
+    },
+    "backendEarlierStage": {
+      "scope": "backend basis before final start-at-end/offscreen followup",
+      "passed": 43,
+      "failed": 0,
+      "elapsedSeconds": 5.614,
+      "finalSnapshotCoverageClaimed": false
+    },
+    "backendBoundaryEarlierStage": {
+      "passed": 25,
+      "failed": 0,
+      "elapsedSeconds": 0.038,
+      "finalSnapshotCoverageClaimed": false
+    },
+    "cianBrowserEarlierStage": {
+      "environment": "controlled Chromium",
+      "passed": 3,
+      "failed": 0,
+      "elapsedSeconds": 1.11,
+      "finalStartAtEndAndOffscreenCovered": false
+    },
+    "finalTargetedBrowserFollowup": {
+      "environment": "controlled Linux Chromium",
+      "browserDomSha256": "66e0dd1e4b0daca9c9cc0250d8d23e2a1db4102e65cad3463df5ab5d65f616e1",
+      "passed": 3,
+      "failed": 0,
+      "elapsedSeconds": 1.888,
+      "tests": [
+        "test_synthetic_delayed_main_ul_is_swept_before_thumbnail_rail_and_restored",
+        "test_sweep_from_last_slide_collects_first_to_last_and_restores_original_position",
+        "test_early_sweep_reveals_offscreen_gallery_before_visibility_gated_lazy_callbacks"
+      ],
+      "scope": "main UL lazy case plus start-at-end and offscreen cases; not live CIAN or native Mac"
+    },
+    "finalGalleryUnits": {
+      "scope": "thumbnail order and source photos priority",
+      "passed": 14,
+      "failed": 0,
+      "elapsedSeconds": 0.016
+    },
+    "independentBoundaryReview": {
+      "environment": "controlled Linux Chromium",
+      "browserDomSha256": "66e0dd1e4b0daca9c9cc0250d8d23e2a1db4102e65cad3463df5ab5d65f616e1",
+      "passed": 2,
+      "failed": 0,
+      "previousFailedAttemptsRetained": true,
+      "previousObservedPhotoCountPerCase": 1,
+      "previousExpectedPhotoCountPerCase": 19,
+      "cases": [
+        {
+          "name": "start-at-last-slide",
+          "expectedPhotos": 19,
+          "observedPhotos": 19,
+          "missing": 0,
+          "moves": 20,
+          "initialScrollLeftPx": 5400,
+          "restoredScrollLeftPx": 5400,
+          "sourceOrderIndices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "mergeIncludesInitialLastSlide": true
+        },
+        {
+          "name": "offscreen-lazy-gallery",
+          "initialTopPx": 2499.875,
+          "viewportHeightPx": 700,
+          "expectedPhotos": 19,
+          "observedPhotos": 19,
+          "missing": 0,
+          "moves": 20,
+          "visibleVisitIndices": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "restoredScrollLeftPx": 0,
+          "completed": true,
+          "bounded": false
+        }
+      ]
+    }
+  },
+  "liveSourceAttempts": {
+    "status": "acceptance-not-established",
+    "cdn": {
+      "requests": 13,
+      "tlsTimeouts": 13,
+      "successfulNewImageByteMeasurements": 0
+    },
+    "chromeNavigation": {
+      "operation": "Page.goto",
+      "timeoutSeconds": 45,
+      "outcome": "timeout"
+    },
+    "archiveRecoveryDoesNotCountAsSuccessfulLiveImport": true
+  },
+  "finalNativeHotfixTests": {
+    "status": "passed",
+    "environment": "Mac; Python suite includes five native Chrome CIAN scenarios",
+    "baselineCommit": "86bd193f5b598717de2b18557b2a24b7f78ed33c",
+    "sourceCommit": null,
+    "sourceCommitBinding": "Verified hotfix source snapshot over the baseline; new Git commit not published at the time of this run.",
+    "sourceBuildId": "9bcdf9f2bb507ce7275747b2b2c1bde733da86e8b8ce1ed69a670dfb469114fa",
+    "sourceManifestSha256": "1b9ef5dd6fd27f1ebe6daa4563c13276ed7623a856c3b62ac8e1d5d0732774eb",
+    "publicSourceFileListSha256": "63e93c319bcdc933c9a3139c7a9acd5a2c48f8b7c83c5f01c3d68383756cf147",
+    "sourcesUnchangedAfterTransfer": true,
+    "startedAt": "2026-11-02T14:11:08.573853+00:00",
+    "finishedAt": "2026-11-02T14:12:19.246970+00:00",
+    "python": {
+      "tests": 58,
+      "passed": 58,
+      "failed": 0,
+      "skipped": 0,
+      "nativeChromeCianScenarios": 5,
+      "unittestElapsedSeconds": 55.266,
+      "processElapsedSeconds": 55.516,
+      "logSha256": "31c31f27b14ce32c887df098d8806178a38d9ca902074bc6b10be8981ce6b7b6"
+    },
+    "node": {
+      "tests": 620,
+      "passed": 619,
+      "failed": 0,
+      "skipped": 1,
+      "skipKind": "optional",
+      "harnessElapsedMilliseconds": 12240.288125,
+      "processElapsedSeconds": 12.363,
+      "logSha256": "ff79e82afa9d1203a83f1f7e2d8ccd279fb829458404e65c61ca8e9e7c508a72"
+    },
+    "preflight": [
+      {
+        "name": "build",
+        "status": "passed",
+        "elapsedSeconds": 0.791
+      },
+      {
+        "name": "secrets",
+        "status": "passed",
+        "elapsedSeconds": 0.671
+      },
+      {
+        "name": "validate-artifact",
+        "status": "passed",
+        "elapsedSeconds": 0.41
+      },
+      {
+        "name": "validate-pages",
+        "status": "passed",
+        "elapsedSeconds": 0.951
+      },
+      {
+        "name": "git diff --check",
+        "status": "passed"
+      }
+    ],
+    "liveSourceImportAccepted": false
+  },
+  "finalBuildAndInstallation": {
+    "status": "built-installation-pending",
+    "buildStatus": "passed",
+    "installationStatus": "pending",
+    "commit": null,
+    "buildId": "9bcdf9f2bb507ce7275747b2b2c1bde733da86e8b8ce1ed69a670dfb469114fa",
+    "sourceManifestSha256": "1b9ef5dd6fd27f1ebe6daa4563c13276ed7623a856c3b62ac8e1d5d0732774eb",
+    "postPublicationEvidenceLocations": [
+      "https://github.com/leunch4off/redcn/pull/6",
+      "https://github.com/leunch4off/redcn/issues/1"
+    ],
+    "exactCommitRequired": true
+  },
+  "finalCi": {
+    "status": "pending",
+    "commit": null,
+    "checksPassed": null,
+    "checksTotal": null,
+    "runUrls": [],
+    "postPublicationEvidenceLocations": [
+      "https://github.com/leunch4off/redcn/pull/6",
+      "https://github.com/leunch4off/redcn/issues/1"
+    ],
+    "exactCommitRequired": true,
+    "previousGreenCiDoesNotSatisfyThisChange": true
+  },
+  "limits": [
+    "Main/fullUrl means a platform-declared main rendition, not a camera RAW or an unresized camera original.",
+    "Fixture HTML, metadata and synthetic lazy callbacks are distinct from actual source photo bytes and live-source acceptance.",
+    "Native UI/ZIP success on the repaired baseline card does not accept the new general capture algorithm.",
+    "The two independent boundary results are controlled Linux Chromium scenarios, not live CIAN or native Mac.",
+    "No RCN-334 through RCN-364 status is changed by this receipt.",
+    "Native hotfix tests and the new source-snapshot build passed; publication, installation and exact-commit CI remain pending in this receipt. Their final results must be linked to the exact SHA in the PR and issue."
+  ],
+  "finalizedScope": "Evidence through the native source-snapshot gate; exact post-publication commit, installation and CI outcomes are recorded in the linked PR and issue."
+}

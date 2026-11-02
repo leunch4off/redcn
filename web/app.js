@@ -3,6 +3,7 @@ import {setupMobileKeyboard} from './mobile-keyboard.mjs';
 import {setupAcceptanceStudio,acceptanceClientEnvironment} from './acceptance-studio.mjs';
 import {sanitizeClientText,clientPublicationCard} from './client-publication.mjs';
 import {importCompletionFeedback,sourceReadinessFeedback,sourceEditorMetadata} from './source-readiness.mjs';
+import {sourceCacheMatchesParser} from './source-import.mjs';
 import {setupPresentationStudio,presentationCardKey} from './presentation-studio.mjs';
 import {savePresentationSource} from './presentation-export-boundary.mjs';
 import {setupCardArchive} from './card-archive.mjs';
@@ -168,7 +169,7 @@ $('import').onclick=async()=>{
   if(importing)return;let raw=$('url').value;
   try{const u=new URL(raw);if(u.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)||u.username||u.password||u.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');
     let cache=read('most-cache',{}),saved=cache[u.href];
-    if(saved&&Date.now()-saved.at<86400000){if(saved.source)applySourceEnvelope(saved.source);else{$('source').value=saved.text;extract();}$('importStatus').textContent='Загружено из кеша · '+new Date(saved.at).toLocaleString('ru-RU');return;}
+    if(saved&&Date.now()-saved.at<86400000&&sourceCacheMatchesParser(saved,u.href)){if(saved.source)applySourceEnvelope(saved.source);else{$('source').value=saved.text;extract();}$('importStatus').textContent='Загружено из кеша · '+new Date(saved.at).toLocaleString('ru-RU');return;}
     importing=true;$('import').disabled=true;$('importStatus').textContent='Загружаем страницу…';
     const response=await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u.href})});
     const data=await response.json();if(!response.ok)throw Error(data.error||'Источник не разрешил загрузку.');

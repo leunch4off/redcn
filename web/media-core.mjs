@@ -10,25 +10,55 @@ export function photoSourceUrl(raw,base=''){
 }
 export function photoSources(values,base=''){return [...new Set((Array.isArray(values)?values:[]).map(v=>photoSourceUrl(v,base)).filter(Boolean))].slice(0,30);}
 
+// CIAN exposes main and thumbnail renditions as separate gallery nodes. This
+// key groups only URLs that were actually observed; it never constructs a URL.
+// The complete path stem is part of the key: a numeric ID alone is insufficient.
+export function cianPhotoUrlIdentity(value){
+ const safe=photoSourceUrl(value);if(!safe)return null;
+ const url=new URL(safe);if(url.hostname!=='images.cdn-cian.ru')return null;
+ const match=url.pathname.match(/^(\/images\/(?:[^/]+\/)*(?:[^/]+-)?)(\d{1,20})-(\d{1,3})\.(?:jpe?g|png|webp)$/i);if(!match)return null;
+ return {key:url.origin+match[1]+match[2],photoId:match[2],rendition:Number(match[3])};
+}
+const observedPhotoUrls=row=>[row.url,...Object.values(row.variants||{}),...(row.observedVariants||[]).map(item=>item.url)].filter(Boolean);
+function cianPhotoGroupKey(row){
+ const identities=observedPhotoUrls(row).map(cianPhotoUrlIdentity),key=identities[0]?.key;
+ return key&&identities.every(item=>item?.key===key)?key:null;
+}
+function preferObservedCianMain(row){
+ if(row.variants?.fullUrl){row.url=row.variants.fullUrl;return row;}
+ if(!cianPhotoGroupKey(row))return row;
+ if(![2,3,4].includes(cianPhotoUrlIdentity(row.url)?.rendition))return row;
+ const main=observedPhotoUrls(row).find(url=>cianPhotoUrlIdentity(url)?.rendition===1);
+ if(main)row.url=main;
+ return row;
+}
+
 // A group contains only variants literally exposed by one gallery image node.
 // A local DOM identity is explicitly distinguished from a platform photo ID.
 export function observedPhotoItem(attrs={}, {base='',platform='',order=0}={}){
  const set=['data-srcset','srcset'].flatMap(key=>String(attrs[key]||'').split(',').map(part=>{const [url,size='0']=part.trim().split(/\s+/);return {url,source:key,weight:parseFloat(size)||0};})).sort((a,b)=>b.weight-a.weight);
- const raw=[{url:attrs['data-original'],source:'data-original'},{url:attrs['data-src'],source:'data-src'},...set.map(row=>({url:row.url,source:row.source})),{url:attrs.currentSrc,source:'currentSrc'},{url:attrs.src,source:'src'},{url:attrs.imageHref,source:'href'}];
+ const raw=[{url:attrs['data-original'],source:'data-original'},...set.map(row=>({url:row.url,source:row.source})),{url:attrs['data-src'],source:'data-src'},{url:attrs.currentSrc,source:'currentSrc'},{url:attrs.src,source:'src'},{url:attrs.imageHref,source:'href'}];
  const observedVariants=[];for(const row of raw){const url=photoSourceUrl(row.url,base);if(url&&!observedVariants.some(item=>item.url===url))observedVariants.push({url,source:row.source});}
  if(!observedVariants.length)return null;
  const url=observedVariants[0].url,declared=attrs['data-photo-id']||attrs['data-image-id'];let photoId=typeof declared==='string'&&/^[A-Za-z0-9_.:-]{1,100}$/.test(declared)?declared:'';
+ const cianIdentity=platform==='cian'&&cianPhotoGroupKey({url,observedVariants})?cianPhotoUrlIdentity(url):null;
+ if(!photoId&&cianIdentity)photoId=cianIdentity.photoId;
  if(!photoId){let scope=base;try{const parsed=new URL(base);scope=parsed.origin+parsed.pathname;}catch{}let hash=2166136261;for(const char of platform+'|'+scope+'|'+url){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619);}photoId='dom-'+(hash>>>0).toString(16).padStart(8,'0');}
- return {url,photoId,order,isLayout:false,isCianLayout:false,variants:{},observedVariants:observedVariants.slice(0,60),identitySource:photoId===declared?'platform-photo-id':'observed-dom-node',source:platform+' gallery DOM'};
+ return {url,photoId,order,isLayout:false,isCianLayout:false,variants:{},observedVariants:observedVariants.slice(0,60),identitySource:photoId===declared?'platform-photo-id':cianIdentity?'observed-cian-photo-url':'observed-dom-node',source:platform+' gallery DOM'};
 }
 
 export function mergeObservedPhotoItems(existing=[],observations=[],layouts=[]){
  const output=existing.map(row=>({...row,variants:{...row.variants},...(Array.isArray(row.observedVariants)?{observedVariants:row.observedVariants.map(value=>({...value}))}:{})}));
- const urls=row=>[row.url,...Object.values(row.variants||{}),...(row.observedVariants||[]).map(item=>item.url)].filter(Boolean);
+ const urls=observedPhotoUrls;
  const excluded=new Set(layouts.flatMap(urls));
- for(const row of observations){if(!row||!row.url||urls(row).some(url=>excluded.has(url)))continue;const variants=urls(row),match=output.find(item=>urls(item).some(url=>variants.includes(url))||row.identitySource==='platform-photo-id'&&item.photoId===row.photoId&&(item.identitySource==='platform-photo-id'||item.source==='CIAN offer'));
-  if(match){match.observedVariants??=[];for(const value of row.observedVariants||[])if(!match.observedVariants.some(item=>item.url===value.url))match.observedVariants.push({...value});match.observedVariants=match.observedVariants.slice(0,60);}
-  else output.push({...row,order:output.length});
+ const excludedGroups=new Set(layouts.map(cianPhotoGroupKey).filter(Boolean));
+ for(const row of observations){if(!row||!row.url||urls(row).some(url=>excluded.has(url)))continue;const variants=urls(row),key=cianPhotoGroupKey(row);if(key&&excludedGroups.has(key))continue;
+  const match=output.find(item=>{
+   const otherKey=cianPhotoGroupKey(item);
+   return urls(item).some(url=>variants.includes(url))||key&&key===otherKey||row.identitySource==='platform-photo-id'&&item.photoId===row.photoId&&(item.identitySource==='platform-photo-id'||item.source==='CIAN offer')&&!(key&&otherKey&&key!==otherKey);
+  });
+  if(match){match.observedVariants??=[];for(const value of row.observedVariants||[])if(!match.observedVariants.some(item=>item.url===value.url))match.observedVariants.push({...value});match.observedVariants=match.observedVariants.slice(0,60);preferObservedCianMain(match);}
+  else output.push(preferObservedCianMain({...row,variants:{...row.variants},observedVariants:(row.observedVariants||[]).map(value=>({...value})),order:output.length}));
  }
  return output.slice(0,400);
 }
@@ -39,7 +69,9 @@ export function observedPhotoPicture(attributeRows=[],options={}){
  if(declared.length&&new Set(declared).size===1){output.photoId=declared[0];output.identitySource='platform-photo-id';}
  else output.identitySource='observed-picture';
  for(const row of rows)for(const variant of row.observedVariants)if(!output.observedVariants.some(item=>item.url===variant.url))output.observedVariants.push({...variant});
- output.observedVariants=output.observedVariants.slice(0,60);return output;
+ output.observedVariants=output.observedVariants.slice(0,60);
+ if(!declared.length&&options.platform==='cian'&&cianPhotoGroupKey(output))output.identitySource='observed-cian-photo-url';
+ return output;
 }
 export function listingPhotoSources(value={}){
  const fields=value.fields||{},listing=value.listing||{};

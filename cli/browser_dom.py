@@ -24,6 +24,11 @@ SNAPSHOT_BODY = r'''() => {
   // apartments. Lazy attributes and srcset often contain the full-size image.
   const gallery = [...document.querySelectorAll(config.gallery.join(','))].filter(e=>!e.closest(unrelated));
   const images = [],galleryPhotos=[],seenPictureNodes=new Set();
+  const thumbnailOrder=new Map();
+  if(config.id==='cian')for(const box of gallery)for(const thumb of box.querySelectorAll('[data-name="PaginationThumbsComponent"] img')){
+    const key=cianPhotoIdentity(thumb.getAttribute('src')||thumb.currentSrc||'')?.key;
+    if(key&&!thumbnailOrder.has(key))thumbnailOrder.set(key,thumbnailOrder.size);
+  }
   const add = s => {if(s && !/^(?:data|blob|javascript):/i.test(s)) images.push(s);};
   for(const box of gallery)for(const e of box.querySelectorAll('img,source,a[href]')){
     if(e.closest(unrelated))continue;
@@ -33,10 +38,10 @@ SNAPSHOT_BODY = r'''() => {
     if(e.tagName==='A'){
       const href=e.getAttribute('href')||'';if(/\.(?:jpe?g|png|webp)(?:[?#]|$)/i.test(href))add(href);
     }else{
-      const candidate=[e.getAttribute('data-original'),e.getAttribute('data-src'),...set.map(row=>row.url),e.currentSrc,e.getAttribute('src')].find(s=>s&&!/^(?:data|blob|javascript):/i.test(s));add(candidate);
-      const raw=[...members.flatMap(node=>[{url:node.getAttribute('data-original'),source:'data-original'},{url:node.getAttribute('data-src'),source:'data-src'}]),...set.map(row=>({url:row.url,source:row.source})),...members.flatMap(node=>[{url:node.currentSrc,source:'currentSrc'},{url:node.getAttribute('src'),source:'src'}])];
+      const candidate=[e.getAttribute('data-original'),...set.map(row=>row.url),e.getAttribute('data-src'),e.currentSrc,e.getAttribute('src')].find(s=>s&&!/^(?:data|blob|javascript):/i.test(s));add(candidate);
+      const raw=[...members.map(node=>({url:node.getAttribute('data-original'),source:'data-original'})),...set.map(row=>({url:row.url,source:row.source})),...members.map(node=>({url:node.getAttribute('data-src'),source:'data-src'})),...members.flatMap(node=>[{url:node.currentSrc,source:'currentSrc'},{url:node.getAttribute('src'),source:'src'}])];
       const observedVariants=[];for(const row of raw){if(!row.url||!row.url.trim())continue;try{const u=new URL(row.url,location.href);if(u.protocol!=='https:'||u.username||u.password||u.port||!/(^|\.)(cian\.ru|cdn-cian\.ru|ciancdn\.ru|avito\.ru|avito\.st)$/i.test(u.hostname))continue;u.hash='';if(!observedVariants.some(item=>item.url===u.href))observedVariants.push({url:u.href,source:row.source});}catch{}}
-      if(observedVariants.length){const url=observedVariants[0].url,declared=e.getAttribute('data-photo-id')||e.getAttribute('data-image-id')||(picture||e.closest('[data-photo-id],[data-image-id]'))?.getAttribute('data-photo-id')||(picture||e.closest('[data-photo-id],[data-image-id]'))?.getAttribute('data-image-id')||'';let photoId=/^[A-Za-z0-9_.:-]{1,100}$/.test(declared)?declared:'';if(!photoId){let hash=2166136261;for(const char of config.id+'|'+location.origin+location.pathname+'|'+url){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619);}photoId='dom-'+(hash>>>0).toString(16).padStart(8,'0');}galleryPhotos.push({url,photoId,identitySource:photoId===declared?'platform-photo-id':picture?'observed-picture':'observed-dom-node',source:config.id+' gallery DOM',observedVariants:observedVariants.slice(0,60),order:galleryPhotos.length});}
+      if(observedVariants.length){const url=observedVariants[0].url,declared=e.getAttribute('data-photo-id')||e.getAttribute('data-image-id')||(picture||e.closest('[data-photo-id],[data-image-id]'))?.getAttribute('data-photo-id')||(picture||e.closest('[data-photo-id],[data-image-id]'))?.getAttribute('data-image-id')||'';let photoId=/^[A-Za-z0-9_.:-]{1,100}$/.test(declared)?declared:'',identitySource=photoId?'platform-photo-id':picture?'observed-picture':'observed-dom-node';const families=config.id==='cian'?observedVariants.map(row=>cianPhotoIdentity(row.url)):[],first=families[0],family=first&&families.every(row=>row?.key===first.key)?first:null;if(!photoId&&family){photoId=family.photoId;identitySource='observed-cian-photo-url';}if(!photoId){let hash=2166136261;for(const char of config.id+'|'+location.origin+location.pathname+'|'+url){hash^=char.charCodeAt(0);hash=Math.imul(hash,16777619);}photoId='dom-'+(hash>>>0).toString(16).padStart(8,'0');}const pos=Number(e.closest('[aria-posinset]')?.getAttribute('aria-posinset')),thumbIndex=family?thumbnailOrder.get(family.key):undefined,sourceOrder=Number.isInteger(thumbIndex)?{galleryIndex:thumbIndex,galleryIndexSource:'thumbnail-rail'}:Number.isInteger(pos)&&pos>=1&&pos<=400?{galleryIndex:pos-1,galleryIndexSource:'aria-posinset'}:{};galleryPhotos.push({url,photoId,identitySource,source:config.id+' gallery DOM',observedVariants:observedVariants.slice(0,60),order:galleryPhotos.length,...sourceOrder});}
     }
   }
   if(config.ogFallback&&!images.length)for(const e of document.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]'))add(e.content);
@@ -57,6 +62,15 @@ SNAPSHOT_BODY = r'''() => {
 SECTION_HELPER = r'''  const sectionGroups = config.sections;
   const sectionUnrelated='[data-name*="Similar"],[data-name*="Recommend"],[data-marker*="recommend"],[data-marker*="similar"]';
   const sectionVisible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
+  const cianPhotoIdentity=value=>{try{const url=new URL(value);if(url.protocol!=='https:'||url.hostname!=='images.cdn-cian.ru'||url.username||url.password||url.port)return null;const match=url.pathname.match(/^(\/images\/(?:[^/]+\/)*(?:[^/]+-)?)(\d{1,20})-(\d{1,3})\.(?:jpe?g|png|webp)$/i);return match?{key:url.origin+match[1]+match[2],photoId:match[2],rendition:Number(match[3])}:null;}catch{return null;}};
+  const galleryScrollers=nodes=>{
+    const candidates=[...new Set(nodes.flatMap(root=>[root,...root.querySelectorAll('*')]))].filter(e=>!e.closest(sectionUnrelated)&&sectionVisible(e)&&e.clientWidth>32&&e.scrollWidth>e.clientWidth+4&&/auto|scroll/.test(getComputedStyle(e).overflowX));
+    // The observed CIAN outer Scroller is overflow:hidden; its nested main UL
+    // scrolls. The separate 64px thumbnail rail must not win by width ratio.
+    const main=config.id==='cian'?candidates.filter(e=>e.tagName==='UL'&&e.closest('[data-name="Scroller"]')&&!e.closest('[data-name="PaginationThumbsComponent"]')):[];
+    const relevant=main.length?main:candidates.filter(e=>!e.closest('[data-name="PaginationThumbsComponent"]'));
+    return relevant.sort((a,b)=>(b.scrollWidth/b.clientWidth)-(a.scrollWidth/a.clientWidth));
+  };
   const galleryState = nodes => {
     const evidence=[];const addCount=(value,source)=>{const count=Number(value);if(Number.isInteger(count)&&count>0&&count<=400&&!evidence.some(row=>row.count===count&&row.source===source))evidence.push({count,source});};
     for(const root of nodes){
@@ -72,7 +86,7 @@ SECTION_HELPER = r'''  const sectionGroups = config.sections;
       for(const match of text.matchAll(/(?:^|\s)(\d{1,3})\s*(?:фото(?:графий|графии)?|photos?)(?:\s|$|[.,:])/gi))addCount(match[1],'gallery-text');
       const counter=text.match(/(?:^|\s)\d{1,3}\s*(?:из|of|\/)\s*(\d{1,3})(?:\s|$)/i);if(counter)addCount(counter[1],'gallery-text');
     }
-    const scrollers=nodes.flatMap(root=>[root,...root.querySelectorAll('*')]).filter(e=>!e.closest(sectionUnrelated)&&sectionVisible(e)&&e.clientWidth>32&&e.scrollWidth>e.clientWidth+4&&/auto|scroll/.test(getComputedStyle(e).overflowX));
+    const scrollers=galleryScrollers(nodes);
     return {countEvidence:evidence.slice(0,30),scrollable:scrollers.length>0};
   };
   const sectionFind=kind=>{
@@ -123,19 +137,17 @@ def source_scripts(config):
 
 def gallery_scroll_script(config):
     """Only scroll an observed horizontal gallery container; never click UI."""
-    literal=json.dumps(config['gallery'],ensure_ascii=False,separators=(',',':'))
+    literal=json.dumps(config,ensure_ascii=False,separators=(',',':'))
     return r'''({restore=null}) => {
-      const selectors=SELECTORS;
-      const unrelated='[data-name*="Similar"],[data-name*="Recommend"],[data-marker*="recommend"],[data-marker*="similar"]';
-      const roots=[...document.querySelectorAll(selectors.join(','))].filter(e=>!e.closest(unrelated));
-      const visible=e=>!!e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';
-      const nodes=[...new Set(roots.flatMap(root=>[root,...root.querySelectorAll('*')]))].filter(e=>!e.closest(unrelated)&&visible(e)&&e.clientWidth>32&&e.scrollWidth>e.clientWidth+4&&/auto|scroll/.test(getComputedStyle(e).overflowX));
-      const target=nodes.sort((a,b)=>(b.scrollWidth/b.clientWidth)-(a.scrollWidth/a.clientWidth))[0];
+      const config=CONFIG;
+      HELPERS
+      const roots=[...document.querySelectorAll(config.gallery.join(','))].filter(e=>!e.closest(sectionUnrelated));
+      const target=galleryScrollers(roots)[0];
       if(!target)return {scrollable:false,moved:false,atEnd:false};
       const before=target.scrollLeft;
       target.scrollLeft=restore===null?Math.min(target.scrollWidth-target.clientWidth,before+Math.max(32,Math.floor(target.clientWidth*.9))):restore;
       return {scrollable:true,moved:Math.abs(target.scrollLeft-before)>1,before,after:target.scrollLeft,atEnd:target.scrollLeft+target.clientWidth>=target.scrollWidth-4};
-    }'''.replace('SELECTORS',literal)
+    }'''.replace('CONFIG',literal).replace('HELPERS',SECTION_HELPER)
 
 
 def gallery_sweep_script(config):
@@ -151,17 +163,26 @@ def gallery_sweep_script(config):
         const state=galleryState(gallery);readsMs+=performance.now()-start;return {images,galleryPhotos,galleryState:state};
       };
       const roots=[...document.querySelectorAll(config.gallery.join(','))].filter(e=>!e.closest(sectionUnrelated));
-      const candidates=[...new Set(roots.flatMap(root=>[root,...root.querySelectorAll('*')]))].filter(e=>!e.closest(sectionUnrelated)&&sectionVisible(e)&&e.clientWidth>32&&e.scrollWidth>e.clientWidth+4&&/auto|scroll/.test(getComputedStyle(e).overflowX));
-      const target=candidates.sort((a,b)=>(b.scrollWidth/b.clientWidth)-(a.scrollWidth/a.clientWidth))[0],before=target?.scrollLeft||0;
+      const target=galleryScrollers(roots)[0],before=target?.scrollLeft||0;
       let exhausted=false;
+      const frame=()=>new Promise(resolve=>{let settled=false;const finish=()=>{if(!settled){settled=true;clearTimeout(timer);resolve();}};const timer=setTimeout(finish,Math.min(40,Math.max(1,end-performance.now())));requestAnimationFrame(finish);});
       try{
+        if(target){
+          // Lazy source callbacks may ignore offscreen rails. Show the actual
+          // main scroller without another browser roundtrip, then scan from
+          // the beginning even when the user initially opened the last slide.
+          target.scrollIntoView({block:'start',inline:'nearest',behavior:'instant'});
+          if(performance.now()<end)await frame();
+          target.scrollLeft=0;
+          if(performance.now()<end)await frame();
+        }
         for(let step=0;step<=Math.min(64,maxMoves);step++){
           const value=collect();images.push(...value.images);photos.push(...value.galleryPhotos);states.push(value.galleryState);
           if(!target||target.scrollLeft+target.clientWidth>=target.scrollWidth-4)break;
           if(performance.now()>=end||step===Math.min(64,maxMoves)){exhausted=true;break;}
           const previous=target.scrollLeft;target.scrollLeft=Math.min(target.scrollWidth-target.clientWidth,previous+Math.max(32,Math.floor(target.clientWidth*.9)));
           if(Math.abs(target.scrollLeft-previous)<1)break;moves++;
-          await new Promise(resolve=>{let settled=false;const finish=()=>{if(!settled){settled=true;clearTimeout(timer);resolve();}};const timer=setTimeout(finish,Math.min(40,Math.max(1,end-performance.now())));requestAnimationFrame(finish);});
+          await frame();
         }
       }finally{if(target){target.scrollLeft=before;restored=true;}}
       return {images:[...new Set(images)].slice(0,180),galleryPhotos:photos.slice(0,1200),galleryStates:states.slice(0,65),moves,restored,bounded:exhausted,domReadMs:readsMs,elapsedMs:performance.now()-began};

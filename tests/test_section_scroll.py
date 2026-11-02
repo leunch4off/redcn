@@ -21,7 +21,8 @@ IMAGE = 'https://images.cdn-cian.ru/images/section-room.jpg'
 
 def snapshot(text=TEXT, images=()):
     return {'text':text, 'fallback':text, 'body':text, 'title':'Квартира',
-            'images':list(images), 'metadata':''}
+            'images':list(images), 'metadata':'',
+            'galleryState':{'countEvidence':[{'count':1,'source':'data-photo-count'}],'scrollable':False}}
 
 
 class Clock:
@@ -204,7 +205,7 @@ class SectionBrowserAcceptance(unittest.TestCase):
         image='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
         return '''<main><h1>Аренда 2-комнатной квартиры 54 м²</h1>
           <div data-name="PriceInfo">80 000 ₽ в месяц</div><div style="height:1100px"></div>
-          <div data-name="OfferGallery"><img width="500" height="300" src="'''+image+'''" data-original="'''+IMAGE+'''" ></div>
+          <div data-name="OfferGallery" data-photo-count="1"><img width="500" height="300" src="'''+image+'''" data-original="'''+IMAGE+'''" ></div>
           <div style="height:1300px"></div><div data-name="OfferDescription">'''+('' if delayed else TEXT)+'''</div>
           <div style="height:1300px"></div><div data-name="GeneralInfoSection">'''+('' if delayed else 'Мебель: шкаф, рабочий стол. Техника: духовой шкаф, пианино.')+'''</div>
           <div style="height:1200px"></div><div data-name="FeaturesItem">'''+('' if delayed else 'Холодильник и микроволновая печь.')+'''</div>
@@ -357,7 +358,7 @@ class SectionBudgetRegressionTests(unittest.TestCase):
 
     def test_snapshot_preflight_requires_no_redundant_batched_probe(self):
         clock=Clock();page=SectionPage(clock)
-        first={**snapshot(),'sectionStates':{kind:{'found':True,'ready':True} for kind in ('gallery','description','characteristics')}}
+        first={**snapshot(images=[IMAGE]),'sectionStates':{kind:{'found':True,'ready':True} for kind in ('gallery','description','characteristics')}}
         with patch.object(browser_import.time,'monotonic',clock.now):
             _,audit=browser_import.capture_sections(page,first,clock.now()+30,lambda *_args,**_kwargs:None,budget=0)
         self.assertTrue(audit['completed']);self.assertEqual(audit['preflightSource'],'snapshot');self.assertFalse(page.probes)

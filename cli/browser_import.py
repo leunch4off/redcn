@@ -102,6 +102,20 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
             reads=1 if isinstance(known,dict) else 0
             moved=False;target_index=0;visited=set();calls_start=len(measurements)
             emit(status,'Переходим к блоку '+str(index+1)+' из 3: '+labels[section]+'. Первичная проверка всех разделов выполнена отдельно.',stage='scroll',section=section,maxTotalSeconds=budget)
+            if section=='gallery':
+                album=state.get('album') if isinstance(state.get('album'),dict) else initial.get('galleryState',{})
+                album_states.append(album)
+                coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+                # The initial snapshot already found the carousel. One bounded
+                # in-page sweep must precede another expensive transport/probe;
+                # a busy source can otherwise consume all six seconds before
+                # the first main slide is visited. The overall deadline wins.
+                if isinstance(album,dict) and album.get('scrollable') and coverage['state']!='complete' and time.monotonic()<phase_end:
+                    _checked_page(page,validate_url,cancel)
+                    sweep=_browser_read(page,gallery_sweep,{'budgetMs':min(1800,max(1,(phase_end-time.monotonic())*1000)),'maxMoves':40},kind='gallery-sweep',measurements=measurements)
+                    gallery_swept=True;gallery_moves+=sweep.get('moves',0)
+                    images.extend(sweep.get('images',[]));gallery_items.extend(sweep.get('galleryPhotos',[]));album_states.extend(sweep.get('galleryStates',[]))
+                    state['gallerySweepBounded']=sweep.get('bounded') is True
             while time.monotonic()<phase_end:
                 _checked_page(page,validate_url,cancel)
                 state=_browser_read(page,section_probe,{'section':section,'scroll':not moved,'index':target_index},kind='probe:'+section,measurements=measurements);reads+=1
@@ -143,7 +157,7 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                 if section=='gallery':
                     album=state.get('album',{}) if isinstance(state.get('album'),dict) else {}
                     album_states.append(album)
-                    coverage=gallery_coverage(album_states,list(dict.fromkeys(images)))
+                    coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
                     if album.get('scrollable') and not gallery_swept and time.monotonic()<phase_end and coverage['state']!='complete':
                         sweep=_browser_read(page,gallery_sweep,{'budgetMs':min(1800,max(1,(phase_end-time.monotonic())*1000)),'maxMoves':40},kind='gallery-sweep',measurements=measurements)
                         gallery_swept=True;gallery_moves+=sweep.get('moves',0)
@@ -166,15 +180,17 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
             if gallery_restore is not None:_browser_read(page,gallery_scroll,{'restore':gallery_restore},kind='restore-gallery-scroll',measurements=measurements)
             _browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
     elapsed=max(0,time.monotonic()-started)
-    complete=len(sections)==3 and all(row.get('ready') for row in sections) and (from_snapshot or captures>0)
+    coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+    sections_complete=len(sections)==3 and all(row.get('ready') for row in sections) and (from_snapshot or captures>0)
+    complete=sections_complete and coverage['state']=='complete' and not coverage['overLimit']
     return {**snapshot,'images':list(dict.fromkeys(images))[:180],'galleryPhotos':gallery_items}, {
-        'version':3,'strategy':'sections','sections':sections,'completed':complete,'bounded':not complete,'pageBottomReached':False,
+        'version':3,'strategy':'sections','sections':sections,'completed':complete,'sectionsCompleted':sections_complete,'bounded':not complete,'pageBottomReached':False,
         'scrolls':sum(row['blocksVisited'] for row in sections),'imageCandidates':len(set(images)),
         'seconds':round(elapsed,3),'activeSeconds':round(max(0,elapsed-manual_seconds),3),
         'budgetSeconds':budget,'budgetOverrunSeconds':round(max(0,elapsed-manual_seconds-budget),3),
         'preflightSource':'snapshot' if from_snapshot else 'batched-probe','fullSnapshotReads':captures,'browserCalls':measurements,
         'browserCallSeconds':round(sum(row['seconds'] for row in measurements),6),
-        'galleryCoverage':gallery_coverage(album_states,list(dict.fromkeys(images))),'galleryMoves':gallery_moves,
+        'galleryCoverage':coverage,'galleryMoves':gallery_moves,
     }
 
 
@@ -254,12 +270,14 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
     finally:
         if not page.is_closed():
             _browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
+    coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+    complete=bottom_stable>=2 and coverage['state']=='complete' and not coverage['overLimit']
     return {**snapshot, 'images': list(dict.fromkeys(images))[:180],'galleryPhotos':gallery_items}, {
-        'version': 1, 'scrolls': scrolls, 'completed': bottom_stable >= 2,
-        'bounded': bottom_stable < 2, 'imageCandidates': len(set(images)),
+        'version': 1, 'scrolls': scrolls, 'completed': complete,'pageWalkCompleted':bottom_stable>=2,
+        'bounded': not complete, 'imageCandidates': len(set(images)),
         'seconds':round(max(0,time.monotonic()-started),3),'browserCalls':measurements,
         'browserCallSeconds':round(sum(row['seconds'] for row in measurements),6),
-        'galleryCoverage':gallery_coverage(album_states,list(dict.fromkeys(images))),
+        'galleryCoverage':coverage,
     }
 
 
@@ -404,7 +422,7 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                             capture['strategy'] = scroll_strategy
                             if section_capture:
                                 capture['sectionFallback'] = True
-                                capture['pageWalkCompleted']=bool(capture.get('completed'))
+                                capture['pageWalkCompleted']=capture.get('pageWalkCompleted',bool(capture.get('completed')))
                                 observed=snapshot.get('sectionStates') or {}
                                 checked=[]
                                 for previous in section_capture['sections']:
@@ -414,7 +432,8 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                                         row.update(state);row['reason']=_section_reason(state);row['reads']+=1;row['postFallbackObserved']=True
                                     checked.append(row)
                                 capture['sections']=checked
-                                capture['completed']=len(checked)==3 and all(row.get('ready') for row in checked)
+                                capture['sectionsCompleted']=len(checked)==3 and all(row.get('ready') for row in checked)
+                                capture['completed']=capture['sectionsCompleted'] and capture['galleryCoverage']['state']=='complete' and not capture['galleryCoverage']['overLimit']
                                 capture['bounded']=bool(capture.get('bounded')) or not capture['completed']
                                 capture['version']=3
                                 for key in ('preflightSource','fullSnapshotReads','budgetOverrunSeconds','budgetSeconds'):
@@ -434,7 +453,9 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         if isinstance(result.get('fields'),dict) and result['photoItems']:result['fields']['photoItems']=result['photoItems']
                         collected=observed_images([*result.get('images',[]),*snapshot.get('images',[])],validate_url,page.url,result.get('photoItems',[]),result.get('layouts',[]))
                         album_states=[snapshot.get('galleryState',{}),capture.get('galleryCoverage',{})]
-                        capture['galleryCoverage']=gallery_coverage(album_states,collected,structured_count=structured or None)
+                        capture['galleryCoverage']=gallery_coverage(album_states,collected,structured_count=structured or None,photo_items=result['photoItems'])
+                        capture['completed']=bool(capture.get('sectionsCompleted',capture.get('pageWalkCompleted',capture.get('completed')))) and capture['galleryCoverage']['state']=='complete' and not capture['galleryCoverage']['overLimit']
+                        capture['bounded']=not capture['completed']
                         result['images'] = collected[:30]
                         result['loader'] = 'chrome'
                         result['browser_channel'] = channel
@@ -442,8 +463,8 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         capture['loadTimings']={'browserStartSeconds':round(browser_start_seconds,6),'navigationSeconds':round(navigation_seconds,6),'browserCalls':load_calls,'browserCallSeconds':round(sum(row['seconds'] for row in load_calls),6)}
                         result['capture'] = capture
                         coverage=capture['galleryCoverage']
-                        if coverage['missing'] or coverage['overLimit']:
-                            emit(report,'Альбом неполный: найдено '+str(coverage['observed'])+' из '+str(coverage['expected'] or '?')+' фото; сохранено ссылок '+str(coverage['retained'])+'. Пропущено '+str(coverage['missing'] or 0)+', сверх лимита '+str(coverage['overLimit'])+'.',stage='extract',albumPartial=True)
+                        if coverage['missing'] or coverage['overLimit'] or coverage.get('previewOnly'):
+                            emit(report,'Альбом неполный: найдено '+str(coverage['observed'])+' из '+str(coverage['expected'] or '?')+' фото; сохранено ссылок '+str(coverage['retained'])+'. Пропущено '+str(coverage['missing'] or 0)+', только миниатюры '+str(coverage.get('previewOnly',0))+', сверх лимита '+str(coverage['overLimit'])+'.',stage='extract',albumPartial=True)
                         elif coverage['state']=='unknown':
                             emit(report,'Найдено '+str(coverage['observed'])+' фото. Полнота альбома не подтверждена: надёжный общий счётчик отсутствует или противоречив.',stage='extract',albumPartial=False)
                         if capture['bounded']:

@@ -56,7 +56,9 @@ class CaptureTests(unittest.TestCase):
         result, audit = browser_import.capture_scrolled(page, original, time.monotonic()+20, validate)
         self.assertIn('пианино', result['text'])
         self.assertEqual(result['images'], original['images']+final['images'])
-        self.assertTrue(audit['completed'])
+        self.assertTrue(audit['pageWalkCompleted'])
+        self.assertFalse(audit['completed'],'Stable page bottom does not supply a verified album total')
+        self.assertEqual(audit['galleryCoverage']['state'],'unknown')
         self.assertEqual(audit['scrolls'], 4)
         self.assertEqual(page.expressions[-1], browser_import.SCROLL_TOP)
         self.assertEqual(validate.call_count, 4)
@@ -111,7 +113,9 @@ class CaptureTests(unittest.TestCase):
         context.new_page.assert_called_once()
         context.close.assert_called_once()
         self.assertEqual(result['images'], ['https://www.cian.ru/full.jpg'])
-        self.assertTrue(result['capture']['completed'])
+        self.assertTrue(result['capture']['pageWalkCompleted'])
+        self.assertFalse(result['capture']['completed'])
+        self.assertEqual(result['capture']['galleryCoverage']['state'],'unknown')
 
     def test_check_appearing_after_scroll_waits_for_manual_completion(self):
         page = ScrollPage([snapshot()], [{'height': 800, 'bottom': True}])
@@ -127,7 +131,8 @@ class CaptureTests(unittest.TestCase):
         result, audit = browser_import.capture_scrolled(page, snapshot(), time.monotonic()+20,
             lambda *_args, **_kwargs: None, status=reports.append)
         self.assertEqual(result['text'], TEXT)
-        self.assertTrue(audit['completed'])
+        self.assertTrue(audit['pageWalkCompleted'])
+        self.assertFalse(audit['completed'])
         self.assertTrue(any('вручную' in report for report in reports))
         self.assertIn(500, page.waits)
 

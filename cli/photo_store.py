@@ -161,7 +161,7 @@ def _source_metadata(source):
             except (ValueError,TypeError):continue
             if not any(item['url']==url for item in safe):safe.append({'url':url,'source':row['source']})
         if safe:selected['observedVariants']=safe[:60]
-    if source.get('identitySource') in ('platform-photo-id','observed-dom-node','observed-picture'):selected['identitySource']=source['identitySource']
+    if source.get('identitySource') in ('platform-photo-id','observed-dom-node','observed-picture','observed-cian-photo-url'):selected['identitySource']=source['identitySource']
     return selected
 
 

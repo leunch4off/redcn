@@ -50,14 +50,20 @@ def source_readiness(listing):
                       'partial': 'полнота раздела не подтверждена'}[reason]
             warnings.append(LABELS[name] + ' — ' + detail + '.')
     album=normalized_coverage(capture.get('galleryCoverage') or capture.get('gallery'))
-    album_partial=bool(album and (album['missing'] or album['overLimit']))
+    album_partial=bool(album and (album['missing'] or album['overLimit'] or album.get('previewOnly')))
+    album_unknown=bool(album and album['state']=='unknown')
     if album_partial:
         warnings.append('Альбом — найдено '+str(album['observed'])+' из '+str(album['expected'] or '?')+' фото; не найдено '+str(album['missing'] or 0)+', сверх лимита '+str(album['overLimit'])+'.')
-    complete = all(row['ready'] for row in sections) and capture.get('completed') is not False and not album_partial
+    if album and album.get('previewOnly'):
+        warnings.append('У '+str(album['previewOnly'])+' фото пока найдены только миниатюры; ссылки на основные версии ещё не получены.')
+    if album_unknown:warnings.append('Полнота альбома не подтверждена: общий счётчик или ссылки на основные версии неизвестны либо противоречивы.')
+    sections_ready=all(row['ready'] for row in sections)
+    complete = sections_ready and capture.get('completed') is not False and not album_partial and not album_unknown
     if not complete and not warnings:
         warnings.append('Разделы обнаружены, но итоговая проверка сбора не завершена.')
-    result = {'state': 'ready' if complete else 'partial', 'completed': complete,
-              'partial': not complete, 'sections': sections, 'warnings': warnings}
+    unknown=album_unknown and sections_ready and not album_partial
+    result = {'state': 'ready' if complete else 'unknown' if unknown else 'partial', 'completed': complete,
+              'partial': not complete and not unknown, 'sections': sections, 'warnings': warnings}
     if album:result['gallery']=album
     for key in ('seconds', 'activeSeconds', 'budgetSeconds', 'budgetOverrunSeconds'):
         value = capture.get(key)

@@ -1,5 +1,12 @@
-import {readCianHtml,cianFieldFacts} from './source-adapters/cian.mjs';
+import {readCianHtml,cianFieldFacts,CIAN_PARSER_VERSION} from './source-adapters/cian.mjs';
 import {readAvitoHtml,avitoFieldFacts} from './source-adapters/avito.mjs';
+// Expire only parsed CIAN source snapshots from an older gallery contract.
+// Saved cards, media blobs, manual choices and other source caches are untouched.
+export function sourceCacheMatchesParser(entry,url=''){
+ let platform=entry?.source?.platform||'';
+ try{const host=new URL(url).hostname;if(/(^|\.)cian\.ru$/i.test(host))platform='cian';else if(/(^|\.)avito\.ru$/i.test(host))platform='avito';}catch{}
+ return platform!=='cian'||entry?.source?.stats?.adapter===CIAN_PARSER_VERSION;
+}
 // Dispatch only. Platform markup and business labels live in separate adapters.
 export function sourcePlatform(input,url=''){
  if(url)try{const host=new URL(url).hostname;if(/(^|\.)avito\.ru$/i.test(host))return 'avito';if(/(^|\.)cian\.ru$/i.test(host))return 'cian';}catch{}

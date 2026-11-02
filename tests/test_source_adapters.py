@@ -59,12 +59,12 @@ class SourceAdapterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             connection=redcn.open_cache(Path(folder))
             try:
-                connection.execute('INSERT INTO cache VALUES (?,?,?)',(url,time.time(),json.dumps({'text':'old one-photo capture','images':['https://images.cdn-cian.ru/legacy.jpg']})));connection.commit()
+                connection.execute('INSERT INTO cache VALUES (?,?,?)',(url,time.time(),json.dumps({'text':'old one-photo capture','images':['https://images.cdn-cian.ru/legacy.jpg'],'parserVersion':'cian-v2-gallery-variants'})));connection.commit()
                 markup=(Path(__file__).parent/'fixtures/cian-54.html').read_text()
                 with patch.object(redcn,'fetch_bytes',return_value=(markup.encode(),'text/html')) as fetch:
                     first=redcn.load_listing(url,connection,loader='http');second=redcn.load_listing(url,connection,loader='http')
                 self.assertFalse(first['cached']);self.assertTrue(second['cached']);self.assertEqual(fetch.call_count,1)
-                self.assertEqual(second['parserVersion'],'cian-v2-gallery-variants');self.assertNotIn('legacy.jpg',json.dumps(second))
+                self.assertEqual(second['parserVersion'],'cian-v3-observed-main-gallery');self.assertNotIn('legacy.jpg',json.dumps(second))
                 self.assertEqual(second['images'],first['images']);self.assertEqual(second['photoItems'],first['photoItems'])
             finally:connection.close()
 
