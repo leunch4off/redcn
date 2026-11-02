@@ -121,10 +121,25 @@ class BrowserAcceptance(unittest.TestCase):
         first = self.page.evaluate(browser_import.SNAPSHOT)
         self.assertNotIn('https://images.cdn-cian.ru/images/lazy-room.jpg', first['images'])
         snapshot, capture = browser_import.capture_scrolled(self.page, first, time.monotonic()+12, lambda url, **kwargs: url)
-        self.assertTrue(capture['completed'])
-        self.assertFalse(capture['bounded'])
+        self.assertTrue(capture['pageWalkCompleted'])
+        self.assertFalse(capture['completed'])
+        self.assertTrue(capture['bounded'])
+        self.assertEqual(capture['galleryCoverage']['state'], 'unknown')
+        self.assertIsNone(capture['galleryCoverage']['expected'])
+        self.assertEqual(capture['galleryCoverage']['observed'], 1)
         self.assertGreater(capture['scrolls'], 1)
         self.assertIn('https://images.cdn-cian.ru/images/lazy-room.jpg', snapshot['images'])
+        self.assertEqual(self.page.evaluate('scrollY'), 0)
+        # An explicit total changes the album conclusion, while the completed
+        # page walk and the original lazy-loading checks remain independent.
+        self.page.locator('[data-name="OfferGallery"]').evaluate('(e)=>e.setAttribute("data-photo-count","1")')
+        counted = self.page.evaluate(browser_import.SNAPSHOT)
+        observed, complete = browser_import.capture_scrolled(self.page, counted, time.monotonic()+12, lambda url, **kwargs: url)
+        self.assertTrue(complete['pageWalkCompleted']);self.assertTrue(complete['completed'])
+        self.assertFalse(complete['bounded'])
+        self.assertEqual(complete['galleryCoverage']['state'], 'complete')
+        self.assertEqual(complete['galleryCoverage']['missing'], 0)
+        self.assertEqual(observed['images'], snapshot['images'])
         self.assertEqual(self.page.evaluate('scrollY'), 0)
 
     def test_furniture_photos_follow_scroll_and_real_import_clears_example(self):

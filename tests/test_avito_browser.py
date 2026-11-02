@@ -8,6 +8,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'cli'))
 import browser_import
 from browser_dom import source_scripts
 from source_adapters import adapter_for
+from source_readiness import source_readiness
 import redcn
 
 URL='https://www.avito.ru/moskva/kvartiry/flat_7462093377'
@@ -44,7 +45,12 @@ class AvitoBrowserAcceptance(unittest.TestCase):
 
     def test_ready_sections_include_all_params_location_and_main_gallery_without_share_or_other_flat(self):
         current,audit=self.read()
-        self.assertTrue(audit['completed']);self.assertEqual(audit['strategy'],'sections')
+        self.assertTrue(audit['sectionsCompleted']);self.assertEqual(audit['strategy'],'sections')
+        self.assertFalse(audit['completed']);self.assertTrue(audit['bounded'])
+        self.assertEqual(audit['galleryCoverage']['state'],'unknown')
+        self.assertEqual(audit['galleryCoverage']['observed'],12)
+        self.assertIsNone(audit['galleryCoverage']['expected'])
+        self.assertEqual(source_readiness({'capture':audit})['state'],'unknown')
         self.assertEqual(len(current['images']),12);self.assertFalse(any('wrong-' in image for image in current['images']))
         self.assertNotIn('PRIVATE_SELLER_PHONE',current['text']);self.assertNotIn('999999',current['text'])
         parsed=redcn.parse_html(current['metadata']+current['sourceHtml'],URL)
@@ -62,7 +68,27 @@ class AvitoBrowserAcceptance(unittest.TestCase):
         }''')
         first=self.page.evaluate(self.snapshot)
         current,audit=browser_import.capture_sections(self.page,first,time.monotonic()+10,lambda value,**kwargs:value,snapshot_script=self.snapshot,section_probe=self.probe)
-        self.assertTrue(audit['completed']);self.assertIn('Можно с питомцем',current['text'])
+        self.assertTrue(audit['sectionsCompleted']);self.assertIn('Можно с питомцем',current['text'])
+        self.assertFalse(audit['completed']);self.assertEqual(audit['galleryCoverage']['state'],'unknown')
+        self.assertEqual(audit['galleryCoverage']['observed'],12)
+        self.assertIsNone(audit['galleryCoverage']['expected'])
         self.assertGreaterEqual(next(r for r in audit['sections'] if r['section']=='characteristics')['blocksVisited'],2)
+
+    def test_explicit_synthetic_total_distinguishes_complete_and_missing_main_photos(self):
+        # The archived fixture has no source total. Only these controlled
+        # cases supply one; a loaded visible section alone never proves it.
+        for total,state,missing in ((12,'complete',0),(14,'partial',2)):
+            with self.subTest(total=total):
+                self.page.goto(URL)
+                self.page.locator('main [data-marker="item-view/main-gallery"]').evaluate('(e,total)=>e.setAttribute("data-photo-count",total)',str(total))
+                first=self.page.evaluate(self.snapshot)
+                current,audit=browser_import.capture_sections(self.page,first,time.monotonic()+10,lambda value,**kwargs:value,snapshot_script=self.snapshot,section_probe=self.probe)
+                self.assertTrue(audit['sectionsCompleted']);self.assertEqual(len(current['images']),12)
+                self.assertEqual(audit['galleryCoverage']['state'],state)
+                self.assertEqual(audit['galleryCoverage']['expected'],total)
+                self.assertEqual(audit['galleryCoverage']['missing'],missing)
+                self.assertEqual(audit['completed'],state=='complete')
+                self.assertEqual(audit['bounded'],state!='complete')
+                self.assertEqual(source_readiness({'capture':audit})['state'],'ready' if state=='complete' else 'partial')
 
 if __name__=='__main__':unittest.main()

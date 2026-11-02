@@ -3,10 +3,12 @@ import io
 import json
 from pathlib import Path
 import sys
+import threading
 import time
 import unittest
 from unittest.mock import patch
 import urllib.error
+import urllib.request
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'cli'))
@@ -29,6 +31,14 @@ class WorkspaceHTTPTests(unittest.TestCase):
             if value:return value
             time.sleep(.01)
         self.fail('Isolated job did not finish within its test budget')
+
+    def local_health(self):
+        if self.controller_thread is None:
+            self.controller_thread=threading.Thread(target=self.controller.serve_forever,daemon=True)
+            self.controller_thread.start()
+        base='http://127.0.0.1:'+str(self.controller.server_port)
+        request=urllib.request.Request(base+'/api/local/health',headers={'Origin':base})
+        with urllib.request.urlopen(request) as response:return json.load(response)
 
     def test_new_routes_keep_phone_auth_and_csrf_boundaries(self):
         for path in ('listing-watch', 'listing-watch/items', 'import-diagnostics', 'import-diagnostics/tg.zip'):
@@ -65,6 +75,59 @@ class WorkspaceHTTPTests(unittest.TestCase):
             again=self.request('/api/phone/import',{'url':'https://www.cian.ru/rent/flat/999999/'})
             self.wait_for(lambda:self.controller.job_status(again['job_id']).get('state')=='error')
             self.assertEqual(self.controller.import_diagnostics.status()['reserved'],10)
+        self.assertEqual(phone_relay.list_cards(self.directory)['cards'],[])
+
+    def test_failed_import_remains_busy_until_finalization_releases_reservation(self):
+        import activity_log
+        self.pair()
+        pairing=self.server.pairing;state=pairing.list_sessions()
+        pairing.manage_session(state['sessions'][0]['id'],role='owner',expected_revision=state['revision'])
+        self.request('/api/phone/import-diagnostics',{'action':'arm','target':10})
+        entered,release=threading.Event(),threading.Event()
+        original_record=activity_log.record_import_attempt
+        calls=[]
+        def pause_first_cleanup(*args,**kwargs):
+            calls.append(True)
+            if len(calls)==1:
+                entered.set()
+                if not release.wait(4):raise RuntimeError('Isolated cleanup barrier was not released')
+            return original_record(*args,**kwargs)
+        with patch('node_runtime.resolve_node',side_effect=ValueError('isolated preflight fixture')), \
+             patch('activity_log.record_import_attempt',side_effect=pause_first_cleanup):
+            first=self.request('/api/phone/import',{'url':'https://www.cian.ru/rent/flat/990000/'})
+            path='/api/phone/jobs/'+first['job_id']
+            try:
+                self.assertTrue(entered.wait(4),'Worker did not reach finalization barrier')
+                self.assertEqual(self.request('/api/phone/import-diagnostics')['completed'],1)
+                self.assertEqual(self.request(path)['state'],'running')
+                self.assertEqual(self.local_health()['activeJobs'],1)
+                with self.assertRaises(urllib.error.HTTPError) as caught:
+                    self.request('/api/phone/import',{'url':'https://www.cian.ru/rent/flat/990001/'})
+                self.assertEqual(caught.exception.code,409)
+                self.assertIn('Дождитесь',json.load(caught.exception)['error'])
+            finally:release.set()
+            self.wait_for(lambda:self.request(path)['state']=='error')
+            self.assertEqual(self.local_health()['activeJobs'],0)
+            second=self.request('/api/phone/import',{'url':'https://www.cian.ru/rent/flat/990001/'})
+            self.wait_for(lambda:self.request('/api/phone/jobs/'+second['job_id'])['state']=='error')
+        self.assertEqual(phone_relay.list_cards(self.directory)['cards'],[])
+
+    def test_cleanup_exception_still_releases_import_reservation(self):
+        self.pair()
+        failed=threading.Event();errors=[]
+        def worker_failed(args):
+            errors.append((args.exc_type,args.exc_value.args))
+            failed.set()
+        with patch('node_runtime.resolve_node',side_effect=ValueError('isolated preflight fixture')):
+            with patch('job_progress.JobProgress.finish',side_effect=ValueError('isolated cleanup fixture')), \
+                 patch('threading.excepthook',side_effect=worker_failed):
+                first=self.request('/api/phone/import',{'url':'https://www.cian.ru/rent/flat/990000/'})
+                self.assertTrue(failed.wait(4),'Cleanup failure did not reach the worker boundary')
+            self.assertEqual(errors,[(ValueError,('isolated cleanup fixture',))])
+            self.assertEqual(self.request('/api/phone/jobs/'+first['job_id'])['state'],'error')
+            self.assertEqual(self.local_health()['activeJobs'],0)
+            second=self.request('/api/phone/import',{'url':'https://www.cian.ru/rent/flat/990001/'})
+            self.wait_for(lambda:self.request('/api/phone/jobs/'+second['job_id'])['state']=='error')
         self.assertEqual(phone_relay.list_cards(self.directory)['cards'],[])
 
     def test_route_edit_preserves_text_fields_and_rejects_stale_version(self):

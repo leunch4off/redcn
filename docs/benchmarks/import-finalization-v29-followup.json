@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "report": "v29-import-finalization-and-gallery-completeness-followup",
+  "date": "2026-11-02",
+  "status": "native-passed-exact-commit-ci-and-installation-pending",
+  "baselineCommit": "1e261bb53f51425a27d93d63bef03eabbe6aae79",
+  "sourceBuildId": "619ff4560d5f5e24b02e6178f35444c4c3d6861c756ea6e50399ac759c0d0167",
+  "sourceHashes": {
+    "cli/local_server.py": "fb0833ea92743e2dc5ca3798a16b673bd39b3f34e86b190e6bdee92e3ed47a2a",
+    "tests/test_workspace_api.py": "71e4d5ec0628adebc63d03b1b0045a8e2d015481faaa27274c732510101b410d",
+    "tests/test_avito_browser.py": "5a0144bf583af82c2dbf1bc9ed91d026b6a24fafe6e430360648d66de7da9cf8",
+    "tests/test_ui_browser.py": "9b603e80b4ec0bcd6bfd4c13eccc9cc0085991c3fcc4e8f05209870153c59e5d"
+  },
+  "galleryAlgorithmSourcesUnchangedSinceBaseline": true,
+  "originalTenPlusEleventhTestUnchanged": true,
+  "causalProofReceiptSha256": "92d9c3a5fdc8fe6c1bd05e19a25000e51d93bbef3e1d10eb9f11f224abdee8f2",
+  "causalProof": {
+    "before": {
+      "sourceSha256": "0c5c0fa06310d90f4e4facc2f4074c02b2d4e55986a6051ddc367fa525fbc345",
+      "testSha256": "da828b8de69103642253e3ed11666deb0a5760a58e7b504f473c9000b9144b86",
+      "causalBarrier": "activity-log cleanup after diagnostics completion and before durable finish",
+      "whilePaused": {
+        "publicJobState": "error",
+        "diagnosticsCompleted": 1,
+        "healthActiveJobs": 0,
+        "durableJobState": "running",
+        "leaseHeld": true,
+        "nextImportHttpStatus": 409
+      },
+      "afterRelease": {
+        "durableJobState": "error",
+        "leaseHeld": false,
+        "nextImportAccepted": true
+      },
+      "regressionRun": {
+        "testsRun": 2,
+        "failures": 1,
+        "errors": 1,
+        "elapsedSeconds": 1.987765,
+        "expectedToFailBeforeFix": true,
+        "testNames": [
+          "test_workspace_api.WorkspaceHTTPTests.test_failed_import_remains_busy_until_finalization_releases_reservation",
+          "test_workspace_api.WorkspaceHTTPTests.test_cleanup_exception_still_releases_import_reservation"
+        ],
+        "logSha256": "06b4ce9cb322ff0742280bb672aaf52a4bcd7b2dde6a0fac489bfbb2fadc1c92"
+      }
+    },
+    "after": {
+      "status": "passed",
+      "sourceSha256": "fb0833ea92743e2dc5ca3798a16b673bd39b3f34e86b190e6bdee92e3ed47a2a",
+      "testSha256": "71e4d5ec0628adebc63d03b1b0045a8e2d015481faaa27274c732510101b410d",
+      "targetedRun": {
+        "testsRun": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "elapsedSeconds": 12.411003,
+        "passed": true,
+        "selectedTests": [
+          "test_workspace_api.WorkspaceHTTPTests",
+          "test_import_job_journal",
+          "test_import_recovery_integration",
+          "test_phone_relay.PhoneRelayTests.test_phone_import_uses_mac_queue_and_caches_photo_before_job_done",
+          "test_phone_relay.PhoneRelayTests.test_prepare_old_card_downloads_on_mac_and_queue_serializes",
+          "test_phone_relay.PhoneRelayTests.test_prepare_completion_keeps_newer_manual_text_and_price"
+        ],
+        "logSha256": "4a60f15497412c12a29d07e07121f3a45afcaabebb576230b05f9744371d97f0"
+      },
+      "originalTenPlusEleventhTestUnchanged": true,
+      "regressionAssertions": {
+        "pausedAfterDiagnosticsCompleted": {
+          "publicJobState": "running",
+          "diagnosticsCompleted": 1,
+          "healthActiveJobs": 1,
+          "nextImportHttpStatus": 409
+        },
+        "afterRelease": {
+          "publicJobState": "error",
+          "healthActiveJobs": 0,
+          "nextImportAccepted": true
+        },
+        "cleanupException": {
+          "workerException": "ValueError",
+          "publicJobState": "error",
+          "healthActiveJobs": 0,
+          "nextImportAccepted": true
+        },
+        "evidence": "Exact public API assertions in the two deterministic regression tests; no hidden-journal waits were added."
+      }
+    },
+    "fix": {
+      "terminalPublication": "Only after durable journal.finish commits and releases the reservation, or after its failure path abandons the lease.",
+      "cleanup": "Nested finally guarantees durable finalization even if tracker or connection cleanup raises.",
+      "publicCancellationStatePreserved": "error",
+      "durableCancellationStatePreserved": "cancelled",
+      "files": [
+        "cli/local_server.py",
+        "tests/test_workspace_api.py"
+      ]
+    }
+  },
+  "independentReadOnlyReview": {
+    "performed": true,
+    "confirmedBlockingFindings": 0,
+    "scope": [
+      "lock ordering",
+      "durable release before public terminal state",
+      "import and prepare finalization",
+      "thread launch failure",
+      "shutdown path",
+      "existing cancellation contract"
+    ]
+  },
+  "nativeVerification": {
+    "environment": "owner Mac, isolated test data",
+    "completeness": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "unittestSeconds": 36.009,
+      "processSeconds": 36.262,
+      "logSha256": "6aec61bcc25747759fc67c36e169b0fa7e031569dcec3b4b5d2843f5d7d8e199",
+      "executedBeforeLifecyclePatch": true,
+      "checks": [
+        "Avito sections and facts retained with unknown total",
+        "Avito lazy rules remain observed",
+        "synthetic total12 complete and14 partial with2missing",
+        "page walk and lazy image retained; unknown versus declared total1"
+      ]
+    },
+    "lifecycle": {
+      "tests": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "unittestSeconds": 14.016,
+      "processSeconds": 14.501,
+      "logSha256": "8c4cb18c1ca24ac2a8cbf752507de3aa8225a0cbc4788d05c7c8d5b73dbd1083"
+    },
+    "nodeFull": {
+      "tests": 620,
+      "passed": 619,
+      "failed": 0,
+      "skipped": 1,
+      "skipKind": "optional independent ZXing decoder",
+      "harnessMilliseconds": 12323.854791,
+      "processSeconds": 12.437,
+      "logSha256": "cfadabd2fc8d4cb73209411cc5370be39b5a34b152375b76a7522553c9c8b624"
+    },
+    "build": {
+      "passed": true,
+      "seconds": 0.663
+    },
+    "validateArtifact": {
+      "passed": true,
+      "seconds": 0.394
+    },
+    "validatePages": {
+      "passed": true,
+      "seconds": 0.916
+    },
+    "diffCheck": {
+      "passed": true
+    }
+  },
+  "previousCi": {
+    "commit": "1e261bb53f51425a27d93d63bef03eabbe6aae79",
+    "reportSha256": "8ba2461d8c359f7365e8c03f832a36908cfbc75f2195c23a732a94aec37195df",
+    "runs": [
+      {
+        "id": 41460446127,
+        "event": "push",
+        "url": "https://github.com/leunch4off/redcn/actions/runs/41460446127",
+        "conclusion": "failure",
+        "python": {
+          "tests": 1436,
+          "passed": 1432,
+          "failures": 3,
+          "errors": 0,
+          "skipped": 1
+        }
+      },
+      {
+        "id": 41460461416,
+        "event": "pull_request",
+        "url": "https://github.com/leunch4off/redcn/actions/runs/41460461416",
+        "conclusion": "failure",
+        "python": {
+          "tests": 1436,
+          "passed": 1431,
+          "failures": 3,
+          "errors": 1,
+          "skipped": 1
+        }
+      }
+    ],
+    "rerunsUsed": false,
+    "sitesReleaseArtifact": "skipped",
+    "bothMacPortabilityFixturesVerifiedInBothRuns": true
+  },
+  "postPublication": {
+    "commit": null,
+    "exactCommitCiRequired": true,
+    "installation": "pending",
+    "finalEvidence": [
+      "https://github.com/leunch4off/redcn/pull/6",
+      "https://github.com/leunch4off/redcn/issues/1"
+    ]
+  },
+  "limits": [
+    "No live CIAN success is claimed by these isolated lifecycle tests.",
+    "Native completeness and lifecycle are separate runs; prior source evidence retains its original binding.",
+    "No model was retrained or promoted by this follow-up.",
+    "No task criterion or roadmap status was changed.",
+    "User card bytes, photographs, credentials and private paths are absent."
+  ]
+}

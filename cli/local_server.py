@@ -162,20 +162,23 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         worker=threading.Thread(target=owned,daemon=True)
         with lock:
             if closing:
-                journal.abandon(job_id)
-                jobs[job_id].update(state='error',message='Сервер завершает работу. Запрос можно повторить после перезапуска.')
+                jobs[job_id].update(message='Сервер завершает работу. Запрос можно повторить после перезапуска.')
                 raise ValueError('Сервер завершает работу')
             workers[job_id]=worker
         try:worker.start()
         except BaseException:
-            with lock:workers.pop(job_id,None);jobs[job_id]['state']='error'
-            journal.finish(job_id,'error');raise
+            with lock:
+                workers.pop(job_id,None)
+                cancel=jobs[job_id]['cancel']
+            finish_journal(job_id,False,False,cancel)
+            raise
 
     def finish_journal(job_id,success,learn,cancel):
         try:
             journal.finish(job_id,'done' if success else 'cancelled' if cancel.is_set() else 'error',partial=success and not learn)
-            if success:
-                with lock:jobs[job_id]['state']='done'
+            # A public terminal state promises that the durable reservation is
+            # released. Cancellation retains the existing public error state.
+            with lock:jobs[job_id]['state']='done' if success else 'error'
             return True
         except (OSError,ValueError,sqlite3.Error):
             journal.abandon(job_id)
@@ -301,28 +304,31 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     owner_scope.check()
                     mark_media_interrupted(directory,result_id,cancelled=cancel.is_set())
                 except (OSError,ValueError,sqlite3.Error):pass
-            with lock: jobs[job_id].update(state='error', message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
+            with lock: jobs[job_id].update(message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
         finally:
-            with lock:
-                jobs[job_id]['tracker'].finish(success,learn=learn)
-                measured = jobs[job_id]['tracker'].snapshot()
-                audit_token = audit_tokens.pop(job_id, None)
             try:
-                if audit_token:
+                with lock:
+                    jobs[job_id]['tracker'].finish(success,learn=learn)
+                    measured = jobs[job_id]['tracker'].snapshot()
+                    audit_token = audit_tokens.pop(job_id, None)
+                try:
+                    if audit_token:
+                        owner_scope.check()
+                        workspace.diagnostics.complete(audit_token,
+                            'success' if success else 'cancelled' if cancel.is_set() else 'error',
+                            progress=measured, capture=(listing or {}).get('capture'), error=failure)
+                except (OSError, ValueError, sqlite3.Error):pass
+                try:
                     owner_scope.check()
-                    workspace.diagnostics.complete(audit_token,
-                        'success' if success else 'cancelled' if cancel.is_set() else 'error',
-                        progress=measured, capture=(listing or {}).get('capture'), error=failure)
-            except (OSError, ValueError, sqlite3.Error):pass
-            try:
-                owner_scope.check()
-                from activity_log import record_import_attempt
-                stages = {row['id']:row.get('elapsedSeconds', 0) for row in measured.get('stages', []) if isinstance(row,dict) and isinstance(row.get('id'),str)}
-                outcome = 'cancelled' if cancel.is_set() else 'partial' if success and not learn else 'done' if success else 'needs_attention' if failure and type(failure).__name__ == 'NeedsAttention' else 'error'
-                record_import_attempt(directory,source_url=params['url'],started=attempt_started,elapsed=min(7200,time.monotonic()-attempt_clock),outcome=outcome,stages=stages,error=failure)
-            except (OSError, ValueError, sqlite3.Error):pass
-            if connection is not None:connection.close()
-            finish_journal(job_id,success,learn,cancel)
+                    from activity_log import record_import_attempt
+                    stages = {row['id']:row.get('elapsedSeconds', 0) for row in measured.get('stages', []) if isinstance(row,dict) and isinstance(row.get('id'),str)}
+                    outcome = 'cancelled' if cancel.is_set() else 'partial' if success and not learn else 'done' if success else 'needs_attention' if failure and type(failure).__name__ == 'NeedsAttention' else 'error'
+                    record_import_attempt(directory,source_url=params['url'],started=attempt_started,elapsed=min(7200,time.monotonic()-attempt_clock),outcome=outcome,stages=stages,error=failure)
+                except (OSError, ValueError, sqlite3.Error):pass
+            finally:
+                try:
+                    if connection is not None:connection.close()
+                finally:finish_journal(job_id,success,learn,cancel)
 
     def start_import(params, *, actor='Mac owner', request_intent=None):
         owner_scope.check()
@@ -359,8 +365,10 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             touch_foreground(directory)
             launch_worker(job_id,run_import,(job_id,params,cancel,actor))
         except (OSError,ValueError):
-            with lock:jobs[job_id].update(state='error',message='Не удалось запустить импорт. Повторите запрос.')
-            if journal.status(job_id)['state']=='running':finish_journal(job_id,False,False,cancel)
+            with lock:
+                jobs[job_id].update(message='Не удалось запустить импорт. Повторите запрос.')
+                unfinished=jobs[job_id]['state']=='running'
+            if unfinished:finish_journal(job_id,False,False,cancel)
             raise
         return job_id
 
@@ -425,17 +433,20 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 success=True
                 with lock:jobs[job_id].update(message='Фотографии готовы' if learn else 'Подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
             except Exception as error:
-                with lock:jobs[job_id].update(state='error',message=str(error).strip() or 'Подготовка фото прервана: '+type(error).__name__)
+                with lock:jobs[job_id].update(message=str(error).strip() or 'Подготовка фото прервана: '+type(error).__name__)
             finally:
-                with lock:jobs[job_id]['tracker'].finish(success,learn=learn)
-                finish_journal(job_id,success,learn,cancel)
+                try:
+                    with lock:jobs[job_id]['tracker'].finish(success,learn=learn)
+                finally:finish_journal(job_id,success,learn,cancel)
         try:
             from learning_scheduler import touch_foreground
             touch_foreground(directory)
             launch_worker(job_id,run)
         except (OSError,ValueError):
-            with lock:jobs[job_id].update(state='error',message='Не удалось начать подготовку фото. Повторите запрос.')
-            if journal.status(job_id)['state']=='running':finish_journal(job_id,False,False,cancel)
+            with lock:
+                jobs[job_id].update(message='Не удалось начать подготовку фото. Повторите запрос.')
+                unfinished=jobs[job_id]['state']=='running'
+            if unfinished:finish_journal(job_id,False,False,cancel)
             raise
         return job_id
 
