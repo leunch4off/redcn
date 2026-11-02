@@ -1,0 +1,145 @@
+{
+  "firstCommit": "8fc711b4339a03f04d7a07c8e90d77432b95f600",
+  "initialCiFailures": [
+    "legacy receipt missing the new zero withdrawn count",
+    "old browser fixture prohibited canonical original metadata read"
+  ],
+  "initialCiRuns": [
+    {
+      "event": "push",
+      "runId": 41426112329,
+      "url": "https://github.com/leunch4off/redcn/actions/runs/41426112329"
+    },
+    {
+      "event": "pull_request",
+      "runId": 41426121963,
+      "url": "https://github.com/leunch4off/redcn/actions/runs/41426121963"
+    }
+  ],
+  "learningFixtureRefresh": {
+    "createdUtc": "2026-11-02T10:12:11Z",
+    "exporterSha256": "1c5064736b1e038e2995b620bb8c0ad8c98c7280b5c6dedfc82119fa70e8f0fc",
+    "newArchiveSha256": "bec9d65d5741ff9357276467c7ce952707fe23070ad36f733151f51b3de0b6ca",
+    "oldArchiveRetainedInFirstCommit": true,
+    "oldArchiveSha256": "6001205a15409df29f49e810d29dafdcc82cc34b4143be9970c60a328c700c54",
+    "runtimePrivateDataUsed": false,
+    "source": {
+      "machine": "arm64",
+      "macos": "26.0.1",
+      "origin": "operator-mac",
+      "system": "Darwin"
+    },
+    "sourceReceiptSha256": "b2be7bc72b48d4b5d2102fc95272b0bdbaf52f1f8c3e34ab6b4dcae20143476e",
+    "strictReceiptValidatorRelaxed": false
+  },
+  "legacyCompatibility": {
+    "newLearningReceiptStillStrict": true,
+    "oldArchiveUnchanged": true,
+    "onlyAbsentZeroCounter": true
+  },
+  "nativeBrowserTest": {
+    "elapsedSeconds": 12.923212625,
+    "exitCode": 0,
+    "logSha256": "f64ce2ae5ca5ce6a622d187fe743f7d280a3948ba70d82aa056d85cf1fda895b",
+    "passed": 1,
+    "rawReportSha256": "6424917fa7c23f05b0e9782bbcbe4f135956d61e5cb2c357c12c6582ea664a19",
+    "run": 1
+  },
+  "nativeUnitTests": {
+    "logSha256": "c392de2a094ac4c42ea53b500f7729071525dc9604833b5c27c2fd8681e72158",
+    "passed": 9,
+    "run": 9,
+    "separateLoaderError": "An incorrect browser class name in the one-off command prevented that tenth entry from running; the browser case was then run separately."
+  },
+  "productionWorkspaceTouched": false,
+  "realModelInferenceAccepted": false,
+  "scope": "source-Mac validation after first exact-commit CI; hosted destination is verified separately by final-commit workflow artifacts",
+  "sourceMacRestores": {
+    "learning": {
+      "archiveSha256": "bec9d65d5741ff9357276467c7ce952707fe23070ad36f733151f51b3de0b6ca",
+      "attachments": 3,
+      "cards": 2,
+      "clientMaterialsRequireRegeneration": true,
+      "destination": {
+        "githubHosted": false,
+        "machine": "arm64",
+        "macos": "26.0.1",
+        "runId": null,
+        "system": "Darwin"
+      },
+      "devicesMustPairAgain": true,
+      "freshNativeModelAcceptanceRequired": true,
+      "learningTransferVerified": true,
+      "photos": 1,
+      "rawReportSha256": "650010e523d1fdb31865b0bc8aea2b05f417fff8decce407acfbd52b0760d7c7",
+      "realModelQualityEvaluated": false,
+      "source": {
+        "machine": "arm64",
+        "macos": "26.0.1",
+        "origin": "operator-mac",
+        "system": "Darwin"
+      },
+      "type": "redcn-portability-verification",
+      "verified": true,
+      "verifiedComponents": [
+        "card-relations",
+        "attachment-bytes",
+        "original-and-cropped-photo-bytes",
+        "template",
+        "material-version-bytes",
+        "archive-status",
+        "profile",
+        "approved-dictionary",
+        "learning-counts"
+      ],
+      "version": 1,
+      "versions": 2
+    },
+    "legacy": {
+      "archiveSha256": "2811f600d45a7badfd20f8252911d39bb33262be62e87d9fda9981dd0416ec7d",
+      "attachments": 3,
+      "cards": 2,
+      "clientMaterialsRequireRegeneration": true,
+      "destination": {
+        "githubHosted": false,
+        "machine": "arm64",
+        "macos": "26.0.1",
+        "runId": null,
+        "system": "Darwin"
+      },
+      "devicesMustPairAgain": true,
+      "freshNativeModelAcceptanceRequired": true,
+      "learningTransferVerified": false,
+      "photos": 1,
+      "rawReportSha256": "6e18c3157891a15a0e4b3d6f1b35042f17e88a024239ac394659da6a22899406",
+      "realModelQualityEvaluated": false,
+      "source": {
+        "machine": "x86_64",
+        "macos": "26.0.1",
+        "origin": "operator-mac",
+        "system": "Darwin"
+      },
+      "type": "redcn-portability-verification",
+      "verified": true,
+      "verifiedComponents": [
+        "card-relations",
+        "attachment-bytes",
+        "original-and-cropped-photo-bytes",
+        "template",
+        "material-version-bytes",
+        "archive-status",
+        "profile",
+        "approved-dictionary",
+        "learning-counts"
+      ],
+      "version": 1,
+      "versions": 2
+    }
+  },
+  "testAndVerifierHashes": {
+    "cli/portability_proof.py": "1c5064736b1e038e2995b620bb8c0ad8c98c7280b5c6dedfc82119fa70e8f0fc",
+    "tests/test_portability_proof.py": "baa2782000563879d8d53e25dae0afebecabbb12c82695eec2958073a4d96e64",
+    "tests/test_publication_compact_browser.py": "1a4d296e6b93b8ea95b55226056ef3d04409a824b23c79e9aee15e371b5af721"
+  },
+  "version": 1
+}

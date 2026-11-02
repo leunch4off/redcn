@@ -68,4 +68,6 @@
 
 Фикстура `tests/fixtures/macos-learning-v29` создана на исходном Mac с полностью вымышленными данными и неисполняемыми синтетическими весами. CI отдельно восстанавливает её на новом macOS-раннере вместе с прежней фикстурой переноса. Успех этого задания подтверждает перенос структуры и решений, а не работоспособность реальных перенесённых весов. Итог CI должен относиться к точному коммиту выпуска. Полная RCN-358 также зависит от оставшихся критериев RCN-241 и RCN-347.
 
-Проверки: [test_learning_transfer.py](../tests/test_learning_transfer.py), [test_workspace_backup.py](../tests/test_workspace_backup.py); сценарий: [portable-mac-proof.py](../scripts/portable-mac-proof.py).
+Первый отдельный macOS CI обнаружил отсутствующий нулевой счётчик отзывов в старой квитанции v26. Verifier учитывает это только для старого формата без переноса модели, сохраняя строгие проверки всех объявленных значений. Новая учебная фикстура повторно экспортирована текущим кодом на ARM64 Mac; неподдерживаемое поле старой синтетической квитанции исключено экспортёром, валидатор не ослаблен. Старый архив сохранён в истории Git. [Квитанции исходного Mac](benchmarks/portability-v29-followup.json) относятся к восстановлению на том же компьютере; независимое восстановление подтверждается отдельным CI конечного SHA.
+
+Проверки: [test_learning_transfer.py](../tests/test_learning_transfer.py), [test_workspace_backup.py](../tests/test_workspace_backup.py), [test_portability_proof.py](../tests/test_portability_proof.py); сценарий: [portable-mac-proof.py](../scripts/portable-mac-proof.py).

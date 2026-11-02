@@ -141,7 +141,16 @@ def verify_fixture(content,receipt,*, require_github_macos=False):
     with tempfile.TemporaryDirectory(prefix='redcn-portability-destination-') as temp:
         destination=Path(temp)/'fresh-workspace'
         restored=workspace_backup.restore_workspace(content,destination)
-        if semantic_state(destination)!=receipt.get('expected'):raise ValueError('Restored library/media/dictionary/design differs from source')
+        expected=receipt.get('expected')
+        # Older public fixtures predate the withdrawn state. Their missing
+        # counter means zero, never "ignore withdrawals". Keep the original
+        # receipt intact and require the full schema for learning-transfer
+        # receipts; every other semantic field still compares exactly.
+        if ('learning' not in receipt and isinstance(expected,dict)
+                and isinstance(expected.get('learning'),dict)
+                and 'withdrawn' not in expected['learning']):
+            expected={**expected,'learning':{**expected['learning'],'withdrawn':0}}
+        if semantic_state(destination)!=expected:raise ValueError('Restored library/media/dictionary/design differs from source')
         ids=[r['result_id'] for r in restored['cards']]
         if any(i in ('a'*32,'b'*32) for i in ids):raise ValueError('Card IDs were not remapped')
         for identifier in ids:

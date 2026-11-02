@@ -4,14 +4,14 @@
   "synthetic": true,
   "source": {
     "system": "Darwin",
-    "machine": "x86_64",
+    "machine": "arm64",
     "macos": "26.0.1",
     "origin": "operator-mac"
   },
-  "exporterSha256": "787fe7d4741b800821349ee1657bf9d0d016c0fdaa089b596102ef19498a005c",
-  "archiveSha256": "6001205a15409df29f49e810d29dafdcc82cc34b4143be9970c60a328c700c54",
-  "archiveBytes": 32715,
-  "createdUtc": "2026-11-02T07:31:24Z",
+  "exporterSha256": "1c5064736b1e038e2995b620bb8c0ad8c98c7280b5c6dedfc82119fa70e8f0fc",
+  "archiveSha256": "bec9d65d5741ff9357276467c7ce952707fe23070ad36f733151f51b3de0b6ca",
+  "archiveBytes": 32947,
+  "createdUtc": "2026-11-02T10:12:11Z",
   "expected": {
     "cards": [
       {
@@ -33,7 +33,7 @@
           {
             "name": "synthetic-floorplan.png",
             "category": "floorplan",
-            "sha256": "cd92cbb631146ded4abbde40ac2f853c79904239393c10d407a15dcc758434ae"
+            "sha256": "4e17f4c5564d75d603d0c19928b6749cc464837571c5c2c0e75584672fad31b6"
           },
           {
             "name": "synthetic-lidar.obj",
@@ -74,7 +74,7 @@
         }
       }
     ],
-    "originalSha256": "61564b00b1c33acba30f9e3be154e18c5df79d429e3dd1f309b3f98a6b4d6d67",
+    "originalSha256": "d4b36641b2c8b59f44c15afe7d1b9dd29345aa544e934206a23967a1c1602a22",
     "preparedSha256": "29027ac4743e90bb32933ca88280b16dd491ed3d69851eb7a0084e36ec637b76",
     "template": {
       "version": 2,
@@ -4356,8 +4356,8 @@
   "scope": "Generated pixels/text/documents only; no operator cache was read",
   "learning": {
     "weightsSha256": "80c302d1043830bccfd56c7d0dfcf873d32846e41478035eeccfcb2ad1ced671",
-    "rejectedId": "5f5cf3342ea54928b1287f6f2930e7c2",
-    "withdrawnId": "7a88ae0e6be24b94949af957cd0d876f",
+    "rejectedId": "787d1f3045b5440d80581a59c4890127",
+    "withdrawnId": "00841e9318e24663911c0ffc3ffa16de",
     "maxSteps": 37,
     "realModelQualityEvaluated": false,
     "scope": "Synthetic bytes exercise transfer integrity only"

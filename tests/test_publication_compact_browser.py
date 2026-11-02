@@ -119,13 +119,22 @@ class PublicationCompactBrowserAcceptance(unittest.TestCase):
 
     def test_saved_manual_margins_override_backend_copy_and_uncertain_ocr_is_never_selected(self):
         self.page.add_init_script("localStorage.setItem('fixture-edits',JSON.stringify({crops:{'https://images.cdn-cian.ru/images/accepted-fixture.jpg':{top:0,left:0,right:0,bottom:20}}}))")
+        media_reads=[]
+        self.page.on('request',lambda request:media_reads.append(request.url.rsplit('/',1)[-1]) if '/api/local/media/' in request.url else None)
         self.open_photos();result=self.page.evaluate('photoPrepare()')
         self.assertEqual((result['width'],result['height'],result['selection']),(600,480,'manual'))
-        self.assertEqual(self.page.evaluate("photoCalls.filter(row=>row.action==='accepted').length"),0)
+        self.assertEqual(result['originalId'],'a'*64)
+        # Canonical metadata must be checked even for a saved manual crop.
+        # That read does not authorize replacing the operator's 20% margins
+        # with the backend's different 500px manual derivative.
+        self.assertEqual(self.page.evaluate('photoCalls'),[{'action':'accepted','url':self.page.evaluate('fixtureUrl')}])
+        self.assertEqual(media_reads,['a'*64],'Only canonical pixels may supply the saved manual crop')
         self.page.evaluate("photoChoice={original:{id:'a'.repeat(64)},selected:{kind:'crop',id:'c'.repeat(64),originalId:'a'.repeat(64),verification:'ocr-checked',verificationEvidence:{knownRegionsExcluded:true,postOcr:'mark-detected'}},reason:'ocr-checked'};photoUI.setSources([fixtureUrl],{})")
         result=self.page.evaluate('photoPrepare()');self.assertEqual((result['width'],result['selection']),(600,'original'))
+        self.assertNotIn('c'*64,media_reads,'An uncertain OCR derivative must not even be downloaded')
         self.page.evaluate("photoChoice.selected.verificationEvidence.postOcr='not-detected';photoUI.setSources([fixtureUrl],{})")
         result=self.page.evaluate('photoPrepare()');self.assertEqual((result['width'],result['selection']),(560,'ocr-checked'))
+        self.assertIn('c'*64,media_reads);self.assertNotIn('b'*64,media_reads)
 
     def test_publication_waits_for_pending_cache_crop_decision_instead_of_leaking_old_manual_copy(self):
         self.open_photos()
