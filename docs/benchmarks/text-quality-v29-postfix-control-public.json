@@ -1,0 +1,1327 @@
+{
+  "automaticPromotion": false,
+  "factChecksRecomputed": false,
+  "freeFormIssuesIncluded": false,
+  "limitations": [
+    "Synthetic frozen holdout, diagnostic after first disclosure.",
+    "Automatic stored checker decisions are not independent manual fact labels.",
+    "Partial and recovered answers have no quality credit; all request denominators remain fixed.",
+    "This report does not merge answers across attempts or select the best retry.",
+    "Issue classes use a fixed string taxonomy, not an independent semantic review.",
+    "Failed earlier attempts and missing raw evidence must remain in the separate attempt ledger."
+  ],
+  "mixtureComparison": null,
+  "mixtures": {
+    "translation-retention": {
+      "attemptOutcome": "completed",
+      "completePairComparable": true,
+      "currentToCandidate": {
+        "all": {
+          "completeAndFactCorrect": {
+            "bothFail": 148,
+            "bothPass": 0,
+            "improved": 2,
+            "nonComparable": 0,
+            "regressed": 0,
+            "requested": 150
+          },
+          "completion": {
+            "bothFail": 1,
+            "bothPass": 138,
+            "improved": 4,
+            "nonComparable": 0,
+            "regressed": 7,
+            "requested": 150
+          },
+          "factFlagsAmongBothCompleted": {
+            "conditionalPreserved": {
+              "bothFail": 4,
+              "bothPass": 15,
+              "improved": 35,
+              "nonComparable": 94,
+              "regressed": 2,
+              "requested": 150
+            },
+            "jsonShapeCorrect": {
+              "bothFail": 1,
+              "bothPass": 55,
+              "improved": 19,
+              "nonComparable": 68,
+              "regressed": 7,
+              "requested": 150
+            },
+            "moneyRolesPreserved": {
+              "bothFail": 27,
+              "bothPass": 0,
+              "improved": 29,
+              "nonComparable": 94,
+              "regressed": 0,
+              "requested": 150
+            },
+            "numbersPreserved": {
+              "bothFail": 31,
+              "bothPass": 4,
+              "improved": 10,
+              "nonComparable": 94,
+              "regressed": 11,
+              "requested": 150
+            },
+            "paymentPeriodsPreserved": {
+              "bothFail": 27,
+              "bothPass": 2,
+              "improved": 27,
+              "nonComparable": 94,
+              "regressed": 0,
+              "requested": 150
+            },
+            "stationNamesPreserved": {
+              "bothFail": 52,
+              "bothPass": 0,
+              "improved": 0,
+              "nonComparable": 94,
+              "regressed": 4,
+              "requested": 150
+            },
+            "unitsPreserved": {
+              "bothFail": 7,
+              "bothPass": 17,
+              "improved": 7,
+              "nonComparable": 94,
+              "regressed": 25,
+              "requested": 150
+            }
+          },
+          "factsAmongBothCompleted": {
+            "bothFail": 136,
+            "bothPass": 0,
+            "improved": 2,
+            "nonComparable": 12,
+            "regressed": 0,
+            "requested": 150
+          }
+        },
+        "listing": {
+          "completeAndFactCorrect": {
+            "bothFail": 88,
+            "bothPass": 0,
+            "improved": 2,
+            "nonComparable": 0,
+            "regressed": 0,
+            "requested": 90
+          },
+          "completion": {
+            "bothFail": 1,
+            "bothPass": 82,
+            "improved": 0,
+            "nonComparable": 0,
+            "regressed": 7,
+            "requested": 90
+          },
+          "factFlagsAmongBothCompleted": {
+            "jsonShapeCorrect": {
+              "bothFail": 1,
+              "bothPass": 55,
+              "improved": 19,
+              "nonComparable": 8,
+              "regressed": 7,
+              "requested": 90
+            }
+          },
+          "factsAmongBothCompleted": {
+            "bothFail": 80,
+            "bothPass": 0,
+            "improved": 2,
+            "nonComparable": 8,
+            "regressed": 0,
+            "requested": 90
+          }
+        },
+        "ru-zh": {
+          "completeAndFactCorrect": {
+            "bothFail": 30,
+            "bothPass": 0,
+            "improved": 0,
+            "nonComparable": 0,
+            "regressed": 0,
+            "requested": 30
+          },
+          "completion": {
+            "bothFail": 0,
+            "bothPass": 29,
+            "improved": 1,
+            "nonComparable": 0,
+            "regressed": 0,
+            "requested": 30
+          },
+          "factFlagsAmongBothCompleted": {
+            "conditionalPreserved": {
+              "bothFail": 4,
+              "bothPass": 5,
+              "improved": 18,
+              "nonComparable": 1,
+              "regressed": 2,
+              "requested": 30
+            },
+            "moneyRolesPreserved": {
+              "bothFail": 0,
+              "bothPass": 0,
+              "improved": 29,
+              "nonComparable": 1,
+              "regressed": 0,
+              "requested": 30
+            },
+            "numbersPreserved": {
+              "bothFail": 13,
+              "bothPass": 4,
+              "improved": 7,
+              "nonComparable": 1,
+              "regressed": 5,
+              "requested": 30
+            },
+            "paymentPeriodsPreserved": {
+              "bothFail": 0,
+              "bothPass": 2,
+              "improved": 27,
+              "nonComparable": 1,
+              "regressed": 0,
+              "requested": 30
+            },
+            "stationNamesPreserved": {
+              "bothFail": 29,
+              "bothPass": 0,
+              "improved": 0,
+              "nonComparable": 1,
+              "regressed": 0,
+              "requested": 30
+            },
+            "unitsPreserved": {
+              "bothFail": 5,
+              "bothPass": 0,
+              "improved": 0,
+              "nonComparable": 1,
+              "regressed": 24,
+              "requested": 30
+            }
+          },
+          "factsAmongBothCompleted": {
+            "bothFail": 29,
+            "bothPass": 0,
+            "improved": 0,
+            "nonComparable": 1,
+            "regressed": 0,
+            "requested": 30
+          }
+        },
+        "zh-ru": {
+          "completeAndFactCorrect": {
+            "bothFail": 30,
+            "bothPass": 0,
+            "improved": 0,
+            "nonComparable": 0,
+            "regressed": 0,
+            "requested": 30
+          },
+          "completion": {
+            "bothFail": 0,
+            "bothPass": 27,
+            "improved": 3,
+            "nonComparable": 0,
+            "regressed": 0,
+            "requested": 30
+          },
+          "factFlagsAmongBothCompleted": {
+            "conditionalPreserved": {
+              "bothFail": 0,
+              "bothPass": 10,
+              "improved": 17,
+              "nonComparable": 3,
+              "regressed": 0,
+              "requested": 30
+            },
+            "moneyRolesPreserved": {
+              "bothFail": 27,
+              "bothPass": 0,
+              "improved": 0,
+              "nonComparable": 3,
+              "regressed": 0,
+              "requested": 30
+            },
+            "numbersPreserved": {
+              "bothFail": 18,
+              "bothPass": 0,
+              "improved": 3,
+              "nonComparable": 3,
+              "regressed": 6,
+              "requested": 30
+            },
+            "paymentPeriodsPreserved": {
+              "bothFail": 27,
+              "bothPass": 0,
+              "improved": 0,
+              "nonComparable": 3,
+              "regressed": 0,
+              "requested": 30
+            },
+            "stationNamesPreserved": {
+              "bothFail": 23,
+              "bothPass": 0,
+              "improved": 0,
+              "nonComparable": 3,
+              "regressed": 4,
+              "requested": 30
+            },
+            "unitsPreserved": {
+              "bothFail": 2,
+              "bothPass": 17,
+              "improved": 7,
+              "nonComparable": 3,
+              "regressed": 1,
+              "requested": 30
+            }
+          },
+          "factsAmongBothCompleted": {
+            "bothFail": 27,
+            "bothPass": 0,
+            "improved": 0,
+            "nonComparable": 3,
+            "regressed": 0,
+            "requested": 30
+          }
+        }
+      },
+      "elapsedSeconds": 537.1645285419945,
+      "fullGateEligibleReported": true,
+      "inputsStillFresh": true,
+      "processAttempts": {
+        "candidate": {
+          "admitted": true,
+          "elapsedSeconds": 268.4799480000074,
+          "journalErrorPresent": false,
+          "journalRows": 150,
+          "maximumSwapGrowthBytesObserved": 0,
+          "minimumAvailableEstimateBytes": 2151088128,
+          "nativeArm64Reported": true,
+          "packageVersions": {
+            "mlx": "0.32.4",
+            "mlx-lm": "0.30.6",
+            "tokenizers": "0.23.3",
+            "transformers": "5.22.1"
+          },
+          "peakMlxBytes": 548552102,
+          "peakProcessGroupRssBytes": 576487424,
+          "physicalBytes": 8589934592,
+          "resourceSamples": 132,
+          "resourceStopReason": null,
+          "returnCode": 0,
+          "signal": null,
+          "stopReason": "finished"
+        },
+        "current": {
+          "admitted": true,
+          "elapsedSeconds": 238.80413566700008,
+          "journalErrorPresent": false,
+          "journalRows": 150,
+          "maximumSwapGrowthBytesObserved": 0,
+          "minimumAvailableEstimateBytes": 2456256512,
+          "nativeArm64Reported": true,
+          "packageVersions": {
+            "mlx": "0.32.4",
+            "mlx-lm": "0.30.6",
+            "tokenizers": "0.23.3",
+            "transformers": "5.22.1"
+          },
+          "peakMlxBytes": 548543270,
+          "peakProcessGroupRssBytes": 588017664,
+          "physicalBytes": 8589934592,
+          "resourceSamples": 117,
+          "resourceStopReason": null,
+          "returnCode": 0,
+          "signal": null,
+          "stopReason": "finished"
+        }
+      },
+      "productionAcceptanceGranted": false,
+      "reportSha256": "3aea42e7845c32f9e5f1ad7f90ebcdc72c07c2b93a7410423f7482f7058e9368",
+      "reportedGateAccepted": false,
+      "requestedByTask": {
+        "listing": 90,
+        "ru-zh": 30,
+        "zh-ru": 30
+      },
+      "requestedPerSide": 150,
+      "sides": {
+        "candidate": {
+          "admittedRows": 150,
+          "all": {
+            "checkerBooleans": {
+              "conditionalPreserved": {
+                "completedFailed": 6,
+                "completedPassed": 54,
+                "failedObserved": 6,
+                "notReported": 90,
+                "passedObserved": 54,
+                "reported": 60
+              },
+              "jsonShapeCorrect": {
+                "completedFailed": 8,
+                "completedPassed": 74,
+                "failedObserved": 16,
+                "notReported": 60,
+                "passedObserved": 74,
+                "reported": 90
+              },
+              "moneyRolesPreserved": {
+                "completedFailed": 30,
+                "completedPassed": 30,
+                "failedObserved": 30,
+                "notReported": 90,
+                "passedObserved": 30,
+                "reported": 60
+              },
+              "numbersPreserved": {
+                "completedFailed": 46,
+                "completedPassed": 14,
+                "failedObserved": 46,
+                "notReported": 90,
+                "passedObserved": 14,
+                "reported": 60
+              },
+              "paymentPeriodsPreserved": {
+                "completedFailed": 30,
+                "completedPassed": 30,
+                "failedObserved": 30,
+                "notReported": 90,
+                "passedObserved": 30,
+                "reported": 60
+              },
+              "stationNamesPreserved": {
+                "completedFailed": 60,
+                "completedPassed": 0,
+                "failedObserved": 60,
+                "notReported": 90,
+                "passedObserved": 0,
+                "reported": 60
+              },
+              "unitsPreserved": {
+                "completedFailed": 33,
+                "completedPassed": 27,
+                "failedObserved": 33,
+                "notReported": 90,
+                "passedObserved": 27,
+                "reported": 60
+              }
+            },
+            "completedFactsPassed": 2,
+            "completedFactsPassedFractionOfRequested": 0.013333333333333334,
+            "diagnosticCompletedFactChecksPassedObserved": 2,
+            "generationTokensMeasured": {
+              "max": 768,
+              "mean": 184.14,
+              "median": 146.5,
+              "min": 13,
+              "n": 150,
+              "p95": 768
+            },
+            "generationTokensMetricMissing": 0,
+            "incomplete": 8,
+            "issueClassesAmongCompleted": {
+              "fee-scope": 114,
+              "format": 8,
+              "language": 2,
+              "length": 1,
+              "missing-fact": 130,
+              "money-role": 64,
+              "negation-polarity-condition": 125,
+              "numbers-units": 95,
+              "payment-period": 38,
+              "station-route": 113,
+              "unsupported-fact": 27
+            },
+            "issueClassesObserved": {
+              "fee-scope": 114,
+              "format": 16,
+              "language": 2,
+              "length": 1,
+              "missing-fact": 130,
+              "money-role": 64,
+              "negation-polarity-condition": 125,
+              "numbers-units": 95,
+              "payment-period": 38,
+              "station-route": 113,
+              "unsupported-fact": 27
+            },
+            "measuredCompleted": 142,
+            "partialOutputsCredited": false,
+            "partialOutputsPassingOnlyFactChecks": 0,
+            "qualityEligible": true,
+            "requested": 150,
+            "saved": 150,
+            "seconds": {
+              "max": 6.3853697089944035,
+              "mean": 1.5691024527332047,
+              "median": 1.2623607914938475,
+              "min": 0.4658379999891622,
+              "n": 150,
+              "p95": 5.743872334001935
+            },
+            "secondsAmongCompleted": {
+              "max": 2.9840358329965966,
+              "mean": 1.3214479450562322,
+              "median": 1.2527199375035707,
+              "min": 0.4658379999891622,
+              "n": 142,
+              "p95": 2.5315090000076452
+            },
+            "stopReasons": {
+              "eos": 142,
+              "token-limit": 8
+            },
+            "tokensPerSecondMeasured": {
+              "max": 168.08270004330282,
+              "mean": 148.66967307394938,
+              "median": 144.0779305303431,
+              "min": 122.98768668960012,
+              "n": 150,
+              "p95": 166.33454065734884
+            },
+            "tokensPerSecondMetricMissing": 0,
+            "unobserved": 0
+          },
+          "recoveredOnlyRows": 0,
+          "tasks": {
+            "listing": {
+              "checkerBooleans": {
+                "jsonShapeCorrect": {
+                  "completedFailed": 8,
+                  "completedPassed": 74,
+                  "failedObserved": 16,
+                  "notReported": 0,
+                  "passedObserved": 74,
+                  "reported": 90
+                }
+              },
+              "completedFactsPassed": 2,
+              "completedFactsPassedFractionOfRequested": 0.022222222222222223,
+              "diagnosticCompletedFactChecksPassedObserved": 2,
+              "generationTokensMeasured": {
+                "max": 768,
+                "mean": 227.2888888888889,
+                "median": 165.0,
+                "min": 13,
+                "n": 90,
+                "p95": 768
+              },
+              "generationTokensMetricMissing": 0,
+              "incomplete": 8,
+              "issueClassesAmongCompleted": {
+                "fee-scope": 54,
+                "format": 8,
+                "length": 1,
+                "missing-fact": 70,
+                "money-role": 34,
+                "negation-polarity-condition": 65,
+                "numbers-units": 38,
+                "payment-period": 8,
+                "station-route": 53,
+                "unsupported-fact": 8
+              },
+              "issueClassesObserved": {
+                "fee-scope": 54,
+                "format": 16,
+                "length": 1,
+                "missing-fact": 70,
+                "money-role": 34,
+                "negation-polarity-condition": 65,
+                "numbers-units": 38,
+                "payment-period": 8,
+                "station-route": 53,
+                "unsupported-fact": 8
+              },
+              "measuredCompleted": 82,
+              "partialOutputsCredited": false,
+              "partialOutputsPassingOnlyFactChecks": 0,
+              "qualityEligible": true,
+              "requested": 90,
+              "saved": 90,
+              "seconds": {
+                "max": 6.3853697089944035,
+                "mean": 2.0002466092107674,
+                "median": 1.6147287500061793,
+                "min": 0.4658379999891622,
+                "n": 90,
+                "p95": 5.858905542001594
+              },
+              "secondsAmongCompleted": {
+                "max": 2.9840358329965966,
+                "mean": 1.613444330694797,
+                "median": 1.493285520999052,
+                "min": 0.4658379999891622,
+                "n": 82,
+                "p95": 2.6841214159940137
+              },
+              "stopReasons": {
+                "eos": 82,
+                "token-limit": 8
+              },
+              "tokensPerSecondMeasured": {
+                "max": 147.48640532788477,
+                "mean": 141.10411569689998,
+                "median": 142.47441078526913,
+                "min": 124.04733009744281,
+                "n": 90,
+                "p95": 146.8967227400991
+              },
+              "tokensPerSecondMetricMissing": 0,
+              "unobserved": 0
+            },
+            "ru-zh": {
+              "checkerBooleans": {
+                "conditionalPreserved": {
+                  "completedFailed": 6,
+                  "completedPassed": 24,
+                  "failedObserved": 6,
+                  "notReported": 0,
+                  "passedObserved": 24,
+                  "reported": 30
+                },
+                "moneyRolesPreserved": {
+                  "completedFailed": 0,
+                  "completedPassed": 30,
+                  "failedObserved": 0,
+                  "notReported": 0,
+                  "passedObserved": 30,
+                  "reported": 30
+                },
+                "numbersPreserved": {
+                  "completedFailed": 19,
+                  "completedPassed": 11,
+                  "failedObserved": 19,
+                  "notReported": 0,
+                  "passedObserved": 11,
+                  "reported": 30
+                },
+                "paymentPeriodsPreserved": {
+                  "completedFailed": 0,
+                  "completedPassed": 30,
+                  "failedObserved": 0,
+                  "notReported": 0,
+                  "passedObserved": 30,
+                  "reported": 30
+                },
+                "stationNamesPreserved": {
+                  "completedFailed": 30,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "unitsPreserved": {
+                  "completedFailed": 30,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                }
+              },
+              "completedFactsPassed": 0,
+              "completedFactsPassedFractionOfRequested": 0.0,
+              "diagnosticCompletedFactChecksPassedObserved": 0,
+              "generationTokensMeasured": {
+                "max": 103,
+                "mean": 76.96666666666667,
+                "median": 77.0,
+                "min": 60,
+                "n": 30,
+                "p95": 91
+              },
+              "generationTokensMetricMissing": 0,
+              "incomplete": 0,
+              "issueClassesAmongCompleted": {
+                "fee-scope": 30,
+                "missing-fact": 30,
+                "negation-polarity-condition": 30,
+                "numbers-units": 30,
+                "station-route": 30,
+                "unsupported-fact": 6
+              },
+              "issueClassesObserved": {
+                "fee-scope": 30,
+                "missing-fact": 30,
+                "negation-polarity-condition": 30,
+                "numbers-units": 30,
+                "station-route": 30,
+                "unsupported-fact": 6
+              },
+              "measuredCompleted": 30,
+              "partialOutputsCredited": false,
+              "partialOutputsPassingOnlyFactChecks": 0,
+              "qualityEligible": true,
+              "requested": 30,
+              "saved": 30,
+              "seconds": {
+                "max": 0.8462528749951161,
+                "mean": 0.6762652457997319,
+                "median": 0.6668018540003686,
+                "min": 0.5446465830027591,
+                "n": 30,
+                "p95": 0.825008333005826
+              },
+              "secondsAmongCompleted": {
+                "max": 0.8462528749951161,
+                "mean": 0.6762652457997319,
+                "median": 0.6668018540003686,
+                "min": 0.5446465830027591,
+                "n": 30,
+                "p95": 0.825008333005826
+              },
+              "stopReasons": {
+                "eos": 30
+              },
+              "tokensPerSecondMeasured": {
+                "max": 168.08270004330282,
+                "mean": 159.7773800608422,
+                "median": 162.7032490415554,
+                "min": 122.98768668960012,
+                "n": 30,
+                "p95": 167.57696546612655
+              },
+              "tokensPerSecondMetricMissing": 0,
+              "unobserved": 0
+            },
+            "zh-ru": {
+              "checkerBooleans": {
+                "conditionalPreserved": {
+                  "completedFailed": 0,
+                  "completedPassed": 30,
+                  "failedObserved": 0,
+                  "notReported": 0,
+                  "passedObserved": 30,
+                  "reported": 30
+                },
+                "moneyRolesPreserved": {
+                  "completedFailed": 30,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "numbersPreserved": {
+                  "completedFailed": 27,
+                  "completedPassed": 3,
+                  "failedObserved": 27,
+                  "notReported": 0,
+                  "passedObserved": 3,
+                  "reported": 30
+                },
+                "paymentPeriodsPreserved": {
+                  "completedFailed": 30,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "stationNamesPreserved": {
+                  "completedFailed": 30,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "unitsPreserved": {
+                  "completedFailed": 3,
+                  "completedPassed": 27,
+                  "failedObserved": 3,
+                  "notReported": 0,
+                  "passedObserved": 27,
+                  "reported": 30
+                }
+              },
+              "completedFactsPassed": 0,
+              "completedFactsPassedFractionOfRequested": 0.0,
+              "diagnosticCompletedFactChecksPassedObserved": 0,
+              "generationTokensMeasured": {
+                "max": 219,
+                "mean": 161.86666666666667,
+                "median": 159.0,
+                "min": 119,
+                "n": 30,
+                "p95": 203
+              },
+              "generationTokensMetricMissing": 0,
+              "incomplete": 0,
+              "issueClassesAmongCompleted": {
+                "fee-scope": 30,
+                "language": 2,
+                "missing-fact": 30,
+                "money-role": 30,
+                "negation-polarity-condition": 30,
+                "numbers-units": 27,
+                "payment-period": 30,
+                "station-route": 30,
+                "unsupported-fact": 13
+              },
+              "issueClassesObserved": {
+                "fee-scope": 30,
+                "language": 2,
+                "missing-fact": 30,
+                "money-role": 30,
+                "negation-polarity-condition": 30,
+                "numbers-units": 27,
+                "payment-period": 30,
+                "station-route": 30,
+                "unsupported-fact": 13
+              },
+              "measuredCompleted": 30,
+              "partialOutputsCredited": false,
+              "partialOutputsPassingOnlyFactChecks": 0,
+              "qualityEligible": true,
+              "requested": 30,
+              "saved": 30,
+              "seconds": {
+                "max": 1.5062298339908011,
+                "mean": 1.168507190233989,
+                "median": 1.157871500501642,
+                "min": 0.9499869160063099,
+                "n": 30,
+                "p95": 1.4436816249944968
+              },
+              "secondsAmongCompleted": {
+                "max": 1.5062298339908011,
+                "mean": 1.168507190233989,
+                "median": 1.157871500501642,
+                "min": 0.9499869160063099,
+                "n": 30,
+                "p95": 1.4436816249944968
+              },
+              "stopReasons": {
+                "eos": 30
+              },
+              "tokensPerSecondMeasured": {
+                "max": 167.25267244566064,
+                "mean": 160.2586382182047,
+                "median": 161.99012812452355,
+                "min": 135.84229297887399,
+                "n": 30,
+                "p95": 166.99648949944313
+              },
+              "tokensPerSecondMetricMissing": 0,
+              "unobserved": 0
+            }
+          }
+        },
+        "current": {
+          "admittedRows": 150,
+          "all": {
+            "checkerBooleans": {
+              "conditionalPreserved": {
+                "completedFailed": 39,
+                "completedPassed": 17,
+                "failedObserved": 40,
+                "notReported": 90,
+                "passedObserved": 20,
+                "reported": 60
+              },
+              "jsonShapeCorrect": {
+                "completedFailed": 24,
+                "completedPassed": 65,
+                "failedObserved": 25,
+                "notReported": 60,
+                "passedObserved": 65,
+                "reported": 90
+              },
+              "moneyRolesPreserved": {
+                "completedFailed": 56,
+                "completedPassed": 0,
+                "failedObserved": 60,
+                "notReported": 90,
+                "passedObserved": 0,
+                "reported": 60
+              },
+              "numbersPreserved": {
+                "completedFailed": 41,
+                "completedPassed": 15,
+                "failedObserved": 45,
+                "notReported": 90,
+                "passedObserved": 15,
+                "reported": 60
+              },
+              "paymentPeriodsPreserved": {
+                "completedFailed": 54,
+                "completedPassed": 2,
+                "failedObserved": 57,
+                "notReported": 90,
+                "passedObserved": 3,
+                "reported": 60
+              },
+              "stationNamesPreserved": {
+                "completedFailed": 52,
+                "completedPassed": 4,
+                "failedObserved": 56,
+                "notReported": 90,
+                "passedObserved": 4,
+                "reported": 60
+              },
+              "unitsPreserved": {
+                "completedFailed": 14,
+                "completedPassed": 42,
+                "failedObserved": 17,
+                "notReported": 90,
+                "passedObserved": 43,
+                "reported": 60
+              }
+            },
+            "completedFactsPassed": 0,
+            "completedFactsPassedFractionOfRequested": 0.0,
+            "diagnosticCompletedFactChecksPassedObserved": 0,
+            "generationTokensMeasured": {
+              "max": 768,
+              "mean": 158.53333333333333,
+              "median": 138.0,
+              "min": 66,
+              "n": 150,
+              "p95": 313
+            },
+            "generationTokensMetricMissing": 0,
+            "incomplete": 5,
+            "issueClassesAmongCompleted": {
+              "fee-scope": 105,
+              "format": 24,
+              "language": 14,
+              "missing-fact": 120,
+              "money-role": 87,
+              "negation-polarity-condition": 121,
+              "numbers-units": 79,
+              "payment-period": 55,
+              "station-route": 113,
+              "unsupported-fact": 48
+            },
+            "issueClassesObserved": {
+              "fee-scope": 109,
+              "format": 25,
+              "language": 14,
+              "missing-fact": 124,
+              "money-role": 91,
+              "negation-polarity-condition": 125,
+              "numbers-units": 83,
+              "payment-period": 58,
+              "station-route": 117,
+              "unsupported-fact": 50
+            },
+            "measuredCompleted": 145,
+            "partialOutputsCredited": false,
+            "partialOutputsPassingOnlyFactChecks": 0,
+            "qualityEligible": true,
+            "requested": 150,
+            "saved": 150,
+            "seconds": {
+              "max": 6.067794791000779,
+              "mean": 1.3893746713666284,
+              "median": 1.2368086670030607,
+              "min": 0.5978674159996444,
+              "n": 150,
+              "p95": 2.8802407079929253
+            },
+            "secondsAmongCompleted": {
+              "max": 3.4931655839900486,
+              "mean": 1.2988352410688973,
+              "median": 1.2130305419996148,
+              "min": 0.5978674159996444,
+              "n": 145,
+              "p95": 1.9959661249886267
+            },
+            "stopReasons": {
+              "eos": 145,
+              "token-limit": 5
+            },
+            "tokensPerSecondMeasured": {
+              "max": 173.19220942804984,
+              "mean": 147.19039265100983,
+              "median": 144.18468617969626,
+              "min": 103.33369486932881,
+              "n": 150,
+              "p95": 168.28123037930393
+            },
+            "tokensPerSecondMetricMissing": 0,
+            "unobserved": 0
+          },
+          "recoveredOnlyRows": 0,
+          "tasks": {
+            "listing": {
+              "checkerBooleans": {
+                "jsonShapeCorrect": {
+                  "completedFailed": 24,
+                  "completedPassed": 65,
+                  "failedObserved": 25,
+                  "notReported": 0,
+                  "passedObserved": 65,
+                  "reported": 90
+                }
+              },
+              "completedFactsPassed": 0,
+              "completedFactsPassedFractionOfRequested": 0.0,
+              "diagnosticCompletedFactChecksPassedObserved": 0,
+              "generationTokensMeasured": {
+                "max": 768,
+                "mean": 159.76666666666668,
+                "median": 150.0,
+                "min": 66,
+                "n": 90,
+                "p95": 309
+              },
+              "generationTokensMetricMissing": 0,
+              "incomplete": 1,
+              "issueClassesAmongCompleted": {
+                "fee-scope": 49,
+                "format": 24,
+                "language": 10,
+                "missing-fact": 64,
+                "money-role": 31,
+                "negation-polarity-condition": 65,
+                "numbers-units": 37,
+                "payment-period": 1,
+                "station-route": 61,
+                "unsupported-fact": 21
+              },
+              "issueClassesObserved": {
+                "fee-scope": 49,
+                "format": 25,
+                "language": 10,
+                "missing-fact": 64,
+                "money-role": 31,
+                "negation-polarity-condition": 65,
+                "numbers-units": 37,
+                "payment-period": 1,
+                "station-route": 61,
+                "unsupported-fact": 21
+              },
+              "measuredCompleted": 89,
+              "partialOutputsCredited": false,
+              "partialOutputsPassingOnlyFactChecks": 0,
+              "qualityEligible": true,
+              "requested": 90,
+              "saved": 90,
+              "seconds": {
+                "max": 6.067794791000779,
+                "mean": 1.5325335444222825,
+                "median": 1.481764166499488,
+                "min": 0.8211467919900315,
+                "n": 90,
+                "p95": 2.6859344170079567
+              },
+              "secondsAmongCompleted": {
+                "max": 3.4931655839900486,
+                "mean": 1.4815755528876926,
+                "median": 1.480610540995258,
+                "min": 0.8211467919900315,
+                "n": 89,
+                "p95": 2.1951053340017097
+              },
+              "stopReasons": {
+                "eos": 89,
+                "token-limit": 1
+              },
+              "tokensPerSecondMeasured": {
+                "max": 148.97396988614932,
+                "mean": 139.84742235265745,
+                "median": 141.3117947090821,
+                "min": 103.33369486932881,
+                "n": 90,
+                "p95": 148.10098232971131
+              },
+              "tokensPerSecondMetricMissing": 0,
+              "unobserved": 0
+            },
+            "ru-zh": {
+              "checkerBooleans": {
+                "conditionalPreserved": {
+                  "completedFailed": 22,
+                  "completedPassed": 7,
+                  "failedObserved": 22,
+                  "notReported": 0,
+                  "passedObserved": 8,
+                  "reported": 30
+                },
+                "moneyRolesPreserved": {
+                  "completedFailed": 29,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "numbersPreserved": {
+                  "completedFailed": 20,
+                  "completedPassed": 9,
+                  "failedObserved": 21,
+                  "notReported": 0,
+                  "passedObserved": 9,
+                  "reported": 30
+                },
+                "paymentPeriodsPreserved": {
+                  "completedFailed": 27,
+                  "completedPassed": 2,
+                  "failedObserved": 27,
+                  "notReported": 0,
+                  "passedObserved": 3,
+                  "reported": 30
+                },
+                "stationNamesPreserved": {
+                  "completedFailed": 29,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "unitsPreserved": {
+                  "completedFailed": 5,
+                  "completedPassed": 24,
+                  "failedObserved": 6,
+                  "notReported": 0,
+                  "passedObserved": 24,
+                  "reported": 30
+                }
+              },
+              "completedFactsPassed": 0,
+              "completedFactsPassedFractionOfRequested": 0.0,
+              "diagnosticCompletedFactChecksPassedObserved": 0,
+              "generationTokensMeasured": {
+                "max": 512,
+                "mean": 117.53333333333333,
+                "median": 105.5,
+                "min": 73,
+                "n": 30,
+                "p95": 206
+              },
+              "generationTokensMetricMissing": 0,
+              "incomplete": 1,
+              "issueClassesAmongCompleted": {
+                "fee-scope": 29,
+                "language": 2,
+                "missing-fact": 29,
+                "money-role": 29,
+                "negation-polarity-condition": 29,
+                "numbers-units": 21,
+                "payment-period": 27,
+                "station-route": 29,
+                "unsupported-fact": 17
+              },
+              "issueClassesObserved": {
+                "fee-scope": 30,
+                "language": 2,
+                "missing-fact": 30,
+                "money-role": 30,
+                "negation-polarity-condition": 30,
+                "numbers-units": 22,
+                "payment-period": 27,
+                "station-route": 30,
+                "unsupported-fact": 17
+              },
+              "measuredCompleted": 29,
+              "partialOutputsCredited": false,
+              "partialOutputsPassingOnlyFactChecks": 0,
+              "qualityEligible": true,
+              "requested": 30,
+              "saved": 30,
+              "seconds": {
+                "max": 3.4599878750013886,
+                "mean": 0.9282437166330055,
+                "median": 0.8427920624963008,
+                "min": 0.5978674159996444,
+                "n": 30,
+                "p95": 1.4082110839954112
+              },
+              "secondsAmongCompleted": {
+                "max": 1.4082110839954112,
+                "mean": 0.8409421939306475,
+                "median": 0.838176207995275,
+                "min": 0.5978674159996444,
+                "n": 29,
+                "p95": 0.9359870000043884
+              },
+              "stopReasons": {
+                "eos": 29,
+                "token-limit": 1
+              },
+              "tokensPerSecondMeasured": {
+                "max": 170.5910116981962,
+                "mean": 159.40556118124192,
+                "median": 159.63252606555056,
+                "min": 137.03611885189105,
+                "n": 30,
+                "p95": 169.90518259414972
+              },
+              "tokensPerSecondMetricMissing": 0,
+              "unobserved": 0
+            },
+            "zh-ru": {
+              "checkerBooleans": {
+                "conditionalPreserved": {
+                  "completedFailed": 17,
+                  "completedPassed": 10,
+                  "failedObserved": 18,
+                  "notReported": 0,
+                  "passedObserved": 12,
+                  "reported": 30
+                },
+                "moneyRolesPreserved": {
+                  "completedFailed": 27,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "numbersPreserved": {
+                  "completedFailed": 21,
+                  "completedPassed": 6,
+                  "failedObserved": 24,
+                  "notReported": 0,
+                  "passedObserved": 6,
+                  "reported": 30
+                },
+                "paymentPeriodsPreserved": {
+                  "completedFailed": 27,
+                  "completedPassed": 0,
+                  "failedObserved": 30,
+                  "notReported": 0,
+                  "passedObserved": 0,
+                  "reported": 30
+                },
+                "stationNamesPreserved": {
+                  "completedFailed": 23,
+                  "completedPassed": 4,
+                  "failedObserved": 26,
+                  "notReported": 0,
+                  "passedObserved": 4,
+                  "reported": 30
+                },
+                "unitsPreserved": {
+                  "completedFailed": 9,
+                  "completedPassed": 18,
+                  "failedObserved": 11,
+                  "notReported": 0,
+                  "passedObserved": 19,
+                  "reported": 30
+                }
+              },
+              "completedFactsPassed": 0,
+              "completedFactsPassedFractionOfRequested": 0.0,
+              "diagnosticCompletedFactChecksPassedObserved": 0,
+              "generationTokensMeasured": {
+                "max": 512,
+                "mean": 195.83333333333334,
+                "median": 166.5,
+                "min": 99,
+                "n": 30,
+                "p95": 512
+              },
+              "generationTokensMetricMissing": 0,
+              "incomplete": 3,
+              "issueClassesAmongCompleted": {
+                "fee-scope": 27,
+                "language": 2,
+                "missing-fact": 27,
+                "money-role": 27,
+                "negation-polarity-condition": 27,
+                "numbers-units": 21,
+                "payment-period": 27,
+                "station-route": 23,
+                "unsupported-fact": 10
+              },
+              "issueClassesObserved": {
+                "fee-scope": 30,
+                "language": 2,
+                "missing-fact": 30,
+                "money-role": 30,
+                "negation-polarity-condition": 30,
+                "numbers-units": 24,
+                "payment-period": 30,
+                "station-route": 26,
+                "unsupported-fact": 12
+              },
+              "measuredCompleted": 27,
+              "partialOutputsCredited": false,
+              "partialOutputsPassingOnlyFactChecks": 0,
+              "qualityEligible": true,
+              "requested": 30,
+              "saved": 30,
+              "seconds": {
+                "max": 3.68205879200832,
+                "mean": 1.421029006933289,
+                "median": 1.2063666874964838,
+                "min": 0.7469067079946399,
+                "n": 30,
+                "p95": 3.648866874995292
+              },
+              "secondsAmongCompleted": {
+                "max": 1.599512583008618,
+                "mean": 1.1882800786665433,
+                "median": 1.196008917002473,
+                "min": 0.7469067079946399,
+                "n": 27,
+                "p95": 1.560361040988937
+              },
+              "stopReasons": {
+                "eos": 27,
+                "token-limit": 3
+              },
+              "tokensPerSecondMeasured": {
+                "max": 173.19220942804984,
+                "mean": 157.00413501583486,
+                "median": 156.02098428623822,
+                "min": 140.1621406426392,
+                "n": 30,
+                "p95": 168.7551746145049
+              },
+              "tokensPerSecondMetricMissing": 0,
+              "unobserved": 0
+            }
+          }
+        }
+      },
+      "sourceIdentity": {
+        "adapters": {
+          "candidate": {
+            "receiptSha256": "3f515dde6b60e0cea0612b0d8e807e27ac6e7593efbd4ef53e58602f3507dffd",
+            "weightsSha256": "a50bacf07cc300ac79949d080820402b33d6580be66c96b97c5626fc6e73bd5f"
+          },
+          "current": {
+            "receiptSha256": "fa1c6227319eb2d34a4ec6fab034f6b60dac296abe7330151834447673391a78",
+            "weightsSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581"
+          }
+        },
+        "advertisingBasisSha256": "0f1c24d63eedc35e805f22a3e852fcea20a24b1a643d479f72b7e7c2d86404f5",
+        "baseSha256": "049f4f2c7130a3cc3c3eae93afd4702d90b2faafd1f0aa227636aaeb85cf7e9f",
+        "casesSha256": "b351584ef81f8ffdca04d9548ba5c8592d4f43d677b27728430e449f2bbe6b7d",
+        "checkersSha256": "d94f8f2c074e5b6f1d62fc4a9cd5743c4822830b942b384c73b826d2ee1a39ce",
+        "datasetSha256": "bda5c2b6561235040beccf324b585c8bdfd48d5b4687e4e075478553c321a7f6",
+        "evaluatorSha256": "37feb2ac15394cf32df4675c3da230e71b3f3cdd90402a87c406ff5857dd2113",
+        "inputsSha256": "9fa5a1c37a71279af7df7c2441ee7a2ec742f2afb3b012146a951226abce44b1",
+        "policySha256": "176a6b9037e9d0b62278494bb6d5348fab947b2144f9a9232f443900060f75e8",
+        "rendererArtifactsSha256": "4043e6fcadf2efde84da377a124fce54851ad48f0c6dd4952d280cf98ae1603a",
+        "rendererRulesSha256": "078ff57aa553937a9f4eb20e6054b729ec35cc1c8e942c4175e48c62dce26259",
+        "runtimeConfigSha256": "e89c44247a30966e0095b60f2225370f388dbd63812f6445b404d54cc4934dee"
+      }
+    }
+  },
+  "nativeSpeakerReviewCompleted": false,
+  "percentileMethod": "nearest-rank",
+  "privatePathsIncluded": false,
+  "productionGateValidated": false,
+  "rawTextIncluded": false,
+  "requestedByTask": {
+    "listing": 90,
+    "ru-zh": 30,
+    "zh-ru": 30
+  },
+  "requestedPerModelPerMixture": 150,
+  "scope": "public-diagnostic-aggregate",
+  "summarizerSha256": "3513b9c6c6f435c7187722cb96c5e12505cee78845e497bd3c0a8882ce3c8311",
+  "version": 1
+}

@@ -266,7 +266,8 @@ def parse_html(markup, base_url):
             result = json.loads(parsed.stdout)
             if result.get('text'):
                 result['url'] = result.get('url') or base_url
-                return result
+                from source_schema_health import attach
+                return attach(markup, result, base_url)
     descriptions = []
     def walk(value):
         if isinstance(value, list):
@@ -301,7 +302,8 @@ def parse_html(markup, base_url):
                 images.append(url)
         except ValueError:
             continue
-    return {'url': base_url, 'text': text, 'images': images[:30]}
+    from source_schema_health import attach
+    return attach(markup, {'url': base_url, 'text': text, 'images': images[:30]}, base_url)
 
 
 def open_cache(directory):

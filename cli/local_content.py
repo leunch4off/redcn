@@ -156,6 +156,8 @@ def validate_draft(draft, baseline, fields=None, *, max_body=150):
 
 
 def generate_preview(directory, data, *, status=None, cancel=None):
+    if data.get('styleMode') == 'advertising-structure':
+        return _structured_preview(directory, data, status=status, cancel=cancel)
     if data.get('styleMode') == 'advertising':
         return _advertising_preview(directory, data, status=status, cancel=cancel)
     from language_service import node_language, _profile
@@ -183,6 +185,7 @@ def generate_preview(directory, data, *, status=None, cancel=None):
     recent_titles.extend([prior_title] if isinstance(prior_title,str) and prior_title else [])
     query = ' '.join(str(fields.get(key, '')) for key in ('metro', 'district', 'layout')).strip()
     examples = memory.retrieve(query or '莫斯科租房', limit=3)
+    style_examples = [row for row in examples if row['kind'] in ('title', 'description')][:2]
     style = secrets.choice(VOICES)
     candidates = re.findall(r'#[\w\u3400-\u9fff-]+', baseline.get('tags', ''))[:30]
     ranking = memory.rank_tags(candidates, limit=8)
@@ -191,7 +194,7 @@ def generate_preview(directory, data, *, status=None, cancel=None):
             'previousTextToAvoid': _clean(prior, 20000)[:250],
             'previousTitleToAvoid': _clean(prior_title,500)[:120],
             'recentTitlesToAvoid':[title[:120] for title in list(dict.fromkeys(recent_titles))[:5]],
-            'approvedStyleExamples': [row['payload']['text'][:150] for row in examples if row['kind'] in ('title', 'description')][:2],
+            'approvedStyleExamples': [row['payload']['text'][:150] for row in style_examples],
             'variation': secrets.token_hex(4)}, ensure_ascii=False)}]
     begin = time.monotonic()
     for attempt in range(2):
@@ -216,8 +219,10 @@ def generate_preview(directory, data, *, status=None, cancel=None):
         messages[0]['content'] += ' 特别注意：只返回合法JSON，不得添加新数字或单位。'
     if not issues:
         try:
-            memory.record('title',{'text':draft['title'],'language':'zh'},source='generated',group_id=group_id)
-            memory.record('description',{'text':draft['body'],'language':'zh'},source='generated',group_id=group_id)
+            memory.record('title',{'text':draft['title'],'language':'zh'},source='generated',group_id=group_id,
+                          derived_from=[row['id'] for row in style_examples])
+            memory.record('description',{'text':draft['body'],'language':'zh'},source='generated',group_id=group_id,
+                          derived_from=[row['id'] for row in style_examples])
         except (OSError,ValueError,sqlite3.Error):
             meta['memoryWarning']='Черновик создан; история генерации не записана'
     return {**meta, **draft, 'tags': ' '.join(row['tag'] for row in ranking), 'tagRanking': ranking,
@@ -311,10 +316,11 @@ def _advertising_issues(draft, baseline, fields, *, max_body=280):
     # restriction/uncertainty clauses verbatim (ignoring punctuation) because
     # the shared concept parser does not cover every rental-contract condition.
     normalized_output = _content_fingerprint(output)
+    condition_output = _content_fingerprint(output.replace('尚未确认', '待确认'))
     for clause in re.split(r'[。；;\n]+', baseline.get('body', '')):
         if re.search(r'禁止|不得|不接待|不吸烟|不接受|不含|另付|另计|仅限|需.{0,20}确认|待确认|协商|至少|最少|个月起|预付|合同期限|最低租期|可入住\s*\d+\s*人', clause):
-            normalized_clause = _content_fingerprint(clause)
-            if normalized_clause and normalized_clause not in normalized_output:
+            normalized_clause = _content_fingerprint(clause.replace('尚未确认', '待确认'))
+            if normalized_clause and normalized_clause not in condition_output:
                 issues.append('В рекламном тексте изменено ограничение или условие, требующее подтверждения')
     def counted_terms(value):
         units = re.findall(r'(\d+(?:\.\d+)?)\s*(个月|人|楼|层|间|个|套|张|台|把|扇|部)', _numeral_text(value))
@@ -343,6 +349,64 @@ def _advertising_issues(draft, baseline, fields, *, max_body=280):
         if pair not in re.sub(r'\s+', '', output):
             issues.append('В рекламном тексте не сохранены этаж и этажность')
     return list(dict.fromkeys(issues))
+
+
+def _structured_preview(directory, data, *, status=None, cancel=None):
+    """The model selects a finite layout; exact fact blocks stay renderer-owned."""
+    from advertising_structure import PLAN_COUNT, parse_plan, render_plan, request_for_structure
+    from advertising_styles import next_style, claim_variant, used_variant_fingerprints, variant_fingerprint
+    from language_service import _profile
+    started = time.monotonic()
+    grounded, baseline = advertising_baseline(data.get('fields'), _profile(directory).get('rules',{}))
+    reference = _clean('\n'.join([*(baseline.get('titles') or [])[:1],baseline['body']]),12000)
+    group_id = data.get('groupId') or hashlib.sha256(reference.encode()).hexdigest()
+    if not isinstance(group_id,str) or not 1 <= len(group_id) <= 2000:
+        raise ValueError('Неверная группа истории генерации')
+    memory=LearningMemory(directory); current=data.get('output') if isinstance(data.get('output'),dict) else {}
+    titles=memory.recent_generated(group_id,limit=30,kind='title')
+    bodies=memory.recent_generated(group_id,limit=30)
+    titles += [_clean(current.get('title',''),500)]; bodies += [_clean(current.get('body',''),20000)]
+    title_history={_content_fingerprint(x) for x in titles}; body_history={_content_fingerprint(x) for x in bodies}
+    plans={index:render_plan(baseline,index) for index in range(PLAN_COUNT)}
+    used=used_variant_fingerprints(directory,group_id)
+    allowed=[index for index,draft in plans.items() if _content_fingerprint(draft['title']) not in title_history
+        and _content_fingerprint(draft['body']) not in body_history
+        and variant_fingerprint(draft['title']) not in used['title']
+        and variant_fingerprint(draft['body']) not in used['description']]
+    meta={'autoApply':False,'fallback':False,'generationMode':'model-structure-verified-renderer',
+          'modelContribution':'selection-of-layout-only','factualTextSource':'verified-renderer',
+          'factsHash':hashlib.sha256(reference.encode()).hexdigest()}
+    if not allowed:
+        return {**meta,'status':'blocked','variantsExhausted':True,
+            'warnings':['Доступные схемы этой карточки уже использованы. Текущий текст сохранён.']}
+    style=next_style(directory,group_id)
+    result=_model(request_for_structure(reference,allowed,seed=style['seed']),directory,
+        deadline=started+55,status=status,cancel=cancel)
+    meta.update({key:result[key] for key in ('model','ai','backend') if key in result})
+    meta['elapsedSeconds']=time.monotonic()-started
+    if cancel is not None and cancel.is_set():
+        return {**meta,'status':'cancelled','warnings':['Генерация отменена; текущий текст сохранён.']}
+    if result.get('status')!='review':
+        return {**meta,'status':result.get('status','blocked'),
+            'warnings':[result.get('message','Модель не смогла выбрать завершённую схему.')]}
+    try:
+        plan=parse_plan(result.get('text',''),allowed); draft=plans[plan]
+        maximum=max(280,len(re.findall(r'[\u3400-\u9fff]',reference))+100)
+        issues=_advertising_issues(draft,baseline,grounded,max_body=maximum)
+    except (ValueError,TypeError):
+        return {**meta,'status':'blocked','warnings':['Модель не вернула допустимую завершённую схему. Текущий текст сохранён.']}
+    if issues or not claim_variant(directory,group_id,draft['title'],draft['body']):
+        return {**meta,'status':'blocked','warnings':issues or ['Схема уже использована другим запросом; текущий текст сохранён.']}
+    ranking=memory.rank_tags(re.findall(r'#[\w\u3400-\u9fff-]+',baseline.get('tags',''))[:30],limit=8)
+    try:
+        for kind,key in (('title','title'),('description','body')):
+            memory.record(kind,{'text':draft[key],'language':'zh'},source='generated',group_id=group_id)
+    except (OSError,ValueError,sqlite3.Error):
+        meta['memoryWarning']='Черновик создан; подробная история не записана'
+    return {**meta,**draft,'status':'review','styleId':style['id'],
+        'tags':' '.join(row['tag'] for row in ranking),'tagRanking':ranking,
+        'warnings':['ИИ выбрал структуру. Все факты перенесены генератором из подтверждённых блоков.',
+                    'Проверьте китайскую подачу перед публикацией.']}
 
 
 def _advertising_preview(directory, data, *, status=None, cancel=None):

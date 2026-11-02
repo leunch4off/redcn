@@ -67,7 +67,9 @@ class ClientPublicationBoundaryTests(unittest.TestCase):
     def test_raster_requires_updated_renderer_contract_and_discards_png_text_metadata(self):
         data=base64.b64encode(self.image(metadata=True)).decode()
         with self.assertRaisesRegex(ValueError,'Обновите страницу'):card_assets.create_image_export(self.directory,self.card_id,data,'intro')
-        response=card_api.dispatch(self.directory,'card-export',{'result_id':self.card_id,'data':data,'kind':'intro','publicationPolicyVersion':PUBLICATION_POLICY_VERSION})
+        receipt=phone_relay.public_card(self.directory,self.card_id)['presentationReceipt'];revision=receipt['revisionSha256']
+        response=card_api.dispatch(self.directory,'card-export',{'result_id':self.card_id,'data':data,'kind':'intro','publicationPolicyVersion':PUBLICATION_POLICY_VERSION,'expectedRevision':revision,'sourceReceipt':receipt})
+        self.assertEqual(response[0],200,response[1])
         asset=response[1];content=card_assets.export_asset(self.directory,asset['id'])[0]
         from PIL import Image
         with Image.open(io.BytesIO(content)) as image:self.assertNotIn('Internal',image.info);self.assertEqual(image.size,(80,80))

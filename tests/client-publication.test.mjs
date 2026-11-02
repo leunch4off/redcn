@@ -41,3 +41,11 @@ test('workflow, service receipts and review history remain private at every nest
  const card={body:'正文',fields:{price:80000,...privateData,nested:{...privateData,area:52}},...privateData};
  const safe=clientPublicationCard(card);assert.equal(JSON.stringify(safe).includes('private'),false);assert.equal(safe.fields.nested.area,52);assert.equal(card.fields.workflow.assignee,'private');
 });
+
+test('source schema review excerpts stay private in raw client projections',()=>{
+ const schema={version:1,state:'partial',privateReviewFragment:'PRIVATE_SOURCE_EXCERPT',sourceSha256:'a'.repeat(64)};
+ const card={body:'租金80000',sourceSchemaHealth:schema,presentationReceipt:{signature:'PRIVATE_EXPORT_RECEIPT'},fields:{price:80000,sourceSchemaHealth:schema,nested:{privateReviewFragment:'PRIVATE_NESTED_EXCERPT',area:52}}};
+ const safe=clientPublicationCard(card),encoded=JSON.stringify(safe);
+ assert.equal(encoded.includes('PRIVATE_'),false);assert.equal(encoded.includes('sourceSchemaHealth'),false);
+ assert.equal(safe.fields.nested.area,52);assert.equal(card.fields.sourceSchemaHealth.privateReviewFragment,'PRIVATE_SOURCE_EXCERPT');
+});

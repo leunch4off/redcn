@@ -820,9 +820,11 @@ def _render_pdf(html, browser_channel, *, timeout=PDF_TOTAL_TIMEOUT):
 
 
 @_serialize_files
-def _persist_export(directory, result_id, content, kind, mime, *, policy_version=None, template=None):
+def _persist_export(directory, result_id, content, kind, mime, *, policy_version=None, template=None, revision=None):
     # The shared file lock protects only bytes + database references. Rendering
     # runs outside it so phones can still fetch contracts during a PDF job.
+    from client_bundle_consistency import require_current,certify
+    if revision is not None:require_current(directory,result_id,revision)
     digest = _write(directory, content)
     export_id = secrets.token_hex(16)
     stamp = time.time()
@@ -833,8 +835,11 @@ def _persist_export(directory, result_id, content, kind, mime, *, policy_version
             connection.execute('INSERT INTO export_publication_policy VALUES (?,?,?)',(export_id,policy_version,digest))
         if template is not None:
             connection.execute('INSERT INTO export_design_snapshots(export_id,payload,created) VALUES(?,?,?)',(export_id,json.dumps(template,ensure_ascii=False,allow_nan=False),stamp))
+        if revision is not None:certify(connection,export_id,result_id,revision,digest)
+    if revision is not None:require_current(directory,result_id,revision)
     return {'id': export_id, 'result_id': result_id, 'kind': kind, 'name': name, 'mime': mime, 'bytes': len(content), 'created': stamp,
-            'publicationPolicyVersion':policy_version,'requiresRegeneration':not bool(policy_version)}
+            'publicationPolicyVersion':policy_version,'requiresRegeneration':not bool(policy_version) or revision is None,
+            'revisionStatus':'current' if revision else 'unverified','revisionSha256':revision}
 
 
 def _export_template(template):
@@ -845,9 +850,13 @@ def _export_template(template):
     return value
 
 
-def create_export(directory, result_id, html, kind, browser_channel='chrome', *, template=None):
+def create_export(directory, result_id, html, kind, browser_channel='chrome', *, template=None, expected_revision=None):
     from client_publication import PUBLICATION_POLICY_VERSION
+    from client_bundle_consistency import snapshot,require_current
+    revision=snapshot(directory,result_id)
+    if expected_revision is not None:require_current(directory,result_id,expected_revision)
     card=_publication_card(directory, result_id,private=True)
+    require_current(directory,result_id,revision)
     template=_export_template(template)
     if kind not in ('html', 'pdf'):
         raise ValueError('Формат экспорта: html/pdf')
@@ -855,7 +864,7 @@ def create_export(directory, result_id, html, kind, browser_channel='chrome', *,
     _assert_public_html(html,card)
     content = html.encode('utf-8') if kind == 'html' else _render_pdf(html, browser_channel)
     mime = 'text/html; charset=utf-8' if kind == 'html' else 'application/pdf'
-    return _persist_export(directory, result_id, content, kind, mime, policy_version=PUBLICATION_POLICY_VERSION,template=template)
+    return _persist_export(directory, result_id, content, kind, mime, policy_version=PUBLICATION_POLICY_VERSION,template=template,revision=revision)
 
 
 @_serialize_files
@@ -871,7 +880,11 @@ def export_asset(directory, export_id):
         policy=connection.execute('SELECT version,digest FROM export_publication_policy WHERE export_id=?',(export_id,)).fetchone()
     if not policy or policy[0] != PUBLICATION_POLICY_VERSION or policy[1] != row[1]:
         raise ValueError('Материал создан до действующего правила публикации. Создайте его заново в разделе «Дизайн»; исходный файл сохранён.')
-    return _read(directory, row[1]), row[2], row[3]
+    from client_bundle_consistency import export_status,require_current
+    status=export_status(directory,export_id,row[0],row[1])
+    if status['requiresRegeneration']:raise ValueError('Материал относится к прежней или неподтверждённой ревизии карточки. Создайте его заново; исходный файл сохранён.')
+    content=_read(directory,row[1]);require_current(directory,row[0],status['revisionSha256'])
+    return content, row[2], row[3]
 
 
 def list_exports(directory, result_id):
@@ -879,14 +892,24 @@ def list_exports(directory, result_id):
     with _db(directory) as connection:
         rows = connection.execute('SELECT e.id,e.card_id,e.kind,e.name,e.mime,e.size,e.created,p.version,p.digest,e.digest FROM exports e LEFT JOIN export_publication_policy p ON p.export_id=e.id WHERE card_id=? ORDER BY created DESC,e.id DESC', (result_id,)).fetchall()
     from client_publication import PUBLICATION_POLICY_VERSION
-    return [{**dict(zip(('id', 'result_id', 'kind', 'name', 'mime', 'bytes', 'created'), row[:7])),
-             'publicationPolicyVersion':row[7],
-             'requiresRegeneration':row[7] != PUBLICATION_POLICY_VERSION or row[8] != row[9]} for row in rows]
+    from client_bundle_consistency import snapshot,export_status
+    current=snapshot(directory,result_id)
+    result=[]
+    for row in rows:
+        status=export_status(directory,row[0],result_id,row[9],current=current)
+        result.append({**dict(zip(('id', 'result_id', 'kind', 'name', 'mime', 'bytes', 'created'), row[:7])),
+                       'publicationPolicyVersion':row[7],**status,
+                       'requiresRegeneration':row[7] != PUBLICATION_POLICY_VERSION or row[8] != row[9] or status['requiresRegeneration']})
+    return result
 
 
-def create_image_export(directory, result_id, data, kind, *, publication_policy_version=None,template=None):
+def create_image_export(directory, result_id, data, kind, *, publication_policy_version=None,template=None,expected_revision=None):
     from client_publication import PUBLICATION_POLICY_VERSION
+    from client_bundle_consistency import snapshot,require_current
+    revision=snapshot(directory,result_id)
+    if expected_revision is not None:require_current(directory,result_id,expected_revision)
     _publication_card(directory, result_id)
+    require_current(directory,result_id,revision)
     template=_export_template(template)
     if publication_policy_version != PUBLICATION_POLICY_VERSION:
         raise ValueError('Обновите страницу «Дизайн» и создайте изображение заново по действующему правилу публикации.')
@@ -912,4 +935,4 @@ def create_image_export(directory, result_id, data, kind, *, publication_policy_
         image.info.clear()
         output=io.BytesIO();image.save(output,format='PNG');content=output.getvalue()
     finally:image.close()
-    return _persist_export(directory, result_id, content, kind, 'image/png', policy_version=PUBLICATION_POLICY_VERSION,template=template)
+    return _persist_export(directory, result_id, content, kind, 'image/png', policy_version=PUBLICATION_POLICY_VERSION,template=template,revision=revision)

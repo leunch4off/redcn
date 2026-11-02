@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import test from 'node:test';
-import {mergePhotoReviewJournal} from '../web/photo-ui.mjs';
+import {mergePhotoReviewJournal,retainReviewedPhotoCandidates} from '../web/photo-ui.mjs';
+import {confirmedPhotoFeatures} from '../web/media-core.mjs';
 
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const url='https://images.cdn-cian.ru/images/synthetic-review.jpg';
@@ -67,4 +68,26 @@ test('journal is bounded and keeps the currently observed original first',()=>{
  const rows=Array.from({length:600},(_,i)=>{const digest=sha('old'+i);return {id:sha(digest+'|fridge'),originalId:digest,featureId:'fridge',sourceUrl:url+'?i='+i,state:'pending'};});
  const photo=item(),journal=mergePhotoReviewJournal({version:1,entries:rows},[photo]);
  assert.equal(journal.entries.length,600);assert.equal(journal.entries[0].originalId,photo.analysis.originalId);
+});
+
+test('same-original reanalysis retains human decisions without retaining guesses or attributing them to the new model',()=>{
+ const photo=item(),originalId=photo.analysis.originalId;
+ photo.selected=true;photo.confirmed={fridge:{count:1}};photo.rejected={sofa:true};
+ photo.analysis.candidates.push({...photo.analysis.candidates[0],id:'sofa',label:'Диван'},
+  {...photo.analysis.candidates[0],id:'desk',label:'Письменный стол'});
+ const previous=structuredClone(photo.analysis),current={...photo.analysis,engine:'new-model-run',candidates:[]};
+ photo.analysis=retainReviewedPhotoCandidates(previous,current,{originalId,confirmed:photo.confirmed,rejected:photo.rejected});
+ assert.deepEqual(photo.analysis.candidates.map(row=>row.id),['fridge','sofa']);
+ assert.ok(photo.analysis.candidates.every(row=>row.reviewOrigin==='operator-kept'&&row.reviewOriginalId===originalId&&row.autoEligible===false&&row.automaticSuggestion===false));
+ const facts=confirmedPhotoFeatures([photo]);
+ assert.deepEqual(facts.features,['fridge']);assert.deepEqual(facts.featureCounts,{fridge:1});
+ assert.equal(facts.photoEvidence.length,1);assert.equal(facts.photoEvidence[0].engine,'operator-kept');
+ assert.equal(facts.photoEvidence[0].status,'confirmed');assert.equal(facts.photoEvidence[0].originalId,originalId);
+ assert.deepEqual(current.candidates,[]);assert.equal(previous.candidates[0].reviewOrigin,undefined);
+ assert.deepEqual(retainReviewedPhotoCandidates(previous,current,{originalId:sha('other'),confirmed:photo.confirmed,rejected:photo.rejected}),current);
+ assert.deepEqual(retainReviewedPhotoCandidates(previous,{...current,originalId:sha('new')},{originalId:sha('new'),confirmed:photo.confirmed,rejected:photo.rejected}).candidates,[]);
+ const fresh={...current,candidates:[{id:'fridge',confidence:.2}]};
+ const repeated=retainReviewedPhotoCandidates(previous,fresh,{originalId,confirmed:photo.confirmed,rejected:photo.rejected});
+ assert.equal(repeated.candidates.filter(row=>row.id==='fridge').length,1);
+ assert.equal(repeated.candidates[0].reviewOrigin,undefined);
 });

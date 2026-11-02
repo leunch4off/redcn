@@ -1,7 +1,7 @@
 """Portable private workspace bundles, restored into a new offline directory.
 
 This is an explicit operator action. It does not open a server/controller, repair
-imports, upload files, discover credentials, or copy model/runtime state. Card
+imports, upload files, discover credentials, or reactivate model/runtime state. Card
 archives and byte hashes use the same validators as individual dossier transfer.
 """
 import argparse
@@ -24,6 +24,7 @@ import zipfile
 
 import card_assets
 import dossier_backup
+from learning_provenance import TABLES as LEARNING_PROVENANCE_TABLES
 
 FORMAT='redcn-private-workspace'
 MAX_BUNDLE=512*1024*1024
@@ -39,7 +40,7 @@ _TABLES={
     'dictionary':('dictionary-reviews.sqlite3',('dictionary_revision','dictionary_entries','dictionary_events')),
     # Checkpoints contain runtime paths and optimizer identities for another
     # machine. Portable examples/decisions/splits survive; jobs start afresh.
-    'learning':('learning/memory.sqlite3',('examples','review_history','splits')),
+    'learning':('learning/memory.sqlite3',('examples','review_history','splits',*LEARNING_PROVENANCE_TABLES)),
     'photo-instances':('photo-instance-reviews/revisions.sqlite3',('revisions',)),
 }
 
@@ -108,7 +109,9 @@ def _metadata(directory):
                 count+=len(rows)
                 if count>MAX_ROWS:raise ValueError('Слишком много строк для одного резервного комплекта')
                 tables[store+'/'+name]={'columns':columns,'rows':[[_encode(item) for item in row] for row in rows]}
-    value={'version':1,'profile':profile,'tables':tables}
+    from learning_transfer import snapshot
+    learning,_=snapshot(root)
+    value={'version':1,'profile':profile,'tables':tables,'learningPackage':learning}
     if len(_json(value))>MAX_METADATA:raise ValueError('Словари и история превышают 32 МБ')
     return value
 
@@ -140,7 +143,7 @@ def _state(directory):
 
 
 def _path_allowed(name):
-    return name=='metadata.json' or bool(re.fullmatch(r'cards/[a-f0-9]{32}\.zip|blobs/card/[a-f0-9]{64}',name))
+    return name=='metadata.json' or bool(re.fullmatch(r'cards/[a-f0-9]{32}\.zip|blobs/card/[a-f0-9]{64}|learning/artifacts/[a-f0-9]{64}',name))
 
 
 def _pack(manifest,files):
@@ -170,6 +173,10 @@ def export_workspace(directory):
     metadata=_metadata(root)
     _validate_metadata_schema(metadata,{identifier for identifier,_,_ in rows})
     files={'metadata.json':_json(metadata)}
+    from learning_transfer import snapshot
+    learning,model_files=snapshot(root)
+    if learning!=metadata['learningPackage']:raise ValueError('Версии моделей изменились во время копирования')
+    files.update(model_files)
     cards=[];expanded=0
     for identifier,_,_ in rows:
         content=dossier_backup.export_private(root,identifier)
@@ -183,8 +190,8 @@ def export_workspace(directory):
             'photoVariantDecisions':len(manifest.get('photoVariantDecisions',[]))})
     global_design=_global_design(root,files)
     result=_pack({'version':1,'type':FORMAT,'created':time.time(),'cards':cards,'globalDesign':global_design,
-        'excluded':['sessions','pairing','cookies','credentials','import-diagnostics','raw-page-cache','models','runtime-jobs'],
-        'restorePolicy':'new-directory-only; re-pair devices; regenerate historical client exports'},files)
+        'excluded':['sessions','pairing','cookies','credentials','import-diagnostics','raw-page-cache','base-model-weights','runtime-jobs'],
+        'restorePolicy':'new-directory-only; re-pair devices; regenerate historical client exports; native model preflight and fresh acceptance'},files)
     if _state(root)!=initial:raise ValueError('Библиотека или словарь изменились во время копирования. Повторите экспорт.')
     return result
 
@@ -241,8 +248,12 @@ def _validate(manifest,files):
     if len(files['metadata.json'])>MAX_METADATA:raise ValueError('История и словари превышают 32 МБ')
     try:metadata=json.loads(files['metadata.json'])
     except (ValueError,UnicodeError) as error:raise ValueError('Неверный переносимый словарь') from error
-    if not isinstance(metadata,dict) or set(metadata)!= {'version','profile','tables'} or metadata['version']!=1 or not isinstance(metadata['tables'],dict):
+    if not isinstance(metadata,dict) or set(metadata) not in ({'version','profile','tables'},{'version','profile','tables','learningPackage'}) or metadata['version']!=1 or not isinstance(metadata['tables'],dict):
         raise ValueError('Неверные переносимые настройки')
+    if 'learningPackage' in metadata:
+        from learning_transfer import validate
+        validate(metadata['learningPackage'],files)
+    elif any(name.startswith('learning/') for name in files):raise ValueError('Файлы моделей не описаны в комплекте')
     count=0
     for key,table in metadata['tables'].items():
         if not isinstance(key,str) or '/' not in key:raise ValueError('Неизвестная переносимая таблица')
@@ -283,6 +294,8 @@ def inspect_workspace(content):
         'photoVariantDecisions':sum(row.get('photoVariantDecisions',0) for row in manifest['cards']),
         'dictionaryRules':len(metadata['profile'].get('rules',{})),
         'learningExamples':len(metadata['tables'].get('learning/examples',{}).get('rows',[])),
+        'modelVersions':len(metadata.get('learningPackage',{}).get('models',[])),
+        'nativeModelAcceptanceRequired':True,
         'requiresNewWorkspace':True,'devicesMustPairAgain':True,'clientMaterialsRequireRegeneration':True}
 
 
@@ -402,6 +415,13 @@ def _restore_metadata(directory,metadata,mapping):
                         position=table['columns'].index('payload')
                         try:row[position]=_json(dossier_backup._remap(json.loads(row[position]),mapping)).decode()
                         except ValueError as error:raise ValueError('Повреждённая запись истории') from error
+                    if store=='learning' and name=='learning_model_history':
+                        position=table['columns'].index('payload')
+                        try:
+                            value=json.loads(row[position])
+                            if not isinstance(value,dict):raise ValueError()
+                            row[position]=_json({**value,'origin':'imported-historical','freshProductionAcceptanceRequired':True}).decode()
+                        except (ValueError,TypeError) as error:raise ValueError('Повреждённая история версий модели') from error
                     if store=='photo-instances':
                         import photo_instances
                         positions={key:table['columns'].index(key) for key in ('listing_id','document','sha256')}
@@ -464,9 +484,14 @@ def restore_workspace(content,destination):
                 for identifier,payload in db.execute('SELECT id,payload FROM results').fetchall():
                     db.execute('UPDATE results SET payload=? WHERE id=?',(_json(dossier_backup._remap(json.loads(payload),mapping)).decode(),identifier))
         _restore_metadata(stage,metadata,mapping)
+        learning_restored=None
+        if 'learningPackage' in metadata:
+            from learning_transfer import restore
+            learning_restored=restore(stage,metadata['learningPackage'],files)
         _install_global_design(stage,manifest['globalDesign'],files)
         receipt={'version':1,'type':FORMAT,'sha256':_sha(content),'restoredAt':time.time(),'cards':cards,
-            'devicesMustPairAgain':True,'modelsRestored':False,'clientMaterialsRequireRegeneration':True,
+            'devicesMustPairAgain':True,'modelsRestored':bool(learning_restored and learning_restored['versions']),
+            'learningRestore':learning_restored,'clientMaterialsRequireRegeneration':True,
             'sourcePublicationReviews':{key:value for key,value in metadata['tables'].items() if key in ('listings/publication_reviews','listings/publication_review_events')}}
         target=stage/'workspace-restore-receipt.json';target.write_bytes(_json(receipt));target.chmod(0o600)
         for path in stage.rglob('*'):

@@ -6,6 +6,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 import urllib.error
 import urllib.request
 
@@ -67,12 +68,41 @@ class CardDocumentRoutes(unittest.TestCase):
         status,body,_=self.request('design',{'template':design});self.assertEqual(status,200,body)
         self.assertEqual(json.loads(self.request('design')[1])['template'],design)
         html='<!doctype html><html><head><meta charset="utf-8"></head><body><h1>中文 · квартира</h1></body></html>'
-        status,body,_=self.request('card-export',{'result_id':self.card,'kind':'html','html':html})
+        receipt=json.loads(self.request('cards/'+self.card)[1])['presentationReceipt'];revision=receipt['revisionSha256']
+        self.assertEqual(self.request('card-export',{'result_id':self.card,'kind':'html','html':html})[0],409)
+        status,body,_=self.request('card-export',{'result_id':self.card,'kind':'html','html':html,'expectedRevision':revision,'sourceReceipt':receipt})
         self.assertEqual(status,200,body);asset=json.loads(body)
         self.assertEqual(self.request(asset['url'].removeprefix('/api/phone/'))[1].decode(),html)
         self.assertEqual(self.request('exports/'+asset['id'],auth=False)[0],401)
         listing=json.loads(self.request('card-exports/'+self.card)[1]);self.assertEqual(listing['exports'][0]['id'],asset['id'])
-        self.assertEqual(self.request('card-export',{'result_id':self.card,'kind':'html','html':html.replace('</body>','<script>alert(1)</script></body>')})[0],400)
+        self.assertEqual(self.request('card-export',{'result_id':self.card,'kind':'html','html':html.replace('</body>','<script>alert(1)</script></body>'),'expectedRevision':revision,'sourceReceipt':receipt})[0],400)
+
+    def test_desktop_save_never_binds_receipt_to_a_concurrent_newer_payload(self):
+        def save_request(result):
+            request=urllib.request.Request('http://127.0.0.1:'+str(self.desktop.server_port)+'/api/local/save',
+                headers={'X-Redcn-Token':self.desktop.desktop_access.token,'Content-Type':'application/json'},
+                data=json.dumps({'result_id':self.card,'result':result}).encode())
+            try:
+                with urllib.request.urlopen(request,timeout=10) as response:return response.status,json.loads(response.read())
+            except urllib.error.HTTPError as error:return error.code,json.loads(error.read())
+        original=local_server.save_result
+        submitted=local_server.read_result(self.directory,self.card)
+        def concurrent(directory,result,result_id=None,**kwargs):
+            identifier=original(directory,result,result_id,**kwargs)
+            changed={**result,'body':'Сохранено из другого окна','fields':{**result['fields'],'price':'81000'}}
+            original(directory,changed,identifier)
+            return identifier
+        with patch.object(local_server,'save_result',side_effect=concurrent):
+            status,body=save_request(submitted)
+        self.assertEqual(status,409);self.assertEqual(body['code'],'CLIENT_REVISION_CHANGED')
+        self.assertNotIn('presentationReceipt',body)
+        current=local_server.read_result(self.directory,self.card)
+        self.assertEqual(current['fields']['price'],'81000')
+        status,body=save_request(current)
+        self.assertEqual(status,200)
+        from client_bundle_consistency import verify_source_receipt
+        receipt=body['presentationReceipt']
+        verify_source_receipt(self.directory,self.card,receipt['revisionSha256'],receipt)
 
     def test_desktop_credentials_are_injected_only_into_top_level_document(self):
         with urllib.request.urlopen('http://127.0.0.1:'+str(self.desktop.server_port)+'/',timeout=10) as response:

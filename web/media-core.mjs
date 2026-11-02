@@ -86,7 +86,8 @@ export function confirmedPhotoFeatures(items=[]){
    const automatic=item.analysis.autoApply===true&&isAutomaticPhotoObservation({...row,status:'auto-visible',originalId:item.analysis.originalId,photoId:item.analysis.originalId});if(!confirmation&&!automatic)continue;
    features.add(row.id);const count=confirmation?.count;
    if(Number.isInteger(count)&&count>=1&&count<=12)featureCounts[row.id]=Math.max(featureCounts[row.id]||0,count);
-   photoEvidence.push({id:row.id,sourceUrl:item.url,photoId:item.analysis.originalId,originalId:item.analysis.originalId,engine:item.analysis.engine,status:confirmation?'confirmed':'auto-visible',autoEligible:automatic,count:Number.isInteger(count)?count:null,confidence:row.confidence,evidence:row.evidence||[]});
+   const operatorKept=row.reviewOrigin==='operator-kept'&&row.reviewOriginalId===item.analysis.originalId;
+   photoEvidence.push({id:row.id,sourceUrl:item.url,photoId:item.analysis.originalId,originalId:item.analysis.originalId,engine:operatorKept?'operator-kept':item.analysis.engine,...(operatorKept?{reviewOrigin:'operator-kept'}:{}),status:confirmation?'confirmed':'auto-visible',autoEligible:automatic,count:Number.isInteger(count)?count:null,confidence:row.confidence,evidence:row.evidence||[]});
   }
  }
  return {features:[...features],featureCounts,photoEvidence,analyzedSources:items.filter(item=>!item.selected||item.analysis).map(item=>item.url),replaceAll:true};

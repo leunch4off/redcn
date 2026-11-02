@@ -15,10 +15,11 @@ import sqlite3
 import tempfile
 import time
 import uuid
+import learning_provenance
 
 KINDS = {'title', 'description', 'translation', 'dictionary', 'furniture', 'tag_stat'}
 SOURCES = {'user', 'user-edit', 'manual', 'generated', 'imported', 'dictionary'}
-STATES = {'pending', 'approved', 'rejected', 'superseded'}
+STATES = {'pending', 'approved', 'rejected', 'superseded', 'withdrawn'}
 MAX_EVENTS = 100_000
 MAX_TEXT = 12_000
 SCHEMA_VERSION = 1
@@ -148,6 +149,7 @@ class LearningMemory:
                 CREATE TABLE IF NOT EXISTS checkpoints (
                   job_id TEXT PRIMARY KEY, payload TEXT NOT NULL, updated TEXT NOT NULL);
             ''')
+            db.executescript(learning_provenance.SCHEMA)
         self.path.chmod(0o600)
 
     @contextmanager
@@ -199,7 +201,7 @@ class LearningMemory:
                    (old['id'], old['status'], 'superseded', stamp))
 
     def record(self, kind, payload, *, source='user', status='pending', group_id=None,
-               supersedes=None, event_id=None):
+               supersedes=None, event_id=None, actor='operator', derived_from=None):
         """Save a bounded example. Explicit operator edits may be approved at ingestion.
 
         ``group_id`` is an opaque listing ID (URLs are hashed and never stored).
@@ -209,6 +211,8 @@ class LearningMemory:
         if kind not in KINDS or source not in SOURCES or status not in {'pending', 'approved', 'rejected'}:
             raise ValueError('Неверные параметры учебного события')
         payload = _payload(kind, payload)
+        actor = learning_provenance.actor_name(actor)
+        source_ids = learning_provenance.parents(derived_from, supersedes)
         if source in {'generated', 'imported'} and status == 'approved':
             status = 'pending'
         event_id = event_id or uuid.uuid4().hex
@@ -233,7 +237,12 @@ class LearningMemory:
             if existing:
                 if (existing['kind'], existing['payload'], existing['source'], existing['group_id'], existing['supersedes']) != (kind, encoded, source, group, supersedes):
                     raise ValueError('Этот ID уже занят другим учебным событием')
+                if derived_from is not None:
+                    recorded = {row[0] for row in db.execute('SELECT parent_id FROM learning_edges WHERE child_id=?', (event_id,))}
+                    if recorded != set(source_ids):
+                        raise ValueError('Этот ID уже имеет другое происхождение')
                 return self._row(existing)
+            learning_provenance.assert_ingest(db, fingerprint, source_ids)
             if old is not None and old['status'] == 'superseded':
                 raise ValueError('Этот пример уже исправлен; обновите текущую версию')
             if db.execute('SELECT COUNT(*) FROM examples').fetchone()[0] >= MAX_EVENTS:
@@ -242,27 +251,66 @@ class LearningMemory:
             db.execute('INSERT INTO examples VALUES (?,?,?,?,?,?,?,?,?)',
                        (event_id, kind, encoded, source, status, group, created, supersedes, fingerprint))
             db.execute('INSERT INTO review_history(event_id,previous,current,created) VALUES (?,NULL,?,?)', (event_id, status, created))
+            learning_provenance.record(db, event_id, source_ids, status, actor, created)
             row = db.execute('SELECT * FROM examples WHERE id=?', (event_id,)).fetchone()
             self._retire_predecessor(db, row, created)
             self._supersede_pair_conflicts(db, row, created)
             return self._row(row)
 
-    def review(self, event_id, status):
+    def review(self, event_id, status, *, actor='operator'):
         if status not in {'pending', 'approved', 'rejected'}:
             raise ValueError('Неверное решение проверки')
         with self._db() as db:
             db.execute('BEGIN IMMEDIATE')
             row = db.execute('SELECT * FROM examples WHERE id=?', (event_id,)).fetchone()
-            if row is None or row['status'] == 'superseded':
+            if row is None or row['status'] in {'superseded', 'withdrawn'}:
                 raise ValueError('Пример не найден или заменён исправлением')
+            learning_provenance.assert_ingest(db, row['fingerprint'], [])
             changed = row['status'] != status
             if changed:
                 db.execute('UPDATE examples SET status=? WHERE id=?', (status, event_id))
                 db.execute('INSERT INTO review_history(event_id,previous,current,created) VALUES (?,?,?,?)', (event_id, row['status'], status, _now()))
+                learning_provenance.record(db, event_id, [], status, actor, _now())
             row = db.execute('SELECT * FROM examples WHERE id=?', (event_id,)).fetchone()
             if changed: self._retire_predecessor(db, row, _now())
             self._supersede_pair_conflicts(db, row, _now())
             return self._row(row)
+
+    def withdraw(self, event_id, *, actor='operator', reason=''):
+        if reason:
+            reason = _text(reason, 500)
+        with self._db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            return learning_provenance.withdraw(db, event_id, actor, _now(), reason)
+
+    def provenance(self, event_id):
+        with self._db() as db:
+            return learning_provenance.details(db, event_id)
+
+    def assert_dataset_consent(self, dataset_path, *, snapshot=None):
+        with self._db() as db:
+            return learning_provenance.dataset_consent(db, dataset_path, snapshot=snapshot)
+
+    def register_dataset(self, dataset_path, *, snapshot=None):
+        with self._db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            return learning_provenance.dataset_consent(db, dataset_path, register=True, snapshot=snapshot)
+
+    def register_candidate(self, weights_sha, dataset_path):
+        if not isinstance(weights_sha, str) or not re.fullmatch(r'[a-f0-9]{64}', weights_sha):
+            raise ValueError('Неверная контрольная сумма кандидата')
+        with self._db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            dataset_sha = learning_provenance.dataset_consent(db, dataset_path, register=True)
+            existing = db.execute('SELECT dataset_sha FROM learning_candidates WHERE weights_sha=?', (weights_sha,)).fetchone()
+            if existing is not None and existing[0] != dataset_sha:
+                raise ValueError('Эти веса уже привязаны к другому корпусу')
+            db.execute('INSERT OR IGNORE INTO learning_candidates VALUES (?,?,?)', (weights_sha, dataset_sha, _now()))
+            return learning_provenance.candidate_status(db, weights_sha)
+
+    def candidate_consent(self, weights_sha):
+        with self._db() as db:
+            return learning_provenance.candidate_status(db, weights_sha)
 
     def list_events(self, status=None, limit=30):
         if status is not None and status not in STATES:
@@ -296,7 +344,7 @@ class LearningMemory:
         if not isinstance(group_id,str) or not 1<=len(group_id)<=2000 or type(limit) is not int or not 1<=limit<=30 or not isinstance(kind,str) or kind not in {'description','title'}:
             raise ValueError('Неверная группа истории генерации')
         with self._db() as db:
-            rows=db.execute("SELECT payload FROM examples WHERE group_id=? AND source='generated' AND kind=? ORDER BY created DESC,rowid DESC LIMIT ?",(_hash(group_id),kind,limit)).fetchall()
+            rows=db.execute("SELECT payload FROM examples WHERE group_id=? AND source='generated' AND kind=? AND status<>'withdrawn' ORDER BY created DESC,rowid DESC LIMIT ?",(_hash(group_id),kind,limit)).fetchall()
         return [json.loads(row[0])['text'] for row in rows]
 
     def retrieve(self, query, limit=6):
@@ -431,7 +479,9 @@ class LearningMemory:
             prompt, answer = 'Пример '+('заголовка' if kind == 'title' else 'описания')+' на '+payload['language']+' для изучения стиля:', payload['text']
         return {'id': row['id'], 'kind': kind, 'groupId': row['group_id'],
                 'messages': [{'role': 'user', 'content': prompt}, {'role': 'assistant', 'content': answer}],
-                'source': row['source']}
+                'source': row['source'], 'provenance': {'kind':'operator-reviewed',
+                    'permission':'approved-for-local-training', 'sourceSha256':row['fingerprint'],
+                    'groupId':row['group_id']}}
 
     def snapshot(self, destination=None, eval_fraction=.2):
         """Write approved-only JSONL + manifest; partitions persist across snapshots.
@@ -484,7 +534,19 @@ class LearningMemory:
             for name, data in contents.items():
                 path = temporary/name
                 path.write_bytes(data); path.chmod(0o600)
-            temporary.rename(target)
+            # Consent can change while files are prepared. Bind the final
+            # snapshot and its members in the same write transaction.
+            with self._db() as db:
+                db.execute('BEGIN IMMEDIATE')
+                for part, values in (('train', train), ('valid', valid)):
+                    for item in values:
+                        row = db.execute('SELECT status,fingerprint FROM examples WHERE id=?', (item['id'],)).fetchone()
+                        if row is None or row[0] != 'approved':
+                            raise ValueError('Решение о примере изменилось; подготовьте снимок заново')
+                        learning_provenance.assert_ingest(db, row[1], [])
+                        db.execute('INSERT INTO learning_snapshot_members VALUES (?,?,?,?)',
+                                   (destination, item['id'], row[1], part))
+                temporary.rename(target)
         finally:
             if temporary.exists():
                 for path in temporary.iterdir(): path.unlink()

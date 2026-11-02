@@ -9,6 +9,11 @@ def _download_header(name):
 
 def dispatch(directory, path, data=None, *, namespace='local', browser_channel='chrome', actor=None):
     """Return (status, value, MIME, headers), or None for unrelated routes."""
+    from photo_training_api import dispatch as photo_training_dispatch
+    training = photo_training_dispatch(directory, path, data, namespace=namespace,
+                                      actor=actor or ('Mac owner' if namespace == 'local' else 'paired editor'))
+    if training:
+        return training
     from photo_instance_api import dispatch as instance_dispatch
     instances = instance_dispatch(directory, path, data, namespace=namespace,
                                   actor=actor or ('Mac owner' if namespace == 'local' else 'paired editor'))
@@ -72,11 +77,22 @@ def dispatch(directory, path, data=None, *, namespace='local', browser_channel='
         content,mime,name=card_assets.attachment_asset(directory,match[1],match[2])
         return 200,content,mime,_download_header(name)
     match=re.fullmatch(r'card-exports/([a-f0-9]{32})',path)
-    if match and data is None:return json_result({'exports':[asset(item) for item in card_assets.list_exports(directory,match[1])]})
+    if match and data is None:
+        from client_bundle_consistency import snapshot
+        return json_result({'exports':[asset(item) for item in card_assets.list_exports(directory,match[1])],
+                            'revisionSha256':snapshot(directory,match[1])})
     if path=='card-export' and data is not None:
-        if data.get('kind') in ('intro','outro'):
-            result=card_assets.create_image_export(directory,data.get('result_id'),data.get('data'),data.get('kind'),publication_policy_version=data.get('publicationPolicyVersion'),template=data.get('template'))
-        else:result=card_assets.create_export(directory,data.get('result_id'),data.get('html'),data.get('kind'),browser_channel=browser_channel,template=data.get('template'))
+        from client_bundle_consistency import ClientRevisionConflict,verify_source_receipt
+        revision=data.get('expectedRevision')
+        if not isinstance(revision,str) or not re.fullmatch(r'[a-f0-9]{64}',revision):
+            return 409,{'error':'Обновите страницу и создайте материал заново: не указана ревизия карточки.','code':'CLIENT_REVISION_REQUIRED'},'application/json; charset=utf-8',{}
+        try:
+            verify_source_receipt(directory,data.get('result_id'),revision,data.get('sourceReceipt'))
+            if data.get('kind') in ('intro','outro'):
+                result=card_assets.create_image_export(directory,data.get('result_id'),data.get('data'),data.get('kind'),publication_policy_version=data.get('publicationPolicyVersion'),template=data.get('template'),expected_revision=revision)
+            else:result=card_assets.create_export(directory,data.get('result_id'),data.get('html'),data.get('kind'),browser_channel=browser_channel,template=data.get('template'),expected_revision=revision)
+        except ClientRevisionConflict as error:
+            return 409,{'error':str(error),'code':error.code},'application/json; charset=utf-8',{}
         return json_result(asset(result))
     match=re.fullmatch(r'exports/([a-f0-9]{32,64})',path)
     if match and data is None:
@@ -89,6 +105,7 @@ def dispatch(directory, path, data=None, *, namespace='local', browser_channel='
 
 
 def request_limit(path):
+    if re.fullmatch(r'photo-training/[a-f0-9]{32}', path):return 400_000
     if re.fullmatch(r'photo-instances/[a-f0-9]{32}', path):return 400_000
     if path=='dossier-import':return 179_000_000
     if re.fullmatch(r'dossier-client/[a-f0-9]{32}',path):return 16_000

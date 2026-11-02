@@ -67,10 +67,13 @@ test('phone prepared selection and observed group changes invalidate designer ph
 });
 
 test('a changed original clears furniture decisions tied to the previous raster before publication',async()=>{
- const source=await readFile(new URL('../web/photo-ui.mjs',import.meta.url),'utf8'),body=source.slice(source.indexOf(' async function acceptedCrop('),source.indexOf(' async function ensure('));
- const item={url,serverId:originalId,blob:{name:'old'},analysis:{originalId,candidates:[{id:'fridge'}]},confirmed:{fridge:{}},rejected:{sofa:true}};let saved=0,changed=0,emitted=0;
- const accepted=new Function('api','presentationAcceptedCrop','binary','dimensions','cachePut','changed','emitFeatures','const local=true;'+body+';return acceptedCrop;')(async()=>({original:{id:variantId},selected:{id:variantId,kind:'original'},reason:'original'}),presentationAcceptedCrop,async()=>new Blob(['replacement'],{type:'image/png'}),async()=>({width:800,height:800}),async()=>{saved++;},()=>{changed++;},()=>{emitted++;});
+ const source=await readFile(new URL('../web/photo-ui.mjs',import.meta.url),'utf8'),body=source.slice(source.indexOf(' function reconcileObservationOriginal('),source.indexOf(' async function ensure('));
+ const item={url,serverId:originalId,blob:{name:'old'},analysis:{originalId,candidates:[{id:'fridge'}]},confirmed:{fridge:{}},rejected:{sofa:true}};let saved=0,changed=0,emitted=0;const calls=[],binaries=[];
+ // Supply the real closure's source lookup and original reconciliation; the
+ // fixture has no observed-variant passport, but its canonical ID is verified.
+ const accepted=new Function('api','itemSource','presentationAcceptedCrop','binary','dimensions','cachePut','changed','emitFeatures','const local=true;'+body+';return acceptedCrop;')(async(path,data)=>{calls.push({path,...data});return {original:{id:variantId},selected:{id:variantId,kind:'original'},reason:'original'};},()=>null,presentationAcceptedCrop,async id=>{binaries.push(id);return new Blob(['replacement'],{type:'image/png'});},async()=>({width:800,height:800}),async()=>{saved++;},()=>{changed++;},()=>{emitted++;});
  await accepted(item);assert.equal(item.serverId,variantId);assert.equal(item.analysis,null);assert.deepEqual(item.confirmed,{});assert.deepEqual(item.rejected,{});assert.equal(saved,1);assert.equal(changed,1);assert.equal(emitted,1);
+ assert.deepEqual(calls,[{path:'photo',action:'accepted',url}]);assert.deepEqual(binaries,[variantId]);
 });
 
 test('intro outro canvas and HTML used by PDF consume exactly the accepted photo input',async()=>{

@@ -20,7 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES = ROOT/'data/quality/rental-heldout-v26.json'
 CHECKERS = ('model_promotion.py', 'rental_heldout_quality.py', 'text_quality.py',
             'local_content.py', 'local_text_model.py', 'text_model_contract.py',
-            'advertising_evaluation.py', 'advertising_styles.py', 'rental_conditions.py',
+            'advertising_evaluation.py', 'advertising_styles.py', 'advertising_structure.py',
+            'text_evaluation_audit.py', 'text_native_evaluation.py', 'text_evaluation_process.py',
+            'learning_memory.py', 'learning_provenance.py', 'rental_conditions.py',
             'language_service.py', 'phone_relay.py', 'fact_ledger.py', 'node_runtime.py', 'nmt_worker.py')
 REPORT_VERSION = 2
 POLICY = {'name': 'paired-independent-advertising-v2', 'seed': 20261102,
@@ -104,6 +106,8 @@ def _adapter_support(path):
 def capture_inputs(directory, candidate, dataset, cases=CASES):
     """Create a complete before/after fingerprint without importing MLX."""
     cache = Path(directory).resolve()
+    from learning_memory import LearningMemory
+    LearningMemory(directory).assert_dataset_consent(dataset)
     candidate = _under_cache(cache, candidate)
     config = raw_config(cache)
     value = config['value']
@@ -226,6 +230,8 @@ def record_evaluation(directory, report_path):
     from learning_scheduler import _folder, _write
     report, decision = validate_report(directory, report_path)
     receipt = _json(Path(report['inputs']['candidate']['path'])/'trainreceipt.json', maximum=2_000_000)
+    from model_history import record_evaluation as save_history
+    save_history(directory, report, decision, receipt, report_sha=_file(report_path))
     _write(_folder(directory)/'model-evaluation.json', {
         'version': 1, 'at': report['finishedAt'], 'decision': decision,
         'stepsCompleted': receipt['stepsCompleted'], 'trainedParameters': receipt['trainableParameters'],

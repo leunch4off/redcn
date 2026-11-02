@@ -143,6 +143,17 @@ def encode_record(tokenizer, row, max_length):
     return {'tokens': full, 'answerStart': len(prefix), 'id': row['id'], 'groupId': row['groupId']}
 
 
+def answer_loss_mask(token_count, answer_start):
+    """Targets are original positions 1..N-1, including the assistant terminator.
+
+The tokenizer's final template suffix is explicit supervision too; it is not
+silently trimmed. Native audit reports EOS and suffix positions separately.
+"""
+    if type(token_count) is not int or type(answer_start) is not int or not 1 <= answer_start < token_count:
+        raise ValueError('Invalid supervised assistant boundary')
+    return [position >= answer_start for position in range(1, token_count)]
+
+
 def validation_gate(before, after):
     """Loss is only an experiment metric; human fact/language review is required."""
     finite = all(type(v) in (int, float) and math.isfinite(v) for v in (before, after))

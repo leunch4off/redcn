@@ -1,4 +1,6 @@
 dist/
+# Generated at install/build from the current checkout; contains build time.
+/data/build-identity.json
 node_modules/
 *.tar.gz
 site.tar.gz

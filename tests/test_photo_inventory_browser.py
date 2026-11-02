@@ -152,7 +152,12 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
             prepare.assert_not_called()
             with self.page.expect_response(lambda response:response.url.endswith('/cards/'+self.card_id+'/analyze') and response.request.method=='POST') as response:
                 self.page.locator('#phoneAnalyzeFurniture').click()
-            self.assertEqual(response.value.status,202);prepare.assert_called_once_with(self.card_id,analyze=True)
+            self.assertEqual(response.value.status,202)
+            session=next(cookie['value'] for cookie in self.context.cookies() if cookie['name']==phone_fixture.phone_relay.COOKIE)
+            request_id=response.value.request.post_data_json['requestId']
+            self.assertRegex(request_id,r'^[A-Za-z0-9_-]{12,80}$')
+            prepare.assert_called_once_with(self.card_id,analyze=True,
+                actor=self.phone.pairing.actor(session),request_id=request_id)
             self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
             self.assertEqual(self.read_card()['body'],self.result['body'])
 

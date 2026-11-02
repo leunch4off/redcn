@@ -6,6 +6,7 @@ parameters are optimized; immutable base weights stay frozen. Same-directory
 resume restores adapter and optimizer together after validating their receipts.
 """
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import math
@@ -14,13 +15,16 @@ from pathlib import Path
 import platform
 import random
 import signal
+import sqlite3
+import stat
 import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'cli'))
 from text_model_contract import (BASE_MODEL, EXPECTED_TRAINABLE, LAYERS, LORA,
     canonical, content_sha, encode_record, expected_parameters, file_sha,
-    load_dataset, validation_gate)
+    validate_dataset, MAX_DATASET_BYTES, validation_gate, answer_loss_mask)
+from training_job_state import with_candidate_lease
 
 
 def atomic_json(path, value):
@@ -68,6 +72,81 @@ def resume_receipt(output, args, model_path):
     return value
 
 
+def requires_consent_cache(data):
+    provenance=data.get('provenance',{})
+    if isinstance(provenance,dict) and provenance.get('kind')=='approved-local-memory':
+        return True
+    for rows in data['splits'].values():
+        for row in rows:
+            source=row.get('provenance',{})
+            if (row.get('status')=='approved' or isinstance(source,dict) and
+                    (source.get('kind')=='operator-reviewed' or
+                     source.get('permission')=='approved-for-local-training' or
+                     isinstance(source.get('sourceSha256'),str))):
+                return True
+    return False
+
+
+class DatasetChanged(ValueError):
+    pass
+
+
+class FrozenTrainingDataset:
+    """One read binds tokenized rows, consent and receipt to the same bytes."""
+    def __init__(self, path):
+        self.path = Path(path)
+        self.raw = self._read()
+        self.sha256 = hashlib.sha256(self.raw).hexdigest()
+        self.data = validate_dataset(json.loads(self.raw))
+
+    def _read(self):
+        descriptor = os.open(self.path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+                             | getattr(os, 'O_NONBLOCK', 0))
+        with os.fdopen(descriptor, 'rb') as stream:
+            info = os.fstat(stream.fileno())
+            if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_DATASET_BYTES:
+                raise ValueError('Training data must be a bounded regular file')
+            raw = stream.read(MAX_DATASET_BYTES+1)
+        if not 0 < len(raw) <= MAX_DATASET_BYTES:
+            raise ValueError('Training dataset size changed while reading')
+        return raw
+
+    def assert_unchanged(self):
+        try:
+            matches = hashlib.sha256(self._read()).hexdigest() == self.sha256
+        except (OSError, ValueError):
+            matches = False
+        if not matches:
+            raise DatasetChanged('Training dataset changed after its immutable snapshot was loaded')
+
+    def assert_consent(self, memory):
+        self.assert_unchanged()
+        if memory is not None:
+            # Even a file replacement precisely between either hash check and
+            # this call cannot change the rows inspected for withdrawal.
+            memory.assert_dataset_consent(self.path, snapshot=self.raw)
+        self.assert_unchanged()
+
+
+def prepare_consent(args, data, *, snapshot=None):
+    cache=getattr(args,'consent_cache',None)
+    if not cache:
+        if requires_consent_cache(data):
+            raise ValueError('Local/operator examples require --consent-cache before training')
+        return None
+    from learning_memory import LearningMemory
+    memory=LearningMemory(cache)
+    raw = snapshot.raw if snapshot is not None else None
+    if snapshot is not None:
+        snapshot.assert_unchanged()
+    memory.assert_dataset_consent(args.dataset, snapshot=raw)
+    memory.register_dataset(args.dataset, snapshot=raw)
+    if snapshot is not None:
+        snapshot.assert_unchanged()
+    return memory
+
+
+@with_candidate_lease
 def run(args):
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise ValueError('Training requires native arm64 Python on an Apple Silicon Mac')
@@ -78,10 +157,13 @@ def run(args):
     count = expected_parameters(config)
     if count != EXPECTED_TRAINABLE:
         raise ValueError('Architecture has an unexpected adapter parameter count')
-    data = load_dataset(args.dataset)
+    snapshot = FrozenTrainingDataset(args.dataset)
+    data = snapshot.data
+    consent = prepare_consent(args, data, snapshot=snapshot)
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
     previous = resume_receipt(output, args, model_path)
+    snapshot.assert_consent(consent)
     import mlx.core as mx
     import mlx.nn as nn
     import mlx.optimizers as optim
@@ -125,11 +207,12 @@ def run(args):
                 encoded[split].append(item)
         if len(encoded[split]) < 2:
             raise ValueError(f'{split} has fewer than two complete examples within the token limit')
+    snapshot.assert_consent(consent)
 
     def loss_fn(current, tokens, answer_start):
         inputs, targets = tokens[:, :-1], tokens[:, 1:]
         logits = current(inputs)
-        mask = mx.arange(1, tokens.shape[1]) >= answer_start
+        mask = mx.array(answer_loss_mask(tokens.shape[1], answer_start))
         losses = nn.losses.cross_entropy(logits, targets)
         return (losses.astype(mx.float32)*mask).sum()/mask.sum()
 
@@ -145,6 +228,7 @@ def run(args):
         return sum(values)/len(values)
 
     before = previous['baselineValidationLoss'] if previous else evaluate()
+    snapshot.assert_consent(consent)
     grad_checkpoint(model.layers[0])
     optimizer = optim.Adam(learning_rate=args.learning_rate)
     if previous:
@@ -154,7 +238,7 @@ def run(args):
         'baseConfigSha256': file_sha(model_path/'config.json'),
         'baseArtifacts': {path.name:file_sha(path) for path in sorted(model_path.glob('*.safetensors'))
             if path.is_file() and not path.is_symlink()},
-        'datasetSha256': file_sha(args.dataset), 'datasetContentSha256': content_sha(data),
+        'datasetSha256': snapshot.sha256, 'datasetContentSha256': content_sha(data),
         'trainableParameters': trainable, 'adapterTensorCount': len(actual),
         'lora': LORA, 'layers': LAYERS, 'seed': args.seed, 'sampling': args.sampling,
         'learningRate': args.learning_rate, 'initialSha256': file_sha(output/'initial.safetensors'),
@@ -166,12 +250,35 @@ def run(args):
         'baselineValidationLoss': before, 'stepsCompleted': previous['stepsCompleted'] if previous else 0,
         'losses': previous['losses'] if previous else [], 'previousElapsedSeconds': previous.get('elapsedSeconds', 0) if previous else 0,
         'autoPromote': False, 'resumeSemantics': 'same directory: exact adapter/optimizer; new directory: adapter warm start'}
+    # A resumed process can be stopped before its first new checkpoint. Keep
+    # the already validated adapter/optimizer binding; replacing the receipt
+    # with an unbound "training" record would needlessly lose valid progress.
+    if previous:
+        for key in ('adapterSha256', 'optimizerSha256'):
+            receipt[key] = previous[key]
+    receipt['peakMemoryBytes'] = max(previous.get('peakMemoryBytes', 0) if previous else 0,
+                                     mx.get_peak_memory())
+    receipt['elapsedSeconds'] = receipt['previousElapsedSeconds']+time.monotonic()-start
     atomic_json(output/'adapter_config.json', {'fine_tune_type': 'lora',
         'num_layers': LAYERS, 'lora_parameters': LORA, 'model': str(model_path)})
     atomic_json(output/'trainreceipt.json', receipt)
     print(canonical({'status': 'training', 'parameters': trainable,
         'examples': receipt['examples'], 'baselineLoss': before}), flush=True)
     interrupted = False
+    consent_stopped = False
+    dataset_changed = False
+
+    def consent_current():
+        nonlocal consent_stopped, dataset_changed
+        try:
+            snapshot.assert_consent(consent)
+            return True
+        except DatasetChanged:
+            dataset_changed = True
+            return False
+        except (OSError, ValueError, sqlite3.Error):
+            consent_stopped = True
+            return False
 
     def checkpoint():
         temporary = output/'adapters.tmp.safetensors'
@@ -183,10 +290,14 @@ def run(args):
         receipt['adapterSha256'] = file_sha(output/'adapters.safetensors')
         receipt['optimizerSha256'] = file_sha(output/'optimizer.safetensors')
         receipt['elapsedSeconds'] = receipt['previousElapsedSeconds']+time.monotonic()-start
+        receipt['peakMemoryBytes'] = max(receipt.get('peakMemoryBytes', 0), mx.get_peak_memory())
         atomic_json(output/'trainreceipt.json', receipt)
 
     try:
         for step in range(receipt['stepsCompleted'], args.steps):
+            if step % 10 == 0 and not consent_current():
+                interrupted = True
+                break
             if cancel_signal[0] or time.monotonic()-start >= args.max_seconds or (args.cancel_file and Path(args.cancel_file).exists()):
                 interrupted = True
                 break
@@ -205,7 +316,12 @@ def run(args):
                 print(canonical({'step': receipt['stepsCompleted'], 'loss': numeric}), flush=True)
     except KeyboardInterrupt:
         interrupted = True
-    after = evaluate()
+    if not consent_current():
+        interrupted = True
+    after = evaluate() if not (consent_stopped or dataset_changed) else None
+    if not consent_current():
+        interrupted = True
+        after = None
     changed, changed_elements = [], 0
     for key, value in tree_flatten(model.trainable_parameters()):
         difference = mx.sum(value != initial[key])
@@ -213,10 +329,22 @@ def run(args):
         number = int(difference.item())
         if number:
             changed.append(key); changed_elements += number
-    receipt.update(status='trained-unaccepted' if receipt['stepsCompleted'] and changed else 'untrained',
+    receipt.update(status='blocked-dataset' if dataset_changed else 'blocked-consent' if consent_stopped else
+        'trained-unaccepted' if receipt['stepsCompleted'] and changed else 'untrained',
         stoppedEarly=interrupted, finalValidationLoss=after,
+        consentChecked=consent is not None, consentWithdrawn=consent_stopped,
+        datasetChanged=dataset_changed,
         changedTensors=changed, changedParameterElements=changed_elements,
-        validation=validation_gate(before, after), peakMemoryBytes=mx.get_peak_memory())
+        validation=validation_gate(before, after),
+        peakMemoryBytes=max(receipt.get('peakMemoryBytes', 0), mx.get_peak_memory()))
+    seen = [training_row(encoded['train'], seed=args.seed, step=step, sampling=args.sampling)
+            for step in range(receipt['stepsCompleted'])]
+    tasks = {row['id']: row.get('task', 'unspecified') for row in data['splits']['train']}
+    receipt['coverage'] = {'uniqueExamples': len({row['id'] for row in seen}),
+        'uniqueGroups': len({row['groupId'] for row in seen}),
+        'sampledTaskCounts': {task: sum(tasks[row['id']]==task for row in seen) for task in sorted(set(tasks.values()))},
+        'completeTrainingPass': len({row['id'] for row in seen}) == len(encoded['train'])}
+    receipt['objective'] = 'assistant-targets-including-template-terminator-and-suffix-v1'
     checkpoint()
     print(canonical({key: receipt[key] for key in ('status', 'stepsCompleted', 'trainableParameters',
         'changedParameterElements', 'baselineValidationLoss', 'finalValidationLoss', 'elapsedSeconds')}), flush=True)
@@ -238,6 +366,7 @@ def main():
         help='random preserves legacy sampling; shuffled visits each complete example once per epoch')
     parser.add_argument('--cancel-file')
     parser.add_argument('--resume-adapter')
+    parser.add_argument('--consent-cache',help='Required for approved/operator examples; rechecked during training')
     args = parser.parse_args()
     if not 1 <= args.steps <= 2000 or not 30 <= args.max_seconds <= 3600 or not 64 <= args.max_seq_length <= 1024:
         parser.error('Bounded steps, seconds and sequence length are required')

@@ -36,7 +36,7 @@ class AcceptanceEvidenceTests(unittest.TestCase):
             value = evidence.overview(directory)
             self.assertEqual(value['records'], [])
             self.assertFalse(value['roadmapChanged'])
-            self.assertEqual(set(value['tasks']), {'RCN-170', 'RCN-224', 'RCN-225', 'RCN-247', 'RCN-262'})
+            self.assertEqual(set(value['tasks']), {'RCN-170', 'RCN-224', 'RCN-225', 'RCN-247', 'RCN-262', 'RCN-362'})
             self.assertFalse(directory.exists())
 
     def test_append_idempotency_scoped_actor_and_conflicting_retry_preserve_first_record(self):

@@ -78,24 +78,28 @@ test('photo preparation preserves order with a maximum of three decodes and stop
 
 test('concurrent cache hydration waits for the same accepted derivative decision',async()=>{
  const source=await readFile(new URL('../web/photo-ui.mjs',import.meta.url),'utf8');
- const body=source.slice(source.indexOf(' async function acceptedCrop('),source.indexOf(' async function ensure('));
+ const body=source.slice(source.indexOf(' function reconcileObservationOriginal('),source.indexOf(' async function ensure('));
  let release,calls=0;const originalId='a'.repeat(64),item={url:'https://images.cdn-cian.ru/images/fixture.jpg',serverId:originalId,blob:{name:'original'},cropBlob:{name:'cached-manual'},cropMeta:{verification:'manual'},manualCropOverride:false};
- const accepted=new Function('api','presentationAcceptedCrop','binary','dimensions','cachePut','const local=true;'+body+';return acceptedCrop;')(async()=>{calls++;return new Promise(resolve=>{release=resolve;});},presentationAcceptedCrop,async()=>({name:'verified-crop'}),async()=>({width:560,height:560}),async()=>{});
+ const requested=[],binaries=[],mutations=[];
+ const accepted=new Function('api','itemSource','presentationAcceptedCrop','binary','dimensions','cachePut','changed','emitFeatures','const local=true;'+body+';return acceptedCrop;')(async(path,data)=>{calls++;requested.push({path,...data});return new Promise(resolve=>{release=resolve;});},()=>null,presentationAcceptedCrop,async id=>{binaries.push(id);return {name:'verified-crop'};},async()=>({width:560,height:560}),async()=>{},()=>mutations.push('observations'),()=>mutations.push('facts'));
  const first=accepted(item);let secondDone=false;const second=accepted(item).then(()=>{secondDone=true;});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(secondDone,false,'a concurrent publisher must wait for the pending crop decision');
  release({original:{id:originalId},selected:{id:'b'.repeat(64),originalId,kind:'crop',verification:'ocr-checked',verificationEvidence:{knownRegionsExcluded:true,postOcr:'mark-detected'}},reason:'ocr-checked'});
  await Promise.all([first,second]);assert.equal(calls,1);assert.equal(item.cropBlob,null);assert.equal(item.cropMeta,null,'uncertain OCR clears the cached crop for this card');
+ assert.deepEqual(requested,[{path:'photo',action:'accepted',url:item.url}]);assert.deepEqual(binaries,[],'an unverified derivative is not downloaded');
+ assert.deepEqual(mutations,[],'same original and uncertain crop do not change photo observations');
 });
 
 test('an original blob becoming available does not finish a pending saved manual crop',async()=>{
  const source=await readFile(new URL('../web/photo-ui.mjs',import.meta.url),'utf8');
- const body=source.slice(source.indexOf(' async function ensure('),source.indexOf(' async function loadAll('));
- let release,entered,binaries=0;const cropEntered=new Promise(resolve=>{entered=resolve;}),item={url:'https://images.cdn-cian.ru/images/fixture.jpg',expectedMargins:{bottom:20}};
+ const body=source.slice(source.indexOf(' function reconcileObservationOriginal('),source.indexOf(' async function acceptedCrop('))+source.slice(source.indexOf(' async function ensure('),source.indexOf(' async function loadAll('));
+ let release,entered,binaries=0,selections=0;const originalId='a'.repeat(64),requests=[],cropEntered=new Promise(resolve=>{entered=resolve;}),item={url:'https://images.cdn-cian.ru/images/fixture.jpg',expectedMargins:{bottom:20}};
  const apply=async value=>{entered();await new Promise(resolve=>{release=resolve;});value.cropBlob={name:'manual'};value.cropMeta={verification:'manual',margins:{bottom:20}};};
- const ensure=new Function('cacheGet','api','binary','dimensions','cachePut','clientCrop','applyClientCrop','acceptedCrop','status','changed','emitFeatures','const local=true,hosted=false;'+body+';return ensure;')(async()=>null,async()=>({id:'a'.repeat(64)}),async()=>{binaries++;return {type:'image/png'};},async()=>({width:600,height:600}),async()=>{},apply,apply,async()=>{},()=>{},()=>{},()=>{});
+ const ensure=new Function('cacheGet','api','itemSource','binary','dimensions','cachePut','clientCrop','applyClientCrop','acceptedCrop','status','changed','emitFeatures','const local=true,hosted=false;'+body+';return ensure;')(async()=>null,async(path,data)=>{requests.push({path,...data});assert.equal(path,'photo');assert.equal(data.action,'accepted');return {original:{id:originalId},selected:{id:originalId,kind:'original'},reason:'original'};},()=>null,async id=>{assert.equal(id,originalId);binaries++;return {type:'image/png'};},async()=>({width:600,height:600}),async()=>{},apply,apply,async(value,choice)=>{selections++;assert.equal(value.serverId,originalId);assert.equal(choice.original.id,originalId);},()=>{},()=>{},()=>{});
  const first=ensure(item);await cropEntered;let secondDone=false;const second=ensure(item).then(()=>{secondDone=true;});
  await new Promise(resolve=>setImmediate(resolve));assert.equal(secondDone,false,'manual crop preparation is part of the original preparation');
  release();await Promise.all([first,second]);assert.equal(binaries,1);assert.equal(item.cropMeta.verification,'manual');
+ assert.equal(item.serverId,originalId);assert.equal(selections,1);assert.deepEqual(requests,[{path:'photo',action:'accepted',url:item.url}]);
 });
 
 test('publication data cache avoids repeated design normalization and invalidates every content dependency',()=>{

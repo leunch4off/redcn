@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"><meta name="redcn-build" content="c93e8843e5908ad57858e51499bddcaf6fca3686d9f6f1c645f50b834283ad4e">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#eff2eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -152,7 +152,7 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
-      <details id="phoneDiagnostics"><summary>Диагностика подключения · v28</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v29</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -203,7 +203,7 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
 <script>/* Independent ES5 startup guard: it must run even when the module cannot parse. */
 (function () {
   'use strict';
-  var version = 'v28', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var version = 'v29', started = Date.now(), attempt = 0, timer = 0, done = false;
   var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
   var moduleStarted = false, probeTimer = 0, probing = false;
   function el(id) { return document.getElementById(id); }
@@ -981,7 +981,7 @@ function clientPublicationCard(card={},options={}){
   if(value===null||typeof value!=='object')return value;
   if(active.has(value))throw TypeError('Циклическая модель публикации');active.add(value);
   let result;if(Array.isArray(value))result=value.map(item=>project(item,key,depth+1));
-  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name))continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
+  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name)||name==='sourceSchemaHealth'||name==='privateReviewFragment'||name==='presentationReceipt')continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
   active.delete(value);return result;
  }
  const projected=project(card);if(projected&&typeof projected==='object'&&!Array.isArray(projected)){for(const key of ['body','title','tags'])if(key in projected&&typeof projected[key]!=='string')projected[key]='';if('titles' in projected)projected.titles=(Array.isArray(projected.titles)?projected.titles:typeof projected.titles==='string'?[projected.titles]:[]).filter(value=>typeof value==='string'&&value.trim());projected.publicationPolicyVersion=PUBLICATION_POLICY_VERSION;clientStoreServiceGrant(projected,serviceGrant);}return projected;
@@ -991,11 +991,20 @@ function clientPublicationCard(card={},options={}){
 // arbitrary backend warning strings must never become readiness feedback.
 const sectionNames={gallery:'Фотографии',description:'Описание',characteristics:'Характеристики'};
 const sectionReasons={partial:'полнота раздела не подтверждена',not_found:'раздел не найден при проверке',not_visited_budget:'проверка не выполнена: исчерпан лимит времени'};
+const schemaReasons={'unknown-schema':'Форма страницы источника изменилась: проверьте извлечённые сведения.','critical-fields-missing':'Не все обязательные сведения извлечены из источника.','invalid-critical-value':'В источнике есть неоднозначное или недопустимое значение.','field-conflict':'В источнике есть противоречивые сведения.','no-photo-evidence':'Фотографии источника не подтверждены.'};
+function schemaSummary(value){
+ if(!value||value.version!==1||!['recognized','partial','unsupported'].includes(value.state))return null;
+ const names=['price','area','layout','description'],reasons=Array.isArray(value.reasons)?value.reasons.filter(key=>Object.hasOwn(schemaReasons,key)):[];
+ return {version:1,state:value.state,platform:['cian','avito'].includes(value.platform)?value.platform:'unknown',reasons,missingCritical:Array.isArray(value.missingCritical)?value.missingCritical.filter(key=>names.includes(key)):[],criticalCoverage:Object.fromEntries(names.map(key=>[key,value.criticalCoverage?.[key]===true])),unknownDoesNotMeanAbsent:true};
+}
 
 function readinessOf(value){
   if(!value||typeof value!=='object')return null;
   const candidates=[value.sourceReadiness,value.listing&&value.listing.sourceReadiness,value.fields&&value.fields.sourceReadiness,value];
-  return candidates.find(row=>row&&typeof row==='object'&&['ready','partial','unknown'].includes(row.state))||null;
+  const ready=candidates.find(row=>row&&typeof row==='object'&&['ready','partial','unknown'].includes(row.state));
+  if(ready)return ready;
+  const schema=schemaSummary(value.sourceSchemaHealth||value.listing?.sourceSchemaHealth||value.fields?.sourceSchemaHealth);
+  return schema?{state:schema.state==='recognized'?'unknown':'partial',partial:schema.state!=='recognized',completed:false,sections:[],schema}:null;
 }
 
 function albumStatus(value){
@@ -1016,6 +1025,8 @@ function sourceReadinessFeedback(value,fallback){
       if(!row||row.reason==='ready'||row.ready===true)continue;
       details.push(sectionNames[name]+' — '+(sectionReasons[row.reason]||'полнота раздела не подтверждена')+'.');
     }
+    const schema=schemaSummary(readiness?.schema);
+    if(schema)for(const reason of schema.reasons)if(reason!=='no-photo-evidence')details.push(schemaReasons[reason]);
   }
   if(album){
     if(album.missing||album.overLimit)details.push('Альбом — найдено '+album.observed+' из '+(album.expected??'?')+' фото; не найдено '+(album.missing||0)+', сверх лимита '+album.overLimit+'.');
@@ -1036,7 +1047,7 @@ function importStageMark(step){
   return step.state==='partial'||step.quality==='partial'||step.state==='error'||step.state==='waitingManual'?'!':step.state==='done'?'✓':'…';
 }
 
-const metadataKeys=['sourceReadiness','photoItems','layouts','sourceDates','transitDetails','pricePeriod','priceCurrency','depositCurrency','commissionCurrency','sellerSource','commissionSource','commissionStatus','commissionAmount','oneTimeFees','publicationStatus','eligibleForNew','locationSource'];
+const metadataKeys=['sourceReadiness','sourceSchemaHealth','photoItems','layouts','sourceDates','transitDetails','pricePeriod','priceCurrency','depositCurrency','commissionCurrency','sellerSource','commissionSource','commissionStatus','commissionAmount','oneTimeFees','publicationStatus','eligibleForNew','locationSource'];
 function metadataUrl(value){try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}}
 function metadataString(value,max=500){return typeof value==='string'?value.slice(0,max):null;}
 function metadataMedia(value,layout){
@@ -1076,6 +1087,8 @@ function sourceEditorMetadata(fields,listing){
       if(['string','number'].includes(typeof value)&&/^\d+(?:\.\d{1,2})?$/.test(String(value)))output[key]=String(value).slice(0,20);
     }else if(key==='oneTimeFees'&&Array.isArray(value)){
       output[key]=value.slice(0,30).filter(row=>row&&typeof row==='object').map(row=>({label:metadataString(row.label,150)||'Разовый платёж',amount:metadataString(row.amount,30)??(typeof row.amount==='number'&&Number.isFinite(row.amount)?String(row.amount):''),currency:['RUB','USD','EUR','unknown'].includes(row.currency)?row.currency:'unknown',source:metadataString(row.source,500)||''}));
+    }else if(key==='sourceSchemaHealth'){
+      const safe=schemaSummary(value);if(safe)output[key]=safe;
     }else if(key==='sourceReadiness'){
       if(!value||!['ready','partial','unknown'].includes(value.state))continue;
       const feedback=sourceReadinessFeedback({sourceReadiness:value});
@@ -1086,6 +1099,7 @@ function sourceEditorMetadata(fields,listing){
         output[key].sections.push({name,reason,found:typeof row.found==='boolean'?row.found:null,visited:row.visited===true,ready:row.ready===true&&reason==='ready'});
       }
       output[key].warnings=feedback.details;
+      const schema=schemaSummary(value.schema);if(schema)output[key].schema=schema;
       const album=albumStatus(value.gallery);if(album)output[key].gallery=album;
       for(const measurement of ['seconds','activeSeconds','budgetSeconds','budgetOverrunSeconds'])if(typeof value[measurement]==='number'&&Number.isFinite(value[measurement])&&value[measurement]>=0&&value[measurement]<=7200)output[key][measurement]=value[measurement];
     }else if(key==='photoItems'||key==='layouts'){
@@ -1221,8 +1235,8 @@ async function cardPhotoDataUrl(blob){
 }
 function cardDownloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name||'redcn-document';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function setupCardFiles({mount,getCardId,api,download,previewImage,toast}){
- let revision=0;const title=document.createElement('h2'),note=document.createElement('p'),list=document.createElement('div'),refreshButton=document.createElement('button');mount.classList.add('card-files');title.textContent='Готовые материалы';note.textContent='Intro, outro, HTML и PDF сохраняются на Mac и доступны с подключённого телефона.';refreshButton.className='btn';refreshButton.type='button';refreshButton.textContent='Обновить материалы';mount.append(title,note,refreshButton,list);
- async function refresh(){const version=++revision,id=getCardId();list.replaceChildren();if(!id){list.textContent='Сохраните карточку, затем создайте материалы в разделе «Дизайн».';return;}try{const result=await api('card-exports/'+id);if(version!==revision||getCardId()!==id)return;for(const asset of result.exports||[]){const row=document.createElement('div'),button=document.createElement('button'),meta=document.createElement('span');row.className='card-file-row';button.type='button';button.className='btn';button.textContent=asset.kind==='intro'?'Intro · PNG':asset.kind==='outro'?'Outro · PNG':asset.kind.toUpperCase();meta.textContent=asset.name+' · '+Math.ceil(asset.bytes/1024)+' КБ'+(asset.created?' · '+new Date(asset.created*1000).toLocaleString('ru-RU'):'');button.onclick=async()=>{button.disabled=true;try{await download(asset);}catch(error){toast(error.message);}finally{button.disabled=false;}};row.append(button,meta);if(asset.mime==='image/png'&&previewImage){const open=document.createElement('button');open.type='button';open.className='btn';open.textContent='Открыть в Фото';open.onclick=async()=>{try{await previewImage(asset);}catch(error){toast(error.message);}};row.append(open);}list.append(row);}if(!list.childNodes.length)list.textContent='Материалы ещё не созданы. Откройте «Дизайн», выберите оформление и сохраните нужный формат.';}catch(error){if(version===revision)list.textContent=error.message;}}
+ let revision=0;const title=document.createElement('h2'),note=document.createElement('p'),list=document.createElement('div'),refreshButton=document.createElement('button');mount.classList.add('card-files');title.textContent='Готовые материалы';note.textContent='Intro, outro, HTML и PDF сохраняются на Mac. После правки карточки устаревшие материалы нужно создать заново.';refreshButton.className='btn';refreshButton.type='button';refreshButton.textContent='Обновить материалы';mount.append(title,note,refreshButton,list);
+ async function refresh(){const version=++revision,id=getCardId();list.replaceChildren();if(!id){list.textContent='Сохраните карточку, затем создайте материалы в разделе «Дизайн».';return;}try{const result=await api('card-exports/'+id);if(version!==revision||getCardId()!==id)return;for(const asset of result.exports||[]){const row=document.createElement('div'),button=document.createElement('button'),meta=document.createElement('span');row.className='card-file-row';row.dataset.revisionStatus=asset.revisionStatus||'unverified';button.disabled=asset.requiresRegeneration===true;button.type='button';button.className='btn';button.textContent=asset.kind==='intro'?'Intro · PNG':asset.kind==='outro'?'Outro · PNG':asset.kind.toUpperCase();meta.textContent=asset.name+' · '+Math.ceil(asset.bytes/1024)+' КБ'+(asset.created?' · '+new Date(asset.created*1000).toLocaleString('ru-RU'):'');if(asset.requiresRegeneration)meta.textContent+=' · '+(asset.revisionStatus==='stale'?'Карточка изменилась — создайте заново в «Дизайне»':'Требуется новая проверка — создайте заново в «Дизайне»');button.onclick=async()=>{button.disabled=true;try{await download(asset);}catch(error){toast(error.message);}finally{button.disabled=asset.requiresRegeneration===true;}};row.append(button,meta);if(asset.mime==='image/png'&&previewImage&&!asset.requiresRegeneration){const open=document.createElement('button');open.type='button';open.className='btn';open.textContent='Открыть в Фото';open.onclick=async()=>{try{await previewImage(asset);}catch(error){toast(error.message);}};row.append(open);}list.append(row);}if(!list.childNodes.length)list.textContent='Материалы ещё не созданы. Откройте «Дизайн», выберите оформление и сохраните нужный формат.';}catch(error){if(version===revision)list.textContent=error.message;}}
  refreshButton.onclick=()=>refresh();return {refresh,clear(){revision++;list.replaceChildren();}};
 }
 
@@ -2241,6 +2255,22 @@ function setupTagPostStats({mount,api,getTags=()=>'',onSaved=()=>{}}){
  return {clear(){epoch++;for(const input of Object.values(inputs))input.value='';eligible.value='';verified.checked=false;approximate.checked=true;status.textContent='';output.replaceChildren();save.disabled=false;},destroy(){epoch++;root.remove();}};
 }
 
+// A receipt belongs to one weight hash. Selection is always the server's live value.
+function setupModelHistory({mount,api}={}){
+ if(!mount||typeof api!=='function')return null;
+ const make=(tag,text='',properties={})=>{const node=document.createElement(tag);node.textContent=text;Object.assign(node,properties);return node;};
+ const box=make('details','',{className:'model-history'}),heading=make('summary','Версии локальной модели'),status=make('p','Откройте историю, чтобы увидеть выбранные веса и отдельные результаты кандидатов.',{className:'muted',role:'status'}),list=make('div');
+ let revision=0;
+ box.style.overflowWrap='anywhere';box.style.minWidth='0';
+ const labels={training:'Сейчас обучается; показатели относятся к последней сохранённой контрольной точке','trained-unaccepted':'Обучение завершено; решение о допуске показано отдельно','restored-unaccepted':'Перенесён; нужна новая нативная приёмка',paused:'Обучение прервано',unfinished:'Незавершённая квитанция','invalid-receipt':'Квитанция или веса требуют проверки'};
+ const reasons={accepted:'Проверка пройдена','incomplete-probes':'Не все ответы завершены','candidate-factual-errors':'Ошибки фактов или формата','repeated-variants':'Варианты повторяются','no-measured-improvement':'Измеримого улучшения нет','not-evaluated':'Решение не записано'};
+ const timestamp=value=>Number.isFinite(value)?new Date(value*1000).toLocaleString('ru-RU'):'';
+ const amount=value=>Number.isFinite(value)?Number(value).toLocaleString('ru-RU'):'не измерено';
+ async function refresh(){const expected=++revision;status.textContent='Читаем квитанции моделей…';try{const value=await api('learning',{action:'model-history',limit:25});if(expected!==revision)return;list.replaceChildren();status.textContent=[value.note,value.activeTraining?'Подтверждено активное обучение кандидата.':'',value.total?'Версий: '+value.total:'Квитанций кандидатов пока нет.'].filter(Boolean).join(' ');for(const row of value.candidates||[]){const item=make('article','',{className:'card-file-row'}),body=make('div'),hash=row.weightsSha256||row.id;body.append(make('strong',(row.selected?'Выбрана сейчас · ':'Кандидат · ')+hash.slice(0,12)),make('p',labels[row.state]||'Состояние требует проверки',{className:'muted'}));if(row.receiptMatchesWeights){body.append(make('p','Шагов: '+amount(row.stepsCompleted)+' · примеров: '+amount(row.examples?.train)+' / '+amount(row.examples?.validation)+' · время: '+amount(row.seconds)+' с · пик MLX: '+(Number.isFinite(row.peakMlxBytes)?(row.peakMlxBytes/1e9).toFixed(2)+' ГБ':'не измерено'),{className:'muted'}));if(row.datasetSha256)body.append(make('p','Корпус SHA-256: '+row.datasetSha256,{className:'muted'}));}const evaluation=row.historicalEvaluation;if(evaluation){const decision=evaluation.decision||{};if(evaluation.origin==='imported-historical')body.append(make('p','История перенесена с другого устройства; допуск в этой среде не подтверждён.',{className:'muted'}));body.append(make('p',(evaluation.scope==='diagnostic-only'?'Диагностическое сравнение ':'Историческая проверка ')+timestamp(evaluation.recordedAt)+': '+(reasons[decision.reason]||'Решение записано')+' · '+amount(decision.candidatePassed)+' / '+amount(decision.requested)+' ответов прошли факты.',{className:'muted'}),make('p','Отчёт SHA-256: '+evaluation.reportSha256,{className:'muted'}));}else body.append(make('p','Для этих весов результат проверки не записан.',{className:'muted'}));if(row.consent?.retrainingRequired)body.append(make('p','В корпусе есть отозванные примеры. Нужны новые данные и переобучение; влияние на готовые веса не удалено.',{className:'muted'}));body.append(make('p','Переключение требует отдельного допуска: снова проверяются актуальные данные, программа и веса.',{className:'muted'}));item.append(body);list.append(item);}}catch(error){if(expected===revision)status.textContent=error.message;}}
+ box.append(heading,status,list);mount.append(box);box.addEventListener('toggle',()=>{if(box.open)refresh();});
+ return {refresh,clear(){revision++;list.replaceChildren();status.textContent='История очищена из текущего экрана.';},destroy(){revision++;box.remove();}};
+}
+
 // Private editorial memory. All user values enter the DOM as text.
 function learningTextLanguage(text){return /\p{Script=Han}/u.test(String(text))?'zh':'ru';}
 function learningGroundingFields(fields={}){
@@ -2270,20 +2300,22 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
  const date=field(form,'Дата наблюдения',make('input','',{type:'date',value:new Date().toISOString().slice(0,10)})),context=field(form,'Контекст статистики · например, теги квартиры у метро',make('input','',{type:'text',maxLength:500}));
  const reviewed=field(form,' Я проверил содержание и разрешаю использовать его',make('input','',{type:'checkbox'}));
  const formActions=make('div','',{className:'output-options'});
- const filters=make('select');for(const [value,label]of [['pending','Ожидают проверки'],['approved','Утверждены'],['rejected','Отклонены'],['','Все записи']])filters.append(make('option',label,{value}));
+ const filters=make('select');for(const [value,label]of [['pending','Ожидают проверки'],['approved','Утверждены'],['rejected','Отклонены'],['withdrawn','Отозваны из обучения'],['','Все записи']])filters.append(make('option',label,{value}));
  async function run(action){if(busy)return;busy=true;details.setAttribute('aria-busy','true');try{await action();}catch(error){const message=String(error?.message||'Не удалось обновить память');status.textContent=message;draftStatus.textContent=message;translationStatus.textContent=message;toast(message);}finally{busy=false;details.setAttribute('aria-busy','false');}}
  function displayFields(){const pair=['dictionary','translation'].includes(kind.value),stat=kind.value==='tag_stat';ru.parentElement.hidden=!pair;zh.parentElement.hidden=!pair;text.parentElement.hidden=pair||stat;for(const node of [tag,views,date,context])node.parentElement.hidden=!stat;}
  kind.onchange=displayFields;displayFields();
  function rowText(row){const p=row.payload||{};return row.kind==='dictionary'||row.kind==='translation'?[p.ru,p.zh].join(' → '):row.kind==='tag_stat'?[p.tag,p.views===undefined?'Просмотры не заданы':String(p.views)+' просмотров',p.observedAt,p.context].filter(Boolean).join(' · '):row.kind==='furniture'?(p.items||[]).join(', '):p.text||'';}
  function render(value){
   const s=value.status||{},counts=s.counts||s;
-  status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
+  status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+' · отозвано: '+Number(counts.withdrawn||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
   const scheduler=value.scheduler||{},config=scheduler.config||scheduler,model=value.text_ai||{},promotion=scheduler.promotion||{},evaluation=promotion.latestEvaluation||{};schedulerEnabled.checked=config.enabled===true;promotionEnabled.checked=config.automaticPromotion===true;schedulerForm.hidden=!canManageSettings();rollback.disabled=promotion.rollbackAvailable!==true;
   schedulerStatus.textContent=[model.installed?'Текстовая модель установлена'+(model.enabled?' и включена':''): 'Текстовая модель ещё не установлена',scheduler.message||'Ожидаем состояние планировщика',model.trainedParameters?'Обученных параметров адаптера: '+Number(model.trainedParameters).toLocaleString('ru-RU'):'',scheduler.stepsCompleted?'Выполнено шагов: '+Number(scheduler.stepsCompleted):'',config.automaticPromotion?'Автоприёмка включена: только после полного сравнения качества':'Автоприёмка выключена',evaluation.stepsCompleted?'Последний кандидат обучен: '+Number(evaluation.stepsCompleted)+' шагов':'',evaluation.requested?'Последняя проверка: '+Number(evaluation.candidatePassed||0)+'/'+Number(evaluation.requested):'',evaluation.message||'',scheduler.adapterReady&&scheduler.qualityOutcome!=='accepted'?'Кандидат сохранён; текущие веса работают до успешной приёмки':'',promotion.state==='accepted'?'Проверенные новые веса подключены; предыдущую версию можно вернуть':''].filter(Boolean).join(' · ');
   rows.replaceChildren();
-  for(const row of value.events||[]){const block=make('article','',{className:'card-file-row'}),body=make('div');body.append(make('strong',({dictionary:'Словарь',translation:'Перевод',title:'Заголовок',description:'Описание',furniture:'Мебель и техника',tag_stat:'Статистика тега'}[row.kind]||row.kind)+' · '+({pending:'на проверке',approved:'утверждено',rejected:'отклонено'}[row.status]||row.status)),make('p',rowText(row).slice(0,2500),{className:'muted'}));block.append(body);const actions=make('div','',{className:'output-options'});
-   if(row.status!=='approved')button(actions,'Утвердить',async()=>{await api('learning',{action:'review',id:row.id,status:'approved'});await refresh();});
-   if(row.status!=='rejected')button(actions,'Отклонить',async()=>{await api('learning',{action:'review',id:row.id,status:'rejected'});await refresh();});
+  for(const row of value.events||[]){const block=make('article','',{className:'card-file-row'}),body=make('div');body.append(make('strong',({dictionary:'Словарь',translation:'Перевод',title:'Заголовок',description:'Описание',furniture:'Мебель и техника',tag_stat:'Статистика тега'}[row.kind]||row.kind)+' · '+({pending:'на проверке',approved:'утверждено',rejected:'отклонено',withdrawn:'отозвано из обучения',superseded:'заменено исправлением'}[row.status]||row.status)),make('p',rowText(row).slice(0,2500),{className:'muted'}));block.append(body);const actions=make('div','',{className:'output-options'});
+   if(!['approved','withdrawn','superseded'].includes(row.status))button(actions,'Утвердить',async()=>{await api('learning',{action:'review',id:row.id,status:'approved'});await refresh();});
+   if(!['rejected','withdrawn','superseded'].includes(row.status))button(actions,'Отклонить',async()=>{await api('learning',{action:'review',id:row.id,status:'rejected'});await refresh();});
+   if(row.status!=='withdrawn')button(actions,'Отозвать из обучения',async()=>{const result=await api('learning',{action:'withdraw',id:row.id});await refresh();status.textContent=result.message;});
+   button(actions,'Происхождение и версии корпуса',async()=>{const value=await api('learning',{action:'provenance',id:row.id});let view=body.querySelector('.learning-provenance');if(!view){view=make('div','',{className:'learning-provenance'});body.append(view);}view.replaceChildren();view.append(make('p','Источник: '+value.source+' · создано: '+value.createdAt,{className:'muted'}));for(const event of value.reviewHistory||[])view.append(make('p',event.action+' · '+event.actor+' · '+event.created,{className:'muted'}));if(value.historicalActorUnknown)view.append(make('p','Для старой записи участник решения не был записан.',{className:'muted'}));view.append(make('p','Версии корпуса: '+((value.snapshots||[]).map(item=>item.snapshotId+' ('+item.partition+')').join(', ')||'ещё не включён'),{className:'muted'}));if(value.withdrawal)view.append(make('p','Разрешение отозвано. Влияние на уже обученные веса не удалено; затронутым моделям нужно переобучение.',{className:'muted'}));});
    block.append(actions);rows.append(block);
   }
   if(!(value.events||[]).length)rows.append(make('p','В этом разделе записей пока нет.',{className:'muted'}));
@@ -2304,9 +2336,13 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
  promotionEnabled.onchange=()=>run(async()=>{if(!canManageSettings())throw Error('Настройки приёмки доступны владельцу');await api('learning',{action:'scheduler-config',automaticPromotion:promotionEnabled.checked});await refresh();});
  button(controls,'Подготовить утверждённые данные к обучению',async()=>{await api('learning',{action:'snapshot'});await refresh();status.textContent+=' Подготовлена версия данных для обучения; веса модели ещё не изменены.';});
  const compose=make('section'),composeActions=make('div','',{className:'output-options'}),draftStatus=make('p','Модель составляет черновик по цене, расположению и подтверждённым характеристикам. Проверьте смысл перед применением.',{className:'muted',role:'status'});
+ const draftMode=field(compose,'Способ подготовки объявления',make('select'));
+ for(const [value,label]of [['advertising','Новый рекламный текст · проверка фактов'],['advertising-structure','Новая подача · фактические блоки сохраняются']])draftMode.append(make('option',label,{value}));
+ compose.append(make('p','В режиме новой подачи модель выбирает расположение блоков, а подтверждённые факты сохраняются целиком. Уже использованные варианты не повторяются; когда схемы закончатся, появится сообщение. Каждый черновик применяется после вашей проверки.',{className:'muted'}));
  const draftTitle=field(compose,'Название · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:240})),draftBody=field(compose,'Описание · редактируемый ИИ-черновик',make('textarea','',{rows:7,maxLength:20000})),draftTags=field(compose,'Теги · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:3000}));
  let draftContext=null,translationContext=null;
  const fingerprint=()=>JSON.stringify([getGroup(),getFields(),getOutput()]);
+ const draftFingerprint=()=>JSON.stringify([draftTitle.value,draftBody.value,draftTags.value]);
  const draftApply=button(composeActions,'Применить проверенный черновик',async()=>{
   if(!draftContext||draftContext!==fingerprint())throw Error('Карточка изменилась. Создайте новый черновик.');
   if(typeof onApply!=='function')throw Error('Откройте карточку для применения');
@@ -2314,12 +2350,15 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
   if(!candidate.title||!candidate.body)throw Error('Введите название и описание');
   await onApply(candidate);draftContext=null;draftApply.disabled=true;draftStatus.textContent='Черновик передан в карточку. Окончательное применение зависит от проверки текущих правок.';
  });draftApply.disabled=true;
+ draftMode.onchange=()=>{draftContext=null;draftApply.disabled=true;draftStatus.textContent='Режим изменён. Создайте новый черновик.';};
  const generate=button(composeActions,'Создать ИИ-черновик по карточке',async()=>{
-  const expected=fingerprint();draftApply.disabled=true;draftContext=null;draftStatus.textContent='Локальная модель составляет текст. Первый запуск включает загрузку весов…';
-  const value=await api('learning',{action:'generate-preview',styleMode:'advertising',fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
-  if(expected!==fingerprint())throw Error('Во время генерации открыта или изменена другая карточка. Повторите запрос.');
-  const grounded=value.fallback===true||value.backend==='grounded-advertising',ai=value.ai||{},elapsed=value.elapsedSeconds??ai.elapsedSeconds;
-  draftStatus.textContent=[value.status==='review'?(grounded?'Рекламный черновик из проверенных фактов; ответ модели не прошёл проверку':'ИИ-черновик требует проверки'):'Локальная модель пока не подготовила пригодный черновик',...(value.warnings||[]),Number.isInteger(ai.generatedTokens)&&ai.generatedTokens>=0?'Модель: '+ai.generatedTokens+' токенов':'',Number.isFinite(ai.tokensPerSecond)&&ai.tokensPerSecond>=0?ai.tokensPerSecond.toFixed(1)+' ток/с':'',Number.isFinite(elapsed)&&elapsed>=0?'Время: '+elapsed.toFixed(1)+' с':''].filter(Boolean).join(' · ');
+  const expected=fingerprint(),expectedDraft=draftFingerprint(),expectedRevision=revision,selectedMode=draftMode.value;draftApply.disabled=true;draftContext=null;draftStatus.textContent=selectedMode==='advertising-structure'?'Локальная модель выбирает новую подачу подтверждённых фактов…':'Локальная модель составляет текст. Первый запуск включает загрузку весов…';
+  const value=await api('learning',{action:'generate-preview',styleMode:selectedMode,fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
+  if(expectedRevision!==revision)return;
+  if(expected!==fingerprint()||selectedMode!==draftMode.value)throw Error('Во время генерации изменилась карточка или выбранный режим. Повторите запрос.');
+  if(expectedDraft!==draftFingerprint()){draftStatus.textContent='Вы изменили черновик во время генерации. Ручной текст сохранён; ответ модели не применён.';return;}
+  const grounded=value.fallback===true||value.backend==='grounded-advertising',structured=value.modelContribution==='selection-of-layout-only'&&value.factualTextSource==='verified-renderer',ai=value.ai||{},elapsed=value.elapsedSeconds??ai.elapsedSeconds;
+  draftStatus.textContent=[value.status==='review'?(structured?'Модель выбрала подачу; фактические блоки сохранены. Проверьте черновик':grounded?'Рекламный черновик из проверенных фактов; ответ модели не прошёл проверку':'ИИ-черновик требует проверки'):'Локальная модель пока не подготовила пригодный черновик',...(value.warnings||[]),Number.isInteger(ai.generatedTokens)&&ai.generatedTokens>=0?'Модель: '+ai.generatedTokens+' токенов':'',Number.isFinite(ai.tokensPerSecond)&&ai.tokensPerSecond>=0?ai.tokensPerSecond.toFixed(1)+' ток/с':'',Number.isFinite(elapsed)&&elapsed>=0?'Время: '+elapsed.toFixed(1)+' с':''].filter(Boolean).join(' · ');
   if(value.status!=='review')return;
   draftTitle.value=typeof value.title==='string'?value.title:'';draftBody.value=typeof value.body==='string'?value.body:'';draftTags.value=typeof value.tags==='string'?value.tags:'';
   draftContext=expected;draftApply.disabled=!draftTitle.value||!draftBody.value;
@@ -2338,10 +2377,12 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
   await onApply({[part]:text});translationContext=null;translationApply.disabled=true;
  });translationApply.disabled=true;
  button(translationActions,'Перевести локальной моделью',async()=>{
-  const expected=fingerprint(),source=translationInput.value.trim(),selected=direction.value;
+  const expected=fingerprint(),expectedDraft=translationOutput.value,expectedRevision=revision,source=translationInput.value.trim(),selected=direction.value;
   if(!source)throw Error('Введите исходный текст');translationApply.disabled=true;translationContext=null;translationStatus.textContent='Переводим локально…';
   const value=await api('learning',{action:'translate-preview',text:source,direction:selected});
+  if(expectedRevision!==revision)return;
   if(expected!==fingerprint()||source!==translationInput.value.trim()||selected!==direction.value)throw Error('Исходный текст или карточка изменились. Повторите перевод.');
+  if(expectedDraft!==translationOutput.value){translationStatus.textContent='Вы изменили перевод во время генерации. Ручной текст сохранён; ответ модели не применён.';return;}
   translationStatus.textContent=[value.status==='review'?'Перевод требует проверки':'Пригодный перевод не получен',...(value.warnings||[])].join(' · ');
   if(value.status!=='review'||typeof value.text!=='string')return;
   translationOutput.value=value.text;translationContext=expected;translationApply.disabled=!value.text.trim();
@@ -2350,9 +2391,10 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
  translation.prepend(make('h3','Русский ↔ 中文'));translation.append(translationActions,translationStatus);
  details.append(heading,intro,compose,translation,status,controls,schedulerForm,schedulerStatus,rows,make('h3','Добавить проверенный опыт'),form,formActions);mount.append(details);
  const postStats=setupTagPostStats({mount:details,api,getTags:()=>getOutput()?.tags||'',onSaved:()=>run(refresh)});
+ const modelHistory=setupModelHistory({mount:details,api});
  details.addEventListener('toggle',()=>{if(details.open)run(refresh);});
  schedulerForm.hidden=!canManageSettings();
- return {refresh,capture,setPermissions:()=>{schedulerForm.hidden=!canManageSettings();},clear:()=>{revision++;postStats.clear();rows.replaceChildren();draftContext=translationContext=null;draftApply.disabled=translationApply.disabled=true;for(const node of [draftTitle,draftBody,draftTags,translationInput,translationOutput,ru,zh,text,tag,views,context])node.value='';status.textContent='Откройте блок, чтобы получить состояние памяти.';},destroy:()=>{revision++;postStats.destroy();details.remove();}};
+ return {refresh,capture,setPermissions:()=>{schedulerForm.hidden=!canManageSettings();},clear:()=>{revision++;postStats.clear();modelHistory.clear();rows.replaceChildren();draftContext=translationContext=null;draftApply.disabled=translationApply.disabled=true;for(const node of [draftTitle,draftBody,draftTags,translationInput,translationOutput,ru,zh,text,tag,views,context])node.value='';status.textContent='Откройте блок, чтобы получить состояние памяти.';},destroy:()=>{revision++;postStats.destroy();modelHistory.destroy();details.remove();}};
 }
 
 // Generated by scripts/build-city-pois.mjs from data/city-pois.json.
@@ -2405,6 +2447,50 @@ function createPhoneDesignerLoader({importModule,getState}={}){
  function prewarm(){const state=getState();return !allowed(state)||state.saveData===true?Promise.resolve(null):load().catch(()=>null);}
  function invalidate(){generation++;cached=null;}
  return {load,prewarm,invalidate};
+}
+
+// Export source authority is received with a loaded/saved card. A later file
+// list cannot renew it: that list says nothing about the content on screen.
+const loadedPresentationSources=new WeakMap();
+const presentationSourceChanged=()=>Object.assign(new Error('Карточка изменилась. Загрузите её заново, обновите макет и повторите экспорт.'),{code:'CLIENT_REVISION_CHANGED'});
+
+function presentationSourceBoundary(resultId,receipt){
+ if(!/^[a-f0-9]{32}$/.test(resultId||'')||receipt?.version!==1||receipt.cardId!==resultId||!/^[a-f0-9]{64}$/.test(receipt.revisionSha256||'')||!/^[a-f0-9]{64}$/.test(receipt.signature||''))throw new Error('Обновите страницу и загрузите карточку заново: подтверждение исходного содержимого недоступно.');
+ return {resultId,expectedRevision:receipt.revisionSha256,sourceReceipt:{version:1,cardId:resultId,revisionSha256:receipt.revisionSha256,signature:receipt.signature}};
+}
+
+function captureLoadedPresentationSource(card){
+ if(card&&typeof card==='object'){
+  // Older servers and viewer projections can still be read. Export requires
+  // a receipt and an unchanged authenticated card object, checked below.
+  loadedPresentationSources.set(card,{serialized:JSON.stringify(card),receipt:card.presentationReceipt?JSON.parse(JSON.stringify(card.presentationReceipt)):null});
+ }
+ return card;
+}
+
+function loadedPresentationSource(card){
+ const loaded=card&&loadedPresentationSources.get(card);
+ if(!loaded||loaded.serialized!==JSON.stringify(card))throw presentationSourceChanged();
+ return presentationSourceBoundary(card.id,loaded.receipt);
+}
+
+async function savePresentationSource({getCard,saveCard,cardKey}){
+ const key=cardKey(getCard()),saved=await saveCard();
+ if(cardKey(getCard())!==key)throw presentationSourceChanged();
+ return presentationSourceBoundary(saved.result_id,saved.presentationReceipt);
+}
+
+async function beginPresentationExport({getCard,ensureCard,cardKey}){
+ const key=cardKey(getCard()),source=await ensureCard({exportSnapshot:true});
+ if(cardKey(getCard())!==key)throw presentationSourceChanged();
+ const boundary=presentationSourceBoundary(source?.resultId,source?.sourceReceipt);
+ if(source.expectedRevision!==boundary.expectedRevision)throw presentationSourceChanged();
+ return {...boundary,key};
+}
+
+function assertPresentationExportCurrent(snapshot,boundary,{getCard,cardKey}){
+ if(!boundary||snapshot?.key!==boundary.key||cardKey(getCard())!==boundary.key)throw presentationSourceChanged();
+ return boundary.resultId;
 }
 
 
@@ -2468,14 +2554,14 @@ function phoneApplyRole(state){
  if(!owner){phoneArchiveUI?.destroy();phoneArchiveUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;}
  if(!edit){phoneDictionaryUI?.clear();phonePublicationReviewUI?.clear();phoneRoutesUI?.destroy();phoneRoutesUI=null;phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;phoneResetWriting();clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneState.job=null;phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');}
  ph('phoneRewriteAll')?.closest('section')?.classList.toggle('hidden',!edit);
- const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v28 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
+ const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v29 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
  if(!edit&&['import','watch','design'].includes(phoneState.view))phoneView('cards');
  if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
  return !!previous&&previous!==phoneState.role;
 }
 const phoneCanEdit=()=>phoneState.access?.supported?phoneState.access.editCards:phoneState.role!=='viewer';
 async function phoneRefreshRole(){if(phoneRoleRefreshing||!phoneState.paired)return phoneRoleRefreshing;const epoch=phoneState.authEpoch;const pending=phoneApi('state').then(state=>{if(epoch!==phoneState.authEpoch)return;phoneState.csrf=state.csrfToken||phoneState.csrf;const changed=phoneApplyRole(state);if(changed&&phoneState.detailId)return phoneOpenCard(phoneState.detailId,{keepScroll:true});}).finally(()=>{if(phoneRoleRefreshing===pending)phoneRoleRefreshing=null;});phoneRoleRefreshing=pending;return pending;}
-function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){phoneAcceptanceUI?.destroy();phoneAcceptanceUI=null;phoneInstanceEditor?.dispose();phoneInstanceEditor=null;ph('phoneAcceptanceMount')?.classList.add('hidden');phoneCityPoisUI?.destroy();phoneCityPoisUI=null;ph('phoneCityPoisSection')?.classList.add('hidden');phoneDesignerLoader.invalidate();phoneDesignerWarmEpoch=null;ph('phoneDesignMount').dataset.editorReady='false';ph('phoneDesignMount').dataset.editorStage='signed-out';phoneDictionaryUI?.clear();phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
+function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){try{sessionStorage.removeItem('redcn-phone-pending-job-v29');}catch{}phoneAcceptanceUI?.destroy();phoneAcceptanceUI=null;phoneInstanceEditor?.dispose();phoneInstanceEditor=null;ph('phoneAcceptanceMount')?.classList.add('hidden');phoneCityPoisUI?.destroy();phoneCityPoisUI=null;ph('phoneCityPoisSection')?.classList.add('hidden');phoneDesignerLoader.invalidate();phoneDesignerWarmEpoch=null;ph('phoneDesignMount').dataset.editorReady='false';ph('phoneDesignMount').dataset.editorStage='signed-out';phoneDictionaryUI?.clear();phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
 // The first usable feed has a shared budget; PDF and attachment work keep their
 // longer operation deadlines and cannot make initial navigation wait for them.
 async function phoneApi(path,data,{deadline=0}={}){
@@ -2546,7 +2632,7 @@ async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
 async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
   if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneInstanceEditor?.dispose();phoneInstanceEditor=null;phoneResetWriting();phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='prepared';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=acceptAuthenticatedClientCard(card);phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phonePrewarmDesigner();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);}
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=captureLoadedPresentationSource(acceptAuthenticatedClientCard(card));phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phonePrewarmDesigner();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);return phoneState.detail;}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
@@ -2631,7 +2717,7 @@ function phoneWritingEnd(request){if(request?.revision===phoneWriting.revision){
 function phoneApplyWrittenCard(card,request){
   if(!phoneWritingCurrent(request))return false;if(card?.id!==request.id)throw Error('Ответ относится к другой карточке. Обновите объявление.');
   phonePublicationReviewUI?.clear();
-  const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=acceptAuthenticatedClientCard(card);phoneUpdateRouteTools();
+  const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=captureLoadedPresentationSource(acceptAuthenticatedClientCard(card));phoneUpdateRouteTools();
   const title=card.titles?.[0]||card.title||card.fields?.name||'Квартира в Москве';ph('phoneDetailTitle').textContent=title;ph('phoneTitleCopy').textContent=card.titles?.[0]||card.title||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);
   const summary=phoneState.cards.get(card.id);if(summary){phoneState.cards.set(card.id,{...summary,title,updated:card.updated});phoneRenderCards();}
   if(phoneState.view==='detail')window.scrollTo(0,oldScroll);return true;
@@ -2695,21 +2781,21 @@ function phoneRenderJobProgress(result){
   ph('phoneJobSteps').replaceChildren();for(const step of p.stages||[]){const row=document.createElement('li');row.dataset.state=step.state;const mark=document.createElement('span');mark.className='job-step-mark';mark.textContent=importStageMark(step);const text=document.createElement('span'),title=document.createElement('strong'),note=document.createElement('small');title.textContent=step.label||step.id;note.textContent=phoneJobDuration(step.elapsedSeconds)+(Number.isFinite(step.completed)&&Number(step.total)>0?' · '+step.completed+' из '+step.total:'');text.append(title,note);row.append(mark,text);ph('phoneJobSteps').append(row);}
   ph('phoneJobDetails').classList.toggle('hidden',!p.stages?.length);phoneJobClock();clearInterval(phoneJobProgressTimer);if(result.state==='running'&&!document.hidden)phoneJobProgressTimer=setInterval(phoneJobClock,500);
 }
-function phoneResumeJob(info){if(!info?.id||!['running','done','error'].includes(info.state)||phoneState.job)return;if(info.sourceUrl&&!ph('phoneImportUrl').value)ph('phoneImportUrl').value=info.sourceUrl;phoneSetJob(info.id,info.kind||'import',info.cardId);if(info.state==='running')phoneView('import');}
+function phoneResumeJob(info){if(!info?.id||!['running','done','error','cancelled','interrupted'].includes(info.state)||phoneState.job)return;if(info.sourceUrl&&!ph('phoneImportUrl').value)ph('phoneImportUrl').value=info.sourceUrl;phoneSetJob(info.id,info.kind||'import',info.cardId);if(info.state==='running')phoneView('import');}
 function phoneSetJob(id,kind='import',cardId=null){phoneState.job={id,kind,cardId:cardId||phoneState.detailId};phoneJobLast=phoneState.job;phoneState.jobResult=null;ph('phoneJobRestart').textContent='Повторить обработку';ph('phoneJob').classList.remove('hidden');ph('phoneJobTitle').textContent=kind==='prepare'?'Mac готовит фотографии':'Mac готовит объявление';ph('phoneJobMessage').textContent='Запрос отправлен на компьютер.';for(const id of ['phoneJobOpen','phoneJobRetry','phoneJobRestart'])ph(id).classList.add('hidden');ph('phoneImportSubmit').disabled=true;phoneRenderJobProgress({state:'running',progress:{elapsedSeconds:0,stageElapsedSeconds:0}});phoneCheckJob();}
 async function phoneCheckJob(){
   clearTimeout(phoneJobTimer);const job=phoneState.job;if(!job||document.hidden)return;
   try{const result=await phoneApi('jobs/'+encodeURIComponent(job.id));if(phoneState.job!==job)return;ph('phoneJobMessage').textContent=result.message||result.progress?.message||'Компьютер обрабатывает объявление…';ph('phoneJobRetry').classList.add('hidden');phoneRenderJobProgress(result);if(job.kind==='prepare')ph('phoneMediaStatus').textContent=result.message||'Mac готовит фотографии…';
     if(result.state==='done'){const feedback=importCompletionFeedback(result,result.result_id===phoneState.detailId?phoneState.detail:null);phoneState.jobResult=result.result_id;ph('phoneJobTitle').textContent=feedback.title;if(feedback.message)ph('phoneJobMessage').textContent=feedback.message;if(feedback.retryPhotos){phoneJobLast={...job,kind:'prepare',cardId:result.result_id};ph('phoneJobRestart').textContent='Повторить подготовку фото';ph('phoneJobRestart').classList.remove('hidden');}ph('phoneJobOpen').classList.toggle('hidden',!result.result_id);ph('phoneImportSubmit').disabled=false;phoneState.job=null;await phoneRefreshCards({reset:true});if(job.kind==='prepare'&&result.result_id===phoneState.detailId)await phoneOpenCard(result.result_id,{keepScroll:true});}
-    else if(result.state==='error'){ph('phoneJobTitle').textContent='Не удалось завершить обработку';ph('phoneImportSubmit').disabled=false;ph('phoneJobRestart').classList.remove('hidden');phoneState.job=null;}
+    else if(['error','cancelled','interrupted'].includes(result.state)){ph('phoneJobTitle').textContent=result.state==='interrupted'?'Обработка прервана перезапуском Mac':result.state==='cancelled'?'Обработка отменена':'Не удалось завершить обработку';ph('phoneImportSubmit').disabled=false;phoneState.jobResult=result.result_id||null;ph('phoneJobOpen').classList.toggle('hidden',!result.result_id);if(result.result_id){phoneJobLast={...job,kind:'prepare',cardId:result.result_id};ph('phoneJobRestart').textContent='Повторить подготовку фото';}ph('phoneJobRestart').classList.remove('hidden');phoneState.job=null;clearInterval(phoneJobProgressTimer);phoneAiProgress?.stop();}
     else{ph('phoneJobTitle').textContent=result.progress?.awaitingUser?'Нужна проверка в Chrome на Mac':result.progress?.label||'Mac готовит объявление';phoneJobTimer=setTimeout(phoneCheckJob,1800);}
   }catch(error){if(phoneState.job!==job)return;ph('phoneJobMessage').textContent=error.message+' Проверка состояния не отменяет работу на Mac.';ph('phoneJobRetry').classList.remove('hidden');clearInterval(phoneJobProgressTimer);phoneAiProgress?.stop();}
 }
 ph('phoneJobOpen').onclick=()=>{if(phoneState.jobResult)phoneOpenCard(phoneState.jobResult);};ph('phoneJobRetry').onclick=()=>{ph('phoneJobRetry').classList.add('hidden');phoneCheckJob();};
-ph('phoneJobRestart').onclick=async()=>{if(phoneJobLast?.kind==='prepare'&&phoneJobLast.cardId){ph('phoneJobRestart').disabled=true;try{const result=await phoneApi('cards/'+phoneJobLast.cardId+'/prepare',{});phoneSetJob(result.job_id,'prepare',phoneJobLast.cardId);}catch(error){phoneToast(error.message);}finally{ph('phoneJobRestart').disabled=false;}}else ph('phoneImportForm').requestSubmit();};
+ph('phoneJobRestart').onclick=async()=>{if(phoneJobLast?.kind==='prepare'&&phoneJobLast.cardId){ph('phoneJobRestart').disabled=true;try{const result=await phoneDurableJobRequest('cards/'+phoneJobLast.cardId+'/prepare',{});phoneSetJob(result.job_id,'prepare',phoneJobLast.cardId);}catch(error){phoneToast(error.message);}finally{ph('phoneJobRestart').disabled=false;}}else ph('phoneImportForm').requestSubmit();};
 ph('phoneImportForm').onsubmit=async event=>{event.preventDefault();let url;try{const parsed=new URL(ph('phoneImportUrl').value);if(parsed.protocol!=='https:'||!/(^|\.)(cian\.ru|avito\.ru)$/i.test(parsed.hostname)||parsed.username||parsed.password||parsed.port)throw Error('Введите HTTPS-ссылку ЦИАН или Авито.');url=parsed.href;}catch(error){phoneToast(error.message==='Invalid URL'?'Проверьте ссылку объявления.':error.message);return;}try{await phoneImportListing(url);}catch(error){phoneToast(error.message);}};
-ph('phoneAnalyzeFurniture').onclick=async()=>{if(!phoneState.detailId)return;if(phoneState.job){phoneToast('Дождитесь текущей обработки на Mac.');return;}const button=ph('phoneAnalyzeFurniture');button.disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/analyze',{});phoneSetJob(result.job_id,'prepare');phoneToast('Mac проверяет мебель и технику на всех доступных фото.');}catch(error){phoneToast(error.message);}finally{button.disabled=false;}};
-ph('phonePreparePhotos').onclick=async()=>{if(!phoneState.detailId)return;ph('phonePreparePhotos').disabled=true;try{const result=await phoneApi('cards/'+phoneState.detailId+'/prepare',{});phoneSetJob(result.job_id,'prepare');ph('phoneMediaStatus').textContent='Mac загружает фотографии…';phoneToast('Mac загружает фото. Они появятся в карточке после подготовки.');}catch(error){phoneToast(error.message);}finally{ph('phonePreparePhotos').disabled=false;}};
+ph('phoneAnalyzeFurniture').onclick=async()=>{if(!phoneState.detailId)return;if(phoneState.job){phoneToast('Дождитесь текущей обработки на Mac.');return;}const button=ph('phoneAnalyzeFurniture');button.disabled=true;try{const result=await phoneDurableJobRequest('cards/'+phoneState.detailId+'/analyze',{});phoneSetJob(result.job_id,'prepare');phoneToast('Mac проверяет мебель и технику на всех доступных фото.');}catch(error){phoneToast(error.message);}finally{button.disabled=false;}};
+ph('phonePreparePhotos').onclick=async()=>{if(!phoneState.detailId)return;ph('phonePreparePhotos').disabled=true;try{const result=await phoneDurableJobRequest('cards/'+phoneState.detailId+'/prepare',{});phoneSetJob(result.job_id,'prepare');ph('phoneMediaStatus').textContent='Mac загружает фотографии…';phoneToast('Mac загружает фото. Они появятся в карточке после подготовки.');}catch(error){phoneToast(error.message);}finally{ph('phonePreparePhotos').disabled=false;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);}else if(phoneState.paired){phoneRefreshCards().catch(()=>{});if(phoneState.job)phoneCheckJob();}});window.addEventListener('online',()=>{if(phoneState.paired)phoneRefreshCards().catch(()=>{});});
 // Installation help is optional; a browser limitation here must not block cards.
 try{initializePwaInstall({container:ph('phoneInstall')});initializePwaInstall({container:ph('phoneInstallTop'),registerWorker:false});}catch{ph('phoneServerStatus').textContent='Подсказка установки недоступна в этом браузере. Карточки можно открыть на сайте.';}
@@ -2749,7 +2835,8 @@ async function phonePresentationPhotos(){
  }}));if(!valid())throw Error('Выбрана другая карточка');mount.dataset.photosStage='decoded';mount.dataset.photosFetchMs=String(Math.round(performance.now()-started));performance.mark?.('redcn-designer-photo-fetch-ready');return photos.filter(Boolean);
  }catch(error){failed=true;if(valid())mount.dataset.photosStage='error';throw error;}
 }
-async function phoneEnsurePresentationCard(){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return phoneState.detail.id;}
+async function phoneReloadPresentationCard(){const id=phoneState.detailId,epoch=phoneState.authEpoch;if(!id)throw Error('Сначала откройте карточку квартиры');const card=await phoneOpenCard(id,{keepScroll:true});if(!card||id!==phoneState.detailId||epoch!==phoneState.authEpoch)throw Error('Не удалось обновить карточку с Mac. Повторите загрузку.');return card;}
+async function phoneEnsurePresentationCard({exportSnapshot=false}={}){if(!phoneState.paired||!phoneState.detail?.id)throw Error('Сначала откройте карточку квартиры');return exportSnapshot?loadedPresentationSource(phoneState.detail):phoneState.detail.id;}
 function phoneDossierAccess(){const role=phoneState.access?.role;return {private:phoneState.paired&&role==='owner',client:phoneState.paired&&['owner','editor'].includes(role)};}
 async function phoneDossierRequest(path,data,{binary=false}={}){
  const epoch=phoneState.authEpoch,id=phoneState.detailId,role=phoneState.access?.role;
@@ -2799,7 +2886,7 @@ function phoneInitializeDesigner(){
     if(!module||epoch!==phoneState.authEpoch||!phoneState.paired||!phoneCanEdit())return null;
     let initialRead=null,usedPrefetch=false;
     const api=(path,data)=>{const initial=path==='design'&&!data&&!usedPrefetch;if(initial)usedPrefetch=true;const request=initial?prefetched.then(result=>{if(result.error)throw result.error;return result.value;}):phoneApi(path,data);if(initial)initialRead=request;return request;};
-    const setupStarted=performance.now(),studio=module.setupPresentationStudio({mount,getCard:()=>phoneState.detail||{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});mount.dataset.setupSyncMs=String(Math.round(performance.now()-setupStarted));performance.mark?.('redcn-designer-setup-sync-ready');
+    const setupStarted=performance.now(),studio=module.setupPresentationStudio({mount,getCard:()=>phoneState.detail||{},getPhotos:phonePresentationPhotos,ensureCard:phoneEnsurePresentationCard,reloadCard:phoneReloadPresentationCard,api,downloadExport:phoneDownloadAsset,getExportBlob:phoneExportBlob,getMapImage:(card,options={})=>phoneApi('listing-map',{latitude:card.fields?.latitude,longitude:card.fields?.longitude,zoom:options.zoom||15,style:options.style||'navy',...((options.pinColor||options.theme?.social?.accent)?{pinColor:options.pinColor||options.theme.social.accent}:{})}),toast:phoneToast});mount.dataset.setupSyncMs=String(Math.round(performance.now()-setupStarted));performance.mark?.('redcn-designer-setup-sync-ready');
     phonePresentationUI=studio;
     try{await (initialRead||Promise.resolve());if(!await studio.ready())throw Error('Текущее полотно ещё не готово. Повторите открытие редактора.');}
     catch(error){if(epoch===phoneState.authEpoch&&studio===phonePresentationUI){studio.destroy();phonePresentationUI=null;mount.dataset.editorStage='error';mount.textContent='Не удалось загрузить общий шаблон. Откройте раздел дизайна ещё раз. '+error.message;}throw error;}
@@ -2813,9 +2900,21 @@ ph('phoneDesignCard').onclick=()=>phoneView('design');
 ph('phoneNetworkHelp').textContent=location.protocol==='https:'?'Внешняя HTTPS-ссылка работает через мобильный интернет; Mac должен оставаться включённым.':'Локальный адрес работает в одной сети с Mac. Для мобильного интернета используйте внешнюю HTTPS-ссылку из раздела «Телефон» на компьютере.';
 ph('phoneNetworkDescription').textContent=location.protocol==='https:'?'Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки через интернет. Нужны включённый Mac и работающий внешний доступ.':'Chrome и подготовка объявлений работают на Mac. Телефон получает готовые карточки. Локальная ссылка требует общей сети; внешняя HTTPS-ссылка работает через мобильный интернет.';
 
+const phonePendingJobKey='redcn-phone-pending-job-v29';
+async function phoneDurableJobRequest(path,data={}){
+ const raw=JSON.stringify({path,data});let fingerprint='';
+ if(globalThis.crypto?.subtle){const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));fingerprint=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');}
+ else{let hash=2166136261;for(const character of raw)hash=Math.imul(hash^character.codePointAt(0),16777619);fingerprint='fallback-'+(hash>>>0).toString(16)+'-'+raw.length;}
+ let pending=null;try{pending=JSON.parse(sessionStorage.getItem(phonePendingJobKey)||'null');}catch{}
+ const requestId=pending?.fingerprint===fingerprint&&/^[A-Za-z0-9_-]{12,80}$/.test(pending.requestId||'')?pending.requestId:globalThis.crypto?.randomUUID?.()||'phone-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+ try{sessionStorage.setItem(phonePendingJobKey,JSON.stringify({fingerprint,requestId}));}catch{}
+ try{const result=await phoneApi(path,{...data,requestId});try{sessionStorage.removeItem(phonePendingJobKey);}catch{}return result;}
+ catch(error){if(Number.isInteger(error.status))try{sessionStorage.removeItem(phonePendingJobKey);}catch{}throw error;}
+}
+
 async function phoneImportListing(url){
  ph('phoneImportUrl').value=url;ph('phoneImportSubmit').disabled=true;
- try{const result=await phoneApi('import',{url,loader:'chrome',timeout:180});phoneSetJob(result.job_id);return result;}
+ try{const result=await phoneDurableJobRequest('import',{url,loader:'chrome',timeout:180});phoneSetJob(result.job_id);return result;}
  catch(error){ph('phoneImportSubmit').disabled=false;throw error;}
 }
 function phoneInitializeWatch(){
@@ -2828,7 +2927,7 @@ function phoneInitializeAudit(){
 }
 function phoneUpdateRouteTools(){
  if(!phoneState.paired||!phoneState.detail?.id||phoneState.role==='viewer')return;
- if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=acceptAuthenticatedClientCard(card);phoneDetailStamp(card);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
+ if(!phoneRoutesUI)phoneRoutesUI=setupPhoneUniversityRoutes({mount:ph('phoneRoutesMount'),getCard:()=>phoneState.detail,api:phoneApi,toast:phoneToast,onSaved:card=>{if(card.id!==phoneState.detailId)return;phoneState.detail=captureLoadedPresentationSource(acceptAuthenticatedClientCard(card));phoneDetailStamp(card);phoneFilesUI?.refresh();if(phoneState.view==='design')phonePresentationUI?.refresh();}});
  phoneRoutesUI.cardChanged(phoneState.detail);
 }
 phoneStart();

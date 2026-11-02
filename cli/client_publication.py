@@ -105,7 +105,7 @@ def client_card(card):
         else:
             result={}
             for name,item in value.items():
-                if _PRIVATE.search(str(name)):continue
+                if _PRIVATE.search(str(name)) or name in {'sourceSchemaHealth','privateReviewFragment','presentationReceipt'}:continue
                 if name=='listing' and isinstance(item,dict):item={key:item[key] for key in ('url','images','latitude','longitude','sourceReadiness') if key in item}
                 result[name]=project(item,depth+1)
         active.remove(key);return result

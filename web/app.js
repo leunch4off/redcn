@@ -3,7 +3,8 @@ import {setupMobileKeyboard} from './mobile-keyboard.mjs';
 import {setupAcceptanceStudio,acceptanceClientEnvironment} from './acceptance-studio.mjs';
 import {sanitizeClientText,clientPublicationCard} from './client-publication.mjs';
 import {importCompletionFeedback,sourceReadinessFeedback,sourceEditorMetadata} from './source-readiness.mjs';
-import {setupPresentationStudio} from './presentation-studio.mjs';
+import {setupPresentationStudio,presentationCardKey} from './presentation-studio.mjs';
+import {savePresentationSource} from './presentation-export-boundary.mjs';
 import {setupCardArchive} from './card-archive.mjs';
 import {setupCardFiles,cardDownloadBlob} from './card-files.mjs';
 import {setupPhoneConnection} from './phone-connection.mjs';
@@ -30,6 +31,8 @@ import {renderInitialPayment} from './initial-payment.mjs';
 import {setupWorkflow} from './workflow.mjs';
 import {setupAccessRoles} from './access-roles.mjs';
 import {setupWorkspaceBackup} from './workspace-backup.mjs';
+import {setupReleaseDiagnostics} from './release-diagnostics.mjs';
+import {setupPhotoTraining} from './photo-training.mjs';
 import {setupPublicationReview} from './publication-review.mjs';
 import {setupImportErrors} from './import-errors.mjs';
 import {setupCommuteCompare} from './commute-compare.mjs';
@@ -278,6 +281,21 @@ async function localApi(path,data){return withRequestDeadline(path==='translate'
 function applyGenerated(value,kind='restore'){if(!value.fields||!Array.isArray(value.titles)||typeof value.body!=='string'||typeof value.tags!=='string')throw Error('Неверный результат');populate({...value.fields,...sourceEditorMetadata(value.fields,value.listing),photos:listingPhotoSources(value)});current=null;currentTitles=value.titles;titleIndex=0;$('outputTitle').value=value.titles[0]||'';$('output').value=value.body;$('tags').value=value.tags;renderTitles();renderTagReasons(value.tagSuggestions);loadedContent(kind);saveDraft();captureKnowledge('example',$('outputTitle').value,$('output').value);}
 function showLocalLink(id){const changed=localResultId!==id;localResultId=id;if(changed){archiveUI?.refresh();cardFilesUI?.refresh();photoUI?.refresh();}if(current){const item=objects.find(o=>o.id===current);if(item){item.resultId=id;write('most-objects',objects);}}$('localResult').classList.remove('hidden');$('resultLink').href='/listing/'+id;$('resultLink').textContent=location.origin+'/listing/'+id;try{const u=new URL($('url').value);if(u.protocol==='https:'&&/(^|\.)(cian\.ru|avito\.ru)$/i.test(u.hostname)){$('sourceLink').href=u.href;$('sourceLink').classList.remove('hidden');}else $('sourceLink').classList.add('hidden');}catch{$('sourceLink').classList.add('hidden');}}
 let importAiProgress=null;
+const localImportPendingKey='most-pending-import-request-v29';
+async function localImportIdentity(payload){
+ const raw=JSON.stringify(payload);let fingerprint='';
+ if(globalThis.crypto?.subtle){const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw));fingerprint=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');}
+ else{let hash=2166136261;for(const character of raw)hash=Math.imul(hash^character.codePointAt(0),16777619);fingerprint='fallback-'+(hash>>>0).toString(16)+'-'+raw.length;}
+ const previous=read(localImportPendingKey,null);
+ if(previous?.fingerprint===fingerprint&&/^[A-Za-z0-9_-]{12,80}$/.test(previous.requestId||''))return previous.requestId;
+ const requestId=globalThis.crypto?.randomUUID?.()||'import-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+ write(localImportPendingKey,{fingerprint,requestId});return requestId;
+}
+function localImportExistingCard(resultId){
+ let link=document.getElementById('importRecoveryLink');
+ if(!link){link=document.createElement('a');link.id='importRecoveryLink';link.className='btn';$('importStatus').after(link);}
+ link.hidden=!/^[a-f0-9]{32}$/.test(resultId||'');if(!link.hidden){link.href='/listing/'+resultId;link.textContent='Открыть сохранённую карточку';}
+}
 async function importLocal(){
  if(importing)return;
  importErrorsUI?.clear();importing=true;$('import').disabled=true;$('cancelImport').classList.remove('hidden');
@@ -285,12 +303,16 @@ async function importLocal(){
  try{
   const old=snapshot(),data={};
   for(const key of ['style','pickup','luggage','support','arrival','registration','registrationMonths','registrationPeople','phraseNotes'])data[key]=old[key];
-  const start=await localApi('import',{url:$('url').value,loader:$('localLoader').value,browser_channel:$('localBrowser').value,timeout:Number($('localTimeout').value),refresh:$('localRefresh').checked,data,rules,prefs});localJob=start.job_id;
+  const importRevision=editorRevision,payload=JSON.parse(JSON.stringify({url:$('url').value,loader:$('localLoader').value,browser_channel:$('localBrowser').value,timeout:Number($('localTimeout').value),refresh:$('localRefresh').checked,data,rules,prefs}));
+  localImportExistingCard(null);
+  const requestId=await localImportIdentity(payload),start=await localApi('import',{...payload,requestId});localJob=start.job_id;
   while(true){
    const job=await localApi('jobs/'+localJob);$('importStatus').textContent=job.message;ai.update(job.progress?.ai);
-   if(job.state==='error'){const failure=Error(job.message);failure.stage=job.progress?.stage;throw failure;}
+   if(['error','cancelled','interrupted'].includes(job.state)){write(localImportPendingKey,null);localImportExistingCard(job.result_id);const failure=Error(job.message);failure.stage=job.progress?.stage;throw failure;}
    if(job.state==='done'){
-    const result=await localApi('results/'+job.result_id),feedback=importCompletionFeedback(job,result);applyGenerated(result,'import');showLocalLink(job.result_id);saveDraft();history.pushState({},'', '/listing/'+job.result_id);
+    const result=await localApi('results/'+job.result_id),feedback=importCompletionFeedback(job,result);write(localImportPendingKey,null);
+    if(editorRevision!==importRevision){localImportExistingCard(job.result_id);$('importStatus').textContent='Импорт завершён. Пока он выполнялся, вы изменили редактор. Правки сохранены; подготовленная карточка открывается отдельной ссылкой.';break;}
+    applyGenerated(result,'import');showLocalLink(job.result_id);saveDraft();history.pushState({},'', '/listing/'+job.result_id);
     $('importStatus').textContent=feedback.message||job.message||'Карточка готова.';
     $('review').textContent=[feedback.sourceMessage,'Карточка загружена. Проверьте факты, словарь и условия; время до вузов добавляется после проверки.'].filter(Boolean).join(' ');
     toast(feedback.sourcePartial?'Карточка создана. Сбор исходной страницы частичный — подробности показаны над карточкой.':feedback.photoPartial?'Карточка создана. Фотографии подготовлены частично.':'Заголовки, описание и теги готовы. Ссылка карточки сохранена.');break;
@@ -423,7 +445,7 @@ function syncPhoneCard(){
 
 // Presentation design and the private dossier share the same stable Mac card ID.
 function presentationCurrentCard(){const revision=historyCurrent(),{resultId,...presentationFields}=revision.fields;return {id:localResultId,identity:editorCardEpoch,fields:presentationFields,titles:[revision.title,...revision.titles.filter(t=>t!==revision.title)],body:revision.body,tags:revision.tags};}
-async function ensurePresentationCard(){if(!localHosting)throw Error('Сохранение на Mac доступно в локальном редакторе.');const epoch=editorCardEpoch;if(!$('outputTitle').value.trim()&&!$('output').value.trim())throw Error('Сначала заполните карточку и создайте описание.');clearTimeout(relaySyncTimer);const saved=await persistLocal();if(epoch!==editorCardEpoch)throw Error('Карточка изменилась. Повторите действие.');return saved.result_id;}
+async function ensurePresentationCard({exportSnapshot=false}={}){if(!localHosting)throw Error('Сохранение на Mac доступно в локальном редакторе.');const epoch=editorCardEpoch,key=exportSnapshot?presentationCardKey(presentationCurrentCard()):null;if(!$('outputTitle').value.trim()&&!$('output').value.trim())throw Error('Сначала заполните карточку и создайте описание.');clearTimeout(relaySyncTimer);if(exportSnapshot){await photoUI?.preparePresentation();if(epoch!==editorCardEpoch||presentationCardKey(presentationCurrentCard())!==key)throw Error('Карточка изменилась. Обновите макет и повторите экспорт.');}const saved=exportSnapshot?await savePresentationSource({getCard:presentationCurrentCard,saveCard:()=>persistLocal(),cardKey:presentationCardKey}):await persistLocal();if(epoch!==editorCardEpoch)throw Error('Карточка изменилась. Повторите действие.');return exportSnapshot?saved:saved.result_id;}
 async function localExportBlob(asset){const url=new URL(asset.url,location.origin);if(url.origin!==location.origin||!/^\/api\/local\/(exports|card-attachments)\//.test(url.pathname))throw Error('Неверный адрес файла');const response=await fetch(url.pathname,{headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||''},cache:'no-store'});if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'Файл недоступен');}return response.blob();}
 async function localDownloadAsset(asset){cardDownloadBlob(await localExportBlob(asset),asset.name);cardFilesUI?.refresh();}
 async function localModelAttachmentBlob(asset){
@@ -479,7 +501,7 @@ workflowUI=setupWorkflow({mount:$('workflowMount'),getObjects:()=>objects,saveOb
 commuteCompareUI=setupCommuteCompare({mount:$('commuteCompareMount'),getObjects:()=>objects,onOpen:openLibraryWorkflowCard,toast});
 async function localWorkspaceBlob(path,data){
  if(!localHosting)throw Error('Операция доступна на сервере Mac');
- if(!/^(?:table-export|workspace-backup\.zip|dossier-(?:backup|client)\/[a-f0-9]{32})$/.test(path))throw Error('Неверный адрес файла');
+ if(!/^(?:table-export|release-diagnostics|workspace-backup\.zip|dossier-(?:backup|client)\/[a-f0-9]{32})$/.test(path))throw Error('Неверный адрес файла');
  return withRequestDeadline(120000,async(signal,scope)=>{const response=await fetch('/api/local/'+path,{method:data?'POST':'GET',headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||'',...(data?{'Content-Type':'application/json'}:{})},cache:'no-store',signal,...(data?{body:JSON.stringify(data)}:{})});if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'Не удалось подготовить файл');}const blob=await response.blob();scope.throwIfAborted();return blob;});
 }
 tableExportUI=setupTableExport({mount:$('tableExportMount'),getObjects:()=>objects,getXlsx:localHosting?rows=>localWorkspaceBlob('table-export',{format:'xlsx',rows}):null,toast});
@@ -493,6 +515,8 @@ publicationReviewUI=setupPublicationReview({mount:$('publicationReviewMount'),ap
 accessRolesUI=setupAccessRoles({mount:$('accessRolesMount'),api:localHosting?localApi:null,toast});
 if(localHosting){const acceptanceMount=document.createElement('div');$('accessRolesMount').after(acceptanceMount);setupAcceptanceStudio({mount:acceptanceMount,api:localApi,toast,getClient:()=>acceptanceClientEnvironment({keyboard:desktopMobileKeyboard.snapshot()})});}
 if(localHosting){const backupMount=document.createElement('div');$('accessRolesMount').after(backupMount);setupWorkspaceBackup({mount:backupMount,api:localApi,getBlob:localWorkspaceBlob,downloadBlob:cardDownloadBlob,toast});}
+if(localHosting){const diagnosticsMount=document.createElement('div');$('accessRolesMount').after(diagnosticsMount);setupReleaseDiagnostics({mount:diagnosticsMount,api:localApi,getBlob:localWorkspaceBlob,downloadBlob:cardDownloadBlob,toast});}
+if(localHosting){const trainingMount=document.createElement('div');$('photoObservations').after(trainingMount);setupPhotoTraining({mount:trainingMount,getCardId:()=>localResultId,ensureCard:ensurePresentationCard,api:localApi,toast});}
 importErrorsUI=setupImportErrors({mount:$('importErrorsMount'),getUrl:()=>$('url').value,onPaste:()=>{$('sourceAnalysis').open=true;$('source').focus();},onRetry:()=>importLocal(),toast});
 if(localHosting){
  const memoryMount=document.createElement('div');$('knowledge').prepend(memoryMount);

@@ -1,6 +1,6 @@
 {
   "project": "redcn",
-  "version": 28,
+  "version": 29,
   "total": 364,
   "tasks": [
     {
@@ -5594,7 +5594,8 @@
         "tests/test_learning_memory.py",
         "cli/tag_post_evaluation.py",
         "web/tag-post-stats.mjs",
-        "docs/QUALITY-v26.md — реальные датированные наблюдения и сравнимый контроль по-прежнему требуются"
+        "docs/QUALITY-v26.md — реальные датированные наблюдения и сравнимый контроль по-прежнему требуются",
+        "docs/RELEASE-v29.md — одобренных датированных наблюдений просмотров нет; статистический контроль не заявляется выполненным"
       ]
     },
     {
@@ -5609,7 +5610,8 @@
       "status": "planned",
       "evidence": [
         "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
-        "docs/TRAINING-v28.md — частично: воспроизводимый синтетический корпус 120/24 групп, точное пересечение с замороженной контрольной выборкой отсутствует; глобальные близкие дубли и человеческая приёмка остаются"
+        "docs/TRAINING-v28.md — частично: воспроизводимый синтетический корпус 120/24 групп, точное пересечение с замороженной контрольной выборкой отсутствует; глобальные близкие дубли и человеческая приёмка остаются",
+        "cli/text_corpus_audit.py; docs/TEXT-QUALITY-v29.md — 2952 строки, 308 групп; точные/близкие пересечения проверены, старые пробелы разрешений и хешей остаются"
       ]
     },
     {
@@ -5624,7 +5626,8 @@
       "status": "planned",
       "evidence": [
         "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
-        "docs/TRAINING-v28.md — частично: новый парный прогон 60 ответов с исходными ответами и причинами отказа в приватном отчёте; независимая диагностическая выборка ещё нужна"
+        "docs/TRAINING-v28.md — частично: новый парный прогон 60 ответов с исходными ответами и причинами отказа в приватном отчёте; независимая диагностическая выборка ещё нужна",
+        "cli/text_evaluation_audit.py; cli/text_evaluation_process.py; docs/TEXT-QUALITY-v29.md — классификация отказов, отдельные процессы и долговечная запись ответов; аварийная первая попытка учтена"
       ]
     },
     {
@@ -5639,7 +5642,9 @@
       "status": "planned",
       "evidence": [
         "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
-        "docs/TRAINING-v28.md — частично: общий top_p=0.9, проверка длины на ARM64 всех 720 записей, 0 пропусков; полный критерий остаётся открытым"
+        "docs/TRAINING-v28.md — частично: общий top_p=0.9, проверка длины на ARM64 всех 720 записей, 0 пропусков; полный критерий остаётся открытым",
+        "scripts/audit-text-objective-v29.py; scripts/check-text-reload-v29.py; docs/RELEASE-v29.md — все 720 строк, 0 пропусков; точное совпадение loss на 32 строках у обоих кандидатов; зависимость RCN-335 открыта",
+        "docs/benchmarks/text-v29-native-objective-reload-summary.json — нативные 720 строк, маска/EOS и два восстановления с разницей loss 0; происхождение RCN-335 остаётся открытым"
       ]
     },
     {
@@ -5656,7 +5661,8 @@
       "status": "planned",
       "evidence": [
         "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
-        "data/learning/factual-curriculum-v28.json; tests/test_factual_curriculum_v28.py — частично: 600/120 упражнений, 12 стилей, согласованные деньги и условия, история до 240 символов; расширенная человеческая приёмка не завершена"
+        "data/learning/factual-curriculum-v28.json; tests/test_factual_curriculum_v28.py — частично: 600/120 упражнений, 12 стилей, согласованные деньги и условия, история до 240 символов; расширенная человеческая приёмка не завершена",
+        "docs/TEXT-QUALITY-v29.md — v29 повторно использует ситуации v28; покрытие всех 12 подач без истории ещё не выполнено"
       ]
     },
     {
@@ -5674,7 +5680,9 @@
       "status": "planned",
       "evidence": [
         "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
-        "docs/TRAINING-v28.md — выполнен ограниченный эксперимент 800 шагов; кандидат отклонён, 0/30 полных проверок; расширенная независимая и ресурсная приёмка зависимостей остаётся"
+        "docs/TRAINING-v28.md — выполнен ограниченный эксперимент 800 шагов; кандидат отклонён, 0/30 полных проверок; расширенная независимая и ресурсная приёмка зависимостей остаётся",
+        "scripts/run-text-experiment-v29.py; data/quality/text-experiment-v29.json; docs/RELEASE-v29.md — два заранее зафиксированных режима по 240 шагов, реальное покрытие/время/память; зависимости приёмки остаются",
+        "docs/benchmarks/text-quality-v29-mixtures-public.json; docs/benchmarks/text-quality-v29-postfix-control-public.json — два обучения по 240 шагов, оба кандидата отклонены; 600 исходных ответов и отдельный свежий контроль 300"
       ]
     },
     {
@@ -5689,7 +5697,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "scripts/summarize-text-evaluation-v29.py; docs/TEXT-QUALITY-v29.md — две смеси от одинаковых весов; отдельные направления, завершённость и факты, усечённые ответы не получают зачёт",
+        "docs/benchmarks/text-quality-v29-mixtures-public.json — завершение переводов смеси B 30/30 в каждом направлении, полные факты 0/60; зависимости и независимая разметка остаются"
       ]
     },
     {
@@ -5704,7 +5714,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/advertising_structure.py; scripts/evaluate-advertising-structure.py; tests/test_learning_studio_browser.py — ограниченная схема и неизменяемые факты, видимый вклад генератора, защита ручного текста",
+        "docs/benchmarks/text-structure-v29-native-public.json — структура 90/90 с EOS и допустимым JSON; факты переносит генератор; зависимости RCN-337/338 остаются"
       ]
     },
     {
@@ -5718,7 +5730,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "data/quality/text-validator-v29.json; docs/TEXT-QUALITY-v29.md — 36 составленных с помощью ИИ контрольных случаев; ручные независимые ожидаемые решения ещё требуются"
       ]
     },
     {
@@ -5734,7 +5747,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/advertising_structure.py; scripts/evaluate-advertising-structure.py; docs/TEXT-QUALITY-v29.md — история, содержательный fingerprint и протокол 10 × 20; редактура RCN-262 остаётся",
+        "docs/benchmarks/text-structure-v29-native-public.json — 10 серий по 20 вариантов, повторов 0; 48 конечных планов, китайская редактура и зависимости остаются"
       ]
     },
     {
@@ -5750,7 +5765,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "data/quality/rental-heldout-v29.json; docs/TEXT-QUALITY-v29.md — 30 новых замороженных групп, 150 проб на модель; после раскрытия набор диагностический, зависимости остаются",
+        "docs/benchmarks/text-quality-v29-postfix-control-public.json — свежие 150+150 ответов на ранее замороженных 30 группах; после раскрытия набор диагностический, нужен новый слепой"
       ]
     },
     {
@@ -5765,7 +5782,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/learning_provenance.py; tests/test_learning_consent.py; docs/LEARNING-OPERATIONS-v29.md#consent — отзыв, производные, состав корпусов и затронутые веса; зависимость происхождения остаётся"
       ]
     },
     {
@@ -5777,10 +5795,12 @@
       "depends_on": [
         "RCN-332"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
-        "docs/TRAINING-v28.md — частично: 800 шагов на Mac с 8 ГБ, пик MLX — 1 533 586 504 байта; длительный и интерактивный ресурсный сценарий ещё не принят"
+        "docs/TRAINING-v28.md — частично: 800 шагов на Mac с 8 ГБ, пик MLX — 1 533 586 504 байта; длительный и интерактивный ресурсный сценарий ещё не принят",
+        "scripts/native-training-acceptance.py; cli/training_resources.py; docs/LEARNING-OPERATIONS-v29.md#resources — реальные MLX/ONNX/Chrome на Mac 8 GiB, 13 проверок; low-memory ветвь без выделения аварийной нагрузки",
+        "docs/benchmarks/native-engineering-v29.json; docs/VERIFICATION.md — Mac 8 GiB, 13/13 ресурсных проверок; приоритет запроса, остановка/возобновление, собственные процессы и проверенный checkpoint; low-memory через управляемый порог, без OOM"
       ]
     },
     {
@@ -5795,7 +5815,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/model_history.py; web/model-history.mjs; docs/LEARNING-OPERATIONS-v29.md#history — выбранные веса, живой процесс и решение различаются; независимая приёмка остаётся"
       ]
     },
     {
@@ -5809,7 +5830,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "scripts/verify-model-switch-v29.py; docs/LEARNING-OPERATIONS-v29.md#switch — пять нативных сценариев на синтетических весах; не приёмка качества реального кандидата"
       ]
     },
     {
@@ -5840,7 +5862,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "cli/photo_training.py; scripts/photo-corpus.py; docs/PHOTO-QUALITY-v29.md — экспорт групп и исходных SHA реализован, разрешённый корпус реальных квартир ещё нужен"
       ]
     },
     {
@@ -5854,7 +5877,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "docs/PHOTO-QUALITY-v29.md — present/absent/unknown/rejected различаются; реальные редкие категории и проверенные отрицательные кадры ещё нужны"
       ]
     },
     {
@@ -5869,7 +5893,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "cli/photo_calibration.py; tests/test_photo_calibration.py; docs/PHOTO-QUALITY-v29.md — calibration/test, замороженные пороги и TP/FP/FN/Wilson; реальная новая калибровка не выполнена"
       ]
     },
     {
@@ -5883,9 +5908,11 @@
         "RCN-332",
         "RCN-349"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "cli/photo_training.py; cli/photo_training_api.py; web/photo-training.mjs; tests/test_photo_training_browser.py; docs/PHOTO-QUALITY-v29.md — ручные рамки/решения, права точного набора SHA, pending и проверенный приватный экспорт",
+        "docs/benchmarks/native-engineering-v29.json; docs/PHOTO-QUALITY-v29.md — Linux и Mac Chrome проверили приватную очередь с исходным SHA, независимыми решениями, рамками и экспортом только проверенных записей; автоматический ответ остаётся pending"
       ]
     },
     {
@@ -5901,7 +5928,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "docs/PHOTO-QUALITY-v29.md — эксперимент не запущен: новые разрешённые группы, положительная/отрицательная разметка и калибровка ещё не готовы"
       ]
     },
     {
@@ -5918,7 +5946,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "scripts/verify-card-workflow.py; docs/PROJECT-RELIABILITY-v29.md#workflow — изолированный сквозной сценарий и реальные форматы; Chrome phone viewport не физический iPhone",
+        "docs/benchmarks/native-engineering-v29.json — сквозной Mac core, 134,288 с, MLX/ONNX и реальные экспорты; fullCriterionMet=false, физический iPhone и зависимости остаются"
       ]
     },
     {
@@ -5933,7 +5963,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/project_soak.py; scripts/soak-project.py; docs/PROJECT-RELIABILITY-v29.md#soak — отдельный снимок источников, реальные фазы и ресурсный замок; физический сон/пробуждение не измерен",
+        "docs/benchmarks/native-engineering-v29.json — 7200,847 с / 246 операций / 0 ошибок на v28 с четырьмя файлами стенда; окончательная v29 и физический сон/пробуждение не приняты"
       ]
     },
     {
@@ -5948,7 +5980,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/import_job_journal.py; tests/test_import_recovery_integration.py; tests/test_learning_recovery.py; docs/PROJECT-RELIABILITY-v29.md#recovery — повтор запроса, checkpoint и блокировки; сон ещё не принят"
       ]
     },
     {
@@ -5964,7 +5997,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/learning_transfer.py; tests/test_learning_transfer.py; tests/fixtures/macos-learning-v29/source.json; docs/LEARNING-OPERATIONS-v29.md#transfer — исторические версии и отзывы, хеши, отключённое принятие; синтетические веса не подтверждают runtime"
       ]
     },
     {
@@ -5976,9 +6010,11 @@
       "depends_on": [
         "RCN-200"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/roadmap_evidence.py; scripts/validate-roadmap-evidence.py; tests/test_roadmap_evidence.py; docs/PROJECT-RELIABILITY-v29.md#roadmap-proof — критерий/артефакт/коммит и все представления; прежняя нетипизированная история обозначена отдельно",
+        "cli/roadmap_evidence.py; tests/test_roadmap_evidence.py; .github/workflows/verification.yml; docs/VERIFICATION.md — автоматическая проверка неизменных ID/критериев, графа, ссылок, SHA доказательств и коммита; план, сайт и issue сверяются отдельно, исторические пробелы не скрываются"
       ]
     },
     {
@@ -5993,7 +6029,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/source_schema_health.py; tests/test_source_schema_health.py; docs/PROJECT-RELIABILITY-v29.md#source-drift — сигнал схемы и приватный фрагмент; расширенные реальные снимки ещё нужны"
       ]
     },
     {
@@ -6009,7 +6046,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/client_bundle_consistency.py; web/presentation-export-boundary.mjs; tests/test_presentation_browser.py; docs/PROJECT-RELIABILITY-v29.md#client-bundle — конкретная ревизия, старый дизайнер и ручная правка; зависимости качества текста остаются",
+        "docs/benchmarks/native-engineering-v29.json — HTML/PNG/PDF/ZIP одной ревизии, устаревшие файлы сохранены и смешанный комплект отклонён; зависимость RCN-343 остаётся"
       ]
     },
     {
@@ -6025,7 +6064,8 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/acceptance_evidence.py; docs/PROJECT-RELIABILITY-v29.md#physical-pwa — форма физического протокола PWA; реальный iPhone ещё не проверен"
       ]
     },
     {
@@ -6040,7 +6080,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/release_diagnostics.py; scripts/build-release-identity.py; docs/PROJECT-RELIABILITY-v29.md#versions-diagnostics — идентичность процесса, старая вкладка и частичная сборка; зависимость истории моделей остаётся",
+        "docs/benchmarks/native-engineering-v29.json — настоящий DOM desktop/phone совпал с серверным buildId; зависимости RCN-347/357 остаются"
       ]
     },
     {
@@ -6056,7 +6098,9 @@
       ],
       "status": "planned",
       "evidence": [
-        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена"
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/release_diagnostics.py; tests/test_release_diagnostics.py; docs/PROJECT-RELIABILITY-v29.md#versions-diagnostics — локальный ZIP до 256000 байт после preview, без секретов/исходных карточек; зависимости восстановления остаются",
+        "docs/benchmarks/native-engineering-v29.json — явный диагностический ZIP, приватные исходники исключены, версии совпадают; без автоотправки, зависимости остаются"
       ]
     }
   ],

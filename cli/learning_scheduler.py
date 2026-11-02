@@ -135,9 +135,13 @@ def model_resource(directory, kind='foreground', timeout=0):
                 if time.monotonic() >= finish:
                     raise ModelBusy('Локальная модель занята. Обучение приостанавливается; повторите запрос через несколько секунд.')
                 time.sleep(min(.05, max(0, finish-time.monotonic())))
-        yield
+        # A supervised child may inherit this descriptor. If the server dies,
+        # its still-running training child continues to own the OS lease.
+        yield descriptor
     finally:
-        fcntl.flock(descriptor, fcntl.LOCK_UN)
+        # A native child inherits this same open-file-description. Explicit
+        # LOCK_UN would also release its lease while it is still running.
+        # Closing only our reference keeps the lock until the final owner exits.
         os.close(descriptor)
 
 
@@ -153,6 +157,23 @@ def active_imports(directory):
             return db.execute('SELECT COUNT(*) FROM attempts WHERE finished IS NULL').fetchone()[0]
     except (sqlite3.Error, ValueError):
         return None
+
+
+def valid_checkpoint(folder,dataset):
+    """An interrupted multi-file save is preserved, but never resumed blindly."""
+    try:
+        receipt=_read(Path(folder)/'trainreceipt.json',{})
+        if not isinstance(receipt,dict) or type(receipt.get('stepsCompleted')) is not int or receipt['stepsCompleted']<1:
+            return False
+        for name,key in (('adapters.safetensors','adapterSha256'),('optimizer.safetensors','optimizerSha256'),('initial.safetensors','initialSha256')):
+            path=Path(folder)/name
+            if path.is_symlink() or not path.is_file() or not 0<path.stat().st_size<=8_000_000 or hashlib.sha256(path.read_bytes()).hexdigest()!=receipt.get(key):
+                return False
+        path=Path(dataset)
+        return (not path.is_symlink() and path.is_file() and 0<path.stat().st_size<=8_000_000
+                and hashlib.sha256(path.read_bytes()).hexdigest()==receipt.get('datasetSha256'))
+    except (OSError,ValueError,TypeError):
+        return False
 
 
 def _samples(memory):
@@ -192,13 +213,15 @@ def status(directory):
 
 
 class IdleTrainer:
-    def __init__(self, directory, *, busy=None, clock=time.time, popen=subprocess.Popen):
+    def __init__(self, directory, *, busy=None, clock=time.time, popen=subprocess.Popen, resource_sampler=None):
         self.directory = Path(directory).resolve()
         self.folder = _folder(self.directory)
         self.memory = LearningMemory(self.directory)
         self.busy = busy or (lambda: False)
         self.clock = clock
         self.popen = popen
+        from training_resources import sample
+        self.resource_sampler = resource_sampler or sample
         self.stopped = threading.Event()
         self.thread = None
         self._process = None
@@ -207,10 +230,17 @@ class IdleTrainer:
         self.state = _read(self.folder/'scheduler-state.json', {})
         if not isinstance(self.state, dict):
             self.state = {}
+        if self.state.get('phase') in {'training','evaluating'}:
+            self.state.update(phase='recovery-pending',updatedAt=self.clock(),
+                message='Предыдущий процесс прерван. Проверяем блокировку и контрольную точку до возобновления.')
+            _write(self.folder/'scheduler-state.json',self.state)
 
     def _state(self, phase, message, **extra):
         if self.stopped.is_set():
             return {key:value for key,value in self.state.items() if key!='sampleHashes'}
+        if phase=='training' and extra.get('jobId')!=self.state.get('jobId'):
+            self.state.update(stepsCompleted=0,trainableParameters=0,adapterReady=False,
+                resourceStopReason=None,resourceGuard=None,qualityPassed=None,qualityRequested=None,qualityMessage=None)
         self.state.update(phase=phase, message=message, updatedAt=self.clock(), **extra)
         _write(self.folder/'scheduler-state.json', self.state)
         return status(self.directory)
@@ -276,10 +306,10 @@ class IdleTrainer:
         if runtime is None:
             return self._state('runtime-unavailable', 'Изолированная языковая модель ещё не установлена.')
         try:
-            with model_resource(self.directory, kind='background', timeout=0):
+            with model_resource(self.directory, kind='background', timeout=0) as resource_fd:
                 if self._busy() or not self._idle(config):
                     return self._state('waiting-idle', 'Появилась работа с объявлениями; обучение отложено.')
-                result = self._run(config, runtime, fingerprint, samples, same)
+                result = self._run(config, runtime, fingerprint, samples, same, resource_fd=resource_fd)
             # The evaluation process acquires the same model gate itself.
             # Never hold the parent's training lock while starting that child.
             if (config['automaticPromotion'] and self.state.get('lastOutcome') == 'unaccepted'
@@ -289,13 +319,18 @@ class IdleTrainer:
         except ModelBusy:
             return self._state('waiting-model', 'Локальная модель обрабатывает текущий запрос.')
 
-    def _run(self, config, runtime, fingerprint, samples, same):
+    def _run(self, config, runtime, fingerprint, samples, same, *, resource_fd=None):
         command, model = runtime
-        job_id = self.state.get('jobId') if same and self.state.get('lastOutcome') == 'paused' else None
+        from training_resources import ResourceGuard
+        resources = ResourceGuard(self.resource_sampler)
+        reason = resources.check(admission=True)
+        if reason:
+            return self._state('waiting-resources', 'Фоновое обучение ждёт достаточной памяти Mac.',
+                               resourceStopReason=reason, resourceGuard=resources.receipt())
+        job_id = self.state.get('jobId') if same and self.state.get('lastOutcome') in {'paused','running'} else None
         if job_id:
             prior = self.folder/'training-runs'/job_id/'candidate'
-            if not all((prior/name).is_file() and not (prior/name).is_symlink()
-                    for name in ('adapters.safetensors','optimizer.safetensors','initial.safetensors','trainreceipt.json')):
+            if not valid_checkpoint(prior,prior.parent/'dataset.json'):
                 job_id = None
         if job_id:
             dataset = self.folder/'training-runs'/job_id/'dataset.json'
@@ -315,6 +350,11 @@ class IdleTrainer:
                 return self._state('needs-holdout', 'Недостаточно коротких независимых примеров для ограниченного учебного прогона.', holdoutFingerprint=fingerprint)
             _write(dataset, {'version':1, 'splits': {'train':train, 'validation':valid},
                 'provenance': {'kind': 'approved-local-memory', 'snapshot': snapshot['manifest']}})
+        try:
+            self.memory.register_dataset(dataset)
+        except ValueError:
+            return self._state('consent-withdrawn', 'Корпус содержит отозванный или изменённый пример. Подготовьте новую версию данных.',
+                               lastOutcome='consent-withdrawn', adapterReady=False, qualityOutcome='blocked')
         cancel = self.folder/'training.cancel'
         if cancel.is_symlink():
             raise ValueError('Маркер отмены не должен быть ссылкой')
@@ -326,7 +366,8 @@ class IdleTrainer:
         attempt = self.state.get('attempts', 0)+1 if same else 1
         args = [*command, '--model', str(model), '--dataset', str(dataset), '--output', str(output),
                 '--steps', str(config['maxSteps']), '--max-seconds', str(config['maxSeconds']),
-                '--max-seq-length', str(config['maxSequenceLength']), '--cancel-file', str(cancel)]
+                '--max-seq-length', str(config['maxSequenceLength']), '--cancel-file', str(cancel),
+                '--consent-cache', str(self.directory)]
         adapter = output/'adapters.safetensors'
         if job_id == self.state.get('jobId') and adapter.is_file():
             args += ['--resume-adapter', str(adapter)]
@@ -339,14 +380,36 @@ class IdleTrainer:
             if self.stopped.is_set():
                 return self._state('paused', 'Обучение остановлено вместе с сервером.')
             process = self.popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                 stderr=subprocess.DEVNULL, start_new_session=True)
+                                 stderr=subprocess.DEVNULL, start_new_session=True,
+                                 **({'pass_fds':(resource_fd,)} if resource_fd is not None else {}))
             self._process = process
         interrupted = False
+        consent_withdrawn = False
+        resource_reason = None
+        consent_checked = self.clock()
         try:
             while process.poll() is None:
+                if self.clock()-consent_checked >= 5:
+                    consent_checked = self.clock()
+                    resource_reason = resources.check(getattr(process,'pid',None))
+                    _write(output.parent/'resource-receipt.json',resources.receipt())
+                    try:
+                        self.memory.assert_dataset_consent(dataset)
+                    except ValueError:
+                        consent_withdrawn = True
                 if self.stopped.is_set() or self._busy() or cancel.exists():
                     interrupted = True
                     _write(cancel, {'at':self.clock()})
+                    try: process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.terminate()
+                        try: process.wait(timeout=2)
+                        except subprocess.TimeoutExpired:
+                            process.kill(); process.wait(timeout=2)
+                    break
+                if consent_withdrawn or resource_reason:
+                    interrupted = True
+                    _write(cancel, {'at':self.clock(), 'reason':'consent-withdrawn' if consent_withdrawn else resource_reason})
                     try: process.wait(timeout=5)
                     except subprocess.TimeoutExpired:
                         process.terminate()
@@ -369,6 +432,7 @@ class IdleTrainer:
             with self._process_lock:
                 if self._process is process:
                     self._process = None
+            _write(output.parent/'resource-receipt.json',resources.receipt())
         if self.stopped.is_set():
             return {key:value for key,value in self.state.items() if key!='sampleHashes'}
         receipt = _read(output/'trainreceipt.json', {})
@@ -379,7 +443,15 @@ class IdleTrainer:
         complete = (not interrupted and process.returncode == 0
             and receipt.get('status') == 'trained-unaccepted'
             and receipt.get('trainableParameters') == 540672
+            and type(receipt.get('stepsCompleted')) is int and receipt['stepsCompleted']==config['maxSteps']
+            and receipt.get('stoppedEarly') is False and valid_checkpoint(output,dataset)
             and adapter_sha is not None and receipt.get('adapterSha256') == adapter_sha)
+        if complete:
+            try:
+                self.memory.register_candidate(adapter_sha, dataset)
+            except ValueError:
+                complete = False
+                consent_withdrawn = True
         step = receipt.get('stepsCompleted', 0)
         step = step if type(step) is int and step >= 0 else 0
         outcome = 'unaccepted' if complete else 'paused' if interrupted else 'failed'
@@ -389,12 +461,15 @@ class IdleTrainer:
             'step':step, 'snapshot':str(dataset), 'model':str(model),
             **({'adapter':str(adapter)} if adapter.is_file() else {}),
             'metrics': {'trainableParameters':540672 if complete else 0}})
-        return self._state('ready-for-review' if complete else 'paused' if interrupted else 'failed',
+        return self._state('consent-withdrawn' if consent_withdrawn else 'ready-for-review' if complete else 'paused' if interrupted else 'failed',
+            'Согласие на учебный пример отозвано. Кандидат заблокирован; нужна новая версия данных и переобучение.' if consent_withdrawn else
+            'Обучение приостановлено из-за давления на память. Следующая попытка проверит сохранённую контрольную точку.' if resource_reason else
             'Кандидат сохранён и ожидает проверки качества.' if complete else
             'Обучение приостановлено для текущей работы; контрольная точка сохранена.' if interrupted else
             'Фоновое обучение не завершилось; состояние сохранено для проверки.',
-            lastOutcome=outcome, retryAfter=self.clock()+3600, stepsCompleted=step,
-            trainableParameters=540672 if complete else 0, adapterReady=adapter.is_file())
+            lastOutcome='consent-withdrawn' if consent_withdrawn else outcome, retryAfter=self.clock()+3600, stepsCompleted=step,
+            trainableParameters=540672 if complete else 0, adapterReady=not consent_withdrawn and (complete or valid_checkpoint(output,dataset)),
+            resourceStopReason=resource_reason, resourceGuard={key:value for key,value in resources.receipt().items() if key!='samples'})
 
     def _evaluate(self, config):
         """Evaluate saved weights offline; imports and foreground work preempt it."""
@@ -500,9 +575,9 @@ class IdleTrainer:
             process = self._process
         if process is not None and process.poll() is None:
             process.terminate()
-            try:process.wait(timeout=.5)
+            try:process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                process.kill();process.wait(timeout=1)
+                process.kill();process.wait(timeout=2)
         thread = self.thread
         if thread is not None and thread is not threading.current_thread():
             thread.join(timeout=6)

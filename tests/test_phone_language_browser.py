@@ -28,7 +28,13 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
         self.page.on('request',lambda request:capabilities.append(request.url) if request.url.endswith('/api/phone/language') else None)
         acceptance.PhoneBrowserAcceptance.connect(self);self.open_card()
         self.page.locator('#phonePhotoNext').click()
-        self.page.wait_for_function("document.querySelector('#phonePhotoPosition').textContent.startsWith('2 /')")
+        # The label changes at the start of the smooth transition. Establish
+        # the selected raster before checking that a later rewrite preserves it.
+        self.page.wait_for_function("""() => {
+            const gallery=document.querySelector('#phonePhotos');
+            return gallery.clientWidth>0 && Math.abs(gallery.scrollLeft-gallery.clientWidth)<=1 &&
+                document.querySelector('#phonePhotoPosition').textContent.startsWith('2 /');
+        }""")
         photo=self.page.locator('#phoneDownloadPhoto').get_attribute('href')
         self.page.evaluate("window.savedGalleryImage=document.querySelector('#phonePhotos img')")
         requests=[]

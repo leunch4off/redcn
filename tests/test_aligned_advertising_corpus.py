@@ -1,5 +1,6 @@
 """Prevent a repeat of the training/inference distribution contract mismatch."""
 from collections import defaultdict
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -11,7 +12,7 @@ sys.path.insert(0, str(ROOT/'cli'))
 from advertising_styles import ADVERTISING_SYSTEM, STYLES
 from local_content import advertising_baseline, advertising_messages, _advertising_issues, _content_fingerprint
 from rental_heldout_quality import check_training_disjoint, load_cases
-from text_model_contract import load_dataset
+from text_model_contract import load_dataset, file_sha
 from text_quality import parse_card, translation_checks
 
 SPEC = importlib.util.spec_from_file_location('aligned_advertising_builder', ROOT/'scripts/build-aligned-advertising-corpus.py')
@@ -30,7 +31,18 @@ class AlignedAdvertisingCorpusTests(unittest.TestCase):
                     cls.rendered[row['groupId']] = advertising_baseline(row['verifiedFields'])
 
     def test_checked_in_dataset_is_reproducible_and_prior_experiment_is_preserved(self):
-        self.assertEqual(builder.build(), self.data)
+        self.assertEqual(file_sha(ROOT/'data/learning/advertising-production-v27b.json'),
+            'e63a9ea7cacad1303e1569c3920ca91d74f72939e59a28d9e731cf8548d620ff')
+        rebuilt=builder.build()
+        current_contract=file_sha(ROOT/'cli/local_content.py')
+        self.assertEqual(rebuilt['provenance']['sourceContractSha256'],current_contract)
+        # The stored envelope identifies the historical validator. A rebuild
+        # identifies today's validator, while every target, prompt, split and
+        # all other provenance must still reproduce exactly. Never rewrite the
+        # frozen experiment merely to update its historical checker identity.
+        expected=copy.deepcopy(self.data)
+        expected['provenance']['sourceContractSha256']=current_contract
+        self.assertEqual(rebuilt,expected)
         previous = load_dataset(ROOT/'data/learning/advertising-fictional-v27.json')
         self.assertEqual(len(previous['splits']['train']), 640)
         self.assertFalse(self.data['provenance']['supersedesExperimentData'])

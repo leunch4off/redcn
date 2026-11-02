@@ -71,7 +71,7 @@ def semantic_state(directory):
         'learning':LearningMemory(root).status()['counts']}
 
 
-def generate_fixture(*, require_macos=False, origin='development-test'):
+def generate_fixture(*, require_macos=False, origin='development-test', with_learning=False):
     if require_macos and platform.system()!='Darwin':raise ValueError('The source fixture must be exported on macOS')
     if origin not in ('development-test','operator-mac'):raise ValueError('Unknown source origin')
     if origin=='operator-mac' and (not require_macos or os.environ.get('GITHUB_ACTIONS')=='true'):
@@ -103,11 +103,27 @@ def generate_fixture(*, require_macos=False, origin='development-test'):
         memory=LearningMemory(root)
         memory.record('translation',{'ru':'есть стол','zh':'有书桌'},status='approved',group_id='generated-one')
         memory.record('translation',{'ru':'проверить мебель','zh':'核实家具'},group_id='generated-two')
+        learning=None
+        if with_learning:
+            from learning_scheduler import save_config
+            rejected=memory.record('translation',{'ru':'вымышленное отклонение','zh':'虚构拒绝'},status='rejected',group_id='generated-rejected',actor='synthetic-reviewer')
+            withdrawn=memory.record('translation',{'ru':'вымышленный отзыв','zh':'虚构撤回'},status='approved',group_id='generated-withdrawn',actor='synthetic-reviewer')
+            memory.withdraw(withdrawn['id'],actor='synthetic-reviewer',reason='Synthetic withdrawal drill')
+            save_config(root,{'enabled':True,'automaticPromotion':True,'maxSteps':37})
+            weights=b'PUBLIC SYNTHETIC NONEXECUTABLE WEIGHT TRANSFER FIXTURE'
+            digest=_sha(weights);folder=root/'tools/text-ai/runs/generated-fixture';folder.mkdir(parents=True)
+            (folder/'adapters.safetensors').write_bytes(weights)
+            (folder/'trainreceipt.json').write_text(json.dumps({'version':1,'status':'synthetic-portability-fixture',
+                'adapterSha256':digest,'stepsCompleted':0,'examples':{'train':0,'validation':0}}))
+            (root/'text-ai.json').write_text(json.dumps({'enabled':True,'useCandidateAdapter':True,'adapterPath':str(folder)}))
+            learning={'weightsSha256':digest,'rejectedId':rejected['id'],'withdrawnId':withdrawn['id'],
+                'maxSteps':37,'realModelQualityEvaluated':False,'scope':'Synthetic bytes exercise transfer integrity only'}
         expected=semantic_state(root);content=workspace_backup.export_workspace(root)
     receipt={'version':1,'type':'redcn-public-synthetic-portability','synthetic':True,'source':{'system':platform.system(),'machine':platform.machine(),'macos':platform.mac_ver()[0] or None,'origin':origin},
         'exporterSha256':_sha(Path(__file__).read_bytes()),'archiveSha256':_sha(content),'archiveBytes':len(content),
         'createdUtc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'expected':expected,
         'scope':'Generated pixels/text/documents only; no operator cache was read'}
+    if learning is not None:receipt['learning']=learning
     return content,receipt
 
 
@@ -133,8 +149,23 @@ def verify_fixture(content,receipt,*, require_github_macos=False):
                 raise ValueError('Historical client exports must be marked for regeneration')
         excluded=('phone-access.json','cookies.json','import-diagnostics','models')
         if any((destination/name).exists() for name in excluded):raise ValueError('Runtime/private state leaked into restored fixture')
+        learning=receipt.get('learning')
+        if learning:
+            from learning_scheduler import load_config
+            from learning_transfer import preflight
+            weights=destination/'learning/imported-models'/learning['weightsSha256']/'adapters.safetensors'
+            if _sha(weights.read_bytes())!=learning['weightsSha256']:raise ValueError('Transferred weights changed')
+            config=load_config(destination)
+            if config['enabled'] or config['automaticPromotion'] or config['maxSteps']!=learning['maxSteps']:
+                raise ValueError('Training preferences were lost or silently enabled')
+            with LearningMemory(destination)._db() as db:
+                for identifier,state in ((learning['rejectedId'],'rejected'),(learning['withdrawnId'],'withdrawn')):
+                    if db.execute('SELECT status FROM examples WHERE id=?',(identifier,)).fetchone()[0]!=state:raise ValueError('Review/withdrawal lost')
+            if preflight(destination)['readyToActivate']:raise ValueError('Historical receipts granted approval')
     return {'version':1,'type':'redcn-portability-verification','verified':True,'archiveSha256':_sha(content),
         'source':receipt['source'],'destination':{'system':platform.system(),'machine':platform.machine(),'macos':platform.mac_ver()[0] or None,'githubHosted':github_hosted,'runId':os.environ.get('GITHUB_RUN_ID')},
         'cards':inspected['cards'],'attachments':inspected['attachments'],'versions':inspected['exports'],'photos':inspected['photos'],
         'verifiedComponents':['card-relations','attachment-bytes','original-and-cropped-photo-bytes','template','material-version-bytes','archive-status','profile','approved-dictionary','learning-counts'],
-        'devicesMustPairAgain':True,'clientMaterialsRequireRegeneration':True}
+        'devicesMustPairAgain':True,'clientMaterialsRequireRegeneration':True,
+        'learningTransferVerified':bool(receipt.get('learning')),'realModelQualityEvaluated':False,
+        'freshNativeModelAcceptanceRequired':True}

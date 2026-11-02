@@ -467,10 +467,14 @@ def list_cards(directory,after=0):
 
 def public_card(directory,result_id):
     import local_server
+    from client_bundle_consistency import snapshot,source_receipt
     from client_publication import client_card,PublicationReviewRequired
     from service_claims import ServiceClaimReview,safe_service_view,service_authorization
     result=local_server.read_result(directory,result_id)
     if result is None or result.get('fields',{}).get('isDemo') is True:return None
+    # Bind this exact payload before reading selected media. The final receipt
+    # refuses concurrent updates instead of blessing a mixed read.
+    revision=snapshot(directory,result_id,expected_card=result)
     db=redcn.open_cache(directory)
     try:updated=db.execute('SELECT updated FROM results WHERE id=?',(result_id,)).fetchone()[0]
     finally:db.close()
@@ -486,6 +490,7 @@ def public_card(directory,result_id):
     if not projected.get('publicationNeedsReview'):
         authorization=service_authorization(result.get('fields',{}))
         if authorization:projected['serviceAuthorization']=authorization
+    projected['presentationReceipt']=source_receipt(directory,result_id,revision)
     return projected
 
 
@@ -686,15 +691,19 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if path=='/api/phone/import':
                     # Phone requests a source; browser selection, dictionary and arbitrary
                     # override data remain controlled by the Mac, not an untrusted payload.
-                    params={**load_profile(directory),'url':data.get('url',''),'loader':data.get('loader','chrome'),'timeout':data.get('timeout',180)}
-                    self.respond(202,{'job_id':controller.start_import(params,actor=self.actor)});return
+                    intent={'url':data.get('url',''),'loader':data.get('loader','chrome'),'timeout':data.get('timeout',180)}
+                    params={**load_profile(directory),**intent,'requestId':data.get('requestId')}
+                    self.respond(202,{'job_id':controller.start_import(params,actor=self.actor,request_intent=intent)});return
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/prepare',path)
-                if match:self.respond(202,{'job_id':controller.prepare_card(match[1])});return
+                if match:self.respond(202,{'job_id':controller.prepare_card(match[1],actor=self.actor,request_id=data.get('requestId'))});return
                 match=re.fullmatch(r'/api/phone/cards/([a-f0-9]{32})/analyze',path)
-                if match:self.respond(202,{'job_id':controller.prepare_card(match[1],analyze=True)});return
+                if match:self.respond(202,{'job_id':controller.prepare_card(match[1],analyze=True,actor=self.actor,request_id=data.get('requestId'))});return
                 self.respond(404,{'error':'Не найдено'})
             except PairingThrottled as error:self.respond(429,{'error':str(error),'retryAfter':error.retry_after},headers={'Retry-After':str(error.retry_after)})
-            except (ValueError,TypeError,OSError) as error:self.respond(400,{'error':str(error)})
+            except (ValueError,TypeError,OSError) as error:
+                from import_job_journal import ImportRequestConflict
+                self.respond(409 if isinstance(error,ImportRequestConflict) or 'Дождитесь' in str(error) else 400,
+                    {'error':str(error),**({'code':error.code} if isinstance(error,ImportRequestConflict) else {})})
     server=ThreadingHTTPServer((bind,port),Handler);server.daemon_threads=True;server.pairing=state;server.allowed_hosts=allowed
     server.external_origins=set();server.origins_lock=threading.RLock()
     return server

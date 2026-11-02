@@ -7,6 +7,20 @@ LABELS = {'gallery': 'Фотографии', 'description': 'Описание', 
 REASONS = ('ready', 'partial', 'not_found', 'not_visited_budget')
 
 
+def _schema_summary(listing, result):
+    from source_schema_health import public_summary
+    old=listing.get('sourceReadiness') if isinstance(listing,dict) else None
+    raw=listing.get('sourceSchemaHealth') if isinstance(listing,dict) else None
+    if raw is None and isinstance(old,dict):raw=old.get('schema')
+    schema=public_summary(raw)
+    if schema is None:return result
+    result={**result,'schema':schema,'warnings':list(result['warnings'])}
+    if schema['state'] in ('partial','unsupported'):
+        result.update(state='partial',completed=False,partial=True)
+        result['warnings'].extend(schema['warnings'])
+    return result
+
+
 def source_readiness(listing):
     capture = listing.get('capture') if isinstance(listing, dict) else None
     if not isinstance(capture, dict):
@@ -14,8 +28,8 @@ def source_readiness(listing):
         if isinstance(old, dict) and isinstance(old.get('sections'), list):
             capture = old
         else:
-            return {'state': 'unknown', 'completed': False, 'partial': False,
-                    'sections': [], 'warnings': ['Проверка полноты разделов источника не записана.']}
+            return _schema_summary(listing, {'state': 'unknown', 'completed': False, 'partial': False,
+                    'sections': [], 'warnings': ['Проверка полноты разделов источника не записана.']})
     rows = {row.get('section', row.get('name', row.get('id'))): row for row in capture.get('sections', [])
             if isinstance(row, dict)} if isinstance(capture.get('sections'), list) else {}
     sections, warnings = [], []
@@ -49,4 +63,4 @@ def source_readiness(listing):
         value = capture.get(key)
         if type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 7200:
             result[key] = round(value, 3)
-    return result
+    return _schema_summary(listing, result)

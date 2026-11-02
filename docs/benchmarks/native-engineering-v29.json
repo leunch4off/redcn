@@ -1,0 +1,700 @@
+{
+  "actualModelQualityAccepted": false,
+  "adapterSwitchControl": {
+    "activeUserWorkspaceTouched": false,
+    "actualModelInferenceMeasured": false,
+    "actualModelQualityMeasured": false,
+    "artifacts": {
+      "fixtureInfrastructureSha256": "181f4eaae41c275e07975d66ccad2645264313ff858119f38e714a8a23f521d6",
+      "promotionImplementationSha256": "3c0d9407699323bfc4936e6336f76fe15b1c466671e5d2da6d90affa6d576925",
+      "runtimeSettingsImplementationSha256": "90974c4b14e9549395c42d0e8a4c256f913671437f9fbaa4b7020f43dd59b0e2",
+      "schedulerImplementationSha256": "8fa4654ea150a58a8ca225a6ca81f63d742677392a47f4b493a1076b16645806",
+      "verifierSha256": "d83eadc504ba9bbe48823b5df957c5cf06e90ac226b8896756469cd16bba52d7"
+    },
+    "controlFlowPassed": true,
+    "freshTemporaryCachesOnly": true,
+    "nativeAppleSilicon": false,
+    "nativeMac": true,
+    "noActualModelApproval": true,
+    "powerLossDurabilityMeasured": false,
+    "qualityEvidenceSynthetic": true,
+    "rawReportSha256": "123f9c90848da5e83432661f89912e61a37dc52ec2707b5d3fe2e66c9101a3e8",
+    "scenarios": {
+      "corruptWeightsRejected": {
+        "checks": {
+          "activeSelectionPreserved": true,
+          "candidateReceiptUnchanged": true,
+          "distinctChildProcesses": true,
+          "finalLeasesReleased": true,
+          "originalConfigRestored": true,
+          "rejected": true,
+          "restartReadsPrevious": true
+        },
+        "originalConfigSha256": "5950438c21f2d42a99855bef8fa4aa0c91ca069df731b02cffbd6ccf998d08de",
+        "passed": true,
+        "syntheticReportSha256": "2c894e0adc8ed552cd4ba68968dbe2c7da3931172d4b2e0688ff3eb90d1b9766"
+      },
+      "crashAfterAtomicReplace": {
+        "checks": {
+          "candidateReceiptUnchanged": true,
+          "completeConfigAfterRestart": true,
+          "crashedAtBoundary": true,
+          "crashedProcessLeasesReleased": true,
+          "distinctChildProcesses": true,
+          "emittedNoPrivateOutput": true,
+          "expectedSelectionAfterCrash": true,
+          "finalLeasesReleased": true,
+          "originalConfigRestored": true,
+          "preparedJournalSurvives": true,
+          "restartReadsPrevious": true,
+          "rollbackAvailableAfterCrash": true,
+          "rollbackCompleted": true
+        },
+        "originalConfigSha256": "d616dc239e0310ab29e8146930dbfd47e03f974a225be8b69c9c596207569427",
+        "passed": true,
+        "syntheticReportSha256": "49d4251de54c1777486aee48696f396c75867550c195868908e87d14eac39f17"
+      },
+      "crashBeforeAtomicReplace": {
+        "checks": {
+          "candidateReceiptUnchanged": true,
+          "completeConfigAfterRestart": true,
+          "crashedAtBoundary": true,
+          "crashedProcessLeasesReleased": true,
+          "distinctChildProcesses": true,
+          "emittedNoPrivateOutput": true,
+          "expectedSelectionAfterCrash": true,
+          "finalLeasesReleased": true,
+          "noRollbackNeeded": true,
+          "originalConfigPreserved": true,
+          "originalConfigRestored": true,
+          "preparedJournalSurvives": true,
+          "restartReadsPrevious": true,
+          "retrySwitchCompleted": true,
+          "rollbackCompleted": true
+        },
+        "originalConfigSha256": "21a20c16f15e153ff593ab4f99f84374a6dfdafe99dea2008748d2a7fdc277ee",
+        "passed": true,
+        "syntheticReportSha256": "c7f1b3ffe7ba0a79a1a0b15230c6222abfb1be3be22f0af60eb43ea2a2705f1b"
+      },
+      "staleReportRejected": {
+        "checks": {
+          "activeSelectionPreserved": true,
+          "candidateReceiptUnchanged": true,
+          "distinctChildProcesses": true,
+          "finalLeasesReleased": true,
+          "originalConfigRestored": true,
+          "rejected": true,
+          "restartReadsPrevious": true
+        },
+        "originalConfigSha256": "aac75850ee7cc33869f178fb6146a1a71914bd03c087a79fe2a518a5565ffa09",
+        "passed": true,
+        "syntheticReportSha256": "86921d2aebbec83d8526be4b6f07008d4265b5daaf2b4b2f14df55b33095023b"
+      },
+      "switchRestartRollback": {
+        "checks": {
+          "candidateReceiptUnchanged": true,
+          "completeConfigAfterRestart": true,
+          "distinctChildProcesses": true,
+          "finalLeasesReleased": true,
+          "originalConfigRestored": true,
+          "restartReadsCandidate": true,
+          "restartReadsPrevious": true,
+          "rollbackAvailable": true,
+          "rollbackCompleted": true,
+          "switchCompleted": true,
+          "switchedLeasesReleased": true
+        },
+        "originalConfigSha256": "a55209042b2b8a538edd800a5bf81a9946f9271a6c14c13b81f34961ec45ef7d",
+        "passed": true,
+        "syntheticReportSha256": "c1bcec500138cdd39aff420748a2a7625e4aa72296384a275b7664d829f4a5c1"
+      }
+    },
+    "version": 1
+  },
+  "browserCoverage": {
+    "distinctCases": 23,
+    "focusedPassed": 3,
+    "focusedRetested": 3,
+    "initialFailed": 3,
+    "initialPassed": 20,
+    "productCoreUnchangedBetweenRuns": true,
+    "singleCleanFullRunClaimed": false
+  },
+  "browserFocused": {
+    "browser": "Chrome",
+    "cases": [
+      "test_presentation_browser.PresentationAcceptance.test_new_card_first_export_keeps_stable_id_in_draft",
+      "test_presentation_browser.PresentationAcceptance.test_all_formats_wait_for_inflight_photo_analysis_before_their_first_save",
+      "test_photo_cache_decisions_browser.PhotoCacheDecisionsBrowserTests.test_export_revalidates_ready_original_inside_five_second_display_cache"
+    ],
+    "elapsedSeconds": 137.490964916,
+    "exitCode": 0,
+    "logSha256": "d3c67ebf66b10a3418b9739221719e87ed4ee97f1f584d434d79fdba4c09f902",
+    "passed": true,
+    "physicalIPhone": false,
+    "platform": "macOS",
+    "priorSuiteRetained": true,
+    "rawReportSha256": "bd5daae6da5431bc319b871f02676b7eb6285ccbb1f1480be613355bc7959203",
+    "reason": null,
+    "run": 3,
+    "sourceBuildId": "c93e8843e5908ad57858e51499bddcaf6fca3686d9f6f1c645f50b834283ad4e",
+    "testHashes": {
+      "tests/test_photo_cache_decisions_browser.py": "bd4e9e60366a4a8b4739c31661b5fb7f4a0929546faeba2dd2b427b893791f75",
+      "tests/test_presentation_browser.py": "d7b3808d0d1818ef6ce7702a4e7b5d34b896e2b614491d963e947fe1b5807806"
+    },
+    "version": 1
+  },
+  "browserInitial": {
+    "browser": "Chrome",
+    "elapsedSeconds": 728.7122779169999,
+    "exitCode": 1,
+    "failedCases": 3,
+    "fixtureCorrectionsRequired": true,
+    "logSha256": "a0a6ffc041b1a7234c95fffbad7a0e3080d0bfed61a09b9372b5e7a8270289e4",
+    "modules": [
+      "test_learning_studio_browser",
+      "test_photo_training_browser",
+      "test_presentation_browser",
+      "test_phone_job_browser",
+      "test_photo_cache_decisions_browser"
+    ],
+    "passed": false,
+    "passedCases": 20,
+    "physicalIPhone": false,
+    "platform": "macOS",
+    "rawReportSha256": "d30329bba649ff1b4707b8ba3fe25e9609be528c54e390b389018a51839bc544",
+    "run": 23,
+    "skipped": 0,
+    "sourceIdentity": {
+      "buildId": "c93e8843e5908ad57858e51499bddcaf6fca3686d9f6f1c645f50b834283ad4e",
+      "components": {
+        "builder": {
+          "files": 3,
+          "sha256": "14f053bc28bf820cbde28d0cb9802912841ee45844b2ad313c3ad4a17e786edb"
+        },
+        "dictionary": {
+          "files": 8,
+          "sha256": "6366def684e86ad9e3aa577067e31065d5b661c2da541785799800e43ff807f1"
+        },
+        "server": {
+          "files": 107,
+          "sha256": "7e1d39cc8df4a82dd40c29ba91e647bba9b64ec05047f29df0101a0a1625cd6a"
+        },
+        "site": {
+          "files": 105,
+          "sha256": "d0f9eacc9150c4cbcf6cd893dde91eab228307d4b9656c8f2d1626a2d8cdfae4"
+        }
+      },
+      "version": 1
+    },
+    "version": 1
+  },
+  "cardWorkflow": {
+    "advertisement": {
+      "fallback": true,
+      "manuallyAcceptedForFixture": true,
+      "status": "review"
+    },
+    "browser": {
+      "SafariTested": false,
+      "backend": "Chrome",
+      "desktopReopen": true,
+      "externalRequestsBlocked": 5,
+      "pageErrors": 0,
+      "phoneDownloadCurrentRevision": true,
+      "phoneReopen": true,
+      "phoneViewport": [
+        393,
+        852
+      ],
+      "physicalIPhone": false,
+      "platform": "darwin"
+    },
+    "clientBundle": {
+      "currentFilesAfterEdit": 1,
+      "formats": [
+        "html",
+        "intro-png",
+        "pdf"
+      ],
+      "mixedRevisionRejected": true,
+      "sameRevisionBeforeEdit": true,
+      "staleFilesPreserved": 3,
+      "zipSameRevision": true
+    },
+    "diagnostics": {
+      "automaticExternalSend": false,
+      "files": [
+        "manifest.json",
+        "versions.json",
+        "operations.json",
+        "training.json"
+      ],
+      "previewAndExplicitDownload": true,
+      "privateFixtureDataExcluded": true,
+      "versionsMatchRunningProcess": true
+    },
+    "elapsedSeconds": 134.28849129100854,
+    "execution": "isolated-real-browser",
+    "fullCriterionMet": false,
+    "import": {
+      "completed": true,
+      "externalSourceRequested": false,
+      "readiness": "unknown",
+      "requestReplayedWithoutNewCard": true,
+      "sourceFixtureSha256": "c9836bd359c7ab51fc868dd91caebfb86237598148f467ea8e2b58867efe83d4",
+      "sourceOrigin": "anonymized-observed-dom"
+    },
+    "nativeAI": {
+      "executed": true,
+      "modelCallsMocked": false,
+      "photo": {
+        "accuracyEvaluated": false,
+        "candidateCount": 0,
+        "inferenceSeconds": 0.043457,
+        "modelSha256": "650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5",
+        "originalSha256": "d36393c440cb36bb44ea755eba4c2043eafb2ff886693d115cf60ca9729ab6bf",
+        "runtime": {
+          "architecture": "arm64",
+          "modelSha256": "650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5",
+          "onnxRuntimeVersion": "1.23.2",
+          "ortBinarySha256": "27a8a1dd75827f54cfacc7e1a3564cd82b20651698babee3536f6622899ed469",
+          "ortSignatureVerified": true,
+          "pythonSha256": "4e28e811a89aeac6eed668ae641c7f85f5831e42e8dc6cd9a85a3bcc032ec46a",
+          "pythonSignatureVerified": true,
+          "pythonVersion": "3.11.9",
+          "receiptSha256": "58465eff8d3ef855c06f7b6f643ddcecc273e6100e53e0f02ce91ec782bb94d9",
+          "selection": "native-arm",
+          "status": "verified",
+          "workerArchitecture": "arm64"
+        }
+      },
+      "text": {
+        "acceptedDirectModelDraft": false,
+        "adapterSha256": "a50bacf07cc300ac79949d080820402b33d6580be66c96b97c5626fc6e73bd5f",
+        "elapsedSeconds": 6.072372499998892,
+        "fallback": true,
+        "metrics": {
+          "backend": "mlx",
+          "elapsedSeconds": 2.386328,
+          "generatedTokens": 84,
+          "generationSeconds": 0.557006,
+          "model": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+          "operation": "text",
+          "phase": "complete",
+          "promptTokens": 637,
+          "promptTokensPerSecond": 2383.04521,
+          "promptTokensProcessed": 637,
+          "promptTokensTotal": 637,
+          "textSource": "rules",
+          "tokenBased": true,
+          "tokensPerSecond": 150.806185
+        },
+        "status": "review"
+      }
+    },
+    "passed": true,
+    "photoAccuracyAccepted": false,
+    "physicalIPhoneAccepted": false,
+    "preservation": {
+      "diagnosticCampaignUnchanged": true,
+      "isolatedCardCount": 2,
+      "manualBody": true,
+      "operatorReviewSha256": "74950d0e5b52c681bd4369cb153c2449fad52b10559f9e8e212c28c63d19cf2a",
+      "originalPhotoIdentities": true
+    },
+    "productionAggregateCountsUnchanged": true,
+    "rawReportSha256": "89c13acbe5c7206e651b280cde576200c0bf643176de5537b9cbb0b41b4ddb30",
+    "source": {
+      "buildId": "c93e8843e5908ad57858e51499bddcaf6fca3686d9f6f1c645f50b834283ad4e",
+      "components": {
+        "builder": {
+          "files": 3,
+          "sha256": "14f053bc28bf820cbde28d0cb9802912841ee45844b2ad313c3ad4a17e786edb"
+        },
+        "dictionary": {
+          "files": 8,
+          "sha256": "6366def684e86ad9e3aa577067e31065d5b661c2da541785799800e43ff807f1"
+        },
+        "server": {
+          "files": 107,
+          "sha256": "7e1d39cc8df4a82dd40c29ba91e647bba9b64ec05047f29df0101a0a1625cd6a"
+        },
+        "site": {
+          "files": 105,
+          "sha256": "d0f9eacc9150c4cbcf6cd893dde91eab228307d4b9656c8f2d1626a2d8cdfae4"
+        }
+      },
+      "version": 1
+    },
+    "taskId": "RCN-355",
+    "version": 1
+  },
+  "corePython": {
+    "elapsedSeconds": 24.490108124999097,
+    "errors": 0,
+    "failures": 0,
+    "logSha256": "faa8155e176c77b1b82a1e60258cd7a390d8c77949370c5b1e6f4d7da8d6db4a",
+    "modules": [
+      "test_learning_consent",
+      "test_learning_transfer",
+      "test_model_history",
+      "test_training_resources",
+      "test_learning_recovery",
+      "test_isolated_job_supervisor",
+      "test_text_evaluation_process",
+      "test_text_v29",
+      "test_model_promotion"
+    ],
+    "passed": true,
+    "platform": "macOS-26.0.1-x86_64-i386-64bit",
+    "pythonArchitecture": "x86_64",
+    "rawReportSha256": "4c366b7d8ac4d4cfa5c255bd234a4774f8b164cf066c98b8515bcbd099854e8d",
+    "run": 80,
+    "skipped": 0,
+    "sourceHashes": {
+      "cli/learning_memory.py": "1221f1d81099bc6d362351c5af374d4fb8510a280c430ff70b823ac859eb2ffe",
+      "cli/learning_provenance.py": "bbaa5bd6948b921933f45e11c5a0e97402ae5ed144826332b88deba369cfae61",
+      "cli/learning_scheduler.py": "8fa4654ea150a58a8ca225a6ca81f63d742677392a47f4b493a1076b16645806",
+      "cli/learning_transfer.py": "8cd8e86d6392e4a254d8f88d8fa4b73c5875fb0aa47991a34952e1d13fe98e41",
+      "cli/model_history.py": "5d4e69637b5e3947630d5c4c2c1b4c8116b52ab5d05064ac1baad869f4f5ace6",
+      "cli/text_evaluation_process.py": "e250706e0aca4eabb3db2c4d8d68289a9e81c7c6a46f1b129806c161f72a27f0",
+      "cli/training_job_state.py": "cbf5b116efc051525c350ffa2d8d9ea16034e121e910674a7cecaf33ca577584",
+      "cli/training_resources.py": "96a5836e022410cfa3aa96acc035b765d940a71637debd11f30f307c6b4a75cd"
+    },
+    "version": 1
+  },
+  "failureLedger": [
+    {
+      "cause": "incorrect tokenizer import in experiment harness",
+      "outcome": "failed before training",
+      "phase": "text-training-preflight",
+      "retained": true
+    },
+    {
+      "fix": "one model per owned child process; each answer durably journaled before next request",
+      "loggedAnswersNotRecoverable": 154,
+      "outcome": "native SIGSEGV after logs for 150 current and 4 candidate answers",
+      "phase": "first paired evaluation",
+      "rawAnswersSaved": 0,
+      "retainedLogs": true
+    },
+    {
+      "outcome": "ModelBusy before model load",
+      "phase": "first B evaluation process-isolated",
+      "retrySeparate": true,
+      "savedAnswers": 0
+    },
+    {
+      "attempted": 1,
+      "cause": "MLX callback contract after prompt prefill",
+      "completed": 0,
+      "fixedAndRetested": true,
+      "phase": "first structure attempt",
+      "reportSha256": "abf15ffae829d491c3d441c284a2710a6c0c7f6814901d00b9bd474edcefc78b"
+    },
+    {
+      "fix": "await current photo work before snapshot and preserve strong full-card revision",
+      "outcome": "export revisions diverged while photo analysis completed",
+      "phase": "first card workflow",
+      "retainedReport": true
+    },
+    {
+      "fix": "retain last valid binding and peak-memory metrics",
+      "outcome": "checkpoint binding lost before first resumed checkpoint save",
+      "phase": "first resource acceptance",
+      "retainedReport": true
+    },
+    {
+      "failed": 3,
+      "fix": "deterministic readiness and fixed display-cache clock in fixtures",
+      "phase": "browser initial",
+      "retestPassed": 3,
+      "run": 23
+    },
+    {
+      "failed": 3,
+      "fix": "restore actual canonical-original dependencies in extracted-function fixtures",
+      "fullRepeatPassed": 603,
+      "fullRepeatSkipped": 1,
+      "phase": "Node initial",
+      "run": 604
+    }
+  ],
+  "finalNodeTestHashes": {
+    "tests/photo-variants.test.mjs": "59c15b432d41356218c56d827bd45c6e57dd0833c82ea6b91960a0cfa5bf4404",
+    "tests/publication-compact.test.mjs": "cac0f11a34bf2fb39c9264e3a81b7030cb344b305ef0c96257686152f22b6162"
+  },
+  "limitations": [
+    "No physical iPhone or Safari acceptance.",
+    "Physical Mac sleep/wake was not exercised.",
+    "Photo runtime used a synthetic blank fixture, not accuracy data.",
+    "Text candidates failed direct-answer quality admission.",
+    "The two-hour soak used the earlier v28 application plus its declared harness, not final v29."
+  ],
+  "mixedLoadSoak": {
+    "acceptance": {
+      "allFourRealPhases": true,
+      "fullCriterionMet": false,
+      "noPhaseErrors": true,
+      "notice": "Process interruption is not physical Mac sleep; independent sleep/wake evidence remains required.",
+      "physicalSleepWake": "not-measured",
+      "requestedDurationCompleted": true,
+      "twoHoursMeasured": true
+    },
+    "cancelled": false,
+    "elapsedSeconds": 7200.846977,
+    "finalV29SoakAccepted": false,
+    "finished": true,
+    "latencySeconds": {
+      "editor": {
+        "count": 72,
+        "p50": 29.849108,
+        "p95": 47.577559
+      },
+      "import": {
+        "count": 73,
+        "p50": 1.214053,
+        "p95": 1.68415
+      },
+      "photo": {
+        "count": 50,
+        "p50": 0.532908,
+        "p95": 0.805382
+      },
+      "training": {
+        "count": 51,
+        "p50": 6.560258,
+        "p95": 7.221261
+      }
+    },
+    "peakObservedQueueDepth": 1,
+    "peakProcessGroupRssBytes": 588644352,
+    "rawReportSha256": "df9eb5ba1c55c901269333b45e20c93db5bf0f87a859f7dd1e2f5925e38b25dd",
+    "recipeSha256": "523f82e006f20158723687119d2b5ec8053666ae9800007e4a5205f23b755140",
+    "requestedSeconds": 7200.0,
+    "sourceFilesUnchanged": true,
+    "sourceSha": "9090ce1fb611ff3c9857558d9d84e43b66202458",
+    "states": {
+      "complete": 246,
+      "run-deadline": 1,
+      "yielded-busy": 43
+    },
+    "successfulPhaseCounts": {
+      "editor": 72,
+      "import": 73,
+      "photo": 50,
+      "training": 51
+    },
+    "task": "RCN-356",
+    "testedSourceScope": "v28 baseline plus four soak harness files; not the final v29 application",
+    "version": 1
+  },
+  "nodeFinal": {
+    "counts": {
+      "cancelled": 0,
+      "fail": 0,
+      "pass": 603,
+      "skipped": 1,
+      "suites": 0,
+      "tests": 604,
+      "todo": 0
+    },
+    "elapsedSeconds": 11.800300625,
+    "exitCode": 0,
+    "logSha256": "1fd3510dce5db13faa83aa099eef04af16218a074a2f5ca496d219c1370e4a5a",
+    "passed": true,
+    "platform": "macOS",
+    "rawReportSha256": "b5bd2fb626a08a35590d2bd895cc9703758e82d77b1495836f2c66ce6e815db4",
+    "reason": null,
+    "sourceBuildId": "c93e8843e5908ad57858e51499bddcaf6fca3686d9f6f1c645f50b834283ad4e",
+    "testFiles": 89,
+    "version": 1
+  },
+  "nodeInitial": {
+    "counts": {},
+    "elapsedSeconds": 11.450428583,
+    "exitCode": 1,
+    "logSha256": "f8b23998e90e0483bc3c6f49d1c8a26d41dd0ea920f466055c9675368ce1160b",
+    "observedSpecReporterCounts": {
+      "fail": 3,
+      "pass": 600,
+      "skipped": 1,
+      "tests": 604
+    },
+    "passed": false,
+    "platform": "macOS",
+    "rawReportSha256": "d48e4b7e0f9fcd5bb53824cf0fd8e915d40eeeb369e1a3d33ffc15549659eee0",
+    "reason": null,
+    "sourceBuildId": "c93e8843e5908ad57858e51499bddcaf6fca3686d9f6f1c645f50b834283ad4e",
+    "summaryParser": "Original wrapper expected TAP counters; actual output used Node spec reporter.",
+    "testFiles": 89,
+    "version": 1
+  },
+  "productionCandidateSwitched": false,
+  "resourceAcceptance": {
+    "checks": {
+      "browserCompleted": true,
+      "checkpointSurvivesStop": true,
+      "foregroundCompleted": true,
+      "lowMemoryBlocked": true,
+      "mlxPeakMeasured": true,
+      "notInterrupted": true,
+      "ownedTrainingExited": true,
+      "ownedTrainingObservedAlive": true,
+      "photoCompleted": true,
+      "productionSettingsUnchanged": true,
+      "serverWorkerJoined": true,
+      "sourceFilesUnchanged": true,
+      "withinTotalDeadline": true
+    },
+    "errors": [],
+    "limits": {
+      "consecutivePressureSamples": 2,
+      "maxProcessGroupRssBytes": 3221225472,
+      "maxSwapGrowthBytes": 805306368,
+      "minimumAvailableEstimateBytes": 536870912
+    },
+    "memory": {
+      "availableMaximumBytes": 2589196288,
+      "availableMinimumBytes": 1607467008,
+      "peakObservedProcessGroupRssBytes": 536395776,
+      "physicalBytes": 8589934592,
+      "rssSamples": 7,
+      "samples": 34,
+      "swapMaximumBytes": 1824983613,
+      "swapMinimumBytes": 1824983613
+    },
+    "nativeModelQualityAccepted": false,
+    "outcome": "completed",
+    "outcomes": {
+      "browser": {
+        "exitCode": 0,
+        "measured": {
+          "backend": "chrome",
+          "isolated": true,
+          "kind": "editor",
+          "manualEditSurvivedReload": true,
+          "mocked": false,
+          "ok": true,
+          "pageErrors": 0,
+          "productionServerUsed": false,
+          "seconds": 28.433243084000424
+        }
+      },
+      "firstTrainingReceipts": [
+        {
+          "adapterSha256": "58af9f8dd0beb7f4bc8fc81b1c23401ba997500565655007bb177904ead0e335",
+          "optimizerSha256": "fc86af94d426f0acb2138b698fa4a398e753018a0e25ae5d67ce2007c3fdd3ac",
+          "peakMemoryBytes": 430394455,
+          "status": "trained-unaccepted",
+          "stepsCompleted": 11,
+          "stoppedEarly": true
+        }
+      ],
+      "foreground": {
+        "attempts": [
+          {
+            "ai": {
+              "backend": "mlx",
+              "elapsedSeconds": 2.633681,
+              "generatedTokens": 4,
+              "generationSeconds": 0.01773,
+              "model": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+              "operation": "text",
+              "phase": "complete",
+              "promptTokens": 42,
+              "promptTokensPerSecond": 327.516025,
+              "promptTokensProcessed": 42,
+              "promptTokensTotal": 42,
+              "tokenBased": true,
+              "tokensPerSecond": 225.600489
+            },
+            "elapsedSeconds": 2.6336983329965733,
+            "status": "review"
+          }
+        ],
+        "completed": true,
+        "secondsFromFirstRequest": 2.6354289580049226
+      },
+      "lowMemoryAdmission": {
+        "actualSample": {
+          "at": 1793608576.158387,
+          "availableEstimateBytes": 2513174528,
+          "availableMethod": "free+inactive+speculative-pages",
+          "physicalBytes": 8589934592,
+          "platform": "Darwin",
+          "supported": true,
+          "swapUsedBytes": 1824983613
+        },
+        "allocatedPressureBytes": 0,
+        "controlledThreshold": true,
+        "reason": "available-memory-low"
+      },
+      "photo": {
+        "exitCode": 0,
+        "measured": {
+          "accuracyEvaluated": false,
+          "architecture": "arm64",
+          "backend": "onnxruntime",
+          "imageKind": "synthetic-runtime-fixture",
+          "imageSha256": "5f253c43be2bae0b10416461ed27fb5a0c32f69fc44ed4b05952cd504bd2d277",
+          "inferenceSeconds": 0.027138,
+          "isolated": true,
+          "kind": "photo",
+          "mocked": false,
+          "modelSha256": "650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5",
+          "ok": true,
+          "seconds": 0.2746528340067016
+        }
+      },
+      "serverStop": {
+        "checkpointAfterSha256": "78bda0d3efd76f98f6e328ba6657e8fcf1d92754b40443024d0fb7a3d79e818c",
+        "checkpointBeforeSha256": "47cb385c1b00657ef24d0e0f15de3fdbfb0fc3b27bf120f62f62b6f3bb4305cc",
+        "checkpointValid": true,
+        "jobIdSha256": "916d5eca9cc567fc8e06c764607ae41b45ccb4adde9249e8a7abfb463e4870b7",
+        "ownedProcessExited": true,
+        "ownedProcessObservedAlive": true,
+        "seconds": 0.6652766670013079,
+        "state": "paused",
+        "stepsAfterStop": 12,
+        "stepsBeforeStop": 11,
+        "workerJoined": true
+      }
+    },
+    "passed": true,
+    "physicalSleepWake": "not-measured",
+    "productionSettingsUnchanged": true,
+    "rawReportSha256": "65611b907bb63868fcfc8e532ef2b46914a171283761bb9c2fe58454f28f7a8d",
+    "sourceFilesUnchanged": true,
+    "sourceHashes": {
+      "cli/isolated_job_supervisor.py": "57cc351d8bd5fc08d7a9dd191eb4a448dbff4055e91ca1298c53cb769f9d104f",
+      "cli/learning_scheduler.py": "8fa4654ea150a58a8ca225a6ca81f63d742677392a47f4b493a1076b16645806",
+      "cli/local_text_model.py": "90974c4b14e9549395c42d0e8a4c256f913671437f9fbaa4b7020f43dd59b0e2",
+      "cli/training_resources.py": "96a5836e022410cfa3aa96acc035b765d940a71637debd11f30f307c6b4a75cd",
+      "scripts/native-training-acceptance.py": "9c2af175c3869019edffa0fe765a0bfa878a0350e6cad97f69ade1ef7af54ba8",
+      "scripts/soak-project-phase.py": "faeb340466238f3ebbcc6b5aadd03874efc780b61a0ffdaf2646977062c21c25",
+      "scripts/train-local-text-model.py": "8d8aa25a6847d2a6415fe5f259be27273d3f1d764d027e98f9bdd26ecd359e4a"
+    },
+    "supervisor": {
+      "actualDurationSeconds": 35.76477966700622,
+      "cleanupGraceSeconds": 5,
+      "interrupted": false,
+      "maximumSeconds": 300,
+      "reason": null
+    },
+    "trainingReceipts": [
+      {
+        "adapterSha256": "41643a96b377e47f9deaa82c20bcefd884515531619a82909390f1c375b053de",
+        "datasetSha256": "dad712f34c052f11bdc60c3af5f45cd3793eed450b140617643a3529857acaa1",
+        "peakMemoryBytes": 430394455,
+        "status": "trained-unaccepted",
+        "stepsCompleted": 12,
+        "stoppedEarly": true
+      }
+    ],
+    "version": 2
+  },
+  "scope": "v29 native engineering verification; each phase keeps its own frozen source identity",
+  "version": 1
+}

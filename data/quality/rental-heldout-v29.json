@@ -1,0 +1,1218 @@
+{
+  "version": 1,
+  "id": "rental-independent-synthetic-v29",
+  "source": "Independent project-authored fictional situations, not copied from v28 training or model answers",
+  "annotation": {
+    "author": "Codex AI-assisted independent annotation",
+    "nativeSpeakerReview": false,
+    "trainingUseAllowed": false,
+    "checksFrozenBeforeInference": true,
+    "sourceStationEvidence": "invented literal labels; not official station translations"
+  },
+  "limitations": [
+    "Synthetic automatic acceptance only; no native-speaker certification.",
+    "After first evaluation this set becomes diagnostic; a future final blind acceptance needs new groups."
+  ],
+  "cases": [
+    {
+      "id": "heldout-01",
+      "groupId": "independent-v29-01",
+      "sourceRu": "Аренда 54235 рублей в месяц. Залог 21875 рублей. Площадь 27.4 м². В квартире есть холодильник. В комплектации отсутствует: микроволновая печь. Не подтверждено наличие: кондиционер. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь1 и КонтрольНефрит1; время в дороге неизвестно.",
+      "referenceZh": "月租54235卢布。押金21875卢布。面积27.4㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь1和КонтрольНефрит1站，通勤时间尚未确认。",
+      "generationFactsZh": "月租54235卢布。押金21875卢布。面积27.4㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь1和КонтрольНефрит1站，通勤时间尚未确认。",
+      "fields": {
+        "price": "54235",
+        "area": "27.4",
+        "metro": "КонтрольЯнтарь1",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь1",
+          "aliases": [
+            "КонтрольЯнтарь1"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит1",
+          "aliases": [
+            "КонтрольНефрит1"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "1216908cc31e0fad13518b9a58b94396a4f21d4e449d0fabfe6aeb981bba19bd",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-02",
+      "groupId": "independent-v29-02",
+      "sourceRu": "Аренда 55614 рублей в месяц. Залог 22738 рублей. Площадь 28.1 м². В квартире есть стиральная машина. В комплектации отсутствует: посудомоечная машина. Не подтверждено наличие: диван. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь2 и КонтрольНефрит2; время в дороге неизвестно.",
+      "referenceZh": "月租55614卢布。押金22738卢布。面积28.1㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь2和КонтрольНефрит2站，通勤时间尚未确认。",
+      "generationFactsZh": "月租55614卢布。押金22738卢布。面积28.1㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь2和КонтрольНефрит2站，通勤时间尚未确认。",
+      "fields": {
+        "price": "55614",
+        "area": "28.1",
+        "metro": "КонтрольЯнтарь2",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь2",
+          "aliases": [
+            "КонтрольЯнтарь2"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит2",
+          "aliases": [
+            "КонтрольНефрит2"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "d507c0f6c739363f15aea53a0e5dbbe289da136af4301b719ab190f4bf9c4991",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-03",
+      "groupId": "independent-v29-03",
+      "sourceRu": "Аренда 56993 рублей в месяц. Залог 23601 рублей. Площадь 28.8 м². В квартире есть духовой шкаф. В комплектации отсутствует: кондиционер. Не подтверждено наличие: письменный стол. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь3 и КонтрольНефрит3; время в дороге неизвестно.",
+      "referenceZh": "月租56993卢布。押金23601卢布。面积28.8㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь3和КонтрольНефрит3站，通勤时间尚未确认。",
+      "generationFactsZh": "月租56993卢布。押金23601卢布。面积28.8㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь3和КонтрольНефрит3站，通勤时间尚未确认。",
+      "fields": {
+        "price": "56993",
+        "area": "28.8",
+        "metro": "КонтрольЯнтарь3",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь3",
+          "aliases": [
+            "КонтрольЯнтарь3"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит3",
+          "aliases": [
+            "КонтрольНефрит3"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "6bc3be37214ddd2e6f61482688390f7ef0fcbdab13d21ffaa9e97dbf2bbec805",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-04",
+      "groupId": "independent-v29-04",
+      "sourceRu": "Аренда 58372 рублей в месяц. Залог 24464 рублей. Площадь 29.5 м². В квартире есть микроволновая печь. В комплектации отсутствует: диван. Не подтверждено наличие: холодильник. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь4 и КонтрольНефрит4; время в дороге неизвестно.",
+      "referenceZh": "月租58372卢布。押金24464卢布。面积29.5㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь4和КонтрольНефрит4站，通勤时间尚未确认。",
+      "generationFactsZh": "月租58372卢布。押金24464卢布。面积29.5㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь4和КонтрольНефрит4站，通勤时间尚未确认。",
+      "fields": {
+        "price": "58372",
+        "area": "29.5",
+        "metro": "КонтрольЯнтарь4",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь4",
+          "aliases": [
+            "КонтрольЯнтарь4"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит4",
+          "aliases": [
+            "КонтрольНефрит4"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "cc132099029b83c96a3930e46a7175205442b08af0b33a14fd570a0a29830f83",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-05",
+      "groupId": "independent-v29-05",
+      "sourceRu": "Аренда 59751 рублей в месяц. Залог 25327 рублей. Площадь 30.2 м². В квартире есть посудомоечная машина. В комплектации отсутствует: письменный стол. Не подтверждено наличие: стиральная машина. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь5 и КонтрольНефрит5; время в дороге неизвестно.",
+      "referenceZh": "月租59751卢布。押金25327卢布。面积30.2㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь5和КонтрольНефрит5站，通勤时间尚未确认。",
+      "generationFactsZh": "月租59751卢布。押金25327卢布。面积30.2㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь5和КонтрольНефрит5站，通勤时间尚未确认。",
+      "fields": {
+        "price": "59751",
+        "area": "30.2",
+        "metro": "КонтрольЯнтарь5",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь5",
+          "aliases": [
+            "КонтрольЯнтарь5"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит5",
+          "aliases": [
+            "КонтрольНефрит5"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "0152b5fbf7a79da3bc259ce40df3433765dc57a826ebe3387de4b6e46d781369",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-06",
+      "groupId": "independent-v29-06",
+      "sourceRu": "Аренда 61130 рублей в месяц. Залог 26190 рублей. Площадь 30.9 м². В квартире есть кондиционер. В комплектации отсутствует: холодильник. Не подтверждено наличие: духовой шкаф. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь6 и КонтрольНефрит6; время в дороге неизвестно.",
+      "referenceZh": "月租61130卢布。押金26190卢布。面积30.9㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь6和КонтрольНефрит6站，通勤时间尚未确认。",
+      "generationFactsZh": "月租61130卢布。押金26190卢布。面积30.9㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь6和КонтрольНефрит6站，通勤时间尚未确认。",
+      "fields": {
+        "price": "61130",
+        "area": "30.9",
+        "metro": "КонтрольЯнтарь6",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь6",
+          "aliases": [
+            "КонтрольЯнтарь6"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит6",
+          "aliases": [
+            "КонтрольНефрит6"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "085f9e5394dc23c97e247669cae3824a52976236cd469b9215996c63e116ea91",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-07",
+      "groupId": "independent-v29-07",
+      "sourceRu": "Аренда 62509 рублей в месяц. Залог 27053 рублей. Площадь 31.6 м². В квартире есть диван. В комплектации отсутствует: стиральная машина. Не подтверждено наличие: микроволновая печь. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь7 и КонтрольНефрит7; время в дороге неизвестно.",
+      "referenceZh": "月租62509卢布。押金27053卢布。面积31.6㎡。已确认配有沙发。未配备洗衣机。微波炉是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь7和КонтрольНефрит7站，通勤时间尚未确认。",
+      "generationFactsZh": "月租62509卢布。押金27053卢布。面积31.6㎡。已确认配有沙发。未配备洗衣机。微波炉是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь7和КонтрольНефрит7站，通勤时间尚未确认。",
+      "fields": {
+        "price": "62509",
+        "area": "31.6",
+        "metro": "КонтрольЯнтарь7",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь7",
+          "aliases": [
+            "КонтрольЯнтарь7"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит7",
+          "aliases": [
+            "КонтрольНефрит7"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "f14f5ad346052bdbeab772c38db4e57c2b88630efbfaf9853226e321e71c2416",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-08",
+      "groupId": "independent-v29-08",
+      "sourceRu": "Аренда 63888 рублей в месяц. Залог 27916 рублей. Площадь 32.3 м². В квартире есть письменный стол. В комплектации отсутствует: духовой шкаф. Не подтверждено наличие: посудомоечная машина. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь8 и КонтрольНефрит8; время в дороге неизвестно.",
+      "referenceZh": "月租63888卢布。押金27916卢布。面积32.3㎡。已确认配有书桌。未配备烤箱。洗碗机是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь8和КонтрольНефрит8站，通勤时间尚未确认。",
+      "generationFactsZh": "月租63888卢布。押金27916卢布。面积32.3㎡。已确认配有书桌。未配备烤箱。洗碗机是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь8和КонтрольНефрит8站，通勤时间尚未确认。",
+      "fields": {
+        "price": "63888",
+        "area": "32.3",
+        "metro": "КонтрольЯнтарь8",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь8",
+          "aliases": [
+            "КонтрольЯнтарь8"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит8",
+          "aliases": [
+            "КонтрольНефрит8"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "fc437f793950e882649b6983d50ee05ee5bda264402eee137d42890d92077ef2",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-09",
+      "groupId": "independent-v29-09",
+      "sourceRu": "Аренда 65267 рублей в месяц. Залог 28779 рублей. Площадь 33.0 м². В квартире есть холодильник. В комплектации отсутствует: микроволновая печь. Не подтверждено наличие: кондиционер. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь9 и КонтрольНефрит9; время в дороге неизвестно.",
+      "referenceZh": "月租65267卢布。押金28779卢布。面积33.0㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь9和КонтрольНефрит9站，通勤时间尚未确认。",
+      "generationFactsZh": "月租65267卢布。押金28779卢布。面积33.0㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь9和КонтрольНефрит9站，通勤时间尚未确认。",
+      "fields": {
+        "price": "65267",
+        "area": "33.0",
+        "metro": "КонтрольЯнтарь9",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь9",
+          "aliases": [
+            "КонтрольЯнтарь9"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит9",
+          "aliases": [
+            "КонтрольНефрит9"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "56ddb4d5b0867c0f24525a7b264de49798426f1c02872780c305bc609b8bce47",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-10",
+      "groupId": "independent-v29-10",
+      "sourceRu": "Аренда 66646 рублей в месяц. Залог 29642 рублей. Площадь 33.7 м². В квартире есть стиральная машина. В комплектации отсутствует: посудомоечная машина. Не подтверждено наличие: диван. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь10 и КонтрольНефрит10; время в дороге неизвестно.",
+      "referenceZh": "月租66646卢布。押金29642卢布。面积33.7㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь10和КонтрольНефрит10站，通勤时间尚未确认。",
+      "generationFactsZh": "月租66646卢布。押金29642卢布。面积33.7㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь10和КонтрольНефрит10站，通勤时间尚未确认。",
+      "fields": {
+        "price": "66646",
+        "area": "33.7",
+        "metro": "КонтрольЯнтарь10",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь10",
+          "aliases": [
+            "КонтрольЯнтарь10"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит10",
+          "aliases": [
+            "КонтрольНефрит10"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "8aeaaf1aa6973362e1a0d39ea947c1f102e31e7b81bf96f32980d12a67e4d6b8",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-11",
+      "groupId": "independent-v29-11",
+      "sourceRu": "Аренда 68025 рублей в месяц. Залог 30505 рублей. Площадь 34.4 м². В квартире есть духовой шкаф. В комплектации отсутствует: кондиционер. Не подтверждено наличие: письменный стол. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь11 и КонтрольНефрит11; время в дороге неизвестно.",
+      "referenceZh": "月租68025卢布。押金30505卢布。面积34.4㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь11和КонтрольНефрит11站，通勤时间尚未确认。",
+      "generationFactsZh": "月租68025卢布。押金30505卢布。面积34.4㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь11和КонтрольНефрит11站，通勤时间尚未确认。",
+      "fields": {
+        "price": "68025",
+        "area": "34.4",
+        "metro": "КонтрольЯнтарь11",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь11",
+          "aliases": [
+            "КонтрольЯнтарь11"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит11",
+          "aliases": [
+            "КонтрольНефрит11"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "d0ea69036104d09e922718823e9f77cb973c825027af5732861e3f21f790b353",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-12",
+      "groupId": "independent-v29-12",
+      "sourceRu": "Аренда 69404 рублей в месяц. Залог 31368 рублей. Площадь 35.1 м². В квартире есть микроволновая печь. В комплектации отсутствует: диван. Не подтверждено наличие: холодильник. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь12 и КонтрольНефрит12; время в дороге неизвестно.",
+      "referenceZh": "月租69404卢布。押金31368卢布。面积35.1㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь12和КонтрольНефрит12站，通勤时间尚未确认。",
+      "generationFactsZh": "月租69404卢布。押金31368卢布。面积35.1㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь12和КонтрольНефрит12站，通勤时间尚未确认。",
+      "fields": {
+        "price": "69404",
+        "area": "35.1",
+        "metro": "КонтрольЯнтарь12",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь12",
+          "aliases": [
+            "КонтрольЯнтарь12"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит12",
+          "aliases": [
+            "КонтрольНефрит12"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "4026abf4744b69d4acca8ddd8ad68952d2491a533f22ef697be1386922e7f53d",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-13",
+      "groupId": "independent-v29-13",
+      "sourceRu": "Аренда 70783 рублей в месяц. Залог 32231 рублей. Площадь 35.8 м². В квартире есть посудомоечная машина. В комплектации отсутствует: письменный стол. Не подтверждено наличие: стиральная машина. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь13 и КонтрольНефрит13; время в дороге неизвестно.",
+      "referenceZh": "月租70783卢布。押金32231卢布。面积35.8㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь13和КонтрольНефрит13站，通勤时间尚未确认。",
+      "generationFactsZh": "月租70783卢布。押金32231卢布。面积35.8㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь13和КонтрольНефрит13站，通勤时间尚未确认。",
+      "fields": {
+        "price": "70783",
+        "area": "35.8",
+        "metro": "КонтрольЯнтарь13",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь13",
+          "aliases": [
+            "КонтрольЯнтарь13"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит13",
+          "aliases": [
+            "КонтрольНефрит13"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "5cb747f0adb08e2cbc59e9fa155a595c09d72c2acf0a320ac63b8e3c0e066fda",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-14",
+      "groupId": "independent-v29-14",
+      "sourceRu": "Аренда 72162 рублей в месяц. Залог 33094 рублей. Площадь 36.5 м². В квартире есть кондиционер. В комплектации отсутствует: холодильник. Не подтверждено наличие: духовой шкаф. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь14 и КонтрольНефрит14; время в дороге неизвестно.",
+      "referenceZh": "月租72162卢布。押金33094卢布。面积36.5㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь14和КонтрольНефрит14站，通勤时间尚未确认。",
+      "generationFactsZh": "月租72162卢布。押金33094卢布。面积36.5㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь14和КонтрольНефрит14站，通勤时间尚未确认。",
+      "fields": {
+        "price": "72162",
+        "area": "36.5",
+        "metro": "КонтрольЯнтарь14",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь14",
+          "aliases": [
+            "КонтрольЯнтарь14"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит14",
+          "aliases": [
+            "КонтрольНефрит14"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "7f52b26858a393d542200b17b3e1aa7a0519f30074788aff0db669237a8a2a5b",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-15",
+      "groupId": "independent-v29-15",
+      "sourceRu": "Аренда 73541 рублей в месяц. Залог 33957 рублей. Площадь 37.2 м². В квартире есть диван. В комплектации отсутствует: стиральная машина. Не подтверждено наличие: микроволновая печь. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь15 и КонтрольНефрит15; время в дороге неизвестно.",
+      "referenceZh": "月租73541卢布。押金33957卢布。面积37.2㎡。已确认配有沙发。未配备洗衣机。微波炉是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь15和КонтрольНефрит15站，通勤时间尚未确认。",
+      "generationFactsZh": "月租73541卢布。押金33957卢布。面积37.2㎡。已确认配有沙发。未配备洗衣机。微波炉是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь15和КонтрольНефрит15站，通勤时间尚未确认。",
+      "fields": {
+        "price": "73541",
+        "area": "37.2",
+        "metro": "КонтрольЯнтарь15",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь15",
+          "aliases": [
+            "КонтрольЯнтарь15"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит15",
+          "aliases": [
+            "КонтрольНефрит15"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "7b7c3f4895fe04b58af58c7b9d97f16d6a9c471e52581cafdf20ac41f50fb2c4",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-16",
+      "groupId": "independent-v29-16",
+      "sourceRu": "Аренда 74920 рублей в месяц. Залог 34820 рублей. Площадь 37.9 м². В квартире есть письменный стол. В комплектации отсутствует: духовой шкаф. Не подтверждено наличие: посудомоечная машина. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь16 и КонтрольНефрит16; время в дороге неизвестно.",
+      "referenceZh": "月租74920卢布。押金34820卢布。面积37.9㎡。已确认配有书桌。未配备烤箱。洗碗机是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь16和КонтрольНефрит16站，通勤时间尚未确认。",
+      "generationFactsZh": "月租74920卢布。押金34820卢布。面积37.9㎡。已确认配有书桌。未配备烤箱。洗碗机是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь16和КонтрольНефрит16站，通勤时间尚未确认。",
+      "fields": {
+        "price": "74920",
+        "area": "37.9",
+        "metro": "КонтрольЯнтарь16",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь16",
+          "aliases": [
+            "КонтрольЯнтарь16"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит16",
+          "aliases": [
+            "КонтрольНефрит16"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "d21fb89ea826baa7c909748dd0202511673269df02e2adb05fd916664daff4f7",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-17",
+      "groupId": "independent-v29-17",
+      "sourceRu": "Аренда 76299 рублей в месяц. Залог 35683 рублей. Площадь 38.6 м². В квартире есть холодильник. В комплектации отсутствует: микроволновая печь. Не подтверждено наличие: кондиционер. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь17 и КонтрольНефрит17; время в дороге неизвестно.",
+      "referenceZh": "月租76299卢布。押金35683卢布。面积38.6㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь17和КонтрольНефрит17站，通勤时间尚未确认。",
+      "generationFactsZh": "月租76299卢布。押金35683卢布。面积38.6㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь17和КонтрольНефрит17站，通勤时间尚未确认。",
+      "fields": {
+        "price": "76299",
+        "area": "38.6",
+        "metro": "КонтрольЯнтарь17",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь17",
+          "aliases": [
+            "КонтрольЯнтарь17"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит17",
+          "aliases": [
+            "КонтрольНефрит17"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "b3a09362aac5c2ebfb1bcd34d7586a58febe95db5c47c49101bc015e0800a7aa",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-18",
+      "groupId": "independent-v29-18",
+      "sourceRu": "Аренда 77678 рублей в месяц. Залог 36546 рублей. Площадь 39.3 м². В квартире есть стиральная машина. В комплектации отсутствует: посудомоечная машина. Не подтверждено наличие: диван. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь18 и КонтрольНефрит18; время в дороге неизвестно.",
+      "referenceZh": "月租77678卢布。押金36546卢布。面积39.3㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь18和КонтрольНефрит18站，通勤时间尚未确认。",
+      "generationFactsZh": "月租77678卢布。押金36546卢布。面积39.3㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь18和КонтрольНефрит18站，通勤时间尚未确认。",
+      "fields": {
+        "price": "77678",
+        "area": "39.3",
+        "metro": "КонтрольЯнтарь18",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь18",
+          "aliases": [
+            "КонтрольЯнтарь18"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит18",
+          "aliases": [
+            "КонтрольНефрит18"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "7af85395dea92056198a86e2dcc4f9bfee60c43cccb9b8891dec9db776e00d6f",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-19",
+      "groupId": "independent-v29-19",
+      "sourceRu": "Аренда 79057 рублей в месяц. Залог 37409 рублей. Площадь 40.0 м². В квартире есть духовой шкаф. В комплектации отсутствует: кондиционер. Не подтверждено наличие: письменный стол. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь19 и КонтрольНефрит19; время в дороге неизвестно.",
+      "referenceZh": "月租79057卢布。押金37409卢布。面积40.0㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь19和КонтрольНефрит19站，通勤时间尚未确认。",
+      "generationFactsZh": "月租79057卢布。押金37409卢布。面积40.0㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь19和КонтрольНефрит19站，通勤时间尚未确认。",
+      "fields": {
+        "price": "79057",
+        "area": "40.0",
+        "metro": "КонтрольЯнтарь19",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь19",
+          "aliases": [
+            "КонтрольЯнтарь19"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит19",
+          "aliases": [
+            "КонтрольНефрит19"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "4485f1bb7c8caad9f2393125f57c4851a5feb943459c810501b2fe1326c8eed2",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-20",
+      "groupId": "independent-v29-20",
+      "sourceRu": "Аренда 80436 рублей в месяц. Залог 38272 рублей. Площадь 40.7 м². В квартире есть микроволновая печь. В комплектации отсутствует: диван. Не подтверждено наличие: холодильник. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь20 и КонтрольНефрит20; время в дороге неизвестно.",
+      "referenceZh": "月租80436卢布。押金38272卢布。面积40.7㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь20和КонтрольНефрит20站，通勤时间尚未确认。",
+      "generationFactsZh": "月租80436卢布。押金38272卢布。面积40.7㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь20和КонтрольНефрит20站，通勤时间尚未确认。",
+      "fields": {
+        "price": "80436",
+        "area": "40.7",
+        "metro": "КонтрольЯнтарь20",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь20",
+          "aliases": [
+            "КонтрольЯнтарь20"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит20",
+          "aliases": [
+            "КонтрольНефрит20"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "c220407fd7a93c13fb537ad3f5f074057704b0a03312d5e1ec4cf292f9b16ed0",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-21",
+      "groupId": "independent-v29-21",
+      "sourceRu": "Аренда 81815 рублей в месяц. Залог 39135 рублей. Площадь 41.4 м². В квартире есть посудомоечная машина. В комплектации отсутствует: письменный стол. Не подтверждено наличие: стиральная машина. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь21 и КонтрольНефрит21; время в дороге неизвестно.",
+      "referenceZh": "月租81815卢布。押金39135卢布。面积41.4㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь21和КонтрольНефрит21站，通勤时间尚未确认。",
+      "generationFactsZh": "月租81815卢布。押金39135卢布。面积41.4㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь21和КонтрольНефрит21站，通勤时间尚未确认。",
+      "fields": {
+        "price": "81815",
+        "area": "41.4",
+        "metro": "КонтрольЯнтарь21",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь21",
+          "aliases": [
+            "КонтрольЯнтарь21"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит21",
+          "aliases": [
+            "КонтрольНефрит21"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "ebd34184cf47828cf70aced3fec78383e73b0b1c20dc58a20ef9a5bd041157ac",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-22",
+      "groupId": "independent-v29-22",
+      "sourceRu": "Аренда 83194 рублей в месяц. Залог 39998 рублей. Площадь 42.1 м². В квартире есть кондиционер. В комплектации отсутствует: холодильник. Не подтверждено наличие: духовой шкаф. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь22 и КонтрольНефрит22; время в дороге неизвестно.",
+      "referenceZh": "月租83194卢布。押金39998卢布。面积42.1㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь22和КонтрольНефрит22站，通勤时间尚未确认。",
+      "generationFactsZh": "月租83194卢布。押金39998卢布。面积42.1㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь22和КонтрольНефрит22站，通勤时间尚未确认。",
+      "fields": {
+        "price": "83194",
+        "area": "42.1",
+        "metro": "КонтрольЯнтарь22",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь22",
+          "aliases": [
+            "КонтрольЯнтарь22"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит22",
+          "aliases": [
+            "КонтрольНефрит22"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "4ad11f38bcca1806bcbb91599676f9700cf9adb0dd60e02e324d81c2de9a02f5",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-23",
+      "groupId": "independent-v29-23",
+      "sourceRu": "Аренда 84573 рублей в месяц. Залог 40861 рублей. Площадь 42.8 м². В квартире есть диван. В комплектации отсутствует: стиральная машина. Не подтверждено наличие: микроволновая печь. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь23 и КонтрольНефрит23; время в дороге неизвестно.",
+      "referenceZh": "月租84573卢布。押金40861卢布。面积42.8㎡。已确认配有沙发。未配备洗衣机。微波炉是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь23和КонтрольНефрит23站，通勤时间尚未确认。",
+      "generationFactsZh": "月租84573卢布。押金40861卢布。面积42.8㎡。已确认配有沙发。未配备洗衣机。微波炉是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь23和КонтрольНефрит23站，通勤时间尚未确认。",
+      "fields": {
+        "price": "84573",
+        "area": "42.8",
+        "metro": "КонтрольЯнтарь23",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь23",
+          "aliases": [
+            "КонтрольЯнтарь23"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит23",
+          "aliases": [
+            "КонтрольНефрит23"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "8cbbb23f589ad5167591221b5913b90c2d11cac5f2561f6190baed7a6a6de4ce",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-24",
+      "groupId": "independent-v29-24",
+      "sourceRu": "Аренда 85952 рублей в месяц. Залог 41724 рублей. Площадь 43.5 м². В квартире есть письменный стол. В комплектации отсутствует: духовой шкаф. Не подтверждено наличие: посудомоечная машина. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь24 и КонтрольНефрит24; время в дороге неизвестно.",
+      "referenceZh": "月租85952卢布。押金41724卢布。面积43.5㎡。已确认配有书桌。未配备烤箱。洗碗机是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь24和КонтрольНефрит24站，通勤时间尚未确认。",
+      "generationFactsZh": "月租85952卢布。押金41724卢布。面积43.5㎡。已确认配有书桌。未配备烤箱。洗碗机是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь24和КонтрольНефрит24站，通勤时间尚未确认。",
+      "fields": {
+        "price": "85952",
+        "area": "43.5",
+        "metro": "КонтрольЯнтарь24",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь24",
+          "aliases": [
+            "КонтрольЯнтарь24"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит24",
+          "aliases": [
+            "КонтрольНефрит24"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "90d48092ecb609b5e4936d37348c8300e54fee0224476d5ff73fcf4dd5d3832f",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-25",
+      "groupId": "independent-v29-25",
+      "sourceRu": "Аренда 87331 рублей в месяц. Залог 42587 рублей. Площадь 44.2 м². В квартире есть холодильник. В комплектации отсутствует: микроволновая печь. Не подтверждено наличие: кондиционер. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь25 и КонтрольНефрит25; время в дороге неизвестно.",
+      "referenceZh": "月租87331卢布。押金42587卢布。面积44.2㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь25和КонтрольНефрит25站，通勤时间尚未确认。",
+      "generationFactsZh": "月租87331卢布。押金42587卢布。面积44.2㎡。已确认配有冰箱。未配备微波炉。空调是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь25和КонтрольНефрит25站，通勤时间尚未确认。",
+      "fields": {
+        "price": "87331",
+        "area": "44.2",
+        "metro": "КонтрольЯнтарь25",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь25",
+          "aliases": [
+            "КонтрольЯнтарь25"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит25",
+          "aliases": [
+            "КонтрольНефрит25"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "36790cc8331fd51b8deb2f586aa63a50deabca1ac625ea79ecaff398170c1e9a",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-26",
+      "groupId": "independent-v29-26",
+      "sourceRu": "Аренда 88710 рублей в месяц. Залог 43450 рублей. Площадь 44.9 м². В квартире есть стиральная машина. В комплектации отсутствует: посудомоечная машина. Не подтверждено наличие: диван. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь26 и КонтрольНефрит26; время в дороге неизвестно.",
+      "referenceZh": "月租88710卢布。押金43450卢布。面积44.9㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь26和КонтрольНефрит26站，通勤时间尚未确认。",
+      "generationFactsZh": "月租88710卢布。押金43450卢布。面积44.9㎡。已确认配有洗衣机。未配备洗碗机。沙发是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь26和КонтрольНефрит26站，通勤时间尚未确认。",
+      "fields": {
+        "price": "88710",
+        "area": "44.9",
+        "metro": "КонтрольЯнтарь26",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь26",
+          "aliases": [
+            "КонтрольЯнтарь26"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит26",
+          "aliases": [
+            "КонтрольНефрит26"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "8682f1845f68a55b58c676b0b2d94f50a5a917565fadc946959dfa6ffa197ba1",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-27",
+      "groupId": "independent-v29-27",
+      "sourceRu": "Аренда 90089 рублей в месяц. Залог 44313 рублей. Площадь 45.6 м². В квартире есть духовой шкаф. В комплектации отсутствует: кондиционер. Не подтверждено наличие: письменный стол. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь27 и КонтрольНефрит27; время в дороге неизвестно.",
+      "referenceZh": "月租90089卢布。押金44313卢布。面积45.6㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь27和КонтрольНефрит27站，通勤时间尚未确认。",
+      "generationFactsZh": "月租90089卢布。押金44313卢布。面积45.6㎡。已确认配有烤箱。未配备空调。书桌是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь27和КонтрольНефрит27站，通勤时间尚未确认。",
+      "fields": {
+        "price": "90089",
+        "area": "45.6",
+        "metro": "КонтрольЯнтарь27",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь27",
+          "aliases": [
+            "КонтрольЯнтарь27"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит27",
+          "aliases": [
+            "КонтрольНефрит27"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "9d0d2ed1ffae756cc1b2bb62856eba2af0c7ebcc6f3b3b1634648742e3c2b365",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-28",
+      "groupId": "independent-v29-28",
+      "sourceRu": "Аренда 91468 рублей в месяц. Залог 45176 рублей. Площадь 46.3 м². В квартире есть микроволновая печь. В комплектации отсутствует: диван. Не подтверждено наличие: холодильник. Животные запрещены. Владелец не оформляет временную регистрацию. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь28 и КонтрольНефрит28; время в дороге неизвестно.",
+      "referenceZh": "月租91468卢布。押金45176卢布。面积46.3㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь28和КонтрольНефрит28站，通勤时间尚未确认。",
+      "generationFactsZh": "月租91468卢布。押金45176卢布。面积46.3㎡。已确认配有微波炉。未配备沙发。冰箱是否配备尚未确认。不接受宠物。房东不办理临时居住登记。禁止转租。水电按表另付。原文提及КонтрольЯнтарь28和КонтрольНефрит28站，通勤时间尚未确认。",
+      "fields": {
+        "price": "91468",
+        "area": "46.3",
+        "metro": "КонтрольЯнтарь28",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь28",
+          "aliases": [
+            "КонтрольЯнтарь28"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит28",
+          "aliases": [
+            "КонтрольНефрит28"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "99c008c26622bedfcd4411e918b1d666b146a16269bf433697cf14bfee2adfa1",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-29",
+      "groupId": "independent-v29-29",
+      "sourceRu": "Аренда 92847 рублей в месяц. Залог 46039 рублей. Площадь 47.0 м². В квартире есть посудомоечная машина. В комплектации отсутствует: письменный стол. Не подтверждено наличие: стиральная машина. Животные только по согласованию. Условия регистрации у владельца неизвестны. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь29 и КонтрольНефрит29; время в дороге неизвестно.",
+      "referenceZh": "月租92847卢布。押金46039卢布。面积47.0㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь29和КонтрольНефрит29站，通勤时间尚未确认。",
+      "generationFactsZh": "月租92847卢布。押金46039卢布。面积47.0㎡。已确认配有洗碗机。未配备书桌。洗衣机是否配备尚未确认。携带宠物需事先协商。房东办理临时居住登记的条件尚未确认。禁止转租。水电按表另付。原文提及КонтрольЯнтарь29和КонтрольНефрит29站，通勤时间尚未确认。",
+      "fields": {
+        "price": "92847",
+        "area": "47.0",
+        "metro": "КонтрольЯнтарь29",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь29",
+          "aliases": [
+            "КонтрольЯнтарь29"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит29",
+          "aliases": [
+            "КонтрольНефрит29"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "ed7d5cf6785af917d6227ae7b0c79da07065ceecea636bbbfc00a0e6a4a5c21e",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    },
+    {
+      "id": "heldout-30",
+      "groupId": "independent-v29-30",
+      "sourceRu": "Аренда 94226 рублей в месяц. Залог 46902 рублей. Площадь 47.7 м². В квартире есть кондиционер. В комплектации отсутствует: холодильник. Не подтверждено наличие: духовой шкаф. Условия для животных неизвестны. Владелец оформляет временную регистрацию за отдельную плату. Субаренда запрещена. Вода и электричество оплачиваются по счётчикам отдельно. В исходнике названы станции КонтрольЯнтарь30 и КонтрольНефрит30; время в дороге неизвестно.",
+      "referenceZh": "月租94226卢布。押金46902卢布。面积47.7㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь30和КонтрольНефрит30站，通勤时间尚未确认。",
+      "generationFactsZh": "月租94226卢布。押金46902卢布。面积47.7㎡。已确认配有空调。未配备冰箱。烤箱是否配备尚未确认。宠物条件待确认。房东可协助办理临时居住登记，费用另付。禁止转租。水电按表另付。原文提及КонтрольЯнтарь30和КонтрольНефрит30站，通勤时间尚未确认。",
+      "fields": {
+        "price": "94226",
+        "area": "47.7",
+        "metro": "КонтрольЯнтарь30",
+        "priceCurrency": "RUB"
+      },
+      "observedStations": [
+        {
+          "ru": "КонтрольЯнтарь30",
+          "aliases": [
+            "КонтрольЯнтарь30"
+          ]
+        },
+        {
+          "ru": "КонтрольНефрит30",
+          "aliases": [
+            "КонтрольНефрит30"
+          ]
+        }
+      ],
+      "sourceClauseSha256": "d9cba78750d7541841beae3bb994631749c9f42c1e2b3b8eb1d785e6aa036f61",
+      "conflicts": [],
+      "annotationNotes": [
+        "Independent fictional situation; exact station labels are invented.",
+        "Owner registration and any studio service must remain distinct."
+      ],
+      "permission": {
+        "trainingAllowed": false,
+        "evaluationAllowed": true,
+        "basis": "project-authored"
+      },
+      "authorship": "project-authored-synthetic",
+      "nativeSpeakerReviewed": false
+    }
+  ]
+}

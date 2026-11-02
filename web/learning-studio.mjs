@@ -1,4 +1,5 @@
 import {setupTagPostStats} from './tag-post-stats.mjs';
+import {setupModelHistory} from './model-history.mjs';
 // Private editorial memory. All user values enter the DOM as text.
 export function learningTextLanguage(text){return /\p{Script=Han}/u.test(String(text))?'zh':'ru';}
 export function learningGroundingFields(fields={}){
@@ -28,20 +29,22 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  const date=field(form,'Дата наблюдения',make('input','',{type:'date',value:new Date().toISOString().slice(0,10)})),context=field(form,'Контекст статистики · например, теги квартиры у метро',make('input','',{type:'text',maxLength:500}));
  const reviewed=field(form,' Я проверил содержание и разрешаю использовать его',make('input','',{type:'checkbox'}));
  const formActions=make('div','',{className:'output-options'});
- const filters=make('select');for(const [value,label]of [['pending','Ожидают проверки'],['approved','Утверждены'],['rejected','Отклонены'],['','Все записи']])filters.append(make('option',label,{value}));
+ const filters=make('select');for(const [value,label]of [['pending','Ожидают проверки'],['approved','Утверждены'],['rejected','Отклонены'],['withdrawn','Отозваны из обучения'],['','Все записи']])filters.append(make('option',label,{value}));
  async function run(action){if(busy)return;busy=true;details.setAttribute('aria-busy','true');try{await action();}catch(error){const message=String(error?.message||'Не удалось обновить память');status.textContent=message;draftStatus.textContent=message;translationStatus.textContent=message;toast(message);}finally{busy=false;details.setAttribute('aria-busy','false');}}
  function displayFields(){const pair=['dictionary','translation'].includes(kind.value),stat=kind.value==='tag_stat';ru.parentElement.hidden=!pair;zh.parentElement.hidden=!pair;text.parentElement.hidden=pair||stat;for(const node of [tag,views,date,context])node.parentElement.hidden=!stat;}
  kind.onchange=displayFields;displayFields();
  function rowText(row){const p=row.payload||{};return row.kind==='dictionary'||row.kind==='translation'?[p.ru,p.zh].join(' → '):row.kind==='tag_stat'?[p.tag,p.views===undefined?'Просмотры не заданы':String(p.views)+' просмотров',p.observedAt,p.context].filter(Boolean).join(' · '):row.kind==='furniture'?(p.items||[]).join(', '):p.text||'';}
  function render(value){
   const s=value.status||{},counts=s.counts||s;
-  status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
+  status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+' · отозвано: '+Number(counts.withdrawn||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
   const scheduler=value.scheduler||{},config=scheduler.config||scheduler,model=value.text_ai||{},promotion=scheduler.promotion||{},evaluation=promotion.latestEvaluation||{};schedulerEnabled.checked=config.enabled===true;promotionEnabled.checked=config.automaticPromotion===true;schedulerForm.hidden=!canManageSettings();rollback.disabled=promotion.rollbackAvailable!==true;
   schedulerStatus.textContent=[model.installed?'Текстовая модель установлена'+(model.enabled?' и включена':''): 'Текстовая модель ещё не установлена',scheduler.message||'Ожидаем состояние планировщика',model.trainedParameters?'Обученных параметров адаптера: '+Number(model.trainedParameters).toLocaleString('ru-RU'):'',scheduler.stepsCompleted?'Выполнено шагов: '+Number(scheduler.stepsCompleted):'',config.automaticPromotion?'Автоприёмка включена: только после полного сравнения качества':'Автоприёмка выключена',evaluation.stepsCompleted?'Последний кандидат обучен: '+Number(evaluation.stepsCompleted)+' шагов':'',evaluation.requested?'Последняя проверка: '+Number(evaluation.candidatePassed||0)+'/'+Number(evaluation.requested):'',evaluation.message||'',scheduler.adapterReady&&scheduler.qualityOutcome!=='accepted'?'Кандидат сохранён; текущие веса работают до успешной приёмки':'',promotion.state==='accepted'?'Проверенные новые веса подключены; предыдущую версию можно вернуть':''].filter(Boolean).join(' · ');
   rows.replaceChildren();
-  for(const row of value.events||[]){const block=make('article','',{className:'card-file-row'}),body=make('div');body.append(make('strong',({dictionary:'Словарь',translation:'Перевод',title:'Заголовок',description:'Описание',furniture:'Мебель и техника',tag_stat:'Статистика тега'}[row.kind]||row.kind)+' · '+({pending:'на проверке',approved:'утверждено',rejected:'отклонено'}[row.status]||row.status)),make('p',rowText(row).slice(0,2500),{className:'muted'}));block.append(body);const actions=make('div','',{className:'output-options'});
-   if(row.status!=='approved')button(actions,'Утвердить',async()=>{await api('learning',{action:'review',id:row.id,status:'approved'});await refresh();});
-   if(row.status!=='rejected')button(actions,'Отклонить',async()=>{await api('learning',{action:'review',id:row.id,status:'rejected'});await refresh();});
+  for(const row of value.events||[]){const block=make('article','',{className:'card-file-row'}),body=make('div');body.append(make('strong',({dictionary:'Словарь',translation:'Перевод',title:'Заголовок',description:'Описание',furniture:'Мебель и техника',tag_stat:'Статистика тега'}[row.kind]||row.kind)+' · '+({pending:'на проверке',approved:'утверждено',rejected:'отклонено',withdrawn:'отозвано из обучения',superseded:'заменено исправлением'}[row.status]||row.status)),make('p',rowText(row).slice(0,2500),{className:'muted'}));block.append(body);const actions=make('div','',{className:'output-options'});
+   if(!['approved','withdrawn','superseded'].includes(row.status))button(actions,'Утвердить',async()=>{await api('learning',{action:'review',id:row.id,status:'approved'});await refresh();});
+   if(!['rejected','withdrawn','superseded'].includes(row.status))button(actions,'Отклонить',async()=>{await api('learning',{action:'review',id:row.id,status:'rejected'});await refresh();});
+   if(row.status!=='withdrawn')button(actions,'Отозвать из обучения',async()=>{const result=await api('learning',{action:'withdraw',id:row.id});await refresh();status.textContent=result.message;});
+   button(actions,'Происхождение и версии корпуса',async()=>{const value=await api('learning',{action:'provenance',id:row.id});let view=body.querySelector('.learning-provenance');if(!view){view=make('div','',{className:'learning-provenance'});body.append(view);}view.replaceChildren();view.append(make('p','Источник: '+value.source+' · создано: '+value.createdAt,{className:'muted'}));for(const event of value.reviewHistory||[])view.append(make('p',event.action+' · '+event.actor+' · '+event.created,{className:'muted'}));if(value.historicalActorUnknown)view.append(make('p','Для старой записи участник решения не был записан.',{className:'muted'}));view.append(make('p','Версии корпуса: '+((value.snapshots||[]).map(item=>item.snapshotId+' ('+item.partition+')').join(', ')||'ещё не включён'),{className:'muted'}));if(value.withdrawal)view.append(make('p','Разрешение отозвано. Влияние на уже обученные веса не удалено; затронутым моделям нужно переобучение.',{className:'muted'}));});
    block.append(actions);rows.append(block);
   }
   if(!(value.events||[]).length)rows.append(make('p','В этом разделе записей пока нет.',{className:'muted'}));
@@ -62,9 +65,13 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  promotionEnabled.onchange=()=>run(async()=>{if(!canManageSettings())throw Error('Настройки приёмки доступны владельцу');await api('learning',{action:'scheduler-config',automaticPromotion:promotionEnabled.checked});await refresh();});
  button(controls,'Подготовить утверждённые данные к обучению',async()=>{await api('learning',{action:'snapshot'});await refresh();status.textContent+=' Подготовлена версия данных для обучения; веса модели ещё не изменены.';});
  const compose=make('section'),composeActions=make('div','',{className:'output-options'}),draftStatus=make('p','Модель составляет черновик по цене, расположению и подтверждённым характеристикам. Проверьте смысл перед применением.',{className:'muted',role:'status'});
+ const draftMode=field(compose,'Способ подготовки объявления',make('select'));
+ for(const [value,label]of [['advertising','Новый рекламный текст · проверка фактов'],['advertising-structure','Новая подача · фактические блоки сохраняются']])draftMode.append(make('option',label,{value}));
+ compose.append(make('p','В режиме новой подачи модель выбирает расположение блоков, а подтверждённые факты сохраняются целиком. Уже использованные варианты не повторяются; когда схемы закончатся, появится сообщение. Каждый черновик применяется после вашей проверки.',{className:'muted'}));
  const draftTitle=field(compose,'Название · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:240})),draftBody=field(compose,'Описание · редактируемый ИИ-черновик',make('textarea','',{rows:7,maxLength:20000})),draftTags=field(compose,'Теги · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:3000}));
  let draftContext=null,translationContext=null;
  const fingerprint=()=>JSON.stringify([getGroup(),getFields(),getOutput()]);
+ const draftFingerprint=()=>JSON.stringify([draftTitle.value,draftBody.value,draftTags.value]);
  const draftApply=button(composeActions,'Применить проверенный черновик',async()=>{
   if(!draftContext||draftContext!==fingerprint())throw Error('Карточка изменилась. Создайте новый черновик.');
   if(typeof onApply!=='function')throw Error('Откройте карточку для применения');
@@ -72,12 +79,15 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
   if(!candidate.title||!candidate.body)throw Error('Введите название и описание');
   await onApply(candidate);draftContext=null;draftApply.disabled=true;draftStatus.textContent='Черновик передан в карточку. Окончательное применение зависит от проверки текущих правок.';
  });draftApply.disabled=true;
+ draftMode.onchange=()=>{draftContext=null;draftApply.disabled=true;draftStatus.textContent='Режим изменён. Создайте новый черновик.';};
  const generate=button(composeActions,'Создать ИИ-черновик по карточке',async()=>{
-  const expected=fingerprint();draftApply.disabled=true;draftContext=null;draftStatus.textContent='Локальная модель составляет текст. Первый запуск включает загрузку весов…';
-  const value=await api('learning',{action:'generate-preview',styleMode:'advertising',fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
-  if(expected!==fingerprint())throw Error('Во время генерации открыта или изменена другая карточка. Повторите запрос.');
-  const grounded=value.fallback===true||value.backend==='grounded-advertising',ai=value.ai||{},elapsed=value.elapsedSeconds??ai.elapsedSeconds;
-  draftStatus.textContent=[value.status==='review'?(grounded?'Рекламный черновик из проверенных фактов; ответ модели не прошёл проверку':'ИИ-черновик требует проверки'):'Локальная модель пока не подготовила пригодный черновик',...(value.warnings||[]),Number.isInteger(ai.generatedTokens)&&ai.generatedTokens>=0?'Модель: '+ai.generatedTokens+' токенов':'',Number.isFinite(ai.tokensPerSecond)&&ai.tokensPerSecond>=0?ai.tokensPerSecond.toFixed(1)+' ток/с':'',Number.isFinite(elapsed)&&elapsed>=0?'Время: '+elapsed.toFixed(1)+' с':''].filter(Boolean).join(' · ');
+  const expected=fingerprint(),expectedDraft=draftFingerprint(),expectedRevision=revision,selectedMode=draftMode.value;draftApply.disabled=true;draftContext=null;draftStatus.textContent=selectedMode==='advertising-structure'?'Локальная модель выбирает новую подачу подтверждённых фактов…':'Локальная модель составляет текст. Первый запуск включает загрузку весов…';
+  const value=await api('learning',{action:'generate-preview',styleMode:selectedMode,fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
+  if(expectedRevision!==revision)return;
+  if(expected!==fingerprint()||selectedMode!==draftMode.value)throw Error('Во время генерации изменилась карточка или выбранный режим. Повторите запрос.');
+  if(expectedDraft!==draftFingerprint()){draftStatus.textContent='Вы изменили черновик во время генерации. Ручной текст сохранён; ответ модели не применён.';return;}
+  const grounded=value.fallback===true||value.backend==='grounded-advertising',structured=value.modelContribution==='selection-of-layout-only'&&value.factualTextSource==='verified-renderer',ai=value.ai||{},elapsed=value.elapsedSeconds??ai.elapsedSeconds;
+  draftStatus.textContent=[value.status==='review'?(structured?'Модель выбрала подачу; фактические блоки сохранены. Проверьте черновик':grounded?'Рекламный черновик из проверенных фактов; ответ модели не прошёл проверку':'ИИ-черновик требует проверки'):'Локальная модель пока не подготовила пригодный черновик',...(value.warnings||[]),Number.isInteger(ai.generatedTokens)&&ai.generatedTokens>=0?'Модель: '+ai.generatedTokens+' токенов':'',Number.isFinite(ai.tokensPerSecond)&&ai.tokensPerSecond>=0?ai.tokensPerSecond.toFixed(1)+' ток/с':'',Number.isFinite(elapsed)&&elapsed>=0?'Время: '+elapsed.toFixed(1)+' с':''].filter(Boolean).join(' · ');
   if(value.status!=='review')return;
   draftTitle.value=typeof value.title==='string'?value.title:'';draftBody.value=typeof value.body==='string'?value.body:'';draftTags.value=typeof value.tags==='string'?value.tags:'';
   draftContext=expected;draftApply.disabled=!draftTitle.value||!draftBody.value;
@@ -96,10 +106,12 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
   await onApply({[part]:text});translationContext=null;translationApply.disabled=true;
  });translationApply.disabled=true;
  button(translationActions,'Перевести локальной моделью',async()=>{
-  const expected=fingerprint(),source=translationInput.value.trim(),selected=direction.value;
+  const expected=fingerprint(),expectedDraft=translationOutput.value,expectedRevision=revision,source=translationInput.value.trim(),selected=direction.value;
   if(!source)throw Error('Введите исходный текст');translationApply.disabled=true;translationContext=null;translationStatus.textContent='Переводим локально…';
   const value=await api('learning',{action:'translate-preview',text:source,direction:selected});
+  if(expectedRevision!==revision)return;
   if(expected!==fingerprint()||source!==translationInput.value.trim()||selected!==direction.value)throw Error('Исходный текст или карточка изменились. Повторите перевод.');
+  if(expectedDraft!==translationOutput.value){translationStatus.textContent='Вы изменили перевод во время генерации. Ручной текст сохранён; ответ модели не применён.';return;}
   translationStatus.textContent=[value.status==='review'?'Перевод требует проверки':'Пригодный перевод не получен',...(value.warnings||[])].join(' · ');
   if(value.status!=='review'||typeof value.text!=='string')return;
   translationOutput.value=value.text;translationContext=expected;translationApply.disabled=!value.text.trim();
@@ -108,7 +120,8 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  translation.prepend(make('h3','Русский ↔ 中文'));translation.append(translationActions,translationStatus);
  details.append(heading,intro,compose,translation,status,controls,schedulerForm,schedulerStatus,rows,make('h3','Добавить проверенный опыт'),form,formActions);mount.append(details);
  const postStats=setupTagPostStats({mount:details,api,getTags:()=>getOutput()?.tags||'',onSaved:()=>run(refresh)});
+ const modelHistory=setupModelHistory({mount:details,api});
  details.addEventListener('toggle',()=>{if(details.open)run(refresh);});
  schedulerForm.hidden=!canManageSettings();
- return {refresh,capture,setPermissions:()=>{schedulerForm.hidden=!canManageSettings();},clear:()=>{revision++;postStats.clear();rows.replaceChildren();draftContext=translationContext=null;draftApply.disabled=translationApply.disabled=true;for(const node of [draftTitle,draftBody,draftTags,translationInput,translationOutput,ru,zh,text,tag,views,context])node.value='';status.textContent='Откройте блок, чтобы получить состояние памяти.';},destroy:()=>{revision++;postStats.destroy();details.remove();}};
+ return {refresh,capture,setPermissions:()=>{schedulerForm.hidden=!canManageSettings();},clear:()=>{revision++;postStats.clear();modelHistory.clear();rows.replaceChildren();draftContext=translationContext=null;draftApply.disabled=translationApply.disabled=true;for(const node of [draftTitle,draftBody,draftTags,translationInput,translationOutput,ru,zh,text,tag,views,context])node.value='';status.textContent='Откройте блок, чтобы получить состояние памяти.';},destroy:()=>{revision++;postStats.destroy();modelHistory.destroy();details.remove();}};
 }

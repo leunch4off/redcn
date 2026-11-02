@@ -148,7 +148,7 @@ class MobileEditorLearningBrowserTests(unittest.TestCase):
         fixture.PhoneBrowserAcceptance.connect(self)
         self.page.locator('#phoneTabs [data-phone-view="setup"]').click()
         panel = self.page.locator('#phoneLearningMount .learning-studio')
-        panel.locator('summary').click()
+        panel.locator(':scope > summary').click()
         panel.get_by_text('На проверке:', exact=False).first.wait_for()
         self.assertTrue(panel.get_by_label('Обучать адаптер во время простоя Mac', exact=True).is_hidden())
         for height in (852, 500):

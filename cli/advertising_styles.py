@@ -58,6 +58,21 @@ def style_by_id(style_id):
     return next((row for row in STYLES if row[0] == style_id), STYLES[0])
 
 
+def variant_fingerprint(value):
+    normalized=''.join(c for c in unicodedata.normalize('NFKC',value).casefold() if c.isalnum())
+    return hashlib.sha256(normalized.encode()).hexdigest()
+
+
+def used_variant_fingerprints(directory, group_id):
+    """Read the durable novelty index, including variants older than prompts."""
+    key=hashlib.sha256(str(group_id).encode()).hexdigest();result={'title':set(),'description':set()}
+    with LearningMemory(directory)._db() as db:
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='advertising_history'").fetchone():
+            for row in db.execute('SELECT kind,fingerprint FROM advertising_history WHERE group_key=?',(key,)):
+                if row['kind'] in result:result[row['kind']].add(row['fingerprint'])
+    return result
+
+
 def claim_variant(directory, group_id, title, body):
     """Reserve both normalized texts atomically; punctuation is not novelty.
 
@@ -65,10 +80,7 @@ def claim_variant(directory, group_id, title, body):
     history. Concurrent requests cannot both claim an identical description.
     """
     key = hashlib.sha256(str(group_id).encode('utf-8')).hexdigest()
-    def fingerprint(value):
-        normalized = ''.join(c for c in unicodedata.normalize('NFKC', value).casefold() if c.isalnum())
-        return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
-    entries = [('title', fingerprint(title)), ('description', fingerprint(body))]
+    entries = [('title', variant_fingerprint(title)), ('description', variant_fingerprint(body))]
     memory = LearningMemory(directory)
     with memory._db() as db:
         db.execute('CREATE TABLE IF NOT EXISTS advertising_history '

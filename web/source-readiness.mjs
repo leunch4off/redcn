@@ -2,11 +2,20 @@
 // arbitrary backend warning strings must never become readiness feedback.
 const sectionNames={gallery:'Фотографии',description:'Описание',characteristics:'Характеристики'};
 const sectionReasons={partial:'полнота раздела не подтверждена',not_found:'раздел не найден при проверке',not_visited_budget:'проверка не выполнена: исчерпан лимит времени'};
+const schemaReasons={'unknown-schema':'Форма страницы источника изменилась: проверьте извлечённые сведения.','critical-fields-missing':'Не все обязательные сведения извлечены из источника.','invalid-critical-value':'В источнике есть неоднозначное или недопустимое значение.','field-conflict':'В источнике есть противоречивые сведения.','no-photo-evidence':'Фотографии источника не подтверждены.'};
+function schemaSummary(value){
+ if(!value||value.version!==1||!['recognized','partial','unsupported'].includes(value.state))return null;
+ const names=['price','area','layout','description'],reasons=Array.isArray(value.reasons)?value.reasons.filter(key=>Object.hasOwn(schemaReasons,key)):[];
+ return {version:1,state:value.state,platform:['cian','avito'].includes(value.platform)?value.platform:'unknown',reasons,missingCritical:Array.isArray(value.missingCritical)?value.missingCritical.filter(key=>names.includes(key)):[],criticalCoverage:Object.fromEntries(names.map(key=>[key,value.criticalCoverage?.[key]===true])),unknownDoesNotMeanAbsent:true};
+}
 
 function readinessOf(value){
   if(!value||typeof value!=='object')return null;
   const candidates=[value.sourceReadiness,value.listing&&value.listing.sourceReadiness,value.fields&&value.fields.sourceReadiness,value];
-  return candidates.find(row=>row&&typeof row==='object'&&['ready','partial','unknown'].includes(row.state))||null;
+  const ready=candidates.find(row=>row&&typeof row==='object'&&['ready','partial','unknown'].includes(row.state));
+  if(ready)return ready;
+  const schema=schemaSummary(value.sourceSchemaHealth||value.listing?.sourceSchemaHealth||value.fields?.sourceSchemaHealth);
+  return schema?{state:schema.state==='recognized'?'unknown':'partial',partial:schema.state!=='recognized',completed:false,sections:[],schema}:null;
 }
 
 function albumStatus(value){
@@ -27,6 +36,8 @@ export function sourceReadinessFeedback(value,fallback){
       if(!row||row.reason==='ready'||row.ready===true)continue;
       details.push(sectionNames[name]+' — '+(sectionReasons[row.reason]||'полнота раздела не подтверждена')+'.');
     }
+    const schema=schemaSummary(readiness?.schema);
+    if(schema)for(const reason of schema.reasons)if(reason!=='no-photo-evidence')details.push(schemaReasons[reason]);
   }
   if(album){
     if(album.missing||album.overLimit)details.push('Альбом — найдено '+album.observed+' из '+(album.expected??'?')+' фото; не найдено '+(album.missing||0)+', сверх лимита '+album.overLimit+'.');
@@ -47,7 +58,7 @@ export function importStageMark(step){
   return step.state==='partial'||step.quality==='partial'||step.state==='error'||step.state==='waitingManual'?'!':step.state==='done'?'✓':'…';
 }
 
-const metadataKeys=['sourceReadiness','photoItems','layouts','sourceDates','transitDetails','pricePeriod','priceCurrency','depositCurrency','commissionCurrency','sellerSource','commissionSource','commissionStatus','commissionAmount','oneTimeFees','publicationStatus','eligibleForNew','locationSource'];
+const metadataKeys=['sourceReadiness','sourceSchemaHealth','photoItems','layouts','sourceDates','transitDetails','pricePeriod','priceCurrency','depositCurrency','commissionCurrency','sellerSource','commissionSource','commissionStatus','commissionAmount','oneTimeFees','publicationStatus','eligibleForNew','locationSource'];
 function metadataUrl(value){try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?url.href:null;}catch{return null;}}
 function metadataString(value,max=500){return typeof value==='string'?value.slice(0,max):null;}
 function metadataMedia(value,layout){
@@ -87,6 +98,8 @@ export function sourceEditorMetadata(fields,listing){
       if(['string','number'].includes(typeof value)&&/^\d+(?:\.\d{1,2})?$/.test(String(value)))output[key]=String(value).slice(0,20);
     }else if(key==='oneTimeFees'&&Array.isArray(value)){
       output[key]=value.slice(0,30).filter(row=>row&&typeof row==='object').map(row=>({label:metadataString(row.label,150)||'Разовый платёж',amount:metadataString(row.amount,30)??(typeof row.amount==='number'&&Number.isFinite(row.amount)?String(row.amount):''),currency:['RUB','USD','EUR','unknown'].includes(row.currency)?row.currency:'unknown',source:metadataString(row.source,500)||''}));
+    }else if(key==='sourceSchemaHealth'){
+      const safe=schemaSummary(value);if(safe)output[key]=safe;
     }else if(key==='sourceReadiness'){
       if(!value||!['ready','partial','unknown'].includes(value.state))continue;
       const feedback=sourceReadinessFeedback({sourceReadiness:value});
@@ -97,6 +110,7 @@ export function sourceEditorMetadata(fields,listing){
         output[key].sections.push({name,reason,found:typeof row.found==='boolean'?row.found:null,visited:row.visited===true,ready:row.ready===true&&reason==='ready'});
       }
       output[key].warnings=feedback.details;
+      const schema=schemaSummary(value.schema);if(schema)output[key].schema=schema;
       const album=albumStatus(value.gallery);if(album)output[key].gallery=album;
       for(const measurement of ['seconds','activeSeconds','budgetSeconds','budgetOverrunSeconds'])if(typeof value[measurement]==='number'&&Number.isFinite(value[measurement])&&value[measurement]>=0&&value[measurement]<=7200)output[key][measurement]=value[measurement];
     }else if(key==='photoItems'||key==='layouts'){

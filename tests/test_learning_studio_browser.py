@@ -85,7 +85,7 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.page.on('pageerror', lambda error: self.errors.append(str(error)))
         self.page.goto('http://127.0.0.1:'+str(self.server.server_port), wait_until='domcontentloaded')
         self.page.wait_for_function('window.ready===true')
-        self.page.locator('summary').click()
+        self.page.locator('summary').first.click()
         self.page.wait_for_function("document.body.textContent.includes('На проверке: 0')")
 
     def tearDown(self):
@@ -156,6 +156,90 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.assertIn('Модель: 25 токенов', text)
         self.assertIn('12.5 ток/с', text)
         self.assertIn('Время: 2.4 с', text)
+
+    def test_withdrawal_removes_approval_actions_and_shows_lineage(self):
+        self.page.get_by_label('Что запомнить',exact=True).select_option('translation')
+        self.page.get_by_label('Русский текст',exact=True).fill('Есть вымышленный стол')
+        self.page.get_by_label('Китайский текст',exact=True).fill('有虚构书桌')
+        self.page.get_by_role('button',name='Запомнить',exact=True).click()
+        self.page.get_by_role('button',name='Происхождение и версии корпуса',exact=True).click()
+        self.page.wait_for_function("document.body.textContent.includes('operator')")
+        self.page.get_by_role('button',name='Отозвать из обучения',exact=True).click()
+        self.page.wait_for_function("document.body.textContent.includes('отозван')")
+        self.page.locator('select').filter(has=self.page.locator('option[value="withdrawn"]')).select_option('withdrawn')
+        self.page.get_by_role('button',name='Происхождение и версии корпуса',exact=True).click()
+        self.page.wait_for_function("document.body.textContent.includes('Влияние на уже обученные веса не удалено')")
+        self.assertEqual(self.page.get_by_role('button',name='Утвердить',exact=True).count(),0)
+        self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth>innerWidth'))
+
+    def test_structure_mode_discloses_model_role_and_preserves_manual_text_on_exhaustion(self):
+        calls=[]
+        def preview(route):
+            request=route.request.post_data_json
+            if request.get('action')!='generate-preview':return route.continue_()
+            calls.append(request)
+            self.assertEqual(request['styleMode'],'advertising-structure')
+            result={'modelContribution':'selection-of-layout-only','factualTextSource':'verified-renderer',
+                'status':'review','title':'租住笔记','body':'租金80000卢布。','tags':'#莫斯科租房'}
+            if len(calls)>1:result.update(status='blocked',variantsExhausted=True,warnings=['Доступные схемы этой карточки уже использованы. Текущий текст сохранён.'])
+            route.fulfill(status=200,content_type='application/json',body=json.dumps(result))
+        self.page.route('**/api/learning',preview)
+        self.page.get_by_label('Способ подготовки объявления',exact=True).select_option('advertising-structure')
+        generate=self.page.get_by_role('button',name='Создать ИИ-черновик по карточке',exact=True)
+        generate.click()
+        self.page.wait_for_function("document.body.textContent.includes('Модель выбрала подачу; фактические блоки сохранены')")
+        body=self.page.get_by_label('Описание · редактируемый ИИ-черновик',exact=True)
+        body.fill('Моя ручная редакция')
+        generate.click()
+        self.page.wait_for_function("document.body.textContent.includes('Доступные схемы этой карточки уже использованы')")
+        self.assertEqual(body.input_value(),'Моя ручная редакция')
+        self.assertTrue(self.page.get_by_role('button',name='Применить проверенный черновик',exact=True).is_disabled())
+        self.assertEqual(self.page.evaluate('applied.length'),0)
+        self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth>innerWidth'))
+
+    def test_late_model_answer_preserves_edits_and_cannot_repopulate_cleared_card(self):
+        self.page.evaluate('''() => {
+          const original=window.fetch;
+          window.fetch=(url,options)=>{
+            if(options?.body && JSON.parse(options.body).action==='generate-preview')
+              return new Promise(resolve=>{window.finishPreview=()=>resolve(new Response(JSON.stringify({status:'review',title:'新标题',body:'MODEL RESULT',tags:'#莫斯科租房'}),{status:200,headers:{'Content-Type':'application/json'}}));});
+            return original(url,options);
+          };
+        }''')
+        body=self.page.get_by_label('Описание · редактируемый ИИ-черновик',exact=True)
+        generate=self.page.get_by_role('button',name='Создать ИИ-черновик по карточке',exact=True)
+        generate.click()
+        self.page.wait_for_function("typeof window.finishPreview==='function'")
+        body.fill('Ручной текст во время запроса')
+        self.page.evaluate('finishPreview()')
+        self.page.wait_for_function("document.body.textContent.includes('Вы изменили черновик во время генерации')")
+        self.assertEqual(body.input_value(),'Ручной текст во время запроса')
+        self.assertTrue(self.page.get_by_role('button',name='Применить проверенный черновик',exact=True).is_disabled())
+        self.page.evaluate('window.finishPreview=null')
+        generate.click()
+        self.page.wait_for_function("typeof window.finishPreview==='function'")
+        self.page.evaluate('studio.clear();finishPreview()')
+        self.page.wait_for_function("document.querySelector('.learning-studio').getAttribute('aria-busy')==='false'")
+        self.assertEqual(body.input_value(),'')
+        self.assertEqual(self.page.get_by_label('Название · редактируемый ИИ-черновик',exact=True).input_value(),'')
+        self.assertEqual(self.page.evaluate('applied.length'),0)
+
+    def test_model_history_binds_selected_version_and_clears_private_screen(self):
+        def history(route):
+            if route.request.post_data_json.get('action')!='model-history':return route.continue_()
+            route.fulfill(status=200,content_type='application/json',body=json.dumps({'total':2,'note':'Fixture version history',
+                'candidates':[{'id':'one','weightsSha256':'a'*64,'selected':True,'state':'trained-unaccepted','receiptMatchesWeights':True,
+                    'stepsCompleted':5,'examples':{'train':10,'validation':4},'seconds':4,'peakMlxBytes':500,
+                    'historicalEvaluation':None}, {'id':'two','weightsSha256':'b'*64,'selected':False,'state':'paused','receiptMatchesWeights':True}]}))
+        self.page.route('**/api/learning',history)
+        self.page.get_by_text('Версии локальной модели',exact=True).click()
+        self.page.wait_for_function("document.body.textContent.includes('Выбрана сейчас · aaaaaaaaaaaa')")
+        text=self.page.locator('.model-history').inner_text()
+        self.assertIn('Кандидат · bbbbbbbbbbbb',text)
+        self.assertIn('Обучение прервано',text)
+        self.assertNotIn('успешно принят',text)
+        self.page.evaluate('studio.clear()')
+        self.assertEqual(self.page.locator('.model-history article').count(),0)
 
 
 if __name__ == '__main__':

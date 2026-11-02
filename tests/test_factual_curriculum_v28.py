@@ -1,5 +1,6 @@
 """The new curriculum must teach complete facts without leaking test answers."""
 from collections import Counter
+import copy
 from decimal import Decimal
 import importlib.util
 import json
@@ -13,7 +14,7 @@ sys.path.insert(0, str(ROOT / 'cli'))
 from advertising_styles import ADVERTISING_SYSTEM, STYLES
 from local_content import advertising_messages, _advertising_issues, _content_fingerprint
 from rental_heldout_quality import check_training_disjoint, load_cases
-from text_model_contract import load_dataset
+from text_model_contract import load_dataset, file_sha
 from text_quality import claims, parse_card, translation_checks
 from rental_conditions import fee_claims
 
@@ -34,7 +35,17 @@ class FactualCurriculumTests(unittest.TestCase):
                         row['verifiedFields'], row['additionalVerifiedText'])
 
     def test_reproducibility_and_preserved_experiments(self):
-        self.assertEqual(builder.build(), self.data)
+        self.assertEqual(file_sha(ROOT/'data/learning/factual-curriculum-v28.json'),
+            'e5bcb3ee99e654e9cfb284d2f8fc4ae9fff29c820219ab35fa3b42f987e71b27')
+        rebuilt=builder.build()
+        current_contract=file_sha(ROOT/'cli/local_content.py')
+        self.assertEqual(rebuilt['provenance']['sourceContractSha256'],current_contract)
+        # Frozen provenance describes the validator that authored v28. A
+        # current rebuild records the current checker without relabelling the
+        # historical corpus. Every row and every other field must match.
+        expected=copy.deepcopy(self.data)
+        expected['provenance']['sourceContractSha256']=current_contract
+        self.assertEqual(rebuilt,expected)
         for name, count in (('advertising-fictional-v27.json', 640),
                             ('advertising-production-v27b.json', 200)):
             self.assertEqual(len(load_dataset(ROOT / 'data/learning' / name)['splits']['train']), count)

@@ -1,9 +1,13 @@
 """Mac Chrome acceptance of reusable designs and private mobile dossiers."""
 import base64
 import json
+import os
 from pathlib import Path
 import threading
+import time
 import unittest
+from unittest.mock import patch
+from urllib.parse import urlsplit
 
 import test_phone_browser as acceptance
 
@@ -99,21 +103,148 @@ class PresentationAcceptance(unittest.TestCase):
     def test_new_card_first_export_keeps_stable_id_in_draft(self):
         thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
         base='http://127.0.0.1:'+str(self.controller.server_port)
+        started=time.monotonic();stage='editor-startup';requests=[];by_request={};milestones=[]
+        def mark(value):
+            nonlocal stage
+            stage=value;milestones.append({'stage':value,'elapsedMs':round((time.monotonic()-started)*1000,3)})
+        def requested(request):
+            path=urlsplit(request.url).path
+            if not path.startswith('/api/local/'):return
+            row={'method':request.method,'path':path,'startedMs':round((time.monotonic()-started)*1000,3)}
+            requests.append(row);by_request[request]=row
+        def responded(response):
+            row=by_request.get(response.request)
+            if row is not None:row.update(status=response.status,elapsedMs=round((time.monotonic()-started)*1000-row['startedMs'],3))
+        def failed(request):
+            row=by_request.get(request)
+            if row is not None:row.update(failed=True,elapsedMs=round((time.monotonic()-started)*1000-row['startedMs'],3))
+        self.page.on('request',requested);self.page.on('response',responded);self.page.on('requestfailed',failed)
         try:
-            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port));self.page.locator('#price').fill('92000');self.page.locator('#area').fill('46');self.page.locator('#metro').fill('Прокшино');self.page.locator('#generate').click()
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port),wait_until='domcontentloaded')
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
+            mark('generate-new-card')
+            self.page.locator('#price').fill('92000');self.page.locator('#area').fill('46');self.page.locator('#metro').fill('Прокшино');self.page.locator('#generate').click()
+            self.page.wait_for_function("document.getElementById('output').value.length>10")
+            mark('prepare-first-preview')
             self.page.locator('#openPresentation').click()
-            try:
-                with self.page.expect_download(timeout=15000) as download:self.page.locator('#presentationHtml').click()
-            except Exception as error:
-                self.fail('New card HTML export: '+self.page.locator('#presentationStatus').inner_text()+'; '+str(error))
+            # This test concerns the first saved ID, not an export competing
+            # with an unfinished initial designer render on a slower Mac.
+            self.page.wait_for_function("document.getElementById('presentationMount').dataset.photosReady==='true' && document.getElementById('presentationStatus').textContent.startsWith('Предпросмотр') && !document.getElementById('presentationHtml').disabled")
+            mark('download-first-html')
+            with self.page.expect_download(timeout=15000) as download:self.page.locator('#presentationHtml').click()
+            mark('verify-saved-draft-id')
             self.assertTrue(download.value.suggested_filename.endswith('.html'))
             draft=self.page.evaluate("JSON.parse(localStorage.getItem('most-draft'))")
             result_id=draft['fields']['resultId'];self.assertRegex(result_id,r'^[a-f0-9]{32}$')
             self.assertEqual(self.page.url,base+'/listing/'+result_id)
-            self.page.goto(base+'/')
+            mark('reload-root-from-draft')
+            self.page.goto(base+'/',wait_until='domcontentloaded')
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
             self.assertTrue(self.page.locator('#resultLink').get_attribute('href').endswith(result_id))
+        except Exception as error:
+            evidence={'stage':stage,'elapsedSeconds':time.monotonic()-started,'milestones':milestones,
+                'requests':requests[-40:],'pageErrors':[str(value)[:500] for value in self.errors[-10:]]}
+            try:evidence['page']=self.page.evaluate("""() => {
+                let draft;try{draft=JSON.parse(localStorage.getItem('most-draft'))}catch{}
+                return {path:location.pathname,editorReady:document.documentElement.dataset.editorReady,
+                    presentationStatus:document.getElementById('presentationStatus')?.textContent,
+                    photosReady:document.getElementById('presentationMount')?.dataset.photosReady,
+                    htmlDisabled:document.getElementById('presentationHtml')?.disabled,
+                    photoStatus:document.getElementById('photoStatus')?.textContent,
+                    draftResultId:draft?.fields?.resultId,
+                    resultHref:document.getElementById('resultLink')?.getAttribute('href')};
+            }""")
+            except Exception as snapshot_error:evidence['snapshotError']=type(snapshot_error).__name__
+            # Only paths/statuses and readiness are recorded; no request body,
+            # tokens, source text or card content enters this failure artifact.
+            output=os.environ.get('REDCN_BROWSER_PROOF_DIR')
+            if output:
+                try:
+                    folder=Path(output);folder.mkdir(parents=True,exist_ok=True,mode=0o700)
+                    target=folder/('first-export-failure-'+str(time.time_ns())+'.json')
+                    with target.open('x') as stream:json.dump(evidence,stream,ensure_ascii=False,indent=2)
+                except OSError as output_error:evidence['artifactError']=type(output_error).__name__
+            self.fail('New card first export: '+json.dumps(evidence,ensure_ascii=False)+'; '+str(error))
         finally:
             self.controller.shutdown();thread.join()
+
+    def test_phone_old_design_rejects_export_until_explicit_card_reload(self):
+        import card_assets
+        import local_server
+        acceptance.PhoneBrowserAcceptance.connect(self)
+        self.page.locator('#phoneCards .listing-card').first.click()
+        self.page.locator('#phoneDesignCard').click()
+        self.page.wait_for_function("document.getElementById('phoneDesignMount').dataset.photosReady==='true'")
+        changed=local_server.read_result(self.directory,self.card_id)
+        changed['fields']['price']='81000';changed['body']='月租81,000₽。新修改的正文。'
+        local_server.save_result(self.directory,changed,self.card_id)
+        # This designer keeps its opened detail when the feed polls a new row.
+        with self.page.expect_response(lambda response:response.url.endswith('/api/phone/card-export')) as rejected:
+            self.page.locator('#presentationHtml').click()
+        self.assertEqual(rejected.value.status,409)
+        self.assertEqual(rejected.value.json()['code'],'CLIENT_REVISION_CHANGED')
+        self.assertEqual(card_assets.list_exports(self.directory,self.card_id),[])
+        self.page.wait_for_function("document.getElementById('presentationStatus').textContent.includes('изменились')")
+        with self.page.expect_response(lambda response:response.url.endswith('/api/phone/cards/'+self.card_id)) as loaded:
+            self.page.locator('#presentationRefresh').click()
+        self.assertEqual(loaded.value.status,200)
+        self.page.wait_for_function("!document.getElementById('presentationHtml').disabled")
+        with self.page.expect_download(timeout=20000) as output:
+            self.page.locator('#presentationHtml').click()
+        text=Path(output.value.path()).read_text()
+        self.assertIn('81,000',text);self.assertNotIn('80,000',text)
+        exported=card_assets.list_exports(self.directory,self.card_id)
+        self.assertEqual(len(exported),1);self.assertEqual(exported[0]['revisionStatus'],'current')
+
+    def test_all_formats_wait_for_inflight_photo_analysis_before_their_first_save(self):
+        import card_assets
+        import photo_store
+        entered=threading.Event();release=threading.Event()
+        original=photo_store.analyze_photo
+        def delayed(*args,**kwargs):
+            entered.set()
+            if not release.wait(12):raise AssertionError('Isolated analysis was not released')
+            return original(*args,**kwargs)
+        thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
+        saves=[]
+        self.page.on('request',lambda request:saves.append(True) if request.method=='POST' and request.url.endswith('/api/local/save') else None)
+        try:
+            # Arm the hold only after startup and the first designer render.
+            # Otherwise automatic analysis can spend its whole hold budget
+            # waiting for page.goto/initial Mac rendering rather than export.
+            self.page.add_init_script("if(window===window.top){localStorage.setItem('most-photo-analyze','false');localStorage.setItem('most-photo-autoload','false')}")
+            self.page.set_viewport_size({'width':1440,'height':1100})
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port,self.card_id),wait_until='domcontentloaded')
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true' && document.getElementById('output').value.length>10")
+            self.page.locator('#openPresentation').click()
+            self.page.wait_for_function("document.getElementById('presentationMount').dataset.photosReady==='true' && document.getElementById('presentationStatus').textContent.includes('Предпросмотр обновлён')")
+            self.page.locator('nav [data-tab="editor"]').click()
+            with patch.object(photo_store,'analyze_photo',side_effect=delayed):
+                saves.clear()
+                self.page.locator('#photoAnalyze').click()
+                deadline=time.monotonic()+5
+                while not entered.is_set() and time.monotonic()<deadline:self.page.wait_for_timeout(30)
+                self.assertTrue(entered.is_set(),'The explicit photo action must be in flight')
+                self.page.locator('#openPresentation').click()
+                self.page.wait_for_function("document.getElementById('presentationMount').dataset.photosReady==='true'")
+                with self.page.expect_download(timeout=20000) as output:
+                    self.page.locator('#presentationHtml').click()
+                    self.page.wait_for_timeout(200)
+                    self.assertEqual(saves,[],'Saving a snapshot while photo observations are changing creates mixed export revisions')
+                    self.assertEqual(card_assets.list_exports(self.directory,self.card_id),[])
+                    release.set()
+                self.assertTrue(output.value.suggested_filename.endswith('.html'))
+                self.page.locator('#presentationTabintro').click()
+                self.page.wait_for_function("document.getElementById('presentationImagePreview').naturalWidth===1080")
+                self.take_download('#presentationImageDownload',20000)
+                self.page.locator('#presentationTabpdf').click()
+                self.take_download('#presentationPdf',90000)
+                exports=card_assets.list_exports(self.directory,self.card_id)
+                self.assertEqual({row['kind'] for row in exports},{'html','intro','pdf'})
+                self.assertTrue(all(row['revisionStatus']=='current' and not row['requiresRegeneration'] for row in exports))
+                self.assertEqual(len({row['revisionSha256'] for row in exports}),1)
+        finally:
+            release.set();self.controller.shutdown();thread.join()
 
 
 if __name__=='__main__':unittest.main()

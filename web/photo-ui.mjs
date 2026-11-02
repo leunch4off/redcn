@@ -1,6 +1,6 @@
 import {createAiProgress} from './ai-progress.mjs';
 import {clientPublicationCard} from './client-publication.mjs';
-import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
+import {isAutomaticPhotoObservation,PHOTO_FEATURE_IDS} from './photo-observation-policy.mjs';
 import {cardPhotoDataUrl} from './card-files.mjs';
 import {withRequestDeadline} from './request-deadline.mjs';
 import {setupFurniturePhotos} from './furniture-photos.mjs';
@@ -24,6 +24,22 @@ export function presentationAcceptedCrop(value,originalId){
 const photoJournalFeatures=new Set(['sofa','bedAny','chairs','tv','fridge','oven','microwave','sink','table','desk','wardrobe','washer','dishwasher','piano','coffeeMachine','mirror','curtains','coffeeTable']);
 const photoJournalDigest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const photoJournalScore=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1;
+const reviewedPhotoFeatures=new Set(PHOTO_FEATURE_IDS);
+
+/** A new inference cannot erase an operator's review of these same bytes.
+ * Missing proposals retain only reviewed rows, clearly outside the new model
+ * output. The caller supplies the canonical identity verified by the server. */
+export function retainReviewedPhotoCandidates(previous,current,{originalId,confirmed={},rejected={}}={}){
+ if(!photoJournalDigest(originalId)||previous?.originalId!==originalId||current?.originalId!==originalId)return current;
+ const candidates=Array.isArray(current.candidates)?[...current.candidates]:[],present=new Set(candidates.map(row=>row?.id));
+ for(const row of Array.isArray(previous.candidates)?previous.candidates.slice(0,64):[]){
+  if(!row||!reviewedPhotoFeatures.has(row.id)||present.has(row.id))continue;
+  const confirmation=Object.hasOwn(confirmed,row.id)&&confirmed[row.id],reviewed=confirmation===true||confirmation&&typeof confirmation==='object'&&!Array.isArray(confirmation)||Object.hasOwn(rejected,row.id)&&rejected[row.id]===true;
+  if(!reviewed)continue;
+  candidates.push({...JSON.parse(JSON.stringify(row)),reviewOrigin:'operator-kept',reviewOriginalId:originalId,autoEligible:false,automaticSuggestion:false});present.add(row.id);
+ }
+ return {...current,candidates};
+}
 
 /** The direct-photo action uses the same bounded review queue as batch scans.
  * It never confirms a finding or assigns an item count by itself. */
@@ -70,7 +86,7 @@ export function mergePhotoReviewJournal(previous,items,{now=new Date().toISOStri
 }
 
 export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatures,getCardId=()=>null,getRejectedFeatures=()=>[]}){
- const pe=id=>document.getElementById(id);let items=[],active=null,epoch=0,objectUrls=[],viewerUrls=[],edits={},busy=false,zipUrl=null;
+ const pe=id=>document.getElementById(id);let items=[],active=null,epoch=0,objectUrls=[],viewerUrls=[],edits={},busy=false,zipUrl=null,sourceReadyEpoch=0,autoLoadPendingEpoch=null;
  const aiProgress=createAiProgress({after:pe('photoStatus'),id:'photoAiProgress'});
  const itemSource=url=>{const rows=typeof getPost==='function'?getPost()?.fields?.photoItems:null;return Array.isArray(rows)?rows.find(row=>row?.url===url):null;};
  const sourceCacheKey=url=>{const source=itemSource(url);return source?url+'\n'+JSON.stringify([source.photoId,source.variants||{},source.observedVariants||[]]):url;};
@@ -91,6 +107,16 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
   if(journal)edits.reviewJournal=journal;
   return {...(journal?{reviewJournal:journal}:{}),order:items.map(i=>i.url),excluded:items.filter(i=>!i.selected).map(i=>i.url),originals:items.filter(i=>i.preferOriginal).map(i=>i.url),crops:Object.fromEntries(items.filter(i=>!i.preferOriginal&&i.manualCropOverride&&i.cropMeta?.verification==='manual'&&i.cropMeta?.margins).map(i=>[i.url,i.cropMeta.margins])),observations:Object.fromEntries(items.filter(i=>i.analysis).map(i=>[i.url,{analysis:i.analysis,confirmed:i.confirmed||{},rejected:i.rejected||{}}]))};}
  function changed(){edits=state();onChange?.();}
+ async function preparePresentation(){
+  const token=epoch;let cancelled=false,timer;
+  const valid=()=>{if(cancelled)throw Error('Дождитесь завершения обработки фото и повторите экспорт.');if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');};
+  const wait=async()=>{valid();while(sourceReadyEpoch!==token||autoLoadPendingEpoch===token||busy||items.some(item=>item.loadingPending||item.acceptedPending)){await new Promise(resolve=>setTimeout(resolve,40));valid();}};
+  const prepare=async()=>{await wait();const selected=items.filter(item=>item.selected).slice(0,30);let next=0;await Promise.all(Array.from({length:Math.min(3,selected.length)},async()=>{while(next<selected.length){valid();const item=selected[next++];await ensure(item,false,{verifyOriginal:true});valid();}}));await wait();};
+  // An export does not cancel a user's photo job when its waiting budget ends.
+  // It simply refuses to save a half-settled source for the client material.
+  try{await Promise.race([prepare(),new Promise((_,reject)=>{timer=setTimeout(()=>{cancelled=true;reject(Error('Обработка фото ещё идёт. Дождитесь её завершения и повторите экспорт.'));},30000);})]);}
+  finally{cancelled=true;clearTimeout(timer);}
+ }
  function status(){for(const id of ['photoAnalyze','photoLoad','photoRefresh','photoDownload','photoDownloadCropped','photoCropAuto','photoAttach','photoCropApply','photoAttachOne'])pe(id).disabled=busy||(id==='photoAnalyze'&&!local);const ready=items.filter(i=>i.blob).length,crops=items.filter(i=>i.cropBlob).length,errors=items.filter(i=>i.error).length;pe('photoStatus').textContent=ready+' / '+items.length+' оригиналов загружено · '+crops+' копий кадрировано'+(busy?' · обработка…':'')+(errors?' · '+errors+' требуют внимания':'');}
  function assetUrl(blob){const url=URL.createObjectURL(blob);objectUrls.push(url);return url;}
  function imageNode(blob,url,alt){const image=document.createElement('img');image.src=blob?assetUrl(blob):url;image.alt=alt;image.loading='lazy';image.referrerPolicy='no-referrer';return image;}
@@ -100,11 +126,24 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  }
  async function binary(id,{signal}={}){return withRequestDeadline(25000,async requestSignal=>{const r=await fetch('/api/local/media/'+id,{headers:{'X-Redcn-Token':document.querySelector('meta[name="redcn-token"]')?.content||''},cache:'no-store',signal:requestSignal});if(!r.ok)throw Error('Локальная копия фото недоступна');return r.blob();},{signal});}
  async function dimensions(blob){if(blob.size>12_000_000||!['image/jpeg','image/png','image/webp'].includes(blob.type))throw Error('Фото: JPEG/PNG/WebP до 12 МБ');const bitmap=await createImageBitmap(blob);try{cropRectangle(bitmap.width,bitmap.height);return {width:bitmap.width,height:bitmap.height};}finally{bitmap.close();}}
- async function acceptedCrop(item){
+ function reconcileObservationOriginal(item,originalId){
+  if(!item.analysis||item.analysis.originalId===originalId)return false;
+  item.analysis=null;item.confirmed={};item.rejected={};return true;
+ }
+ async function acceptedCrop(item,knownChoice=null){
   if(item.acceptedPending)return item.acceptedPending;
-  if(!local||item.preferOriginal||item.expectedMargins||item.manualCropOverride&&item.cropMeta?.verification==='manual'||item.acceptedCheckedAt&&Date.now()-item.acceptedCheckedAt<5000)return;
-  const pending=(async()=>{try{const source=typeof getPost==='function'?getPost()?.fields?.photoItems?.find?.(row=>row?.url===item.url):null,choice=await api('photo',{action:'accepted',url:item.url,...(source?{source}:{})});if(choice.original?.id&&choice.original.id!==item.serverId&&/^[a-f0-9]{64}$/.test(choice.original.id)){const blob=await binary(choice.original.id),size=await dimensions(blob);Object.assign(item,size,{blob,mime:blob.type,serverId:choice.original.id,analysis:null,confirmed:{},rejected:{}});await cachePut(item);if(typeof changed==='function')changed();if(typeof emitFeatures==='function')emitFeatures();}const selected=presentationAcceptedCrop(choice,item.serverId);item.variantReview=choice.variantReview||null;
-   if(selected){const preparedBlob=await binary(selected.id);await dimensions(preparedBlob);if(item.preferOriginal||item.expectedMargins||item.manualCropOverride&&item.cropMeta?.verification==='manual')return;if(selected.kind==='crop'){item.cropBlob=preparedBlob;item.cropMeta=selected;item.variantBlob=null;item.variantMeta=null;}else{item.variantBlob=preparedBlob;item.variantMeta=selected;item.cropBlob=null;item.cropMeta=null;}item.message=selected.kind==='original'?'Принят наблюдаемый вариант подходящего размера; исходники сохранены':selected.verification==='manual'?'Ручная производная с Mac':'Проверенная OCR-копия с Mac';await cachePut(item);}
+  if(!local||!knownChoice&&(item.preferOriginal||item.expectedMargins||item.manualCropOverride&&item.cropMeta?.verification==='manual'||item.acceptedCheckedAt&&Date.now()-item.acceptedCheckedAt<5000))return;
+  const pending=(async()=>{try{
+   const source=itemSource(item.url),choice=knownChoice||await api('photo',{action:'accepted',url:item.url,...(source?{source}:{})});
+   if(/^[a-f0-9]{64}$/.test(choice.original?.id||'')){
+    const changedOriginal=choice.original.id!==item.serverId;
+    if(changedOriginal){const blob=await binary(choice.original.id),size=await dimensions(blob);Object.assign(item,size,{blob,mime:blob.type,serverId:choice.original.id,cropBlob:null,cropMeta:null,variantBlob:null,variantMeta:null});}
+    const changedObservation=reconcileObservationOriginal(item,choice.original.id);
+    if(changedOriginal||changedObservation){await cachePut(item);changed();emitFeatures();}
+   }
+   if(item.preferOriginal||item.expectedMargins||item.manualCropOverride&&item.cropMeta?.verification==='manual')return;
+   const selected=presentationAcceptedCrop(choice,item.serverId);item.variantReview=choice.variantReview||null;
+   if(selected){let preparedBlob=selected.kind==='crop'&&item.cropMeta?.id===selected.id?item.cropBlob:selected.kind==='original'&&item.variantMeta?.id===selected.id?item.variantBlob:null;if(!preparedBlob){preparedBlob=await binary(selected.id);await dimensions(preparedBlob);}if(item.preferOriginal||item.expectedMargins||item.manualCropOverride&&item.cropMeta?.verification==='manual')return;if(selected.kind==='crop'){item.cropBlob=preparedBlob;item.cropMeta=selected;item.variantBlob=null;item.variantMeta=null;}else{item.variantBlob=preparedBlob;item.variantMeta=selected;item.cropBlob=null;item.cropMeta=null;}item.message=selected.kind==='original'?'Принят наблюдаемый вариант подходящего размера; исходники сохранены':selected.verification==='manual'?'Ручная производная с Mac':'Проверенная OCR-копия с Mac';await cachePut(item);}
    else if((item.cropMeta||item.variantMeta)&&!item.manualCropOverride){item.cropBlob=null;item.cropMeta=null;item.variantBlob=null;item.variantMeta=null;await cachePut(item);}
   }catch{if(item.cropMeta?.verification==='ocr-checked'||item.variantMeta){item.cropBlob=null;item.cropMeta=null;item.variantBlob=null;item.variantMeta=null;}}})();
   item.acceptedPending=pending;
@@ -112,13 +151,25 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  }
  // Cache hydration and the designer can request the same item concurrently.
  // A ready original is not a ready selected image until its crop is settled.
- async function ensure(item,refresh=false){if(item.loadingPending)return item.loadingPending;if(item.blob&&!refresh)return item;const pending=loadOriginal(item,refresh);item.loadingPending=pending;try{return await pending;}finally{if(item.loadingPending===pending)delete item.loadingPending;}}
+ async function ensure(item,refresh=false,{verifyOriginal=false}={}){if(item.loadingPending)return item.loadingPending;if(item.blob&&!refresh&&!verifyOriginal)return item;const pending=loadOriginal(item,refresh);item.loadingPending=pending;try{return await pending;}finally{if(item.loadingPending===pending)delete item.loadingPending;}}
  async function loadOriginal(item,refresh=false){
-  try{item.error='';item.message='Загружается…';status();let blob,metadata;
-   if(!refresh){const saved=await cacheGet(item.url,item.cacheKey);if(saved?.blob){const {confirmed:cachedConfirmation,...cached}=saved;if(item.analysis&&saved.analysis&&item.analysis.originalId!==saved.analysis.originalId)item.confirmed={};Object.assign(item,cached,{selected:item.selected});item.serverId=local?saved.serverId:null;item.message='Оригинал из кеша';if(item.preferOriginal||item.expectedMargins&&JSON.stringify(item.expectedMargins)!==JSON.stringify(item.cropMeta?.margins)){delete item.cropBlob;delete item.cropMeta;}if(item.expectedMargins&&!item.cropBlob)await applyClientCrop(item,item.expectedMargins);await acceptedCrop(item);return item;}}
-   if(local){const source=typeof getPost==='function'?getPost()?.fields?.photoItems?.find?.(row=>row?.url===item.url):null;metadata=await api('photo',{url:item.url,refresh,action:'load',...(source?{source}:{})});blob=await binary(metadata.id);item.serverId=metadata.id;}
+  try{item.error='';item.message='Загружается…';status();let blob,metadata,choice;
+   // The server's canonical identity is authoritative. Browser bitmap caches
+   // never replace the newer observation/decisions loaded with the card.
+   if(local){const source=itemSource(item.url);if(!refresh)try{choice=await api('photo',{action:'accepted',url:item.url,...(source?{source}:{})});metadata=choice.original;}catch{}if(!metadata?.id)metadata=await api('photo',{url:item.url,refresh,action:'load',...(source?{source}:{})});}
+   const saved=refresh?null:item.blob?Object.fromEntries(['blob','width','height','mime','cropBlob','cropMeta','variantBlob','variantMeta','variantReview','serverId','analysis'].map(key=>[key,item[key]])):await cacheGet(item.url,item.cacheKey);
+   if(saved?.blob&&(!local||saved.serverId===metadata.id)){
+    const {analysis:cachedAnalysis,confirmed:cachedConfirmation,rejected:cachedRejection,...cached}=saved;
+    const changedObservation=local?reconcileObservationOriginal(item,metadata.id):false;
+    Object.assign(item,cached,{selected:item.selected});item.serverId=local?metadata.id:null;
+    if(!item.analysis&&local&&cachedAnalysis?.originalId===metadata.id)item.analysis=cachedAnalysis;
+    item.message='Оригинал из кеша';if(item.preferOriginal||item.expectedMargins&&JSON.stringify(item.expectedMargins)!==JSON.stringify(item.cropMeta?.margins)){delete item.cropBlob;delete item.cropMeta;}
+    if(item.expectedMargins&&!item.cropBlob)await applyClientCrop(item,item.expectedMargins);
+    await acceptedCrop(item,choice);if(changedObservation){await cachePut(item);changed();emitFeatures();}return item;
+   }
+   if(local){blob=await binary(metadata.id);item.serverId=metadata.id;}
    else{blob=await withRequestDeadline(25000,async signal=>{const r=await fetch(hosted?'/api/photo?url='+encodeURIComponent(item.url):item.url,{referrerPolicy:'no-referrer',signal});if(!r.ok)throw Error('Источник не отдал фото ('+r.status+')');return r.blob();});}
-   const size=await dimensions(blob);if(item.analysis&&(!local||item.analysis.originalId!==metadata.id)){item.analysis=null;item.confirmed={};item.rejected={};changed();emitFeatures();}Object.assign(item,size,{blob,mime:blob.type,message:'Оригинал сохранён',cropBlob:null,cropMeta:null,variantBlob:null,variantMeta:null});await cachePut(item);if(item.expectedMargins)await applyClientCrop(item,item.expectedMargins);await acceptedCrop(item);return item;
+   const size=await dimensions(blob),changedObservation=reconcileObservationOriginal(item,local?metadata.id:null);Object.assign(item,size,{blob,mime:blob.type,message:'Оригинал сохранён',cropBlob:null,cropMeta:null,variantBlob:null,variantMeta:null});await cachePut(item);if(item.expectedMargins)await applyClientCrop(item,item.expectedMargins);await acceptedCrop(item,choice);if(changedObservation){changed();emitFeatures();}return item;
   }catch(error){item.error=(error.message||'Ошибка фото')+(!local?' · Если источник запрещает CORS, откройте локальный redcn или прикрепите оригиналы.':'');item.message='';throw error;}
  }
  async function loadAll(refresh=false){if(busy){toast('Дождитесь обработки фотографий.');return;}busy=true;status();const currentEpoch=epoch,queue=items.filter(i=>i.selected);let next=0;try{await Promise.all(Array.from({length:Math.min(3,queue.length)},async()=>{while(next<queue.length){if(epoch!==currentEpoch)return;const item=queue[next++];try{await ensure(item,refresh);}catch{}if(epoch===currentEpoch)render();}}));}finally{busy=false;if(epoch===currentEpoch){render();if(local&&pe('photoAnalyzeAuto').checked)await analyzeAll();}}}
@@ -145,6 +196,7 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  function observationDetail(item,row){
   const journal=edits.reviewJournal?.entries,pending=Array.isArray(journal)&&journal.some(entry=>entry?.originalId===item.analysis.originalId&&entry.featureId===row.id&&entry.state==='pending');
   const decision=item.rejected?.[row.id]?' · отклонено':item.confirmed?.[row.id]?' · подтверждено':row.automaticSuggestion&&pending?' · автодобавлено в журнал · требует подтверждения':'';
+  if(row.reviewOrigin==='operator-kept'&&row.reviewOriginalId===item.analysis.originalId)return row.label+decision+' · сохранено решение оператора для этого оригинала';
   return row.label+decision+' · '+(item.analysis.provider==='yolox-trained'?'оценка '+Number(row.confidence).toFixed(2):Math.round(row.confidence*100)+'%')+' · '+(row.evidence||[]).map(e=>e.text||e.label).join('; ');
  }
  function renderObservations(){observations.replaceChildren();const found=items.filter(i=>i.selected&&i.analysis);observations.classList.toggle('hidden',!found.length);if(!found.length)return;const title=document.createElement('h3'),help=document.createElement('p');title.textContent='Предметы на фотографиях';help.className='small';help.textContent='Автодобавление сохраняет находки ИИ в журнал проверки. Предположения обученной модели требуют подтверждения перед включением в описание. Отметьте видимые предметы; ошибочные снимите. Оценка модели не гарантирует точность, количество между ракурсами не суммируется.';observations.append(title,help);
@@ -163,13 +215,15 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
     const started=performance.now();
     aiProgress.update({operation:'furniture',phase:'preparing',active:true,photoIndex:index+1,photoTotal:queue.length,elapsedSeconds:0});
     try{
-     await ensure(item);const source=itemSource(item.url),original=await api('photo',{action:'load',url:item.url,...(source?{source}:{})});item.serverId=original.id;
+     await ensure(item,false,{verifyOriginal:true});const originalId=item.serverId;
+     if(!photoJournalDigest(originalId))throw Error('Не удалось подтвердить оригинал фото. Повторите загрузку.');
      aiProgress.update({operation:'furniture',phase:'analyzing',active:true,photoIndex:index+1,photoTotal:queue.length,elapsedSeconds:(performance.now()-started)/1000});
-     const analysis=await api('photo',{action:'analyze',id:original.id});
+     const analysis=await api('photo',{action:'analyze',id:originalId});
      if(epoch!==token)break;
+     if(analysis.originalId!==originalId)throw Error('Ответ анализа относится к другому оригиналу. Повторите анализ фото.');
      aiProgress.update({operation:'furniture',phase:['review','ok'].includes(analysis.status)?'complete':'unavailable',elapsedSeconds:(performance.now()-started)/1000,...analysis.ai,active:false,photoIndex:index+1,photoTotal:queue.length});
      if(item.analysis?.originalId!==analysis.originalId){item.confirmed={};item.rejected={};}
-     item.analysis=analysis;item.confirmed??={};item.message=item.analysis.message;
+     item.analysis=retainReviewedPhotoCandidates(item.analysis,analysis,{originalId,confirmed:item.confirmed,rejected:item.rejected});item.confirmed??={};item.message=item.analysis.message;
      const journal=mergePhotoReviewJournal(edits.reviewJournal,items,{refresh:true,rejectedFeatures:getRejectedFeatures()});
      if(journal)edits.reviewJournal=journal;
      await cachePut(item);
@@ -190,5 +244,5 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  pe('photoDownloadCropOne').onclick=()=>{if(active?.cropBlob)downloadPhoto(photoFileName(items.indexOf(active),'image/jpeg',true),active.cropBlob);else toast('Сначала создайте кадрированную копию.');};
  pe('photoFiles').onchange=async()=>{try{const files=[...pe('photoFiles').files];const queue=active?[active]:items.filter(i=>!i.blob);if(files.length>queue.length)throw Error('Прикрепите не больше файлов, чем незагруженных фото; либо откройте нужное фото.');for(let n=0;n<files.length;n++){const file=files[n],item=queue[n],size=await dimensions(file);let serverId=null;if(local){const encoded=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});serverId=(await api('photo',{action:'attach',url:item.url,data:encoded})).id;}Object.assign(item,size,{blob:file,mime:file.type,error:'',message:'Оригинал прикреплён вручную',serverId,cropBlob:null,cropMeta:null,variantBlob:null,variantMeta:null,variantReview:null,analysis:null,confirmed:{}});await cachePut(item);changed();emitFeatures();}render();if(active)show(active);toast('Оригиналы прикреплены в выбранном порядке.');}catch(error){toast(error.message);}finally{pe('photoFiles').value='';}};
  pe('photoAttach').onclick=()=>{active=null;pe('photoFiles').click();};pe('photoAttachOne').onclick=()=>pe('photoFiles').click();
- return {state,async presentationPhotos(){const token=epoch,selected=items.filter(item=>item.selected).slice(0,30),photos=new Array(selected.length);let next=0;await Promise.all(Array.from({length:Math.min(3,selected.length)},async()=>{while(next<selected.length){const index=next++,item=selected[index];await ensure(item);await acceptedCrop(item);if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');const asset=photoExportAsset(item,true),blob=asset.blob;if(blob)photos[index]={dataUrl:await cardPhotoDataUrl(blob),originalId:item.serverId||'',selectedId:asset.kind==='crop'?item.cropMeta?.id||'':asset.kind==='variant'?item.variantMeta?.id||'':item.serverId||'',selection:asset.kind==='crop'?item.cropMeta?.verification||'manual':asset.kind==='variant'?'observed-variant':'original'};}}));return photos.filter(Boolean);},setSources(urls,saved={}){epoch++;aiProgress.clear();if(zipUrl){URL.revokeObjectURL(zipUrl);zipUrl=null;}pe('photoZipLink').classList.add('hidden');edits=saved||{};const safe=photoSources(urls),order=[...new Set([...(Array.isArray(edits.order)?edits.order:[]).filter(u=>safe.includes(u)),...safe])];items=order.map(url=>({url,cacheKey:sourceCacheKey(url),selected:!edits.excluded?.includes(url),preferOriginal:edits.originals?.includes(url)===true,manualCropOverride:!edits.originals?.includes(url)&&!!edits.crops?.[url],expectedMargins:edits.originals?.includes(url)?undefined:edits.crops?.[url],analysis:edits.observations?.[url]?.analysis,confirmed:edits.observations?.[url]?.confirmed||{},rejected:edits.observations?.[url]?.rejected||{}}));active=null;render();const token=epoch;const start=()=>{if(token!==epoch||!pe('photoAutoLoad').checked)return;if(busy){setTimeout(start,250);return;}loadAll();};Promise.all(items.map(async item=>{const cached=await cacheGet(item.url,item.cacheKey);if(epoch===token&&cached?.blob)try{await ensure(item);}catch{}})).then(()=>{if(epoch===token){render();start();}});},refresh:render};
+ return {state,preparePresentation,async presentationPhotos(){const token=epoch,selected=items.filter(item=>item.selected).slice(0,30),photos=new Array(selected.length);let next=0;await Promise.all(Array.from({length:Math.min(3,selected.length)},async()=>{while(next<selected.length){const index=next++,item=selected[index];await ensure(item);await acceptedCrop(item);if(token!==epoch)throw Error('Карточка изменилась. Обновите макет.');const asset=photoExportAsset(item,true),blob=asset.blob;if(blob)photos[index]={dataUrl:await cardPhotoDataUrl(blob),originalId:item.serverId||'',selectedId:asset.kind==='crop'?item.cropMeta?.id||'':asset.kind==='variant'?item.variantMeta?.id||'':item.serverId||'',selection:asset.kind==='crop'?item.cropMeta?.verification||'manual':asset.kind==='variant'?'observed-variant':'original'};}}));return photos.filter(Boolean);},setSources(urls,saved={}){epoch++;sourceReadyEpoch=0;autoLoadPendingEpoch=epoch;aiProgress.clear();if(zipUrl){URL.revokeObjectURL(zipUrl);zipUrl=null;}pe('photoZipLink').classList.add('hidden');edits=saved||{};const safe=photoSources(urls),order=[...new Set([...(Array.isArray(edits.order)?edits.order:[]).filter(u=>safe.includes(u)),...safe])];items=order.map(url=>({url,cacheKey:sourceCacheKey(url),selected:!edits.excluded?.includes(url),preferOriginal:edits.originals?.includes(url)===true,manualCropOverride:!edits.originals?.includes(url)&&!!edits.crops?.[url],expectedMargins:edits.originals?.includes(url)?undefined:edits.crops?.[url],analysis:edits.observations?.[url]?.analysis,confirmed:edits.observations?.[url]?.confirmed||{},rejected:edits.observations?.[url]?.rejected||{}}));active=null;render();const token=epoch;const start=()=>{if(token!==epoch)return;if(!pe('photoAutoLoad').checked){autoLoadPendingEpoch=null;return;}if(busy){setTimeout(start,250);return;}autoLoadPendingEpoch=null;loadAll();};Promise.all(items.map(async item=>{const cached=await cacheGet(item.url,item.cacheKey);if(epoch===token&&cached?.blob)try{await ensure(item);}catch{}})).then(()=>{if(epoch===token){sourceReadyEpoch=token;render();start();}});},refresh:render};
 }

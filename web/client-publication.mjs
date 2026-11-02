@@ -132,7 +132,7 @@ export function clientPublicationCard(card={},options={}){
   if(value===null||typeof value!=='object')return value;
   if(active.has(value))throw TypeError('Циклическая модель публикации');active.add(value);
   let result;if(Array.isArray(value))result=value.map(item=>project(item,key,depth+1));
-  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name))continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
+  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name)||name==='sourceSchemaHealth'||name==='privateReviewFragment'||name==='presentationReceipt')continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
   active.delete(value);return result;
  }
  const projected=project(card);if(projected&&typeof projected==='object'&&!Array.isArray(projected)){for(const key of ['body','title','tags'])if(key in projected&&typeof projected[key]!=='string')projected[key]='';if('titles' in projected)projected.titles=(Array.isArray(projected.titles)?projected.titles:typeof projected.titles==='string'?[projected.titles]:[]).filter(value=>typeof value==='string'&&value.trim());projected.publicationPolicyVersion=PUBLICATION_POLICY_VERSION;clientStoreServiceGrant(projected,serviceGrant);}return projected;

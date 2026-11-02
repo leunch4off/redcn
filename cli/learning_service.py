@@ -77,9 +77,25 @@ def dispatch(directory, path, data=None, *, actor='operator'):
             value = {'event': memory.record(data.get('kind'), data.get('payload'),
                 source=data.get('source', 'manual'), status=data.get('status', 'pending'),
                 group_id=data.get('groupId'), supersedes=data.get('supersedes'),
-                event_id=data.get('eventId'))}
+                event_id=data.get('eventId'), actor=actor,
+                derived_from=data.get('derivedFrom'))}
         elif action == 'review':
-            value = {'event': memory.review(data.get('id'), data.get('status'))}
+            value = {'event': memory.review(data.get('id'), data.get('status'), actor=actor)}
+        elif action == 'withdraw':
+            if not {'action', 'id'} <= set(data) <= {'action', 'id', 'reason'}:
+                raise ValueError('Для отзыва нужны ID и необязательная причина')
+            value = memory.withdraw(data['id'], actor=actor, reason=data.get('reason', ''))
+            from learning_scheduler import touch_foreground
+            touch_foreground(directory)
+        elif action == 'provenance':
+            if set(data) != {'action', 'id'}:
+                raise ValueError('Для истории нужен только ID примера')
+            value = memory.provenance(data['id'])
+        elif action == 'model-history':
+            if not {'action'} <= set(data) <= {'action','limit'}:
+                raise ValueError('Неверные поля истории моделей')
+            from model_history import public_history
+            value = public_history(directory, data.get('limit',25))
         elif action == 'list':
             value = _overview(directory, memory, status=data.get('status'), limit=data.get('limit', 30))
         elif action == 'scheduler-config':

@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "kind": "recorded-linux-verification-summary",
+  "recordedOn": "2026-11-02",
+  "scope": {
+    "gitCommit": null,
+    "finalReleaseAcceptance": false,
+    "nativeMacAcceptance": false,
+    "physicalIphoneAcceptance": false,
+    "modelQualityAcceptance": false,
+    "automaticModelApproval": false,
+    "realHumanLabelsCreated": 0
+  },
+  "environment": {
+    "os": "Linux",
+    "browser": "Chromium headless",
+    "playwright": "1.56",
+    "productPdfWorker": "Chromium headless",
+    "fixtures": "isolated synthetic cards, images and caches"
+  },
+  "runs": [
+    {
+      "id": "photo-queue-and-calibration",
+      "modules": [
+        "test_photo_training_queue",
+        "test_photo_calibration"
+      ],
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "evidenceSource": "tool result recorded in this execution session",
+      "log": null
+    },
+    {
+      "id": "photo-training-browser",
+      "modules": [
+        "test_photo_training_browser"
+      ],
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 2.93,
+      "evidenceSource": "tool result recorded in this execution session after npm run build",
+      "log": null
+    },
+    {
+      "id": "full-node-after-tracked-assets-restored",
+      "command": "npm test",
+      "tests": 597,
+      "passed": 596,
+      "failed": 0,
+      "skipped": 1,
+      "seconds": 12.311570001,
+      "skipReason": "independent ZXing decoder unavailable",
+      "log": {
+        "name": "redcn-v29-node-full-restored.log",
+        "sha256": "3f2c554a0961e30ce4d632d9680af4ce755777b565781b2817279f842769a8dc"
+      },
+      "chronology": "Before later presentation-source and photo-readiness fixes"
+    },
+    {
+      "id": "photo-box-node-tests",
+      "file": "tests/photo-training.test.mjs",
+      "tests": 2,
+      "passed": 2,
+      "includedIn": "full-node-after-tracked-assets-restored"
+    },
+    {
+      "id": "wide-browser-initial",
+      "moduleCount": 50,
+      "tests": 168,
+      "passed": 165,
+      "failed": 2,
+      "errors": 1,
+      "skipped": 0,
+      "seconds": 256.353,
+      "log": {
+        "name": "redcn-v29-browser-wide.log",
+        "sha256": "4df9efdf4280d63b2d1022ceb41b650702fca8e96a7cdbbbc4a1fcf52804b00b"
+      }
+    },
+    {
+      "id": "mobile-and-photo-test-contract-recheck",
+      "modules": [
+        "test_mobile_editor_learning_browser",
+        "test_photo_inventory_browser"
+      ],
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 21.046,
+      "log": {
+        "name": "redcn-v29-browser-contract-fixes.log",
+        "sha256": "1d12fdd419ce20204bc477b0db4bda53d2487ad61e6b5c0d51cdb1d768b27ec5"
+      }
+    },
+    {
+      "id": "phone-language-recheck",
+      "modules": [
+        "test_phone_language_browser"
+      ],
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 11.309,
+      "galleryRewriteCaseRepetitions": 5,
+      "log": {
+        "name": "redcn-v29-phone-language-gate.log",
+        "sha256": "808eb318a0268a53052e72cc036cc683dc799223a1bec2461154d8f7d2e72005"
+      }
+    },
+    {
+      "id": "subsequent-photo-boundaries-after-runtime-fixes",
+      "modules": [
+        "test_photo_cache_decisions_browser",
+        "test_presentation_browser.PresentationAcceptance.test_all_formats_wait_for_inflight_photo_analysis_before_their_first_save"
+      ],
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 12.144,
+      "log": {
+        "name": "redcn-v29-photo-boundaries-final.log",
+        "sha256": "a1583b2eda438b329b1ec18492ec33f2224bc3fd5b8c4d81c617644fcb3e6a1c"
+      },
+      "checks": [
+        "Unchanged canonical SHA preserves saved decisions over stale IndexedDB bitmap",
+        "Changed canonical SHA invalidates old decisions",
+        "Same-SHA empty reanalysis retains only human-reviewed rows and their evidence",
+        "Immediate export revalidates canonical original within five-second display cache; decoded HTML raster matches new image",
+        "HTML/intro/PDF wait for inflight analysis and share one current revision"
+      ]
+    }
+  ],
+  "wideBrowser": {
+    "modules": [
+      "test_access_roles_browser",
+      "test_ai_progress_browser",
+      "test_avito_browser",
+      "test_browser_capture",
+      "test_browser_scroll_cli",
+      "test_ci_editor_browser",
+      "test_ciliev_studio_browser",
+      "test_city_pois_browser",
+      "test_client_publication_browser",
+      "test_cloud_backup_browser",
+      "test_commute_compare_browser",
+      "test_content_studio_browser",
+      "test_design_canvas_browser",
+      "test_device_notifications_browser",
+      "test_dictionary_review_browser",
+      "test_dossier_transfer_browser",
+      "test_fact_ledger_browser",
+      "test_import_errors_browser",
+      "test_language_studio_browser",
+      "test_listing_watch_browser",
+      "test_mobile_editor_learning_browser",
+      "test_model_viewer_browser",
+      "test_pairing_browser",
+      "test_phone_bootstrap_browser",
+      "test_phone_browser",
+      "test_phone_designer_loading_browser",
+      "test_phone_dossier_browser",
+      "test_phone_language_browser",
+      "test_phone_roles_browser",
+      "test_phone_routes_controller_browser",
+      "test_phone_timeout_browser",
+      "test_photo_instance_editor_browser",
+      "test_photo_instance_editor_desktop_browser",
+      "test_photo_inventory_browser",
+      "test_photo_variant_browser",
+      "test_publication_compact_browser",
+      "test_publication_review_browser",
+      "test_route_provider_browser",
+      "test_service_checklist_browser",
+      "test_service_composition_browser",
+      "test_shared_catalog_browser",
+      "test_source_readiness_browser",
+      "test_table_export_browser",
+      "test_twenty_editor_browser",
+      "test_ui_browser",
+      "test_university_route_cache_browser",
+      "test_university_ui_browser",
+      "test_workflow_browser",
+      "test_workspace_browser",
+      "test_workspace_ownership_browser"
+    ],
+    "excludedPreviouslyPassed": [
+      "test_learning_studio_browser",
+      "test_phone_job_browser",
+      "test_photo_training_browser",
+      "test_presentation_browser"
+    ],
+    "fullSuiteRepeatedAfterTestOnlyFixes": false,
+    "corrections": [
+      {
+        "type": "test-selector",
+        "file": "tests/test_mobile_editor_learning_browser.py",
+        "detail": "Choose direct summary rather than also matching nested model history"
+      },
+      {
+        "type": "test-call-contract",
+        "file": "tests/test_photo_inventory_browser.py",
+        "detail": "Assert exact authenticated session actor and durable requestId"
+      },
+      {
+        "type": "test-precondition",
+        "file": "tests/test_phone_language_browser.py",
+        "detail": "Wait for actual second-image scroll position before capturing URL and rewriting; all after assertions retained"
+      }
+    ],
+    "productionCodeChangedForTheseThreeCorrections": false,
+    "fixedSleepsAdded": false
+  },
+  "photoDataAudit": {
+    "currentWorkspaceSource": "Coordinator read-only Mac aggregate supplied on 2026-11-02",
+    "cards": 14,
+    "photosWithStoredObservations": 25,
+    "confirmed": 0,
+    "rejected": 0,
+    "reviewJournalStates": 0,
+    "instanceReviewRevisions": 0,
+    "instanceStates": 0,
+    "historicalCorpus": {
+      "evidence": "docs/PHOTO-TRAINING-READINESS-v28.md",
+      "images": 214,
+      "train": 134,
+      "validation": 80,
+      "classes": 21,
+      "verifiedNegativeClassImagePairs": 0,
+      "declaredApartmentGroups": 0,
+      "independentTestPresent": false,
+      "classesWithPotentiallySufficientValidationSupport": 0
+    },
+    "newPhotoTrainingPerformed": false,
+    "newClassesAdmitted": 0
+  },
+  "criteriaAssessment": {
+    "RCN-349": {
+      "scope": "read-only audit tooling",
+      "criteriaSatisfied": true,
+      "priorEvidence": "docs/PHOTO-TRAINING-READINESS-v28.md",
+      "note": "Exit code 0 means audit execution finished; blockers and automaticAcceptance=false must be read"
+    },
+    "RCN-353": {
+      "scope": "operator queue and checked-only export",
+      "syntheticEngineeringCriteriaSatisfied": true,
+      "realRentalDatasetAccepted": false,
+      "nativeReleaseEvidenceRecordedHere": false
+    },
+    "RCN-350": {
+      "dataReady": false,
+      "blocker": "Real permitted apartment groups with human near-duplicate review absent"
+    },
+    "RCN-351": {
+      "dataReady": false,
+      "blocker": "Verified rental positives, negatives and independently resolved rare categories absent"
+    },
+    "RCN-352": {
+      "protocolImplemented": true,
+      "newDataCalibrationPerformed": false
+    },
+    "RCN-354": {
+      "experimentPerformed": false,
+      "blocker": "New prepared independent rental data required first"
+    }
+  },
+  "sourceSnapshots": {
+    "cli/photo_training.py": "ab3409b89630ce92d4af8a2191366255da7f6a8c09f4fa1df7bdea4f92d6b9a0",
+    "cli/photo_training_api.py": "140f0e7af906b101b452ff80875864351e5eaf9998a349f1c85de4672be5cbdd",
+    "cli/photo_calibration.py": "c8d90de520e1fe1248aec3b727bf666c793e0ebbb52452ed9713023eaa0bfa1e",
+    "scripts/photo-corpus.py": "55ee51cf659842e10a8ed880bd89542e74308772c900e7463d84efd4ee7aa14e",
+    "web/photo-training.mjs": "82e7d2dd9e5e92808581d3f072b2305d6a3f0852e814a9e91c1c0bd5a412e825",
+    "tests/test_photo_training_queue.py": "8e30cbbf35248c0596f3464a8d5737b291247feaddb736cd6aed73093f920ac4",
+    "tests/test_photo_calibration.py": "0e3b6715a0eb9e98639607533e5f3848ed4d177a6d77a706c44a668191a8d46c",
+    "tests/photo-training.test.mjs": "529720acc20fc7df6e4c4092220c8deb3aee206dd9b810ad8360eea1716ea254",
+    "tests/test_photo_training_browser.py": "7d5849bd2ca53b10fabfb78784e0918b65f6fb07b34f83cea00171776bd90304",
+    "tests/test_mobile_editor_learning_browser.py": "c1c452e51c5666966f384c1aac42edc3d7d12e13bb41b9ef5b4aee12e10c8bcc",
+    "tests/test_photo_inventory_browser.py": "b61843b2918b179a4486ed43f6755a01066330986b3981b817ce9654b14c9f73",
+    "tests/test_phone_language_browser.py": "e7f3abf351c02fe5d4da4d60da6a765f01d3ec0bf1311f27d00e02f121a67a3f",
+    "tests/test_photo_cache_decisions_browser.py": "8a1f36655f31bad355bc3f2dee346c0b67c2030b8c2c904d3fc7c1080a03ad3d",
+    "tests/test_presentation_browser.py": "ce8e79892fe6482d5f2131c46aaab84a24f649c653a652c912b4a8bf62b63228",
+    "web/photo-ui.mjs": "41bc587032b8e9c880f57f880a6372d19ca16c2150669ae10bb8be8cbe95d443",
+    "web/media-core.mjs": "14ccada8d00af736b2ecf00b4146bf0c5db9cafb461d0bdd5dc8a2b91b430d70"
+  },
+  "limitations": [
+    "Recorded runs are historical snapshots, not a single final Git-commit gate.",
+    "Do not sum reruns or included tests as independent coverage.",
+    "Photo fixtures do not establish model quality or permission to use real photos.",
+    "Linux Chromium and emulated phone dimensions do not constitute native Mac or physical iPhone acceptance.",
+    "Later source changes are not retroactively covered; the five subsequent photo-boundary tests cover only their listed scenarios."
+  ],
+  "regressionBaselines": [
+    {
+      "id": "stale-indexeddb-manual-decisions",
+      "tests": 2,
+      "passed": 1,
+      "failed": 0,
+      "errors": 1,
+      "scope": "Synthetic browser fixtures before the corresponding runtime fix",
+      "log": {
+        "name": "redcn-v29-photo-cache-decisions-before.log",
+        "sha256": "215bc59bae7b8e09da31fab5d6b4920cc8ca06c985d1780949c31f8330b04715"
+      }
+    },
+    {
+      "id": "same-sha-reanalysis-human-evidence",
+      "tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "errors": 0,
+      "scope": "Synthetic browser fixture before the corresponding runtime fix",
+      "log": {
+        "name": "redcn-v29-photo-reanalysis-before.log",
+        "sha256": "bd37eae4d824f3c526d57e7c79f8c637f707bafc6e01b9086c2464a02ee01858"
+      }
+    }
+  ]
+}

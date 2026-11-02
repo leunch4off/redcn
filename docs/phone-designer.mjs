@@ -411,7 +411,7 @@ function clientPublicationCard(card={},options={}){
   if(value===null||typeof value!=='object')return value;
   if(active.has(value))throw TypeError('Циклическая модель публикации');active.add(value);
   let result;if(Array.isArray(value))result=value.map(item=>project(item,key,depth+1));
-  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name))continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
+  else{result={};for(const [name,item] of Object.entries(value)){if(clientPrivateKey.test(name)||name==='sourceSchemaHealth'||name==='privateReviewFragment'||name==='presentationReceipt')continue;const selected=name==='listing'&&item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(['url','images','latitude','longitude','sourceReadiness'].filter(field=>item[field]!==undefined).map(field=>[field,item[field]])):item;result[name]=project(selected,name,depth+1);}}
   active.delete(value);return result;
  }
  const projected=project(card);if(projected&&typeof projected==='object'&&!Array.isArray(projected)){for(const key of ['body','title','tags'])if(key in projected&&typeof projected[key]!=='string')projected[key]='';if('titles' in projected)projected.titles=(Array.isArray(projected.titles)?projected.titles:typeof projected.titles==='string'?[projected.titles]:[]).filter(value=>typeof value==='string'&&value.trim());projected.publicationPolicyVersion=PUBLICATION_POLICY_VERSION;clientStoreServiceGrant(projected,serviceGrant);}return projected;
@@ -3183,6 +3183,50 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   return {ready,refresh,refreshAssets,setSurface,selectedNode:()=>selected()?dceClone(effectiveNode(selected())):null,design:()=>dceClone(draft),destroy(){destroyed=true;settleReady(null,false);++renderEpoch;lastDrawnInputs=pendingDrawInputs=null;if(renderFrame!==null)cancelAnimationFrame(renderFrame);resizeObserver?.disconnect();window.removeEventListener('resize',dimensions);mount.replaceChildren();}};
 }
 
+// Export source authority is received with a loaded/saved card. A later file
+// list cannot renew it: that list says nothing about the content on screen.
+const loadedPresentationSources=new WeakMap();
+const presentationSourceChanged=()=>Object.assign(new Error('Карточка изменилась. Загрузите её заново, обновите макет и повторите экспорт.'),{code:'CLIENT_REVISION_CHANGED'});
+
+function presentationSourceBoundary(resultId,receipt){
+ if(!/^[a-f0-9]{32}$/.test(resultId||'')||receipt?.version!==1||receipt.cardId!==resultId||!/^[a-f0-9]{64}$/.test(receipt.revisionSha256||'')||!/^[a-f0-9]{64}$/.test(receipt.signature||''))throw new Error('Обновите страницу и загрузите карточку заново: подтверждение исходного содержимого недоступно.');
+ return {resultId,expectedRevision:receipt.revisionSha256,sourceReceipt:{version:1,cardId:resultId,revisionSha256:receipt.revisionSha256,signature:receipt.signature}};
+}
+
+function captureLoadedPresentationSource(card){
+ if(card&&typeof card==='object'){
+  // Older servers and viewer projections can still be read. Export requires
+  // a receipt and an unchanged authenticated card object, checked below.
+  loadedPresentationSources.set(card,{serialized:JSON.stringify(card),receipt:card.presentationReceipt?JSON.parse(JSON.stringify(card.presentationReceipt)):null});
+ }
+ return card;
+}
+
+function loadedPresentationSource(card){
+ const loaded=card&&loadedPresentationSources.get(card);
+ if(!loaded||loaded.serialized!==JSON.stringify(card))throw presentationSourceChanged();
+ return presentationSourceBoundary(card.id,loaded.receipt);
+}
+
+async function savePresentationSource({getCard,saveCard,cardKey}){
+ const key=cardKey(getCard()),saved=await saveCard();
+ if(cardKey(getCard())!==key)throw presentationSourceChanged();
+ return presentationSourceBoundary(saved.result_id,saved.presentationReceipt);
+}
+
+async function beginPresentationExport({getCard,ensureCard,cardKey}){
+ const key=cardKey(getCard()),source=await ensureCard({exportSnapshot:true});
+ if(cardKey(getCard())!==key)throw presentationSourceChanged();
+ const boundary=presentationSourceBoundary(source?.resultId,source?.sourceReceipt);
+ if(source.expectedRevision!==boundary.expectedRevision)throw presentationSourceChanged();
+ return {...boundary,key};
+}
+
+function assertPresentationExportCurrent(snapshot,boundary,{getCard,cardKey}){
+ if(!boundary||snapshot?.key!==boundary.key||cardKey(getCard())!==boundary.key)throw presentationSourceChanged();
+ return boundary.resultId;
+}
+
 /* Shared publication design. Generated HTML contains escaped text and embedded images only. */
 const PS_DESIGN_KEY='most-presentation-design-v1';
 const PRESENTATION_BLOCKS=['cover','title','facts','description','photos','location','contact'];
@@ -3308,7 +3352,7 @@ async function compressPresentationPhotos(values,encode=psCompressedPhoto,valid=
 }
 function psFileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Не удалось прочитать изображение'));reader.readAsDataURL(file);});}
 
-function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloadExport,getExportBlob,toast=()=>{},getMapImage,getRules}={}){
+function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,reloadCard,api,downloadExport,getExportBlob,toast=()=>{},getMapImage,getRules}={}){
   if(!mount)return null;
   const setupStarted=performance.now();
   let template=defaultPublicationDesign(),photos=[],intro='',outro='',mapImage='',mapAttribution='',logo='',avatar='',photoCardKey='',lastRendered=null;
@@ -3417,19 +3461,20 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,api,downloa
     }catch(error){if(valid()){status.textContent=error.message;toast(error.message);}return false;}
     }finally{if(reload){reloadRendering--;if(!reloadRendering){const surfacePending=deferredSurfacePreview&&active!=='pdf'&&lastRendered?.imageKind!==active,htmlPending=deferredHtmlPreview&&frameWrap.open&&!currentHtmlSnapshot(lastRendered);deferredSurfacePreview=deferredHtmlPreview=false;if(!destroyed&&(surfacePending||htmlPending))queueRender();}}}
   }
-  async function savedSnapshot(snapshot){const resultId=await ensureCard();if(!resultId)throw new Error('Сначала сохраните карточку в редакторе');if(presentationCardKey(current())!==snapshot.key)throw new Error('Карточка изменилась. Обновите макет и повторите экспорт.');return resultId;}
+  async function beginSavedExport(){if(!api||!ensureCard||demo)return null;status.textContent='Подготавливаем карточку и завершаем текущую обработку фото…';return beginPresentationExport({getCard:current,ensureCard,cardKey:presentationCardKey});}
+  function savedSnapshot(snapshot,boundary){return assertPresentationExportCurrent(snapshot,boundary,{getCard:current,cardKey:presentationCardKey});}
   async function action(run){if(busy||destroyed)return;clearTimeout(timer);busy=true;for(const control of [refresh,sample,save,html,proof,pdf,imageDownload])control.disabled=true;try{await run();}catch(error){if(!destroyed){status.textContent=error.message;toast(error.message);}}finally{busy=false;if(!destroyed){for(const control of [refresh,sample,save,html,proof,pdf])control.disabled=false;showImage();}}}
-  refresh.onclick=()=>action(async()=>{demo=false;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});await render(true);});sample.onclick=()=>action(async()=>{demo=true;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});await render(true);});
+  refresh.onclick=()=>action(async()=>{if(reloadCard)await reloadCard();demo=false;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});await render(true);});sample.onclick=()=>action(async()=>{demo=true;clearCardAssetsForKey(presentationCardKey(current()));editor?.refresh({resetHistory:true});await render(true);});
   save.onclick=()=>action(async()=>{await serverReady;if(destroyed)return;clearTimeout(timer);const epoch=designEpoch,snapshot=normalizePublicationDesign(template);if(api){const result=await api('design',{template:snapshot,expectedUpdated:serverUpdated});if(destroyed)return;serverUpdated=result.updated??null;storedBaseline=true;remoteChanged=false;if(epoch===designEpoch){template=normalizePublicationDesign(result.template||snapshot);dirty=false;syncInputs();persistLocal({touched:false});await render(false);}status.textContent=epoch===designEpoch?'Общий шаблон сохранён на Mac и будет использоваться для следующих карточек.':'Шаблон сохранён на Mac; новые локальные правки ещё не сохранены.';}else{dirty=false;persistLocal({touched:false});status.textContent='Общий шаблон сохранён в этом браузере.';}toast('Дизайн сохранён');});
   exportTemplate.onclick=()=>psDownloadBlob('ciliev-design-template.json',new Blob([JSON.stringify(normalizePublicationDesign(template),null,2)],{type:'application/json'}));oldExport.onclick=()=>{if(legacyBackup)psDownloadBlob('ciliev-original-design-v1.json',new Blob([JSON.stringify(legacyBackup,null,2)],{type:'application/json'}));};importTemplate.onclick=()=>file.click();
   draftExport.onclick=()=>{if(draftBackup)psDownloadBlob('ciliev-previous-draft.json',new Blob([JSON.stringify(draftBackup,null,2)],{type:'application/json'}));};
   reloadTemplate.onclick=()=>action(async()=>{if(!api)return;const result=await api('design');if(destroyed)return;if(!result.template)throw new Error('На Mac ещё нет сохранённого общего шаблона');if(dirty)draftBackup=normalizePublicationDesign(template);if(result.template.version===1)legacyBackup=result.template;template=normalizePublicationDesign(result.template);serverUpdated=result.updated??null;storedBaseline=true;remoteChanged=false;dirty=false;templateTouched=false;designEpoch++;revision++;assetRoleEpoch.logo++;assetRoleEpoch.avatar++;if(result.rules&&typeof result.rules==='object')savedServerRules=result.rules;syncInputs();persistLocal({touched:false});editor?.refresh({resetHistory:true});await render(false);status.textContent='Сохранённый шаблон загружен с Mac.'+(draftBackup?' Предыдущие локальные правки доступны отдельной кнопкой JSON.':'');});
   file.onchange=()=>action(async()=>{const selected=file.files?.[0];try{if(!selected)return;if(selected.size>300000)throw new Error('Шаблон должен быть меньше 300 КБ');const value=JSON.parse(await selected.text());if(![1,2].includes(value.version)||value.version===1&&!Array.isArray(value.blocks)||value.version===2&&(!value.surfaces||typeof value.surfaces!=='object'))throw new Error('Нужен шаблон МОСТ v1 или Ciliev v2');if(value.version===1)legacyBackup=value;template=normalizePublicationDesign(value);assetRoleEpoch.logo++;assetRoleEpoch.avatar++;syncInputs();persistLocal();editor?.refresh({resetHistory:true});await render(false);status.textContent='Шаблон импортирован. Сохраните его на Mac для следующих карточек.';}finally{file.value='';}});
-  html.onclick=()=>action(async()=>{if(!await render(true,{imageKind:null}))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered;if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot),asset=await api('card-export',{result_id:resultId,kind:'html',publicationPolicyVersion:PUBLICATION_POLICY_VERSION,html:snapshot.html,template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание HTML не подключено');status.textContent='HTML сохранён на Mac и доступен с телефона.';}else{psDownloadBlob('ciliev-card.html',new Blob([snapshot.html],{type:'text/html;charset=utf-8'}));status.textContent='HTML сохранён со встроенными фотографиями.';}});
-  async function createPdf(){if(demo)throw new Error('Для PDF выберите настоящую карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard)throw new Error('Автоматический PDF доступен через сервер Mac');if(!await render(true,{imageKind:null}))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=await savedSnapshot(snapshot);status.textContent='Mac создаёт PDF из текущего макета…';return api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',publicationPolicyVersion:PUBLICATION_POLICY_VERSION,template:snapshot.template});}
+  html.onclick=()=>action(async()=>{const boundary=await beginSavedExport();if(!await render(true,{imageKind:null}))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered;if(api&&ensureCard&&!demo){const resultId=savedSnapshot(snapshot,boundary),asset=await api('card-export',{result_id:resultId,kind:'html',expectedRevision:boundary.expectedRevision,sourceReceipt:boundary.sourceReceipt,publicationPolicyVersion:PUBLICATION_POLICY_VERSION,html:snapshot.html,template:snapshot.template});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание HTML не подключено');status.textContent='HTML сохранён на Mac и доступен с телефона.';}else{psDownloadBlob('ciliev-card.html',new Blob([snapshot.html],{type:'text/html;charset=utf-8'}));status.textContent='HTML сохранён со встроенными фотографиями.';}});
+  async function createPdf(){if(demo)throw new Error('Для PDF выберите настоящую карточку кнопкой «Обновить из карточки»');if(!api||!ensureCard)throw new Error('Автоматический PDF доступен через сервер Mac');const boundary=await beginSavedExport();if(!await render(true,{imageKind:null}))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered,resultId=savedSnapshot(snapshot,boundary);status.textContent='Mac создаёт PDF из текущего макета…';return api('card-export',{result_id:resultId,html:snapshot.html,kind:'pdf',expectedRevision:boundary.expectedRevision,sourceReceipt:boundary.sourceReceipt,publicationPolicyVersion:PUBLICATION_POLICY_VERSION,template:snapshot.template});}
   pdf.onclick=()=>action(async()=>{const asset=await createPdf();if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание PDF не подключено');status.textContent='PDF сохранён на Mac. Скачивание начато.';});
   proof.onclick=()=>action(async()=>{if(!getExportBlob)throw new Error('Просмотр PDF не подключён');const asset=await createPdf(),blob=await getExportBlob(asset);if(destroyed)return;if(!blob||typeof blob.arrayBuffer!=='function')throw new Error('Не удалось открыть созданный PDF');clearProof();proofUrl=URL.createObjectURL(blob);proofFrame.src=proofUrl;proofOpen.href=proofUrl;proofDialog.showModal();status.textContent='Готовый PDF открыт для проверки и сохранён в карточке.';});
-  imageDownload.onclick=()=>action(async()=>{const kind=active==='intro'?'intro':'outro';if(!await render(true,{imageKind:kind}))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered,value=kind==='intro'?snapshot.intro:snapshot.outro;if(!value)throw new Error('Сначала выберите фотографии карточки');if(api&&ensureCard&&!demo){const resultId=await savedSnapshot(snapshot),asset=await api('card-export',{result_id:resultId,kind,data:value,template:snapshot.template,publicationPolicyVersion:PUBLICATION_POLICY_VERSION});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание изображения не подключено');status.textContent='Изображение сохранено на Mac и доступно с телефона.';}else{const response=await fetch(value);psDownloadBlob('ciliev-'+kind+'.png',await response.blob());}toast('Изображение готово');});
+  imageDownload.onclick=()=>action(async()=>{const boundary=await beginSavedExport(),kind=active==='intro'?'intro':'outro';if(!await render(true,{imageKind:kind}))throw new Error('Макет изменился. Повторите экспорт.');const snapshot=lastRendered,value=kind==='intro'?snapshot.intro:snapshot.outro;if(!value)throw new Error('Сначала выберите фотографии карточки');if(api&&ensureCard&&!demo){const resultId=savedSnapshot(snapshot,boundary),asset=await api('card-export',{result_id:resultId,kind,expectedRevision:boundary.expectedRevision,sourceReceipt:boundary.sourceReceipt,data:value,template:snapshot.template,publicationPolicyVersion:PUBLICATION_POLICY_VERSION});if(downloadExport)await downloadExport(asset);else throw new Error('Скачивание изображения не подключено');status.textContent='Изображение сохранено на Mac и доступно с телефона.';}else{const response=await fetch(value);psDownloadBlob('ciliev-'+kind+'.png',await response.blob());}toast('Изображение готово');});
   syncInputs();selectTab('pdf');if(!api)queueRender();
   if(api)serverReady=api('design').then(result=>{if(destroyed)return;const currentUpdated=result.updated??null;remoteChanged=dirty&&storedBaseline&&serverUpdated!==currentUpdated;if(!dirty||!storedBaseline){serverUpdated=currentUpdated;storedBaseline=true;}if(result.rules&&typeof result.rules==='object')savedServerRules=result.rules;if(!templateTouched&&result.template){if(result.template.version===1)legacyBackup=result.template;template=normalizePublicationDesign(result.template);dirty=false;syncInputs();persistLocal({touched:false});editor?.refresh({resetHistory:true});}queueRender();}).catch(error=>{if(!destroyed)status.textContent='Не удалось загрузить общий шаблон. Ваши локальные правки сохранены. '+error.message;throw error;});
   // The initial fetch may fail before a save is attempted; keep that rejection

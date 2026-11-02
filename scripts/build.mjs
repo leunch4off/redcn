@@ -1,7 +1,14 @@
 import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const root=new URL('../',import.meta.url);
 await import('./build-city-pois.mjs');
+execFileSync(process.env.REDCN_PYTHON||(process.platform==='darwin'?'/usr/bin/python3':'python3'),[fileURLToPath(new URL('scripts/build-release-identity.py',root))],{cwd:fileURLToPath(root),stdio:['ignore','ignore','pipe']});
 const read=p=>readFile(new URL(p,root),'utf8');
+const buildIdentity=JSON.parse(await read('data/build-identity.json'));
+if(!/^[a-f0-9]{64}$/.test(buildIdentity.buildId))throw Error('Missing release build identity');
+const buildMeta='<meta name="redcn-build" content="'+buildIdentity.buildId+'">';
+const stampBuild=source=>{const charset=source.match(/<meta\s+charset=["']utf-8["']\s*\/?>/i);if(!charset||charset.index>4096)throw Error('Missing top-level UTF-8 header for release identity');return source.slice(0,charset.index+charset[0].length)+buildMeta+source.slice(charset.index+charset[0].length);};
 const [html,css,geoCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,sourceImport,factEvidence,content,engine,editor,historyCore,historyUI,insights,insightsUI,app,server]=await Promise.all(['web/index.html','web/styles.css','web/geo-catalog.mjs','web/qr-code.mjs','web/phone-connection.mjs','web/editor-state.mjs','web/furniture-photos.mjs','web/media-core.mjs','web/related.mjs','web/photo-ui.mjs','web/related-ui.mjs','web/source-import.mjs','web/fact-evidence.mjs','web/content-tools.mjs','web/engine.mjs','web/word-editor.mjs','web/history.mjs','web/history-ui.mjs','web/insights.mjs','web/insights-ui.mjs','web/app.js','worker/server.js'].map(read));
 const [cardFiles,cardArchive,presentationStudio,cardArchiveCss,presentationCss]=await Promise.all(['web/card-files.mjs','web/card-archive.mjs','web/presentation-studio.mjs','web/card-archive.css','web/presentation-studio.css'].map(read));
 const [rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,languageStudio,languageCss]=await Promise.all(['web/rental-lexicon.mjs','web/community-phrases.mjs','web/ru-zh-translator.mjs','web/template-catalog.mjs','web/language-studio.mjs','web/language-studio.css'].map(read));
@@ -11,12 +18,16 @@ const [universityRoutes,universityRoutesCss,listingWatch,listingWatchCss,importD
 const requestDeadline=await read('web/request-deadline.mjs');
 const desktopOwner=await read('web/desktop-owner.mjs');
 const learningStudio=await read('web/learning-studio.mjs');
+const modelHistory=await read('web/model-history.mjs');
+const releaseDiagnostics=await read('web/release-diagnostics.mjs');
+const photoTraining=await read('web/photo-training.mjs');
 const tagPostStats=await read('web/tag-post-stats.mjs');
 const deviceNotifications=await read('web/device-notifications.mjs');
 const workspaceBackup=await read('web/workspace-backup.mjs');
 const cloudBackup=await read('web/cloud-backup.mjs');
 const cloudWorker=await read('worker/cloud-backup.mjs');
 const phoneDesignerLoader=await read('web/phone-designer-loader.mjs');
+const presentationExportBoundary=await read('web/presentation-export-boundary.mjs');
 const [acceptanceStudio,mobileKeyboard,mobileAcceptanceCss,photoInstanceEditor]=await Promise.all(['web/acceptance-studio.mjs','web/mobile-keyboard.mjs','web/mobile-acceptance.css','web/photo-instance-editor.mjs'].map(read));
 const universityRouteCacheClient=await read('web/university-route-cache-client.mjs');
 const [cityPois,cityPoisCss]=await Promise.all(['web/city-pois.mjs','web/city-pois.css'].map(read));
@@ -35,9 +46,9 @@ const [publicationReview,publicationReviewCss]=await Promise.all(['web/publicati
 const operatorCss=(await Promise.all(['web/workflow.css','web/commute-compare.css','web/fact-ledger.css','web/dictionary-review.css','web/dossier-transfer.css','web/table-export.css','web/access-roles.css','web/import-errors.css','web/model-viewer.css'].map(read))).join('\n');
 const [metroNames,photoObservationPolicy]=await Promise.all(['web/metro-names.mjs','web/photo-observation-policy.mjs'].map(read));
 const strip=s=>s.replace(/^import .*?;\n/gm,'').replace(/^export /gm,'');
-const combined=[aiProgress,desktopOwner,mobileKeyboard,acceptanceStudio,photoInstanceEditor,requestDeadline,clientPublication,sourceReadiness,cardFiles,cardArchive,geoCatalog,metroNames,photoObservationPolicy,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,...sourceAdapters,sourceImport,factEvidence,content,contentStudio,listingSemantics,factLedger,engine,initialPayment,...operatorModules,publicationReview,universityRouteCacheClient,universityRoutes,publicationModel,publicationRender,designCanvasEditor,presentationStudio,editor,historyCore,historyUI,insights,insightsUI,languageStudio,universityUI,deviceNotifications,listingWatch,importDiagnostics,tagPostStats,learningStudio,cloudBackup,workspaceBackup,cityPois,app].map(strip).join('\n');
+const combined=[aiProgress,desktopOwner,mobileKeyboard,acceptanceStudio,photoInstanceEditor,requestDeadline,clientPublication,sourceReadiness,cardFiles,cardArchive,geoCatalog,metroNames,photoObservationPolicy,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,qrCode,phoneConnectionUi,editorState,furniturePhotos,mediaCore,relatedCore,photoUI,relatedUI,...sourceAdapters,sourceImport,factEvidence,content,contentStudio,listingSemantics,factLedger,engine,initialPayment,...operatorModules,publicationReview,universityRouteCacheClient,universityRoutes,publicationModel,publicationRender,designCanvasEditor,presentationExportBoundary,presentationStudio,editor,historyCore,historyUI,insights,insightsUI,languageStudio,universityUI,deviceNotifications,listingWatch,importDiagnostics,tagPostStats,modelHistory,learningStudio,cloudBackup,workspaceBackup,releaseDiagnostics,photoTraining,cityPois,app].map(strip).join('\n');
 // JSON escaping avoids breaking out of the JavaScript string that holds the page.
-const page=html.replace('<link rel="stylesheet" href="/styles.css">',()=>'<style>'+css+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'\n'+languageCss+'\n'+universityCss+'\n'+cityPoisCss+'\n'+universityRoutesCss+'\n'+listingWatchCss+'\n'+importDiagnosticsCss+'\n'+contentStudioCss+'\n'+operatorCss+'\n'+publicationReviewCss+'\n'+mobileAcceptanceCss+'</style>').replace('<script type="module" src="/app.js"></script>',()=>'<script type="module">'+combined.replace(/<\/script/gi,'<\\/script')+'</script>');
+const page=stampBuild(html).replace('<link rel="stylesheet" href="/styles.css">',()=>'<style>'+css+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'\n'+languageCss+'\n'+universityCss+'\n'+cityPoisCss+'\n'+universityRoutesCss+'\n'+listingWatchCss+'\n'+importDiagnosticsCss+'\n'+contentStudioCss+'\n'+operatorCss+'\n'+publicationReviewCss+'\n'+mobileAcceptanceCss+'</style>').replace('<script type="module" src="/app.js"></script>',()=>'<script type="module">'+combined.replace(/<\/script/gi,'<\\/script')+'</script>');
 const plan=JSON.parse(await read('plan.json'));
 const research=JSON.parse(await read('data/research.json'));
 const seed=JSON.parse(await read('data/knowledge-seed.json'));
@@ -54,11 +65,11 @@ for(const [source,target] of [['plan.json','docs/plan.json'],['data/research.jso
 console.log('Built standalone GitHub Pages site in docs/');
 
 const [phoneSource,phoneCss,phoneApp,pwaInstall,phoneBootstrap]=await Promise.all(['web/phone.html','web/phone.css','web/phone.mjs','web/pwa-install.mjs','web/phone-bootstrap.js'].map(read));
-const phoneHtml=phoneSource.replace('<script src="/phone/phone-bootstrap.js"></script>',()=>'<script>'+phoneBootstrap.replace(/<\/script/gi,'<\\/script')+'</script>');
-const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'\n'+universityRoutesCss+'\n'+listingWatchCss+'\n'+importDiagnosticsCss+'\n'+dictionaryReviewCss+'\n'+cityPoisCss+'\n'+dossierTransferCss+'\n'+publicationReviewCss+'\n'+mobileAcceptanceCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[aiProgress,mobileKeyboard,acceptanceStudio,photoInstanceEditor,requestDeadline,sourceAdapters[0],factLedger,clientPublication,sourceReadiness,photoObservationPolicy,photoBatchStatus,cardFiles,cardArchive,pwaInstall,deviceNotifications,listingWatch,importDiagnostics,dictionaryReview,dossierTransfer,accessRoles,publicationReview,universityRouteCacheClient,phoneRoutesController,tagPostStats,learningStudio,cityPois,phoneDesignerLoader,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
+const phoneHtml=stampBuild(phoneSource).replace('<script src="/phone/phone-bootstrap.js"></script>',()=>'<script>'+phoneBootstrap.replace(/<\/script/gi,'<\\/script')+'</script>');
+const phonePage=phoneHtml.replace('<link rel="stylesheet" href="/phone/phone.css">',()=>'<style>'+phoneCss+'\n'+cardArchiveCss+'\n'+presentationCss+'\n'+designCanvasCss+'\n'+universityRoutesCss+'\n'+listingWatchCss+'\n'+importDiagnosticsCss+'\n'+dictionaryReviewCss+'\n'+cityPoisCss+'\n'+dossierTransferCss+'\n'+publicationReviewCss+'\n'+mobileAcceptanceCss+'</style>').replace('<script type="module" src="/phone/phone.mjs"></script>',()=>'<script type="module">'+[aiProgress,mobileKeyboard,acceptanceStudio,photoInstanceEditor,requestDeadline,sourceAdapters[0],factLedger,clientPublication,sourceReadiness,photoObservationPolicy,photoBatchStatus,cardFiles,cardArchive,pwaInstall,deviceNotifications,listingWatch,importDiagnostics,dictionaryReview,dossierTransfer,accessRoles,publicationReview,universityRouteCacheClient,phoneRoutesController,tagPostStats,modelHistory,learningStudio,cityPois,phoneDesignerLoader,presentationExportBoundary,phoneApp].map(strip).join('\n').replace(/<\/script/gi,'<\\/script')+'</script>');
 await writeFile(new URL('docs/phone.html',root),phonePage);
 // The complete vocabulary and visual editor load only when opened on a phone.
-const phoneDesigner=[sourceAdapters[0],factLedger,clientPublication,geoCatalog,metroNames,photoObservationPolicy,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,factEvidence,content,contentStudio,listingSemantics,engine,universityRoutes,publicationModel,publicationRender,designCanvasEditor,presentationStudio].map(strip).join('\n')+'\nexport {setupPresentationStudio};\n';
+const phoneDesigner=[sourceAdapters[0],factLedger,clientPublication,geoCatalog,metroNames,photoObservationPolicy,universityCatalog,rentalLexicon,communityPhrases,ruZhTranslator,templateCatalog,factEvidence,content,contentStudio,listingSemantics,engine,universityRoutes,publicationModel,publicationRender,designCanvasEditor,presentationExportBoundary,presentationStudio].map(strip).join('\n')+'\nexport {setupPresentationStudio};\n';
 await writeFile(new URL('docs/phone-designer.mjs',root),phoneDesigner);
 await writeFile(new URL('docs/phone-routes.mjs',root),[universityCatalog,universityRoutes].map(strip).join('\n')+'\nexport {setupUniversityRoutes};\n');
 await copyFile(new URL('web/manifest.webmanifest',root),new URL('docs/phone.webmanifest',root));

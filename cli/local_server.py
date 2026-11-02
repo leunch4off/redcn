@@ -118,6 +118,22 @@ def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,phot
     finally:connection.close()
 
 
+def mark_media_interrupted(directory,result_id,*,cancelled=False):
+    """Only change the loading marker; a late failure must retain manual text."""
+    connection=redcn.open_cache(directory)
+    try:
+        connection.execute('BEGIN IMMEDIATE')
+        row=connection.execute('SELECT payload FROM results WHERE id=?',(result_id,)).fetchone()
+        current=json.loads(row[0]) if row else None
+        if current and current.get('mediaStatus')=='loading':
+            current['mediaStatus']='cancelled' if cancelled else 'error'
+            connection.execute('UPDATE results SET updated=max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),payload=? WHERE id=?',
+                (time.time(),json.dumps(current,ensure_ascii=False),result_id))
+        connection.commit()
+    except BaseException:connection.rollback();raise
+    finally:connection.close()
+
+
 def create_server(directory, port=8765, browser_channel='chrome'):
     if browser_channel not in ('chrome','chromium'): raise ValueError('Неверный браузер')
     directory = Path(directory)
@@ -125,10 +141,46 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     owner_scope = WorkspaceOwner(directory)
     desktop_access = DesktopOwnerAccess(owner_scope)
     token, jobs, lock = desktop_access.token, {}, threading.Lock()
+    from import_job_journal import ImportJobJournal, ImportRequestConflict
+    journal=ImportJobJournal(directory);journal.recover()
+    workers={};closing=False
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v28', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v29', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    from release_diagnostics import runtime_identity
+    release_runtime=runtime_identity(redcn.ROOT)
+
+    def launch_worker(job_id,target,args=()):
+        def owned():
+            try:target(*args)
+            finally:
+                with lock:
+                    workers.pop(job_id,None)
+                    stopped=closing and not workers
+                if stopped:journal.close()
+        worker=threading.Thread(target=owned,daemon=True)
+        with lock:
+            if closing:
+                journal.abandon(job_id)
+                jobs[job_id].update(state='error',message='Сервер завершает работу. Запрос можно повторить после перезапуска.')
+                raise ValueError('Сервер завершает работу')
+            workers[job_id]=worker
+        try:worker.start()
+        except BaseException:
+            with lock:workers.pop(job_id,None);jobs[job_id]['state']='error'
+            journal.finish(job_id,'error');raise
+
+    def finish_journal(job_id,success,learn,cancel):
+        try:
+            journal.finish(job_id,'done' if success else 'cancelled' if cancel.is_set() else 'error',partial=success and not learn)
+            if success:
+                with lock:jobs[job_id]['state']='done'
+            return True
+        except (OSError,ValueError,sqlite3.Error):
+            journal.abandon(job_id)
+            with lock:jobs[job_id].update(state='error',message='Карточка сохранена частично; состояние завершения не подтверждено. Откройте её перед повтором обработки.')
+            return False
 
     def phone_status():
         return {**server.phone_relay.status(), 'diagnostics': server.connection_diagnostics.status()}
@@ -160,6 +212,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             with lock:
                 jobs[job_id].update(message=message)
                 jobs[job_id]['tracker'].update(message,**fields)
+            journal.progress(job_id,fields.get('stage'))
             # Token samples stay in bounded live state. Repeated samples must
             # not exhaust the separate diagnostic campaign's event budget.
             ai = fields.get('ai')
@@ -208,7 +261,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             from phone_relay import cache_photos
             result['mediaStatus']='loading'
             owner_scope.check()
-            result_id = save_result(directory, result, actor=actor, kind='import')
+            result_id = save_result(directory, result, journal.reserved_result_id(job_id), actor=actor, kind='import')
             cache_photos(directory,result,report,cancel)
             from photo_generation import photo_revision
             photo_generated=photo_revision(directory,result,text=listing['text'],rules=params.get('rules'),prefs=params.get('prefs'),report=report,cancel=cancel)
@@ -240,16 +293,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             success=True
             message=('Карточка сохранена. Полнота разделов источника не подтверждена.' if readiness['partial'] else
                      'Готово' if learn else 'Текст готов, подготовка фотографий завершена не полностью.')
-            with lock: jobs[job_id].update(state='done',message=message,result_id=result_id,**outcome)
+            with lock: jobs[job_id].update(message=message,result_id=result_id,**outcome)
         except Exception as error:
             failure = error
             if result_id:
                 try:
                     owner_scope.check()
-                    current=read_result(directory,result_id)
-                    if current and current.get('mediaStatus')=='loading':
-                        current['mediaStatus']='cancelled' if cancel.is_set() else 'error'
-                        save_result(directory,current,result_id,actor=actor,kind='import')
+                    mark_media_interrupted(directory,result_id,cancelled=cancel.is_set())
                 except (OSError,ValueError,sqlite3.Error):pass
             with lock: jobs[job_id].update(state='error', message=str(error).strip() or 'Обработка прервана: '+type(error).__name__)
         finally:
@@ -272,15 +322,18 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 record_import_attempt(directory,source_url=params['url'],started=attempt_started,elapsed=min(7200,time.monotonic()-attempt_clock),outcome=outcome,stages=stages,error=failure)
             except (OSError, ValueError, sqlite3.Error):pass
             if connection is not None:connection.close()
+            finish_journal(job_id,success,learn,cancel)
 
-    def start_import(params, *, actor='Mac owner'):
+    def start_import(params, *, actor='Mac owner', request_intent=None):
         owner_scope.check()
-        from learning_scheduler import touch_foreground
-        touch_foreground(directory)
         if not isinstance(actor,str) or not actor.strip() or len(actor)>100:
             raise ValueError('У импорта должен быть проверенный автор до 100 знаков')
         params=dict(params)
+        request_id=params.pop('requestId',None)
         params['url']=redcn.normalize_url(params.get('url',''))
+        if request_intent is not None:
+            if not isinstance(request_intent,dict):raise ValueError('Неверный исходный запрос импорта')
+            request_intent={**request_intent,'url':params['url']}
         if params.get('loader','auto') not in ('auto','http','chrome'):raise ValueError('Неверный режим загрузки')
         if params.get('browser_channel',browser_channel) not in ('chrome','chromium'):raise ValueError('Неверный браузер')
         if type(params.get('timeout',180)) is not int or not 15<=params.get('timeout',180)<=600:raise ValueError('Ожидание: 15–600 секунд')
@@ -290,34 +343,44 @@ def create_server(directory, port=8765, browser_channel='chrome'):
         profile_key='import:vision' if load_config(directory)['enabled'] else 'import:'+params.get('loader','auto')
         if not all(isinstance(k,str) and isinstance(v,str) for k,v in params.get('rules',{}).items()):raise ValueError('Словарь: строки RU → CN')
         with lock:
-            if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущего импорта или отмените его')
+            if closing:raise ValueError('Сервер завершает работу. Повторите запрос после перезапуска.')
+            reservation=journal.reserve(params,actor=actor,request_id=request_id,
+                allow_new=not any(job['state']=='running' for job in jobs.values()),identity_params=request_intent)
+            if reservation['replayed']:return reservation['jobId']
             while len(jobs)>=32:jobs.pop(next(iter(jobs)))
-            job_id,cancel=secrets.token_hex(16),threading.Event()
+            job_id,cancel=reservation['jobId'],threading.Event()
             jobs[job_id]={'state':'running','message':'Начинаем загрузку…','cancel':cancel,
                          'kind':'import','sourceUrl':params['url'],
                          'tracker':JobProgress(timing_history,profile_key)}
             try:audit_tokens[job_id] = workspace.diagnostics.begin(job_id, params['url'], manual=True)
             except (OSError, ValueError, sqlite3.Error):pass
-        threading.Thread(target=run_import,args=(job_id,params,cancel,actor),daemon=True).start()
+        try:
+            from learning_scheduler import touch_foreground
+            touch_foreground(directory)
+            launch_worker(job_id,run_import,(job_id,params,cancel,actor))
+        except (OSError,ValueError):
+            with lock:jobs[job_id].update(state='error',message='Не удалось запустить импорт. Повторите запрос.')
+            if journal.status(job_id)['state']=='running':finish_journal(job_id,False,False,cancel)
+            raise
         return job_id
 
     def job_status(job_id):
         with lock:
             job=jobs.get(job_id)
-            if not job:return {}
+            if not job:
+                if not isinstance(job_id,str) or not re.fullmatch(r'[a-f0-9]{32}',job_id):return {}
+                return journal.status(job_id) or {}
             return {**{k:v for k,v in job.items() if k not in ('cancel','tracker')},
                     'progress':job['tracker'].snapshot()}
 
     def latest_job():
         with lock:
-            if not jobs:return None
+            if not jobs:return journal.latest()
             selected=next((job_id for job_id,job in reversed(list(jobs.items())) if job['state']=='running'),next(reversed(jobs)))
         return {'id':selected,**job_status(selected)}
 
-    def prepare_card(result_id,*,analyze=False):
+    def prepare_card(result_id,*,analyze=False,actor='Mac owner',request_id=None):
         owner_scope.check()
-        from learning_scheduler import touch_foreground
-        touch_foreground(directory)
         from phone_relay import cache_photos
         result=read_result(directory,result_id)
         if not result or result.get('fields',{}).get('isDemo') is True:raise ValueError('Карточка не найдена')
@@ -326,9 +389,12 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if not load_config(directory)['enabled']:
                 raise ValueError('Автоматический анализ фото пока не включён на Mac. Текст карточки сохранён; мебель можно уточнить вручную в редакторе.')
         with lock:
-            if any(job['state']=='running' for job in jobs.values()):raise ValueError('Дождитесь текущей загрузки')
+            if closing:raise ValueError('Сервер завершает работу. Повторите запрос после перезапуска.')
+            reservation=journal.reserve({'analyze':analyze},actor=actor,kind='prepare',request_id=request_id,result_id=result_id,
+                allow_new=not any(job['state']=='running' for job in jobs.values()))
+            if reservation['replayed']:return reservation['jobId']
             while len(jobs)>=32:jobs.pop(next(iter(jobs)))
-            job_id,cancel=secrets.token_hex(16),threading.Event()
+            job_id,cancel=reservation['jobId'],threading.Event()
             jobs[job_id]={'state':'running','message':'Сохраняем фотографии на Mac…','cancel':cancel,
                          'kind':'prepare','cardId':result_id,
                          'tracker':JobProgress(timing_history,'prepare:vision' if analyze else 'prepare')}
@@ -339,6 +405,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 with lock:
                     jobs[job_id].update(message=message)
                     jobs[job_id]['tracker'].update(message,**fields)
+                journal.progress(job_id,fields.get('stage'))
             try:
                 report('Проверяем библиотеку обработки фотографий на Mac…',stage='photos')
                 photo_store.pillow()
@@ -356,12 +423,21 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 merge_prepared_media(directory,result_id,result,photo_baseline=baseline,photo_generated=generated)
                 learn,outcome=photo_outcome(result)
                 success=True
-                with lock:jobs[job_id].update(state='done',message='Фотографии готовы' if learn else 'Подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
+                with lock:jobs[job_id].update(message='Фотографии готовы' if learn else 'Подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
             except Exception as error:
                 with lock:jobs[job_id].update(state='error',message=str(error).strip() or 'Подготовка фото прервана: '+type(error).__name__)
             finally:
                 with lock:jobs[job_id]['tracker'].finish(success,learn=learn)
-        threading.Thread(target=run,daemon=True).start();return job_id
+                finish_journal(job_id,success,learn,cancel)
+        try:
+            from learning_scheduler import touch_foreground
+            touch_foreground(directory)
+            launch_worker(job_id,run)
+        except (OSError,ValueError):
+            with lock:jobs[job_id].update(state='error',message='Не удалось начать подготовку фото. Повторите запрос.')
+            if journal.status(job_id)['state']=='running':finish_journal(job_id,False,False,cancel)
+            raise
+        return job_id
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_args): pass
@@ -431,11 +507,14 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     if relay is None:self.respond(409,{'error':'Сначала включите телефонный доступ на Mac'});return
                     self.respond(*dispatch_sessions(relay.pairing));return
                 try:
+                    from release_diagnostics import dispatch as release_dispatch
+                    document=release_dispatch(directory,redcn.ROOT,path.removeprefix('/api/local/'),server_release=identity['release'],server_runtime=release_runtime)
+                    if document:self.respond(*document);return
                     document=workspace.dispatch(path.removeprefix('/api/local/'), query=parse_qs(urlsplit(self.path).query))
                     if document:self.respond(*document);return
                     document=language_service.dispatch(directory,path.removeprefix('/api/local/'))
                     if document:self.respond(*document);return
-                    document=learning_service.dispatch(directory,path.removeprefix('/api/local/'))
+                    document=learning_service.dispatch(directory,path.removeprefix('/api/local/'),actor='Mac owner')
                     if document:self.respond(*document);return
                     document=card_api.dispatch(directory,path.removeprefix('/api/local/'),browser_channel=browser_channel)
                     if document:self.respond(*document);return
@@ -514,6 +593,9 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     relay = self.server.phone_relay.server
                     if relay is None:self.respond(409,{'error':'Сначала включите телефонный доступ на Mac'});return
                     self.respond(*dispatch_sessions(relay.pairing,data));return
+                from release_diagnostics import dispatch as release_dispatch
+                document=release_dispatch(directory,redcn.ROOT,relative,data,server_release=identity['release'],server_runtime=release_runtime)
+                if document:self.respond(*document);return
                 if relative == 'import-cache':
                     with lock:
                         if any(job['state']=='running' for job in jobs.values()):
@@ -524,7 +606,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if document:self.respond(*document);return
                 document=language_service.dispatch(directory,relative,data)
                 if document:self.respond(*document);return
-                document=learning_service.dispatch(directory,relative,data)
+                document=learning_service.dispatch(directory,relative,data,actor='Mac owner')
                 if document:self.respond(*document);return
                 document=card_api.dispatch(directory,relative,data,browser_channel=browser_channel)
                 if document:self.respond(*document);return
@@ -566,6 +648,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 if path == '/api/local/import':
                     try:job_id=start_import(data)
                     except ValueError as error:
+                        if isinstance(error,ImportRequestConflict):self.respond(409,{'error':str(error),'code':error.code});return
                         if 'Дождитесь' in str(error):self.respond(409,{'error':str(error)});return
                         raise
                     self.respond(202,{'job_id':job_id});return
@@ -578,7 +661,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     result = data.get('result')
                     if not isinstance(result,dict) or not isinstance(result.get('fields'),dict) or not isinstance(result.get('titles'),list) or not isinstance(result.get('body'),str) or not isinstance(result.get('tags'),str): raise ValueError('Неверная карточка')
                     result_id = save_result(directory,result,data.get('result_id'))
-                    self.respond(200,{'result_id':result_id});return
+                    from client_bundle_consistency import snapshot,source_receipt,ClientRevisionConflict
+                    try:
+                        revision=snapshot(directory,result_id,expected_card=result)
+                        receipt=source_receipt(directory,result_id,revision)
+                    except ClientRevisionConflict as error:
+                        self.respond(409,{'error':str(error),'code':error.code});return
+                    self.respond(200,{'result_id':result_id,'presentationReceipt':receipt});return
                 self.respond(404,{'error':'Не найдено'})
             except (ValueError,TypeError,OSError,redcn.subprocess.SubprocessError) as error:
                 self.respond(400,{'error':str(error)})
@@ -594,6 +683,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server.learning_scheduler=start_learning_background(directory,busy=learning_busy)
     server.daemon_threads = True
     server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card;server.latest_job=latest_job
+    server.import_job_journal=journal
     server.browser_channel=browser_channel
     from workspace_api import WorkspaceAPI
     workspace = WorkspaceAPI(directory, browser_channel=browser_channel)
@@ -607,6 +697,16 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server.connection_diagnostics=ConnectionDiagnostics()
     close=server.server_close
     def close_all():
+        nonlocal closing
+        with lock:
+            closing=True
+            for job in jobs.values():job['cancel'].set()
+            pending=list(workers.values())
+        deadline=time.monotonic()+2
+        for worker in pending:
+            if worker is not threading.current_thread():worker.join(max(0,deadline-time.monotonic()))
+        with lock:stopped=not workers
+        if stopped:journal.close()
         server.learning_scheduler.stop()
         workspace.close();server.connection_diagnostics.close();server.phone_relay.stop();close()
     server.server_close=close_all

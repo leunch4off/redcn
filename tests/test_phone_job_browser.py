@@ -164,5 +164,38 @@ class PhoneJobBrowserAcceptance(unittest.TestCase):
         self.assertEqual(len(imports),1);self.assertEqual(len(prepares),1)
         self.assertTrue(self.page.locator('#phoneJobRestart').is_hidden())
 
+    def test_interrupted_after_restart_opens_saved_card_and_retries_only_its_photos(self):
+        acceptance.PhoneBrowserAcceptance.connect(self)
+        state=self.context.request.get(self.base+'/api/phone/state').json()
+        first='c'*32;second='f'*32;imports=[];prepares=[]
+        state['activeJob']={'id':first,'kind':'import','state':'interrupted','cardId':self.card_id}
+        interrupted={'state':'interrupted','message':'Mac перезапущен. Сохранённый текст доступен.',
+            'result_id':self.card_id,'partial':True,'recovery':{'available':True,'action':'open-card-and-prepare-photos'},
+            'progress':{'stage':'vision','elapsedSeconds':9,'stageElapsedSeconds':2}}
+        complete={'state':'done','partial':False,'message':'Фотографии готовы','result_id':self.card_id,
+            'progress':{'stage':'done','elapsedSeconds':2,'stageElapsedSeconds':0}}
+        def prepare(route):
+            prepares.append(route.request.post_data_json)
+            route.fulfill(status=202,content_type='application/json',body=json.dumps({'job_id':second}))
+        self.page.route('**/api/phone/state',lambda route:route.fulfill(status=200,content_type='application/json',body=json.dumps(state)))
+        self.page.route('**/api/phone/jobs/'+first,lambda route:route.fulfill(status=200,content_type='application/json',body=json.dumps(interrupted,ensure_ascii=False)))
+        self.page.route('**/api/phone/jobs/'+second,lambda route:route.fulfill(status=200,content_type='application/json',body=json.dumps(complete,ensure_ascii=False)))
+        self.page.route('**/api/phone/cards/'+self.card_id+'/prepare',prepare)
+        self.page.on('request',lambda request:imports.append(request.url) if request.url.endswith('/api/phone/import') else None)
+        self.page.reload()
+        self.page.locator('#phoneTabs [data-phone-view="import"]').click()
+        self.page.wait_for_function("document.querySelector('#phoneJobTitle').textContent.includes('прервана')")
+        self.assertTrue(self.page.locator('#phoneImportSubmit').is_enabled())
+        self.assertTrue(self.page.locator('#phoneJobOpen').is_visible())
+        self.assertEqual(self.page.locator('#phoneJobRestart').inner_text(),'Повторить подготовку фото')
+        self.page.locator('#phoneJobOpen').click()
+        self.page.wait_for_function("document.querySelector('#phoneBody').textContent.includes('两间独立')")
+        self.page.locator('#phoneTabs [data-phone-view="import"]').click()
+        self.page.locator('#phoneJobRestart').click()
+        self.page.wait_for_function("document.querySelector('#phoneJobTitle').textContent==='Готово на Mac'")
+        self.assertEqual(imports,[]);self.assertEqual(len(prepares),1)
+        self.assertRegex(prepares[0]['requestId'],r'^[a-zA-Z0-9_-]{12,128}$')
+        acceptance.PhoneBrowserAcceptance.assert_mobile_fit(self)
+
 
 if __name__=='__main__':unittest.main()

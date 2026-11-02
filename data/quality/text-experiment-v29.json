@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "id": "v29-two-mixture-retention",
+  "frozenBeforeTraining": true,
+  "authoredAt": "2026-11-02",
+  "question": "Does retaining bilingual examples reduce translation regression at the same bounded step budget?",
+  "base": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+  "initialAdapterSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581",
+  "baseConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+  "artifacts": {
+    "data/learning/text-v29-advertising-only.json": "36e1adf266425de49763b10fed1eabb0f4b7bded8faf3a5adfe088dd40231593",
+    "data/learning/text-v29-translation-retention.json": "bda5c2b6561235040beccf324b585c8bdfd48d5b4687e4e075478553c321a7f6",
+    "data/quality/rental-heldout-v29.json": "b351584ef81f8ffdca04d9548ba5c8592d4f43d677b27728430e449f2bbe6b7d"
+  },
+  "counts": {
+    "advertising-only": {
+      "train": {
+        "examples": 360,
+        "groups": 120,
+        "tasks": {
+          "advertising": 360,
+          "translation-ru-zh": 0,
+          "translation-zh-ru": 0
+        }
+      },
+      "validation": {
+        "examples": 120,
+        "groups": 24,
+        "tasks": {
+          "advertising": 72,
+          "translation-ru-zh": 24,
+          "translation-zh-ru": 24
+        }
+      }
+    },
+    "translation-retention": {
+      "train": {
+        "examples": 600,
+        "groups": 120,
+        "tasks": {
+          "advertising": 360,
+          "translation-ru-zh": 120,
+          "translation-zh-ru": 120
+        }
+      },
+      "validation": {
+        "examples": 120,
+        "groups": 24,
+        "tasks": {
+          "advertising": 72,
+          "translation-ru-zh": 24,
+          "translation-zh-ru": 24
+        }
+      }
+    }
+  },
+  "independentGroups": 30,
+  "builderSha256": "e0a56df47fb8c30fcc60a3b62e6282f4782f6d22bf964c47f9ececcea7ae0f17",
+  "recipe": {
+    "steps": 240,
+    "seed": 20261102,
+    "learningRate": 2e-05,
+    "maxSequenceLength": 1024,
+    "evalExamples": 32,
+    "sampling": "shuffled",
+    "batchSize": 1,
+    "maxSecondsPerRun": 900,
+    "mlxMemoryLimitBytes": 3500000000
+  },
+  "evaluation": {
+    "directions": [
+      "ru-zh",
+      "zh-ru"
+    ],
+    "advertisingVariants": 3,
+    "listingMaxTokens": 768,
+    "translationMaxTokens": 512,
+    "probeSeconds": 55,
+    "maxSecondsPerComparison": 1800,
+    "topP": 0.9,
+    "listingTemperature": 0.75,
+    "translationTemperature": 0,
+    "seed": 20261102,
+    "fallbackCredited": false,
+    "acceptance": "All direct candidate facts pass, no baseline regression, complete probes, distinct variants, strict measured improvement.",
+    "modelAndRendererContributionReportedSeparately": true
+  },
+  "safety": {
+    "offline": true,
+    "foregroundPriority": true,
+    "separateOutputDirectories": true,
+    "selectedWeightsUnchangedUntilIndependentAdmission": true
+  },
+  "limitations": [
+    "Same step count does not imply equal per-task exposure; actual sampled counts must be reported.",
+    "Reuse of v28 authored train situations is explicit; this is a mixture experiment, not a new independent training corpus.",
+    "Synthetic bilingual references are not independently approved by a native editor."
+  ]
+}

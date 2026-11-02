@@ -42,6 +42,9 @@ def clean_request(request):
     if type(temperature) not in (int, float) or not 0 <= temperature <= 1.2:
         raise ValueError('Неверная температура генерации')
     result = {'messages': cleaned, 'maxTokens': tokens, 'temperature': temperature}
+    if 'allowedStructurePlans' in request:
+        from advertising_structure import validate_plans
+        result['allowedStructurePlans'] = validate_plans(request['allowedStructurePlans'])[:]
     if 'seed' in request:
         seed = request['seed']
         if type(seed) is not int or not 0 <= seed <= 4_294_967_295:
@@ -141,7 +144,7 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
             gate = model_resource(directory, kind='foreground', timeout=min(3, budget))
         except ImportError:
             gate = nullcontext()
-        with gate, tempfile.TemporaryDirectory(prefix='redcn-ai-progress-') as progress_directory:
+        with gate as resource_fd, tempfile.TemporaryDirectory(prefix='redcn-ai-progress-') as progress_directory:
             try:
                 progress_path = Path(progress_directory)/'progress.json'
                 report({'phase': 'loading'})
@@ -149,7 +152,8 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
                     str(Path(__file__).resolve()), '--worker', str(model),
                     str(config['adapterPath']) if config['adapterPath'] else '-', str(progress_path)],
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                    start_new_session=True)
+                    start_new_session=True,
+                    pass_fds=(resource_fd,) if type(resource_fd) is int else ())
                 end = started+budget
                 pending = json.dumps(request, ensure_ascii=False).encode()
                 last_sample = None
@@ -231,7 +235,8 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
     model, tokenizer = load(str(model_path), adapter_path=None if adapter_path == '-' else adapter_path)
     progress('preparing', force=True)
     prompt = tokenizer.apply_chat_template(request['messages'], tokenize=False, add_generation_prompt=True)
-    prompt_tokens = len(tokenizer.encode(prompt))
+    prompt_ids = list(tokenizer.encode(prompt))
+    prompt_tokens = len(prompt_ids)
     if prompt_tokens > 2048:
         raise ValueError('Prompt exceeds the bounded local context')
     if 'seed' in request:
@@ -243,8 +248,14 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
         progress('prefill', promptTokensProcessed=done, promptTokensTotal=total)
 
     parts = []
+    constrained = {}
+    if 'allowedStructurePlans' in request:
+        from advertising_structure import TokenChoiceConstraint
+        constrained['logits_processors'] = [TokenChoiceConstraint(tokenizer,
+            request['allowedStructurePlans'], prompt_ids)]
     for response in stream_generate(model, tokenizer, prompt=prompt, max_tokens=request['maxTokens'],
-            sampler=make_sampler(**sampling_parameters(request['temperature'])), prompt_progress_callback=prefill):
+            sampler=make_sampler(**sampling_parameters(request['temperature'])),
+            prompt_progress_callback=prefill, **constrained):
         parts.append(response.text)
         measured = {'generatedTokens': response.generation_tokens,
             'tokensPerSecond': response.generation_tps, 'promptTokens': response.prompt_tokens,
@@ -254,6 +265,7 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
         progress('generating', **measured)
     progress('complete', force=True)
     return {'status': 'review', 'text': ''.join(parts), 'model': identity, 'adapterSha256': adapter_sha,
+        'generationMode': 'bounded-structure-plan' if constrained else 'free-text',
         'ai': sanitize_ai(metrics),
         'autoApply': False, 'message': 'Локальный черновик: проверьте факты и китайскую формулировку перед публикацией.'}
 

@@ -498,13 +498,15 @@ def client_options(directory,card_id):
 @card_assets._serialize_files
 def export_client(directory,card_id,selection):
     from client_publication import client_card,PUBLICATION_POLICY_VERSION
+    from client_bundle_consistency import snapshot,require_current
+    revision=snapshot(directory,card_id)
     _,raw=_card_payload(directory,card_id);card=client_card(raw)
     if not isinstance(selection,dict) or set(selection)-{'attachmentIds','exportIds'}:raise ValueError('Нужен явный выбор файлов')
     for key in ('attachmentIds','exportIds'):
         if not isinstance(selection.get(key),list) or len(selection[key])>100:raise ValueError('Выберите до 100 уникальных файлов каждого вида')
         for identifier in selection[key]:_identifier(identifier)
         if len(selection[key])!=len(set(selection[key])):raise ValueError('Не выбирайте файл дважды')
-    files={};manifest={'version':1,'type':'redcn-client-dossier','created':time.time(),'publicationPolicyVersion':PUBLICATION_POLICY_VERSION,'files':[]}
+    files={};manifest={'version':1,'type':'redcn-client-dossier','created':time.time(),'publicationPolicyVersion':PUBLICATION_POLICY_VERSION,'cardRevisionSha256':revision,'files':[]}
     with card_assets._db(directory) as db:
         for index,identifier in enumerate(selection['attachmentIds'],1):
             row=db.execute('SELECT name,category,digest,mime FROM attachments WHERE card_id=? AND id=?',(card_id,identifier)).fetchone()
@@ -521,4 +523,6 @@ def export_client(directory,card_id,selection):
     files['post.txt']='\n\n'.join([*(card.get('titles') or [])[:1],card.get('body',''),card.get('tags','')]).encode()
     for row in manifest['files']:
         data=files[row['name']];row.update(bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
-    return _make_zip(manifest,files)
+    result=_make_zip(manifest,files)
+    require_current(directory,card_id,revision)
+    return result

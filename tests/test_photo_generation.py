@@ -337,7 +337,8 @@ class PhotoAIHTTPBoundaryTests(unittest.TestCase):
             self.assertEqual(photo_ai_settings.load_config(self.directory), config)
             response = self.request('/api/phone/cards/' + card_id + '/analyze', {})
             self.assertEqual(response, {'job_id': 'b'*32})
-            prepare.assert_called_once_with(card_id, analyze=True)
+            expected_actor='phone:'+hashlib.sha256(next(iter(self.jar)).value.encode()).hexdigest()
+            prepare.assert_called_once_with(card_id, analyze=True, actor=expected_actor, request_id=None)
 
 
 if __name__ == '__main__':

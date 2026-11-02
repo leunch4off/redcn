@@ -8,6 +8,17 @@ const partialSource=()=>({state:'partial',partial:true,completed:false,sections:
   {name:'characteristics',ready:false,reason:'not_found',visited:true,found:false}
 ]});
 
+test('schema drift remains visible after editor save without leaking private review fragments',()=>{
+ const schema={version:1,state:'unsupported',platform:'cian',reasons:['unknown-schema','critical-fields-missing','PRIVATE_REASON'],missingCritical:['price','PRIVATE_FIELD'],criticalCoverage:{price:false,area:true,layout:true,description:true},privateReviewFragment:'PRIVATE_FRAGMENT',sourceSha256:'PRIVATE_HASH'};
+ const fields=sourceEditorMetadata({}, {sourceSchemaHealth:schema});
+ const saved=sourceEditorMetadata(JSON.parse(JSON.stringify(fields)));
+ assert.doesNotMatch(JSON.stringify(saved),/PRIVATE/);
+ const feedback=sourceReadinessFeedback({fields:saved});
+ assert.equal(feedback.partial,true);assert.match(feedback.message,/Форма страницы источника изменилась/);
+ const readiness={state:'partial',partial:true,completed:false,sections:[],schema};
+ assert.doesNotMatch(JSON.stringify(sourceEditorMetadata({sourceReadiness:readiness})),/PRIVATE/);
+});
+
 test('normalized rental evidence survives editor persistence without serializing source HTML or offer state',()=>{
   const fields={pricePeriod:'day',priceCurrency:'RUB',sellerSource:'Avito item-owner',commissionSource:'Avito params',commissionStatus:'present',commissionAmount:'25000',publicationStatus:'removed',eligibleForNew:false,
     oneTimeFees:[{label:'Уборка',amount:'1500',currency:'RUB',source:'Условия аренды',html:'PRIVATE_HTML'}],

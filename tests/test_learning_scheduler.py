@@ -54,8 +54,11 @@ class SchedulerTests(unittest.TestCase):
         (output/'optimizer.safetensors').write_bytes(b'test-optimizer')
         (output/'initial.safetensors').write_bytes(b'test-initial')
         (output/'trainreceipt.json').write_text(json.dumps({'status':'trained-unaccepted',
-            'stepsCompleted':20, 'trainableParameters':540672,
-            'adapterSha256':hashlib.sha256(artifact).hexdigest()}))
+            'stepsCompleted':20, 'trainableParameters':540672,'stoppedEarly':False,
+            'adapterSha256':hashlib.sha256(artifact).hexdigest(),
+            'optimizerSha256':hashlib.sha256(b'test-optimizer').hexdigest(),
+            'initialSha256':hashlib.sha256(b'test-initial').hexdigest(),
+            'datasetSha256':hashlib.sha256(dataset.read_bytes()).hexdigest()}))
         return DoneProcess()
 
     def runtime(self, trainer):
@@ -220,6 +223,19 @@ class SchedulerTests(unittest.TestCase):
         with self.runtime(trainer): second = trainer.tick()
         self.assertEqual(len(self.calls), 2)
         self.assertNotEqual(first['jobId'], second['jobId'])
+
+    def test_exit_zero_with_one_of_twenty_steps_is_not_completed_training(self):
+        trainer=self.ready();normal=trainer.popen
+        def short(args,**kwargs):
+            process=normal(args,**kwargs)
+            receipt=Path(args[args.index('--output')+1])/'trainreceipt.json'
+            value=json.loads(receipt.read_text());value['stepsCompleted']=1;receipt.write_text(json.dumps(value))
+            return process
+        trainer.popen=short
+        with self.runtime(trainer):result=trainer.tick()
+        self.assertEqual(result['phase'],'failed')
+        self.assertEqual(result['lastOutcome'],'failed')
+        self.assertEqual(result['trainableParameters'],0)
 
     def test_settings_bound_training_budget_and_reject_unknown_fields(self):
         for update in ({'maxSeconds':601},{'maxSteps':201},{'minNewExamples':1},{'command':'sh'}, {'enabled':1}):
