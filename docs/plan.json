@@ -2200,9 +2200,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
-        "docs/GEO-FACULTY-v26-2026-11-01.md — 16 подтверждённых пар станция–линия, полный реестр и точный RGB ещё не приняты"
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 16 подтверждённых пар станция–линия, полный реестр и точный RGB ещё не приняты",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
       ]
     },
     {
@@ -2214,8 +2216,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
+      ]
     },
     {
       "id": "RCN-137",
@@ -3520,11 +3525,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "docs/QUALITY-v26.md — интерфейс ручных связей и явных конфликтов; автоматическое тождество предметов не принято",
         "cli/photo_instance_api.py",
-        "web/photo-instance-editor.mjs"
+        "web/photo-instance-editor.mjs",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
       ]
     },
     {
@@ -4017,11 +4024,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "tests/fixtures/macos-portability — полностью синтетический архив с исходного Mac",
         "scripts/portable-mac-proof.py — проверка восстановленных связей и байтов",
-        "docs/CLOUD-BACKUP-AND-DEVICE-DELIVERY-v26.md — отдельный macOS runner имеет самостоятельный результат CI"
+        "docs/CLOUD-BACKUP-AND-DEVICE-DELIVERY-v26.md — отдельный macOS runner имеет самостоятельный результат CI",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md",
+        "docs/benchmarks/other-mac-restore-v29-41463994376.json"
       ]
     },
     {
@@ -4493,10 +4503,12 @@
       "acceptance": "Дополнять справочник корпусами отдельных факультетов по первичным источникам; отдельно проверять переезды и закрытые подразделения.",
       "priority": "P1",
       "depends_on": [],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "docs/GEO-FACULTY-v26-2026-11-01.md — 9 текущих и 1 исторический адрес, отдельные основания переезда/закрытия; заявленный объём ограничен",
-        "tests/test_university_lifecycle.py"
+        "tests/test_university_lifecycle.py",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
       ]
     },
     {
@@ -4986,10 +4998,12 @@
         "RCN-266",
         "RCN-297"
       ],
-      "status": "planned",
+      "status": "done",
       "evidence": [
         "docs/GEO-FACULTY-v26-2026-11-01.md — 4 опубликованные точки конкретных зданий с методом и неизвестной метрической точностью",
-        "tests/university-coordinate-lifecycle.test.mjs"
+        "tests/university-coordinate-lifecycle.test.mjs",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
       ]
     },
     {

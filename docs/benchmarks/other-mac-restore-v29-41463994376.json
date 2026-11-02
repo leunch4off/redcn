@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "source": "GitHub authenticated workflow job log",
+  "runId": 41463994376,
+  "jobId": 125339958805,
+  "sourceCommit": "95931b3467eb4944006ef06d127dd6d7cca8bd37",
+  "jobConclusion": "success",
+  "reports": [
+    {
+      "version": 1,
+      "type": "redcn-portability-verification",
+      "verified": true,
+      "archiveSha256": "2811f600d45a7badfd20f8252911d39bb33262be62e87d9fda9981dd0416ec7d",
+      "source": {
+        "system": "Darwin",
+        "machine": "x86_64",
+        "macos": "26.0.1",
+        "origin": "operator-mac"
+      },
+      "destination": {
+        "system": "Darwin",
+        "machine": "arm64",
+        "macos": "15.8.2",
+        "githubHosted": true,
+        "runId": "41463994376"
+      },
+      "cards": 2,
+      "attachments": 3,
+      "versions": 2,
+      "photos": 1,
+      "verifiedComponents": [
+        "card-relations",
+        "attachment-bytes",
+        "original-and-cropped-photo-bytes",
+        "template",
+        "material-version-bytes",
+        "archive-status",
+        "profile",
+        "approved-dictionary",
+        "learning-counts"
+      ],
+      "devicesMustPairAgain": true,
+      "clientMaterialsRequireRegeneration": true,
+      "learningTransferVerified": false,
+      "realModelQualityEvaluated": false,
+      "freshNativeModelAcceptanceRequired": true
+    },
+    {
+      "version": 1,
+      "type": "redcn-portability-verification",
+      "verified": true,
+      "archiveSha256": "bec9d65d5741ff9357276467c7ce952707fe23070ad36f733151f51b3de0b6ca",
+      "source": {
+        "system": "Darwin",
+        "machine": "arm64",
+        "macos": "26.0.1",
+        "origin": "operator-mac"
+      },
+      "destination": {
+        "system": "Darwin",
+        "machine": "arm64",
+        "macos": "15.8.2",
+        "githubHosted": true,
+        "runId": "41463994376"
+      },
+      "cards": 2,
+      "attachments": 3,
+      "versions": 2,
+      "photos": 1,
+      "verifiedComponents": [
+        "card-relations",
+        "attachment-bytes",
+        "original-and-cropped-photo-bytes",
+        "template",
+        "material-version-bytes",
+        "archive-status",
+        "profile",
+        "approved-dictionary",
+        "learning-counts"
+      ],
+      "devicesMustPairAgain": true,
+      "clientMaterialsRequireRegeneration": true,
+      "learningTransferVerified": true,
+      "realModelQualityEvaluated": false,
+      "freshNativeModelAcceptanceRequired": true
+    }
+  ]
+}

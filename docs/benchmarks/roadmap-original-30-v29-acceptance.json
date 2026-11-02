@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "date": "2026-11-02",
+  "sourceCommit": "95931b3467eb4944006ef06d127dd6d7cca8bd37",
+  "scope": "Evidence review of original remaining tasks; acceptance criteria and task identities unchanged",
+  "sourceSha256": {
+    "cli/route_provider.py": "1fbf5a8c9a8b3da1c9f85880585d1e938c0ebc79fa5fe67b6ee7fb1a5a788551",
+    "cli/university_store.py": "9726cd7f774e5f25812dc1b7696bf70528cbf81654e1e9c45428e49ccc2c86db",
+    "cli/photo_instance_api.py": "becf75f7b9d6e704be8268e145907237cf46c722f9016771196ec6852eef2597",
+    "web/photo-instance-editor.mjs": "1d1e9794f7ca535deda742d59af6b66f5b2f953c86b34fb7ddd9db74230bc530",
+    "data/metro-official-evidence.json": "e698dc7306512c545ddfcc0eb40f27355d78f4f4f2adfff40aa9f0970ff1301b",
+    "data/moscow-universities.json": "550c25f1d417fdbad861d579cbde4d9250c50327ecfce079ae36311d0e93cd9e",
+    "web/university-catalog.mjs": "8a235d5ea88eea29124729c70ba1341359a77c263e0311b8deb686354e4f1b0e",
+    "cli/portability_proof.py": "1c5064736b1e038e2995b620bb8c0ad8c98c7280b5c6dedfc82119fa70e8f0fc"
+  },
+  "ci": {
+    "runId": 41463994376,
+    "conclusion": "success",
+    "macPortabilityJobId": 125339958805,
+    "runUrl": "https://github.com/leunch4off/redcn/actions/runs/41463994376"
+  },
+  "checks": {
+    "nativeMacPython": {
+      "count": 33,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 31.128,
+      "modules": [
+        "test_route_provider",
+        "test_university_lifecycle",
+        "test_university_store",
+        "test_photo_instance_api",
+        "test_photo_instance_editor_browser"
+      ]
+    },
+    "javascript": {
+      "count": 38,
+      "passed": 38,
+      "skipped": 0,
+      "seconds": 3.227,
+      "modules": [
+        "metro-current-membership",
+        "metro-published-names",
+        "university-coordinate-lifecycle",
+        "university-generation",
+        "device-notifications",
+        "device-notification-click",
+        "photo-instance-editor"
+      ]
+    }
+  },
+  "accepted": {
+    "RCN-135": "Only explicitly verified current station-line pairs; partial directory scope is disclosed, historic line aliases do not override current lines.",
+    "RCN-136": "Real native production direct HTTPS pilot returned 1085 m / 769.302 seconds in 0.481 seconds; dated network estimate, not physically measured travel.",
+    "RCN-213": "Native real Chrome confirms cross-frame instance identity, explicit visible count, wrong-merge review and viewer denial. No automatic exact whole-apartment inventory claim.",
+    "RCN-241": "Source operator Mac archive restored on a different hosted physical Mac: Darwin arm64 macOS 15.8.2. Verified 2 cards, 3 attachments, 2 material versions, 1 original/crop photo pair, template, archive status, profile, dictionary and learning. Synthetic public fixture; no operator private archive uploaded.",
+    "RCN-271": "Incremental primary-source faculty building addition plus relocation and closed-unit lifecycle; not exhaustive all-faculty coverage.",
+    "RCN-300": "Four exact campus/address-bound primary-source published building points. Accuracy scope and unpublished metric uncertainty disclosed; no universal main-building or entrance substitution."
+  },
+  "limits": [
+    "Physical phone, human native Chinese review and real post-view statistics have not been inferred from automated tests.",
+    "Public routing demo has no SLA, live traffic or public transit timetable.",
+    "Other-Mac restore proves data portability, not quality of transferred model weights."
+  ]
+}
