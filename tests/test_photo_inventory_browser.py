@@ -1,7 +1,9 @@
 """Optional Chrome acceptance for positive photo facts and the phone inventory.
 
 Photos, cards and servers are isolated temporary fixtures. The local model and
-phone preparation job are mocked; these tests never import a listing or run AI.
+phone preparation job and asynchronous text-job responses are mocked; these
+tests never import a listing or run AI. Text fixtures test the UI contract, not
+model quality.
 """
 import copy
 import re
@@ -10,6 +12,7 @@ import unittest
 from unittest.mock import patch
 
 import test_phone_browser as phone_fixture
+from browser_text_jobs_fixture import MockTextJobs, accepted_draft
 
 
 MODEL='qwen3-vl:2b-instruct-q4_K_M'
@@ -62,6 +65,22 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
     def fridge_observation(self):
         return self.page.locator('#photoObservations label').filter(has_text='Холодильник').locator('input[type="checkbox"]')
 
+    def wait_for_text_job(self):
+        self.page.wait_for_function("!document.getElementById('generate').disabled")
+
+    @staticmethod
+    def photo_text_fixture(request,ordinal):
+        # Synthetic accepted response for the new asynchronous UI contract.
+        # Its inventory follows the actual requested facts, including rejection.
+        result=accepted_draft(request,ordinal)
+        features=set(request['fields'].get('features',[]))
+        inventory=[label for feature,label in [('fridge','冰箱'),('sofa','沙发'),('bedAny','床')]
+            if feature in features]
+        result['body']+='\n配置：'+'、'.join(inventory)+'。'
+        result['inventoryCount']=len(inventory)
+        result['photoInventoryCount']=len(inventory)
+        return result
+
     def assert_positive_body(self,fridge=True):
         body=self.page.locator('#output').input_value()
         self.assertIn('沙发',body);self.assertIn('床',body)
@@ -75,7 +94,9 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
                 {'id':'fridge','label':'Холодильник','status':'absent',
                     'matches':[{'source':'JSON · hasFridge','text':'hasFridge=false'}]}]}})
         self.result['listing']={'offer':{'hasFridge':False},'images':self.result['fields']['photos']}
-        self.save_fixture();self.open_desktop()
+        self.save_fixture()
+        jobs=MockTextJobs(self.page,'local',result_factory=self.photo_text_fixture)
+        self.open_desktop()
         self.assertFalse(self.page.locator('#feature-fridge').is_checked())
         first_digest=self.assets[0]['id']
         def analyze(_directory,digest,**_options):
@@ -87,6 +108,9 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
             self.page.locator('#photoAnalyze').click()
             self.page.wait_for_function("!document.getElementById('photoAnalyze').disabled&&document.getElementById('feature-fridge').checked&&document.getElementById('feature-sofa').checked&&document.getElementById('feature-bedAny').checked")
             self.assertEqual(model.call_count,2)
+        self.wait_for_text_job()
+        self.assertTrue(jobs.requests,'Photo facts must reach the individual text-job route')
+        self.assertTrue({'fridge','sofa','bedAny'}<=set(jobs.requests[-1]['fields']['features']))
         self.assertTrue(self.fridge_observation().is_checked());self.assertFalse(self.page.locator('#feature-bed').is_checked())
         # Loaded publication text is protected as an existing edit. Photo facts
         # change the candidate immediately, then the operator accepts its diff.
@@ -106,7 +130,9 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
         self.page.wait_for_function("document.getElementById('feature-fridge').checked&&document.getElementById('output').value.includes('冰箱')")
         self.fridge_observation().uncheck()
         self.page.wait_for_function("!document.getElementById('feature-fridge').checked&&!document.getElementById('output').value.includes('冰箱')")
-        self.page.locator('#generate').click();self.assert_positive_body(fridge=False)
+        self.page.locator('#generate').click();self.wait_for_text_job()
+        self.assertNotIn('fridge',jobs.requests[-1]['fields']['features'])
+        self.assert_positive_body(fridge=False)
         with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST'):
             self.page.locator('#saveLocal').click()
         self.page.wait_for_function("document.getElementById('localSaveStatus').textContent.includes('Сохранено')")
@@ -116,6 +142,7 @@ class PhotoInventoryBrowserAcceptance(unittest.TestCase):
         self.assertEqual(saved['fields']['sourceAudit']['furniture'][0]['status'],'absent')
         self.page.reload();self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'&&document.querySelectorAll('#photoObservations input[type=checkbox]').length===3")
         self.assertFalse(self.fridge_observation().is_checked());self.assertFalse(self.page.locator('#feature-fridge').is_checked())
+        self.wait_for_text_job()
         before=self.page.locator('#output').input_value()
         self.page.locator('#generate').click()
         self.assertEqual(self.page.locator('#output').input_value(),before)

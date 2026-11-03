@@ -26,6 +26,8 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.page.locator('#languageComposer').wait_for(state='attached')
 
     def apply_rewrite_preview(self,label):
+        # Title/body are async text jobs; tags keep their deterministic path.
+        self.page.wait_for_function("!document.getElementById('generate').disabled")
         apply=self.page.get_by_role('button',name='Применить новую версию',exact=True)
         apply.wait_for(state='visible')
         preview=apply.locator('..')
@@ -152,6 +154,7 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.assertFalse(self.page.locator('#languageApply').is_disabled())
 
     def test_independent_rewrites_preserve_manual_other_parts_and_new_card_clears_draft(self):
+        """Authored job replies must never clear manual protection on other parts."""
         jobs=MockTextJobs(self.page,'local')
         self.open_editor()
         for key,value in {'price':'80000','area':'54','rooms':'2','metro':'Юго-Западная','walk':'8'}.items():

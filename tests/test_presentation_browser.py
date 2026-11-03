@@ -10,6 +10,7 @@ from unittest.mock import patch
 from urllib.parse import urlsplit
 
 import test_phone_browser as acceptance
+from browser_text_jobs_fixture import MockTextJobs
 
 
 class PresentationAcceptance(unittest.TestCase):
@@ -101,6 +102,8 @@ class PresentationAcceptance(unittest.TestCase):
             self.controller.shutdown();thread.join()
 
     def test_new_card_first_export_keeps_stable_id_in_draft(self):
+        # Synthetic text transport; real save/export/identity behavior below.
+        text_jobs=MockTextJobs(self.page,'local')
         thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
         base='http://127.0.0.1:'+str(self.controller.server_port)
         started=time.monotonic();stage='editor-startup';requests=[];by_request={};milestones=[]
@@ -125,6 +128,9 @@ class PresentationAcceptance(unittest.TestCase):
             mark('generate-new-card')
             self.page.locator('#price').fill('92000');self.page.locator('#area').fill('46');self.page.locator('#metro').fill('Прокшино');self.page.locator('#generate').click()
             self.page.wait_for_function("document.getElementById('output').value.length>10")
+            self.assertEqual(len(text_jobs.requests),1)
+            self.assertEqual(text_jobs.requests[0]['fields']['price'],'92000')
+            self.assertEqual(text_jobs.requests[0]['part'],'all')
             mark('prepare-first-preview')
             self.page.locator('#openPresentation').click()
             # This test concerns the first saved ID, not an export competing

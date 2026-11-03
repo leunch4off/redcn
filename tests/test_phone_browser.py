@@ -206,6 +206,9 @@ class PhoneBrowserAcceptance(unittest.TestCase):
             self.controller.shutdown();thread.join()
 
     def test_mac_generation_and_text_edits_sync_without_duplicate_cards(self):
+        # Synthetic job response checks autosave/sync; no model is invoked.
+        from browser_text_jobs_fixture import MockTextJobs
+        jobs=MockTextJobs(self.page,'local',hold=True)
         thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
         try:
             with patch.object(self.controller.phone_relay,'status',return_value={'enabled':True,'port':self.phone.server_port,'urls':[]}):
@@ -213,15 +216,32 @@ class PhoneBrowserAcceptance(unittest.TestCase):
                 self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
                 self.page.wait_for_function("document.getElementById('phoneConnectionStatus').textContent.includes('включён')")
                 self.page.locator('#price').fill('90000');self.page.locator('#area').fill('55')
-                with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000):
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/text-jobs') and response.request.method=='POST') as queued:
                     self.page.locator('#generate').click()
-                self.page.wait_for_function("document.getElementById('resultLink').getAttribute('href')?.startsWith('/listing/')")
+                self.assertEqual(queued.value.status,202)
+                self.assertEqual(len(jobs.requests),1)
+                self.assertEqual(jobs.requests[0]['action'],'preview')
+                self.assertEqual(jobs.requests[0]['part'],'all')
+                self.assertEqual(jobs.requests[0]['fields']['price'],'90000')
+                self.assertEqual(jobs.requests[0]['fields']['area'],'55')
+                self.assertTrue(self.page.locator('#generate').is_disabled())
+                self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),1,
+                                 'An unfinished text job must not create a synced card')
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000) as saved:
+                    jobs.release_all()
+                self.assertEqual(saved.value.status,200)
+                self.page.wait_for_function("!document.getElementById('generate').disabled&&document.getElementById('resultLink').getAttribute('href')?.startsWith('/listing/')")
                 result_id=self.page.locator('#resultLink').get_attribute('href').rsplit('/',1)[-1]
+                generated_body=self.page.locator('#output').input_value()
+                self.assertIn('90,000₽',generated_body)
+                self.assertIn('55㎡',generated_body)
+                self.assertEqual(local_server.read_result(self.directory,result_id)['body'],generated_body)
                 self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),2)
                 with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000):
                     self.page.locator('#output').fill('运营人员修订后的最终中文说明。')
                 self.assertEqual(local_server.read_result(self.directory,result_id)['body'],'运营人员修订后的最终中文说明。')
                 self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),2)
+                self.assertEqual(len(jobs.requests),1,'Manual text editing must save without regenerating')
         finally:
             self.controller.shutdown();thread.join()
 

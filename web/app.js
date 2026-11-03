@@ -170,7 +170,7 @@ async function rewriteIndividual(part='all'){
         if(key==='title'){contentStudioUI?.recordTitle(prior.title,'manual');currentTitles=[text,...currentTitles.filter(title=>title!==text)].slice(0,3);titleIndex=0;$('outputTitle').value=text;}
         else $(key==='body'?'output':'tags').value=text;
       }
-      contentState.aiGeneration=individualCopyMetadata(value);renderTitles();contentStudioUI?.markCommitted();
+      contentState.aiGeneration=individualCopyMetadata(value);renderTitles();contentStudioUI?.markCommitted(undefined,Object.keys(candidate));
       $('review').classList.remove('error');$('review').textContent=['Объявление написал локальный ИИ по данным этой квартиры. Подтверждённых предметов: '+value.inventoryCount+'.',...(value.warnings||[])].join(' ');
       editorRevision++;saveDraft();syncPhoneCard();historyUI?.record('generate').catch(error=>toast(error.message));
       toast(part==='body'?'Новое описание ИИ готово. Заголовок и теги сохранены.':part==='title'?'Новый заголовок ИИ готов. Описание и теги сохранены.':'Новый текст ИИ готов; теги подобраны по фактам квартиры.');

@@ -197,7 +197,11 @@ class LearningStudioBrowserTests(unittest.TestCase):
         def preview(route):
             request = route.request.post_data_json
             if request.get('action') == 'generate-preview':
-                self.assertEqual(request['styleMode'], 'advertising')
+                # The primary composer now requests full individual prose; legacy
+                # grounded responses must still be identified honestly in the UI.
+                self.assertEqual(request['styleMode'], 'individual')
+                self.assertEqual(request['groupId'], 'listing-one')
+                self.assertEqual(request['fields']['price'], 80000)
                 route.fulfill(status=200, content_type='application/json', body=json.dumps({
                     'status': 'review', 'backend': 'grounded-advertising', 'fallback': True,
                     'title': '已确认房源', 'body': '租金80000卢布。', 'tags': '#莫斯科租房',
@@ -211,6 +215,8 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.assertIn('Модель: 25 токенов', text)
         self.assertIn('12.5 ток/с', text)
         self.assertIn('Время: 2.4 с', text)
+        self.assertEqual(self.page.evaluate('window.applied'), [])
+        self.assertEqual(self.page.evaluate('window.output.body'), 'Старое описание')
 
     def test_withdrawal_removes_approval_actions_and_shows_lineage(self):
         def action_response(response,action):

@@ -63,6 +63,8 @@ class TwentyEditorBrowserAcceptance(unittest.TestCase):
         self.page.locator('#deposit').fill('40000')
         self.page.locator('#commission').fill('50')
         self.page.locator('#generate').click()
+        # The same seed helper also serves local async text-job fixtures.
+        self.page.wait_for_function("document.getElementById('output').value.includes('80,000')")
         self.assertIn('80,000', self.page.locator('#output').input_value())
 
     def test_saved_formulas_styles_history_and_manual_diff_in_real_built_editor(self):

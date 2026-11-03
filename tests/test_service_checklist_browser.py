@@ -9,6 +9,7 @@ import unittest
 
 import test_twenty_editor_browser as editor_fixture
 import test_language_studio_browser as local_fixture
+from browser_text_jobs_fixture import MockTextJobs, accepted_draft
 
 
 class ServiceChecklistBuiltEditor(unittest.TestCase):
@@ -142,6 +143,14 @@ class ServiceChecklistLocalSave(unittest.TestCase):
     fields=editor_fixture.TwentyEditorBrowserAcceptance.fields
 
     def test_unsourced_receipt_survives_first_mac_save_then_real_presentation_html(self):
+        # The authored text response checks receipt transport, not model quality.
+        def authored_text(request,ordinal):
+            result=accepted_draft(request,ordinal)
+            fields=request['fields']
+            if fields.get('pickup') and fields.get('serviceConfirmations',{}).get('pickup'):
+                result['body']+='\n免费接送到入住地点'
+            return result
+        text_jobs=MockTextJobs(self.page,'local',authored_text)
         self.open_editor()
         self.page.locator('nav button[data-tab="history"]').click()
         self.page.locator('#captureSnapshots').uncheck()
@@ -154,6 +163,9 @@ class ServiceChecklistLocalSave(unittest.TestCase):
         self.assertTrue(receipt['cardKey'].startswith('editorIdentity:'))
         self.page.locator('#generate').click()
         self.page.wait_for_function("document.getElementById('output').value.includes('免费接送到入住地点')")
+        self.assertEqual(len(text_jobs.requests),2)
+        self.assertNotIn('pickup',text_jobs.requests[0]['fields'].get('serviceConfirmations',{}))
+        self.assertEqual(text_jobs.requests[-1]['fields']['serviceConfirmations']['pickup'],receipt)
         self.page.locator('#save').click()
         self.page.wait_for_function("/^[a-f0-9]{32}$/.test(JSON.parse(localStorage.getItem('most-draft'))?.fields?.resultId||'')")
         self.assertEqual(self.fields()['serviceConfirmations']['pickup'],receipt);self.assertTrue(pickup.is_checked())

@@ -5,6 +5,7 @@ import threading
 import unittest
 
 import test_phone_browser as acceptance
+from browser_text_jobs_fixture import MockTextJobs, accepted_draft
 
 
 class UniversityReferenceAcceptance(unittest.TestCase):
@@ -94,13 +95,26 @@ class UniversityReferenceAcceptance(unittest.TestCase):
         self.assertIn('Более 650',mai.inner_text());self.assertIn('Гостевая летняя школа',mai.inner_text());self.assertIn('не доказывают результаты обучения',mai.inner_text())
         self.assertEqual(self.page.locator('#price').input_value(),'81000');self.assertEqual(self.page.locator('#metro').input_value(),'Прокшино');self.assertEqual(self.page.locator('#uniTime').input_value(),'');self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
 
-    def test_selected_school_appears_in_title_and_body_without_invented_proximity(self):
+    def test_selected_school_reaches_individual_job_and_applies_checked_reference_copy(self):
+        # Deterministic UI transport fixture; this is not a model-quality test.
+        def authored_text(request,ordinal):
+            fields=request['fields']
+            self.assertEqual(fields['university'],self.school['ru'])
+            self.assertEqual(fields['uniTime'],'')
+            self.assertEqual(fields['uniMode'],'unknown')
+            result=accepted_draft(request,ordinal)
+            result['title']='莫斯科房源｜通勤目标：'+self.school['zh']
+            result['body']+='\n通勤目标：'+self.school['zh']+'。时间待确认。'
+            return result
+        text_jobs=MockTextJobs(self.page,'local',authored_text)
         self.open_editor()
         self.page.locator('#price').fill('80000');self.page.locator('#area').fill('50');self.page.locator('#rooms').fill('2')
         self.page.locator('#university').fill('МГУ');self.page.locator('#universitySuggestions button').first.click()
         self.page.locator('#generate').click()
+        self.page.wait_for_function("document.getElementById('output').value.includes('时间待确认')")
+        self.assertEqual(len(text_jobs.requests),1)
         title=self.page.locator('#outputTitle').input_value();body=self.page.locator('#output').input_value()
         self.assertIn(self.school['zh'],title);self.assertIn(self.school['zh'],body)
         self.assertIn('通勤目标',title);self.assertIn('时间待确认',body)
         self.assertNotIn('近地铁',title);self.assertNotIn('步行约',body)
-        self.assertIn('抵达登记（临时居住登记）',body)
+        self.assertNotIn('抵达登记（临时居住登记）',body,'Unconfirmed service copy must not be introduced by this UI fixture')

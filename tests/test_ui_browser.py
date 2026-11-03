@@ -13,6 +13,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'cli'))
 import local_server
 import photo_store
+from browser_text_jobs_fixture import MockTextJobs, accepted_draft
 
 
 class BrowserAcceptance(unittest.TestCase):
@@ -54,16 +55,41 @@ class BrowserAcceptance(unittest.TestCase):
         self.assertEqual(self.errors, [], 'Browser JavaScript errors')
 
     def test_existing_dictionary_and_generation_geo(self):
+        # Authored HTTP fixture tests the async editor contract, not model quality.
+        fixture_body = '两间独立房间，月租80,000卢布。西南站步行7分钟。有书桌。房东不提供登记；不可养宠物。'
+        def draft(request, ordinal):
+            return {**accepted_draft(request, ordinal), 'title': '西南站两居租房',
+                    'body': fixture_body, 'tags': '#两居室租房 #地铁租房', 'inventoryCount': 1}
+        jobs = MockTextJobs(self.page, 'local', result_factory=draft, hold=True)
         self.page.add_init_script("localStorage.setItem('most-rules-version','3');localStorage.setItem('most-rules',JSON.stringify({'рабочий стол':'自定义书桌'}));")
         self.page.goto(self.server.desktop_access.launch_url(self.server.server_port))
-        self.page.locator('#source').fill('2-комнатная квартира. Две изолированные комнаты. Цена 80 000 руб. Метро Юго-Западная — 7 минут пешком. Есть рабочий стол. Без животных. Регистрацию не делаем.')
+        source = '2-комнатная квартира. Две изолированные комнаты. Цена 80 000 руб. Метро Юго-Западная — 7 минут пешком. Есть рабочий стол. Без животных. Регистрацию не делаем.'
+        self.page.locator('#source').fill(source)
         self.page.locator('#extract').click()
-        self.page.locator('#generate').click()
-        body = self.page.locator('#output').input_value()
-        self.assertIn('抵达登记（临时居住登记）', body)
-        self.assertNotIn('宠物', body)
-        self.assertIn('40,000', body)
-        self.assertIn('20,000', body)
+        with self.page.expect_response(lambda response: response.url.endswith('/api/local/text-jobs')
+                                       and response.request.method == 'POST') as queued:
+            self.page.locator('#generate').click()
+        self.assertEqual(queued.value.status, 202)
+        self.assertEqual(len(jobs.requests), 1)
+        request = jobs.requests[0]
+        self.assertEqual(request['action'], 'preview')
+        self.assertEqual(request['part'], 'all')
+        fields = request['fields']
+        self.assertEqual(fields['sourceDescription'], source)
+        self.assertEqual(fields['price'], '80000')
+        self.assertEqual(fields['metro'], 'Юго-Западная')
+        self.assertEqual(fields['walk'], '7')
+        self.assertEqual(fields['petPolicy'], 'no')
+        self.assertFalse(fields['pets'])
+        self.assertEqual(fields['registrationPolicy'], 'not_available')
+        self.assertEqual(fields['deposit'], '', 'The source does not specify a deposit')
+        self.assertEqual(self.page.locator('#output').input_value(), '')
+        self.assertTrue(self.page.locator('#generate').is_disabled())
+        jobs.release_all()
+        self.page.wait_for_function("expected => document.querySelector('#output').value === expected", arg=fixture_body)
+        self.page.wait_for_function("!document.querySelector('#generate').disabled")
+        self.assertEqual(self.page.locator('#outputTitle').input_value(), '西南站两居租房')
+        self.assertEqual(len(jobs.requests), 1)
         self.assertFalse(self.page.locator('#registration').is_disabled())
         rules = self.page.evaluate("JSON.parse(localStorage.getItem('most-rules'))")
         self.assertEqual(rules['рабочий стол'], '自定义书桌')
