@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "release": "v32",
+  "kind": "assistant-editorial-review-of-real-native-candidate",
+  "status": "completed-candidate-not-recommended",
+  "nativeGateReportSha256": "97bb1f97d5a55246ffa297588e2258e29b2cb0997ca78b1c9e275a369bc69a11",
+  "reviewer": "assistant_individual_ai_v32",
+  "humanVerified": false,
+  "nativeSpeakerReviewCompleted": false,
+  "scope": {
+    "actualCandidateAnswersReviewed": 12,
+    "holdoutPropertyGroups": 6,
+    "inputBasis": [
+      "frozen canonical facts and inventory",
+      "existing source narrative",
+      "actual raw generated text"
+    ],
+    "newPhotoInspection": false,
+    "productionMutationsByReviewer": false,
+    "modelCallsByReviewer": 0
+  },
+  "formalScorePreserved": {
+    "currentPassed": 12,
+    "candidatePassed": 10,
+    "requestedPerSide": 12,
+    "currentDistinctPairs": 6,
+    "candidateDistinctPairs": 5
+  },
+  "findings": [
+    {
+      "category": "confirmed-inventory-item-omitted",
+      "candidateAnswers": 2,
+      "propertyGroups": 1,
+      "caughtByFormalValidator": true,
+      "attribution": "model-output",
+      "description": "Both variants omit an explicitly required vacuum cleaner."
+    },
+    {
+      "category": "unsupported-inventory-count-transfer",
+      "candidateAnswers": 2,
+      "propertyGroups": 1,
+      "caughtByFormalValidator": false,
+      "attribution": "model-output",
+      "description": "A count belonging to the number of bathrooms is reassigned to a bath and basin although their inventory entries have no confirmed counts."
+    },
+    {
+      "category": "source-prompt-renovation-conflict-repeated",
+      "candidateAnswers": 2,
+      "propertyGroups": 1,
+      "caughtByFormalValidator": false,
+      "attribution": "inherited-input-conflict",
+      "alsoObservedInCurrentAnswers": 2,
+      "description": "A structured renovation category conflicts with the source narrative. Both models repeat the structured value. This is not a new invention relative to the prompt."
+    },
+    {
+      "category": "identical-complete-rewrite-pair",
+      "candidateAnswers": 2,
+      "propertyGroups": 1,
+      "caughtByFormalDistinctnessCheck": true,
+      "attribution": "model-output",
+      "description": "Different probe seeds produce byte-identical title and body for one holdout property."
+    }
+  ],
+  "additionalObservations": [
+    "All 12 candidate responses preserve the known monetary roles, mandatory conditions and transport associations on this inspected set.",
+    "Some optional building-year, room-independence and kitchen-area details are omitted; the current formal contract does not require every optional field.",
+    "Titles and paragraph forms remain regular; a distinct-string count alone is not evidence of rich editorial variety.",
+    "The independent review also noted source-only dishware and a bed subtype absent from the frozen request. These input coverage gaps are separate from output hallucinations."
+  ],
+  "decision": {
+    "recommendSelection": false,
+    "formalPolicyChanged": false,
+    "historicalScoresReclassified": false,
+    "weightsSelectedByReviewer": false
+  },
+  "independentAssistantReview": {
+    "reviewer": "assistant_photo_evidence_v32",
+    "actualCandidateAnswersReviewed": 6,
+    "humanVerified": false,
+    "agreesOnMissingItem": true,
+    "agreesOnInheritedSourceConflict": true,
+    "agreesOnIdenticalRewritePair": true,
+    "privateAuditSha256": "996e0bedcbb16346cd05aa2fa7dfe064eecb175765b4bcf39c877f5809fa8a7c"
+  }
+}

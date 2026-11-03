@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "kind": "v32-native-ci-toggle-acceptance",
+  "status": "passed",
+  "startedAt": "2026-11-03T22:11:21.335145+00:00",
+  "finishedAt": "2026-11-03T22:11:33.080727+00:00",
+  "elapsedSeconds": 11.464,
+  "source": {
+    "commit": "b254082d8f95905b62a2b57cfa0d71592c8e36eb",
+    "buildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+    "files": {
+      "tests/test_learning_studio_browser.py": "5bce7adce6e8bf729a656084399d75a997b60b630f5f5c8b86b17d6660205445",
+      "web/learning-studio.mjs": "ef15498408a3b64152cca5dc7604d0d3a1c77ca666821538ce2e6e1bdf26f512",
+      "cli/learning_scheduler.py": "91d2b9b23353c7df633869fc970d317b7e69179a49ea8d1df58c46ef37ee2498",
+      "cli/learning_transfer.py": "133518bb96e8f8d9b79d8525a1f10cc8dc0018e81e99f19b61fa074b6abef2d4",
+      "data/build-identity.json": "2bc53089b5aa40e2dda1f312628bf8fdf89226365c0a6896ebc78ff8a76bf713",
+      "docs/index.html": "18a7aeafb53164a3e84130325c0b6b53e8d7a3ccb5b46e406e72244d5fe17a23",
+      "docs/phone.html": "7cbcc70a5b6e64516a07ed50f3b0f77c1c07d35379b4944f6c35129e3afefd0b"
+    },
+    "desktopAndPhoneBuildsMatch": true,
+    "unchangedAfterRun": true
+  },
+  "counts": {
+    "expected": 1,
+    "run": 1,
+    "passed": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "pageErrors": 0,
+  "tests": [
+    {
+      "test": "test_learning_studio_browser.LearningStudioBrowserTests.test_auto_accept_toggle_explains_gate_and_does_not_enable_rollback_without_acceptance",
+      "status": "passed",
+      "elapsedSeconds": 5.527,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    }
+  ],
+  "logSha256": "4719f67840a7da744aa6e4643e7eb7bea511f4ba962098e64f70e30218c60b1d",
+  "runnerSha256": "13e042ca285931fc10dbd284ab46afff80aef42d039b648481f96b1f8c86365d",
+  "scope": {
+    "isolatedLearningDom": true,
+    "actualTemporaryApiAndConfigSave": true,
+    "productionChanged": false,
+    "modelInferencePerformed": false,
+    "modelQualityEvaluated": false,
+    "physicalIphoneTested": false,
+    "retries": 0
+  }
+}

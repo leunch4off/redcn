@@ -1,0 +1,223 @@
+{
+  "version": 1,
+  "kind": "v32-native-browser-acceptance",
+  "status": "passed",
+  "startedAt": "2026-11-03T22:02:56.615054+00:00",
+  "finishedAt": "2026-11-03T22:06:45.520440+00:00",
+  "elapsedSeconds": 228.273,
+  "source": {
+    "commit": "9a65a21c9d5aad60e7a010536a5354a14da07dc4",
+    "buildId": "96d32915099010699369d3e3105392ebc455e5bc68187c3c7ff951701f3426bf",
+    "shellBuildIds": {
+      "desktop": "96d32915099010699369d3e3105392ebc455e5bc68187c3c7ff951701f3426bf",
+      "phone": "96d32915099010699369d3e3105392ebc455e5bc68187c3c7ff951701f3426bf"
+    },
+    "files": {
+      "tests/test_catalog_state_browser.py": {
+        "sha256": "e192806ea0b8061089920971c86878b49278dbb27e657613bb96cfa9c42322a9",
+        "bytes": 16173
+      },
+      "tests/test_own_property_browser.py": {
+        "sha256": "96cafc30de958b8145a57eb3e3db9df6c2c148a7d1d701c21964bc61f44494ed",
+        "bytes": 4954
+      },
+      "tests/test_learning_grounded_browser.py": {
+        "sha256": "610112b399723ff49f32df928a079127571cd3452eec85eecce4e124b77101af",
+        "bytes": 10053
+      },
+      "tests/test_phone_browser.py": {
+        "sha256": "0bb95d49191e9b613d67dac06b14e0fba0f331d77688a77433c201bcd12522f6",
+        "bytes": 19025
+      },
+      "tests/test_learning_studio_browser.py": {
+        "sha256": "806420e5103081ef2a3cb49c42fee2248e4a1253f1d686d17e4bb540628cf278",
+        "bytes": 25777
+      },
+      "web/catalog-state.mjs": {
+        "sha256": "abef8cecb6354d2a776e944f1a9330f48213687d21dbf324cce207bc96e2bb8a",
+        "bytes": 2953
+      },
+      "web/own-property.mjs": {
+        "sha256": "4d75e00d4599366291568d01ee41497bee6136202fc4b6b9e8df40e1df7cbaec",
+        "bytes": 289
+      },
+      "web/learning-studio.mjs": {
+        "sha256": "ef15498408a3b64152cca5dc7604d0d3a1c77ca666821538ce2e6e1bdf26f512",
+        "bytes": 55375
+      },
+      "web/app.js": {
+        "sha256": "ef5f07cb2f147237bedefdfe7f1e364f74574e851f11b59d6a3768072aa35cd1",
+        "bytes": 99280
+      },
+      "web/phone.mjs": {
+        "sha256": "4178120a86ea64a68a0bb9209a59ebd73e49b300d0a795740598eefd61b91145",
+        "bytes": 95444
+      },
+      "scripts/build.mjs": {
+        "sha256": "dd985aa7f334bcfc5807ca2272d35f4726fe2e76c881363d8a50567f7a0e8ff7",
+        "bytes": 12485
+      },
+      "data/build-identity.json": {
+        "sha256": "cb8db11b385017ed24b178f27af5078bb4eab60313dc5539d7bd1ccd5aa0135f",
+        "bytes": 613
+      },
+      "docs/index.html": {
+        "sha256": "a1bcfa0787b8050fe7301012703f2bdfeac0f3b26b5e833c3f64dd941def94c4",
+        "bytes": 5695309
+      },
+      "docs/phone.html": {
+        "sha256": "8b9c13ad801fe4964f79156396e7d0c17cfde684264c5b845838830110a01b7f",
+        "bytes": 544547
+      }
+    },
+    "unchangedAfterRun": true
+  },
+  "environment": {
+    "os": "Darwin",
+    "python": "3.11.9",
+    "browser": "Chrome headless via Playwright Chromium",
+    "sequential": true,
+    "phoneViewport": {
+      "width": 393,
+      "height": 852
+    },
+    "physicalIphoneTested": false
+  },
+  "counts": {
+    "expected": 12,
+    "run": 12,
+    "passed": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "pageErrors": {
+    "capturedTests": 12,
+    "total": 0,
+    "assertedByFixtureTeardown": true
+  },
+  "suites": [
+    {
+      "suite": "test_catalog_state_browser.CatalogStateBrowserTests",
+      "scope": "built-desktop-and-phone-shells",
+      "expected": 7,
+      "run": 7,
+      "passed": 7,
+      "pageErrors": 0
+    },
+    {
+      "suite": "test_own_property_browser.OwnPropertyBrowserTests",
+      "scope": "built-shells-with-es2022-apis-removed",
+      "expected": 2,
+      "run": 2,
+      "passed": 2,
+      "pageErrors": 0
+    },
+    {
+      "suite": "test_learning_grounded_browser.GroundedLearningBrowserTests",
+      "scope": "isolated-learning-module-dom-with-synthetic-api",
+      "expected": 3,
+      "run": 3,
+      "passed": 3,
+      "pageErrors": 0
+    }
+  ],
+  "tests": [
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_desktop_delayed_view_ack_cannot_remove_newer_edited_state",
+      "status": "passed",
+      "elapsedSeconds": 17.722,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_desktop_view_gray_stable_order_and_edited_tab_survive_reload",
+      "status": "passed",
+      "elapsedSeconds": 41.896,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_phone_cold_reload_drains_feed_pages_and_keeps_edited_old_card_in_place",
+      "status": "passed",
+      "elapsedSeconds": 11.681,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_phone_deep_link_view_survives_first_appearance_in_an_older_feed",
+      "status": "passed",
+      "elapsedSeconds": 12.477,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_phone_delayed_feed_and_view_ack_do_not_undo_view_or_edit",
+      "status": "passed",
+      "elapsedSeconds": 14.311,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_phone_repair_same_role_saves_its_own_view_without_old_session_ack",
+      "status": "passed",
+      "elapsedSeconds": 15.143,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_catalog_state_browser.CatalogStateBrowserTests.test_phone_viewed_edit_filter_and_original_order_persist",
+      "status": "passed",
+      "elapsedSeconds": 14.708,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_own_property_browser.OwnPropertyBrowserTests.test_desktop_saved_card_schema_warning_survives_edit_and_reload_without_es2022_apis",
+      "status": "passed",
+      "elapsedSeconds": 34.056,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_own_property_browser.OwnPropertyBrowserTests.test_phone_schema_card_and_lazy_routes_and_designer_work_without_es2022_apis",
+      "status": "passed",
+      "elapsedSeconds": 22.214,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_learning_grounded_browser.GroundedLearningBrowserTests.test_advertising_status_separates_translation_history_and_live_process_proof",
+      "status": "passed",
+      "elapsedSeconds": 4.513,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_learning_grounded_browser.GroundedLearningBrowserTests.test_pair_save_binds_review_to_current_facts_and_never_sends_authorship",
+      "status": "passed",
+      "elapsedSeconds": 9.386,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    },
+    {
+      "test": "test_learning_grounded_browser.GroundedLearningBrowserTests.test_pending_pair_preserves_full_text_and_requires_review_after_manual_changes",
+      "status": "passed",
+      "elapsedSeconds": 7.407,
+      "pageErrorCaptureObserved": true,
+      "pageErrors": 0
+    }
+  ],
+  "logSha256": "75c41c19888a751ff5e087a630747a3af9db42587647aad73ecb2f4ff17b0d98",
+  "runnerSha256": "39c0909dd02576fac954aa508c7a44cb024b74ad520bae89683c05fca6dc064f",
+  "scope": {
+    "syntheticListingsAndApiResponses": true,
+    "disposableAuthenticatedServers": true,
+    "productionChanged": false,
+    "modelInferencePerformed": false,
+    "trainingPerformed": false,
+    "modelQualityEvaluated": false,
+    "buildPerformedByThisRunner": false,
+    "retries": 0
+  }
+}

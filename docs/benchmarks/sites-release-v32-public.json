@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "scope": "private-sites-release-v32",
+  "verifiedGithubCommit": "b254082d8f95905b62a2b57cfa0d71592c8e36eb",
+  "githubCiRun": "https://github.com/leunch4off/redcn/actions/runs/41727995090",
+  "siteSourceCommit": "03417b01f993bc7033f63b826814732fe80ae4de",
+  "exactSourceFilesCompared": 905,
+  "sourceDigest": "67c45834fa47742f3dc9d7e3e29ab083cf57ed4796a59d1b62c8af239f7a89e6",
+  "buildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+  "status": "succeeded",
+  "audience": "existing-owner-only-preserved",
+  "firstMismatchedPackageDeployed": false,
+  "archivedBuildValidated": true,
+  "physicalIphoneTested": false,
+  "privateAddressPublishedInThisReceipt": false
+}
