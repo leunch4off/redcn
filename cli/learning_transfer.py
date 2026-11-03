@@ -9,6 +9,19 @@ import re
 SHA=re.compile(r'[a-f0-9]{64}')
 MAX_MODELS=60
 MAX_WEIGHTS=160*1024**2
+# Version-1 archives first shipped with these scheduler fields. New optional
+# limits may be absent in that historical format, but unknown or incomplete
+# original configurations must not be silently accepted.
+LEGACY_SCHEDULER_FIELDS={'enabled','idleSeconds','checkSeconds','minNewExamples',
+    'maxSteps','maxSeconds','maxSequenceLength','automaticPromotion','evaluationSeconds'}
+
+
+def _scheduler(value):
+    from learning_scheduler import DEFAULTS
+    if (not isinstance(value,dict) or not LEGACY_SCHEDULER_FIELDS<=set(value)
+            or not set(value)<=set(DEFAULTS)):
+        raise ValueError('Неверные параметры обучения')
+    return {**DEFAULTS,**value}
 
 
 def _digest(path,limit):
@@ -161,10 +174,9 @@ def snapshot(directory):
 def validate(package,files):
     if not isinstance(package,dict) or set(package)!={'version','scheduler','preferences','base','models','restorePolicy'} or package['version']!=1 or package['restorePolicy']!='disabled-until-native-preflight-and-new-acceptance':
         raise ValueError('Неверный комплект учебной памяти')
-    from learning_scheduler import DEFAULTS,save_config
+    from learning_scheduler import save_config
     import tempfile
-    if not isinstance(package['scheduler'],dict) or set(package['scheduler'])!=set(DEFAULTS):raise ValueError('Неверные параметры обучения')
-    with tempfile.TemporaryDirectory() as temp:save_config(temp,package['scheduler'])
+    with tempfile.TemporaryDirectory() as temp:save_config(temp,_scheduler(package['scheduler']))
     prefs=package['preferences']
     if not isinstance(prefs,dict) or set(prefs)!={'textEnabled','advertisingEnabled','photoEnabled','photoModel','photoAutoApply'} or any(type(prefs[key]) is not bool for key in prefs if key!='photoModel'):
         raise ValueError('Неверные предпочтения ИИ')
@@ -201,7 +213,7 @@ def restore(directory,package,files):
     validate(package,files)
     root=Path(directory)
     from learning_scheduler import _write,save_config
-    save_config(root,{**package['scheduler'],'enabled':False,'automaticPromotion':False})
+    save_config(root,{**_scheduler(package['scheduler']),'enabled':False,'automaticPromotion':False})
     for row in package['models']:
         folder=root/'learning/imported-models'/row['sha256']
         folder.mkdir(mode=0o700,parents=True)

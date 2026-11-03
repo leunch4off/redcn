@@ -4,7 +4,9 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+import zipfile
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'cli'))
 import test_workspace_backup as fixtures
@@ -12,6 +14,65 @@ import learning_transfer as transfer
 import workspace_backup as backup
 from learning_memory import LearningMemory
 from learning_scheduler import save_config,load_config
+
+
+class LegacySchedulerTransferTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.fixture=Path(__file__).parent/'fixtures/macos-learning-v29'
+        with zipfile.ZipFile(cls.fixture/'workspace.zip') as archive:
+            cls.package=json.loads(archive.read('metadata.json'))['learningPackage']
+            cls.files={name:archive.read(name) for name in archive.namelist()
+                if name.startswith('learning/artifacts/')}
+
+    def test_existing_v29_mac_fixture_still_passes_complete_portability_proof(self):
+        from portability_proof import verify_fixture
+        content=(self.fixture/'workspace.zip').read_bytes()
+        receipt=json.loads((self.fixture/'source.json').read_text())
+        before=copy.deepcopy(receipt)
+        self.assertNotIn('advertisingMaxSequenceLength',self.package['scheduler'])
+        result=verify_fixture(content,receipt)
+        self.assertTrue(result['verified'])
+        self.assertTrue(result['learningTransferVerified'])
+        self.assertTrue(result['freshNativeModelAcceptanceRequired'])
+        self.assertFalse(result['realModelQualityEvaluated'])
+        self.assertEqual(receipt,before,'Never rewrite the historical source receipt')
+
+    def test_old_scheduler_gets_new_safe_default_without_enabling_or_changing_history(self):
+        package=copy.deepcopy(self.package)
+        with tempfile.TemporaryDirectory() as temp:
+            destination=Path(temp)
+            # Missing old-package fields must not inherit an unrelated local
+            # override instead of the new version's reviewed safe default.
+            save_config(destination,{'advertisingMaxSequenceLength':512})
+            result=transfer.restore(destination,package,self.files)
+            config=load_config(destination)
+            self.assertEqual(config['advertisingMaxSequenceLength'],1536)
+            self.assertEqual(config['maxSteps'],37)
+            self.assertFalse(config['enabled'])
+            self.assertFalse(config['automaticPromotion'])
+            self.assertFalse((destination/'text-ai.json').exists())
+            self.assertTrue(result['freshAcceptanceRequired'])
+            self.assertFalse(transfer.preflight(destination)['readyToActivate'])
+            self.assertEqual(json.loads((destination/'learning/restored-ai.json').read_text()),self.package)
+        self.assertEqual(package,self.package)
+
+    def test_supported_new_limit_is_preserved_and_invalid_or_unknown_fields_veto_restore(self):
+        package=copy.deepcopy(self.package)
+        package['scheduler']['advertisingMaxSequenceLength']=1024
+        with tempfile.TemporaryDirectory() as temp:
+            transfer.restore(temp,package,self.files)
+            self.assertEqual(load_config(temp)['advertisingMaxSequenceLength'],1024)
+        invalid=[{'advertisingMaxSequenceLength':value} for value in (511,1537,True,'1536',None)]
+        invalid += [{'unknownOption':True},{'enabled':1},{'maxSteps':True},{'checkSeconds':0}]
+        for update in invalid:
+            forged=copy.deepcopy(self.package);forged['scheduler'].update(update)
+            with self.subTest(update=update),tempfile.TemporaryDirectory() as temp:
+                destination=Path(temp)/'not-created'
+                with self.assertRaises(ValueError):transfer.restore(destination,forged,self.files)
+                self.assertFalse(destination.exists())
+        incomplete=copy.deepcopy(self.package);del incomplete['scheduler']['maxSteps']
+        with self.assertRaises(ValueError):transfer.validate(incomplete,self.files)
 
 
 class TransferTests(unittest.TestCase):

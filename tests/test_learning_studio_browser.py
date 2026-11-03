@@ -184,13 +184,26 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.assertEqual(self.page.evaluate('applied.length'), 0)
 
     def test_auto_accept_toggle_explains_gate_and_does_not_enable_rollback_without_acceptance(self):
+        from learning_scheduler import load_config
         toggle = self.page.get_by_role('checkbox', name='Принимать новые веса после проверки качества', exact=True)
         self.assertFalse(toggle.is_checked())
-        toggle.check()
-        self.page.wait_for_function("document.body.textContent.includes('Автоприёмка включена: только после полного сравнения качества')")
+        with self.page.expect_response(lambda response: response.url.endswith('/api/learning')
+                and response.request.method=='POST'
+                and response.request.post_data_json.get('action')=='scheduler-config') as saved:
+            toggle.check()
+        self.assertEqual(saved.value.status,200)
+        self.assertEqual(saved.value.request.post_data_json,
+                         {'action':'scheduler-config','automaticPromotion':True})
+        self.page.wait_for_function("document.querySelector('.learning-studio').getAttribute('aria-busy')==='false'")
         self.assertTrue(toggle.is_checked())
+        self.assertTrue(load_config(Path(self.folder.name))['automaticPromotion'])
+        self.assertFalse(load_config(Path(self.folder.name))['enabled'])
+        text=self.page.locator('body').inner_text()
+        self.assertIn('Автоприёмка включена: только после сравнения качества',text)
+        self.assertIn('только после полного сравнения с текущей',text)
+        self.assertIn('проверочные факты без ошибок, отсутствие ухудшений и разные варианты текста',text)
         self.assertTrue(self.page.get_by_role('button', name='Вернуть предыдущие веса', exact=True).is_disabled())
-        self.assertIn('Веса — обученные настройки модели', self.page.locator('body').inner_text())
+        self.assertIn('Веса — обученные настройки модели',text)
         self.assertFalse((Path(self.folder.name)/'text-ai.json').exists())
 
     def test_grounded_advertising_is_distinguished_from_model_text_with_measured_rates(self):
