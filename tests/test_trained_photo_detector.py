@@ -1,4 +1,5 @@
 import io
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -24,6 +25,89 @@ def item(raw, index, feature, score=.9):
 
 
 class TrainedDetectorTests(unittest.TestCase):
+    def test_large_request_reaches_eof_after_slow_reader_exceeds_first_poll(self):
+        # Real OS transport: a request larger than a pipe buffer and a child
+        # that does not start reading until after communicate's first timeout.
+        content=b'photo-fixture-'*160_000
+        worker_source='''import base64,hashlib,json,sys,time
+time.sleep(.3)
+request=json.loads(sys.stdin.buffer.read())
+content=base64.b64decode(request['content'],validate=True)
+print(json.dumps({'status':'review','provider':'yolox-trained','model':'redcn-furniture-v1',
+    'candidates':[],'inputByteCount':len(content),'inputSha256':hashlib.sha256(content).hexdigest(),
+    'actualMime':request['mime']}),flush=True)
+'''
+        actual_popen=detector.subprocess.Popen
+        processes=[];timeouts=[];transports=[]
+        def spawn(*args,**kwargs):
+            transports.append(kwargs['stdin'])
+            process=actual_popen(*args,**kwargs);communicate=process.communicate
+            def measured(**options):
+                try:return communicate(**options)
+                except detector.subprocess.TimeoutExpired:
+                    timeouts.append(True);raise
+            process.communicate=measured;processes.append(process)
+            return process
+        with tempfile.TemporaryDirectory() as directory:
+            worker=Path(directory)/'slow-photo-reader.py';worker.write_text(worker_source)
+            with patch.object(detector,'__file__',str(worker)), \
+                    patch('photo_native_runtime.runtime_command',return_value=([sys.executable,'-I'],{'selection':'legacy'})), \
+                    patch.object(detector.subprocess,'Popen',side_effect=spawn):
+                result=detector.analyze(content,'image/webp',directory,deadline=time.monotonic()+2)
+        self.assertGreaterEqual(len(timeouts),1)
+        self.assertEqual(result['status'],'review',result)
+        self.assertEqual(result['inputByteCount'],len(content))
+        self.assertEqual(result['inputSha256'],hashlib.sha256(content).hexdigest())
+        self.assertEqual(result['actualMime'],'image/webp')
+        self.assertEqual(processes[0].poll(),0)
+        self.assertTrue(transports[0].closed)
+        self.assertTrue(processes[0].stdout.closed)
+
+    def test_real_slow_reader_is_reaped_and_temporary_input_closed_on_cancel_or_deadline(self):
+        actual_popen=detector.subprocess.Popen
+        for cancel_requested in (False,True):
+            processes=[];transports=[];timer=None
+            cancel=threading.Event()
+            def spawn(*args,**kwargs):
+                transports.append(kwargs['stdin'])
+                process=actual_popen(*args,**kwargs);processes.append(process)
+                return process
+            with self.subTest(cancel_requested=cancel_requested),tempfile.TemporaryDirectory() as directory:
+                worker=Path(directory)/'waiting-reader.py';worker.write_text('import time;time.sleep(30)\n')
+                with patch.object(detector,'__file__',str(worker)), \
+                        patch('photo_native_runtime.runtime_command',return_value=([sys.executable,'-I'],{'selection':'legacy'})), \
+                        patch.object(detector.subprocess,'Popen',side_effect=spawn):
+                    if cancel_requested:
+                        timer=threading.Timer(.2,cancel.set);timer.start()
+                    try:
+                        if cancel_requested:
+                            with self.assertRaisesRegex(ValueError,'отмен'):
+                                detector.analyze(b'large-photo'*100_000,'image/webp',directory,cancel=cancel,deadline=time.monotonic()+2)
+                        else:
+                            result=detector.analyze(b'large-photo'*100_000,'image/webp',directory,deadline=time.monotonic()+.2)
+                            self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+                    finally:
+                        if timer is not None:timer.cancel();timer.join()
+                self.assertEqual(len(processes),1)
+                self.assertIsNotNone(processes[0].poll())
+                self.assertTrue(transports[0].closed)
+                self.assertTrue(processes[0].stdout.closed)
+
+    def test_deadline_exhausted_while_staging_does_not_start_child_and_closes_file(self):
+        clock={'value':0};files=[];actual_temporary=detector.tempfile.TemporaryFile
+        def stage(*args,**kwargs):
+            stream=actual_temporary(*args,**kwargs);files.append(stream);clock['value']=3
+            return stream
+        with tempfile.TemporaryDirectory() as directory,patch.object(detector.time,'monotonic',side_effect=lambda:clock['value']), \
+                patch.object(detector.tempfile,'TemporaryFile',side_effect=stage), \
+                patch('photo_native_runtime.runtime_command',return_value=([sys.executable],{'selection':'legacy'})), \
+                patch.object(detector.subprocess,'Popen') as spawn:
+            result=detector.analyze(b'photo','image/webp',directory,deadline=2)
+        spawn.assert_not_called()
+        self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+        self.assertEqual(result['failurePhase'],'request-staging')
+        self.assertTrue(files[0].closed)
+
     def test_new_class_has_box_but_never_publishes_or_counts(self):
         raw = rows(); item(raw, 0, 'washer'); item(raw, 1, 'washer', .8)
         result = detector.decode(raw, 832, 416, 'a'*64)
@@ -143,18 +227,19 @@ class TrainedDetectorTests(unittest.TestCase):
         self.assertEqual(result['diagnostics']['budgetSeconds'],10)
 
     def test_expired_worker_is_terminated_and_reaped(self):
+        clock={'value':0}
         class Process:
             terminated=False
             reaped=False
             def communicate(self, **kwargs):
+                clock['value']=61
                 raise detector.subprocess.TimeoutExpired(['worker'], .1)
             def poll(self):return None
             def terminate(self):self.terminated=True
             def wait(self, timeout):self.reaped=True
         process=Process()
-        clock=iter([0,0])
         with patch.object(detector.subprocess,'Popen',return_value=process), \
-                patch.object(detector.time,'monotonic',side_effect=lambda:next(clock,61)):
+                patch.object(detector.time,'monotonic',side_effect=lambda:clock['value']):
             result=detector.analyze(b'fixture','image/jpeg','/unused')
         self.assertEqual(result['status'],'unavailable')
         self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')

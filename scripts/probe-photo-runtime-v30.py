@@ -45,6 +45,7 @@ def main():
     report={'version':1,'kind':'native-photo-runtime-v30-probe','manifestSha256':manifest_sha,
         'scriptSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'detectorSourceSha256':hashlib.sha256(Path(selected_detector.__file__).read_bytes()).hexdigest(),
+        'transportSourceSha256':hashlib.sha256(Path(trained_photo_detector.__file__).read_bytes()).hexdigest(),
         'model':selected_model,'modelSha256':selected_detector.MODEL_SHA,
         'route':'explicit-native-provider' if args.model else 'configured-vision-pipeline',
         'cardsWritten':False,'cacheWritten':False,'settingsChanged':False,'weightsChanged':False,

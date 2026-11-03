@@ -7,6 +7,7 @@ import math
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import time
 import threading
 import warnings
@@ -237,6 +238,7 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
         return completed(unavailable())
     request = json.dumps({'content': base64.b64encode(content).decode(), 'mime': mime}).encode()
     process = None
+    request_file = None
     runtime = None
     phase = 'runtime-verification'
     validation_started = time.monotonic()
@@ -251,12 +253,28 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
             return completed({**unavailable(error.code, phase), 'message': str(error)+'; фото не проверено.',
                 'errorCode': error.code, 'runtime': {'selection': 'native-arm', 'status': 'invalid'}})
         validation_seconds = time.monotonic()-validation_started
+        phase = 'request-staging'
+        # A communicate(input=...) timeout can leave stdin partly written.
+        # Retrying with input=None stops selecting stdin on CPython 3.11/3.12,
+        # so a slow-starting worker then waits forever for the remaining JSON
+        # and EOF. An anonymous private file is finite before the child starts;
+        # polling communicates output only and cannot strand request bytes.
+        request_file = tempfile.TemporaryFile(mode='w+b')
+        request_file.write(request)
+        request_file.flush()
+        request_file.seek(0)
+        if cancel is not None and cancel.is_set():
+            raise ValueError('Анализ отменён')
+        if time.monotonic() >= started+remaining:
+            return completed({**unavailable('PHOTO_WORKER_TIMEOUT', phase), 'runtime': runtime,
+                'diagnostics': {'coldStart': cold, 'budgetSeconds': remaining,
+                    'runtimeVerificationSeconds': validation_seconds, 'workerWaitSeconds': 0,
+                    'requestTransport': 'temporary-file'}})
         phase = 'worker-startup-or-inference'
         worker_started = time.monotonic()
         process = subprocess.Popen([*command, str(worker), '--worker', str(directory)],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+            stdin=request_file, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
         finish = started+remaining
-        pending = request
         if status is not None:
             progress('analyzing', 'Находим видимые предметы на фото; скорость измеряется в фото/с')
         while True:
@@ -268,13 +286,13 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
                 result['runtime'] = runtime
                 result['diagnostics'] = {'coldStart': cold, 'budgetSeconds': remaining,
                     'runtimeVerificationSeconds': validation_seconds,
-                    'workerWaitSeconds': time.monotonic()-worker_started}
+                    'workerWaitSeconds': time.monotonic()-worker_started, 'requestTransport': 'temporary-file'}
                 return completed(result)
             try:
-                stdout, _ = process.communicate(input=pending, timeout=min(.1, budget))
+                stdout, _ = process.communicate(timeout=min(.1, budget))
                 break
             except subprocess.TimeoutExpired:
-                pending = None
+                pass
         if len(stdout) > MAX_OUTPUT:
             return completed(unavailable('PHOTO_WORKER_OUTPUT_LIMIT', phase))
         result = json.loads(stdout)
@@ -293,7 +311,7 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
         result['diagnostics'] = {**(result.get('diagnostics') if isinstance(result.get('diagnostics'), dict) else {}),
             'coldStart': cold, 'budgetSeconds': remaining,
             'runtimeVerificationSeconds': validation_seconds,
-            'workerWaitSeconds': time.monotonic()-worker_started}
+            'workerWaitSeconds': time.monotonic()-worker_started, 'requestTransport': 'temporary-file'}
         if result.get('status') == 'review':
             with _WARM_LOCK:
                 _WARM_DIRECTORIES.add(identity)
@@ -315,6 +333,13 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
                 except ProcessLookupError: pass
                 try: process.wait(timeout=.5)
                 except subprocess.TimeoutExpired: pass
+        if process is not None:
+            for stream in (getattr(process,'stdin',None),getattr(process,'stdout',None),getattr(process,'stderr',None)):
+                if stream is not None:
+                    try: stream.close()
+                    except OSError: pass
+        if request_file is not None:
+            request_file.close()
 
 
 if __name__ == '__main__':
