@@ -20,6 +20,20 @@ ORT_SHA = '27a8a1dd75827f54cfacc7e1a3564cd82b20651698babee3536f6622899ed469'
 FOLDER = Path('tools/photo-ai-arm')
 ORT_PATH = Path('venv/lib/python3.11/site-packages/onnxruntime/capi/onnxruntime_pybind11_state.so')
 MODEL_PATH = Path('tools/photo-training/20261101-first-pass/run-01/model.onnx')
+WORLD_MODEL_PATH = Path('tools/yoloe-pilot/world-v2/export-v1/furniture-21-worldv2.onnx')
+WORLD_MODEL_SHA = 'eb56e6e04067350e6bb4c9603a4664707ec7620f3a3dda81c1ddd8fd9d580bba'
+# Optional WORLD preprocessing extension. The original v1 install receipt stays
+# valid; WORLD separately requires the same ARM wheel used in its comparison.
+OPENCV_VERSION = '4.11.0.86'
+OPENCV_WHEEL_SHA = '432f67c223f1dc2824f5e73cdfcd9db0efc8710647d4e813012195dc9122a52a'
+OPENCV_FILES = {
+    'cv2/cv2.abi3.so': '199208e3b15e14cce3ed597c602e9a83f66f296870f63d6e80afa79f461bdead',
+    'cv2/__init__.py': '936bd94c5a5debf0212fc751af79d3a163652f3e850259df2159db6aa3ed8ad8',
+    'cv2/config.py': '1db3463a96f58a82123a847d1507228d9e8a80006de67401ae835917658ebe87',
+    'cv2/config-3.py': '9a7aadf724b822001f5e963b01fd4e375d45e2cbbe328d2ca7b42a440c083a1c',
+    'cv2/load_config_py3.py': '03dc1f11374a667c9b7db10dd5276d640b0c2d5b2e7866b4ccef772732bd3852',
+    'cv2/version.py': '86ce72a8385d1fff358a2a306231f86b769d654e89beca6a164c9c36774f7e5a',
+}
 WHEELS = {
     'numpy': ('1.26.4', 'edd8b5fe47dab091176d21bb6de568acdd906d1887a4584a15a9a96a1dca06ef'),
     'pillow': ('11.3.0', '9c412fddd1b77a75aa904615ebaa6001f169b26fd467b4be93aded278266b288'),
@@ -82,22 +96,49 @@ def _codesign(path, digest, *, deadline=None):
         _LOCK.release()
 
 
-def cache_identity(directory):
+def _world_preprocessing(folder, installed=None):
+    site = folder/'venv/lib/python3.11/site-packages'
+    if installed is None:
+        installed = {distribution.metadata['Name'].lower():distribution.version
+            for distribution in importlib.metadata.distributions(path=[str(site)])}
+    if installed.get('opencv-python') != OPENCV_VERSION:
+        raise NativeRuntimeError('Для YOLO-World требуется закреплённый OpenCV ARM runtime')
+    if (site/'cv2').is_symlink():
+        raise NativeRuntimeError('Пакет OpenCV не должен перенаправляться ссылкой')
+    for relative, expected in OPENCV_FILES.items():
+        path = site/relative
+        if path.is_symlink() or file_sha(path,40_000_000) != expected:
+            raise NativeRuntimeError('Контрольная сумма OpenCV runtime не совпадает')
+    return {'opencvVersion':OPENCV_VERSION,'opencvBinarySha256':OPENCV_FILES['cv2/cv2.abi3.so']}
+
+
+def cache_identity(directory, *, model='redcn-furniture-v1'):
     receipt = Path(directory)/FOLDER/'native-runtime.json'
     if not receipt.exists():
         return 'legacy-runtime'
     if receipt.is_symlink():
         return 'invalid-native-runtime'
     try:
-        return file_sha(receipt, 16000)
+        identity = file_sha(receipt, 16000)
+        if model == 'redcn-furniture-world-v2':
+            extra = _world_preprocessing(Path(directory)/FOLDER)
+            identity += ':'+extra['opencvVersion']+':'+extra['opencvBinarySha256']
+        return identity
     except (OSError, NativeRuntimeError):
         return 'invalid-native-runtime'
 
 
-def runtime_command(directory, *, deadline=None):
+def runtime_command(directory, *, deadline=None, model='redcn-furniture-v1'):
+    models = {'redcn-furniture-v1': (MODEL_PATH, MODEL_SHA),
+        'redcn-furniture-world-v2': (WORLD_MODEL_PATH, WORLD_MODEL_SHA)}
+    if model not in models:
+        raise NativeRuntimeError('Неизвестная закреплённая модель')
+    selected_model_path, selected_model_sha = models[model]
     folder = Path(directory)/FOLDER
     receipt = folder/'native-runtime.json'
     if not receipt.exists():
+        if model == 'redcn-furniture-world-v2':
+            raise NativeRuntimeError('YOLO-World требует проверенный native runtime macOS')
         return [sys.executable], {'selection': 'legacy', 'status': 'not-verified'}
     if sys.platform != 'darwin' or folder.is_symlink() or receipt.is_symlink():
         raise NativeRuntimeError('ARM runtime доступен только как проверенная локальная установка macOS')
@@ -113,15 +154,16 @@ def runtime_command(directory, *, deadline=None):
         raise NativeRuntimeError('Паспорт ARM runtime не совпадает с закреплённой сборкой')
     python = folder/'venv/bin/python'
     ort = folder/ORT_PATH
-    model = Path(directory)/MODEL_PATH
+    model_file = Path(directory)/selected_model_path
+    extra = {}
     try:
         if python.resolve(strict=True) != PYTHON_BASE.resolve(strict=True):
             raise NativeRuntimeError('Путь Python ARM runtime не соответствует закреплённому интерпретатору')
-        if ort.is_symlink() or model.is_symlink() or any((folder/path).is_symlink() for path in (
+        if ort.is_symlink() or model_file.is_symlink() or any((folder/path).is_symlink() for path in (
                 'venv','venv/bin','venv/lib','venv/lib/python3.11','venv/lib/python3.11/site-packages',
                 'venv/lib/python3.11/site-packages/onnxruntime','venv/lib/python3.11/site-packages/onnxruntime/capi')):
             raise NativeRuntimeError('Файлы ARM runtime или модели не должны перенаправляться ссылками')
-        for target, expected in ((python, PYTHON_SHA), (ort, ORT_SHA), (model, MODEL_SHA)):
+        for target, expected in ((python, PYTHON_SHA), (ort, ORT_SHA), (model_file, selected_model_sha)):
             if file_sha(target) != expected:
                 raise NativeRuntimeError('Контрольная сумма ARM runtime или модели не совпадает')
         config = dict(line.split('=',1) for line in (folder/'venv/pyvenv.cfg').read_text().splitlines() if '=' in line)
@@ -135,6 +177,8 @@ def runtime_command(directory, *, deadline=None):
                      for distribution in importlib.metadata.distributions(path=[str(site)])}
         if any(installed.get(name) != version for name,(version,_) in WHEELS.items()):
             raise NativeRuntimeError('Версии пакетов ARM runtime не соответствуют закреплённым wheels')
+        if model == 'redcn-furniture-world-v2':
+            extra = _world_preprocessing(folder, installed)
         _codesign(python, PYTHON_SHA, deadline=deadline); _codesign(ort, ORT_SHA, deadline=deadline)
     except NativeRuntimeError:
         raise
@@ -144,5 +188,5 @@ def runtime_command(directory, *, deadline=None):
         'selection': 'native-arm', 'status': 'verified', 'architecture': 'arm64',
         'pythonVersion': '3.11.9', 'onnxRuntimeVersion': WHEELS['onnxruntime'][0],
         'pythonSha256': PYTHON_SHA, 'ortBinarySha256': ORT_SHA,
-        'modelSha256': MODEL_SHA, 'receiptSha256': hashlib.sha256(raw).hexdigest(),
-        'pythonSignatureVerified': True, 'ortSignatureVerified': True}
+        'modelSha256': selected_model_sha, 'receiptSha256': hashlib.sha256(raw).hexdigest(),
+        'pythonSignatureVerified': True, 'ortSignatureVerified': True, **extra}

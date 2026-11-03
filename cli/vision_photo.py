@@ -189,12 +189,13 @@ def _analyze_image(image, directory, *, content=None, mime='image/jpeg', cancel=
     if cancel is not None and cancel.is_set():raise ValueError('Анализ отменён')
     if deadline is not None and deadline<=time.monotonic():raise ValueError('Время анализа фото истекло')
     config=load_config(directory)
-    if config['enabled'] and config['model']=='redcn-furniture-v1':
+    if config['enabled'] and config['model'] in ('redcn-furniture-v1','redcn-furniture-world-v2'):
         import trained_photo_detector
         from photo_auto_policy import trained_policy
         if content is None:
             buffer=io.BytesIO();preview=image.convert('RGB');preview.save(buffer,'JPEG',quality=92);preview.close();content=buffer.getvalue();mime='image/jpeg'
-        outcome=trained_photo_detector.analyze(content,mime,directory,cancel=cancel,deadline=deadline,status=status)
+        outcome=trained_photo_detector.analyze(content,mime,directory,cancel=cancel,deadline=deadline,status=status,
+            **({'model':config['model']} if config['model']!='redcn-furniture-v1' else {}))
         return {**trained_policy(outcome,requested=config.get('autoApply') is True),'version':ANALYSIS_VERSION}
     fallback=None
     if config['enabled']:

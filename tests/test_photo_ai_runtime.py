@@ -26,6 +26,16 @@ class ImmediateProcess:
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_native_models_never_start_optional_ollama_helper_or_background_thread(self):
+        for model in ('redcn-furniture-v1','redcn-furniture-world-v2'):
+            config={**CONFIG,'model':model}
+            with self.subTest(model=model),patch.object(runtime.sys,'platform','darwin'), \
+                    patch.object(runtime,'_installed') as installed,patch.object(runtime.subprocess,'Popen') as spawn, \
+                    patch.object(runtime.threading,'Thread') as thread,patch('photo_ai_settings.load_config',return_value=config):
+                self.assertFalse(runtime.ensure_started('/unused',config))
+                self.assertIsNone(runtime.start_background('/unused'))
+                installed.assert_not_called();spawn.assert_not_called();thread.assert_not_called()
+
     def test_ineligible_cases_never_touch_install_paths_or_spawn(self):
         for platform, config in [('linux', CONFIG), ('darwin', {'enabled': False, 'endpoint': runtime.PRIVATE_ENDPOINT}),
                 ('darwin', {'enabled': 1, 'endpoint': runtime.PRIVATE_ENDPOINT}),

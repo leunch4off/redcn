@@ -45,10 +45,18 @@ def _text_ai(directory, scheduler):
         'trainedParameters': trained, 'stepsCompleted': steps}
 
 
-def _overview(directory, memory, *, status=None, limit=30):
+def _activity(directory, memory):
     scheduler = _scheduler(directory)
-    return {'status': memory.status(), 'events': memory.list_events(status=status, limit=limit),
-        'scheduler': scheduler, 'text_ai': _text_ai(directory, scheduler)}
+    from learning_discovery import status as discovery_status
+    return {'status': memory.status(),
+        'scheduler': scheduler, 'text_ai': _text_ai(directory, scheduler),
+        'discovery': discovery_status(directory, limit=0)}
+
+
+def _overview(directory, memory, *, status=None, limit=30):
+    from learning_discovery import status as discovery_status
+    return {**_activity(directory, memory), 'events': memory.list_events(status=status, limit=limit),
+            'discovery': discovery_status(directory)}
 
 
 def dispatch(directory, path, data=None, *, actor='operator'):
@@ -79,6 +87,11 @@ def dispatch(directory, path, data=None, *, actor='operator'):
                 group_id=data.get('groupId'), supersedes=data.get('supersedes'),
                 event_id=data.get('eventId'), actor=actor,
                 derived_from=data.get('derivedFrom'))}
+        elif action == 'review-source-phrase':
+            if set(data) != {'action', 'id', 'zh'}:
+                raise ValueError('Нужны ID исходной фразы и проверенный китайский перевод')
+            from learning_discovery import review_phrase
+            value = review_phrase(directory, data['id'], data['zh'], actor=actor)
         elif action == 'review':
             value = {'event': memory.review(data.get('id'), data.get('status'), actor=actor)}
         elif action == 'withdraw':
@@ -98,6 +111,10 @@ def dispatch(directory, path, data=None, *, actor='operator'):
             value = public_history(directory, data.get('limit',25))
         elif action == 'list':
             value = _overview(directory, memory, status=data.get('status'), limit=data.get('limit', 30))
+        elif action == 'activity':
+            if set(data) != {'action'}:
+                raise ValueError('Состояние обучения не принимает дополнительные поля')
+            value = _activity(directory, memory)
         elif action == 'scheduler-config':
             keys = set(data)-{'action'}
             if not keys or not keys <= {'enabled', 'automaticPromotion'} or any(type(data[key]) is not bool for key in keys):

@@ -8,6 +8,7 @@ import redcn
 def photo_revision(directory, result, *, text='', rules=None, prefs=None, report=None, cancel=None):
     from listing_photo_inventory import analyze_listing_photos
     from photo_ai_settings import load_config
+    from photo_teacher_review import valid_review, retain_teacher_candidates
     config=load_config(directory)
     inventory=analyze_listing_photos(directory,result,report,cancel,max_seconds=config['maxSeconds'])
     result['photoInventory']=inventory
@@ -15,13 +16,18 @@ def photo_revision(directory, result, *, text='', rules=None, prefs=None, report
     if inventory['state']=='disabled':return None
     fields=copy.deepcopy(result.get('fields') or {})
     previous=set(fields.get('photoAutoFeatures') or [])
+    previous.update(row.get('id') for row in fields.get('photoEvidence',[]) if isinstance(row,dict) and row.get('status')=='assistant-reviewed')
     found=set(inventory.get('features') or [])
     # Refresh automatic observations; explicit user confirmations and source
     # positives survive a missed detection in a later photograph pass.
     audit=fields.get('sourceAudit') if isinstance(fields.get('sourceAudit'),dict) else {}
     source_positive={row['id'] for row in audit.get('furniture',[]) or []
                      if isinstance(row,dict) and row.get('status')=='present' and 'id' in row}
-    human=[row for row in fields.get('photoEvidence',[]) or [] if isinstance(row,dict) and row.get('status')=='confirmed']
+    current_originals={row.get('sourceUrl'):row.get('id') for row in result.get('media',[]) if isinstance(row,dict)}
+    current_sources=set(fields.get('photos') or [])-set((fields.get('photoEdits') or {}).get('excluded') or [])
+    human=[row for row in fields.get('photoEvidence',[]) or [] if isinstance(row,dict) and
+        (row.get('status')=='confirmed' or row.get('status')=='assistant-reviewed'
+         and row.get('sourceUrl') in current_sources and row.get('originalId')==current_originals.get(row.get('sourceUrl')))]
     human_ids={row['id'] for row in human if 'id' in row}
     baseline=fields.get('photoFeatureBaseline') if isinstance(fields.get('photoFeatureBaseline'),dict) else {}
     manually_checked={feature for feature,value in baseline.items() if isinstance(value,dict) and value.get('checked') is True}
@@ -39,7 +45,11 @@ def photo_revision(directory, result, *, text='', rules=None, prefs=None, report
             'provider':photo.get('provider'),'model':photo.get('model'),'engine':photo.get('engine'),
             **({key:photo[key] for key in ('ai','autoApplyMode','autoApplySummary') if key in photo}),
             'autoApply':config['autoApply'],'candidates':photo['candidates'],'unknownIds':photo.get('unknownIds',[])},
-            'confirmed':old.get('confirmed',{}) if same else {},'rejected':old.get('rejected',{}) if same else {}}
+            'confirmed':old.get('confirmed',{}) if same else {},'rejected':old.get('rejected',{}) if same else {},
+            **({'teacherReview':copy.deepcopy(old['teacherReview'])} if same and isinstance(old.get('teacherReview'),dict) else {})}
+        stored=observations[photo['sourceUrl']]
+        if valid_review(stored.get('teacherReview'),photo['originalId']):
+            stored['analysis']=retain_teacher_candidates(stored['analysis'],stored['teacherReview'])
     fields['photoEdits']={**edits,'observations':observations}
     if isinstance(inventory.get('reviewJournal'),dict):
         fields['photoEdits']['reviewJournal']=copy.deepcopy(inventory['reviewJournal'])

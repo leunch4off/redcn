@@ -38,6 +38,19 @@ class TransferTests(unittest.TestCase):
             'useCandidateAdapter':True,'enabled':True,'advertisingEnabled':True}))
         return digest,content
 
+    def test_source_phrase_queue_and_review_state_survive_transfer(self):
+        from learning_discovery import capture_import,status,review_phrase
+        capture_import(self.source,{'fields':{'sourceDescription':'В комнате установлен письменный стол. Окна выходят во двор.'}},self.fixture.one)
+        first=status(self.source)['candidates'][0]
+        review_phrase(self.source,first['id'],'人工确认的译文。')
+        before=status(self.source)
+        backup.restore_workspace(backup.export_workspace(self.source),self.destination)
+        after=status(self.destination)
+        for key in ('uniqueSourcePhrases','pendingTranslation','indexedCards','lastCapture','candidates'):
+            self.assertEqual(after[key],before[key])
+        self.assertFalse(after['modelWeightsUpdated'])
+        self.assertEqual(LearningMemory(self.destination).status()['approvedExamples'],2)
+
     def test_preserves_withdrawal_and_weights_but_restarts_with_training_off(self):
         digest,content=self.model()
         save_config(self.source,{'enabled':True,'automaticPromotion':True,'maxSteps':87})

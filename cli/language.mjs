@@ -6,6 +6,7 @@ import {RENTAL_LEXICON} from '../web/rental-lexicon.mjs';
 import {COMMUNITY_RENTAL_ENTRIES} from '../web/community-phrases.mjs';
 import {GEO_CATALOG} from '../web/geo-catalog.mjs';
 import {CITY_POIS} from '../web/city-pois.mjs';
+import {normalizeCopyHistory,rememberPublication,publicationDigest} from '../web/rental-copy.mjs';
 
 const fold=value=>String(value??'').normalize('NFC').toLocaleLowerCase('ru').replaceAll('ё','е').replace(/\s+/g,' ').trim();
 
@@ -46,11 +47,19 @@ try{
   const chunks=[];let size=0;for await(const chunk of process.stdin){size+=chunk.length;if(size>1_000_000)throw Error('Запрос текста слишком большой');chunks.push(chunk);}
   const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!input||Array.isArray(input)||typeof input!=='object')throw Error('Нужен JSON-объект');
   const rules={...DICTIONARY,...(input.rules||{})};let result;
-  if(input.action==='capabilities'){
-    const open=await openLexicon(),pairs=new Set(),headwords=new Set();
-    for(const [ru,zh] of [...Object.entries(rules),...open.entries]){if(typeof zh!=='string')continue;pairs.add(ru.toLocaleLowerCase('ru')+'\0'+zh);headwords.add(ru.toLocaleLowerCase('ru'));}
+  if(input.action==='source-term-index'){
+    result={terms:[...new Set(Object.keys(rules).map(fold))],normalization:'nfc-lowercase-yo-space-v1',weightsUpdated:false};
+  }else if(input.action==='capabilities'){
+    const open=await openLexicon(),pairs=new Set(),headwords=new Set(),openPairs=new Set(),openHeadwords=new Set(),corePairs=new Set();
+    for(const [ru,zh] of [...Object.entries(rules),...open.entries]){if(typeof zh!=='string')continue;pairs.add(fold(ru)+'\0'+zh.normalize('NFC').trim());headwords.add(fold(ru));}
+    for(const [ru,zh] of open.entries){openPairs.add(fold(ru)+'\0'+zh.normalize('NFC').trim());openHeadwords.add(fold(ru));}
+    for(const [ru,zh] of Object.entries(DICTIONARY))corePairs.add(fold(ru)+'\0'+zh.normalize('NFC').trim());
     result={...generationCapabilities(),dictionary:{...getLexiconStats(),entries:pairs.size,ruZhPairs:pairs.size,headwords:headwords.size,
-      curatedRules:Object.keys(DICTIONARY).length,activeRules:Object.keys(rules).length,openPairs:open.entries.length,
+      curatedRules:Object.keys(DICTIONARY).length,activeRules:Object.keys(rules).length,openPairs:openPairs.size,
+      openRows:open.entries.length,openHeadwords:openHeadwords.size,openReviewedPairs:0,
+      coreNormalizedPairs:corePairs.size,coreOpenOverlap:[...corePairs].filter(key=>openPairs.has(key)).length,
+      countMeaning:'dictionary-records-not-learned-words',weightsUpdated:false,
+      sourceAttribution:'Wiktionary contributors; Kaikki.org / Wiktextract; project rental rules',
       openAvailable:open.available,source:open.source,license:open.license}};
   }else if(input.action==='search'){
     const query=fold(input.query);if(!query||query.length>200)throw Error('Поиск: от 1 до 200 символов');
@@ -73,8 +82,29 @@ try{
     const open=await openLexicon();result=translateDraft(input.text,{rules,entries:open.entries,mode:'draft'});
   }else if(input.action==='generate'){
     if(!input.fields||Array.isArray(input.fields)||typeof input.fields!=='object')throw Error('Нужны поля карточки');
-    result=generateListing({...input.fields,templateMode:'catalog'},rules,{...DEFAULT_PREFS,...(input.prefs||{})});
-    if(result.problems?.length)throw Error(result.problems.join(' · '));
+    const fields={...input.fields,templateMode:'catalog'},prefs={...DEFAULT_PREFS,...(input.prefs||{})};
+    const requested=input.copyRewrite;
+    let history=normalizeCopyHistory(fields.copyHistory),parts=[];
+    const keys={title:'titleVariant',body:'copyVariant',tags:'tagVariant'},previous=requested?.previous||{};
+    if(requested){
+      if(!Array.isArray(requested.parts)||!requested.parts.length||requested.parts.some(part=>!Object.hasOwn(keys,part)))throw Error('Неверные части перегенерации');
+      parts=[...new Set(requested.parts)];
+      for(const part of parts){if(typeof previous[part]!=='string'||previous[part].length>20000)throw Error('Неверный предыдущий текст');history=rememberPublication(history,part,previous[part]);}
+    }
+    const output=part=>part==='title'?result.titles?.[0]||'':result[part];
+    for(let attempt=0;attempt<=64;attempt++){
+      result=generateListing(fields,rules,prefs);
+      if(result.problems?.length)throw Error(result.problems.join(' · '));
+      const duplicate=parts.filter(part=>history[part].includes(publicationDigest(output(part),part)));
+      if(!duplicate.length)break;
+      if(attempt===64)throw Error(duplicate.includes('title')&&fields.titleFormula?'Формула закрепляет этот заголовок. Измените формулу для другой подачи.':'Для этих фактов новый вариант пока не найден. Текущий текст сохранён.');
+      for(const part of duplicate)fields[keys[part]]=(Math.max(0,Math.trunc(Number(fields[keys[part]])||0))+1)%(2**31);
+    }
+    if(parts.length){
+      for(const part of parts)history=rememberPublication(history,part,output(part));
+      result.copyHistory=history;
+      result.copyCounters=Object.fromEntries(parts.map(part=>[part,fields[keys[part]]]));
+    }
   }else throw Error('Неизвестная операция с текстом');
   process.stdout.write(JSON.stringify(result));
 }catch(error){process.stderr.write(String(error.message||error).slice(0,1000));process.exitCode=2;}

@@ -16,6 +16,7 @@ OLLAMA_VERSION = '0.40.13'
 PRIVATE_ENDPOINT = 'http://127.0.0.1:11435'
 INSTALLER = Path(__file__).resolve().parents[1] / 'scripts' / 'install-photo-ai-macos.py'
 MAX_START_SECONDS = 60
+NATIVE_MODELS = frozenset(('redcn-furniture-v1', 'redcn-furniture-world-v2'))
 _CLEANUP_SECONDS = 4
 _START_LOCK = threading.Lock()
 _BACKGROUND_LOCK = threading.Lock()
@@ -80,6 +81,7 @@ def ensure_started(directory, config, *, deadline=None, cancel=None):
     """
     if (sys.platform != 'darwin' or not isinstance(config, dict)
             or config.get('enabled') is not True or config.get('endpoint') != PRIVATE_ENDPOINT
+            or config.get('model') in NATIVE_MODELS
             or _cancelled(cancel)):
         return False
     now = time.monotonic()
@@ -129,6 +131,10 @@ def start_background(directory):
     """Return immediately; at most one optional startup thread runs at a time."""
     global _BACKGROUND_THREAD
     if sys.platform != 'darwin':
+        return None
+    from photo_ai_settings import load_config
+    config = load_config(directory)
+    if config.get('enabled') is not True or config.get('model') in NATIVE_MODELS:
         return None
     with _BACKGROUND_LOCK:
         if _BACKGROUND_THREAD is not None and _BACKGROUND_THREAD.is_alive():

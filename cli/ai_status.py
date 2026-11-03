@@ -9,6 +9,12 @@ import urllib.error
 import urllib.request
 
 
+REVIEW_ONLY_PHOTO_MODELS = {
+    'redcn-furniture-v1': ('yolox-trained', 'Мебель v1 · локальные предложения'),
+    'redcn-furniture-world-v2': ('onnx-world', 'YOLO-World v2 · локальные предложения'),
+}
+
+
 def _read(path, warnings, *, max_bytes=32_000):
     if path.is_symlink():
         warnings.append(path.name + ': symbolic link rejected')
@@ -88,9 +94,10 @@ def inspect_ai(directory):
     model = (photo or {}).get('model', 'qwen3-vl:2b-instruct-q4_K_M')
     if not isinstance(model, str) or len(model) > 128:
         model = 'unknown'
-    automatic_policy = model != 'redcn-furniture-v1'
+    review_model = REVIEW_ONLY_PHOTO_MODELS.get(model)
+    automatic_policy = review_model is None
     photo_enabled = _enabled(photo)
-    review_capture = photo_enabled is True and auto_apply is True and model == 'redcn-furniture-v1'
+    review_capture = photo_enabled is True and auto_apply is True and review_model is not None
     effective_mode = ('unknown' if photo_enabled is None or auto_apply is None else
                       'suggestions-only' if review_capture else
                       'direct-observations' if photo_enabled is True and auto_apply is True and automatic_policy else 'off')
@@ -102,6 +109,11 @@ def inspect_ai(directory):
                  'candidateAdapterSelected': adapter_selected,
                  'automaticApplication': False},
         'photo': {'enabled': photo_enabled, 'model': model,
+                  'provider': review_model[0] if review_model else None,
+                  'displayName': review_model[1] if review_model else model,
+                  'reviewRequired': review_model is not None if photo is not None else None,
+                  'acceptedClasses': 0 if review_model and photo is not None else None,
+                  'automaticFacts': 0 if review_model and photo is not None else None,
                   'configurationSource': photo_source,
                   'autoApplyConfigured': auto_apply,
                   'automaticReviewCapture': review_capture,
@@ -146,11 +158,14 @@ def russian_status(value):
              'Анализ фото: ' + flag(photo['enabled']) + ' · ' + photo['model'],
              'Автодобавление в журнал проверки: ' + flag(photo.get('automaticReviewCapture', False)),
              'Автоподтверждение для описания: ' + flag(photo['automaticApplication']) +
-             (' — модель ещё не прошла приёмку' if photo.get('effectiveMode') == 'suggestions-only' else ''),
+             (' — модель ещё не прошла приёмку' if photo.get('reviewRequired') is True else ''),
              'Обучение в простое: ' + flag(training['enabled']),
              'Последний записанный этап обучения: ' + training['recordedPhase'],
              'Автоматическое принятие новых весов: ' + flag(training['automaticPromotion']) +
              ' · только после независимого сравнения качества']
+    if photo.get('reviewRequired') is True:
+        lines[4:4] = [photo['displayName'] + ' · требуется проверка найденных предметов',
+                      'Категорий для автоподтверждения: 0 · автоматических фактов: 0']
     if 'server' in value:
         server = value['server']
         lines.append('Сервер: ' + (server['release'] or 'версия неизвестна') if server['reachable'] else 'Сервер: НЕ ОТВЕЧАЕТ')

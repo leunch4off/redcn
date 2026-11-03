@@ -82,6 +82,26 @@ class AIStatusTests(unittest.TestCase):
                 self.assertIsNone(result['photo']['automaticApplication'])
                 self.assertTrue(result['warnings'])
 
+    def test_world_detector_never_claims_automatic_facts_from_auto_apply_flag(self):
+        for enabled,auto_apply in ((True,True),(True,False),(False,True)):
+            with self.subTest(enabled=enabled,auto_apply=auto_apply), tempfile.TemporaryDirectory() as folder:
+                root=Path(folder)
+                (root/'photo-ai.json').write_text(json.dumps({**DEFAULTS,'enabled':enabled,
+                    'autoApply':auto_apply,'model':'redcn-furniture-world-v2'}))
+                before=set(root.rglob('*'))
+                value=inspect_ai(root);photo=value['photo']
+                self.assertEqual(photo['provider'],'onnx-world')
+                self.assertTrue(photo['reviewRequired'])
+                self.assertEqual(photo['acceptedClasses'],0)
+                self.assertEqual(photo['automaticFacts'],0)
+                self.assertFalse(photo['modelAllowsAutomaticApplication'])
+                self.assertFalse(photo['automaticApplication'])
+                self.assertEqual(photo['automaticReviewCapture'],enabled and auto_apply)
+                self.assertEqual(photo['effectiveMode'],'suggestions-only' if enabled and auto_apply else 'off')
+                self.assertIn('YOLO-World v2 · локальные предложения',russian_status(value))
+                self.assertIn('Категорий для автоподтверждения: 0',russian_status(value))
+                self.assertEqual(before,set(root.rglob('*')))
+
     def test_adapter_switch_without_a_selected_path_does_not_claim_a_selection(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

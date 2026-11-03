@@ -6,8 +6,8 @@ import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'cli'))
-from text_quality import (claims,language_check,money_roles,parse_card,polarity_issues,
-    translation_checks)
+from text_quality import (claims,deposit_returns,folding_sofa_claims,language_check,
+    lease_terms,money_roles,parse_card,polarity_issues,translation_checks,utility_payers)
 from text_quality_probes import probes
 from text_model_contract import inference_model, expected_parameters, BASE_MODEL
 import local_content
@@ -93,11 +93,133 @@ class TextQualityTests(unittest.TestCase):
         self.assertFalse(translation_checks(source,'Аренда91200 рублей в сутки.','zh-ru')['paymentPeriodsPreserved'])
         self.assertFalse(translation_checks(source,'Аренда91200 рублей.','zh-ru')['paymentPeriodsPreserved'])
 
+    def test_utility_payers_are_bound_to_each_expense_in_both_directions(self):
+        pairs=[
+            ('Отопление оплачивает владелец, воду — арендатор.', '供暖费由房东支付，水费由租客支付。'),
+            ('За электричество платит наниматель, а за отопление — владелец.', '电费由房客支付，供暖费由业主承担。'),
+            ('Вода оплачивается жильцом; интернет — собственником.', '水费由租客缴纳；网费由房东支付。'),
+            ('Вода за счёт собственника. Интернет оплачивает жилец.', '水费由房东承担。网费由租客支付。'),
+        ]
+        for ru,zh in pairs:
+            for source,output,direction in [(ru,zh,'ru-zh'),(zh,ru,'zh-ru')]:
+                with self.subTest(source=source,output=output):
+                    self.assertTrue(translation_checks(source,output,direction)['passed'])
+
+    def test_payer_swap_omission_and_fluent_unrelated_words_do_not_pass(self):
+        source='水费由租客支付，供暖费由房东支付。'
+        for output in ('Воду оплачивает собственник, отопление — жилец.',
+                       'Воду оплачивает жилец.',
+                       'Кухня отвечает за воду, стол — за отопление.'):
+            with self.subTest(output=output):
+                check=translation_checks(source,output,'zh-ru')
+                self.assertFalse(check['passed']);self.assertFalse(check['utilityPayersPreserved'])
+        self.assertFalse(translation_checks('Воду оплачивает жилец, отопление — собственник.',
+            '水费由租客支付，供暖费由租客承担。','ru-zh')['utilityPayersPreserved'])
+        self.assertEqual(utility_payers('Арендатор осмотрел воду и отопление с собственником.','ru'),{})
+
+    def test_payment_recipient_is_not_payer_and_explicit_exclusion_is_preserved(self):
+        self.assertEqual(utility_payers('水费由租客支付给房东。','zh'),{'water':{'tenant'}})
+        check=translation_checks('Жилец не оплачивает воду.','水费不由租客支付。','ru-zh')
+        self.assertTrue(check['passed'])
+        self.assertFalse(translation_checks('Жилец не оплачивает воду.','水费由租客支付。','ru-zh')['utilityPayersPreserved'])
+
+    def test_deposit_refund_conditions_and_timing_survive_correct_translation(self):
+        pairs=[
+            ('Депозит вернут после освобождения квартиры при условии соблюдения договора.',
+             '如果遵守合同，搬出后押金返还。'),
+            ('Если договор не нарушен, после выезда возвращают залог.',
+             '押金在退租后退回，前提是遵守合同。'),
+            ('Депозит возвращается после выезда при отсутствии повреждений.',
+             '无损坏的情况下，退房后退还押金。'),
+            ('Залог невозвратный.', '押金不退。'),
+        ]
+        for ru,zh in pairs:
+            for source,output,direction in [(ru,zh,'ru-zh'),(zh,ru,'zh-ru')]:
+                with self.subTest(source=source,output=output):
+                    self.assertTrue(translation_checks(source,output,direction)['passed'])
+
+    def test_refund_cannot_lose_its_object_condition_or_time_order(self):
+        source='Депозит вернут после выезда при соблюдении договора.'
+        for output in ('回来以后再回来。', '退房后退还押金。', '遵守合同的情况下退还押金。',
+                       '遵守合同的情况下，退房前退还押金。', '退还押金后，需要遵守合同。',
+                       '没有损坏的情况下，退房后退还押金。'):
+            with self.subTest(output=output):
+                check=translation_checks(source,output,'ru-zh')
+                self.assertFalse(check['passed']);self.assertFalse(check['depositReturnPreserved'])
+        self.assertFalse(translation_checks('Депозит возвращается после выезда.',
+            '如果遵守合同，退房后退还押金。','ru-zh')['depositReturnPreserved'])
+        self.assertEqual(deposit_returns('Возврат ключей после выезда, депозит внесён.','ru'),set())
+
+    def test_sofa_bed_and_folding_qualification_are_not_an_additional_bed(self):
+        pairs=[
+            ('В комнате раскладной диван.', '房间配有可展开作睡床的沙发。'),
+            ('Есть диван-кровать.', '配有沙发床。'),
+            ('Диван раскладывается.', '沙发可以展开。'),
+            ('Диван не раскладывается.', '沙发不可折叠。'),
+            ('Есть раскладной диван и отдельная кровать.', '配有可折叠沙发和单独的床。'),
+        ]
+        for ru,zh in pairs:
+            for source,output,direction in [(ru,zh,'ru-zh'),(zh,ru,'zh-ru')]:
+                with self.subTest(source=source,output=output):
+                    self.assertTrue(translation_checks(source,output,direction)['passed'])
+        self.assertNotIn('bed',claims('房间配有可展开作睡床的沙发。','zh'))
+        self.assertIn('bed',claims('配有沙发床和一张床。','zh'))
+        self.assertEqual(folding_sofa_claims('Есть раскладной стол и обычный диван.','ru'),set())
+
+    def test_folding_cannot_disappear_be_added_or_move_to_another_object(self):
+        for output in ('有沙发。','有布艺沙发。','有折叠桌和沙发。'):
+            with self.subTest(output=output):
+                check=translation_checks('Есть раскладной диван.',output,'ru-zh')
+                self.assertFalse(check['passed']);self.assertFalse(check['sofaFoldingPreserved'])
+        self.assertFalse(translation_checks('Есть диван.','配有沙发床。','ru-zh')['sofaFoldingPreserved'])
+        self.assertFalse(translation_checks('Диван не раскладывается.','沙发可以展开。','ru-zh')['sofaFoldingPreserved'])
+
+    def test_minimum_lease_is_not_a_rent_amount(self):
+        pairs=[
+            ('Минимальный срок аренды — 9 месяцев.', '最短租期为9个月。'),
+            ('Срок аренды не менее 8 месяцев.', '租期至少8个月。'),
+            ('Максимальный срок аренды — 2 года.', '最长租期为2年。'),
+            ('Срок аренды — 6 месяцев; аренда — 54000 рублей, залог — 27000 рублей.',
+             '租期为6个月；租金54000卢布，押金27000卢布。'),
+        ]
+        for ru,zh in pairs:
+            for source,output,direction in [(ru,zh,'ru-zh'),(zh,ru,'zh-ru')]:
+                with self.subTest(source=source,output=output):
+                    check=translation_checks(source,output,direction)
+                    self.assertTrue(check['moneyRolesPreserved']);self.assertTrue(check['passed'])
+        self.assertEqual(money_roles('Минимальный срок аренды — 9 месяцев.'),{})
+
+    def test_minimum_or_maximum_lease_bound_cannot_turn_into_fixed_term(self):
+        source='Минимальный срок аренды — 9 месяцев.'
+        for output in ('租期为9个月。','最长租期为9个月。','最短租期为9年。'):
+            with self.subTest(output=output):
+                check=translation_checks(source,output,'ru-zh')
+                self.assertFalse(check['passed']);self.assertFalse(check['leaseTermPreserved'])
+        self.assertEqual(lease_terms('Залог вносится за 2 месяца.','ru'),{})
+        self.assertTrue(translation_checks('Залог вносится за 2 месяца.','押金为2个月。','ru-zh')['moneyRolesPreserved'])
+
     def test_common_uncertainty_synonyms_and_russian_ordinal_units_are_supported(self):
         for output in ('空调未被确认存在。','尚未证实存在空调。'):
             self.assertEqual(translation_checks('Наличие кондиционера не подтверждено.',output,'ru-zh')['issues'],[])
         self.assertEqual(translation_checks('月租91200卢布，面积51.5平方米，位于16楼。',
             'Аренда91200 рублей в месяц, площадь51.5 квадратных метров, квартира на16-м этаже.','zh-ru')['issues'],[])
+
+    def test_confirmation_adverbs_do_not_turn_unknown_equipment_into_presence(self):
+        for zh in ('电视配置需进一步核实。','电视是否配备需要再次确认。','电视配置需另行确认。'):
+            ru='Наличие телевизора нужно уточнить.'
+            with self.subTest(zh=zh):
+                self.assertTrue(translation_checks(ru,zh,'ru-zh')['passed'])
+                self.assertTrue(translation_checks(zh,ru,'zh-ru')['passed'])
+                self.assertFalse(translation_checks(ru,'配有电视。','ru-zh')['passed'])
+
+    def test_equipment_exception_reverses_only_the_excluded_item(self):
+        for ru,zh in [('Нет мебели, кроме шкафа.','除衣柜外，没有其他家具。'),
+                      ('Есть всё, кроме холодильника.','除了冰箱之外，其他都有。')]:
+            with self.subTest(ru=ru):
+                self.assertTrue(translation_checks(ru,zh,'ru-zh')['passed'])
+                self.assertTrue(translation_checks(zh,ru,'zh-ru')['passed'])
+        self.assertEqual(claims('Кроме шкафа, нет холодильника.','ru').get('fridge'),{'absent'})
+        self.assertTrue(polarity_issues('Нет мебели, кроме шкафа.','没有衣柜。','ru','zh',require_mentions=True))
 
     def test_changed_transport_mode_is_visible(self):
         result=translation_checks('До метро11 минут пешком. Автобус2 идёт до парка.',

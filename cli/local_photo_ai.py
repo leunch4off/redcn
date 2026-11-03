@@ -48,7 +48,7 @@ FEATURE_LABELS = {
     'dryer': 'Сушильная машина', 'bath': 'Ванна', 'shower': 'Душ',
     'washbasin': 'Умывальник', 'closet': 'Гардеробная', 'pantry': 'Кладовая',
     'shelves': 'Стеллажи / полки', 'balcony': 'Балкон', 'loggia': 'Лоджия',
-    'coffeeTable': 'Журнальный стол', 'dresser': 'Комод', 'cabinet': 'Тумба / буфет',
+    'coffeeTable': 'Журнальный стол', 'dresser': 'Комод', 'cabinet': 'Шкафчик / тумба',
     'shoeCabinet': 'Обувница', 'ottoman': 'Пуф', 'bench': 'Скамья',
     'mirror': 'Зеркало', 'curtains': 'Шторы', 'dryingRack': 'Сушилка для белья',
     'iron': 'Утюг', 'vacuum': 'Пылесос', 'coffeeMachine': 'Кофемашина',

@@ -259,9 +259,12 @@ for(const [part,id] of [['title','phoneRewriteTitle'],['body','phoneRewriteBody'
 function phoneLanguageCount(value){const number=typeof value==='number'?value:Number(value?.count??value?.total??value?.size);return Number.isFinite(number)&&number>=0?number.toLocaleString('ru-RU'):null;}
 function phoneRenderLanguageStats(value){
   const catalog=value?.templates||{},dictionary=value?.dictionary||{};
-  const title=phoneLanguageCount(catalog.title??catalog.titles??catalog.titleCount),body=phoneLanguageCount(catalog.body??catalog.descriptions??catalog.bodyCount),tags=phoneLanguageCount(catalog.tags??catalog.tagSets??catalog.tagCount),entries=phoneLanguageCount(dictionary.ruZhPairs??dictionary.entries??dictionary.entryCount);
-  const lines=[];if(entries)lines.push('База перевода: '+entries+' записей.');if(title&&body&&tags)lines.push('Шаблоны: '+title+' заголовков, '+body+' описаний, '+tags+' наборов тегов.');
-  lines.push('Композиции шаблонов и словарные записи считаются отдельно. Доступные варианты зависят от подтверждённых фактов квартиры.');ph('phoneLanguageStats').textContent=lines.join(' ');
+  const entries=phoneLanguageCount(dictionary.ruZhPairs??dictionary.entries??dictionary.entryCount),headwords=phoneLanguageCount(dictionary.headwords),openPairs=phoneLanguageCount(dictionary.openPairs);
+  const families=phoneLanguageCount(value?.editorialStyles?.families),leads=phoneLanguageCount(value?.copyEngine?.leadFrames),tags=phoneLanguageCount(catalog.genericTagAtoms);
+  const lines=[];if(entries)lines.push('Словарных пар RU → ZH: '+entries+'.');if(headwords)lines.push('Уникальных русских записей: '+headwords+'.');if(openPairs)lines.push('Пар открытого словаря, требующих проверки: '+openPairs+'.');
+  if(families&&leads&&tags)lines.push('Подача объявлений: '+families+' способов оформления · '+leads+' вариантов вступления · '+tags+' общих тегов.');
+  else lines.push('Показатели способов подачи недоступны в этой версии сервера.');
+  lines.push('Словарные записи и конечные правила составления текста не являются обученными весами ИИ. Доступные варианты зависят от подтверждённых фактов квартиры.');ph('phoneLanguageStats').textContent=lines.join(' ');
 }
 async function phoneLoadLanguageStats(){
   if(phoneWriting.capabilities){phoneRenderLanguageStats(phoneWriting.capabilities);return;}

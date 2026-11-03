@@ -451,6 +451,7 @@ def _advertising_preview(directory, data, *, status=None, cancel=None):
         if not claim_variant(directory, group_id, draft['title'], draft['body']):
             return None
         value = {**meta, **draft, **(extra or {}), 'status': 'review', 'fallback': fallback,
+                 'modelAccepted': not fallback, 'textSource': 'rules' if fallback else 'model',
                  'elapsedSeconds': time.monotonic()-started,
                  'tags': ' '.join(row['tag'] for row in ranking), 'tagRanking': ranking,
                  'warnings': (['Ответ модели не принят. Новая подача собрана из проверенных фактов.'] if fallback else [])
@@ -545,7 +546,8 @@ def generate_import_advertisement(directory, result, *, status=None, cancel=None
     if cancel is not None and cancel.is_set():
         return result
     metadata = {key: preview[key] for key in ('status', 'model', 'backend', 'styleId', 'variation',
-        'factsHash', 'elapsedSeconds', 'fallback', 'warnings', 'ai') if key in preview}
+        'factsHash', 'elapsedSeconds', 'fallback', 'warnings', 'ai', 'modelAccepted', 'textSource',
+        'modelIssues', 'generationMode', 'modelContribution', 'factualTextSource') if key in preview}
     if preview.get('status') != 'review':
         return {**result, 'aiAdvertisement': metadata}
     return {**result, 'titles': [preview['title']], 'body': preview['body'], 'tags': preview['tags'],

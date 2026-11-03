@@ -40,7 +40,8 @@ _TABLES={
     'dictionary':('dictionary-reviews.sqlite3',('dictionary_revision','dictionary_entries','dictionary_events')),
     # Checkpoints contain runtime paths and optimizer identities for another
     # machine. Portable examples/decisions/splits survive; jobs start afresh.
-    'learning':('learning/memory.sqlite3',('examples','review_history','splits',*LEARNING_PROVENANCE_TABLES)),
+    'learning':('learning/memory.sqlite3',('examples','review_history','splits',*LEARNING_PROVENANCE_TABLES,
+        'source_phrase_candidates','source_phrase_occurrences','source_phrase_captures')),
     'photo-instances':('photo-instance-reviews/revisions.sqlite3',('revisions',)),
 }
 
@@ -338,6 +339,8 @@ def _initialize_tables(directory,stores):
     if 'learning' in stores:
         from learning_memory import LearningMemory
         LearningMemory(directory)
+        from learning_discovery import _memory as initialize_discovery
+        initialize_discovery(directory)
     if 'photo-instances' in stores:
         import photo_instances
         with photo_instances._connection(directory):pass

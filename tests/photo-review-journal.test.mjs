@@ -29,6 +29,26 @@ test('direct analysis creates a real pending entry and repeated scans deduplicat
  assert.equal(photo.analysis.candidates[0].evidence[0].region[0],.1);
 });
 
+test('World proposals retain their actual provider and new categories only in the review journal',()=>{
+ for(const feature of ['fridge','stove','cabinet']){
+  const photo=item(),analysis=photo.analysis,candidate=analysis.candidates[0];
+  analysis.model='redcn-furniture-world-v2';analysis.provider='onnx-world';
+  candidate.id=feature;candidate.label=feature;candidate.reviewId=sha(analysis.originalId+'|'+feature);
+  Object.assign(candidate.evidence[0],{model:analysis.model,provider:analysis.provider});
+  const before=structuredClone(photo),journal=mergePhotoReviewJournal(null,[photo]);
+  assert.equal(journal.pending,1);assert.equal(journal.confirmed,0);
+  assert.equal(journal.entries[0].featureId,feature);
+  assert.equal(journal.entries[0].provider,'onnx-world');assert.equal(journal.entries[0].model,'redcn-furniture-world-v2');
+  assert.equal(journal.entries[0].count,null);assert.equal(journal.entries[0].reason,'model-unaccepted');
+  assert.deepEqual(photo,before);assert.deepEqual(confirmedPhotoFeatures([photo]).features,[]);
+  const forged=structuredClone(photo);forged.analysis.candidates[0].evidence[0].provider='yolox-trained';
+  assert.equal(mergePhotoReviewJournal(null,[forged]),null);
+  const crossed=structuredClone(photo);crossed.analysis.provider='yolox-trained';
+  crossed.analysis.candidates[0].evidence[0].provider='yolox-trained';
+  assert.equal(mergePhotoReviewJournal(null,[crossed]),null);
+ }
+});
+
 test('manual rejection and confirmation survive scans, URL aliases and global rejection',()=>{
  const photo=item(),journal=mergePhotoReviewJournal(null,[photo],{now:'first'});
  photo.rejected.fridge=true;

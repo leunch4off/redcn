@@ -14,7 +14,7 @@ import learning_service
 HARNESS = '''<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{padding:12px;font:16px system-ui}input,textarea,select{display:block;max-width:100%;width:100%}label{display:block;margin:10px 0}button{padding:9px;margin:5px}main{max-width:900px;margin:auto}summary{padding:15px}</style><main id="mount"></main><script type="module">
 import {setupLearningStudio} from '/web/learning-studio.mjs';
 window.fields={price:80000,metro:'Прокшино'};window.output={title:'Старое название',body:'Старое описание',tags:'#莫斯科租房'};window.applied=[];
-window.studio=setupLearningStudio({mount:document.getElementById('mount'),getGroup:()=>'listing-one',getFields:()=>fields,getOutput:()=>output,onApply:async candidate=>{applied.push(candidate);Object.assign(output,candidate);},api:async(path,data)=>{const response=await fetch('/api/'+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});const value=await response.json();if(!response.ok)throw Error(value.error);return value;}});window.ready=true;
+window.studio=setupLearningStudio({mount:document.getElementById('mount'),canManageSettings:()=>window.owner!==false,getGroup:()=>'listing-one',getFields:()=>fields,getOutput:()=>output,onApply:async candidate=>{applied.push(candidate);Object.assign(output,candidate);},api:async(path,data)=>{const response=await fetch('/api/'+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});const value=await response.json();if(!response.ok)throw Error(value.error);return value;}});window.ready=true;
 </script>'''
 
 
@@ -96,6 +96,43 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.folder.cleanup()
         self.assertEqual(self.errors, [])
 
+    def test_photo_model_selection_saves_only_settings_and_keeps_world_review_only(self):
+        config={'enabled':True,'model':'redcn-furniture-v1','autoApply':True,
+                'endpoint':'http://127.0.0.1:11434','maxSeconds':600}
+        writes=[]
+        def respond(route):
+            if route.request.method=='POST':
+                values=route.request.post_data_json;writes.append(values);config.update(values)
+            route.fulfill(json=config)
+        self.page.route('**/api/photo-ai',respond)
+        self.page.get_by_text('Модель для анализа фотографий',exact=True).click()
+        self.page.wait_for_function("document.querySelector('.learning-photo-settings select').value==='redcn-furniture-v1'")
+        self.page.get_by_label('Локальная модель фото',exact=True).select_option('redcn-furniture-world-v2')
+        panel=self.page.locator('.learning-photo-settings')
+        self.assertIn('0 категорий для автоподтверждения · 0 автоматических фактов',panel.inner_text())
+        self.assertIn('требуют подтверждения перед включением в описание',panel.inner_text())
+        self.page.get_by_role('button',name='Сохранить модель фото',exact=True).click()
+        self.page.wait_for_function("document.querySelector('.learning-studio').getAttribute('aria-busy')==='false'")
+        self.assertEqual(writes,[{'model':'redcn-furniture-world-v2','enabled':True,'autoApply':True}])
+        self.assertEqual(self.page.evaluate('output.body'),'Старое описание')
+        self.assertEqual(self.page.evaluate('applied'),[])
+        self.assertEqual(config['endpoint'],'http://127.0.0.1:11434')
+        self.assertEqual(self.errors,[])
+
+    def test_photo_settings_are_read_only_after_owner_permission_is_removed(self):
+        writes=[]
+        def respond(route):
+            if route.request.method=='POST':writes.append(route.request.post_data_json)
+            route.fulfill(json={'enabled':True,'model':'redcn-furniture-world-v2','autoApply':True})
+        self.page.route('**/api/photo-ai',respond)
+        self.page.evaluate('window.owner=false;window.studio.setPermissions()')
+        self.page.get_by_text('Модель для анализа фотографий',exact=True).click()
+        self.page.wait_for_function("document.querySelector('.learning-photo-settings').textContent.includes('0 категорий для автоподтверждения')")
+        self.assertFalse(self.page.get_by_label('Локальная модель фото',exact=True).is_visible())
+        self.assertFalse(self.page.get_by_role('button',name='Сохранить модель фото',exact=True).is_visible())
+        self.assertEqual(writes,[])
+        self.assertEqual(self.errors,[])
+
     def test_manual_tag_statistics_wait_for_approval(self):
         self.page.get_by_label('Что запомнить', exact=True).select_option('tag_stat')
         self.page.get_by_label('Хештег', exact=True).fill('#莫斯科租房')
@@ -106,6 +143,24 @@ class LearningStudioBrowserTests(unittest.TestCase):
         self.page.get_by_role('button', name='Утвердить', exact=True).click()
         self.page.wait_for_function("document.body.textContent.includes('утверждено: 1')")
         self.assertFalse(self.page.evaluate('document.documentElement.scrollWidth>innerWidth'))
+
+    def test_new_source_phrase_is_visible_then_reviewed_without_claiming_weight_training(self):
+        from learning_discovery import capture_import, status as discovery_status
+        from learning_memory import LearningMemory
+        directory=Path(self.folder.name)
+        capture_import(directory,{'fields':{'sourceDescription':'В спальне установлен письменный стол.'}},'fixture-card')
+        self.page.evaluate('studio.refresh()')
+        self.assertIn('уникальных фрагментов 1',self.page.locator('body').inner_text())
+        self.assertIn('не уже выученные моделью слова',self.page.locator('body').inner_text())
+        self.assertEqual(LearningMemory(directory).status()['approvedExamples'],0)
+        self.page.get_by_label('Перевод новой исходной фразы',exact=True).fill('卧室配有书桌。')
+        with self.page.expect_response(lambda response:response.url.endswith('/api/learning') and response.request.method=='POST' and response.request.post_data_json.get('action')=='review-source-phrase'):
+            self.page.get_by_role('button',name='Утвердить перевод для памяти',exact=True).click()
+        self.page.wait_for_function("document.body.textContent.includes('ожидают перевода и проверки 0')")
+        self.assertEqual(LearningMemory(directory).status()['approvedExamples'],1)
+        self.assertEqual(discovery_status(directory)['pendingTranslation'],0)
+        self.page.evaluate('studio.clear()')
+        self.assertNotIn('В спальне установлен письменный стол.',self.page.locator('body').inner_text())
 
     def test_preview_requires_explicit_apply_and_rejects_stale_card(self):
         self.page.get_by_role('button', name='Создать ИИ-черновик по карточке', exact=True).click()

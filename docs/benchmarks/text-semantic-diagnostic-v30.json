@@ -1,0 +1,891 @@
+{
+  "schemaVersion": 1,
+  "kind": "native-output-assistant-semantic-review",
+  "release": "v30",
+  "baseRevision": "aafae764d9fe6199dcfd086601eebc7e0be8a7b4",
+  "heldoutSha256": "02ef6fe30adb98d930be61b6e7ff30089397f7b301d52df2b751c4cddbd7389f",
+  "heldoutArtifact": "data/quality/teacher-rental-heldout-v30.json",
+  "inputSha256": {
+    "selectedCandidatePaired": "ce54bf2e001948e6d94fe3064acaf7f62d83570fd7510267e06d91bd02a9c214",
+    "base05": "3bd168c1e55317375d82167ea4c2c5043f4b253783ac1d809ac439384e833456",
+    "base15": "90cde1aae1ac5e822a315fe2b8a5533894c35d40e0ee7aab2085b0fa5ca19b54"
+  },
+  "methodology": {
+    "assessor": "AI assistant",
+    "humanReviewed": false,
+    "independentNativeChineseReview": false,
+    "criterion": "ready means complete output in the requested language, preserving the rental facts and their qualifications, with usable grammar and no added promises; needs-edit is not accepted",
+    "questionGroups": 12,
+    "queries": 24,
+    "directions": [
+      "ru-zh",
+      "zh-ru"
+    ],
+    "diagnosticOnly": true,
+    "reusedForTraining": false,
+    "notAccuracyEstimate": "The small assistant-authored diagnostic set and assistant judgments are not an independently measured production accuracy estimate.",
+    "judgmentSensitiveCases": [
+      "base05:heldout-009-ru-zh",
+      "base15:heldout-002-zh-ru",
+      "base15:heldout-005-ru-zh",
+      "base15:heldout-005-zh-ru",
+      "base15:heldout-007-zh-ru",
+      "base15:heldout-011-ru-zh"
+    ],
+    "automaticCheckerNote": "Original saved checks used text_quality.py SHA 13412322af3c6f898156857367f073cf19eb849504d660978b70117ddac8cbfd. A later post-hoc checker repair is reported separately in text-reality-v30.json; its results are not substituted into these original measurements."
+  },
+  "summary": {
+    "selected05": {
+      "requested": 24,
+      "readyWithoutEdit": 5,
+      "verdictCounts": {
+        "ready": 5,
+        "needs-edit": 2,
+        "incorrect": 17,
+        "incomplete": 0
+      },
+      "originalAutomaticFactsPassed": 6,
+      "originalAutomaticAcceptedButNotReady": 3,
+      "originalAutomaticRejectedButReady": 2,
+      "adapterSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581",
+      "modelConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+      "completed": 24,
+      "elapsedSeconds": 4.862694458992337,
+      "peakMemoryBytes": 385797864,
+      "model": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      "baseWithoutAdapter": false
+    },
+    "candidate05": {
+      "requested": 24,
+      "readyWithoutEdit": 2,
+      "verdictCounts": {
+        "ready": 2,
+        "needs-edit": 1,
+        "incorrect": 21,
+        "incomplete": 0
+      },
+      "originalAutomaticFactsPassed": 5,
+      "originalAutomaticAcceptedButNotReady": 3,
+      "originalAutomaticRejectedButReady": 0,
+      "adapterSha256": "f9a467d80db4744bb3f04b5265cf85fbdadc3336e87ecc09c70e25f4623024ee",
+      "modelConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+      "completed": 24,
+      "elapsedSeconds": 4.8997182919993065,
+      "peakMemoryBytes": 386001044,
+      "model": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      "baseWithoutAdapter": false
+    },
+    "base05": {
+      "requested": 24,
+      "readyWithoutEdit": 7,
+      "verdictCounts": {
+        "ready": 7,
+        "needs-edit": 3,
+        "incorrect": 13,
+        "incomplete": 1
+      },
+      "originalAutomaticFactsPassed": 9,
+      "originalAutomaticAcceptedButNotReady": 4,
+      "originalAutomaticRejectedButReady": 2,
+      "model": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      "baseWithoutAdapter": true,
+      "modelConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+      "completed": 23,
+      "elapsedSeconds": 5.876753125005052,
+      "peakMemoryBytes": 396508872,
+      "sourceHashes": {
+        "scripts/evaluate-base-text-v30.py": "1ca78d1c9656d8ba46073036bf890cfb399d775dd2073bc9012c4dcbae08b635",
+        "cli/text_quality.py": "13412322af3c6f898156857367f073cf19eb849504d660978b70117ddac8cbfd",
+        "cli/text_native_evaluation.py": "0b313d33d6c2bb08d3bcc56cecf8524dd71c20a395658ab45fc762f6aa8e39f7"
+      },
+      "protectedSettingsUnchanged": true,
+      "supervisedDurationSeconds": 8.074614624999999,
+      "nativeResourceStopReason": null
+    },
+    "base15": {
+      "requested": 24,
+      "readyWithoutEdit": 8,
+      "verdictCounts": {
+        "ready": 8,
+        "needs-edit": 6,
+        "incorrect": 10,
+        "incomplete": 0
+      },
+      "originalAutomaticFactsPassed": 11,
+      "originalAutomaticAcceptedButNotReady": 6,
+      "originalAutomaticRejectedButReady": 3,
+      "model": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
+      "baseWithoutAdapter": true,
+      "modelConfigSha256": "636d3e2a15e8914b8cf82b05cc2288a811f9bd93c3bf1afc00cab701a70b47c0",
+      "completed": 24,
+      "elapsedSeconds": 10.008703125000466,
+      "peakMemoryBytes": 1076964828,
+      "sourceHashes": {
+        "scripts/evaluate-base-text-v30.py": "1ca78d1c9656d8ba46073036bf890cfb399d775dd2073bc9012c4dcbae08b635",
+        "cli/text_quality.py": "13412322af3c6f898156857367f073cf19eb849504d660978b70117ddac8cbfd",
+        "cli/text_native_evaluation.py": "0b313d33d6c2bb08d3bcc56cecf8524dd71c20a395658ab45fc762f6aa8e39f7"
+      },
+      "protectedSettingsUnchanged": true,
+      "supervisedDurationSeconds": 12.630220916,
+      "nativeResourceStopReason": null
+    }
+  },
+  "decision": {
+    "qualityAccepted": false,
+    "selectedWeightsChanged": false,
+    "reason": "All four modes still have critical rental-fact failures. Base models outperform the selected and newly trained adapters on this diagnostic review, but no mode meets admission criteria.",
+    "nextExperiment": "Investigate loss masking, prompts and adapter provenance, preserve reviewed relation-level examples, and freeze a new independent acceptance set before another bounded candidate comparison; do not train on this diagnostic set."
+  },
+  "privacy": {
+    "privateListingsPublished": false,
+    "onlyProjectAuthoredProbeInputs": true,
+    "modelResponsesPublished": true
+  },
+  "rows": [
+    {
+      "id": "heldout-000-ru-zh",
+      "source": "Квартира площадью 41.1 м² находится на 3 этаже.",
+      "reference": "公寓面积为41.1㎡，位于3楼。",
+      "outputs": {
+        "selected05": {
+          "text": "41.1㎡公寓位于3楼。",
+          "verdict": "ready",
+          "reason": "Площадь и этаж сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "candidate05": {
+          "text": "公寓面积3层。",
+          "verdict": "incorrect",
+          "reason": "Площадь 41.1 утрачена; этаж ошибочно связан с площадью.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "41.1平方米的公寓在3层。",
+          "verdict": "ready",
+          "reason": "Площадь и этаж сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "面积为41.1平方米的公寓位于第3层。",
+          "verdict": "ready",
+          "reason": "Площадь и этаж сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-000-zh-ru",
+      "source": "公寓面积为41.1㎡，位于3楼。",
+      "reference": "Квартира площадью 41.1 м² находится на 3 этаже.",
+      "outputs": {
+        "selected05": {
+          "text": "В квартире площадью 41. 1 м² находится на 3 этаж.",
+          "verdict": "needs-edit",
+          "reason": "Разорвано десятичное число и нарушена грамматика.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "В квартире площадью 41, 1 м². В 3-м этаже.",
+          "verdict": "needs-edit",
+          "reason": "Разорвано десятичное число; русский текст требует правки.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Квартира площадь составляет 41. 1 кв. м., расположена на 3-м этаже.",
+          "verdict": "needs-edit",
+          "reason": "Разорвано десятичное число и нарушена грамматика.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Объект площадью 41.1 м² расположен на 3 этаже.",
+          "verdict": "ready",
+          "reason": "Площадь и этаж сохранены; допустимое обобщение «объект».",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-001-ru-zh",
+      "source": "Аренда составляет 70000 рублей в месяц, залог — 75000 рублей.",
+      "reference": "月租为70000卢布，押金为75000卢布。",
+      "outputs": {
+        "selected05": {
+          "text": "月租70000卢布，担保75000卢布。",
+          "verdict": "needs-edit",
+          "reason": "担保 не передаёт однозначно денежный залог аренды; нужен 押金.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "月租70000元，押金75000元。",
+          "verdict": "incorrect",
+          "reason": "Рубли заменены юанями.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "70000元/月, 负担75000元。",
+          "verdict": "incorrect",
+          "reason": "Рубли заменены юанями, залог не передан.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "月租金为70000元，押金为75000元。",
+          "verdict": "incorrect",
+          "reason": "Рубли заменены юанями.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-001-zh-ru",
+      "source": "月租为70000卢布，押金为75000卢布。",
+      "reference": "Аренда составляет 70000 рублей в месяц, залог — 75000 рублей.",
+      "outputs": {
+        "selected05": {
+          "text": "Приличий стоимость аренды — 70000 рублей.押金 также 75000 рублей.",
+          "verdict": "incorrect",
+          "reason": "Часть ответа не переведена с китайского; русский текст неграмотный.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Стоимо по 70000 рублей за месяц и 75000 рублей за押金.",
+          "verdict": "incorrect",
+          "reason": "Залог не переведён с китайского; русский текст требует правки.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Мартокоп составляет 70000卢布, купюра составляет 75000卢布.",
+          "verdict": "incorrect",
+          "reason": "Бессмысленная лексика и непереведённая валюта.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Месячная плата составляет 70 000 р., а押金 — 75 000 р.",
+          "verdict": "incorrect",
+          "reason": "Залог не переведён с китайского.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-002-ru-zh",
+      "source": "Пешком до метро примерно 13 минут.",
+      "reference": "步行到地铁站约需13分钟。",
+      "outputs": {
+        "selected05": {
+          "text": "步行约13分钟即可到达地铁。",
+          "verdict": "ready",
+          "reason": "Способ перемещения, приблизительность и время сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "candidate05": {
+          "text": "地铁站步行大约需13分钟。",
+          "verdict": "ready",
+          "reason": "Способ перемещения, приблизительность и время сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base05": {
+          "text": "步行大约需要13分钟到地铁站。",
+          "verdict": "ready",
+          "reason": "Ходьба, приблизительность и время сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "步行到地铁大约需要13分钟。",
+          "verdict": "ready",
+          "reason": "Ходьба, приблизительность и время сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-002-zh-ru",
+      "source": "步行到地铁站约需13分钟。",
+      "reference": "Пешком до метро примерно 13 минут.",
+      "outputs": {
+        "selected05": {
+          "text": "Площадь步行到地铁站的距离大约是13 минут.",
+          "verdict": "incorrect",
+          "reason": "Смешаны языки; перевод не завершён.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Двигаться по улице через 13 минут.",
+          "verdict": "incorrect",
+          "reason": "Пропущены метро и ходьба, длительность заменена моментом через 13 минут.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Пешеход до станции метро примерно за 13 минут.",
+          "verdict": "needs-edit",
+          "reason": "Вместо пешего пути назван пешеход; требуется редактура.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Пройти до станции метро примерно 13 минут.",
+          "verdict": "needs-edit",
+          "reason": "Смысл пути и времени понятен, но требуется русская редактура.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-003-ru-zh",
+      "source": "В квартире два раскладных дивана.",
+      "reference": "公寓内有两张可展开作睡床的沙发。",
+      "outputs": {
+        "selected05": {
+          "text": "公寓内有两个布艺沙发。",
+          "verdict": "incorrect",
+          "reason": "Потеряна раскладная функция диванов и добавлена тканевая обивка.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "candidate05": {
+          "text": "公寓内配有两个沙发。",
+          "verdict": "incorrect",
+          "reason": "Пропущена раскладная функция диванов.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base05": {
+          "text": "在公寓里有两个折叠沙发。",
+          "verdict": "ready",
+          "reason": "Два раскладных дивана сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "在公寓里有两张折叠沙发。",
+          "verdict": "ready",
+          "reason": "Два раскладных дивана сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-003-zh-ru",
+      "source": "公寓内有两张可展开作睡床的沙发。",
+      "reference": "В квартире два раскладных дивана.",
+      "outputs": {
+        "selected05": {
+          "text": "В квартире есть две кровати, на которых можно распределять тело.",
+          "verdict": "incorrect",
+          "reason": "Диваны заменены кроватями; бессмысленное уточнение.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "В квартире есть двухместный кровать для двух человек.",
+          "verdict": "incorrect",
+          "reason": "Два дивана заменены одной двуспальной кроватью.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Квартиры имеют две сиденье с телевизором и двумя кроватями с телевизором.",
+          "verdict": "incorrect",
+          "reason": "Добавлены телевизоры и кровати, диваны утрачены.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "В квартире были два раскладных диванчанок, которые могли быть перевернуты на спину для сна.",
+          "verdict": "incorrect",
+          "reason": "Придумано переворачивание диванов на спину, нарушена лексика и изменено время.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-004-ru-zh",
+      "source": "Есть холодильник, но нет посудомоечной машины.",
+      "reference": "配有冰箱，但没有洗碗机。",
+      "outputs": {
+        "selected05": {
+          "text": "冰箱有，但没有洗碗机。",
+          "verdict": "ready",
+          "reason": "Холодильник и отсутствие посудомойки сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "candidate05": {
+          "text": "有冰箱，但无洗碗机。",
+          "verdict": "ready",
+          "reason": "Наличие холодильника и отсутствие посудомойки сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base05": {
+          "text": "有冰箱，但没有洗碗机。",
+          "verdict": "ready",
+          "reason": "Холодильник и отсутствие посудомойки сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "有冰箱，但没有洗碗机。",
+          "verdict": "ready",
+          "reason": "Холодильник и отсутствие посудомойки сохранены.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-004-zh-ru",
+      "source": "配有冰箱，但没有洗碗机。",
+      "reference": "Есть холодильник, но нет посудомоечной машины.",
+      "outputs": {
+        "selected05": {
+          "text": "В холодильнике есть холодильник, но не посудомоечная машина.",
+          "verdict": "incorrect",
+          "reason": "Холодильник ошибочно помещён внутрь холодильника.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "В холодильнике есть холодильник, но не имеет чашки для чая.",
+          "verdict": "incorrect",
+          "reason": "Посудомойка заменена чашкой, холодильник помещён внутрь холодильника.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Доступна холодильная камера, но не чайник.",
+          "verdict": "incorrect",
+          "reason": "Посудомойка заменена чайником.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Есть холодильник, но отсутствует машина для мытья посуды.",
+          "verdict": "ready",
+          "reason": "Корректная перифраза посудомоечной машины.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-005-ru-zh",
+      "source": "Наличие кондиционера нужно уточнить.",
+      "reference": "是否配有空调需进一步确认。",
+      "outputs": {
+        "selected05": {
+          "text": "制冷器是否正常？",
+          "verdict": "incorrect",
+          "reason": "Неизвестное наличие кондиционера заменено вопросом об исправности охлаждающего прибора.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "制冷设备是否已连接到位。",
+          "verdict": "incorrect",
+          "reason": "Неизвестное наличие кондиционера заменено подключением оборудования.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "“您需要确认制冷器是否足够？”",
+          "verdict": "incorrect",
+          "reason": "Неизвестное наличие кондиционера заменено достаточностью охлаждения.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "需要确认空调设备。",
+          "verdict": "needs-edit",
+          "reason": "Не вполне ясно, что нужно проверить именно наличие, а не само оборудование.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-005-zh-ru",
+      "source": "是否配有空调需进一步确认。",
+      "reference": "Наличие кондиционера нужно уточнить.",
+      "outputs": {
+        "selected05": {
+          "text": "Вы должны уточнить наличие асфера.",
+          "verdict": "incorrect",
+          "reason": "Кондиционер заменён несуществующим словом.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Для определения модели и моделиного оборудования необходимо проконсультироваться с менеджером.",
+          "verdict": "incorrect",
+          "reason": "Придуманы оборудование и консультация менеджера, кондиционер утрачен.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Для того, чтобы убедиться, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду, что вы имеете в виду",
+          "verdict": "incomplete",
+          "reason": "Повторяющийся незавершённый ответ достиг лимита токенов.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Определяется, имеется ли кондиционер.",
+          "verdict": "needs-edit",
+          "reason": "Потребность уточнить заменена описанием уже идущего определения.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-006-ru-zh",
+      "source": "Воду оплачивает жилец, отопление — собственник.",
+      "reference": "水费由租客支付，供暖费由房东支付。",
+      "outputs": {
+        "selected05": {
+          "text": "住主付水费，家电属自身。",
+          "verdict": "incorrect",
+          "reason": "Плательщик отопления утрачен, добавлена бытовая техника.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "candidate05": {
+          "text": "水费由房东承担，空调则由自己购买。",
+          "verdict": "incorrect",
+          "reason": "Изменён плательщик воды, отопление заменено покупкой кондиционера.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "水由卖主支付，供暖由卖主提供。",
+          "verdict": "incorrect",
+          "reason": "Жилец заменён продавцом; оплата отопления заменена предоставлением отопления.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "自来水由水表计费，供暖由业主支付。",
+          "verdict": "incorrect",
+          "reason": "Добавлен водомер; плательщик воды утрачен.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-006-zh-ru",
+      "source": "水费由租客支付，供暖费由房东支付。",
+      "reference": "Воду оплачивает жилец, отопление — собственник.",
+      "outputs": {
+        "selected05": {
+          "text": "房东负责水电费，租客负责供暖费。",
+          "verdict": "incorrect",
+          "reason": "Возвращён китайский текст вместо русского; плательщики переставлены.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Стерелка платится за воду, а кухня - за кухню.",
+          "verdict": "incorrect",
+          "reason": "Бессмыслица с кухней вместо отопления и плательщиков.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base05": {
+          "text": "Свобода отдавать за счет арендатора, а кухня - за счет владельца.",
+          "verdict": "incorrect",
+          "reason": "Бессмыслица с кухней вместо отопления.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "Военная служба состоит из двух частей: военной службы и военной подготовки.",
+          "verdict": "incorrect",
+          "reason": "Ответ о военной службе не связан с источником.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-007-ru-zh",
+      "source": "Залог возвращается после выезда при соблюдении условий договора.",
+      "reference": "遵守合同约定的情况下，退房后退还押金。",
+      "outputs": {
+        "selected05": {
+          "text": "返回已知，返回已知",
+          "verdict": "incorrect",
+          "reason": "Бессмыслица: нет залога, выезда или условия возврата.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "candidate05": {
+          "text": "返回押金后，需遵守合同规定。",
+          "verdict": "incorrect",
+          "reason": "Нарушена последовательность: условия после возврата залога; момент выезда утрачен.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base05": {
+          "text": "返回后，返回目的地后，遵守合同规定。",
+          "verdict": "incorrect",
+          "reason": "Утрачены залог и возврат после выезда.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "贷款在借款人离开后归还，前提是遵守合同中的条件。",
+          "verdict": "incorrect",
+          "reason": "Залог заменён кредитом, жилец — заёмщиком.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-007-zh-ru",
+      "source": "遵守合同约定的情况下，退房后退还押金。",
+      "reference": "Залог возвращается после выезда при соблюдении условий договора.",
+      "outputs": {
+        "selected05": {
+          "text": "При условии того, что договоренность с клиентом не была нарушена,退还押金。",
+          "verdict": "incorrect",
+          "reason": "Перевод не завершён; залог остаётся на китайском.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "При условии выполнения всех условий договора,退还押金。",
+          "verdict": "incorrect",
+          "reason": "Возврат залога не переведён с китайского.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "При условии выполнения contractual obligations,退还押金后，继续履行合同约定。",
+          "verdict": "incorrect",
+          "reason": "Ответ смешивает три языка, перевод не завершён.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Согласно условиям договора, возврат денежных средств производится после сдачи жилья.",
+          "verdict": "needs-edit",
+          "reason": "Возвращаемые средства не обозначены как залог; условность и момент выезда требуют уточнения.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-008-ru-zh",
+      "source": "Владелец делает временную регистрацию за отдельную плату.",
+      "reference": "房东可办理临时居住登记，费用另付。",
+      "outputs": {
+        "selected05": {
+          "text": "“Owner makes separate registration.”",
+          "verdict": "incorrect",
+          "reason": "Ответ на английском вместо китайского, условия утрачены.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "房东需支付临时租期费用。",
+          "verdict": "incorrect",
+          "reason": "Услуга регистрации заменена обязанностью владельца платить за временную аренду.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "赵先生单独支付了一定金额。",
+          "verdict": "incorrect",
+          "reason": "Выдуман господин Чжао, услуга регистрации утрачена.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "业主需额外支付费用进行临时注册。",
+          "verdict": "incorrect",
+          "reason": "Владелец, оказывающий услугу, ошибочно назначен плательщиком.",
+          "originalAutomaticFactCheckPassed": true
+        }
+      }
+    },
+    {
+      "id": "heldout-008-zh-ru",
+      "source": "房东可办理临时居住登记，费用另付。",
+      "reference": "Владелец делает временную регистрацию за отдельную плату.",
+      "outputs": {
+        "selected05": {
+          "text": "Владельцы могут пройти процедуру получения временного проживания без взноса.",
+          "verdict": "incorrect",
+          "reason": "Регистрация подменена проживанием, отдельная плата заменена отсутствием взноса.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Доступ на временный личный счет.",
+          "verdict": "incorrect",
+          "reason": "Регистрация заменена доступом к личному счёту.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Доступны услуги по временному проживанию, но при этом придется платить дополнительные расходы.",
+          "verdict": "incorrect",
+          "reason": "Регистрация заменена временным проживанием; роль владельца утрачена.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "landlord can apply for a temporary registration, the fee is additional.",
+          "verdict": "incorrect",
+          "reason": "Ответ на английском вместо русского.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-009-ru-zh",
+      "source": "Проживание с ребёнком возможно, с питомцами нельзя.",
+      "reference": "可以携带孩子入住，但不接受宠物。",
+      "outputs": {
+        "selected05": {
+          "text": "陪孩子生活是可以的，但养宠物需要考虑。",
+          "verdict": "incorrect",
+          "reason": "Запрет на питомцев ослаблен до необходимости обдумать.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "房间配有婴儿床，但不提供厨房或卫生间。",
+          "verdict": "incorrect",
+          "reason": "Придуманы детская кроватка и отсутствие кухни/санузла.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "孩子可以住在父母的陪伴下，但不能养宠物。",
+          "verdict": "needs-edit",
+          "reason": "Добавлено условие сопровождения родителями; требует проверки смысла.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "带小孩入住，带宠物不行。",
+          "verdict": "ready",
+          "reason": "Разрешение с ребёнком и запрет с питомцами сохранены.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-009-zh-ru",
+      "source": "可以携带孩子入住，但不接受宠物。",
+      "reference": "Проживание с ребёнком возможно, с питомцами нельзя.",
+      "outputs": {
+        "selected05": {
+          "text": "При согласии можно пригласить ребенка, но не принимать питшо.",
+          "verdict": "incorrect",
+          "reason": "Ребёнок приглашён вместо разрешения проживания; питомцы не переведены.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Допускаются посещение с детьми, но не рекомендуем наличие животного.",
+          "verdict": "incorrect",
+          "reason": "Проживание заменено посещением; запрет на питомцев ослаблен до рекомендации.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Для приобретения, можно приобрести ребенка, но не принимать питомца.",
+          "verdict": "incorrect",
+          "reason": "Проживание с ребёнком заменено приобретением ребёнка.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "Можно сопровождать ребенка, но не принимать животных.",
+          "verdict": "needs-edit",
+          "reason": "Проживание заменено сопровождением ребёнка; требуется редактура.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-010-ru-zh",
+      "source": "Минимальный срок аренды — 11 месяцев.",
+      "reference": "最短租期为11个月。",
+      "outputs": {
+        "selected05": {
+          "text": "出租期限最低11个月。",
+          "verdict": "ready",
+          "reason": "Минимальный срок аренды сохранён.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "租期为11个月。",
+          "verdict": "incorrect",
+          "reason": "Минимум заменён фиксированным сроком.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "最低租期为11个月。",
+          "verdict": "ready",
+          "reason": "Минимальный срок аренды сохранён.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "租赁的最短期限为11个月。",
+          "verdict": "ready",
+          "reason": "Минимальный срок аренды сохранён.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-010-zh-ru",
+      "source": "最短租期为11个月。",
+      "reference": "Минимальный срок аренды — 11 месяцев.",
+      "outputs": {
+        "selected05": {
+          "text": "Минимальный срок аренды составляет 11 месяцев.",
+          "verdict": "ready",
+          "reason": "Минимальный срок аренды сохранён.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Период аренды составляет 11 месяцев.",
+          "verdict": "incorrect",
+          "reason": "Минимум заменён фиксированным сроком.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Минимальный срок аренды составляет 11 месяцев.",
+          "verdict": "ready",
+          "reason": "Минимальный срок аренды сохранён.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "максимальный срок аренды 11 месяцев.",
+          "verdict": "incorrect",
+          "reason": "Минимальный срок заменён максимальным.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-011-ru-zh",
+      "source": "В квартире нет мебели, кроме кухонного гарнитура.",
+      "reference": "除厨房橱柜外，公寓没有其他家具。",
+      "outputs": {
+        "selected05": {
+          "text": "公寓没有家具，除了厨房台盆。",
+          "verdict": "incorrect",
+          "reason": "Кухонный гарнитур заменён кухонной раковиной.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "公寓内没有家具，包括厨房。",
+          "verdict": "incorrect",
+          "reason": "Исключение для кухонного гарнитура обращено в отсутствие любой мебели.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "在公寓里没有家具，除了厨房的橱柜。",
+          "verdict": "ready",
+          "reason": "Отсутствие мебели с исключением для кухонных шкафов сохранено.",
+          "originalAutomaticFactCheckPassed": true
+        },
+        "base15": {
+          "text": "在公寓里除了厨房的家具外，没有其他家具。",
+          "verdict": "needs-edit",
+          "reason": "Конкретные кухонные шкафы обобщены до любой кухонной мебели.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    },
+    {
+      "id": "heldout-011-zh-ru",
+      "source": "除厨房橱柜外，公寓没有其他家具。",
+      "reference": "В квартире нет мебели, кроме кухонного гарнитура.",
+      "outputs": {
+        "selected05": {
+          "text": "В公寓里除了橱柜之外，没有其他家具。",
+          "verdict": "incorrect",
+          "reason": "Основная часть ответа осталась на китайском.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "candidate05": {
+          "text": "Комната в квартире.",
+          "verdict": "incorrect",
+          "reason": "Утрачены отсутствие мебели и исключение.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base05": {
+          "text": "Квартиры без кухонного шкафа и других предметов не имеют других.",
+          "verdict": "incorrect",
+          "reason": "Нарушены отрицание и исключение для кухонного гарнитура.",
+          "originalAutomaticFactCheckPassed": false
+        },
+        "base15": {
+          "text": "apartments have no other furniture except kitchen cabinets.",
+          "verdict": "incorrect",
+          "reason": "Ответ на английском вместо русского.",
+          "originalAutomaticFactCheckPassed": false
+        }
+      }
+    }
+  ],
+  "trainingReceipt": "docs/benchmarks/text-training-native-v30.json"
+}

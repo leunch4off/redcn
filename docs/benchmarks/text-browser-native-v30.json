@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "createdAt": "2026-11-03T00:00:34.862576+00:00",
+  "scope": "native Chrome; iPhone-sized viewport; not physical iPhone/Safari acceptance",
+  "productionMutation": false,
+  "localModelInvoked": false,
+  "macOS": "26.0.1",
+  "python": "3.11.9",
+  "gitBaseRevision": "aafae764d9fe6199dcfd086601eebc7e0be8a7b4",
+  "sourceSha256": {
+    "web/rental-copy.mjs": "dcc5f001959babe955cf08401fe44c2a7ffdeee142309c6833fde9d6aa557a81",
+    "web/engine.mjs": "681a596514077a6f931499d8520a8bba1d58aed2153ca224544c03ff2f8b2c1d",
+    "web/app.js": "c39569d452e3cefffb7a482e854ec6ec159009501d1f9d060d519e31fcbd0188",
+    "web/language-studio.mjs": "4920d6dbed5725332564f8cd31c9b710b9c8a11c9e0a663f7e96497780cf37fc",
+    "web/template-catalog.mjs": "c53261e8255e83e754b85de7950b908ee40452f7f8ec9378dc23f852bc4eb59b",
+    "web/phone.mjs": "a1a80b526ced24014f0912aa2944b5fcd88552d2aa2cacb8e59b172f797ab33f",
+    "cli/language.mjs": "ba5e9d2db1c0a9a8109d8002a94d9da79ada6fbf86617b658d9353d0054f5257",
+    "cli/language_service.py": "20a84488df9bf724e033eefb41ee44d1d0d4e543893066ad88de71f30ea46fbc",
+    "cli/local_server.py": "ec696f06de2929e829d8c0444ace8a8b9cf8d1f2ab655f0a6e8a532de9e7a17f",
+    "cli/node_runtime.py": "946c8928019b646e344d3aa7e1031ce0a7478fce51c375963de4f90f4bb04024",
+    "tests/test_phone_browser.py": "d7b90ebb7b030648a70f3e1ae3191ddf21f3d6ee031899914034b6111ca16a55",
+    "tests/test_language_studio_browser.py": "afb4cbe0f45373d86f4039699d1172dcb23ea44edf585ef233de2030d328257d",
+    "tests/test_phone_language_browser.py": "1b0524a448c4984583d39fb44cd25884fe751ae91068656c978b222fd5593ba6",
+    "scripts/audit-rental-copy.mjs": "1f2be53e829778b272a1438c9723573b8878fd32d114620f54f001cf1461ef85",
+    "scripts/verify-rental-copy-v30.py": "700e79bab9db4796182a474a208e0d55f99dad1f5342c64b2722b634d135a997",
+    "docs/index.html": "9aaf8b9039331cd86f7085270b6599747698ce2dd5f3f49986f4fd59544c973b",
+    "docs/phone.html": "6c4b07a044af84aa70af266813f6c6c06272c667c1406ea2ab436643dd206761",
+    "data/build-identity.json": "3ffe05378bde3ba532957154cdf50031d6524afbd1a54237676e93a4ebcb247e"
+  },
+  "browser": {
+    "attempted": true,
+    "passed": true,
+    "test": "LanguageStudioAcceptance.test_rewrites_change_real_words_keep_manual_other_parts_and_survive_reload",
+    "testsRun": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": [],
+    "elapsedSeconds": 95.367,
+    "proof": {
+      "rewrites": 20,
+      "distinctNormalizedBodies": 20,
+      "manualTitleAndTagsPreserved": true,
+      "reload": {
+        "counterBefore": 10,
+        "counterAfter": 10,
+        "rememberedBodies": 11
+      },
+      "visibleCompositionText": "Подача объявлений: 20 способов оформления · 12 вариантов вступления · 48 общих тегов.",
+      "pageErrors": [],
+      "isolatedFixture": true
+    },
+    "phoneProof": {
+      "visibleLanguageText": "Словарных пар RU → ZH: 90 824. Уникальных русских записей: 68 200. Пар открытого словаря, требующих проверки: 88 894. Подача объявлений: 20 способов оформления · 12 вариантов вступления · 48 общих тегов. Словарные записи и конечные правила составления текста не являются обученными весами ИИ. Доступные варианты зависят от подтверждённых фактов квартиры.",
+      "pageErrors": [],
+      "isolatedFixture": true
+    }
+  },
+  "recentCardReplay": {
+    "requested": true,
+    "reportFile": "text-native-browser-v30-r2-recent-cards.json",
+    "aggregate": {
+      "version": 1,
+      "createdAt": "2026-11-03T00:02:10.801Z",
+      "inputSha256": "6e03afcce4a36c69113294dc1ad74d045579fa64b3ab8b9e25fc1bba11c8601c",
+      "inputCards": 82,
+      "selectedMostRecentCards": 65,
+      "variantsPerCard": 1,
+      "beforeFamilies": {
+        "emoji-summary": 65
+      },
+      "afterFamilies": {
+        "viewing-note": 4,
+        "room-by-room": 5,
+        "compact": 8,
+        "clean-card": 4,
+        "location-note": 3,
+        "split-sections": 3,
+        "calm-paragraph": 3,
+        "price-first": 5,
+        "university-reference": 1,
+        "emoji-summary": 3,
+        "numbered-guide": 3,
+        "area-layout": 6,
+        "commute-first": 5,
+        "bullet-board": 4,
+        "service-note": 1,
+        "budget-note": 1,
+        "conditions-first": 4,
+        "editorial": 1,
+        "feature-focus": 1
+      },
+      "leadFrames": {
+        "transport-first": 6,
+        "inventory-invitation": 4,
+        "overview": 8,
+        "save-to-compare": 7,
+        "quick-summary": 5,
+        "details-invitation": 5,
+        "rent-first": 7,
+        "space-first": 7,
+        "layout-question": 7,
+        "route-and-home": 3,
+        "equipment-first": 4,
+        "comparison": 2
+      },
+      "generatorErrors": 0,
+      "normalizedRepeatedBodies": 0,
+      "cardsWithUnknownTranslationFragments": 65,
+      "minDistinctBodies": 1,
+      "modelAuthored": false,
+      "qualityScope": "structural-and-repeat-regression; not independent Chinese quality or model training acceptance",
+      "elapsedSeconds": 2.527,
+      "distinctInitialFamilies": 19,
+      "distinctInitialLeadFrames": 12,
+      "passed": true
+    },
+    "passed": true
+  },
+  "sourceUnchangedDuringCheck": true,
+  "elapsedSeconds": 98.653,
+  "passed": true,
+  "receiptSha256": "e74f32bc2802e585318844e08a20382480ff1e801c8a322920cc1d902d8331cd"
+}

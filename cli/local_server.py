@@ -88,6 +88,20 @@ def read_result(directory, result_id):
     finally: connection.close()
 
 
+def capture_listing_learning(directory, result, result_id):
+    """Collection is useful even when there are too few reviewed training rows.
+
+    A saved card must survive a temporarily unavailable learning queue. The
+    returned receipt distinguishes new source phrases from changed weights.
+    """
+    try:
+        from learning_capture import capture_import
+        return capture_import(directory, result, result_id)
+    except (ImportError, OSError, ValueError, TypeError, sqlite3.Error):
+        return {'status': 'unavailable', 'newPhrases': 0, 'modelWeightsUpdated': False,
+                'message': 'Карточка сохранена; сбор новых фраз временно недоступен.'}
+
+
 def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,photo_generated=None):
     from phone_relay import source_images
     # Lock the read/merge/write so the completed download cannot save an old text snapshot.
@@ -98,6 +112,8 @@ def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,phot
         current=json.loads(row[0]) if row else None
         if not current or source_images(current)!=source_images(prepared):raise ValueError('Фотографии карточки изменились. Повторите загрузку.')
         current.update(media=prepared.get('media',[]),mediaStatus=prepared.get('mediaStatus','ready'))
+        if isinstance(prepared.get('learningCapture'),dict):
+            current['learningCapture']=prepared['learningCapture']
         if isinstance(prepared.get('photoProcessing'),dict):current['photoProcessing']=prepared['photoProcessing']
         if isinstance(prepared.get('photoInventory'),dict):
             current['photoInventory']=prepared['photoInventory']
@@ -147,7 +163,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v29', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v30', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
     from release_diagnostics import runtime_identity
     release_runtime=runtime_identity(redcn.ROOT)
 
@@ -265,6 +281,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             result['mediaStatus']='loading'
             owner_scope.check()
             result_id = save_result(directory, result, journal.reserved_result_id(job_id), actor=actor, kind='import')
+            result['learningCapture']=capture_listing_learning(directory,result,result_id)
+            captured=result['learningCapture']
+            if captured.get('status')=='captured':
+                report('Учебная память: '+str(captured.get('newPhrases',0))+' новых фраз на разбор; '
+                    +str(captured.get('knownPhrases',0))+' уже известны. Веса модели этим не изменены.',stage='generate')
+            else:
+                report(captured.get('message','Источник проверен для учебной памяти; новых фраз нет.'),stage='generate')
             cache_photos(directory,result,report,cancel)
             from photo_generation import photo_revision
             photo_generated=photo_revision(directory,result,text=listing['text'],rules=params.get('rules'),prefs=params.get('prefs'),report=report,cancel=cancel)
@@ -672,13 +695,14 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     result = data.get('result')
                     if not isinstance(result,dict) or not isinstance(result.get('fields'),dict) or not isinstance(result.get('titles'),list) or not isinstance(result.get('body'),str) or not isinstance(result.get('tags'),str): raise ValueError('Неверная карточка')
                     result_id = save_result(directory,result,data.get('result_id'))
+                    learning_capture=capture_listing_learning(directory,result,result_id)
                     from client_bundle_consistency import snapshot,source_receipt,ClientRevisionConflict
                     try:
                         revision=snapshot(directory,result_id,expected_card=result)
                         receipt=source_receipt(directory,result_id,revision)
                     except ClientRevisionConflict as error:
                         self.respond(409,{'error':str(error),'code':error.code});return
-                    self.respond(200,{'result_id':result_id,'presentationReceipt':receipt});return
+                    self.respond(200,{'result_id':result_id,'presentationReceipt':receipt,'learningCapture':learning_capture});return
                 self.respond(404,{'error':'Не найдено'})
             except (ValueError,TypeError,OSError,redcn.subprocess.SubprocessError) as error:
                 self.respond(400,{'error':str(error)})

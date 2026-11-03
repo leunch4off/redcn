@@ -66,6 +66,43 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'),393)
         self.assertGreaterEqual(self.page.locator('#dictionarySearch').evaluate('el=>parseFloat(getComputedStyle(el).fontSize)'),16)
 
+    def test_rewrites_change_real_words_keep_manual_other_parts_and_survive_reload(self):
+        self.open_editor()
+        for key,value in {'url':'https://www.cian.ru/rent/flat/100001/','price':'70000','deposit':'35000','area':'40','rooms':'1','floor':'10','floors':'23','metro':'Прокшино','walk':'5'}.items():
+            self.page.locator('#'+key).fill(value)
+        self.page.locator('#outputTitle').fill('手工标题保留')
+        self.page.locator('#tags').fill('#手工标签保留')
+        outputs=[];reload_proof=None
+        for index in range(20):
+            self.page.locator('#rewriteCopy').click()
+            apply=self.page.get_by_role('button',name='Применить новую версию',exact=True)
+            if apply.is_visible():
+                apply.click()
+            current=self.page.locator('#output').input_value()
+            normalized=self.page.evaluate("text=>text.replace(/[^\\p{L}\\p{N}]/gu,'')",current)
+            self.assertNotIn(normalized,outputs,'Punctuation and emoji alone must not count as a new body')
+            outputs.append(normalized)
+            for fact in ['40㎡','70,000₽','35,000₽','10/23层','抵达登记（临时居住登记）']:
+                self.assertIn(fact,current)
+            self.assertEqual(self.page.locator('#outputTitle').input_value(),'手工标题保留')
+            self.assertEqual(self.page.locator('#tags').input_value(),'#手工标签保留')
+            if index==9:
+                saved=self.page.evaluate("JSON.parse(localStorage.getItem('most-draft')).fields")
+                self.assertGreaterEqual(len(saved['copyHistory']['body']),10)
+                self.page.reload(wait_until='domcontentloaded')
+                self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
+                restored=self.page.evaluate("JSON.parse(localStorage.getItem('most-draft')).fields")
+                self.assertEqual(restored['copyHistory'],saved['copyHistory'])
+                self.assertEqual(restored['copyVariant'],saved['copyVariant'])
+                reload_proof={'counterBefore':saved['copyVariant'],'counterAfter':restored['copyVariant'],'rememberedBodies':len(restored['copyHistory']['body'])}
+        self.page.locator('nav [data-tab="rules"]').click()
+        stats=self.page.locator('#languageStats').inner_text()
+        self.assertIn('20 способов оформления',stats)
+        self.assertIn('12 вариантов вступления',stats)
+        self.assertIn('48 общих тегов',stats)
+        self.assertNotIn('262',self.page.locator('.language-composition-count').inner_text())
+        self.copy_acceptance_receipt={'rewrites':len(outputs),'distinctNormalizedBodies':len(set(outputs)),'manualTitleAndTagsPreserved':True,'reload':reload_proof,'visibleCompositionText':self.page.locator('.language-composition-count').inner_text(),'pageErrors':list(self.errors),'isolatedFixture':True}
+
     def test_translation_requires_apply_and_preserves_other_output_parts(self):
         self.page.route('**/api/local/translate',lambda route:route.fulfill(json={
             'text':'厨房有书桌。','unknown':['необычное слово'],'warnings':['Проверьте порядок слов'],'needsReview':True,'backend':'rental-phrases'}))

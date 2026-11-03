@@ -15,11 +15,12 @@ from local_photo_ai import FEATURE_LABELS
 
 VERSION = 1
 TRAINED_MODEL = 'redcn-furniture-v1'
+REVIEW_MODELS = {TRAINED_MODEL: 'yolox-trained', 'redcn-furniture-world-v2': 'onnx-world'}
 SUGGESTION_SCORE = .85
 MAX_JOURNAL_ENTRIES = 600
 TRAINED_REVIEW_IDS = frozenset(('sofa', 'bedAny', 'chairs', 'tv', 'fridge',
     'oven', 'microwave', 'sink', 'table', 'desk', 'wardrobe', 'washer',
-    'dishwasher', 'piano', 'coffeeMachine', 'mirror', 'curtains', 'coffeeTable'))
+    'dishwasher', 'piano', 'coffeeMachine', 'mirror', 'curtains', 'coffeeTable', 'stove', 'cabinet'))
 _DIGEST = re.compile(r'[a-f0-9]{64}\Z')
 
 
@@ -32,8 +33,8 @@ def detector_suggestion(candidate, analysis, digest):
     if (not isinstance(candidate, dict) or not isinstance(analysis, dict)
             or not isinstance(digest, str) or not _DIGEST.fullmatch(digest)
             or analysis.get('originalId') != digest
-            or analysis.get('provider') != 'yolox-trained'
-            or analysis.get('model') != TRAINED_MODEL
+            or not isinstance(analysis.get('model'), str) or analysis['model'] not in REVIEW_MODELS
+            or analysis.get('provider') != REVIEW_MODELS[analysis['model']]
             or analysis.get('status') not in ('ok', 'review')
             or not isinstance(candidate.get('id'), str) or candidate['id'] not in TRAINED_REVIEW_IDS
             or not _score(candidate.get('confidence'))
@@ -44,7 +45,7 @@ def detector_suggestion(candidate, analysis, digest):
     evidence = candidate.get('evidence')
     for row in evidence[:8] if isinstance(evidence, list) else []:
         if (not isinstance(row, dict) or row.get('kind') != 'object-detection'
-                or row.get('provider') != 'yolox-trained' or row.get('model') != TRAINED_MODEL
+                or row.get('provider') != analysis['provider'] or row.get('model') != analysis['model']
                 or row.get('source') != 'local-photo' or row.get('originalId') != digest
                 or row.get('photoId') != digest or not _score(row.get('confidence'))
                 or row['confidence'] != candidate['confidence']):
@@ -166,7 +167,7 @@ def review_journal(fields, photos, *, requested=False, now=None):
             entry = {'id': identity, 'originalId': digest, 'sourceUrl': url,
                 'featureId': feature, 'label': FEATURE_LABELS[feature],
                 'confidence': candidate['confidence'], 'evidence': copy.deepcopy(candidate['evidence'][:8]),
-                'provider': 'yolox-trained', 'model': TRAINED_MODEL, 'automatic': True,
+                'provider': photo['provider'], 'model': photo['model'], 'automatic': True,
                 'state': state, 'reason': 'model-unaccepted', 'count': None,
                 'createdAt': old.get('createdAt', moment), 'lastSeenAt': moment}
             if identity not in entries:

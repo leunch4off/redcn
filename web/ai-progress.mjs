@@ -7,10 +7,19 @@ const aiProgressCount=value=>Number.isInteger(value)&&value>=0&&value<=10000000?
 const aiProgressFormat=value=>value.toLocaleString('ru-RU',{maximumFractionDigits:value<1?2:1});
 const aiProgressIdentity=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:/+\-]{0,127}$/.test(value)&&!value.includes('://')?value:'';
 
+export function aiTextOutcome(value){
+ if(!value||typeof value!=='object')return '';
+ if(value.fallback===true||value.backend==='grounded-advertising'||value.textSource==='rules')return 'Ответ локальной модели отклонён. Этот текст составлен правилами по фактам карточки.';
+ if(value.modelContribution==='selection-of-layout-only'||value.generationMode==='model-structure-verified-renderer')return 'ИИ выбрал схему подачи; формулировки и факты собраны генератором.';
+ if(value.status==='review')return 'Черновик локальной модели: требуется проверка китайского текста и фактов.';
+ if(['blocked','unavailable','cancelled'].includes(value.status))return 'Модель не создала принятого варианта; сохранён предыдущий текст.';
+ return '';
+}
+
 export function aiProgressText(value,{extraElapsed=0}={}){
  if(!value||typeof value!=='object'||Array.isArray(value)||!Object.hasOwn(aiProgressPhases,value.phase))return null;
  const active=value.active!==false&&aiProgressActivePhases.has(value.phase),cached=value.cached===true||value.phase==='cached';
- const rules=value.textSource==='rules',model=aiProgressIdentity(value.model),kind=rules?'Китайский текст · проверенные факты':value.operation==='text'?'Текстовый ИИ':'ИИ · мебель и техника';
+ const rules=value.textSource==='rules',model=aiProgressIdentity(value.model),kind=rules?'Китайский текст по правилам · ответ ИИ отклонён':value.operation==='text'?'Текстовый ИИ':'ИИ · мебель и техника';
  const details=[],metrics=[],elapsed=aiProgressNumber(value.elapsedSeconds),index=aiProgressCount(value.photoIndex),total=aiProgressCount(value.photoTotal);
  if(model)details.push((rules?'Модель черновика: ':'')+model);
  if(total&&index!==null&&index>0&&index<=total)details.push('Фото '+index+' из '+total);

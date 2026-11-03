@@ -1,4 +1,5 @@
 import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
+import {isTeacherEvidence} from './photo-teacher-review.mjs';
 export function normalizeRussian(text){const map={a:'а',b:'в',c:'с',e:'е',h:'н',k:'к',m:'м',o:'о',p:'р',t:'т',x:'х',y:'у'};return String(text||'').toLowerCase().replace(/ё/g,'е').replace(/[a-zа-я]+/g,word=>/[а-я]/.test(word)?word.replace(/[abcehkmoptxy]/g,c=>map[c]):word);}
 const furniturePatterns={
  bed:'двуспальн[а-я]*\\s+кроват[а-я]*|двойн[а-я]*\\s+кроват[а-я]*',bedAny:'кроват(?:ь|и|ью|ей)',wardrobe:'шкаф(?:ы|а|ом|ов)?',slidingWardrobe:'шкаф(?:а|ы|ов)?[ -]?купе',desk:'(?:письменн|рабоч|учебн)[а-я]*\\s+стол[а-я]*',
@@ -71,8 +72,9 @@ export function resolvePhotoFurniture(fields={},catalog=[]){
  for(const row of Array.isArray(fields.photoEvidence)?fields.photoEvidence:[]){
   if(!row||!allowed.has(row.id)||rejected.has(row.id))continue;
   const human=row.status==='confirmed';
+  const teacher=isTeacherEvidence(row);
   const automatic=!reviewOnly.has(row.id)&&isAutomaticPhotoObservation(row);
-  if(!human&&!automatic)continue;
+  if(!human&&!teacher&&!automatic)continue;
   features.add(row.id);evidence.push(row);(human?confirmed:visual).add(row.id);
   // Different photographs can show the same chair. Never sum their counts.
   if(human&&Number.isInteger(row.count)&&row.count>=1&&row.count<=12)counts[row.id]=Math.max(Number(counts[row.id])||0,row.count);

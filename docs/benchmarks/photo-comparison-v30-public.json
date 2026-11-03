@@ -1,0 +1,1213 @@
+{
+  "version": 1,
+  "kind": "photo-presence-v30-public-summary",
+  "humanVerified": false,
+  "exhaustiveLabels": false,
+  "automaticAcceptance": false,
+  "limitations": [
+    "Labels come from assistant visual review, not a human annotation team.",
+    "Only explicitly labelled positives and negatives are evaluated; other classes remain unknown.",
+    "Image-level presence coverage is not global accuracy, localization accuracy or approval for automatic facts.",
+    "No private image, listing ID, address or source URL is included."
+  ],
+  "comparison": {
+    "receiptSha256": "3f99ba1d6fc5e9980e99ebd66fdc0929b6b9bce449d516742bf1d0f8c6e976f3",
+    "manifestSha256": "74574203f226040bc1877a3333bf32e4a063b04b99cc4754f805fa30dd20385c",
+    "scriptSha256": "736323e5bb4b3584d8fb41d52d1130fbf6f878f735564ea7932fc93e35561c39",
+    "images": 995,
+    "splits": {
+      "train": 737,
+      "validation": 95,
+      "test": 163
+    },
+    "seconds": 293.7721794579993,
+    "processMaxRssBytes": 387137536,
+    "weightsChanged": false,
+    "engines": {
+      "baseline": {
+        "modelSha256": "650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5",
+        "modelLoadSeconds": 0.013924250000854954,
+        "inferenceTotalSeconds": 34.71999702320318,
+        "images": 995,
+        "metrics": {
+          "0.35": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 524,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 0,
+              "unlabelledPredictions": 563,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 2,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 8,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 104,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 40,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 0
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 144,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 113,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 20,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 4,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 53,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 23,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 6,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 378,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 59,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 0
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 87,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          },
+          "0.5": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 425,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 0,
+              "unlabelledPredictions": 336,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 97,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 30,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 0
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 124,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 101,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 14,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 2,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 41,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 9,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 2,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 309,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 46,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 0
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 70,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          },
+          "0.7": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 303,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 0,
+              "unlabelledPredictions": 163,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 84,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 21,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 0
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 88,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 77,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 9,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 19,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 218,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 33,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 0
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 52,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          },
+          "0.85": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 165,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 0,
+              "unlabelledPredictions": 64,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 61,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 12,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 0
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 47,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 33,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 11,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 119,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 17,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 0
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 29,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          }
+        }
+      },
+      "world": {
+        "modelSha256": "eb56e6e04067350e6bb4c9603a4664707ec7620f3a3dda81c1ddd8fd9d580bba",
+        "modelLoadSeconds": 0.033708124989061616,
+        "inferenceTotalSeconds": 256.3637023018382,
+        "images": 995,
+        "metrics": {
+          "0.35": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 1178,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 1,
+              "unlabelledPredictions": 1243,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 108,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 58,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 8,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 116,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 50,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 66,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 1
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 43,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 44,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 164,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 147,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 61,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 43,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 30,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 77,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 82,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 40,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 38,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 853,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 128,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 1
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 197,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          },
+          "0.5": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 1009,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 1,
+              "unlabelledPredictions": 794,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 93,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 53,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 113,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 20,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 65,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 1
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 30,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 23,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 159,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 144,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 44,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 36,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 11,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 75,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 67,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 33,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 37,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 734,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 110,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 1
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 165,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          },
+          "0.7": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 710,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 1,
+              "unlabelledPredictions": 324,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 67,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 47,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 92,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 56,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 1
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 11,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 11,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 113,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 134,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 9,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 22,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 71,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 20,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 18,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 35,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 520,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 73,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 1
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 117,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          },
+          "0.85": {
+            "totals": {
+              "positiveWitnesses": 1795,
+              "recoveredPositiveWitnesses": 379,
+              "explicitNegativeWitnesses": 30,
+              "negativeWitnessViolations": 0,
+              "unlabelledPredictions": 61,
+              "unsupportedPositiveWitnesses": 746
+            },
+            "byClass": {
+              "mirror": {
+                "positiveWitnesses": 166,
+                "recoveredPositiveWitnesses": 22,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "washer": {
+                "positiveWitnesses": 70,
+                "recoveredPositiveWitnesses": 34,
+                "explicitNegativeWitnesses": 8,
+                "negativeWitnessViolations": 0
+              },
+              "wardrobe": {
+                "positiveWitnesses": 145,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "bedAny": {
+                "positiveWitnesses": 124,
+                "recoveredPositiveWitnesses": 47,
+                "explicitNegativeWitnesses": 7,
+                "negativeWitnessViolations": 0
+              },
+              "curtains": {
+                "positiveWitnesses": 204,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "tv": {
+                "positiveWitnesses": 72,
+                "recoveredPositiveWitnesses": 38,
+                "explicitNegativeWitnesses": 6,
+                "negativeWitnessViolations": 0
+              },
+              "cabinet": {
+                "positiveWitnesses": 57,
+                "recoveredPositiveWitnesses": 4,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "table": {
+                "positiveWitnesses": 133,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "chairs": {
+                "positiveWitnesses": 176,
+                "recoveredPositiveWitnesses": 31,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "sofa": {
+                "positiveWitnesses": 157,
+                "recoveredPositiveWitnesses": 106,
+                "explicitNegativeWitnesses": 5,
+                "negativeWitnessViolations": 0
+              },
+              "sink": {
+                "positiveWitnesses": 76,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "desk": {
+                "positiveWitnesses": 47,
+                "recoveredPositiveWitnesses": 6,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "stove": {
+                "positiveWitnesses": 96,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "fridge": {
+                "positiveWitnesses": 83,
+                "recoveredPositiveWitnesses": 55,
+                "explicitNegativeWitnesses": 4,
+                "negativeWitnessViolations": 0
+              },
+              "oven": {
+                "positiveWitnesses": 93,
+                "recoveredPositiveWitnesses": 1,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeTable": {
+                "positiveWitnesses": 45,
+                "recoveredPositiveWitnesses": 3,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "dishwasher": {
+                "positiveWitnesses": 5,
+                "recoveredPositiveWitnesses": 0,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "microwave": {
+                "positiveWitnesses": 43,
+                "recoveredPositiveWitnesses": 28,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "coffeeMachine": {
+                "positiveWitnesses": 3,
+                "recoveredPositiveWitnesses": 2,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              }
+            },
+            "bySplit": {
+              "train": {
+                "positiveWitnesses": 1323,
+                "recoveredPositiveWitnesses": 279,
+                "explicitNegativeWitnesses": 0,
+                "negativeWitnessViolations": 0
+              },
+              "validation": {
+                "positiveWitnesses": 184,
+                "recoveredPositiveWitnesses": 41,
+                "explicitNegativeWitnesses": 13,
+                "negativeWitnessViolations": 0
+              },
+              "test": {
+                "positiveWitnesses": 288,
+                "recoveredPositiveWitnesses": 59,
+                "explicitNegativeWitnesses": 17,
+                "negativeWitnessViolations": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

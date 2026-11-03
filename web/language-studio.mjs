@@ -1,4 +1,5 @@
-import {getTemplate, catalogStats, CATALOG_SIZE, nextTemplateIndex} from './template-catalog.mjs';
+import {getTemplate, catalogStats, CATALOG_SIZE, nextTemplateIndex, listingStyleStats} from './template-catalog.mjs';
+import {rentalCopyStats} from './rental-copy.mjs';
 
 // This panel keeps only the current dictionary page and a private, unsaved draft.
 export function setupLanguageStudio({local=false,api,getRules=()=>({}),onApplyText,onApplyTemplate,onUseRule,toast=()=>{},translateLocal,capabilities,searchLocal,catalogBaseUrl='../data/template-catalog/'}={}){
@@ -24,7 +25,7 @@ export function setupLanguageStudio({local=false,api,getRules=()=>({}),onApplyTe
   const pager=node('div','',{class:'language-actions'}),prev=button('← Назад','dictionaryPrev'),next=button('Далее →','dictionaryNext');prev.disabled=true;next.disabled=true;pager.append(prev,next);
   studio.append(searchRow,searchStatus,results,pager);
   const catalog=node('details','',{class:'language-catalog'});catalog.append(node('summary','Базовые схемы и варианты оформления'));
-  catalog.append(node('p','По 262 144 индексируемые композиции каждого типа. Они собраны из языковых блоков; это число схем, а не слов, отдельных хештегов или вручную написанных объявлений. Поля заполняются подтверждёнными фактами карточки. Готовая публикация использует 20 семейств оформления; ниже показана базовая схема композиции, а не точный внешний вид объявления.',{class:'muted'}));
+  catalog.append(node('p','Технический каталог: 262 144 = 8⁶ сочетаний фраз и порядка блоков для каждого типа. Это математические комбинации, а не столько рекламных текстов. Для конкретной квартиры сочетания могут давать одинаковый результат. Каталог сохраняется для совместимости; готовый текст использует конечный набор способов подачи и подтверждённые факты карточки.',{class:'muted'}));
   const catalogRow=node('div','',{class:'language-grid'}),kind=select('catalogKind',[['title','Заголовок'],['description','Описание'],['tags','Набор тегов']]),index=node('input','',{id:'catalogIndex',type:'number',min:0,max:CATALOG_SIZE-1,step:1,value:0,inputmode:'numeric'});
   const kwrap=node('div'),iwrap=node('div');kwrap.append(label('Тип схемы','catalogKind'),kind);iwrap.append(label('Номер схемы · от 0','catalogIndex'),index);catalogRow.append(kwrap,iwrap);
   const preview=node('pre','',{id:'catalogPreview',class:'language-template-preview','aria-live':'polite'}),catalogId=node('p','',{class:'muted',id:'catalogIdentity'});
@@ -44,11 +45,13 @@ export function setupLanguageStudio({local=false,api,getRules=()=>({}),onApplyTe
   function renderStats(){
     const value=loadedCapabilities||available()||{},d=value.dictionary||{},fallback=catalogStats(),t=value.templates||fallback;
     const pairs=d.ruZhPairs??d.entries,forms=d.openWordForms??d.grammaticalForms,curated=d.curatedRules??value.curatedRules??d.curatedEntries;
-    const rows=[['Пар RU → ZH',pairs],['Словоформ',forms],['Правил основного словаря',curated],['Моих правил',Object.keys(getRules()||{}).length]];
+    const rows=[['Словарных пар RU → ZH',pairs],['Уникальных русских записей',d.headwords],['Пар открытого словаря · нужна проверка',d.openPairs],['Правил основного словаря',curated],['Моих правил',Object.keys(getRules()||{}).length],['Проверенных учебных примеров',value.learning?.approvedExamples]];
     stats.replaceChildren();
     for(const [title,value] of rows){const item=node('div','',{class:'language-stat'});item.append(node('strong',number(value)),node('span',title));stats.append(item);}
-    const composition=node('p',`Схемы: заголовки ${number(t.titles??t.title?.count??fallback.titles)} · описания ${number(t.descriptions??t.body?.count??t.description?.count??fallback.descriptions)} · наборы тегов ${number(t.tagSets??t.tags?.count??fallback.tagSets)}.`,{class:'language-composition-count'});
-    stats.append(composition,node('p',`${number(t.baseLanguageBlocks??128)} языковых блоков и ${number(t.genericTagAtoms??48)} общих тегов составляют каталог. Число разных результатов для конкретной квартиры зависит от заполненных полей.`,{class:'muted'}));
+    stats.append(node('p','Словарная пара — запись «русский текст → китайский вариант», а не выученное моделью слово. Открытый словарь Wiktionary / Kaikki требует проверки в контексте; его строки автоматически не включаются в обучение. Подсчёт объединяет одинаковые записи.',{class:'muted'}));
+    const layouts=value.editorialStyles||listingStyleStats(),copy=value.copyEngine||rentalCopyStats();
+    const composition=node('p',`Подача объявлений: ${number(layouts.families)} способов оформления · ${number(copy.leadFrames)} вариантов вступления · ${number(t.genericTagAtoms??48)} общих тегов.`,{class:'language-composition-count'});
+    stats.append(composition,node('p','Это конечные правила составления текста. Доступные варианты зависят от фактов квартиры. Смена цены или эмодзи не считается новым рекламным текстом; словарь и шаблоны не являются обученными весами ИИ.',{class:'muted'}));
     if(local&&!loadedCapabilities)stats.append(node('p','Полные показатели словаря загружаются при открытии раздела.',{class:'muted'}));
   }
   async function refreshStats(){

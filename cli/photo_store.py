@@ -539,6 +539,10 @@ def analyze_photo(directory,digest,*,cancel=None,deadline=None,status=None):
     if config.get('model')=='redcn-furniture-v1':
         import trained_photo_detector
         trained_identity=Path(trained_photo_detector.__file__).read_bytes()+trained_photo_detector.cache_identity(directory).encode()
+    elif config.get('model')=='redcn-furniture-world-v2':
+        import trained_photo_detector, world_photo_detector
+        trained_identity=(Path(trained_photo_detector.__file__).read_bytes()+Path(world_photo_detector.__file__).read_bytes()
+            +world_photo_detector.cache_identity(directory).encode())
     source_hash=hashlib.sha256(Path(vision_photo.__file__).read_bytes()+Path(__file__).with_name('classify-photo.swift').read_bytes()+Path(__file__).with_name('local_photo_ai.py').read_bytes()+Path(__file__).with_name('photo_auto_policy.py').read_bytes()+trained_identity+json.dumps(config,sort_keys=True).encode()).hexdigest()[:16]
     cache=folder/(digest+'-'+source_hash+'.json')
     if cache.exists():
@@ -554,7 +558,8 @@ def analyze_photo(directory,digest,*,cancel=None,deadline=None,status=None):
         except (OSError,ValueError):pass
     image=open_photo(content)
     emit(status,'Анализируем оригинал: мебель и техника',stage='vision',ai=sanitize_ai({
-        'backend':'yolox-trained' if config.get('model')=='redcn-furniture-v1' else 'ollama' if config.get('enabled') else 'apple-vision',
+        'backend':{'redcn-furniture-v1':'yolox-trained','redcn-furniture-world-v2':'onnx-world'}.get(config.get('model'),
+            'ollama' if config.get('enabled') else 'apple-vision'),
         'model':config.get('model'),'operation':'furniture','phase':'loading','cached':False,'elapsedSeconds':time.monotonic()-started}))
     try:result={**vision_photo.analyze_image(image,directory,content=content,mime=mime,cancel=cancel,deadline=deadline,status=status),'originalId':digest,'sourceUrl':original.get('sourceUrl'),'width':image.width,'height':image.height,'cached':False}
     finally:image.close()

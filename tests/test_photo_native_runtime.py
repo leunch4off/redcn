@@ -46,6 +46,44 @@ class NativePhotoRuntimeTests(unittest.TestCase):
         self.assertEqual(command,[sys.executable]);self.assertEqual(identity['selection'],'legacy')
         self.assertEqual(set(self.cache.rglob('*')),before)
 
+    def test_world_requires_explicit_native_install_and_unknown_models_fail(self):
+        with self.assertRaises(native.NativeRuntimeError):native.runtime_command(self.cache,model='other')
+        self.receipt.unlink()
+        with self.assertRaisesRegex(native.NativeRuntimeError,'YOLO-World'):native.runtime_command(self.cache,model='redcn-furniture-world-v2')
+
+    def world_extension(self):
+        model=self.cache/native.WORLD_MODEL_PATH;model.parent.mkdir(parents=True);model.write_bytes(b'fixed world fixture')
+        site=self.folder/'venv/lib/python3.11/site-packages'
+        metadata=site/('opencv_python-'+native.OPENCV_VERSION+'.dist-info');metadata.mkdir()
+        (metadata/'METADATA').write_text('Name: opencv-python\nVersion: '+native.OPENCV_VERSION+'\n')
+        fixtures={}
+        for name in native.OPENCV_FILES:
+            target=site/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(('fixed '+name).encode())
+            fixtures[name]=hashlib.sha256(target.read_bytes()).hexdigest()
+        return model,fixtures,metadata
+
+    def test_world_selects_fixed_model_and_independently_pinned_opencv(self):
+        model,fixtures,metadata=self.world_extension()
+        with patch.object(native,'WORLD_MODEL_SHA',hashlib.sha256(model.read_bytes()).hexdigest()),patch.object(native,'OPENCV_FILES',fixtures):
+            command,identity=native.runtime_command(self.cache,model='redcn-furniture-world-v2')
+            self.assertEqual(command[:2],['/usr/bin/arch','-arm64'])
+            self.assertEqual(identity['modelSha256'],hashlib.sha256(model.read_bytes()).hexdigest())
+            self.assertEqual(identity['opencvVersion'],native.OPENCV_VERSION)
+            self.assertEqual(identity['opencvBinarySha256'],fixtures['cv2/cv2.abi3.so'])
+            self.assertNotEqual(native.cache_identity(self.cache),native.cache_identity(self.cache,model='redcn-furniture-world-v2'))
+            (metadata/'METADATA').write_text('Name: opencv-python\nVersion: 0.0.0\n')
+            with self.assertRaisesRegex(native.NativeRuntimeError,'OpenCV'):native.runtime_command(self.cache,model='redcn-furniture-world-v2')
+            # Optional extension cannot make the unchanged older model unusable.
+            self.assertEqual(native.runtime_command(self.cache)[1]['status'],'verified')
+
+    def test_modified_opencv_cannot_start_world_or_reuse_its_runtime_identity(self):
+        model,fixtures,_=self.world_extension()
+        with patch.object(native,'WORLD_MODEL_SHA',hashlib.sha256(model.read_bytes()).hexdigest()),patch.object(native,'OPENCV_FILES',fixtures):
+            before=native.cache_identity(self.cache,model='redcn-furniture-world-v2')
+            binary=self.folder/'venv/lib/python3.11/site-packages/cv2/cv2.abi3.so';binary.write_bytes(b'changed')
+            with self.assertRaisesRegex(native.NativeRuntimeError,'OpenCV'):native.runtime_command(self.cache,model='redcn-furniture-world-v2')
+            self.assertNotEqual(before,native.cache_identity(self.cache,model='redcn-furniture-world-v2'))
+
     def test_receipt_cannot_select_an_arbitrary_executable_or_download_url(self):
         document=json.loads(self.receipt.read_text());document.update(pythonPath='/tmp/attacker',downloadUrl='https://evil.test/runtime')
         self.receipt.write_text(json.dumps(document))

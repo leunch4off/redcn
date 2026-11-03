@@ -55,7 +55,7 @@ def _evidence(raw):
         if not isinstance(evidence, dict):
             continue
         row = {key: value[:300] for key, value in evidence.items() if key in (
-            'kind', 'text', 'label', 'photoId', 'originalId', 'provider', 'model', 'source') and isinstance(value, str)}
+            'kind', 'text', 'label', 'photoId', 'originalId', 'provider', 'model', 'source', 'rawClassId') and isinstance(value, str)}
         score = evidence.get('confidence')
         if type(score) in (int, float) and math.isfinite(score) and 0 <= score <= 1:
             row['confidence'] = score
@@ -139,7 +139,7 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
             'message': 'Локальный анализ фото не включён'}
     model = config['model'].strip()
     output['autoApply'] = config.get('autoApply') is True
-    output['autoApplyMode'] = ('suggestions-only' if model == 'redcn-furniture-v1' else 'direct-observations') if output['autoApply'] else 'off'
+    output['autoApplyMode'] = ('suggestions-only' if model in ('redcn-furniture-v1','redcn-furniture-world-v2') else 'direct-observations') if output['autoApply'] else 'off'
     fields = result.get('fields') if isinstance(result.get('fields'), dict) else {}
     configured_budget = config.get('maxSeconds', max_seconds)
     if type(max_seconds) not in (int, float) or not math.isfinite(max_seconds) or not 0 < max_seconds <= 1800:
@@ -197,6 +197,14 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                 photo['autoApplyMode']=str(analysis.get('autoApplyMode',output['autoApplyMode']))[:40]
                 if isinstance(analysis.get('ai'),dict):
                     photo['ai']=sanitize_ai({**analysis['ai'],'photoIndex':index+1,'photoTotal':len(selected)})
+                for key in ('errorCode', 'failurePhase'):
+                    if isinstance(analysis.get(key), str):
+                        photo[key] = analysis[key][:100]
+                if isinstance(analysis.get('diagnostics'), dict):
+                    photo['diagnostics'] = {key: value for key, value in analysis['diagnostics'].items()
+                        if key in ('coldStart', 'budgetSeconds', 'runtimeVerificationSeconds', 'runtimeImportSeconds',
+                            'artifactReadSeconds', 'imagePrepareSeconds', 'sessionLoadSeconds', 'inferenceSeconds',
+                            'workerTotalSeconds', 'workerWaitSeconds', 'decoderVersion')}
                 if status not in ('ok', 'review'):
                     photo['status'] = status if status in ('disabled', 'unavailable', 'invalid', 'timeout', 'busy', 'cancelled') else 'invalid'
                     output['failed'] += 1; incomplete = True
@@ -215,7 +223,7 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                     output['checked'] += 1
                     if analysis.get('provider') != 'ollama' or analysis.get('fallbackReason'):
                         incomplete = True
-                    if analysis.get('provider') == 'yolox-trained':
+                    if analysis.get('provider') in ('yolox-trained','onnx-world'):
                         output['reviewRequired'] = True
                     if photo['autoApply']:
                         for candidate in candidates:
@@ -247,7 +255,7 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
         'automaticSuggestions':output['reviewJournal']['pending'],
         'newSuggestions':output['reviewJournal']['added'],
         'needsReview':len(review_needed),
-        **({'reason':'model-unaccepted','acceptedClasses':0} if model=='redcn-furniture-v1' else {})}
+        **({'reason':'model-unaccepted','acceptedClasses':0} if model in ('redcn-furniture-v1','redcn-furniture-world-v2') else {})}
     if output.get('reviewRequired'):
         output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
             and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))

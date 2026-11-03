@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "kind": "native-assistant-teacher-text-experiment",
+  "release": "v30",
+  "baseRevision": "aafae764d9fe6199dcfd086601eebc7e0be8a7b4",
+  "nativeReceiptSha256": {
+    "experiment": "2ec82b75fb894a86b4d86d32083424fca4ac994635c15ca7487e8e2bdeca877d",
+    "training": "5a6f24ea0984bfc71277c9e8bc89145f434c23f1585690d4335ef08ca12b6c5e"
+  },
+  "startedAt": "2026-11-02T23:47:03.029557+00:00",
+  "finishedAt": "2026-11-02T23:48:05.869075+00:00",
+  "phase": "complete-unaccepted",
+  "sourceHashes": {
+    "scripts/run-teacher-text-v30.py": "09d7b1012543e9523b4e35ddec67e5c495e9b86d1e760761e921c77255e0728d",
+    "scripts/train-local-text-model.py": "8d8aa25a6847d2a6415fe5f259be27273d3f1d764d027e98f9bdd26ecd359e4a",
+    "cli/text_model_contract.py": "754431fde2805e8647aab472596971de14598c1001c9900035303da8b562587f"
+  },
+  "data": {
+    "datasetSha256": "e02cc4ab5d8f1910ec46557d81c3c15e22b7221998e097963de12be3cf22a23d",
+    "heldoutSha256": "02ef6fe30adb98d930be61b6e7ff30089397f7b301d52df2b751c4cddbd7389f",
+    "counts": {
+      "train": 136,
+      "validation": 30
+    },
+    "heldoutQueries": 24,
+    "teacherAuthorship": "AI assistant, explicitly not human/native-editor reviewed"
+  },
+  "training": {
+    "status": "trained-unaccepted",
+    "baseModel": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+    "baseConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+    "baseArtifacts": {
+      "model.safetensors": "ddffab9cbc7bf6dde941c6724841eeca8981fcfa81ca20ff8efff1396326d153"
+    },
+    "datasetContentSha256": "e266077ee6e09cf4863b6ccd77c975c91ffb47b9578aa73c10ca8203f0f8a879",
+    "trainableParameters": 540672,
+    "adapterTensorCount": 96,
+    "lora": {
+      "rank": 8,
+      "scale": 16.0,
+      "dropout": 0.0,
+      "keys": [
+        "self_attn.q_proj",
+        "self_attn.v_proj"
+      ]
+    },
+    "layers": 24,
+    "seed": 20261103,
+    "sampling": "shuffled",
+    "learningRate": 2e-05,
+    "initialSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581",
+    "packages": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.30.6"
+    },
+    "limits": {
+      "seconds": 600,
+      "steps": 240,
+      "maxSequenceLength": 512,
+      "memoryBytes": 3500000000,
+      "batchSize": 1
+    },
+    "examples": {
+      "train": 136,
+      "validation": 30
+    },
+    "stepsCompleted": 240,
+    "peakMemoryBytes": 554302362,
+    "elapsedSeconds": 46.52642133401241,
+    "adapterSha256": "f9a467d80db4744bb3f04b5265cf85fbdadc3336e87ecc09c70e25f4623024ee",
+    "optimizerSha256": "f3036f7422fa841089e7fb356c20d4ea16111baf9c57b106d016a2184b4957b9",
+    "stoppedEarly": false,
+    "baselineValidationLoss": 1.7270145217577617,
+    "finalValidationLoss": 0.9705639923612277,
+    "changedParameterElements": 540672,
+    "coverage": {
+      "uniqueExamples": 136,
+      "uniqueGroups": 80,
+      "sampledTaskCounts": {
+        "advertising": 44,
+        "translation-ru-zh": 96,
+        "translation-zh-ru": 100
+      },
+      "completeTrainingPass": true
+    },
+    "objective": "assistant-targets-including-template-terminator-and-suffix-v1"
+  },
+  "baseline": {
+    "heldoutSha256": "02ef6fe30adb98d930be61b6e7ff30089397f7b301d52df2b751c4cddbd7389f",
+    "adapterSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581",
+    "modelConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+    "requested": 24,
+    "humanLanguageAcceptance": false,
+    "automaticPromotion": false,
+    "completed": 24,
+    "automaticFactsPassed": 6,
+    "exactReferenceMatches": 0,
+    "elapsedSeconds": 4.862694458992337,
+    "peakMemoryBytes": 385797864
+  },
+  "candidate": {
+    "heldoutSha256": "02ef6fe30adb98d930be61b6e7ff30089397f7b301d52df2b751c4cddbd7389f",
+    "adapterSha256": "f9a467d80db4744bb3f04b5265cf85fbdadc3336e87ecc09c70e25f4623024ee",
+    "modelConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+    "requested": 24,
+    "humanLanguageAcceptance": false,
+    "automaticPromotion": false,
+    "completed": 24,
+    "automaticFactsPassed": 5,
+    "exactReferenceMatches": 0,
+    "elapsedSeconds": 4.8997182919993065,
+    "peakMemoryBytes": 386001044
+  },
+  "resourceSupervision": {
+    "physicalBytes": 8589934592,
+    "limits": {
+      "maxProcessGroupRssBytes": 3221225472,
+      "minimumAvailableEstimateBytes": 536870912,
+      "maxSwapGrowthBytes": 805306368,
+      "consecutivePressureSamples": 2
+    },
+    "stopReason": null,
+    "peakProcessGroupRssBytes": 532578304,
+    "minimumAvailableEstimateBytes": 1269874688,
+    "supervisor": {
+      "actualDurationSeconds": 62.780814625000005,
+      "maximumSeconds": 1500,
+      "interrupted": false,
+      "reason": null,
+      "cleanupGraceSeconds": 5
+    }
+  },
+  "qualityAccepted": false,
+  "automaticPromotion": false,
+  "selectedWeightsUnchanged": true,
+  "protectedSettingsUnchanged": true,
+  "interpretation": "The adapter parameters changed and validation loss decreased, but the saved candidate answers failed rental-fact checks. Completion of training does not establish improved usable output. Native outputs are reviewed separately in text-semantic-diagnostic-v30.json.",
+  "privateListingSourcesUsed": false,
+  "authorship": "AI assistant authored curriculum under explicit user request; not operator- or native-editor-approved"
+}

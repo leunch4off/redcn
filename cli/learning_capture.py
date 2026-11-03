@@ -1,9 +1,14 @@
-"""Capture only editor deltas; generated prose is never an approved example."""
+"""Capture editor deltas and source discovery without automatic approval.
+
+``capture_import`` records unknown source phrases in a separate review queue;
+neither a saved import nor generated prose is an approved training example.
+"""
 import hashlib
 import json
 import re
 
 from learning_memory import LearningMemory
+from learning_discovery import capture_import
 
 
 def capture_edit(directory, before, after, group_id):

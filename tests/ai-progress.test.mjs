@@ -41,7 +41,7 @@ test('stale speed is labeled and a stopped clock does not keep advancing',()=>{
 
 test('rules fallback labels the final text separately from measured model draft speed',()=>{
  const text=aiProgressText({backend:'mlx',model:'fixture-model',operation:'text',phase:'complete',textSource:'rules',generatedTokens:60,tokensPerSecond:15,generationSeconds:4});
- assert.match(text.title,/проверенные факты/);assert.match(text.details,/Модель черновика/);
+ assert.match(text.title,/по правилам/);assert.match(text.title,/ИИ отклонён/);assert.match(text.details,/Модель черновика/);
  assert.match(text.metrics,/15 токенов\/с/);assert.match(text.note,/относится к черновику/);
  const skipped=aiProgressText({phase:'complete',textSource:'rules'});
  assert.match(skipped.title,/Китайский текст/);assert.doesNotMatch(skipped.title,/мебель/);

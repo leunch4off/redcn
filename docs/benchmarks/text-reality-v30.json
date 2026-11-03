@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "release": "v30",
+  "recordedAt": "2026-11-03T00:02:02.512646+00:00",
+  "purpose": "Privacy-safe evidence for finite advertisement styles, repeat prevention and translation-validator repair.",
+  "baseRevision": "aafae764d9fe6199dcfd086601eebc7e0be8a7b4",
+  "privacy": {
+    "containsListingIds": false,
+    "containsUrlsOrAddresses": false,
+    "containsSourceOrGeneratedCardTexts": false,
+    "containsPrivatePhotoOrModelData": false
+  },
+  "capabilities": {
+    "engine": "editorial-rules",
+    "modelAuthored": false,
+    "layoutFamilies": 20,
+    "openingFrames": 12,
+    "genericTagAtoms": 48,
+    "unlimitedVariety": false,
+    "legacyCatalogueIndexSpacePerKind": 262144,
+    "legacyCatalogueFormula": "8^6",
+    "legacyCatalogueMeaning": "Mathematical phrase/order combinations, not independently authored or verified advertisements. Different indices can produce the same text for sparse facts."
+  },
+  "initialCardReplay": {
+    "cards": 82,
+    "beforeFamilies": {
+      "emoji-summary": 74,
+      "unrecorded": 8
+    },
+    "afterFamilies": {
+      "viewing-note": 7,
+      "room-by-room": 7,
+      "compact": 8,
+      "clean-card": 5,
+      "location-note": 4,
+      "split-sections": 4,
+      "calm-paragraph": 4,
+      "price-first": 6,
+      "university-reference": 1,
+      "emoji-summary": 3,
+      "numbered-guide": 5,
+      "area-layout": 7,
+      "commute-first": 6,
+      "bullet-board": 5,
+      "service-note": 2,
+      "budget-note": 1,
+      "conditions-first": 5,
+      "editorial": 1,
+      "feature-focus": 1
+    },
+    "distinctObservedFamilies": 19,
+    "openingFrames": {
+      "transport-first": 9,
+      "inventory-invitation": 6,
+      "overview": 9,
+      "save-to-compare": 9,
+      "quick-summary": 5,
+      "details-invitation": 5,
+      "rent-first": 8,
+      "space-first": 11,
+      "layout-question": 8,
+      "route-and-home": 4,
+      "equipment-first": 5,
+      "comparison": 3
+    },
+    "distinctObservedOpeningFrames": 12,
+    "unobservedFamily": "catalogue",
+    "unobservedFamilyRequirement": "Requires a supplied real listing code; no code is invented.",
+    "mostRecentCards": {
+      "cards": 65,
+      "previousZeroTitleBodyTagCounters": 65,
+      "beforeFamilies": {
+        "emoji-summary": 65
+      },
+      "afterFamilies": {
+        "viewing-note": 4,
+        "room-by-room": 5,
+        "compact": 8,
+        "clean-card": 4,
+        "location-note": 3,
+        "split-sections": 3,
+        "calm-paragraph": 3,
+        "price-first": 5,
+        "university-reference": 1,
+        "emoji-summary": 3,
+        "numbered-guide": 3,
+        "area-layout": 6,
+        "commute-first": 5,
+        "bullet-board": 4,
+        "service-note": 1,
+        "budget-note": 1,
+        "conditions-first": 4,
+        "editorial": 1,
+        "feature-focus": 1
+      },
+      "openingFrames": {
+        "transport-first": 6,
+        "inventory-invitation": 4,
+        "overview": 8,
+        "save-to-compare": 7,
+        "quick-summary": 5,
+        "details-invitation": 5,
+        "rent-first": 7,
+        "space-first": 7,
+        "layout-question": 7,
+        "route-and-home": 3,
+        "equipment-first": 4,
+        "comparison": 2
+      }
+    }
+  },
+  "bodyRepeatReplay": {
+    "cards": 82,
+    "variantsPerCard": 50,
+    "comparedBodies": 4100,
+    "minimumDistinctNormalizedBodiesPerCard": 50,
+    "cardsWithRepeatedBodies": 0,
+    "generatorErrors": 0,
+    "minimumDistinctOpeningTextsPerCard": 10,
+    "maximumGeneratedBodyCharacters": 902,
+    "elapsedSeconds": 150.821,
+    "comparison": "NFC letters and numbers; punctuation, whitespace and emoji differences do not create a distinct body.",
+    "sampling": "Read-only replay of a private saved-card snapshot using the shipped dictionary and default preferences; the operator personal dictionary/profile was not supplied.",
+    "environment": "Linux scratch, Node rules renderer; no model inference and no production card writes.",
+    "sourceHashesCapturedInTextBundle": {
+      "web/rental-copy.mjs": "dcc5f001959babe955cf08401fe44c2a7ffdeee142309c6833fde9d6aa557a81",
+      "web/engine.mjs": "7f33b70cb2a2cf586ec7e7761b5b200e386d75b2d20c750182238cfcb9173b63"
+    },
+    "currentSourceNote": "A later generic cabinet label correction does not appear in this earlier renderer replay receipt; this receipt does not claim to remeasure final deployed bytes."
+  },
+  "qualityLimits": {
+    "cardsWithUnknownTranslationFragmentsUnderShippedDictionary": 77,
+    "independentChineseEditorialAcceptance": false,
+    "trainedModelQualityAcceptance": false,
+    "hardwarePhotoAcceptance": false,
+    "statement": "Repeat prevention and fact-oriented rendering are structural improvements. Fifty distinct variants do not establish fluency, marketing effectiveness, unlimited creativity, or local-model learning. Untranslated source fragments remain visible for review."
+  },
+  "translationValidatorRepair": {
+    "checkerSha256": "3d1919d4dbb56962cca558d80c7979eb64aff6767645da84c9e1aa9f43537854",
+    "automaticSemanticVerification": false,
+    "checkedRelations": [
+      "utility category and explicit payer",
+      "deposit refund object, prerequisite and move-out timing",
+      "sofa folding property without an invented separate bed",
+      "lease duration and minimum/maximum qualification separate from money roles",
+      "scoped equipment exceptions and explicit confirmation modifiers"
+    ],
+    "targetedRegression": {
+      "command": "PYTHONPATH=cli:tests python -m unittest test_text_quality test_rental_conditions",
+      "tests": 46,
+      "passed": 46,
+      "failed": 0
+    },
+    "pairedOutputReplay": {
+      "cases": 24,
+      "baselinePassedPreviousChecker": 6,
+      "candidatePassedPreviousChecker": 5,
+      "baselinePassedRepairedChecker": 5,
+      "candidatePassedRepairedChecker": 2,
+      "authoredReferenceAnswersPassedRepairedChecker": 24,
+      "scope": "Post-hoc checker repair replay over previously saved outputs. These outputs and references were not added to training. This is not a new independent model evaluation and does not authorize accepting candidate weights.",
+      "modelAccepted": false,
+      "pairedInputSha256": "ce54bf2e001948e6d94fe3064acaf7f62d83570fd7510267e06d91bd02a9c214"
+    }
+  },
+  "javascriptRegression": {
+    "command": "node --test tests/*.test.mjs",
+    "environment": "Linux scratch",
+    "tests": 630,
+    "passed": 629,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 1,
+    "skipReason": "Optional independent ZXing decoder unavailable",
+    "durationMs": 11902.280239
+  },
+  "nativeBrowserAcceptance": {
+    "status": "passed",
+    "verifiedBy": "root native Mac execution",
+    "recordedAt": "2026-11-03T00:03:28.183698+00:00",
+    "privateReceipt": "text-native-browser-v30-r2.json",
+    "tests": 2,
+    "failed": 0,
+    "skipped": 0,
+    "browserTestElapsedSeconds": 95.367,
+    "browser": "Native Chrome with iPhone-sized viewport",
+    "rebuiltDesktopAndPhoneShells": true,
+    "rewrites": 20,
+    "distinctNormalizedBodies": 20,
+    "manualTitleAndTagsPreserved": true,
+    "reload": {
+      "afterRewrite": 10,
+      "counterBefore": 10,
+      "counterAfter": 10,
+      "rememberedBodies": 11,
+      "continuedToRewrite": 20
+    },
+    "javascriptPageErrors": [],
+    "phoneActualApi": {
+      "dictionaryPairs": 90824,
+      "uniqueRussianEntries": 68200,
+      "openDictionaryPairsRequiringReview": 88894,
+      "layoutFamilies": 20,
+      "openingFrames": 12,
+      "genericTagAtoms": 48
+    },
+    "nativeRecentCardReplay": {
+      "cards": 65,
+      "passed": true,
+      "distinctInitialFamilies": 19,
+      "distinctInitialOpeningFrames": 12,
+      "generatorErrors": 0,
+      "normalizedRepeatedBodies": 0
+    },
+    "sourceAndBuiltShellHashesRecordedInPrivateReceipt": true,
+    "productionMutation": false,
+    "localModelInvoked": false,
+    "physicalIPhoneOrSafariAcceptance": false,
+    "limitation": "The successful run verifies rebuilt software in native Chrome and disposable caches. It does not replace testing on a physical iPhone or Safari."
+  },
+  "assistantReviewSourceBindingAudit": {
+    "criticalIssueFixed": "A new image SHA at the same URL previously inherited old per-photo operator confirmations/rejections. The import now clears those per-photo decisions when originalId changes.",
+    "globalManualFactsPreserved": true,
+    "sameOriginalDecisionsPreserved": true,
+    "reviewJournalPreserved": true,
+    "humanVerified": false,
+    "exhaustive": false,
+    "inventedCounts": false,
+    "targetedRegression": {
+      "command": "PYTHONPATH=cli:tests python -m unittest test_photo_teacher_review",
+      "tests": 6,
+      "passed": 6,
+      "failed": 0
+    }
+  }
+}

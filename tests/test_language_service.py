@@ -62,6 +62,32 @@ class LanguageUpdates(unittest.TestCase):
             self.assertEqual(result['fields']['customFact'],'preserve')
             self.assertEqual(result['fields']['description'],self.original['fields']['description'])
 
+    def test_rewrite_saves_real_selected_style_history_and_skipped_counter_only_for_requested_part(self):
+        original=copy.deepcopy(self.original)
+        original['templateInfo']['editorial']={'titleStyles':[{'family':'old-title'}],'descriptionStyle':{'family':'old-body'}}
+        local_server.save_result(self.directory,original,self.card)
+        def render(payload):
+            self.assertEqual(payload['copyRewrite']['parts'],['body'])
+            self.assertEqual(payload['copyRewrite']['previous']['body'],original['body'])
+            result=self.render(payload)
+            result['copyCounters']={'body':11}
+            result['copyHistory']={'version':1,'body':['a-b-c'],'title':[],'tags':[]}
+            result['templateInfo']['editorial']={'titleStyles':[{'family':'unapplied-title'}],'descriptionStyle':{'family':'new-body'},'stats':{'families':20}}
+            result['templateInfo']['copyEngine']={'modelAuthored':False,'leadFrame':'rent-first'}
+            return result
+        with patch.object(language,'node_language',side_effect=render):
+            language.rewrite(self.directory,self.card,{'part':'body'})
+        saved=local_server.read_result(self.directory,self.card)
+        self.assertEqual(saved['fields']['copyVariant'],11)
+        self.assertEqual(saved['fields']['copyHistory']['body'],['a-b-c'])
+        self.assertEqual(saved['templateInfo']['indices']['description'],11)
+        self.assertEqual(saved['templateInfo']['editorial']['descriptionStyle']['family'],'new-body')
+        self.assertEqual(saved['templateInfo']['editorial']['titleStyles'],[{'family':'old-title'}])
+        self.assertEqual(saved['templateInfo']['copyEngine']['leadFrame'],'rent-first')
+        self.assertEqual(saved['titles'],original['titles'])
+        self.assertEqual(saved['tags'],original['tags'])
+        self.assertEqual(saved['photoAnalysis'],original['photoAnalysis'])
+
     def test_manual_preview_does_not_save_then_apply_keeps_other_parts_and_russian_source(self):
         translated={'text':'有衣柜和书桌','unknown':[],'warnings':[]}
         with patch.object(language,'node_language',return_value=translated) as render:

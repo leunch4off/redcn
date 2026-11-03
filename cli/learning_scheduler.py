@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import sqlite3
 import subprocess
 import threading
@@ -208,8 +209,34 @@ def status(directory):
     if not isinstance(state, dict):
         state = {}
     from model_promotion import public_status
+    config = load_config(directory)
+    with _THREADS_LOCK:
+        current = _THREADS.get(str(Path(directory).resolve()))
+    worker_alive = bool(current and current.thread and current.thread.is_alive() and not current.stopped.is_set())
+    process = current._process if current else None
+    running = bool(process is not None and process.poll() is None)
+    progress = None
+    job_id = state.get('jobId')
+    if running and isinstance(job_id, str) and re.fullmatch(r'idle-[a-f0-9]{32}', job_id):
+        try:
+            receipt = _read(_folder(directory)/'training-runs'/job_id/'candidate/trainreceipt.json', {})
+        except (ValueError, OSError):
+            receipt = {}
+        if (isinstance(receipt, dict) and type(receipt.get('stepsCompleted')) is int
+                and 0 <= receipt['stepsCompleted'] <= 2000):
+            progress = {'stepsCompleted':receipt['stepsCompleted'], 'requestedSteps':config['maxSteps'],
+                'source':'last-written-native-checkpoint', 'elapsedSeconds':receipt.get('elapsedSeconds'),
+                'peakMemoryBytes':receipt.get('peakMemoryBytes')}
+    memory = LearningMemory(directory).status()
     return {**{key: value for key, value in state.items() if key not in {'sampleHashes'}},
-            **load_config(directory), 'promotion': public_status(directory)}
+            **config, 'promotion': public_status(directory),
+            'workerAlive': worker_alive, 'modelProcessRunning': running,
+            'trainingProgress': progress,
+            'recordedPhaseIsProcessProof': False,
+            'approvedExamples': memory['approvedExamples'], 'approvedGroups': memory['approvedGroups'],
+            'examplesStillNeeded': max(0, 20-memory['approvedExamples']),
+            'independentGroupsStillNeeded': max(0, 5-memory['approvedGroups']),
+            'nextCheckSeconds': config['checkSeconds'] if worker_alive else None}
 
 
 class IdleTrainer:
@@ -276,13 +303,23 @@ class IdleTrainer:
             return self._state('disabled', 'Фоновое обучение выключено.')
         if self._busy() or not self._idle(config):
             return self._state('waiting-idle', 'Обучение ждёт свободный Mac и завершение работы с объявлениями.')
+        # Imports are indexed as source text, never auto-approved labels. This
+        # bounded sweep also catches old cards and saves interrupted before the
+        # post-commit discovery hook. It does useful work without loading MLX.
+        from learning_discovery import sweep_saved_cards
+        discovery = sweep_saved_cards(self.directory)
+        if discovery['indexed']:
+            self.state['lastSourceDiscovery'] = {**discovery, 'at': self.clock()}
         if (config['automaticPromotion'] and self.state.get('lastOutcome') == 'unaccepted'
                 and self.state.get('jobId') and self.state.get('qualityOutcome') not in {'accepted', 'blocked'}
                 and self.clock() >= self.state.get('qualityRetryAfter', 0)):
             return self._evaluate(config)
         summary = self.memory.status()
         if not summary['trainingEligible']:
-            return self._state('collecting', 'Нужно не менее 20 проверенных примеров из пяти независимых групп.')
+            return self._state('collecting',
+                'Проверено примеров: '+str(summary['approvedExamples'])+'/20; независимых групп: '+
+                str(summary['approvedGroups'])+'/5. Новые исходные фразы собраны отдельно; их перевод ещё нужно проверить.',
+                approvedExamples=summary['approvedExamples'], approvedGroups=summary['approvedGroups'])
         samples = _samples(self.memory)
         fingerprint = hashlib.sha256('\n'.join(samples).encode()).hexdigest()
         if fingerprint == self.state.get('holdoutFingerprint'):

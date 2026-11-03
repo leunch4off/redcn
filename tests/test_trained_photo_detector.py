@@ -33,10 +33,23 @@ class TrainedDetectorTests(unittest.TestCase):
         self.assertEqual(result[0]['evidence'][0]['photoId'], 'a'*64)
         self.assertAlmostEqual(result[0]['evidence'][0]['region'][0], 80/832)
 
-    def test_ambiguous_dataset_classes_are_not_mapped_into_features(self):
-        for feature in ('gasStove', 'cabinetry', 'cupboard'):
-            raw = rows(); item(raw, 0, feature)
-            self.assertEqual(detector.decode(raw, 416, 416, 'a'*64), [])
+    def test_dataset_aliases_keep_broad_meaning_and_original_class(self):
+        for raw_feature, canonical in detector.CLASS_ALIASES.items():
+            raw = rows(); item(raw, 0, raw_feature)
+            result = detector.decode(raw, 416, 416, 'a'*64)
+            self.assertEqual([row['id'] for row in result], [canonical])
+            self.assertFalse(result[0]['autoEligible'])
+            self.assertIsNone(result[0]['count'])
+            self.assertEqual(result[0]['evidence'][0]['rawClassId'], raw_feature)
+            self.assertNotIn('wardrobe', [row['id'] for row in result])
+            self.assertNotIn('kitchenFurniture', [row['id'] for row in result])
+
+    def test_cupboard_and_cabinetry_share_nms_without_inventing_two_objects(self):
+        raw = rows(); item(raw, 0, 'cupboard', .9); item(raw, 1, 'cabinetry', .8)
+        result = detector.decode(raw, 416, 416, 'a'*64)
+        self.assertEqual([row['id'] for row in result], ['cabinet'])
+        self.assertEqual(len(result[0]['evidence']), 1)
+        self.assertIsNone(result[0]['count'])
 
     def test_oven_never_creates_fridge_and_bad_scores_are_rejected(self):
         raw = rows(); item(raw, 0, 'oven')
@@ -104,6 +117,31 @@ class TrainedDetectorTests(unittest.TestCase):
         self.assertNotIn('generatedTokens',result['ai'])
         self.assertEqual([row['ai']['phase'] for row in events],['loading','analyzing','complete'])
 
+    def test_cold_initialization_can_finish_after_twenty_seconds_but_obeys_outer_deadline(self):
+        class Process:
+            returncode=0
+            terminated=False
+            def communicate(self, **kwargs):
+                return json.dumps({'status':'review','provider':'yolox-trained','model':detector.MODEL,
+                    'autoApply':False,'candidates':[]}).encode(),b''
+            def poll(self):return 0
+        def run(deadline=None):
+            clock={'value':0}
+            process=Process()
+            def launch(*args,**kwargs):
+                # OS initialization/launch costs 25 seconds in this reproduction.
+                clock['value']=25
+                return process
+            with tempfile.TemporaryDirectory() as directory, \
+                    patch.object(detector.time,'monotonic',side_effect=lambda:clock['value']), \
+                    patch.object(detector.subprocess,'Popen',side_effect=launch), \
+                    patch('photo_native_runtime.runtime_command',return_value=(['python'],{'selection':'legacy'})):
+                return detector.analyze(b'photo','image/jpeg',directory,deadline=deadline)
+        self.assertEqual(run()['status'],'review')
+        result=run(deadline=10)
+        self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+        self.assertEqual(result['diagnostics']['budgetSeconds'],10)
+
     def test_expired_worker_is_terminated_and_reaped(self):
         class Process:
             terminated=False
@@ -116,9 +154,11 @@ class TrainedDetectorTests(unittest.TestCase):
         process=Process()
         clock=iter([0,0])
         with patch.object(detector.subprocess,'Popen',return_value=process), \
-                patch.object(detector.time,'monotonic',side_effect=lambda:next(clock,21)):
+                patch.object(detector.time,'monotonic',side_effect=lambda:next(clock,61)):
             result=detector.analyze(b'fixture','image/jpeg','/unused')
         self.assertEqual(result['status'],'unavailable')
+        self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+        self.assertEqual(result['failurePhase'],'worker-startup-or-inference')
         self.assertTrue(process.terminated); self.assertTrue(process.reaped)
 
 

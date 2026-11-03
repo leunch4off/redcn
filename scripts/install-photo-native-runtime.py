@@ -11,9 +11,37 @@ sys.path.insert(0, str(ROOT/'cli'))
 import photo_native_runtime as native
 
 
+def install_world_extension(cache):
+    """Add the measured OpenCV wheel; no model download or provider selection."""
+    import world_photo_detector
+    world_photo_detector.load_artifact(cache)
+    _, base = native.runtime_command(cache)
+    if base.get('selection') != 'native-arm' or base.get('status') != 'verified':
+        raise ValueError('A verified native ARM runtime is required before the World extension')
+    folder = cache/native.FOLDER
+    site = folder/'venv/lib/python3.11/site-packages'
+    if (site/'cv2').exists() or (site/'cv2').is_symlink():
+        # Do not silently replace an existing different or modified package.
+        native._world_preprocessing(folder)
+    else:
+        requirements = folder/'pinned-world-requirements.txt'
+        report = folder/'world-install-receipt.json'
+        for path in (requirements,report):
+            if path.is_symlink():raise ValueError('Runtime extension records must not be symlinks')
+        requirements.write_text('opencv-python=='+native.OPENCV_VERSION+' --hash=sha256:'+native.OPENCV_WHEEL_SHA+'\n')
+        requirements.chmod(0o600)
+        subprocess.run(['/usr/bin/arch','-arm64',str(folder/'venv/bin/python'),'-I','-m','pip','--isolated',
+            'install','--index-url','https://pypi.org/simple','--only-binary=:all:','--disable-pip-version-check',
+            '--require-hashes','--no-deps','--report',str(report),'-r',str(requirements)],check=True)
+        report.chmod(0o600)
+    _, identity = native.runtime_command(cache,model=world_photo_detector.MODEL)
+    return identity
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cache', type=Path, required=True)
+    parser.add_argument('--world',action='store_true',help='Also install the pinned World preprocessing extension; no settings or weights change')
     args = parser.parse_args()
     if sys.platform != 'darwin':
         parser.error('Installer requires the authorized Mac')
@@ -27,7 +55,9 @@ def main():
     receipt = folder/'native-runtime.json'
     if receipt.exists():
         command, identity = native.runtime_command(args.cache)
-        print(json.dumps({'alreadyInstalled': True, 'runtime': identity})); return
+        if args.world:identity=install_world_extension(args.cache)
+        print(json.dumps({'alreadyInstalled': True, 'runtime': identity,
+            'providerConfigurationChanged':False,'autoApplyChanged':False,'modelChanged':False})); return
     env = folder/'venv'
     python = env/'bin/python'
     if env.is_symlink():
@@ -50,6 +80,7 @@ def main():
     temporary.write_text(json.dumps(native.expected_receipt(), sort_keys=True, indent=2)+'\n')
     temporary.chmod(0o600); temporary.replace(receipt)
     command, identity = native.runtime_command(args.cache)
+    if args.world:identity=install_world_extension(args.cache)
     print(json.dumps({'installed': True, 'runtime': identity, 'providerConfigurationChanged': False,
                       'autoApplyChanged': False, 'modelChanged': False}))
 

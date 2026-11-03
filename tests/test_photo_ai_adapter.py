@@ -84,6 +84,31 @@ class PhotoAIAdapterTests(unittest.TestCase):
                 photo_store.analyze_photo(self.directory, self.digest)
         self.assertEqual(provider.call_count, 4)
 
+    def test_native_world_model_and_artifact_identity_cannot_reuse_v1_cache(self):
+        import trained_photo_detector
+        import world_photo_detector
+        def measured(content,mime,directory,model='redcn-furniture-v1',**kwargs):
+            return {'status':'review','provider':'onnx-world' if model==world_photo_detector.MODEL else 'yolox-trained',
+                'model':model,'originalId':hashlib.sha256(content).hexdigest(),'candidates':[],
+                'ai':{'inferenceSeconds':.2,'imagesPerSecond':5,'tokenBased':False}}
+        with patch.object(trained_photo_detector,'analyze',side_effect=measured) as provider, \
+                patch.object(trained_photo_detector,'cache_identity',return_value='v1-identity'), \
+                patch.object(world_photo_detector,'cache_identity',return_value='world-identity') as identity, \
+                patch.object(local_photo_ai,'analyze_photo',side_effect=AssertionError('No Ollama')):
+            photo_ai_settings.save_config(self.directory,{'model':trained_photo_detector.MODEL})
+            first=photo_store.analyze_photo(self.directory,self.digest)
+            photo_ai_settings.save_config(self.directory,{'model':world_photo_detector.MODEL})
+            second=photo_store.analyze_photo(self.directory,self.digest)
+            cached=photo_store.analyze_photo(self.directory,self.digest)
+            identity.return_value='world-new-runtime-identity'
+            changed=photo_store.analyze_photo(self.directory,self.digest)
+        self.assertEqual(provider.call_count,3)
+        self.assertEqual((first['provider'],second['provider']),('yolox-trained','onnx-world'))
+        self.assertFalse(first['cached']);self.assertFalse(second['cached']);self.assertTrue(cached['cached'])
+        self.assertFalse(changed['cached']);self.assertNotIn('imagesPerSecond',cached['ai'])
+        self.assertEqual(second['autoApplySummary']['automaticFacts'],0)
+        self.assertEqual(photo_store.asset(self.directory,self.digest)[0],self.content)
+
     def test_cache_reports_reuse_without_replaying_old_inference_or_token_speed(self):
         events = []
         def measured(*args, **kwargs):

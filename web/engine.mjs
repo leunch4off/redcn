@@ -11,6 +11,7 @@ import {COMMUNITY_RENTAL_RULES,COMMUNITY_RENTAL_META} from './community-phrases.
 import {UNIVERSITY_CATALOG,universityRules,resolveUniversity,resolveCampus,universityStats,universityCampusAvailability} from './university-catalog.mjs';
 import {roomTerminology,extractRoomCounts,audienceIntroduction,descriptionAudience,normalizeListingStudioProfile,applyStudioProfile} from './listing-semantics.mjs';
 import {renderTitleFormula} from './content-studio.mjs';
+import {listingCopySeed,listingCopyVariation,advertisingLead,rentalCopyStats} from './rental-copy.mjs';
 // Deterministic copy engine. No inferred furniture, routes, or journey times.
 const engineCommunityKey=value=>String(value).toLowerCase().replaceAll('ё','е');
 const engineCommunityMeanings=new Map(Object.entries(COMMUNITY_RENTAL_RULES).map(([ru,zh])=>[engineCommunityKey(ru),zh]));
@@ -61,7 +62,7 @@ export const FEATURES = [
   ['sofa','沙发','Диван','living',['диван','диваном']],
   ['armchair','单人扶手椅','Кресло','living',['кресло']],
   ['coffeeTable','茶几','Журнальный столик','living',['журнальный столик']],
-  ['cabinet','边柜','Тумба / буфет','living',['буфет','тумба']],
+  ['cabinet','储物柜','Шкафчик / тумба','living',['буфет','тумба']],
   ['ottoman','软凳','Пуф / банкетка','living',['пуф','банкетка']],
   ['bench','长凳','Скамья','living',['скамья']],
   ['tvStand','电视柜','ТВ-тумба · без вывода о телевизоре','living',['тв-тумба']],
@@ -126,7 +127,7 @@ export function translateDraft(text,{rules=DICTIONARY,entries=[],mode='draft'}={
   return translateRussian(text,{rules,entries,mode});
 }
 export function generationCapabilities(){
-  return {templates:catalogStats(),editorialStyles:listingStyleStats(),curatedRules:Object.keys(DICTIONARY).length,
+  return {templates:catalogStats(),editorialStyles:listingStyleStats(),copyEngine:rentalCopyStats(),curatedRules:Object.keys(DICTIONARY).length,
     communityPhrases:COMMUNITY_RENTAL_META.entryCount,
     universities:universityStats(),
     customText:{offline:true,unknown:'review',manualRulesPriority:true},
@@ -245,9 +246,10 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     sharingAllowed&&positive('price')?['🚨莫斯科'+price+'整套'+layout, '2人分摊参考：人均'+wan(Math.round(Number(v.price)/2)),area].filter(Boolean).join('｜'):
       ['✈️莫斯科'+price+layout,metro?((main?.mode==='walk'&&Number(main.time)<=10)?'近':'')+metro:null,'协助抵达登记'].filter(Boolean).join('｜'),
   ];
-  const variation=safeVariant(v.titleVariant);
-  const copyVariation=safeVariant(v.copyVariant);
-  const tagVariation=safeVariant(v.tagVariant??v.titleVariant);
+  const titleCounter=safeVariant(v.titleVariant),copyCounter=safeVariant(v.copyVariant),tagCounter=safeVariant(v.tagVariant??v.titleVariant);
+  const variation=listingCopyVariation({...v,titleVariant:titleCounter},'title');
+  const copyVariation=listingCopyVariation({...v,copyVariant:copyCounter},'body');
+  const tagVariation=listingCopyVariation({...v,tagVariant:tagCounter},'tags');
   const templateMode=v.templateMode==='catalog';
   const hooks=[];if(featureSet.has('ac'))hooks.push('空调');if(featureSet.has('bed'))hooks.push('双人床');if(featureSet.has('closet'))hooks.push('衣帽间');if(featureSet.has('dishwasher'))hooks.push('洗碗机');
   if(variation%3===1)titles=[['🏡'+area+layout,metro||'莫斯科',hooks.join('＋')||'整套出租',price].filter(Boolean).join('｜'),...titles.slice(0,2)];
@@ -280,19 +282,19 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   else push('🏠 户型：'+layout+(roomInfo.separateRooms?'｜房间独立':''));
   if(roomInfo.bedroomLabel)push('🛏 卧室数量：'+roomInfo.bedroomLabel);
   if(roomInfo.livingRoomLabel)push('🛋 客厅数量：'+roomInfo.livingRoomLabel);
-  if(area)push('📐 面积：'+area);
-  if(positive('living'))push('🛋 居住面积：'+v.living+'㎡');
-  if(positive('kitchen'))push('🍳 厨房：'+v.kitchen+'㎡');
+  if(area)push(wording('📐 面积：'+area,'📐 这套房源的面积为'+area+'。','📐 房源面积'+area+'，具体空间安排可结合户型一起看。','📐 '+area+'的空间，房屋配置继续往下看。'));
+  if(positive('living'))push(wording('🛋 居住面积：'+v.living+'㎡','🛋 其中居住面积为'+v.living+'㎡。','🛋 房源所列居住面积是'+v.living+'㎡。'));
+  if(positive('kitchen'))push(wording('🍳 厨房：'+v.kitchen+'㎡','🍳 厨房面积为'+v.kitchen+'㎡。','🍳 厨房部分占'+v.kitchen+'㎡，现有配置见家具家电清单。'));
   if(positive('bedroomArea'))push('🛏 卧室：'+v.bedroomArea+'㎡');
-  if(v.floor||v.floors)push('🏢 楼层：'+(v.floor||'待确认')+'/'+(v.floors||'待确认')+'层');
+  if(v.floor||v.floors){const floorValue=(v.floor||'待确认')+'/'+(v.floors||'待确认')+'层';push(wording('🏢 楼层：'+floorValue,'🏢 这套房源所在楼层：'+floorValue+'。','🏢 楼层信息为'+floorValue+'，可结合自己的居住习惯考虑。'));}
   if(v.renovation)push('✨ 装修：'+zh(v.renovation));
   if(v.windows)push('🪟 '+zh(v.windows));
   if(v.bathroom)push('🛁 卫浴：'+zh(v.bathroom).replace(/^(\d+)\s*(?:个)?(卫生间与浴室合一|厕所与浴室分开)/,'$1处（$2）'));
   if(v.buildingYear)push('🏘 建成年份：'+v.buildingYear);
   if(v.ceiling)push('📏 层高：'+v.ceiling+'米');
   section('conditions');
-  if(positive('price'))push('💰 租金：'+price+'/月（'+rubles(v.price)+'₽）');
-  if(v.deposit!==''&&v.deposit!==undefined&&v.deposit!==null)push('🔐 押金：'+(Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）'));
+  if(positive('price')){const rentValue=price+'/月（'+rubles(v.price)+'₽）';push(wording('💰 租金：'+rentValue,'💰 每月租金为'+rentValue+'。','💰 这套的月租是'+rentValue+'，其他费用按下面列出的条件核对。','💰 租房预算先记这一项：'+rentValue+'。'));}
+  if(v.deposit!==''&&v.deposit!==undefined&&v.deposit!==null){const depositValue=Number(v.deposit)===0?'无需押金':wan(v.deposit)+'（'+rubles(v.deposit)+'₽）';push(wording('🔐 押金：'+depositValue,'🔐 入住押金：'+depositValue,Number(v.deposit)===0?'🔐 该房源注明无需押金。':'🔐 押金金额为'+depositValue+'。'));}
   if(v.prepayMonths)push('📄 预付：'+v.prepayMonths+'个月');
   if(v.contractMonths)push('📅 描述所列合同期限：'+v.contractMonths+'个月');
   if(v.minMonths&&v.leaseTerm==='long')push('📅 卡片所列最低租期：'+v.minMonths+'个月'+(v.contractMonths&&Number(v.contractMonths)!==Number(v.minMonths)?'（与描述不一致，请确认）':''));
@@ -378,6 +380,8 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   const blockContext={...titleContext,feature:[...titleFeatures.slice(bodyFeatureStart),...titleFeatures.slice(0,bodyFeatureStart)].slice(0,2).map(equipmentLabel).join('、'),...Object.fromEntries(Object.entries(sections).map(([key,value])=>[key,value.join('\n').replace(/^\n+|\n+$/g,'')]))};
   titles=titleIndexes.map(index=>renderListingTemplate('title',index,titleContext));
   body=renderListingTemplate('description',copyVariation,blockContext);
+  const lead=advertisingLead(blockContext,copyVariation);
+  if(lead.text)body=lead.text+'\n\n'+body;
   if(templateMode){
     renderedTags=renderTemplate('tags',tagVariation,{tags:[...new Set(finalTags)]});
     const byTag=new Map(tagSuggestions.map(row=>[row.tag,row]));
@@ -385,7 +389,8 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
     templateInfo={version:1,mode:'catalog',titleId:getTemplate('title',variation).id,
       titleIds:titleIndexes.map(index=>getTemplate('title',index).id),
       descriptionId:getTemplate('description',copyVariation).id,tagId:getTemplate('tags',tagVariation).id,
-      indices:{title:variation,description:copyVariation,tags:tagVariation},counts:catalogStats(),
+      indices:{title:titleCounter,description:copyCounter,tags:tagCounter},counts:catalogStats(),
+      copyEngine:{...rentalCopyStats(),sourceSeed:listingCopySeed(v),leadFrame:lead.id,availableLeadFrames:lead.available},
       editorial:{titleStyles:titleIndexes.map(index=>getListingStyle('title',index,titleContext)),descriptionStyle:getListingStyle('description',copyVariation,blockContext),stats:listingStyleStats()}};
   }
   if(universityTarget)titles[0]+='｜🎓通勤目标：'+universityTarget;

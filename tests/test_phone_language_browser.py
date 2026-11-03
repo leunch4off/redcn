@@ -70,7 +70,7 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
     def test_russian_translation_is_reviewed_then_saved_to_selected_part(self):
         acceptance.PhoneBrowserAcceptance.connect(self);self.open_card()
         self.page.route('**/api/phone/language',lambda route:route.fulfill(status=200,content_type='application/json',body=json.dumps({
-            'dictionary':{'entries':1200},'templates':{'title':{'count':200001},'body':{'count':200002},'tags':{'count':200003}}})))
+            'dictionary':{'entries':1200},'templates':{'titles':262144,'descriptions':262144,'tagSets':262144,'genericTagAtoms':48},'editorialStyles':{'families':20},'copyEngine':{'leadFrames':12}})))
         translations=[];edits=[]
         def translate(route):
             translations.append(route.request.post_data_json)
@@ -85,8 +85,9 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
         self.page.route('**/api/phone/translate',translate)
         self.page.route('**/api/phone/cards/'+self.card_id+'/edit-text',edit)
         self.page.locator('#phoneLanguageStudio summary').click()
-        self.page.wait_for_function("document.querySelector('#phoneLanguageStats').textContent.includes('200')")
-        self.assertIn('считаются отдельно',self.page.locator('#phoneLanguageStats').inner_text())
+        self.page.wait_for_function("document.querySelector('#phoneLanguageStats').textContent.includes('20 способов оформления')")
+        self.assertIn('не являются обученными весами',self.page.locator('#phoneLanguageStats').inner_text())
+        self.assertNotIn('наборов тегов',self.page.locator('#phoneLanguageStats').inner_text())
         self.page.locator('#phoneRussianDraft').fill('Есть холодильник и неслово.')
         self.page.locator('#phoneTranslateDraft').click()
         self.page.wait_for_function("document.querySelector('#phoneChineseDraft').value.includes('冰箱')")
@@ -104,6 +105,16 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
         self.page.wait_for_function("document.querySelector('#phoneTags').textContent.includes('房源信息')")
         self.assertEqual(edits[1]['part'],'tags');self.assertEqual(len(translations),1)
         acceptance.PhoneBrowserAcceptance.assert_mobile_fit(self)
+
+    def test_language_stats_show_finite_styles_and_dictionary_records(self):
+        acceptance.PhoneBrowserAcceptance.connect(self);self.open_card()
+        self.page.locator('#phoneLanguageStudio summary').click()
+        self.page.wait_for_function("document.querySelector('#phoneLanguageStats').textContent.includes('20 способов оформления')")
+        text=self.page.locator('#phoneLanguageStats').inner_text()
+        for fact in ['Словарных пар RU → ZH:', '12 вариантов вступления', '48 общих тегов', 'не являются обученными весами']:
+            self.assertIn(fact,text)
+        self.assertNotIn('наборов тегов',text)
+        self.language_truth_receipt={'visibleLanguageText':text,'pageErrors':list(self.errors),'isolatedFixture':True}
 
     def test_late_translation_cannot_fill_another_card_and_logout_clears_drafts(self):
         other=local_server.save_result(self.directory,{**self.result,'titles':['另一套莫斯科公寓']})

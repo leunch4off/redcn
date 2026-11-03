@@ -54,16 +54,16 @@ def _profile(directory):
     return load_profile(Path(directory))
 
 
-def node_language(payload):
+def node_language(payload, *, timeout=60):
     encoded = json.dumps(payload, ensure_ascii=False)
     if len(encoded.encode('utf-8')) > 1_000_000:
         raise ValueError('Запрос перевода превышает ограничение размера')
     try:
         result = subprocess.run([resolve_node(), str(redcn.ROOT/'cli/language.mjs')],
             input=encoded, capture_output=True, text=True, encoding='utf-8',
-            check=False, timeout=60)
+            check=False, timeout=timeout)
     except subprocess.TimeoutExpired as error:
-        raise ValueError('Обработка текста не завершилась за 60 секунд. Повторите запрос.') from error
+        raise ValueError('Обработка текста не завершилась за '+str(timeout)+' секунд. Повторите запрос.') from error
     except OSError as error:
         raise ValueError('Не удалось запустить обработчик текста на Mac') from error
     if result.returncode:
@@ -78,6 +78,13 @@ def node_language(payload):
     if not isinstance(value, dict):
         raise ValueError('Обработчик текста вернул неверный ответ')
     return value
+
+
+def _learning_counts(directory):
+    from learning_memory import LearningMemory
+    memory = LearningMemory(directory).status()
+    return {'approvedExamples': memory['approvedExamples'], 'approvedGroups': memory['approvedGroups'],
+            'pendingExamples': memory['counts'].get('pending', 0), 'dictionaryPairsAreModelKnowledge': False}
 
 
 def capabilities(directory):
@@ -97,8 +104,9 @@ def capabilities(directory):
         cached = _capabilities.get(key)
         if cached and time.monotonic()-cached[0] < 60:
             _capabilities.move_to_end(key)
-            return copy.deepcopy(cached[1])
+            return {**copy.deepcopy(cached[1]), 'learning': _learning_counts(directory)}
         value = node_language({'action': 'capabilities', 'rules': profile.get('rules', {})})
+        value['learning'] = _learning_counts(directory)
         import university_store
         value['universities'] = university_store.stats(directory)
         _capabilities[key] = (time.monotonic(), value)
@@ -278,9 +286,19 @@ def rewrite(directory, card_id, data, *, actor='Mac owner'):
         'titleVariant': indices['title'], 'copyVariant': indices['description'], 'tagVariant': indices['tags']}
     profile = _profile(directory)
     generated = node_language({'action': 'generate', 'fields': render_fields,
-        'rules': profile.get('rules', {}), 'prefs': profile.get('prefs', {})})
+        'rules': profile.get('rules', {}), 'prefs': profile.get('prefs', {}),
+        'copyRewrite': {'parts': list(targets), 'previous': {
+            'title': (previous.get('titles') or [''])[0],
+            'body': previous.get('body', ''), 'tags': previous.get('tags', '')}}})
     if generated.get('problems'):
         raise ValueError(' · '.join(str(problem) for problem in generated['problems'])[:600])
+    used_counters = generated.get('copyCounters')
+    if isinstance(used_counters, dict):
+        for target in targets:
+            if target in used_counters:
+                indices[index_names[target]] = _variant(used_counters[target])
+    if isinstance(generated.get('copyHistory'), dict):
+        fields['copyHistory'] = copy.deepcopy(generated['copyHistory'])
     card = copy.deepcopy(previous)
     for target in targets:
         if target == 'title':
@@ -305,6 +323,14 @@ def rewrite(directory, card_id, data, *, actor='Mac owner'):
                 info[key] = new_info[key]
             else:
                 info.pop(key, None)
+    if isinstance(new_info.get('editorial'), dict):
+        editorial = copy.deepcopy(info.get('editorial')) if isinstance(info.get('editorial'), dict) else {}
+        for key in ['stats'] + (['titleStyles'] if 'title' in targets else []) + (['descriptionStyle'] if 'body' in targets else []):
+            if key in new_info['editorial']:
+                editorial[key] = copy.deepcopy(new_info['editorial'][key])
+        info['editorial'] = editorial
+    if 'body' in targets and isinstance(new_info.get('copyEngine'), dict):
+        info['copyEngine'] = copy.deepcopy(new_info['copyEngine'])
     if isinstance(info.get('manualParts'), list):
         info['manualParts'] = [name for name in info['manualParts'] if name not in targets]
     card['templateInfo'] = info

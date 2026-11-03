@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import threading
 import warnings
 
 if __name__ == '__main__' and sys.flags.isolated:
@@ -28,6 +29,16 @@ SIZE = 416
 ROWS = 3549
 MAX_BYTES = 12_000_000
 MAX_OUTPUT = 1_000_000
+# Cold Python/ORT initialization is part of the deadline, not evidence that a
+# room is empty. Subsequent photos retain the short bounded request budget.
+COLD_SECONDS = 60
+WARM_SECONDS = 20
+_WARM_DIRECTORIES = set()
+_WARM_LOCK = threading.Lock()
+# Dataset labels map only to broader, semantically entailed UI categories.
+# A cupboard never establishes a wardrobe or a fitted kitchen.
+CLASS_ALIASES = {'gasStove': 'stove', 'cabinetry': 'cabinet', 'cupboard': 'cabinet'}
+DECODER_VERSION = 'bounded-startup-canonical-classes-v2'
 ARTIFACT = Path('tools/photo-training/20261101-first-pass/run-01')
 
 
@@ -64,7 +75,7 @@ def cache_identity(directory):
     try:
         from photo_native_runtime import cache_identity as runtime_identity
         _, receipt_sha = load_artifact(directory)
-        return MODEL_SHA+':'+receipt_sha+':'+runtime_identity(directory)
+        return DECODER_VERSION+':'+MODEL_SHA+':'+receipt_sha+':'+runtime_identity(directory)
     except (OSError, ValueError, TypeError, AttributeError):
         return 'unavailable'
 
@@ -89,7 +100,8 @@ def decode(rows, width, height, digest):
                         or not all(0 <= v <= 1 for v in row[4:])):
                     raise ValueError('Неверные оценки локальной модели')
                 class_index = max(range(len(CLASS_IDS)), key=lambda value: row[5+value])
-                feature = CLASS_IDS[class_index]
+                raw_feature = CLASS_IDS[class_index]
+                feature = CLASS_ALIASES.get(raw_feature, raw_feature)
                 score = row[4]*row[5+class_index]
                 if feature not in FEATURE_LABELS or score < .35 or abs(row[2]) > 20 or abs(row[3]) > 20:
                     continue
@@ -99,7 +111,7 @@ def decode(rows, width, height, digest):
                 x2, y2 = max(0, min(width, cx+bw/2)), max(0, min(height, cy+bh/2))
                 if x2 <= x1 or y2 <= y1:
                     continue
-                found.append({'id': feature, 'confidence': score,
+                found.append({'id': feature, 'rawClassId': raw_feature, 'confidence': score,
                     'region': [x1/width, y1/height, (x2-x1)/width, (y2-y1)/height]})
     kept = []
     for row in sorted(found, key=lambda item: -item['confidence']):
@@ -115,26 +127,33 @@ def decode(rows, width, height, digest):
         if len(candidate['evidence']) < 8:
             candidate['evidence'].append({'kind': 'object-detection', 'region': row['region'],
                 'confidence': row['confidence'], 'photoId': digest, 'originalId': digest,
-                'provider': 'yolox-trained', 'model': MODEL, 'source': 'local-photo'})
+                'provider': 'yolox-trained', 'model': MODEL, 'source': 'local-photo',
+                'rawClassId': row['rawClassId']})
     return list(groups.values())
 
 
 def _infer(directory, content, mime):
+    started = time.monotonic()
     model, _ = load_artifact(directory)
+    timings = {'artifactReadSeconds': time.monotonic()-started}
+    imported = time.monotonic()
     if not isinstance(content, bytes) or not 0 < len(content) <= MAX_BYTES:
         raise ValueError('Нужна фотография до 12 МБ')
-    from PIL import Image
+    from PIL import Image, ImageOps
     import numpy as np
     import onnxruntime as ort
+    timings['runtimeImportSeconds'] = time.monotonic()-imported
+    prepared = time.monotonic()
     expected = {'image/jpeg': 'JPEG', 'image/png': 'PNG', 'image/webp': 'WEBP'}.get(mime)
     with warnings.catch_warnings():
         warnings.simplefilter('error', Image.DecompressionBombWarning)
         with Image.open(io.BytesIO(content)) as original:
             if (expected is None or original.format != expected or getattr(original, 'n_frames', 1) != 1
-                    or original.width*original.height > 40_000_000 or min(original.size) < 32
-                    or original.getexif().get(274, 1) not in (1, None)):
-                raise ValueError('Нужна одиночная фотография без EXIF-поворота')
-            image = original.convert('RGB')
+                    or original.width*original.height > 40_000_000 or min(original.size) < 32):
+                raise ValueError('Нужна одиночная фотография JPEG, PNG или WebP с верным MIME')
+            # Coordinates follow the displayed, EXIF-oriented original.
+            with ImageOps.exif_transpose(original) as oriented:
+                image = oriented.convert('RGB')
     width, height = image.size
     ratio = min(SIZE/width, SIZE/height)
     resized = image.resize((max(1, int(width*ratio)), max(1, int(height*ratio))), Image.Resampling.BILINEAR)
@@ -142,9 +161,12 @@ def _infer(directory, content, mime):
     array[:resized.height, :resized.width] = np.asarray(resized)[:, :, ::-1]
     image.close(); resized.close()
     tensor = np.ascontiguousarray(array.transpose(2, 0, 1)[None])
+    timings['imagePrepareSeconds'] = time.monotonic()-prepared
+    loaded = time.monotonic()
     options = ort.SessionOptions(); options.intra_op_num_threads = 2; options.inter_op_num_threads = 1
     options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
     session = ort.InferenceSession(model, sess_options=options, providers=['CPUExecutionProvider'])
+    timings['sessionLoadSeconds'] = time.monotonic()-loaded
     inputs = session.get_inputs()
     if len(inputs) != 1 or inputs[0].shape != [1, 3, SIZE, SIZE] or inputs[0].type != 'tensor(float)':
         raise ValueError('Неверный вход обученной модели')
@@ -159,6 +181,8 @@ def _infer(directory, content, mime):
     return {'status': 'review', 'provider': 'yolox-trained', 'model': MODEL,
         'runtimeArchitecture': platform.machine(),
         'engine': 'redcn · обученная компактная модель · проверка', 'originalId': digest,
+        'diagnostics': {**timings, 'inferenceSeconds': inference_seconds,
+            'workerTotalSeconds': time.monotonic()-started, 'decoderVersion': DECODER_VERSION},
         'candidates': candidates, 'autoApply': False,
         'ai': sanitize_ai({'backend': 'yolox-trained', 'model': MODEL, 'operation': 'furniture',
             'phase': 'complete', 'tokenBased': False, 'cached': False, 'processedImages': 1,
@@ -171,19 +195,27 @@ def _infer(directory, content, mime):
             'Количество, размеры, исправность и наличие скрытых приборов не определяются.']}
 
 
-def _unavailable():
+def _unavailable(code='PHOTO_WORKER_UNAVAILABLE', phase='unknown'):
     return {'status': 'unavailable', 'provider': 'yolox-trained', 'model': MODEL,
         'engine': 'redcn · обученная компактная модель', 'candidates': [], 'autoApply': False,
+        'errorCode': code, 'failurePhase': phase,
         'message': 'Обученная модель недоступна или не успела обработать фото. Предметы не проверены.',
         'limitations': ['Это не означает, что предметов нет.']}
 
 
-def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None):
+def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None, model=MODEL):
+    if model == MODEL:
+        provider, worker, unavailable = 'yolox-trained', Path(__file__).resolve(), _unavailable
+    elif model == 'redcn-furniture-world-v2':
+        import world_photo_detector as selected
+        provider, worker, unavailable = selected.PROVIDER, Path(selected.__file__).resolve(), selected._unavailable
+    else:
+        raise ValueError('Неизвестная закреплённая модель фотоанализа')
     if cancel is not None and cancel.is_set():
         raise ValueError('Анализ отменён')
     started = time.monotonic()
     def progress(phase, message, **metrics):
-        ai = sanitize_ai({'backend': 'yolox-trained', 'model': MODEL, 'operation': 'furniture',
+        ai = sanitize_ai({'backend': provider, 'model': model, 'operation': 'furniture',
             **metrics, 'phase': phase, 'tokenBased': False, 'cached': False,
             'elapsedSeconds': time.monotonic() - started})
         emit(status, message, stage='vision', ai=ai)
@@ -194,23 +226,34 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
         result['ai'] = progress('complete' if result.get('status') == 'review' else 'unavailable',
             result.get('message', 'Анализ фото завершён'), **metrics)
         return result
-    remaining = 20 if deadline is None else min(20, deadline-started)
+    identity = str(Path(directory).resolve())+'|'+model
+    with _WARM_LOCK:
+        cold = identity not in _WARM_DIRECTORIES
+    budget_limit = COLD_SECONDS if cold else WARM_SECONDS
+    remaining = budget_limit if deadline is None else min(budget_limit, deadline-started)
     if remaining <= 0:
         raise ValueError('Время анализа фото истекло')
     if not isinstance(content, bytes) or not 0 < len(content) <= MAX_BYTES:
-        return completed(_unavailable())
+        return completed(unavailable())
     request = json.dumps({'content': base64.b64encode(content).decode(), 'mime': mime}).encode()
     process = None
+    runtime = None
+    phase = 'runtime-verification'
+    validation_started = time.monotonic()
     try:
         from photo_native_runtime import runtime_command, NativeRuntimeError
         try:
             if status is not None:
                 progress('loading', 'Загружаем локальный детектор мебели и техники')
-            command, runtime = runtime_command(directory, deadline=started+remaining)
+            command, runtime = runtime_command(directory, deadline=started+remaining,
+                **({'model': model} if model != MODEL else {}))
         except NativeRuntimeError as error:
-            return completed({**_unavailable(), 'message': str(error)+'; фото не проверено.',
+            return completed({**unavailable(error.code, phase), 'message': str(error)+'; фото не проверено.',
                 'errorCode': error.code, 'runtime': {'selection': 'native-arm', 'status': 'invalid'}})
-        process = subprocess.Popen([*command, str(Path(__file__).resolve()), '--worker', str(directory)],
+        validation_seconds = time.monotonic()-validation_started
+        phase = 'worker-startup-or-inference'
+        worker_started = time.monotonic()
+        process = subprocess.Popen([*command, str(worker), '--worker', str(directory)],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
         finish = started+remaining
         pending = request
@@ -221,28 +264,46 @@ def analyze(content, mime, directory, *, cancel=None, deadline=None, status=None
                 raise ValueError('Анализ отменён')
             budget = finish-time.monotonic()
             if budget <= 0:
-                return completed(_unavailable())
+                result = unavailable('PHOTO_WORKER_TIMEOUT', phase)
+                result['runtime'] = runtime
+                result['diagnostics'] = {'coldStart': cold, 'budgetSeconds': remaining,
+                    'runtimeVerificationSeconds': validation_seconds,
+                    'workerWaitSeconds': time.monotonic()-worker_started}
+                return completed(result)
             try:
                 stdout, _ = process.communicate(input=pending, timeout=min(.1, budget))
                 break
             except subprocess.TimeoutExpired:
                 pending = None
-        if process.returncode != 0 or len(stdout) > MAX_OUTPUT:
-            return completed(_unavailable())
+        if len(stdout) > MAX_OUTPUT:
+            return completed(unavailable('PHOTO_WORKER_OUTPUT_LIMIT', phase))
         result = json.loads(stdout)
-        if not isinstance(result, dict) or result.get('provider') != 'yolox-trained' or result.get('model') != MODEL:
-            return completed(_unavailable())
+        if process.returncode != 0:
+            failure = unavailable('PHOTO_WORKER_FAILED', phase)
+            if isinstance(result, dict) and result.get('errorCode') in ('PHOTO_IMAGE_INVALID', 'PHOTO_WORKER_FAILED'):
+                failure.update(errorCode=result['errorCode'], failurePhase=result.get('failurePhase', phase))
+            failure['runtime'] = runtime
+            return completed(failure)
+        if not isinstance(result, dict) or result.get('provider') != provider or result.get('model') != model:
+            return completed(unavailable())
         if runtime.get('selection') == 'native-arm' and result.get('runtimeArchitecture') != 'arm64':
-            return completed({**_unavailable(), 'message': 'ARM runtime вернул несовпадающую архитектуру; фото не проверено.',
+            return completed({**unavailable(), 'message': 'ARM runtime вернул несовпадающую архитектуру; фото не проверено.',
                 'errorCode': 'PHOTO_NATIVE_RUNTIME_ARCHITECTURE', 'runtime': {**runtime, 'status': 'invalid'}})
         result['runtime'] = {**runtime, 'workerArchitecture': result.get('runtimeArchitecture', 'unknown')}
+        result['diagnostics'] = {**(result.get('diagnostics') if isinstance(result.get('diagnostics'), dict) else {}),
+            'coldStart': cold, 'budgetSeconds': remaining,
+            'runtimeVerificationSeconds': validation_seconds,
+            'workerWaitSeconds': time.monotonic()-worker_started}
+        if result.get('status') == 'review':
+            with _WARM_LOCK:
+                _WARM_DIRECTORIES.add(identity)
         # Enforce publication policy even when loading an older worker/cache.
         result['autoApply'] = False
         for row in result.get('candidates', []):
             row.update(autoEligible=False, autoCountEligible=False, count=None)
         return completed(result)
     except (OSError, json.JSONDecodeError, TypeError, AttributeError):
-        return completed(_unavailable())
+        return completed(unavailable('PHOTO_WORKER_FAILED', phase))
     finally:
         if process is not None and process.poll() is None:
             try: process.terminate()
@@ -263,6 +324,9 @@ if __name__ == '__main__':
         request = json.loads(sys.stdin.buffer.read(17_000_001))
         content = base64.b64decode(request['content'], validate=True)
         print(json.dumps(_infer(sys.argv[2], content, request['mime']), ensure_ascii=False, allow_nan=False))
+    except ValueError:
+        print(json.dumps(_unavailable('PHOTO_IMAGE_INVALID', 'image-or-model-validation'), ensure_ascii=False))
+        raise SystemExit(1)
     except Exception:
-        print(json.dumps(_unavailable(), ensure_ascii=False))
+        print(json.dumps(_unavailable('PHOTO_WORKER_FAILED', 'runtime-or-inference'), ensure_ascii=False))
         raise SystemExit(1)
