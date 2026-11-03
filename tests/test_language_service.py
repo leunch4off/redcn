@@ -185,6 +185,30 @@ class LanguageUpdates(unittest.TestCase):
         self.assertIn(preview['warnings'][0],result['warnings'])
 
 
+class IndividualSourceConditions(unittest.TestCase):
+    def test_utility_source_conflict_is_explicit_and_preserves_input(self):
+        for utilities in ('meters', 'included'):
+            fields = {'price': '98000', 'rooms': '2', 'utilities': utilities,
+                'sourceDescription': 'Коммунальные платежи по квитанции (7-9т.р в месяц) + интернет.'}
+            original = copy.deepcopy(fields)
+            with self.assertRaisesRegex(ValueError, 'В описании и полях расходятся коммунальные расходы'):
+                language.node_language({'action': 'individual-brief', 'fields': fields})
+            self.assertEqual(fields, original)
+
+    def test_matching_utility_condition_and_separate_admission_range_reach_brief(self):
+        fields = {'price': '98000', 'rooms': '2', 'utilities': 'extra', 'occupants': '4',
+            'sourceDescription': 'Коммунальные платежи по квитанции. '
+                'Курение в квартире категорически запрещено. Рассмотрим к проживанию 1–2х человек.'}
+        result = language.node_language({'action': 'individual-brief', 'fields': fields})
+        brief = result['factualBrief']
+        self.assertEqual(brief['effectiveConditions']['utilities'], 'extra')
+        self.assertEqual(brief['effectiveConditions']['smokingPolicy'], 'no')
+        self.assertEqual(brief['sourceRestrictions'], [
+            {'kind': 'occupancy-range', 'minimum': 1, 'maximum': 2, 'text': '入住人数：1–2人。'}])
+        self.assertEqual(fields['occupants'], '4')
+        self.assertNotIn('smokingPolicy', fields)
+
+
 class AuthenticatedLanguageRoutes(unittest.TestCase):
     setUp=route_fixture.CardDocumentRoutes.setUp
     tearDown=route_fixture.CardDocumentRoutes.tearDown

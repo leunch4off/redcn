@@ -384,12 +384,12 @@ def analyze_photo(content, mime, *, model=None, endpoint=DEFAULT_ENDPOINT,
                 raw = request('POST', '/api/chat', {'model': selected_model, 'stream': False,
                     'messages': [{'role': 'user', 'content': prompt, 'images': [encoded]}],
                     'format': schema, 'options': {'temperature': 0, 'num_ctx': 4096, 'num_predict': 1536}, 'keep_alive': 0})
+                state['metrics'] = {**_ollama_metrics(raw), 'inferenceSeconds': time.monotonic() - inference_started}
                 if isinstance(raw,dict) and raw.get('done_reason')=='length':
                     raise _Failure('invalid','Ответ модели обрезан по лимиту; предметы не добавлены. Повторите анализ фото.')
                 if not isinstance(raw, dict) or raw.get('done') is not True or raw.get('done_reason') not in (None, 'stop') or not isinstance(raw.get('message'), dict) or not isinstance(raw['message'].get('content'), str):
                     raise _Failure('invalid', 'Модель не завершила структурированный ответ')
                 state['inventory'] = normalize_inventory(_json(raw['message']['content']), photo_id, selected_model)
-                state['metrics'] = {**_ollama_metrics(raw), 'inferenceSeconds': time.monotonic() - inference_started}
             except _Failure as error:
                 state['failure'] = (error.status, error.message)
             except (OSError, http.client.HTTPException):
@@ -416,7 +416,7 @@ def analyze_photo(content, mime, *, model=None, endpoint=DEFAULT_ENDPOINT,
                 return finish('timeout', 'Локальный анализ превысил лимит времени; оригинал сохранён')
             if done.wait(min(.05, remaining)):
                 if 'failure' in state:
-                    return finish(*state['failure'])
+                    return finish(*state['failure'], ai=state.get('metrics', {}))
                 return finish('ok', 'Наблюдения по фото; количество и неоднозначные предметы требуют проверки',
                     **state['inventory'], ai=state.get('metrics', {}))
             if time.monotonic() - last_progress >= 1:

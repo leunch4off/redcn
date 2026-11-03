@@ -19,11 +19,11 @@ _VIEW_GET = (r'state', r'cards', rf'cards/{_CARD}(?:\.zip)?',
 _EDITOR_GET = (r'learning', r'language', r'language/catalog/(?:title|description|tags)',
                r'acceptance-evidence', r'route-provider', r'device-delivery/context', rf'photo-instances/{_CARD}',
                r'universities', r'city-pois', r'listing-watch', r'listing-watch/items',
-               r'listing-watch/notifications',r'activity-log',rf'fact-revisions/{_CARD}',rf'jobs/{_CARD}',
+               r'listing-watch/notifications',r'activity-log',rf'fact-revisions/{_CARD}',rf'jobs/{_CARD}',rf'text-jobs/{_CARD}',
                r'import-diagnostics', r'photo-ai', r'design', rf'design-images/{_CARD}',
                rf'dossier-(?:options|design)/{_CARD}', r'photo-duplicates',
                r'dictionary-reviews',rf'publication-review/{_CARD}')
-_EDITOR_POST = (r'learning', r'logout', r'import', rf'cards/{_CARD}/(?:prepare|analyze|routes|rewrite|edit-text)',
+_EDITOR_POST = (r'learning', r'logout', r'import', r'text-jobs',rf'text-jobs/{_CARD}/cancel',rf'cards/{_CARD}/(?:prepare|analyze|routes|rewrite|edit-text)',
                 r'acceptance-evidence', r'route-provider/calculate', rf'photo-instances/{_CARD}',
                 r'university-route-cache/(?:lookup|remember)',
                 r'language/search', r'universities/search', r'city-pois/search', r'translate',
@@ -65,7 +65,9 @@ def phone_route_allowed(role, method, path, data=None):
     if method == 'GET':
         patterns = _VIEW_GET + (_EDITOR_GET if role in ('owner', 'editor') else ()) + (_OWNER_GET if role == 'owner' else ())
     else:
-        patterns = (r'logout',) + (_EDITOR_POST if role in ('owner', 'editor') else ()) + (_OWNER_POST if role == 'owner' else ())
+        # A view acknowledgement changes only this principal's own catalogue
+        # state, never the publication or another reader's viewed marker.
+        patterns = (r'logout', rf'cards/{_CARD}/viewed') + (_EDITOR_POST if role in ('owner', 'editor') else ()) + (_OWNER_POST if role == 'owner' else ())
     return any(re.fullmatch(pattern, path) for pattern in patterns)
 
 

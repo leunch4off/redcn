@@ -1,3 +1,8 @@
+// ES2022 Object.hasOwn is absent on older WebKit. Keep the same own-key
+// semantics without modifying the global Object or trusting a record's methods.
+const ownPropertyCheck=Object.prototype.hasOwnProperty;
+function hasOwnKey(value,key){return ownPropertyCheck.call(value,key);}
+
 // Literal rental values shared by the two source adapters. No phrase here is
 // evidence of a different field (in particular, zero commission is not owner).
 function rentalNumber(value){
@@ -389,7 +394,7 @@ function clientCheckServiceContext(card,context){
  const grant=clientServiceGrant(context);
  if(grant?.kind==='server'){
   for(const text of clientServiceTexts(card)){try{assertClientServiceClaims({body:text,fields:{}});}catch(error){if(!(error instanceof ClientPublicationReviewRequired)||!grant.texts.includes(clientServiceCanonical(text)))throw error;}}
-  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(Object.hasOwn(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
+  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(hasOwnKey(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
   return grant;
  }
  const original=grant?.kind==='private'?grant.context:context,merged={...(original?.fields||original||{}),...(card.fields||{})},privateContext={fields:Object.fromEntries(['url','editorIdentity','resultId','id','registrationMonths','registrationPeople','pickup','luggage','arrival','support','serviceBenefits','serviceConfirmations'].filter(key=>merged[key]!==undefined).map(key=>[key,merged[key]]))};
@@ -612,10 +617,10 @@ function resolveMetroName(value,{rules={},dictionary={},includeRussian=false,par
   const undecorated=metroNameWithoutDecoration(original),key=metroNameFold(undecorated),originalKey=metroNameFold(original),index=metroNameIndex(),rows=index.get(key)||[],row=metroNamePreferred(rows);
   const ruleMatches=[...metroNameRuleMatches(rules,key),...(originalKey!==key?metroNameRuleMatches(rules,originalKey):[])],baseMatches=[...metroNameRuleMatches(dictionary,key),...(originalKey!==key?metroNameRuleMatches(dictionary,originalKey):[])];
   const baseValues=new Set(baseMatches.map(match=>match.zh)),explicit=ruleMatches.filter(match=>!baseValues.has(match.zh));
-  const exact=explicit.at(-1);
+  const exact=explicit[explicit.length-1];
   if(exact){const complete=metroNameIsChinese(exact.zh),suffix=includeRussian&&row&&complete?'（'+row.ru+'）':'';return metroNameResult(original,{label:exact.zh+suffix,canonicalRu:row?.ru||'',knownStation:!!row,complete,needsReview:!row||!complete||new Set(explicit.map(match=>match.zh)).size>1,source:'exact-rule',translationStatus:'explicit-rule'});}
   if(row){
-    const dictionaryMatch=[...baseMatches,...ruleMatches].filter(match=>metroNameIsChinese(match.zh)).at(-1);
+    const dictionaryMatch=[...baseMatches,...ruleMatches].filter(match=>metroNameIsChinese(match.zh)).slice(-1)[0];
     if(dictionaryMatch)return metroNameResult(original,{label:dictionaryMatch.zh+(includeRussian?'（'+row.ru+'）':''),canonicalRu:row.ru,knownStation:true,complete:true,needsReview:false,source:'dictionary',translationStatus:'dictionary'});
     if(metroNameIsChinese(row.zh))return metroNameResult(original,{label:row.zh+(includeRussian?'（'+row.ru+'）':''),canonicalRu:row.ru,knownStation:true,complete:true,needsReview:false,source:'geo-catalog',translationStatus:row.translationStatus||'',translationSource:row.translationSource||''});
     const fallback=partial?metroNamePartial(row):null;
@@ -881,7 +886,7 @@ function ruZhScan(raw,ctx){
  let output='',matches=[],unknown=[],pending='',pendingStart=0;
  const flush=()=>{if(!pending)return;const geo=translateGeo(pending,{}, {includeRussian:false});output+=geo;if(geo!==pending)matches.push({ru:pending,zh:geo,start:pendingStart,end:pendingStart+pending.length,source:'geo-catalog',reviewed:false});const remaining=geo.match(/[\p{Script=Cyrillic}]+(?:[-'’][\p{Script=Cyrillic}]+)*/gu)||[];unknown.push(...remaining);pending='';};
  const candidates=index=>{const char=ruZhFold(raw[index]);return [...(ctx.user.prefix.get(char)||[]),...(ruZhCore().prefix.get(char)||[]),...(ctx.mode==='lookup'?(ctx.open.prefix.get(char)||[]):[])];};
- for(let i=0;i<raw.length;){let row=null;for(const candidate of candidates(i)){const part=raw.slice(i,i+candidate.key.length);if(ruZhFold(part)!==candidate.key)continue;if((i&&ruZhWordChar.test(raw[i-1])&&ruZhWordChar.test(candidate.key[0]))||(ruZhWordChar.test(raw[i+part.length]||'')&&ruZhWordChar.test(candidate.key.at(-1))))continue;row={...candidate,actual:part};break;}
+ for(let i=0;i<raw.length;){let row=null;for(const candidate of candidates(i)){const part=raw.slice(i,i+candidate.key.length);if(ruZhFold(part)!==candidate.key)continue;if((i&&ruZhWordChar.test(raw[i-1])&&ruZhWordChar.test(candidate.key[0]))||(ruZhWordChar.test(raw[i+part.length]||'')&&ruZhWordChar.test(candidate.key[candidate.key.length-1])))continue;row={...candidate,actual:part};break;}
   if(row){flush();output+=row.zh;matches.push(ruZhMatch(row,row.actual,i));i+=row.actual.length;}
   else{if(!pending)pendingStart=i;pending+=raw[i++];}}
  flush();return ruZhResult(output,unknown,matches);
@@ -900,7 +905,7 @@ function ruZhProtectedPieces(input,ctx){
   for(const row of candidates){
    const actual=input.slice(index,index+row.key.length);
    if(ruZhFold(actual)!==row.key)continue;
-   if((index&&ruZhWordChar.test(input[index-1])&&ruZhWordChar.test(row.key[0]))||(ruZhWordChar.test(input[index+actual.length]||'')&&ruZhWordChar.test(row.key.at(-1))))continue;
+   if((index&&ruZhWordChar.test(input[index-1])&&ruZhWordChar.test(row.key[0]))||(ruZhWordChar.test(input[index+actual.length]||'')&&ruZhWordChar.test(row.key[row.key.length-1])))continue;
    ranges.push([index,index+actual.length]);index+=actual.length-1;break;
   }
  }
@@ -1407,7 +1412,7 @@ const furniturePatterns={
 const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasWasher',ac:'hasConditioner',tv:'hasTv',internet:'hasInternet',bath:'hasBathtub',shower:'hasShower',kitchenFurniture:'hasKitchenFurniture',roomFurniture:'hasFurniture'};
 function furnitureUnseenMention(before,term,after){
  const boundary=/[;.!?\n。；]|\s+(?:но|зато|однако|but|however)\s+|但是|不过|但/iu;
- const left=before.split(boundary).at(-1)||'',right=after.split(boundary)[0]||'',scope=left+term+right;
+ const left=before.split(boundary).slice(-1)[0]||'',right=after.split(boundary)[0]||'',scope=left+term+right;
  // A direct availability predicate belongs to this object. It must not be
  // invalidated by another coordinated object that is outside the photograph.
  const direct=/(?:^|\s)(?:есть|имеется|имеются|оборудован[а-я]*|оснащен[а-я]*|укомплектован[а-я]*|установлен[а-я]*)\s*$/iu.exec(left);
@@ -1428,7 +1433,7 @@ function detectFurniture(text,features,offer={},origin='JSON'){
   const expression=furniturePatterns[id];const matches=[];
   if(expression)for(const m of t.matchAll(new RegExp('(?<![а-яa-z])(?:'+expression+')(?![а-яa-z])','gu'))){
    const before=t.slice(Math.max(0,m.index-75),m.index),after=t.slice(m.index+m[0].length,m.index+m[0].length+65);
-   const clauseBefore=before.split(/[.!?;\n]/).at(-1),clauseAfter=after.split(/[.!?;\n]/)[0],clause=clauseBefore+m[0]+clauseAfter;
+   const clauseBefore=before.split(/[.!?;\n]/).slice(-1)[0],clauseAfter=after.split(/[.!?;\n]/)[0],clause=clauseBefore+m[0]+clauseAfter;
    const kitchenContext=/кухн[а-я]*|кухонн[а-я]*/.test(clause),bathContext=/ванн[а-я]*|сануз[а-я]*|душев[а-я]*|туалет[а-я]*|умывальник[а-я]*|рукомойник[а-я]*/.test(clause);
    if(id==='tv'&&(/^[ -]?тумб/.test(after)||/тумб[а-я]*\s+(?:под|для)\s+$/.test(before)))continue;
    if(id==='wardrobe'&&/(?:духов[а-я]*|кухонн[а-я]*)\s+$/.test(before))continue;
@@ -1488,8 +1493,14 @@ function resolvePhotoFurniture(fields={},catalog=[]){
  return {features:[...features],featureCounts:counts,visualFeatures:[...visual],photoEvidence:evidence,conflicts};
 }
 
-function detectConditions(text){const t=normalizeRussian(text),facts={},evidence=[],warnings=[];const put=(field,value,match)=>{facts[field]=value;evidence.push({field,value,source:'Описание / условия',text:match[0]});};let m;
+function detectConditions(text){const t=normalizeRussian(text),facts={},evidence=[],warnings=[],restrictions=[];const put=(field,value,match)=>{facts[field]=value;evidence.push({field,value,source:'Описание / условия',text:match[0]});};let m;
  if((m=t.match(/(?:^|[\n.!?])\s*(\d+)\s*человек/)))put('occupants',m[1],m);
+ // Admission ranges are source restrictions, not the editor's per-person
+ // budget divisor. Require an explicit admission predicate and a real range.
+ if((m=t.match(/(?:рассмотрим|рассматриваем)\s+(?:к|для)\s+проживани[а-я]*\s*(?:только\s+)?(\d{1,2})\s*[-–—]\s*(\d{1,2})(?:\s*[-–—]?\s*х)?\s*человек[а-я]*/))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
+  const minimum=Number(m[1]),maximum=Number(m[2]);
+  if(minimum>=1&&maximum>=minimum)restrictions.push({kind:'occupancy-range',minimum,maximum,text:`入住人数：${minimum}–${maximum}人。`});
+ }
  if((m=t.match(/(?:договор[а-я]*\s+на|срок[а-я]*\s+(?:аренды\s+)?)\s*(\d+)\s*месяц/)))put('contractMonths',m[1],m);
  if((m=t.match(/срок аренды\s*от года|от\s*12\s*месяц/)))put('minMonths','12',m);
  if((m=t.match(/(?:долгосрочн[а-я]*\s+аренда|длительн[а-я]*\s+срок)/)))put('leaseTerm','long',m);
@@ -1500,14 +1511,30 @@ function detectConditions(text){const t=normalizeRussian(text),facts={},evidence
  if((m=t.match(/без\s+детей|(?:с\s+детьми|дети)\s*(?:нельзя|запрещены|не допускаются|не разрешено)|(?:нельзя|не разрешено|не допускается)\s+с\s+детьми/))){put('childrenPolicy','no',m);facts.children=false;}
  else if((m=t.match(/(?:можно|разрешено|допускается)\s+с\s+детьми|дети\s+разрешены/))){put('childrenPolicy','yes',m);facts.children=true;}
  if((m=t.match(/(?:две|2)\s+(?:отдельн[а-я]*|изолированн[а-я]*)\s+комнат[а-я]*|комнат[а-я]*\s+(?:изолированн[а-я]*|раздельн[а-я]*)/)))put('separate',true,m);
- if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+запрещено)/)))put('smokingPolicy','no',m);
+ if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+(?:в\s+(?:квартире|помещении|доме)\s+)?(?:(?:категорически|строго)\s+)?запрещено)/)))put('smokingPolicy','no',m);
  if((m=t.match(/без\s+(?:компаний\s*[/,]\s*)?гостей|без компаний\s*[/,]\s*гостей/)))put('guestPolicy','no',m);
  if((m=t.match(/(?:субаренда|пересдача)[^\n]{0,100}?(?:исключена|запрещена|не допускается)/)))put('subletPolicy','no',m);
  if((m=t.match(/(?:посуточно|краткосрочн[а-я]*)[^.!?\n]{0,30}(?:исключена|запрещена)/))){put('shortTermPolicy','no',m);facts.shortTerm=false;}
  if((m=t.match(/без комиссии|комиссия с арендатора\s*(?:нет|0)/)))put('commission','0',m);
  if((m=t.match(/предоплата\s*(\d+)\s*месяц/)))put('prepayMonths',m[1],m);
  if((m=t.match(/оплата жкх включена\s*\(без счетчиков\)/)))put('utilities','meters',m);
- return {facts,evidence,warnings};}
+ // This explicit additive payment clause does not change the utility mode
+ // or infer an internet connection; it carries only the separate network fee.
+ if((m=t.match(/(?<![а-я])оплата[^.!?;\n]{0,80}?(?:\+|(?<![а-я])плюс)\s*счетчики\s+и\s+интернет(?![а-я])/u))){
+  const scope=t.slice(m.index).split(/[.!?;\n]/)[0];
+  if(!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))&&!/включ[а-я]*|вход[а-я]*\s+в\s+(?:аренд[а-я]*|стоимост[а-я]*|цен[а-я]*)|без\s+доплат[а-я]*|бесплатн[а-я]*/u.test(scope))restrictions.push({kind:'internet-extra',text:'网络费用另付。'});
+ }
+ // A bill paid separately is an explicit condition; its amount and internet
+ // charge remain untyped. Do not turn a negated payment or included bill into
+ // an extra charge, and keep the original witness for conflict review.
+ for(const receipt of t.matchAll(/коммунальн[а-я]*\s+(?:платеж[а-я]*|услуг[а-я]*|расход[а-я]*)\s*[:—–-]?\s*(?:(?:оплачива[а-я]*|оплат[а-я]*)\s+)?(?:отдельно\s+)?по\s+квитанци[а-я]*/gu)){
+  const left=t.slice(0,receipt.index).split(/[.!?;\n]/).slice(-1)[0]||'',right=t.slice(receipt.index+receipt[0].length).split(/[.!?;\n]/)[0]||'',scope=left+receipt[0]+right;
+  const inclusionScope=scope.replace(/(?:^|[^а-я])не\s+(?:включен[а-я]*|вход[а-я]*)/gu,' ');
+  if(/включен[а-я]*|вход[а-я]*\s+в\s+(?:аренд[а-я]*|стоимост[а-я]*|цен[а-я]*)/u.test(inclusionScope))continue;
+  if(/не\s+(?:нужн[а-я]*|надо|требу[а-я]*|оплачива[а-я]*|платить|предусмотрен[а-я]*)|без\s+оплат[а-я]*/u.test(scope))continue;
+  put('utilities','extra',receipt);break;
+ }
+ return {facts,evidence,warnings,restrictions};}
 
 // User-supplied editorial tag catalogue. This is not a popularity ranking or live analytics.
 const TAG_CATALOG = [
@@ -1645,7 +1672,7 @@ function renderTitleFormula(formula,context={}){
  const validation=validateTitleFormula(formula);if(!validation.valid)throw Error(validation.problems.join(' · '));
  const values=Object.create(null);
  for(const key of TITLE_FORMULA_VARIABLES){
-  const value=context&&Object.hasOwn(context,key)?context[key]:'';
+  const value=context&&hasOwnKey(context,key)?context[key]:'';
   if(value!=null&&typeof value!=='string'&&typeof value!=='number'||typeof value==='number'&&!Number.isFinite(value))throw TypeError('Неверное значение подстановки '+key);
   const text=value==null?'':String(value).trim();
   if(containsClientCommission(text))throw Error('Комиссия не включается в заголовок для клиента');
@@ -1701,7 +1728,7 @@ function textDiff(before,after){
  const table=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1));
  for(let i=a.length-1;i>=0;i--)for(let j=b.length-1;j>=0;j--)table[i][j]=a[i]===b[j]?table[i+1][j+1]+1:Math.max(table[i+1][j],table[i][j+1]);
  const result=[];let i=0,j=0;
- const push=(kind,text)=>{const last=result.at(-1);if(last?.kind===kind)last.text+=text;else result.push({kind,text});};
+ const push=(kind,text)=>{const last=result[result.length-1];if(last?.kind===kind)last.text+=text;else result.push({kind,text});};
  while(i<a.length||j<b.length){if(i<a.length&&j<b.length&&a[i]===b[j]){push('same',a[i++]);j++;}else if(j<b.length&&(i===a.length||table[i][j+1]>=table[i+1][j]))push('added',b[j++]);else push('removed',a[i++]);}
  return result;
 }
@@ -1769,7 +1796,7 @@ function setupContentStudio({mount,read,write,getFields,getOutput,setOutput,toas
  function requestRegeneration(candidate,commit){
   try{const before=safeOutput(getOutput()),next=safeOutput({...before,...candidate}),changes=publicationTextDiff(before,next);
    const affected=changes.some(row=>manual.has(row.key)||row.before!==String(baseline[row.key]??''));
-   const committedKeys=['title','body','tags'].filter(key=>Object.hasOwn(candidate,key));
+   const committedKeys=['title','body','tags'].filter(key=>hasOwnKey(candidate,key));
    if(!changes.length||!affected||!Object.values(before).some(value=>value.trim())){commit(candidate);markCommitted(getOutput(),committedKeys);recordTitle(next.title,'generated');return true;}
    pending={candidate:{...candidate,...next},keys:committedKeys,commit,outputFingerprint:JSON.stringify(getOutput()),fieldsFingerprint:JSON.stringify(getFields())};diff.replaceChildren();
    const labels={title:'Заголовок',body:'Описание',tags:'Теги'};
@@ -1782,13 +1809,13 @@ function setupContentStudio({mount,read,write,getFields,getOutput,setOutput,toas
  function markManual(key){if(['title','body','tags'].includes(key))manual.add(key);}
  function applySettings(value={}){
   try{
-   if(Object.hasOwn(value,'studioProfile')){
+   if(hasOwnKey(value,'studioProfile')){
     const profile=normalizeStudioProfile(value.studioProfile||{});
     // Profiles embedded in a saved card remain selectable even if the local
     // catalogue was cleared; loading a card never changes its saved layout.
     profiles=[...profiles.filter(row=>row.id!==profile.id),profile];selection.profile=profile.id;
    }
-   if(Object.hasOwn(value,'titleFormula')){
+   if(hasOwnKey(value,'titleFormula')){
     if(value.titleFormula){const validation=validateTitleFormula(value.titleFormula);if(!validation.valid)throw Error(validation.problems.join(' · '));let row=formulas.find(item=>item.formula===value.titleFormula);if(!row){row={id:uid('card-formula'),name:'Формула сохранённой карточки',formula:value.titleFormula};formulas=[...formulas.slice(-29),row];}selection.formula=row.id;}
     else selection.formula='';
    }
@@ -1849,7 +1876,7 @@ function extractRoomCounts(text=''){
 
 function descriptionAudience(value='general'){
   const aliases={worker:'professional',working:'professional',family:'family',student:'student',professional:'professional',general:'general'};
-  return typeof value==='string'&&Object.hasOwn(aliases,value)?aliases[value]:'general';
+  return typeof value==='string'&&hasOwnKey(aliases,value)?aliases[value]:'general';
 }
 const listingAudienceIntroductions=Object.freeze({
   student:[
@@ -2084,7 +2111,7 @@ function extractUniversityReferences(text){
 // Its historical factual blocks keep the same production validation; new
 // advertising introductions belong only to publication copy.
 const FACTUAL_REFERENCE_VERSION='rental-facts-v1';
-function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVersion=null}={}) {
+function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVersion=null,includeFactualBrief=false}={}) {
   if(referenceVersion!==null&&referenceVersion!==FACTUAL_REFERENCE_VERSION)throw Error('Неизвестная версия фактического контекста');
   const schema=validateListingFields(v);if(!schema.valid)return {titles:[],body:'',tags:'',problems:schema.problems,unknown:[],tagSuggestions:[],semanticWarnings:[]};
   v={...v};
@@ -2294,7 +2321,20 @@ function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVer
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
   try{assertClientServiceClaims({fields:{...v,serviceBenefits:typeof prefs.benefits==='string'?prefs.benefits:''},titles,body,tags:renderedTags});}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';tagSuggestions=[];}
   if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
-  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo,...(referenceVersion?{referenceVersion}:{})};
+  // This is a separate, opt-in inference contract. Historical factual-reference
+  // output and training corpora must not change when live copy gains new fields.
+  const factualBrief=includeFactualBrief?{
+    version:'individual-rental-v1',layout,metro,
+    sections:Object.fromEntries(Object.entries(sections).filter(([key])=>key!=='contact').map(([key,value])=>[key,value.join('\n').trim()])),
+    inventory:FEATURES.filter(row=>featureSet.has(row[0])).map(row=>({id:row[0],zh:row[1],label:equipmentLabel(row),
+      count:Number(v.featureCounts?.[row[0]])||null,
+      countKind:Number(v.featureCounts?.[row[0]])>0?(v.sourceAudit?.furniture?.find(item=>item.id===row[0])?.countKind==='minimum'?'minimum':'exact'):null,
+      photoVisible:photoFacts.visualFeatures.includes(row[0])})),
+    featureVocabulary:FEATURES.map(row=>({id:row[0],zh:row[1]})),
+    photoConflicts:photoFacts.conflicts.map(row=>row.label),
+    services:serviceChecks.claims.filter(row=>row.confirmed).map(row=>row.id),
+  }:null;
+  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo,...(referenceVersion?{referenceVersion}:{}),...(includeFactualBrief?{factualBrief}:{})};
 }
 
 // Trigger dictionaries describe vocabulary, not evidence. A larger vocabulary
@@ -2302,7 +2342,7 @@ function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVer
 function confirmedDetailTrigger(text,phrase){
   const source=fold(text),needle=fold(phrase);let from=0,found=false,blocked=false,index;
   while((index=source.indexOf(needle,from))!==-1){
-    const before=source.slice(Math.max(0,index-75),index).split(/[.!?;\n,]/).at(-1);
+    const before=source.slice(Math.max(0,index-75),index).split(/[.!?;\n,]/).slice(-1)[0];
     const after=source.slice(index+needle.length,index+needle.length+75).split(/[.!?;\n,]/)[0];
     const beforeBlock=/(?:^|\s)(?:не|нет|без|отсутствует|не будет|планир[а-я]*)\s*(?:[^\s]+\s+){0,2}$/.test(before);
     const afterBlock=/^\s*(?:(?:только|пока|еще|скоро)\s+)?(?:нет|отсутств|не\s+(?:будет|предусмотр)|будет|будут|планиру|ожидается|запланирован)/.test(after);
@@ -2405,7 +2445,7 @@ const universityRouteNumber=value=>{
 const universityRouteClone=value=>JSON.parse(JSON.stringify(value));
 const universityRouteCampusById=new Map(UNIVERSITY_CATALOG.campuses.map(row=>[row.id,row]));
 const universityRouteSchoolById=new Map(UNIVERSITY_CATALOG.universities.map(row=>[row.id,row]));
-function universityRouteMode(value){const aliases={'步行':'walk','乘坐地铁':'metro','地铁':'metro','乘坐公交':'bus','公交':'bus','公共交通':'public','驾车':'car','骑行':'bike'};const mode=aliases[value]||value;return Object.hasOwn(universityRouteModes,mode)?mode:'unknown';}
+function universityRouteMode(value){const aliases={'步行':'walk','乘坐地铁':'metro','地铁':'metro','乘坐公交':'bus','公交':'bus','公共交通':'public','驾车':'car','骑行':'bike'};const mode=aliases[value]||value;return hasOwnKey(universityRouteModes,mode)?mode:'unknown';}
 function universityRouteInteger(value,maximum){const n=universityRouteNumber(value);return n!==null&&Number.isInteger(n)&&n>=0&&n<=maximum?n:'';}
 function universityRouteEvidenceUrl(value){const text=universityRouteText(value,2048);try{const url=new URL(text);return url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&['', '443'].includes(url.port)?text:'';}catch{return '';}}
 function universityRouteDate(value){const text=universityRouteText(value,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return '';const stamp=Date.parse(text+'T00:00:00Z');return Number.isFinite(stamp)&&new Date(stamp).toISOString().slice(0,10)===text?text:'';}
@@ -3237,7 +3277,7 @@ function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSurfaceCh
   }
   function refreshInspector(){
     const node=effectiveNode(selected());inspector.disabled=!node;selectedName.textContent=node?nodeName(node)+(selection.size>1?' · выбрано '+selection.size:''):'Выберите блок';duplicate.disabled=remove.disabled=!node;
-    for(const input of Object.values(controls))input.value=node?String(Math.round(node[input.id.split('-').at(-1)]*10)/10):'';
+    for(const input of Object.values(controls))input.value=node?String(Math.round(node[input.id.split('-').slice(-1)[0]]*10)/10):'';
     if(!node){layers.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));return;}
     const style=node.style||{};if(node.bind&&![...binding.options].some(option=>option.value===node.bind))binding.append(make('option',bindingName(node.bind),{value:node.bind}));binding.value=node.bind||'';text.value=node.text||'';text.disabled=node.type!=='text';binding.disabled=!['text','facts','route','image'].includes(node.type);
     fontSize.value=String(style.fontSize||36);font.value=style.fontFamily||'sans';weight.value=String(style.fontWeight||400);align.value=style.align||'left';textColor.value=/^#[a-f\d]{6}$/i.test(style.color||'')?style.color:'#ffffff';fill.value=/^#[a-f\d]{6}$/i.test(style.background||'')?style.background:'#07162b';opacity.value=String(style.opacity??1);visible.checked=node.visible!==false;locked.checked=!!node.locked;objectFit.value=style.objectFit||'cover';photoIndex.value=String((node.photoIndex||0)+1);photoIndex.disabled=node.type!=='image';objectFit.disabled=!['image','logo','avatar','map'].includes(node.type);
@@ -3431,7 +3471,7 @@ async function renderLegacyPresentationImage(kind,card,input,photos=[],mapImage=
 
 
 const PS_STUDIO_KEY='most-presentation-design-v2';
-const psLegacyInput=value=>!!value&&typeof value==='object'&&(value.version===1||value.version!==2&&['editorial','minimal','night'].includes(value.preset)||value.version!==2&&['blocks','intro','outro','footer','contact'].some(key=>Object.hasOwn(value,key)));
+const psLegacyInput=value=>!!value&&typeof value==='object'&&(value.version===1||value.version!==2&&['editorial','minimal','night'].includes(value.preset)||value.version!==2&&['blocks','intro','outro','footer','contact'].some(key=>hasOwnKey(value,key)));
 // Explicit old-format consumers retain their ordering and styles. The interactive
 // studio always migrates through the new model and keeps its original backup.
 function normalizeDesignTemplate(input={}){return psLegacyInput(input)?normalizeLegacyDesignTemplate(input):normalizePublicationDesign(input);}
@@ -3477,7 +3517,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,reloadCard,
   const assetCache=new Map(),assetRoleEpoch={logo:0,avatar:0};let savedServerRules={};
   try{
     const stored=JSON.parse(localStorage.getItem(PS_STUDIO_KEY)||'null'),older=stored?null:JSON.parse(localStorage.getItem(PS_DESIGN_KEY)||'null');
-    if(stored){template=normalizePublicationDesign(stored.template||stored);dirty=stored.dirty===true;templateTouched=dirty;storedBaseline=Object.hasOwn(stored,'baseUpdated');if(storedBaseline)serverUpdated=stored.baseUpdated??null;}
+    if(stored){template=normalizePublicationDesign(stored.template||stored);dirty=stored.dirty===true;templateTouched=dirty;storedBaseline=hasOwnKey(stored,'baseUpdated');if(storedBaseline)serverUpdated=stored.baseUpdated??null;}
     else if(older){legacyBackup=older;template=normalizePublicationDesign(older);}
     if(!legacyBackup)legacyBackup=JSON.parse(localStorage.getItem('most-presentation-design-legacy-backup-v1')||'null');
     draftBackup=JSON.parse(localStorage.getItem('most-presentation-design-draft-backup-v2')||'null');
@@ -3568,7 +3608,7 @@ function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,reloadCard,
       if(reload){mount.dataset.photosReady='false';status.textContent='Готовим фотографии и предпросмотр…';const values=demo?(photos.length?photos:[{dataUrl:demoPhoto()}]):await getPhotos?.()||[];if(!valid())return false;const safe=await compressPresentationPhotos(values,psCompressedPhoto,valid);if(!valid())return false;photos=safe;photoCardKey=key;mount.dataset.photosReady='true';performance.mark?.('redcn-designer-photos-ready');mapImage='';mapAttribution='';if(!demo&&presentationCardData(card).mapUrl&&getMapImage)try{const result=await getMapImage(card,design);if(!valid())return false;mapImage=safePresentationImage(typeof result==='string'?result:result?.dataUrl);mapAttribution=typeof result==='object'?psSafeString(result?.attribution,300):'';}catch{mapFailed=true;}}
       else if(photoCardKey!==key){photos=[];mapImage='';mapAttribution='';photoCardKey=key;}
       if(!await loadBrandAssets(valid)||!valid())return false;
-      const imageAssets=assets(),imageKind=Object.hasOwn(options,'imageKind')?options.imageKind:active==='pdf'?null:active,designKey=JSON.stringify(design),previous=lastRendered;
+      const imageAssets=assets(),imageKind=hasOwnKey(options,'imageKind')?options.imageKind:active==='pdf'?null:active,designKey=JSON.stringify(design),previous=lastRendered;
       const sameInputs=previous?.key===key&&previous.designKey===designKey&&previous.ruleKey===ruleKey&&previous.mapImage===mapImage&&previous.mapAttribution===mapAttribution&&previous.logo===logo&&previous.avatar===avatar&&previous.photos?.length===photos.length&&photos.every((value,index)=>previous.photos[index]===value);
       const rasters=sameInputs&&previous[imageKind]?{intro:imageKind==='intro'?previous.intro:'',outro:imageKind==='outro'?previous.outro:''}:await preparePresentationRaster(imageKind,{card,design,photos,mapImage,assets:imageAssets},renderPresentationImage,valid);if(!rasters||!valid())return false;
       intro=rasters.intro||(sameInputs?previous.intro:'');outro=rasters.outro||(sameInputs?previous.outro:'');lastRendered={key,card,template:design,designKey,sourceDesignKey,ruleKey,photos:photos.slice(),mapImage,mapAttribution,logo,avatar,intro,outro,imageKind,html:buildPublicationHtml(card,design,imageAssets)};syncHtmlPreview();showImage();if(!sameInputs)editor?.refresh();

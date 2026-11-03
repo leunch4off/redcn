@@ -1,10 +1,11 @@
+import {hasOwnKey} from './own-property.mjs';
 export function publicationReviewActions(snapshot={}){
  const state=snapshot.state,valid=Number.isSafeInteger(snapshot.revision)&&snapshot.revision>=0&&Number.isFinite(snapshot.savedUpdated);
  return {submit:valid,approve:valid&&state==='pending'&&snapshot.canReview===true,reject:valid&&state==='pending'&&snapshot.canReview===true};
 }
 export function publicationReviewMutation(snapshot,action,comment=''){
  const allowed=publicationReviewActions(snapshot);
- if(!Object.hasOwn(allowed,action)||!allowed[action])throw Error('Обновите состояние проверки; согласование доступно другому участнику для актуального поста');
+ if(!hasOwnKey(allowed,action)||!allowed[action])throw Error('Обновите состояние проверки; согласование доступно другому участнику для актуального поста');
  if(typeof comment!=='string'||comment.length>1000)throw Error('Комментарий: до 1000 символов');
  if(action==='reject'&&!comment.trim())throw Error('Укажите причину возврата на доработку');
  return {action,expectedRevision:snapshot.revision,expectedUpdated:snapshot.savedUpdated,comment:comment.trim()};

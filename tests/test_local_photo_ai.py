@@ -320,11 +320,14 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(result['candidates'], [])
 
     def test_truncated_even_otherwise_valid_inventory_never_becomes_photo_facts(self):
-        with server(chat={'done':True,'done_reason':'length','message':{'content':json.dumps(inventory(item()))}}) as (endpoint,_,_):
+        with server(chat={'done':True,'done_reason':'length','eval_count':1536,'eval_duration':32_000_000_000,
+                'message':{'content':json.dumps(inventory(item()))}}) as (endpoint,_,_):
             result=self.analyze(endpoint)
         self.assertEqual(result['status'],'invalid')
         self.assertEqual(result['candidates'],[])
         self.assertIn('обрезан',result['message'])
+        self.assertEqual(result['ai']['generatedTokens'],1536)
+        self.assertEqual(result['ai']['tokensPerSecond'],48)
 
     def test_inflight_cancel_is_prompt_and_serial_slot_is_not_queued(self):
         cancel = threading.Event()

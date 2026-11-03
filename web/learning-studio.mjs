@@ -1,10 +1,15 @@
+import {hasOwnKey} from './own-property.mjs';
 import {setupTagPostStats} from './tag-post-stats.mjs';
 import {setupModelHistory} from './model-history.mjs';
 // Private editorial memory. All user values enter the DOM as text.
 export function learningTextLanguage(text){return /\p{Script=Han}/u.test(String(text))?'zh':'ru';}
 export function learningGroundingFields(fields={}){
  const keys=['city','district','districtZh','complex','metro','metroLine','walk','area','rooms','floor','floors','price','priceCurrency','pricePeriod','deposit','depositCurrency','layout','separate','bedrooms','livingRooms','children','pets','petPolicy','childrenPolicy','registration','serviceConfirmations','features','featureCounts','photoEvidence','photoRejectedFeatures','sourceAudit','utilities','ceiling','balconies','loggias','universityRoutes','kitchen','living','bedroomArea','occupants','registrationMonths','registrationPeople','shortTerm','minMonths','shortTermPolicy','smokingPolicy','guestPolicy','subletPolicy','leaseTerm','contractMonths','prepayMonths'];
- return Object.fromEntries(keys.filter(key=>Object.hasOwn(fields,key)).map(key=>[key,fields[key]]));
+ return Object.fromEntries(keys.filter(key=>hasOwnKey(fields,key)).map(key=>[key,fields[key]]));
+}
+export function individualGroundingFields(fields={}){
+ const extra=['description','sourceDescription','renovation','windows','bathroom','buildingYear','details','transit','universities','university','uniTime','uniMode','route','highlight','registrationPolicy','url','editorIdentity','resultId','id','pickup','luggage','arrival','support','serviceBenefits'];
+ return {...learningGroundingFields(fields),...Object.fromEntries(extra.filter(key=>hasOwnKey(fields,key)).map(key=>[key,fields[key]]))};
 }
 
 export const LEARNING_PHOTO_MODELS=Object.freeze([
@@ -79,6 +84,8 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
   status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+' · отозвано: '+Number(counts.withdrawn||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
   const scheduler=value.scheduler||{},config=scheduler.config||scheduler,model=value.text_ai||{},promotion=scheduler.promotion||{},evaluation=promotion.latestEvaluation||{};schedulerEnabled.checked=config.enabled===true;promotionEnabled.checked=config.automaticPromotion===true;schedulerForm.hidden=!canManageSettings();rollback.disabled=promotion.rollbackAvailable!==true;
   schedulerStatus.textContent=[model.installed?'Текстовая модель установлена'+(model.enabled?' и включена':''): 'Текстовая модель ещё не установлена',scheduler.message||'Ожидаем состояние планировщика',model.trainedParameters?'Обученных параметров адаптера: '+Number(model.trainedParameters).toLocaleString('ru-RU'):'',scheduler.stepsCompleted?'Выполнено шагов: '+Number(scheduler.stepsCompleted):'',config.automaticPromotion?'Автоприёмка включена: только после полного сравнения качества':'Автоприёмка выключена',evaluation.stepsCompleted?'Последний кандидат обучен: '+Number(evaluation.stepsCompleted)+' шагов':'',evaluation.requested?'Последняя проверка: '+Number(evaluation.candidatePassed||0)+'/'+Number(evaluation.requested):'',evaluation.message||'',scheduler.adapterReady&&scheduler.qualityOutcome!=='accepted'?'Кандидат сохранён; текущие веса работают до успешной приёмки':'',promotion.state==='accepted'?'Проверенные новые веса подключены; предыдущую версию можно вернуть':''].filter(Boolean).join(' · ');
+  if(model.model)schedulerStatus.textContent+=' · Перевод и обучение: '+model.model+(model.candidateAdapterSelected?' с выбранным локальным адаптером':' без локального адаптера');
+  if(model.advertising){const ad=model.advertising;schedulerStatus.textContent+=' · Объявления: '+(ad.model||'модель не определена')+(ad.installed&&ad.supported?' установлена':' не готова')+(ad.enabled?' · генерация включена':' · генерация выключена')+(ad.separateProfile?' · отдельная предобученная модель, адаптер перевода не применяется; её веса локально не обучались':' · общий профиль текстовой модели')+(ad.automaticGenerationEnabled?' · автоматическое описание при импорте включено':' · автоматическое описание при импорте выключено');}
   if(scheduler.trainingProgress)schedulerStatus.textContent+=' · Сохранённая контрольная точка: '+Number(scheduler.trainingProgress.stepsCompleted)+'/'+Number(scheduler.trainingProgress.requestedSteps)+' шагов';
   schedulerStatus.textContent+=' · '+(scheduler.modelProcessRunning?'Сейчас выполняется фоновый процесс обучения или проверки':scheduler.workerAlive?'Планировщик работает; его процесс обучения сейчас не запущен':'Живая работа планировщика этим ответом не подтверждена')+(scheduler.updatedAt?' · Проверка: '+new Date(scheduler.updatedAt*1000).toLocaleString('ru-RU'):'');
   const discovery=value.discovery||{},last=discovery.lastCapture;
@@ -116,8 +123,8 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  button(controls,'Подготовить утверждённые данные к обучению',async()=>{await api('learning',{action:'snapshot'});await refresh();status.textContent+=' Подготовлена версия данных для обучения; веса модели ещё не изменены.';});
  const compose=make('section'),composeActions=make('div','',{className:'output-options'}),draftStatus=make('p','Модель составляет черновик по цене, расположению и подтверждённым характеристикам. Проверьте смысл перед применением.',{className:'muted',role:'status'});
  const draftMode=field(compose,'Способ подготовки объявления',make('select'));
- for(const [value,label]of [['advertising','Новый рекламный текст · проверка фактов'],['advertising-structure','Новая подача · фактические блоки сохраняются']])draftMode.append(make('option',label,{value}));
- compose.append(make('p','В режиме новой подачи модель выбирает расположение блоков, а подтверждённые факты сохраняются целиком. Уже использованные варианты не повторяются; когда схемы закончатся, появится сообщение. Каждый черновик применяется после вашей проверки.',{className:'muted'}));
+ for(const [value,label]of [['individual','Полное объявление ИИ · описание и подтверждённые фото-находки'],['advertising-structure','Компоновка проверенных блоков · модель выбирает схему']])draftMode.append(make('option',label,{value}));
+ compose.append(make('p','В первом режиме локальная модель пишет заголовок и весь текст по исходному описанию, параметрам и подтверждённому перечню предметов. Непринятый ответ сохраняет текущий текст. Компоновка блоков доступна отдельно; каждый черновик применяется после вашей проверки.',{className:'muted'}));
  const draftTitle=field(compose,'Название · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:240})),draftBody=field(compose,'Описание · редактируемый ИИ-черновик',make('textarea','',{rows:7,maxLength:20000})),draftTags=field(compose,'Теги · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:3000}));
  let draftContext=null,translationContext=null;
  const fingerprint=()=>JSON.stringify([getGroup(),getFields(),getOutput()]);
@@ -132,7 +139,7 @@ export function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getF
  draftMode.onchange=()=>{draftContext=null;draftApply.disabled=true;draftStatus.textContent='Режим изменён. Создайте новый черновик.';};
  const generate=button(composeActions,'Создать ИИ-черновик по карточке',async()=>{
   const expected=fingerprint(),expectedDraft=draftFingerprint(),expectedRevision=revision,selectedMode=draftMode.value;draftApply.disabled=true;draftContext=null;draftStatus.textContent=selectedMode==='advertising-structure'?'Локальная модель выбирает новую подачу подтверждённых фактов…':'Локальная модель составляет текст. Первый запуск включает загрузку весов…';
-  const value=await api('learning',{action:'generate-preview',styleMode:selectedMode,fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
+  const value=await api('learning',{action:'generate-preview',styleMode:selectedMode,fields:selectedMode==='individual'?individualGroundingFields(getFields()):learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
   if(expectedRevision!==revision)return;
   if(expected!==fingerprint()||selectedMode!==draftMode.value)throw Error('Во время генерации изменилась карточка или выбранный режим. Повторите запрос.');
   if(expectedDraft!==draftFingerprint()){draftStatus.textContent='Вы изменили черновик во время генерации. Ручной текст сохранён; ответ модели не применён.';return;}

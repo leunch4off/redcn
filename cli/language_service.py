@@ -33,6 +33,14 @@ class MissingCard(ValueError):
     pass
 
 
+class LanguageDraftRejected(ValueError):
+    """Bounded application validation reasons, never provider stderr/raw prose."""
+    def __init__(self, warnings):
+        self.warnings = [value[:240] for value in warnings[:10] if isinstance(value, str)] if isinstance(warnings, list) else []
+        self.public_message = (' · '.join(self.warnings) or 'ИИ не создал пригодный новый текст. Текущая карточка сохранена.')[:1600]
+        super().__init__(self.public_message)
+
+
 def _text(value, limit, label, *, empty=False):
     if not isinstance(value, str) or len(value) > limit or '\x00' in value:
         raise ValueError(label + ': превышен размер или неверный текст')
@@ -240,12 +248,16 @@ def _save(directory, card_id, original_payload, card, *, actor='Mac owner', kind
     encoded = json.dumps(card, ensure_ascii=False)
     connection = redcn.open_cache(Path(directory))
     try:
+        from card_catalog import ensure_entries, record_save
+        connection.execute('BEGIN IMMEDIATE')
+        ensure_entries(connection, directory)
         changed = connection.execute('UPDATE results SET payload=?, updated=max(?, '
             '(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)) WHERE id=? AND payload=?',
             (encoded, time.time(), card_id, original_payload)).rowcount
         if not changed:
             connection.rollback()
             raise LanguageConflict('Карточка изменилась во время обработки. Обновите её и повторите действие.')
+        record_save(connection, directory, card_id, json.loads(original_payload), card, publication_edit=kind!='import')
         record_fact_revision(connection, card_id, card.get('fields', {}), actor=actor, kind=kind)
         connection.commit()
     finally:
@@ -266,9 +278,47 @@ def _variant(value):
         return 0
 
 
-def rewrite(directory, card_id, data, *, actor='Mac owner'):
+def rewrite(directory, card_id, data, *, actor='Mac owner', status=None, cancel=None, before_save=None):
+    def allow_save():
+        if cancel is not None and cancel.is_set():
+            raise ValueError('Генерация отменена; карточка не изменена')
+        if before_save is not None:
+            before_save()
+        if cancel is not None and cancel.is_set():
+            raise ValueError('Генерация отменена; карточка не изменена')
     part = _part(data.get('part', 'all'), all_parts=True)
     previous, original_payload = _read(directory, card_id)
+    mode = data.get('mode', 'template')
+    if mode not in ('individual', 'template'):
+        raise ValueError('Неизвестный способ подготовки объявления')
+    if mode == 'individual' and part != 'tags':
+        from individual_copy import generate_preview
+        from local_content import publication_generation_metadata
+        preview = generate_preview(directory, {'fields': previous.get('fields', {}),
+            'part': part, 'groupId': card_id,
+            'output': {'title': (previous.get('titles') or [''])[0], 'body': previous.get('body', '')}}, status=status, cancel=cancel)
+        if preview.get('status') != 'review' or preview.get('modelAccepted') is not True or preview.get('fallback') is True:
+            raise LanguageDraftRejected(preview.get('warnings'))
+        card = copy.deepcopy(previous)
+        targets = PARTS if part == 'all' else (part,)
+        for target in targets:
+            if target == 'title':
+                card['titles'] = [_text(preview.get('title'), LIMITS['title'], 'Заголовок')]
+            else:
+                card[target] = _text(preview.get(target), LIMITS[target], 'Описание' if target == 'body' else 'Теги', empty=target == 'tags')
+        metadata = publication_generation_metadata(preview)
+        card['aiAdvertisement'] = metadata
+        card.setdefault('fields', {})['aiGeneration'] = metadata
+        info = copy.deepcopy(previous.get('templateInfo') or {})
+        info.update(mode='individual', generationMode='individual-model-prose', modelContribution='full-publication-prose')
+        for target in targets:
+            for key in {'title': ('titleId', 'titleIds'), 'body': ('descriptionId', 'copyEngine'), 'tags': ('tagId',)}[target]:
+                info.pop(key, None)
+        info['manualParts'] = [name for name in info.get('manualParts', []) if name not in targets]
+        card['templateInfo'] = info
+        # Inference is outside the transaction; _save retains full-payload CAS.
+        allow_save()
+        return _save(directory, card_id, original_payload, card, actor=actor)
     fields = copy.deepcopy(previous.get('fields', {}))
     old_info = previous.get('templateInfo') if isinstance(previous.get('templateInfo'), dict) else {}
     saved_indices = old_info.get('indices') if isinstance(old_info.get('indices'), dict) else {}
@@ -334,6 +384,7 @@ def rewrite(directory, card_id, data, *, actor='Mac owner'):
     if isinstance(info.get('manualParts'), list):
         info['manualParts'] = [name for name in info['manualParts'] if name not in targets]
     card['templateInfo'] = info
+    allow_save()
     return _save(directory, card_id, original_payload, card, actor=actor)
 
 

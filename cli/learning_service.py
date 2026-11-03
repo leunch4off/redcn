@@ -18,11 +18,28 @@ def _scheduler(directory):
 def _text_ai(directory, scheduler):
     try:
         from local_text_model import settings
-        from text_model_contract import BASE_MODEL, EXPECTED_TRAINABLE, file_sha
+        from text_model_contract import BASE_MODEL, EXPECTED_TRAINABLE, file_sha, inference_model
     except ImportError:
         return {'installed': False, 'enabled': False, 'trainedParameters': None}
     config = settings(directory)
     model, runtime = Path(config['modelPath']), Path(config['pythonPath'])
+    def describe_profile(model_folder, python):
+        try:
+            model_folder, python = Path(model_folder), Path(python)
+            path = model_folder/'config.json'
+            installed = python.is_file() and path.is_file() and path.stat().st_size <= 1_000_000
+            identity = inference_model(json.loads(path.read_text())) if installed else None
+            return {'installed': installed, 'supported': bool(identity), 'model': identity or 'configured-local-model'}
+        except (OSError, ValueError, TypeError):
+            return {'installed': False, 'supported': False, 'model': 'configured-local-model'}
+    text_profile = describe_profile(model, runtime)
+    separate_advertising = bool(config.get('advertisingModelPath'))
+    advertising = describe_profile(config.get('advertisingModelPath') or model,
+        (config.get('advertisingPythonPath') or runtime) if separate_advertising else runtime)
+    advertising.update(enabled=config['enabled'], automaticGenerationEnabled=config.get('advertisingEnabled') is True,
+        separateProfile=separate_advertising, candidateAdapterSelected=False if separate_advertising else bool(config.get('adapterPath')),
+        modelSource='pretrained-local-inference' if separate_advertising else 'shared-text-profile',
+        trainedByRedcn=False if separate_advertising else None)
     receipt_folder = Path(config.get('adapterPath') or Path(directory)/'tools/text-ai/runs/first')
     receipt_path, weights = receipt_folder/'trainreceipt.json', receipt_folder/'adapters.safetensors'
     trained = None
@@ -39,10 +56,9 @@ def _text_ai(directory, scheduler):
                 trained, steps = receipt['trainableParameters'], receipt['stepsCompleted']
     except (OSError, ValueError, TypeError):
         pass
-    return {'installed': runtime.is_file() and model.is_dir() and (model/'config.json').is_file(),
-        'enabled': config['enabled'], 'model': BASE_MODEL,
+    return {**text_profile, 'enabled': config['enabled'],
         'candidateAdapterSelected': bool(config.get('adapterPath')),
-        'trainedParameters': trained, 'stepsCompleted': steps}
+        'trainedParameters': trained, 'stepsCompleted': steps, 'advertising': advertising}
 
 
 def _activity(directory, memory):

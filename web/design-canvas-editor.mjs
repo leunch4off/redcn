@@ -155,7 +155,7 @@ export function setupDesignCanvasEditor({mount,getDesign,onChange,setDesign,onSu
   }
   function refreshInspector(){
     const node=effectiveNode(selected());inspector.disabled=!node;selectedName.textContent=node?nodeName(node)+(selection.size>1?' · выбрано '+selection.size:''):'Выберите блок';duplicate.disabled=remove.disabled=!node;
-    for(const input of Object.values(controls))input.value=node?String(Math.round(node[input.id.split('-').at(-1)]*10)/10):'';
+    for(const input of Object.values(controls))input.value=node?String(Math.round(node[input.id.split('-').slice(-1)[0]]*10)/10):'';
     if(!node){layers.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));return;}
     const style=node.style||{};if(node.bind&&![...binding.options].some(option=>option.value===node.bind))binding.append(make('option',bindingName(node.bind),{value:node.bind}));binding.value=node.bind||'';text.value=node.text||'';text.disabled=node.type!=='text';binding.disabled=!['text','facts','route','image'].includes(node.type);
     fontSize.value=String(style.fontSize||36);font.value=style.fontFamily||'sans';weight.value=String(style.fontWeight||400);align.value=style.align||'left';textColor.value=/^#[a-f\d]{6}$/i.test(style.color||'')?style.color:'#ffffff';fill.value=/^#[a-f\d]{6}$/i.test(style.background||'')?style.background:'#07162b';opacity.value=String(style.opacity??1);visible.checked=node.visible!==false;locked.checked=!!node.locked;objectFit.value=style.objectFit||'cover';photoIndex.value=String((node.photoIndex||0)+1);photoIndex.disabled=node.type!=='image';objectFit.disabled=!['image','logo','avatar','map'].includes(node.type);

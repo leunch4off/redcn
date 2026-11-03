@@ -23,7 +23,7 @@ def card(count=3):
 def observation(digest, feature='oven'):
     normalized = ai.normalize_inventory({'objects': [{'id': feature, 'visible': True,
         'confidence': .98, 'count': 1, 'countExact': True,
-        'evidence': 'Духовой шкаф со стеклянной дверцей и ручкой'}], 'unknownIds': []}, digest, MODEL)
+        'evidence': 'Холодильник с двумя дверцами у стены' if feature == 'fridge' else 'Духовой шкаф со стеклянной дверцей и ручкой'}], 'unknownIds': []}, digest, MODEL)
     return {'status': 'review', 'provider': 'ollama', 'model': MODEL,
         'engine': 'Ollama · fixture · локально', 'originalId': digest, **normalized}
 
@@ -79,12 +79,39 @@ class ListingInventoryTests(unittest.TestCase):
         self.assertEqual(output['totalAvailable'], 2)
         self.assertEqual(analyze.call_count, 2)
 
-    def test_more_than_thirty_photos_is_explicitly_partial(self):
-        output, analyze, _ = self.analyze(card(35))
+    def test_album_beyond_thirty_uses_source_union_and_retains_last_photo_facts(self):
+        result = card(36)
+        result['fields']['photos'] = result['fields']['photos'][:1]
+        last = result['media'][-1]['id']
+        output, analyze, _ = self.analyze(result, analysis=lambda _, digest, **kwargs:
+            observation(digest, 'fridge' if digest == last else 'oven'))
+        self.assertEqual((output['total'], output['totalAvailable'], output['checked']), (36, 36, 36))
+        self.assertEqual(output['state'], 'complete')
+        self.assertTrue(output['coverageComplete'])
+        self.assertEqual(analyze.call_count, 36)
+        self.assertIn('fridge', output['features'])
+        self.assertTrue(any(row['id'] == 'fridge' and row['originalId'] == last for row in output['photoEvidence']))
+
+    def test_available_count_uses_same_layout_exclusion_and_retained_metadata_union(self):
+        result = card(36)
+        urls = result['fields']['photos'][:]
+        result['fields']['photos'] = urls[:1]
+        result['listing']['images'] = urls[:30]
+        result['listing']['photoItems'] = [{'url': url, 'isLayout': index == 35} for index, url in enumerate(urls)]
+        result['fields']['photoEdits'] = {'excluded': [urls[1]]}
+        output, analyze, _ = self.analyze(result)
+        self.assertEqual((output['total'], output['totalAvailable'], output['checked']), (34, 34, 34))
+        self.assertEqual(analyze.call_count, 34)
+        self.assertNotIn(urls[35], [row['sourceUrl'] for row in output['photos']])
+
+    def test_more_than_two_hundred_photos_is_explicitly_partial(self):
+        output, analyze, _ = self.analyze(card(205))
         self.assertEqual(output['state'], 'partial')
-        self.assertEqual((output['total'], output['totalAvailable'], output['coverageLimit']), (30, 35, 30))
+        self.assertEqual((output['total'], output['totalAvailable'], output['coverageLimit']), (200, 205, 200))
         self.assertTrue(output['truncated'])
-        self.assertEqual(analyze.call_count, 30)
+        self.assertFalse(output['coverageComplete'])
+        self.assertEqual(output['overLimit'], 5)
+        self.assertEqual(analyze.call_count, 200)
 
     def test_disabled_or_missing_configuration_never_runs_apple_vision_thirty_times(self):
         for config in ({}, {**CONFIG, 'enabled': False}, {**CONFIG, 'model': ''}):

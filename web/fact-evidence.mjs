@@ -9,7 +9,7 @@ const furniturePatterns={
 const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasWasher',ac:'hasConditioner',tv:'hasTv',internet:'hasInternet',bath:'hasBathtub',shower:'hasShower',kitchenFurniture:'hasKitchenFurniture',roomFurniture:'hasFurniture'};
 function furnitureUnseenMention(before,term,after){
  const boundary=/[;.!?\n。；]|\s+(?:но|зато|однако|but|however)\s+|但是|不过|但/iu;
- const left=before.split(boundary).at(-1)||'',right=after.split(boundary)[0]||'',scope=left+term+right;
+ const left=before.split(boundary).slice(-1)[0]||'',right=after.split(boundary)[0]||'',scope=left+term+right;
  // A direct availability predicate belongs to this object. It must not be
  // invalidated by another coordinated object that is outside the photograph.
  const direct=/(?:^|\s)(?:есть|имеется|имеются|оборудован[а-я]*|оснащен[а-я]*|укомплектован[а-я]*|установлен[а-я]*)\s*$/iu.exec(left);
@@ -30,7 +30,7 @@ export function detectFurniture(text,features,offer={},origin='JSON'){
   const expression=furniturePatterns[id];const matches=[];
   if(expression)for(const m of t.matchAll(new RegExp('(?<![а-яa-z])(?:'+expression+')(?![а-яa-z])','gu'))){
    const before=t.slice(Math.max(0,m.index-75),m.index),after=t.slice(m.index+m[0].length,m.index+m[0].length+65);
-   const clauseBefore=before.split(/[.!?;\n]/).at(-1),clauseAfter=after.split(/[.!?;\n]/)[0],clause=clauseBefore+m[0]+clauseAfter;
+   const clauseBefore=before.split(/[.!?;\n]/).slice(-1)[0],clauseAfter=after.split(/[.!?;\n]/)[0],clause=clauseBefore+m[0]+clauseAfter;
    const kitchenContext=/кухн[а-я]*|кухонн[а-я]*/.test(clause),bathContext=/ванн[а-я]*|сануз[а-я]*|душев[а-я]*|туалет[а-я]*|умывальник[а-я]*|рукомойник[а-я]*/.test(clause);
    if(id==='tv'&&(/^[ -]?тумб/.test(after)||/тумб[а-я]*\s+(?:под|для)\s+$/.test(before)))continue;
    if(id==='wardrobe'&&/(?:духов[а-я]*|кухонн[а-я]*)\s+$/.test(before))continue;
@@ -90,8 +90,14 @@ export function resolvePhotoFurniture(fields={},catalog=[]){
  return {features:[...features],featureCounts:counts,visualFeatures:[...visual],photoEvidence:evidence,conflicts};
 }
 
-export function detectConditions(text){const t=normalizeRussian(text),facts={},evidence=[],warnings=[];const put=(field,value,match)=>{facts[field]=value;evidence.push({field,value,source:'Описание / условия',text:match[0]});};let m;
+export function detectConditions(text){const t=normalizeRussian(text),facts={},evidence=[],warnings=[],restrictions=[];const put=(field,value,match)=>{facts[field]=value;evidence.push({field,value,source:'Описание / условия',text:match[0]});};let m;
  if((m=t.match(/(?:^|[\n.!?])\s*(\d+)\s*человек/)))put('occupants',m[1],m);
+ // Admission ranges are source restrictions, not the editor's per-person
+ // budget divisor. Require an explicit admission predicate and a real range.
+ if((m=t.match(/(?:рассмотрим|рассматриваем)\s+(?:к|для)\s+проживани[а-я]*\s*(?:только\s+)?(\d{1,2})\s*[-–—]\s*(\d{1,2})(?:\s*[-–—]?\s*х)?\s*человек[а-я]*/))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
+  const minimum=Number(m[1]),maximum=Number(m[2]);
+  if(minimum>=1&&maximum>=minimum)restrictions.push({kind:'occupancy-range',minimum,maximum,text:`入住人数：${minimum}–${maximum}人。`});
+ }
  if((m=t.match(/(?:договор[а-я]*\s+на|срок[а-я]*\s+(?:аренды\s+)?)\s*(\d+)\s*месяц/)))put('contractMonths',m[1],m);
  if((m=t.match(/срок аренды\s*от года|от\s*12\s*месяц/)))put('minMonths','12',m);
  if((m=t.match(/(?:долгосрочн[а-я]*\s+аренда|длительн[а-я]*\s+срок)/)))put('leaseTerm','long',m);
@@ -102,11 +108,27 @@ export function detectConditions(text){const t=normalizeRussian(text),facts={},e
  if((m=t.match(/без\s+детей|(?:с\s+детьми|дети)\s*(?:нельзя|запрещены|не допускаются|не разрешено)|(?:нельзя|не разрешено|не допускается)\s+с\s+детьми/))){put('childrenPolicy','no',m);facts.children=false;}
  else if((m=t.match(/(?:можно|разрешено|допускается)\s+с\s+детьми|дети\s+разрешены/))){put('childrenPolicy','yes',m);facts.children=true;}
  if((m=t.match(/(?:две|2)\s+(?:отдельн[а-я]*|изолированн[а-я]*)\s+комнат[а-я]*|комнат[а-я]*\s+(?:изолированн[а-я]*|раздельн[а-я]*)/)))put('separate',true,m);
- if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+запрещено)/)))put('smokingPolicy','no',m);
+ if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+(?:в\s+(?:квартире|помещении|доме)\s+)?(?:(?:категорически|строго)\s+)?запрещено)/)))put('smokingPolicy','no',m);
  if((m=t.match(/без\s+(?:компаний\s*[/,]\s*)?гостей|без компаний\s*[/,]\s*гостей/)))put('guestPolicy','no',m);
  if((m=t.match(/(?:субаренда|пересдача)[^\n]{0,100}?(?:исключена|запрещена|не допускается)/)))put('subletPolicy','no',m);
  if((m=t.match(/(?:посуточно|краткосрочн[а-я]*)[^.!?\n]{0,30}(?:исключена|запрещена)/))){put('shortTermPolicy','no',m);facts.shortTerm=false;}
  if((m=t.match(/без комиссии|комиссия с арендатора\s*(?:нет|0)/)))put('commission','0',m);
  if((m=t.match(/предоплата\s*(\d+)\s*месяц/)))put('prepayMonths',m[1],m);
  if((m=t.match(/оплата жкх включена\s*\(без счетчиков\)/)))put('utilities','meters',m);
- return {facts,evidence,warnings};}
+ // This explicit additive payment clause does not change the utility mode
+ // or infer an internet connection; it carries only the separate network fee.
+ if((m=t.match(/(?<![а-я])оплата[^.!?;\n]{0,80}?(?:\+|(?<![а-я])плюс)\s*счетчики\s+и\s+интернет(?![а-я])/u))){
+  const scope=t.slice(m.index).split(/[.!?;\n]/)[0];
+  if(!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))&&!/включ[а-я]*|вход[а-я]*\s+в\s+(?:аренд[а-я]*|стоимост[а-я]*|цен[а-я]*)|без\s+доплат[а-я]*|бесплатн[а-я]*/u.test(scope))restrictions.push({kind:'internet-extra',text:'网络费用另付。'});
+ }
+ // A bill paid separately is an explicit condition; its amount and internet
+ // charge remain untyped. Do not turn a negated payment or included bill into
+ // an extra charge, and keep the original witness for conflict review.
+ for(const receipt of t.matchAll(/коммунальн[а-я]*\s+(?:платеж[а-я]*|услуг[а-я]*|расход[а-я]*)\s*[:—–-]?\s*(?:(?:оплачива[а-я]*|оплат[а-я]*)\s+)?(?:отдельно\s+)?по\s+квитанци[а-я]*/gu)){
+  const left=t.slice(0,receipt.index).split(/[.!?;\n]/).slice(-1)[0]||'',right=t.slice(receipt.index+receipt[0].length).split(/[.!?;\n]/)[0]||'',scope=left+receipt[0]+right;
+  const inclusionScope=scope.replace(/(?:^|[^а-я])не\s+(?:включен[а-я]*|вход[а-я]*)/gu,' ');
+  if(/включен[а-я]*|вход[а-я]*\s+в\s+(?:аренд[а-я]*|стоимост[а-я]*|цен[а-я]*)/u.test(inclusionScope))continue;
+  if(/не\s+(?:нужн[а-я]*|надо|требу[а-я]*|оплачива[а-я]*|платить|предусмотрен[а-я]*)|без\s+оплат[а-я]*/u.test(scope))continue;
+  put('utilities','extra',receipt);break;
+ }
+ return {facts,evidence,warnings,restrictions};}

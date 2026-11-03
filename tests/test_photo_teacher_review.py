@@ -43,6 +43,16 @@ class AssistantReviewTests(unittest.TestCase):
         result['fields']['photoEdits'] = {'excluded': [URL]}
         self.assertEqual(merge_reviews(result, reviews)[1]['reviewedPhotos'], 0)
 
+    def test_source_album_photo_does_not_need_to_be_duplicated_in_editor_photo_field(self):
+        result,reviews=self.fixture()
+        result['fields']['photos']=['https://images.cdn-cian.ru/images/cover-only.jpg']
+        result['listing']={'images':[URL]}
+        output,summary=merge_reviews(result,reviews)
+        self.assertEqual(summary['reviewedPhotos'],1)
+        self.assertIn('washer',output['fields']['features'])
+        result['fields']['photoEdits']={'excluded':[URL]}
+        self.assertEqual(merge_reviews(result,reviews)[1]['reviewedPhotos'],0)
+
     def test_manual_rejection_and_source_conflict_are_not_overwritten(self):
         result, reviews = self.fixture()
         result['fields']['photoRejectedFeatures'] = ['sofa']

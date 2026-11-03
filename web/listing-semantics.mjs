@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 // Room vocabulary describes supplied layout data, never the presence of a bed.
 // Audience copy is editorial framing and does not grant permission to rent.
 export const DESCRIPTION_AUDIENCES=Object.freeze([
@@ -48,7 +49,7 @@ export function extractRoomCounts(text=''){
 
 export function descriptionAudience(value='general'){
   const aliases={worker:'professional',working:'professional',family:'family',student:'student',professional:'professional',general:'general'};
-  return typeof value==='string'&&Object.hasOwn(aliases,value)?aliases[value]:'general';
+  return typeof value==='string'&&hasOwnKey(aliases,value)?aliases[value]:'general';
 }
 const listingAudienceIntroductions=Object.freeze({
   student:[

@@ -9,10 +9,12 @@ import math
 from pathlib import Path
 
 BASE_MODEL = 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
+ADVERTISING_MODEL = 'mlx-community/Qwen3-4B-Instruct-2507-4bit'
 INFERENCE_TOP_P = .9
 INFERENCE_MODELS = {
     (896,24,14,2): BASE_MODEL,
     (1536,28,12,2): 'mlx-community/Qwen2.5-1.5B-Instruct-4bit',
+    (2560,36,32,8): ADVERTISING_MODEL,
 }
 LORA = {'rank': 8, 'scale': 16.0, 'dropout': 0.0,
         'keys': ['self_attn.q_proj', 'self_attn.v_proj']}
@@ -28,6 +30,17 @@ def sampling_parameters(temperature, *, top_p=INFERENCE_TOP_P):
     if type(top_p) not in (int, float) or top_p != INFERENCE_TOP_P:
         raise ValueError('Text evaluation must use the production top-p')
     return {'temp': temperature, 'top_p': INFERENCE_TOP_P}
+
+
+def inference_sampling_parameters(model, temperature):
+    """Inference-only profile; the frozen 0.5B training/evaluation is unchanged."""
+    if model == ADVERTISING_MODEL:
+        return {'temp': temperature, 'top_p': .8, 'top_k': 20}
+    return sampling_parameters(temperature)
+
+
+def inference_memory_limit(model):
+    return 3_200_000_000 if model == ADVERTISING_MODEL else 2_500_000_000
 
 
 def canonical(value):
@@ -59,14 +72,24 @@ def expected_parameters(config):
 
 
 def inference_model(config):
-    """Permit only the two researched text architectures for optional inference.
+    """Permit researched text architectures for optional inference only.
 
 Training still uses the exact 0.5B contract above. Selecting a different base
 does not make an existing adapter compatible or approve that model's quality.
 """
-    if not isinstance(config,dict) or config.get('model_type') != 'qwen2':
+    if not isinstance(config,dict):
         raise ValueError('Unsupported local text architecture')
     shape=tuple(config.get(key) for key in ('hidden_size','num_hidden_layers','num_attention_heads','num_key_value_heads'))
+    if config.get('model_type') == 'qwen3':
+        quantization=config.get('quantization') or config.get('quantization_config') or {}
+        if (shape != (2560,36,32,8) or config.get('head_dim') != 128
+                or config.get('vocab_size') != 151936 or config.get('tie_word_embeddings') is not True
+                or config.get('rope_theta') != 5_000_000 or config.get('max_position_embeddings') != 262144
+                or not isinstance(quantization,dict) or quantization.get('bits') != 4 or quantization.get('group_size') != 64):
+            raise ValueError('Unsupported local advertising architecture')
+        return ADVERTISING_MODEL
+    if config.get('model_type') != 'qwen2' or shape == (2560,36,32,8):
+        raise ValueError('Unsupported local text architecture')
     if shape not in INFERENCE_MODELS:
         raise ValueError('Unsupported local text architecture')
     return INFERENCE_MODELS[shape]

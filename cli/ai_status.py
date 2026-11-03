@@ -52,6 +52,26 @@ def _file(value):
         return False
 
 
+def _text_profile(model_path, python_path, warnings, *, label):
+    """Inspect bounded architecture metadata; never open model weights."""
+    from text_model_contract import inference_model
+    result = {'model': None, 'modelSupported': False, 'modelConfigPresent': False,
+              'runtimePresent': _file(python_path)}
+    if not isinstance(model_path, (str, Path)) or not str(model_path) or len(str(model_path)) > 4096:
+        warnings.append(label + ': invalid model path')
+        return result
+    try:
+        path = Path(model_path).expanduser() / 'config.json'
+        result['modelConfigPresent'] = _file(path)
+        config = _read(path, warnings, max_bytes=1_000_000)
+        if result['modelConfigPresent'] and config is not None:
+            result['model'] = inference_model(config)
+            result['modelSupported'] = True
+    except (OSError, ValueError, TypeError):
+        warnings.append(label + ': unsupported model configuration')
+    return result
+
+
 def _photo_settings(root, warnings):
     # Share the runtime validator and its environment fallback, without
     # starting a worker or creating the workspace. A partial/invalid JSON file
@@ -82,9 +102,20 @@ def inspect_ai(directory):
     state = _read(root / 'learning' / 'scheduler-state.json', warnings)
     defaults = root / 'tools' / 'text-ai'
     text_model = (text or {}).get('modelPath', str(defaults / 'model'))
-    config_path = str(Path(text_model).expanduser() / 'config.json') if isinstance(text_model, str) and len(text_model) <= 4096 else None
+    text_runtime = (text or {}).get('pythonPath', str(defaults / 'venv' / 'bin' / 'python'))
+    text_profile = _text_profile(text_model, text_runtime, warnings, label='text model')
     adapter_selected = ((text or {}).get('useCandidateAdapter') is True
                         and bool((text or {}).get('adapterPath')))
+    separate_advertising = bool((text or {}).get('advertisingModelPath'))
+    advertising = (_text_profile((text or {})['advertisingModelPath'],
+                   (text or {}).get('advertisingPythonPath') or text_runtime,
+                   warnings, label='advertising model') if separate_advertising else dict(text_profile))
+    advertising.update(enabled=_enabled(text),
+        automaticGenerationEnabled=(text or {}).get('advertisingEnabled') is True,
+        separateProfile=separate_advertising,
+        candidateAdapterSelected=False if separate_advertising else adapter_selected,
+        modelSource='separate-inference-profile' if separate_advertising else 'shared-text-profile',
+        weightsTrainingInspected=False)
     auto_apply = (photo or {}).get('autoApply', True) if photo is not None else None
     if type(auto_apply) is not bool:
         auto_apply = None
@@ -103,11 +134,9 @@ def inspect_ai(directory):
                       'direct-observations' if photo_enabled is True and auto_apply is True and automatic_policy else 'off')
     return {
         'readOnly': True,
-        'text': {'enabled': _enabled(text),
-                 'modelConfigPresent': _file(config_path),
-                 'runtimePresent': _file((text or {}).get('pythonPath', str(defaults / 'venv' / 'bin' / 'python'))),
+        'text': {**text_profile, 'enabled': _enabled(text),
                  'candidateAdapterSelected': adapter_selected,
-                 'automaticApplication': False},
+                 'automaticApplication': False, 'advertising': advertising},
         'photo': {'enabled': photo_enabled, 'model': model,
                   'provider': review_model[0] if review_model else None,
                   'displayName': review_model[1] if review_model else model,
@@ -152,20 +181,29 @@ def server_status(port=8765, *, opener=urllib.request.urlopen):
 def russian_status(value):
     flag = lambda v: 'ВКЛЮЧЕНО' if v is True else 'ВЫКЛЮЧЕНО' if v is False else 'ОШИБКА НАСТРОЕК'
     text, photo, training = value['text'], value['photo'], value['idleTraining']
-    lines = ['Текстовый ИИ: ' + flag(text['enabled']),
+    lines = ['Текстовый ИИ: ' + flag(text['enabled']) + (' · '+text['model'] if text.get('model') else ''),
              'Файлы текстовой модели: ' + ('ЕСТЬ' if text['modelConfigPresent'] else 'НЕ НАЙДЕНЫ'),
-             'Среда текстовой модели: ' + ('ЕСТЬ' if text['runtimePresent'] else 'НЕ НАЙДЕНА'),
-             'Анализ фото: ' + flag(photo['enabled']) + ' · ' + photo['model'],
-             'Автодобавление в журнал проверки: ' + flag(photo.get('automaticReviewCapture', False)),
+             'Среда текстовой модели: ' + ('ЕСТЬ' if text['runtimePresent'] else 'НЕ НАЙДЕНА')]
+    advertising = text.get('advertising')
+    if advertising:
+        lines.extend(['Рекламный ИИ: ' + flag(advertising['enabled']) + ' · ' +
+                      (advertising['model'] or 'модель не определена по конфигурации') +
+                      (' · отдельный профиль' if advertising['separateProfile'] else ' · общий текстовый профиль'),
+                      'Конфигурация рекламной модели: ' + ('ЕСТЬ' if advertising['modelConfigPresent'] else 'НЕ НАЙДЕНА') +
+                      ' · среда: ' + ('ЕСТЬ' if advertising['runtimePresent'] else 'НЕ НАЙДЕНА'),
+                      'Автоматическое создание описаний: ' + flag(advertising['automaticGenerationEnabled']),
+                      'Выбор рекламной модели не означает обучение новых весов.'])
+    lines.append('Анализ фото: ' + flag(photo['enabled']) + ' · ' + photo['model'])
+    if photo.get('reviewRequired') is True:
+        lines.extend([photo['displayName'] + ' · требуется проверка найденных предметов',
+                      'Категорий для автоподтверждения: 0 · автоматических фактов: 0'])
+    lines.extend(['Автодобавление в журнал проверки: ' + flag(photo.get('automaticReviewCapture', False)),
              'Автоподтверждение для описания: ' + flag(photo['automaticApplication']) +
              (' — модель ещё не прошла приёмку' if photo.get('reviewRequired') is True else ''),
              'Обучение в простое: ' + flag(training['enabled']),
              'Последний записанный этап обучения: ' + training['recordedPhase'],
              'Автоматическое принятие новых весов: ' + flag(training['automaticPromotion']) +
-             ' · только после независимого сравнения качества']
-    if photo.get('reviewRequired') is True:
-        lines[4:4] = [photo['displayName'] + ' · требуется проверка найденных предметов',
-                      'Категорий для автоподтверждения: 0 · автоматических фактов: 0']
+             ' · только после независимого сравнения качества'])
     if 'server' in value:
         server = value['server']
         lines.append('Сервер: ' + (server['release'] or 'версия неизвестна') if server['reachable'] else 'Сервер: НЕ ОТВЕЧАЕТ')

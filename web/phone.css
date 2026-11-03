@@ -35,3 +35,5 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
 .learning-studio .card-file-row>div{min-width:0;max-width:100%}
 .learning-studio .card-file-row strong{font-size:14px;line-height:1.7}
 .learning-studio [hidden]{display:none!important}
+
+.catalog-filters{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px}.catalog-filters button{padding:9px 16px;border:1px solid #ccd3c8;border-radius:24px;background:#fff;color:#344438}.catalog-filters button.active{background:#38533d;border-color:#38533d;color:#fff}.listing-card.catalog-viewed{background:#eceeed;border-color:#d0d5d1}.listing-card.catalog-viewed .listing-cover img{filter:grayscale(.7)}.listing-card.catalog-viewed h3,.listing-card.catalog-viewed .listing-price{color:#5a625e}.listing-card.catalog-viewed .listing-updated{color:#515a55}

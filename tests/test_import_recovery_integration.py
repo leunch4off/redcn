@@ -86,7 +86,7 @@ class ImportRecoveryIntegrationTests(unittest.TestCase):
         self.assertEqual(self.request('release-diagnostics',authenticated=False)[0],403)
         self.assertEqual(self.request('release-diagnostics',{'action':'preview'},authenticated=False)[0],403)
         status,value=self.request('release-diagnostics',{'action':'status','clientBuild':'0'*64})
-        self.assertEqual(status,200,value);self.assertTrue(value['readOnly']);self.assertEqual(value['serverRelease'],'v30')
+        self.assertEqual(status,200,value);self.assertTrue(value['readOnly']);self.assertEqual(value['serverRelease'],'v31')
         self.assertFalse((self.root/'import-diagnostics/tg.zip').exists())
 
     def test_phone_retry_uses_original_intent_after_mac_profile_changes(self):

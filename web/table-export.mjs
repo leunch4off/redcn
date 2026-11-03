@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {calculateInitialPayment} from './initial-payment.mjs';
 
 export const TABLE_EXPORT_COLUMNS=Object.freeze([
@@ -14,7 +15,7 @@ const tePhone=/(?<!\d)(?:\+?7|8)[\s().-]*(?:\d[\s().-]*){10}(?!\d)|\+[1-9](?:[\s
 const teFormula=/^[\s\ufeff\u200b-\u200f\u202a-\u202e\u2060-\u206f]*[=+\-@]/u;
 function teText(value,max,label){if(value===undefined||value===null)return '';if(typeof value!=='string'||value.length>max||/[\uD800-\uDFFF\uFFFE\uFFFF]/u.test(value))throw Error('Неверное поле выгрузки: '+label);return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu,'').replace(tePhone,'[телефон скрыт]');}
 function teNumber(value,label,{max=1_000_000_000,places=2,integer=false}={}){if(value===''||value===undefined||value===null)return null;if(!['string','number'].includes(typeof value))throw Error('Неверное число выгрузки: '+label);const text=String(value).replace(/[\s\u00a0\u202f]/gu,'').replace(',','.');if(!(new RegExp(integer?'^\\d+$':'^\\d+(?:\\.\\d{1,'+places+'})?$','u')).test(text))throw Error('Неверное число выгрузки: '+label);const number=Number(text);if(!Number.isFinite(number)||number>max)throw Error('Число вне диапазона: '+label);return number;}
-function teEnum(value,choices,fallback,label){const selected=value===undefined||value===null||value===''?fallback:value;if(typeof selected!=='string'||!Object.hasOwn(choices,selected))throw Error('Неверная единица или категория: '+label);return selected;}
+function teEnum(value,choices,fallback,label){const selected=value===undefined||value===null||value===''?fallback:value;if(typeof selected!=='string'||!hasOwnKey(choices,selected))throw Error('Неверная единица или категория: '+label);return selected;}
 function teCurrency(value,label){return teEnum(value,{RUB:1,USD:1,EUR:1,unknown:1},'RUB',label);}
 function teSource(value){try{const url=new URL(teText(value,2048,'источник'));if(url.protocol!=='https:'||url.username||url.password||url.port&&!['443'].includes(url.port))return '';if(/(^|\.)cian\.ru$/iu.test(url.hostname)&&/^\/rent\/(?:flat|room)\/\d+\/?$/u.test(url.pathname)||/(^|\.)avito\.ru$/iu.test(url.hostname)&&/\/(?:kvartiry|komnaty)\/[^/]+_\d+\/?$/u.test(url.pathname))return url.origin+url.pathname;}catch{}return '';}
 function teFacts(card){return teObject(card?.fields)?card.fields:card;}

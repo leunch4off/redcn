@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 // Only measured backend counters and elapsed wall time are shown here.
 // A detector has no tokens; cached inference must not look like a fresh run.
 const aiProgressPhases={waiting:'Ожидаем свободную память',loading:'Загружаем модель',preparing:'Готовим запрос',prefill:'Модель читает запрос',generating:'Создаём китайское описание',analyzing:'Ищем видимую мебель и технику',complete:'Обработка завершена',cached:'Результат из кеша',cancelled:'Запрос отменён',timeout:'Время запроса истекло',unavailable:'Модель сейчас недоступна',error:'Не удалось завершить запрос'};
@@ -9,6 +10,7 @@ const aiProgressIdentity=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9
 
 export function aiTextOutcome(value){
  if(!value||typeof value!=='object')return '';
+ if(value.generationMode==='explicit-template')return 'Текст собран по выбранной схеме из фактов карточки.';
  if(value.fallback===true||value.backend==='grounded-advertising'||value.textSource==='rules')return 'Ответ локальной модели отклонён. Этот текст составлен правилами по фактам карточки.';
  if(value.modelContribution==='selection-of-layout-only'||value.generationMode==='model-structure-verified-renderer')return 'ИИ выбрал схему подачи; формулировки и факты собраны генератором.';
  if(value.status==='review')return 'Черновик локальной модели: требуется проверка китайского текста и фактов.';
@@ -17,7 +19,7 @@ export function aiTextOutcome(value){
 }
 
 export function aiProgressText(value,{extraElapsed=0}={}){
- if(!value||typeof value!=='object'||Array.isArray(value)||!Object.hasOwn(aiProgressPhases,value.phase))return null;
+ if(!value||typeof value!=='object'||Array.isArray(value)||!hasOwnKey(aiProgressPhases,value.phase))return null;
  const active=value.active!==false&&aiProgressActivePhases.has(value.phase),cached=value.cached===true||value.phase==='cached';
  const rules=value.textSource==='rules',model=aiProgressIdentity(value.model),kind=rules?'Китайский текст по правилам · ответ ИИ отклонён':value.operation==='text'?'Текстовый ИИ':'ИИ · мебель и техника';
  const details=[],metrics=[],elapsed=aiProgressNumber(value.elapsedSeconds),index=aiProgressCount(value.photoIndex),total=aiProgressCount(value.photoTotal);
@@ -64,8 +66,8 @@ export function createAiProgress({after,id}){
  function stop(phase){
   if(!latest)return;
   const elapsed=aiProgressNumber(latest.elapsedSeconds);
-  update({...latest,...(phase&&Object.hasOwn(aiProgressPhases,phase)?{phase}:{}),active:false,
+  update({...latest,...(phase&&hasOwnKey(aiProgressPhases,phase)?{phase}:{}),active:false,
    ...(elapsed!==null?{elapsedSeconds:elapsed+(latest.active!==false&&aiProgressActivePhases.has(latest.phase)?(performance.now()-received)/1000:0)}:{})});
  }
- return {update,stop,clear:()=>update(null),destroy(){clearInterval(timer);panel.remove();}};
+ return {element:panel,update,stop,clear:()=>update(null),destroy(){clearInterval(timer);panel.remove();}};
 }

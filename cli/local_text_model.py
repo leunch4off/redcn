@@ -15,7 +15,8 @@ import time
 from ai_telemetry import read_progress, sanitize_ai, write_progress
 from job_progress import emit
 from text_model_contract import (BASE_MODEL, EXPECTED_TRAINABLE, expected_parameters,
-                                inference_model, file_sha, sampling_parameters)
+                                inference_model, file_sha, sampling_parameters,
+                                inference_sampling_parameters, inference_memory_limit)
 
 MAX_INPUT = 40_000
 MAX_OUTPUT = 100_000
@@ -35,6 +36,9 @@ def clean_request(request):
         if not isinstance(content, str) or not content.strip() or len(content) > 12_000:
             raise ValueError('Сообщение должно содержать до 12000 символов')
         cleaned.append({'role': row['role'], 'content': content})
+    purpose = request.get('purpose')
+    if purpose not in (None, 'advertising'):
+        raise ValueError('Неизвестное назначение текстового запроса')
     tokens = request.get('maxTokens', 350)
     temperature = request.get('temperature', .75)
     if type(tokens) is not int or not 16 <= tokens <= 1024:
@@ -42,6 +46,10 @@ def clean_request(request):
     if type(temperature) not in (int, float) or not 0 <= temperature <= 1.2:
         raise ValueError('Неверная температура генерации')
     result = {'messages': cleaned, 'maxTokens': tokens, 'temperature': temperature}
+    if 'maxPromptTokens' in request:
+        if type(request['maxPromptTokens']) is not int or request['maxPromptTokens'] not in (2048, 4096):
+            raise ValueError('Неверный предел контекста')
+        result['maxPromptTokens'] = request['maxPromptTokens']
     if 'allowedStructurePlans' in request:
         from advertising_structure import validate_plans
         result['allowedStructurePlans'] = validate_plans(request['allowedStructurePlans'])[:]
@@ -50,6 +58,8 @@ def clean_request(request):
         if type(seed) is not int or not 0 <= seed <= 4_294_967_295:
             raise ValueError('Неверное зерно генерации')
         result['seed'] = seed
+    if purpose:
+        result['purpose'] = purpose
     if len(json.dumps(result, ensure_ascii=False).encode()) > MAX_INPUT:
         raise ValueError('Текстовый запрос слишком большой')
     return result
@@ -68,6 +78,8 @@ def settings(directory):
         'advertisingEnabled': value.get('advertisingEnabled') is True,
         'modelPath': value.get('modelPath', str(defaults/'model')),
         'pythonPath': value.get('pythonPath', str(defaults/'venv'/'bin'/'python')),
+        'advertisingModelPath': value.get('advertisingModelPath'),
+        'advertisingPythonPath': value.get('advertisingPythonPath'),
         'adapterPath': value.get('adapterPath') if value.get('useCandidateAdapter') is True else None,
         'maxSeconds': max(5, min(55, float(value.get('maxSeconds', 55))))}
 
@@ -124,6 +136,10 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
     try:
         request = clean_request(request)
         config = settings(directory)
+        if request.get('purpose') == 'advertising' and config.get('advertisingModelPath'):
+            config = {**config, 'modelPath': config['advertisingModelPath'],
+                'pythonPath': config.get('advertisingPythonPath') or config['pythonPath'],
+                'adapterPath': None}
         if not config['enabled']:
             return unavailable('Локальная текстовая модель выключена')
         python = Path(config['pythonPath'])
@@ -132,7 +148,10 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
             return unavailable('Локальная текстовая модель ещё не установлена')
         identity=inference_model(json.loads((model/'config.json').read_text()))
         latest['model'] = identity
-        budget = config['maxSeconds'] if deadline is None else min(config['maxSeconds'], deadline-time.monotonic())
+        end = started+config['maxSeconds']
+        if deadline is not None:
+            end = min(end, deadline)
+        budget = end-time.monotonic()
         if budget <= 0 or (cancel is not None and cancel.is_set()):
             return unavailable('Время генерации истекло или запрос отменён',
                 phase='cancelled' if cancel is not None and cancel.is_set() else 'timeout')
@@ -144,18 +163,27 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
             gate = model_resource(directory, kind='foreground', timeout=min(3, budget))
         except ImportError:
             gate = nullcontext()
-        with gate as resource_fd, tempfile.TemporaryDirectory(prefix='redcn-ai-progress-') as progress_directory:
+        with gate as resource_fd, tempfile.TemporaryDirectory(prefix='redcn-ai-progress-') as progress_directory, \
+                tempfile.TemporaryFile(mode='w+b') as request_file:
             try:
                 progress_path = Path(progress_directory)/'progress.json'
+                # A slow-starting MLX worker may not drain a pipe in the first
+                # communicate(timeout=.1). Retrying with input=None then stops
+                # writing the remaining input on CPython. Supply a finite file
+                # before starting the child; polling now handles output only.
+                request_file.write(json.dumps(request, ensure_ascii=False).encode())
+                request_file.flush()
+                request_file.seek(0)
+                if time.monotonic() >= end or (cancel is not None and cancel.is_set()):
+                    return unavailable('Время генерации истекло или запрос отменён',
+                        phase='cancelled' if cancel is not None and cancel.is_set() else 'timeout')
                 report({'phase': 'loading'})
                 process = subprocess.Popen(['/usr/bin/arch', '-arm64', str(python),
                     str(Path(__file__).resolve()), '--worker', str(model),
                     str(config['adapterPath']) if config['adapterPath'] else '-', str(progress_path)],
-                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                    stdin=request_file, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                     start_new_session=True,
                     pass_fds=(resource_fd,) if type(resource_fd) is int else ())
-                end = started+budget
-                pending = json.dumps(request, ensure_ascii=False).encode()
                 last_sample = None
                 while True:
                     remaining = end-time.monotonic()
@@ -163,10 +191,9 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
                         return unavailable('Локальная модель не успела ответить; исходные поля сохранены',
                             phase='cancelled' if cancel is not None and cancel.is_set() else 'timeout')
                     try:
-                        stdout, _ = process.communicate(input=pending, timeout=min(.1, remaining))
+                        stdout, _ = process.communicate(timeout=min(.1, remaining))
                         break
                     except subprocess.TimeoutExpired:
-                        pending = None
                         measured = read_progress(progress_path)
                         if measured and measured != last_sample:
                             report(measured)
@@ -190,6 +217,13 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
         raise
     finally:
         _stop(process)
+        for name in ('stdin', 'stdout', 'stderr'):
+            stream = getattr(process, name, None)
+            if stream is not None:
+                try:
+                    stream.close()
+                except OSError:
+                    pass
 
 
 def worker(model_path, adapter_path, request, *, progress_path=None):
@@ -213,7 +247,8 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
             last_write = now
 
     progress('loading', force=True)
-    mx.set_memory_limit(2_500_000_000)
+    memory_limit = inference_memory_limit(identity)
+    mx.set_memory_limit(memory_limit)
     mx.set_cache_limit(64_000_000)
     adapter_sha = None
     if adapter_path != '-':
@@ -234,10 +269,11 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
         adapter_sha = receipt['adapterSha256']
     model, tokenizer = load(str(model_path), adapter_path=None if adapter_path == '-' else adapter_path)
     progress('preparing', force=True)
-    prompt = tokenizer.apply_chat_template(request['messages'], tokenize=False, add_generation_prompt=True)
+    prompt = tokenizer.apply_chat_template(request['messages'], tokenize=False, add_generation_prompt=True,
+        **({'enable_thinking': False} if request.get('purpose') == 'advertising' else {}))
     prompt_ids = list(tokenizer.encode(prompt))
     prompt_tokens = len(prompt_ids)
-    if prompt_tokens > 2048:
+    if prompt_tokens > request.get('maxPromptTokens', 2048):
         raise ValueError('Prompt exceeds the bounded local context')
     if 'seed' in request:
         mx.random.seed(request['seed'])
@@ -248,15 +284,20 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
         progress('prefill', promptTokensProcessed=done, promptTokensTotal=total)
 
     parts = []
+    finish_reason = None
+    sampler_settings = inference_sampling_parameters(identity, request['temperature'])
     constrained = {}
     if 'allowedStructurePlans' in request:
         from advertising_structure import TokenChoiceConstraint
         constrained['logits_processors'] = [TokenChoiceConstraint(tokenizer,
             request['allowedStructurePlans'], prompt_ids)]
     for response in stream_generate(model, tokenizer, prompt=prompt, max_tokens=request['maxTokens'],
-            sampler=make_sampler(**sampling_parameters(request['temperature'])),
+            sampler=make_sampler(**sampler_settings),
             prompt_progress_callback=prefill, **constrained):
         parts.append(response.text)
+        reported_finish = getattr(response, 'finish_reason', None)
+        if reported_finish in ('stop', 'length'):
+            finish_reason = reported_finish
         measured = {'generatedTokens': response.generation_tokens,
             'tokensPerSecond': response.generation_tps, 'promptTokens': response.prompt_tokens,
             'promptTokensPerSecond': response.prompt_tps}
@@ -264,7 +305,12 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
             measured['generationSeconds'] = response.generation_tokens/response.generation_tps
         progress('generating', **measured)
     progress('complete', force=True)
+    peak_memory = getattr(mx, 'get_peak_memory', None)
     return {'status': 'review', 'text': ''.join(parts), 'model': identity, 'adapterSha256': adapter_sha,
+        'stopReason': finish_reason or ('length' if metrics.get('generatedTokens', 0) >= request['maxTokens'] else 'stop'),
+        'stopReasonSource': 'mlx-finish-reason' if finish_reason else 'token-bound-fallback',
+        'sampling': sampler_settings, 'memoryLimitBytes': memory_limit,
+        'peakMemoryBytes': int(peak_memory()) if callable(peak_memory) else None,
         'generationMode': 'bounded-structure-plan' if constrained else 'free-text',
         'ai': sanitize_ai(metrics),
         'autoApply': False, 'message': 'Локальный черновик: проверьте факты и китайскую формулировку перед публикацией.'}

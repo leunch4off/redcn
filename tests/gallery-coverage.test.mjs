@@ -31,6 +31,14 @@ test('the30photo retention cap is separate from actual observation and download 
  assert.equal(feedback.partial,true);assert.match(feedback.message,/сверх лимита 10/);
  assert.equal(sourceEditorMetadata(value).sourceReadiness.gallery.retained,30);
 });
+test('the200photo scan limit survives metadata round trips and reports the remainder',()=>{
+ const complete=sourceEditorMetadata(sourceEditorMetadata({sourceReadiness:source({observed:36,expected:36,limit:200})}));
+ assert.equal(complete.sourceReadiness.gallery.limit,200);assert.equal(complete.sourceReadiness.gallery.retained,36);
+ assert.equal(sourceReadinessFeedback(complete).partial,false);
+ const large=sourceEditorMetadata(sourceEditorMetadata({sourceReadiness:source({observed:205,expected:205,limit:200})}));
+ assert.equal(large.sourceReadiness.gallery.retained,200);assert.equal(large.sourceReadiness.gallery.overLimit,5);
+ assert.match(sourceReadinessFeedback(large).message,/сверх лимита 5/);
+});
 
 test('thirteen identities with only three main links remain partial after save even when every thumbnail downloaded',()=>{
  const value={sourceReadiness:source({version:2,observed:13,expected:13,previewOnly:10,mainLinksObserved:3})};

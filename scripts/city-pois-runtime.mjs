@@ -1,8 +1,9 @@
+import {hasOwnKey} from './own-property.mjs';
 const cityPoiFold=value=>String(value??'').normalize('NFC').toLocaleLowerCase('ru').replaceAll('ё','е').replace(/\s+/g,' ').trim();
 export const CITY_POI_CATEGORIES=Object.freeze({'chinese-grocery':'Азиатские продукты, включая китайские','chinese-restaurant':'Китайская кухня',park:'Парки · опубликованные ориентиры'});
 export function cityPoiStats(){return {places:CITY_POIS.places.length,categories:Object.fromEntries(Object.keys(CITY_POI_CATEGORIES).map(key=>[key,CITY_POIS.places.filter(row=>row.category===key).length])),verifiedAt:CITY_POIS.verifiedAt,exhaustive:false};}
 export function searchCityPois(query='',{category='',offset=0,limit=30}={}){
- const q=cityPoiFold(query);if(q.length>200)throw Error('Поиск мест: не более 200 символов.');if(category&&!Object.hasOwn(CITY_POI_CATEGORIES,category))throw Error('Неизвестная категория мест.');
+ const q=cityPoiFold(query);if(q.length>200)throw Error('Поиск мест: не более 200 символов.');if(category&&!hasOwnKey(CITY_POI_CATEGORIES,category))throw Error('Неизвестная категория мест.');
  const start=Math.max(0,Math.min(10000,Math.trunc(Number(offset)||0))),size=Math.max(1,Math.min(100,Math.trunc(Number(limit)||30))),sources=new Map(CITY_POIS.sources.map(row=>[row.id,row]));
  const matches=CITY_POIS.places.filter(row=>(!category||row.category===category)&&(!q||[row.ru,row.zh,row.addressRu,...row.aliases].some(value=>cityPoiFold(value).includes(q))));
  return {entries:matches.slice(start,start+size).map(row=>({...row,aliases:[...row.aliases],sourceIds:[...row.sourceIds],coordinateEvidence:{...row.coordinateEvidence,sourceIds:[...row.coordinateEvidence.sourceIds]},sources:row.sourceIds.map(id=>({...sources.get(id)})),sourceId:'city-pois',reviewed:false})),total:matches.length,offset:start,limit:size,stats:cityPoiStats()};

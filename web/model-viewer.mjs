@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 /* Geometry-only local preview. No resource URLs, material loaders or executable imports. */
 export const MODEL_PREVIEW_LIMITS=Object.freeze({bytes:16*1024*1024,vertices:150000,triangles:200000,line:65536,lines:400000,json:1024*1024,nodes:512});
 const mvFail=text=>{throw Error(text);};
@@ -72,7 +73,7 @@ export function parseModelPreview(input,name=''){
  const bytes=input instanceof Uint8Array?input:input instanceof ArrayBuffer?new Uint8Array(input):null;if(!bytes||bytes.length===0||bytes.length>MODEL_PREVIEW_LIMITS.bytes)mvFail('Предпросмотр: выберите непустой OBJ / PLY / GLB до 16 МиБ. Оригинал сохраняется отдельно.');
  const extension=String(name).split('.').pop().toLowerCase();if(extension==='glb')return mvGlb(bytes);if(extension==='obj')return mvObj(mvDecode(bytes));if(extension==='ply')return mvPly(mvDecode(bytes));mvFail('Предпросмотр поддерживает OBJ, PLY ASCII 1.0 и статический GLB 2.0.');
 }
-export function measureModelPoints(a,b,unit){const factors={m:1,cm:.01,mm:.001};if(!Object.hasOwn(factors,unit))mvFail('Сначала укажите единицы исходной модели: м, см или мм.');if(![a,b].every(point=>Array.isArray(point)&&point.length===3&&point.every(mvNumber)))mvFail('Выберите две точки поверхности.');return Math.hypot(...a.map((value,i)=>value-b[i]))*factors[unit];}
+export function measureModelPoints(a,b,unit){const factors={m:1,cm:.01,mm:.001};if(!hasOwnKey(factors,unit))mvFail('Сначала укажите единицы исходной модели: м, см или мм.');if(![a,b].every(point=>Array.isArray(point)&&point.length===3&&point.every(mvNumber)))mvFail('Выберите две точки поверхности.');return Math.hypot(...a.map((value,i)=>value-b[i]))*factors[unit];}
 export function modelViewRotation(yaw,pitch){const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);return [cy,sp*sy,-cp*sy,0,cp,sp,sy,-sp*cy,cp*cy];}
 function mvRotate(point,matrix){return [matrix[0]*point[0]+matrix[3]*point[1]+matrix[6]*point[2],matrix[1]*point[0]+matrix[4]*point[1]+matrix[7]*point[2],matrix[2]*point[0]+matrix[5]*point[1]+matrix[8]*point[2]];}
 export function pickModelPoint(model,rotatedX,rotatedY,rotation){

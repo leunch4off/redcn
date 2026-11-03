@@ -24,6 +24,7 @@ import redcn
 import photo_store
 import http_delivery
 import access_roles
+from photo_limits import PHOTO_SOURCE_LIMIT
 
 PAIR_TTL = 600
 SESSION_TTL = 30 * 86400
@@ -251,7 +252,7 @@ def photo_source_items(result):
     return output
 
 
-def source_images(result):
+def source_images(result, *, limit=PHOTO_SOURCE_LIMIT):
     fields=result.get('fields',{}) if isinstance(result.get('fields'),dict) else {}
     listing=result.get('listing',{}) if isinstance(result.get('listing'),dict) else {}
     # A one-photo generated/editable field must not hide the source album. The
@@ -273,7 +274,9 @@ def source_images(result):
         try:url=redcn.allowed_url(value,images=True,resolve=False)
         except (ValueError,TypeError):continue
         if url not in urls and url not in excluded:urls.append(url)
-    return urls[:30]
+    # Inventory coverage needs the full count before applying its work bound.
+    # Presentation renderers keep their own smaller page limit.
+    return urls if limit is None else urls[:limit]
 
 
 def cache_photos(directory,result,report=None,cancel=None):
@@ -362,7 +365,7 @@ def media_failures(result):
             'stage':'download' if row.get('error') else 'crop','originalSaved':bool(row.get('id')),
             'errorClass':str(row.get('errorClass') or crop.get('errorClass') or '')[:60],
             'message':str(message)[:300]})
-    return output[:30]
+    return output[:PHOTO_SOURCE_LIMIT]
 
 
 def original_metadata(directory):
@@ -420,13 +423,17 @@ def parse_cursor(value):
     return stamp,identifier
 
 
-def list_cards(directory,after=0):
+def list_cards(directory,after=0,*,viewer='owner'):
     from client_publication import sanitize_text,PublicationReviewRequired
+    from card_catalog import ensure_entries,summaries
     stamp,identifier=parse_cursor(after);upper=time.time()
     db=redcn.open_cache(directory)
     try:
         db.execute('CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, updated REAL, payload TEXT)')
+        ensure_entries(db,directory)
         rows=db.execute('SELECT id,updated,payload FROM results WHERE (updated>? OR (updated=? AND id>?)) AND updated<=? ORDER BY updated,id LIMIT 201',(stamp,stamp,identifier,upper)).fetchall()
+        catalogue=summaries(db,[row[0] for row in rows],viewer=viewer)
+        db.commit()
     finally:db.close()
     has_more=len(rows)>200;rows=rows[:200];cards=[];metadata=original_metadata(directory) if rows else {}
     for result_id,updated,payload in rows:
@@ -460,7 +467,7 @@ def list_cards(directory,after=0):
                 try:summary[key]=sanitize_text(value)
                 except PublicationReviewRequired:summary[key]='';needs_review=True
             else:summary[key]=value if key in ('price','area') and type(value) in (int,float) and math.isfinite(value) else ''
-        cards.append({'id':result_id,'updated':updated,**summary,'publicationNeedsReview':needs_review,'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+cover_id if cover_id else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
+        cards.append({'id':result_id,'updated':updated,**catalogue.get(result_id,{}),**summary,'publicationNeedsReview':needs_review,'photoCount':len(source_images(result)),'cachedPhotoCount':len(media),'coverUrl':'/api/phone/previews/'+cover_id if cover_id else None,'mediaStatus':result.get('mediaStatus','ready' if len(media)==len(source_images(result)) else 'pending')})
     cursor=(repr(rows[-1][1])+':'+rows[-1][0]) if has_more and rows else (repr(upper)+':'+'f'*32)
     return {'cards':cards,'cursor':cursor,'serverTime':upper,'hasMore':has_more}
 
@@ -530,6 +537,14 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
     owner_scope.check(directory)
     state=PairingState(directory);allowed=set(hosts or lan_names())
     if not allowed:raise ValueError('Не найдены локальные адреса Mac')
+    def text_job_access(session,role):
+        # Capture values, never a request handler or its later mutable role.
+        principal='phone:'+hashlib.sha256(session.encode()).hexdigest()+':'+role
+        def authorize():
+            owner_scope.check(directory)
+            if not state.authorized(session) or state.role(session)!=role or role not in ('owner','editor'):
+                raise PermissionError('Доступ устройства изменился')
+        return principal,authorize
     def latest_job_info():
         getter=getattr(controller,'latest_job',None)
         value=getter() if callable(getter) else None
@@ -603,6 +618,11 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                                 status,value,mime,headers=document
                                 value={'exports':[row for row in value.get('exports',[]) if not row.get('requiresRegeneration') and access_roles.viewer_asset_allowed(directory,'export',row.get('id'))]}
                                 self.respond(status,value,mime,headers);return
+                    if relative=='text-jobs' or relative.startswith('text-jobs/'):
+                        from text_generation_jobs import dispatch as dispatch_text_job
+                        principal,authorize=text_job_access(self.session,self.role)
+                        self.respond(*dispatch_text_job(controller.text_generation_jobs,relative,
+                            principal=principal,authorize=authorize,actor=self.actor,allowed_actions=('rewrite',)));return
                     workspace=getattr(controller,'workspace_api',None)
                     document=workspace(relative,namespace='phone',query=parse_qs(urlsplit(self.path).query),actor=self.actor) if callable(workspace) else None
                     if document:self.respond(*document);return
@@ -621,7 +641,8 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                 if path=='/api/phone/state':self.respond(200,{'paired':True,'workspaceId':owner_scope.owner_id,'csrfToken':state.csrf(self.session),'serverTime':time.time(),'version':3,'release':getattr(controller,'release','unknown'),'role':self.role,'capabilities':access_roles.capabilities(self.role),'activeJob':latest_job_info() if self.role!='viewer' else None});return
                 if path=='/api/phone/cards':
                     after=parse_qs(urlsplit(self.path).query).get('after',['0'])[0]
-                    feed=list_cards(directory,after)
+                    from card_catalog import viewer_scope
+                    feed=list_cards(directory,after,viewer=viewer_scope(self.role,self.session))
                     if self.role=='viewer':
                         visible={card_id for card_id,_ in access_roles._read_cards(directory)}
                         feed['cards']=[row for row in feed['cards'] if row['id'] in visible]
@@ -676,6 +697,18 @@ def create_phone_server(directory,controller,port=8767,bind='0.0.0.0',hosts=None
                     self.respond(200,{'paired':True,'workspaceId':owner_scope.owner_id,'csrfToken':state.csrf(token),'activeJob':latest_job_info(),'role':role,'capabilities':access_roles.capabilities(role),'release':getattr(controller,'release','unknown')},headers={'Set-Cookie':cookie});return
                 if not access_roles.phone_route_allowed(self.role,'POST',relative,data):
                     self.respond(403,{'error':'У этой роли нет доступа к данному действию.','code':'ROLE_FORBIDDEN'});return
+                if relative=='text-jobs' or relative.startswith('text-jobs/'):
+                    from text_generation_jobs import dispatch as dispatch_text_job
+                    principal,authorize=text_job_access(self.session,self.role)
+                    self.respond(*dispatch_text_job(controller.text_generation_jobs,relative,data,
+                        principal=principal,authorize=authorize,actor=self.actor,allowed_actions=('rewrite',)));return
+                viewed=re.fullmatch(r'cards/([a-f0-9]{32})/viewed',relative)
+                if viewed:
+                    if data:raise ValueError('Отметка просмотра не изменяет поля карточки')
+                    if self.role=='viewer' and viewed[1] not in {card_id for card_id,_ in access_roles._read_cards(directory)}:
+                        self.respond(404,{'error':'Карточка не найдена'});return
+                    from card_catalog import mark_viewed,viewer_scope
+                    self.respond(200,mark_viewed(directory,viewed[1],viewer=viewer_scope(self.role,self.session)));return
                 workspace=getattr(controller,'workspace_api',None)
                 document=workspace(relative,data,namespace='phone',actor=self.actor) if callable(workspace) else None
                 if document:self.respond(*document);return

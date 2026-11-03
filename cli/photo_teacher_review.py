@@ -79,11 +79,12 @@ def merge_reviews(result, reviews):
     rejection and contradictory source facts are kept for operator resolution.
     """
     from photo_auto_policy import human_decisions
+    from phone_relay import source_images
     updated = copy.deepcopy(result)
     fields = updated.setdefault('fields', {})
     media = {row.get('sourceUrl'): row.get('id') for row in updated.get('media', [])
              if isinstance(row, dict) and row.get('kind', 'original') == 'original'}
-    selected = set(fields.get('photos') or [])
+    selected = set(source_images(updated))
     edits = fields.get('photoEdits') if isinstance(fields.get('photoEdits'), dict) else {}
     excluded = set(edits.get('excluded') or [])
     observations = edits.setdefault('observations', {})

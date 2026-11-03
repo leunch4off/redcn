@@ -3,6 +3,7 @@ import threading
 import unittest
 
 import test_phone_browser as acceptance
+from browser_text_jobs_fixture import MockTextJobs
 
 
 class LanguageStudioAcceptance(unittest.TestCase):
@@ -67,6 +68,8 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.assertGreaterEqual(self.page.locator('#dictionarySearch').evaluate('el=>parseFloat(getComputedStyle(el).fontSize)'),16)
 
     def test_rewrites_change_real_words_keep_manual_other_parts_and_survive_reload(self):
+        """Twenty authored mock replies test UI/history, never model quality."""
+        jobs=MockTextJobs(self.page,'local')
         self.open_editor()
         for key,value in {'url':'https://www.cian.ru/rent/flat/100001/','price':'70000','deposit':'35000','area':'40','rooms':'1','floor':'10','floors':'23','metro':'Прокшино','walk':'5'}.items():
             self.page.locator('#'+key).fill(value)
@@ -75,6 +78,7 @@ class LanguageStudioAcceptance(unittest.TestCase):
         outputs=[];reload_proof=None
         for index in range(20):
             self.page.locator('#rewriteCopy').click()
+            self.page.wait_for_function("!document.getElementById('rewriteCopy').disabled")
             apply=self.page.get_by_role('button',name='Применить новую версию',exact=True)
             if apply.is_visible():
                 apply.click()
@@ -82,8 +86,10 @@ class LanguageStudioAcceptance(unittest.TestCase):
             normalized=self.page.evaluate("text=>text.replace(/[^\\p{L}\\p{N}]/gu,'')",current)
             self.assertNotIn(normalized,outputs,'Punctuation and emoji alone must not count as a new body')
             outputs.append(normalized)
-            for fact in ['40㎡','70,000₽','35,000₽','10/23层','抵达登记（临时居住登记）']:
+            for fact in ['40㎡','70,000₽','35,000₽','10/23层']:
                 self.assertIn(fact,current)
+            self.assertNotIn('免费',current)
+            self.assertNotIn('登记',current,'An unspecified registration service must not be added to the UI fixture')
             self.assertEqual(self.page.locator('#outputTitle').input_value(),'手工标题保留')
             self.assertEqual(self.page.locator('#tags').input_value(),'#手工标签保留')
             if index==9:
@@ -101,7 +107,12 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.assertIn('12 вариантов вступления',stats)
         self.assertIn('48 общих тегов',stats)
         self.assertNotIn('262',self.page.locator('.language-composition-count').inner_text())
-        self.copy_acceptance_receipt={'rewrites':len(outputs),'distinctNormalizedBodies':len(set(outputs)),'manualTitleAndTagsPreserved':True,'reload':reload_proof,'visibleCompositionText':self.page.locator('.language-composition-count').inner_text(),'pageErrors':list(self.errors),'isolatedFixture':True}
+        self.assertEqual(len(jobs.requests),20)
+        self.assertTrue(all(request['action']=='preview' and request['part']=='body' for request in jobs.requests))
+        self.assertEqual(len({request['requestId'] for request in jobs.requests}),20)
+        self.assertEqual(jobs.requests[0]['fields']['price'],'70000')
+        self.assertEqual(jobs.requests[0]['output']['title'],'手工标题保留')
+        self.copy_acceptance_receipt={'evidenceKind':'mock-ui-contract','modelInferenceExecuted':False,'syntheticResponses':True,'rewrites':len(outputs),'distinctNormalizedBodies':len(set(outputs)),'manualTitleAndTagsPreserved':True,'reload':reload_proof,'visibleCompositionText':self.page.locator('.language-composition-count').inner_text(),'pageErrors':list(self.errors),'isolatedFixture':True}
 
     def test_translation_requires_apply_and_preserves_other_output_parts(self):
         self.page.route('**/api/local/translate',lambda route:route.fulfill(json={
@@ -141,6 +152,7 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.assertFalse(self.page.locator('#languageApply').is_disabled())
 
     def test_independent_rewrites_preserve_manual_other_parts_and_new_card_clears_draft(self):
+        jobs=MockTextJobs(self.page,'local')
         self.open_editor()
         for key,value in {'price':'80000','area':'54','rooms':'2','metro':'Юго-Западная','walk':'8'}.items():
             self.page.locator('#'+key).fill(value)
@@ -182,6 +194,38 @@ class LanguageStudioAcceptance(unittest.TestCase):
         self.page.locator('#newObject').click()
         self.assertEqual(self.page.locator('#languageRussianInput').input_value(),'')
         self.assertEqual(self.page.locator('#languageChineseOutput').input_value(),'')
+        self.assertEqual([request['part'] for request in jobs.requests],['title','body'])
+
+    def test_model_job_live_metrics_cancel_and_late_manual_edit_are_preserved(self):
+        jobs=MockTextJobs(self.page,'local',hold=True)
+        self.open_editor()
+        self.page.locator('#price').fill('80000')
+        self.page.locator('#area').fill('54')
+        self.page.locator('#outputTitle').fill('手工标题')
+        self.page.locator('#output').fill('我保留的初始描述。')
+        self.page.locator('#tags').fill('#手工标签')
+        self.page.locator('#rewriteCopy').click()
+        self.page.wait_for_function("document.querySelector('#individualCopyProgress').textContent.includes('24,5 токенов/с')")
+        progress=self.page.locator('#individualCopyProgress').inner_text()
+        self.assertIn('Создано 49 токенов',progress)
+        self.assertIn('fixture-individual-model',progress)
+        self.assertEqual(self.page.locator('#output').input_value(),'我保留的初始描述。')
+        self.page.locator('#individualCopyCancel').click()
+        self.page.wait_for_function("document.querySelector('#review').textContent.includes('Генерация отменена')&&!document.getElementById('rewriteCopy').disabled")
+        self.assertEqual(len(jobs.cancellations),1)
+        self.assertEqual(self.page.locator('#output').input_value(),'我保留的初始描述。')
+        self.assertFalse(self.page.get_by_role('button',name='Применить новую версию',exact=True).is_visible())
+
+        self.page.locator('#rewriteCopy').click()
+        self.page.wait_for_function("document.querySelector('#individualCopyProgress').textContent.includes('24,5 токенов/с')")
+        self.page.locator('#output').fill('生成过程中我写下的新内容。')
+        jobs.release_all()
+        self.page.wait_for_function("document.querySelector('#review').textContent.includes('карточка изменилась')&&!document.getElementById('rewriteCopy').disabled")
+        self.assertEqual(self.page.locator('#output').input_value(),'生成过程中我写下的新内容。')
+        self.assertEqual(self.page.locator('#outputTitle').input_value(),'手工标题')
+        self.assertEqual(self.page.locator('#tags').input_value(),'#手工标签')
+        self.assertFalse(self.page.get_by_role('button',name='Применить новую версию',exact=True).is_visible())
+        self.assertEqual([request['action'] for request in jobs.requests],['preview','preview'])
 
     def test_v5_migration_keeps_custom_priority_and_only_renders_one_rule_page(self):
         self.page.add_init_script("""localStorage.setItem('most-rules-version','4');

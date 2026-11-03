@@ -7,6 +7,7 @@ import {COMMUNITY_RENTAL_ENTRIES} from '../web/community-phrases.mjs';
 import {GEO_CATALOG} from '../web/geo-catalog.mjs';
 import {CITY_POIS} from '../web/city-pois.mjs';
 import {normalizeCopyHistory,rememberPublication,publicationDigest} from '../web/rental-copy.mjs';
+import {detectConditions} from '../web/fact-evidence.mjs';
 
 const fold=value=>String(value??'').normalize('NFC').toLocaleLowerCase('ru').replaceAll('ё','е').replace(/\s+/g,' ').trim();
 
@@ -80,6 +81,19 @@ try{
   }else if(input.action==='translate'){
     if(typeof input.text!=='string'||input.text.length>20_000)throw Error('Русский текст: до 20 000 символов');
     const open=await openLexicon();result=translateDraft(input.text,{rules,entries:open.entries,mode:'draft'});
+  }else if(input.action==='individual-brief'){
+    if(!input.fields||Array.isArray(input.fields)||typeof input.fields!=='object')throw Error('Нужны поля карточки');
+    const fields={...input.fields},sourceConditions=detectConditions(fields.sourceDescription||fields.sourceAudit?.description||''),source=sourceConditions.facts;
+    const utilityValues=new Set(['included','meters','extra']);
+    if(utilityValues.has(source.utilities)&&utilityValues.has(fields.utilities)&&source.utilities!==fields.utilities)throw Error('В описании и полях расходятся коммунальные расходы. Уточните в карточке, какие платежи входят в аренду и какие оплачиваются отдельно.');
+    const conditionKeys=['petPolicy','childrenPolicy','registrationPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','shortTerm','contractMonths','prepayMonths','minMonths','leaseTerm','utilities'];
+    for(const key of conditionKeys)if((fields[key]===undefined||fields[key]===null||fields[key]==='')&&source[key]!==undefined)fields[key]=source[key];
+    for(const [key,flag] of [['petPolicy','pets'],['childrenPolicy','children']])if(source[key]==='no'&&!['no','conflict'].includes(fields[key])){fields[key]='conflict';fields[flag]=false;}
+    result=generateListing({...fields,templateMode:'catalog',titleVariant:0,copyVariant:0,tagVariant:0},rules,
+      {...DEFAULT_PREFS,benefits:'',contact:'',brandTags:''},{referenceVersion:FACTUAL_REFERENCE_VERSION,includeFactualBrief:true});
+    if(result.problems?.length)throw Error(result.problems.join(' · '));
+    result.factualBrief.effectiveConditions=Object.fromEntries(conditionKeys.filter(key=>fields[key]!==undefined).map(key=>[key,fields[key]]));
+    result.factualBrief.sourceRestrictions=sourceConditions.restrictions;
   }else if(input.action==='factual-reference'){
     if(input.referenceVersion!==FACTUAL_REFERENCE_VERSION)throw Error('Неизвестная версия фактического контекста');
     if(!input.fields||Array.isArray(input.fields)||typeof input.fields!=='object')throw Error('Нужны поля карточки');

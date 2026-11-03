@@ -36,7 +36,7 @@ MAX_HTTP_INSPECT=64*1024*1024
 _HEX=re.compile(r'[a-f0-9]{32}')
 _DIGEST=re.compile(r'[a-f0-9]{64}')
 _TABLES={
-    'listings':('listings.sqlite3',('history','publication_reviews','publication_review_events','variants','seen')),
+    'listings':('listings.sqlite3',('history','publication_reviews','publication_review_events','variants','seen','card_catalog_state','card_catalog_views')),
     'dictionary':('dictionary-reviews.sqlite3',('dictionary_revision','dictionary_entries','dictionary_events')),
     # Checkpoints contain runtime paths and optimizer identities for another
     # machine. Portable examples/decisions/splits survive; jobs start afresh.
@@ -331,6 +331,8 @@ def _initialize_tables(directory,stores):
             db.executescript('''CREATE TABLE IF NOT EXISTS results(id TEXT PRIMARY KEY,updated REAL,payload TEXT);
               CREATE TABLE IF NOT EXISTS history(id TEXT PRIMARY KEY,stamp REAL,payload TEXT,png BLOB);
               CREATE TABLE IF NOT EXISTS variants(key TEXT PRIMARY KEY,value INTEGER NOT NULL);''')
+            from card_catalog import create_tables
+            create_tables(db)
         import publication_review
         with publication_review._connect(directory):pass
     if 'dictionary' in stores:
@@ -378,6 +380,8 @@ def _validate_metadata_schema(metadata,card_ids):
                             else:valid=False
                             if not valid:raise ValueError('Тип данных несовместим со схемой: '+key+'/'+column[1])
                         values=dict(zip(table['columns'],row))
+                        if name in ('card_catalog_state','card_catalog_views') and values['card_id'] not in card_ids:
+                            raise ValueError('Состояние каталога относится к карточке вне комплекта')
                         if key=='listings/history':
                             try:document=json.loads(values['payload'])
                             except (ValueError,TypeError) as error:raise ValueError('Повреждённая запись истории') from error
@@ -414,6 +418,10 @@ def _restore_metadata(directory,metadata,mapping):
                 rows=[]
                 for source in table['rows']:
                     row=[_decode(value) for value in source]
+                    if store=='listings' and name in ('card_catalog_state','card_catalog_views'):
+                        position=table['columns'].index('card_id')
+                        if row[position] not in mapping:raise ValueError('Состояние каталога относится к карточке вне комплекта')
+                        row[position]=mapping[row[position]]
                     if store=='listings' and name=='history':
                         position=table['columns'].index('payload')
                         try:row[position]=_json(dossier_backup._remap(json.loads(row[position]),mapping)).decode()

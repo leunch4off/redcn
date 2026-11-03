@@ -12,11 +12,11 @@ from job_progress import emit
 from ai_telemetry import sanitize_ai
 from local_photo_ai import AUTO_CONFIDENCE, FEATURE_LABELS, normalize_inventory
 from photo_auto_policy import detector_suggestion, human_decisions, review_journal
+from photo_limits import PHOTO_SOURCE_LIMIT
 import photo_store
-import redcn
 
 VERSION = 1
-COVERAGE_LIMIT = 30
+COVERAGE_LIMIT = PHOTO_SOURCE_LIMIT
 _DIGEST = re.compile(r'[a-f0-9]{64}\Z')
 
 
@@ -32,21 +32,11 @@ def _cancelled(cancel):
 
 def _sources(result):
     from phone_relay import source_images
-    selected = source_images(result)
-    fields = result.get('fields') if isinstance(result.get('fields'), dict) else {}
-    listing = result.get('listing') if isinstance(result.get('listing'), dict) else {}
-    values = fields.get('photos') or listing.get('images') or []
-    edits = fields.get('photoEdits') if isinstance(fields.get('photoEdits'), dict) else {}
-    excluded = {value for value in edits.get('excluded', []) if isinstance(value, str)} if isinstance(edits.get('excluded', []), list) else set()
-    available = set()
-    for value in values if isinstance(values, list) else []:
-        try:
-            url = redcn.allowed_url(value, images=True, resolve=False)
-        except (ValueError, TypeError):
-            continue
-        if url not in excluded:
-            available.add(url)
-    return selected[:COVERAGE_LIMIT], len(available)
+    # Count exactly the same union that is scanned: source gallery, editable
+    # photos and retained source metadata, excluding layouts/operator removals.
+    # An old one-photo editor field must not hide a larger source album.
+    available = source_images(result, limit=None)
+    return available[:COVERAGE_LIMIT], len(available)
 
 
 def _evidence(raw):
@@ -118,7 +108,7 @@ def _candidates(analysis, digest, model, *, auto_apply=False):
 
 
 def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_seconds=600):
-    """Analyze at most 30 cached originals within one explicit wall deadline.
+    """Analyze at most 200 cached originals within one explicit wall deadline.
 
     Missing files, bad responses, timeouts and duplicates are represented per
     source URL. Cancellation raises ValueError. An incomplete album never
@@ -128,7 +118,8 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
     selected, available = _sources(result if isinstance(result, dict) else {})
     output = {'version': VERSION, 'state': 'complete', 'total': len(selected),
         'totalAvailable': available, 'coverageLimit': COVERAGE_LIMIT,
-        'truncated': available > COVERAGE_LIMIT, 'checked': 0, 'failed': 0,
+        'truncated': available > COVERAGE_LIMIT, 'overLimit': max(0, available-COVERAGE_LIMIT),
+        'coverageComplete': False, 'checked': 0, 'failed': 0,
         'skipped': 0, 'features': [], 'photoEvidence': [], 'photos': []}
     try:
         config = _configuration(directory)
@@ -256,8 +247,7 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
         'newSuggestions':output['reviewJournal']['added'],
         'needsReview':len(review_needed),
         **({'reason':'model-unaccepted','acceptedClasses':0} if model in ('redcn-furniture-v1','redcn-furniture-world-v2') else {})}
-    if output.get('reviewRequired'):
-        output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
-            and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))
+    output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
+        and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))
     output['state'] = 'partial' if incomplete else 'complete'
     return output

@@ -68,10 +68,10 @@ export function resolveMetroName(value,{rules={},dictionary={},includeRussian=fa
   const undecorated=metroNameWithoutDecoration(original),key=metroNameFold(undecorated),originalKey=metroNameFold(original),index=metroNameIndex(),rows=index.get(key)||[],row=metroNamePreferred(rows);
   const ruleMatches=[...metroNameRuleMatches(rules,key),...(originalKey!==key?metroNameRuleMatches(rules,originalKey):[])],baseMatches=[...metroNameRuleMatches(dictionary,key),...(originalKey!==key?metroNameRuleMatches(dictionary,originalKey):[])];
   const baseValues=new Set(baseMatches.map(match=>match.zh)),explicit=ruleMatches.filter(match=>!baseValues.has(match.zh));
-  const exact=explicit.at(-1);
+  const exact=explicit[explicit.length-1];
   if(exact){const complete=metroNameIsChinese(exact.zh),suffix=includeRussian&&row&&complete?'（'+row.ru+'）':'';return metroNameResult(original,{label:exact.zh+suffix,canonicalRu:row?.ru||'',knownStation:!!row,complete,needsReview:!row||!complete||new Set(explicit.map(match=>match.zh)).size>1,source:'exact-rule',translationStatus:'explicit-rule'});}
   if(row){
-    const dictionaryMatch=[...baseMatches,...ruleMatches].filter(match=>metroNameIsChinese(match.zh)).at(-1);
+    const dictionaryMatch=[...baseMatches,...ruleMatches].filter(match=>metroNameIsChinese(match.zh)).slice(-1)[0];
     if(dictionaryMatch)return metroNameResult(original,{label:dictionaryMatch.zh+(includeRussian?'（'+row.ru+'）':''),canonicalRu:row.ru,knownStation:true,complete:true,needsReview:false,source:'dictionary',translationStatus:'dictionary'});
     if(metroNameIsChinese(row.zh))return metroNameResult(original,{label:row.zh+(includeRussian?'（'+row.ru+'）':''),canonicalRu:row.ru,knownStation:true,complete:true,needsReview:false,source:'geo-catalog',translationStatus:row.translationStatus||'',translationSource:row.translationSource||''});
     const fallback=partial?metroNamePartial(row):null;

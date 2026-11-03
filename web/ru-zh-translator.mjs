@@ -91,7 +91,7 @@ function ruZhScan(raw,ctx){
  let output='',matches=[],unknown=[],pending='',pendingStart=0;
  const flush=()=>{if(!pending)return;const geo=translateGeo(pending,{}, {includeRussian:false});output+=geo;if(geo!==pending)matches.push({ru:pending,zh:geo,start:pendingStart,end:pendingStart+pending.length,source:'geo-catalog',reviewed:false});const remaining=geo.match(/[\p{Script=Cyrillic}]+(?:[-'’][\p{Script=Cyrillic}]+)*/gu)||[];unknown.push(...remaining);pending='';};
  const candidates=index=>{const char=ruZhFold(raw[index]);return [...(ctx.user.prefix.get(char)||[]),...(ruZhCore().prefix.get(char)||[]),...(ctx.mode==='lookup'?(ctx.open.prefix.get(char)||[]):[])];};
- for(let i=0;i<raw.length;){let row=null;for(const candidate of candidates(i)){const part=raw.slice(i,i+candidate.key.length);if(ruZhFold(part)!==candidate.key)continue;if((i&&ruZhWordChar.test(raw[i-1])&&ruZhWordChar.test(candidate.key[0]))||(ruZhWordChar.test(raw[i+part.length]||'')&&ruZhWordChar.test(candidate.key.at(-1))))continue;row={...candidate,actual:part};break;}
+ for(let i=0;i<raw.length;){let row=null;for(const candidate of candidates(i)){const part=raw.slice(i,i+candidate.key.length);if(ruZhFold(part)!==candidate.key)continue;if((i&&ruZhWordChar.test(raw[i-1])&&ruZhWordChar.test(candidate.key[0]))||(ruZhWordChar.test(raw[i+part.length]||'')&&ruZhWordChar.test(candidate.key[candidate.key.length-1])))continue;row={...candidate,actual:part};break;}
   if(row){flush();output+=row.zh;matches.push(ruZhMatch(row,row.actual,i));i+=row.actual.length;}
   else{if(!pending)pendingStart=i;pending+=raw[i++];}}
  flush();return ruZhResult(output,unknown,matches);
@@ -110,7 +110,7 @@ function ruZhProtectedPieces(input,ctx){
   for(const row of candidates){
    const actual=input.slice(index,index+row.key.length);
    if(ruZhFold(actual)!==row.key)continue;
-   if((index&&ruZhWordChar.test(input[index-1])&&ruZhWordChar.test(row.key[0]))||(ruZhWordChar.test(input[index+actual.length]||'')&&ruZhWordChar.test(row.key.at(-1))))continue;
+   if((index&&ruZhWordChar.test(input[index-1])&&ruZhWordChar.test(row.key[0]))||(ruZhWordChar.test(input[index+actual.length]||'')&&ruZhWordChar.test(row.key[row.key.length-1])))continue;
    ranges.push([index,index+actual.length]);index+=actual.length-1;break;
   }
  }

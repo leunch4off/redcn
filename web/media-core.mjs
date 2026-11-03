@@ -9,7 +9,8 @@ export function photoSourceUrl(raw,base=''){
     u.hash='';return u.href;
   }catch{return null;}
 }
-export function photoSources(values,base=''){return [...new Set((Array.isArray(values)?values:[]).map(v=>photoSourceUrl(v,base)).filter(Boolean))].slice(0,30);}
+export const PHOTO_SOURCE_LIMIT=200;
+export function photoSources(values,base=''){return [...new Set((Array.isArray(values)?values:[]).map(v=>photoSourceUrl(v,base)).filter(Boolean))].slice(0,PHOTO_SOURCE_LIMIT);}
 
 // CIAN exposes main and thumbnail renditions as separate gallery nodes. This
 // key groups only URLs that were actually observed; it never constructs a URL.

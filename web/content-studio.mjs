@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {containsClientCommission,sanitizeClientText} from './client-publication.mjs';
 
 export const TITLE_FORMULA_VARIABLES=Object.freeze(['city','layout','area','price','metro','floor','feature','university','code']);
@@ -24,7 +25,7 @@ export function renderTitleFormula(formula,context={}){
  const validation=validateTitleFormula(formula);if(!validation.valid)throw Error(validation.problems.join(' · '));
  const values=Object.create(null);
  for(const key of TITLE_FORMULA_VARIABLES){
-  const value=context&&Object.hasOwn(context,key)?context[key]:'';
+  const value=context&&hasOwnKey(context,key)?context[key]:'';
   if(value!=null&&typeof value!=='string'&&typeof value!=='number'||typeof value==='number'&&!Number.isFinite(value))throw TypeError('Неверное значение подстановки '+key);
   const text=value==null?'':String(value).trim();
   if(containsClientCommission(text))throw Error('Комиссия не включается в заголовок для клиента');
@@ -80,7 +81,7 @@ export function textDiff(before,after){
  const table=Array.from({length:a.length+1},()=>new Uint16Array(b.length+1));
  for(let i=a.length-1;i>=0;i--)for(let j=b.length-1;j>=0;j--)table[i][j]=a[i]===b[j]?table[i+1][j+1]+1:Math.max(table[i+1][j],table[i][j+1]);
  const result=[];let i=0,j=0;
- const push=(kind,text)=>{const last=result.at(-1);if(last?.kind===kind)last.text+=text;else result.push({kind,text});};
+ const push=(kind,text)=>{const last=result[result.length-1];if(last?.kind===kind)last.text+=text;else result.push({kind,text});};
  while(i<a.length||j<b.length){if(i<a.length&&j<b.length&&a[i]===b[j]){push('same',a[i++]);j++;}else if(j<b.length&&(i===a.length||table[i][j+1]>=table[i+1][j]))push('added',b[j++]);else push('removed',a[i++]);}
  return result;
 }
@@ -148,7 +149,7 @@ export function setupContentStudio({mount,read,write,getFields,getOutput,setOutp
  function requestRegeneration(candidate,commit){
   try{const before=safeOutput(getOutput()),next=safeOutput({...before,...candidate}),changes=publicationTextDiff(before,next);
    const affected=changes.some(row=>manual.has(row.key)||row.before!==String(baseline[row.key]??''));
-   const committedKeys=['title','body','tags'].filter(key=>Object.hasOwn(candidate,key));
+   const committedKeys=['title','body','tags'].filter(key=>hasOwnKey(candidate,key));
    if(!changes.length||!affected||!Object.values(before).some(value=>value.trim())){commit(candidate);markCommitted(getOutput(),committedKeys);recordTitle(next.title,'generated');return true;}
    pending={candidate:{...candidate,...next},keys:committedKeys,commit,outputFingerprint:JSON.stringify(getOutput()),fieldsFingerprint:JSON.stringify(getFields())};diff.replaceChildren();
    const labels={title:'Заголовок',body:'Описание',tags:'Теги'};
@@ -161,13 +162,13 @@ export function setupContentStudio({mount,read,write,getFields,getOutput,setOutp
  function markManual(key){if(['title','body','tags'].includes(key))manual.add(key);}
  function applySettings(value={}){
   try{
-   if(Object.hasOwn(value,'studioProfile')){
+   if(hasOwnKey(value,'studioProfile')){
     const profile=normalizeStudioProfile(value.studioProfile||{});
     // Profiles embedded in a saved card remain selectable even if the local
     // catalogue was cleared; loading a card never changes its saved layout.
     profiles=[...profiles.filter(row=>row.id!==profile.id),profile];selection.profile=profile.id;
    }
-   if(Object.hasOwn(value,'titleFormula')){
+   if(hasOwnKey(value,'titleFormula')){
     if(value.titleFormula){const validation=validateTitleFormula(value.titleFormula);if(!validation.valid)throw Error(validation.problems.join(' · '));let row=formulas.find(item=>item.formula===value.titleFormula);if(!row){row={id:uid('card-formula'),name:'Формула сохранённой карточки',formula:value.titleFormula};formulas=[...formulas.slice(-29),row];}selection.formula=row.id;}
     else selection.formula='';
    }

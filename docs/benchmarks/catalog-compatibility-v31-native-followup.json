@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "release": "v31",
+  "status": "native-catalog-and-compatibility-passed",
+  "date": "2026-11-03T10:27:18.991646+00:00",
+  "environment": {
+    "os": "macOS",
+    "browser": "Chrome via Playwright",
+    "physicalIPhone": false
+  },
+  "isolatedFixture": true,
+  "productionModified": false,
+  "build": {
+    "passed": true,
+    "elapsedSeconds": 1.442
+  },
+  "browser": {
+    "tests": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedSeconds": 212.856,
+    "suites": {
+      "test_catalog_state_browser": 7,
+      "test_own_property_browser": 2
+    }
+  },
+  "followup": {
+    "test": "test_phone_deep_link_view_survives_first_appearance_in_an_older_feed",
+    "passed": 1,
+    "failed": 0,
+    "elapsedSeconds": 30.757,
+    "change": "Replace Response.finished() with expect_request_finished in the test harness.",
+    "testFileSha256": "e192806ea0b8061089920971c86878b49278dbb27e657613bb96cfa9c42322a9",
+    "cleanLog": true
+  },
+  "sourceFilesSha256": {
+    "web/phone.mjs": "2cc083f81cb212c69472e93b1d7c30d509365a1adbecad447b181da81b9c9112",
+    "web/catalog-state.mjs": "abef8cecb6354d2a776e944f1a9330f48213687d21dbf324cce207bc96e2bb8a",
+    "web/own-property.mjs": "4d75e00d4599366291568d01ee41497bee6136202fc4b6b9e8df40e1df7cbaec",
+    "web/app.js": "78ad0727fba6141dee02d08b2ab571915547d7d0229fb013413bef33f686967b",
+    "cli/card_catalog.py": "d48a3f0e8dc15891ded6561c73fea820a2bc98d9d1059234cc02e1e5644c681c",
+    "cli/phone_relay.py": "243db746dd9ace04e9d30363a6fff84708bebb3da9a0ea726b94741ce3859508",
+    "cli/local_server.py": "c844b97932a7b6864759df68521fc0259402722bc81d613adcd88478883f8f0a",
+    "tests/test_card_catalog.py": "c9cfb1e702916c26753769a958d8a551d4cb67effe5e49c38111b146034dd51c",
+    "tests/test_catalog_state_browser.py": "6b3a2a84301e645d6038c9b018954c2c5991ef1c57982552573bf470e760affc",
+    "tests/test_own_property_browser.py": "96cafc30de958b8145a57eb3e3db9df6c2c148a7d1d701c21964bc61f44494ed"
+  },
+  "builtFilesSha256": {
+    "docs/index.html": "017f2671375b06bc4c5bbbf325e03498abd37f050930b88986fcf3c26bd008ea",
+    "docs/phone.html": "fb071c61f73e60d1f43b9a1ff8c0470d8f1b71779461053808e8805c35a68eee"
+  },
+  "limits": [
+    "This receipt describes the listed isolated source snapshot, not a final production deployment.",
+    "The initial successful suite included a Playwright Response.finished teardown warning; the test waiting mechanism was corrected and that scenario passed again with a clean log.",
+    "No model generation or training quality is asserted by these catalogue and compatibility tests."
+  ]
+}

@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 // Only status codes cross this UI boundary. Source text, capture details and
 // arbitrary backend warning strings must never become readiness feedback.
 const sectionNames={gallery:'Фотографии',description:'Описание',characteristics:'Характеристики'};
@@ -5,7 +6,7 @@ const sectionReasons={partial:'полнота раздела не подтвер
 const schemaReasons={'unknown-schema':'Форма страницы источника изменилась: проверьте извлечённые сведения.','critical-fields-missing':'Не все обязательные сведения извлечены из источника.','invalid-critical-value':'В источнике есть неоднозначное или недопустимое значение.','field-conflict':'В источнике есть противоречивые сведения.','no-photo-evidence':'Фотографии источника не подтверждены.'};
 function schemaSummary(value){
  if(!value||value.version!==1||!['recognized','partial','unsupported'].includes(value.state))return null;
- const names=['price','area','layout','description'],reasons=Array.isArray(value.reasons)?value.reasons.filter(key=>Object.hasOwn(schemaReasons,key)):[];
+ const names=['price','area','layout','description'],reasons=Array.isArray(value.reasons)?value.reasons.filter(key=>hasOwnKey(schemaReasons,key)):[];
  return {version:1,state:value.state,platform:['cian','avito'].includes(value.platform)?value.platform:'unknown',reasons,missingCritical:Array.isArray(value.missingCritical)?value.missingCritical.filter(key=>names.includes(key)):[],criticalCoverage:Object.fromEntries(names.map(key=>[key,value.criticalCoverage?.[key]===true])),unknownDoesNotMeanAbsent:true};
 }
 
@@ -20,8 +21,8 @@ function readinessOf(value){
 
 function albumStatus(value){
  if(!value||typeof value!=='object'||!Number.isInteger(value.observed)||value.observed<0||value.observed>1800)return null;
- const expected=value.expected===null?null:Number.isInteger(value.expected)&&value.expected>0&&value.expected<=400?value.expected:null,observed=value.observed,limit=Number.isInteger(value.limit)&&value.limit>0&&value.limit<=180?value.limit:30;
- const hasRoles=value.version===2||Object.hasOwn(value,'previewOnly')||Object.hasOwn(value,'mainLinksObserved');
+ const expected=value.expected===null?null:Number.isInteger(value.expected)&&value.expected>0&&value.expected<=400?value.expected:null,observed=value.observed,limit=Number.isInteger(value.limit)&&value.limit>0&&value.limit<=200?value.limit:30;
+ const hasRoles=value.version===2||hasOwnKey(value,'previewOnly')||hasOwnKey(value,'mainLinksObserved');
  const rolesValid=hasRoles&&Number.isInteger(value.previewOnly)&&value.previewOnly>=0&&Number.isInteger(value.mainLinksObserved)&&value.mainLinksObserved>=0&&value.previewOnly+value.mainLinksObserved<=observed;
  const missing=expected===null?null:Math.max(0,expected-observed),countConflict=value.countConflict===true||expected!==null&&observed>expected;
  const state=missing||rolesValid&&value.previewOnly?'partial':expected===null||countConflict||hasRoles&&(!rolesValid||value.mainLinksObserved+value.previewOnly<observed)?'unknown':'complete';

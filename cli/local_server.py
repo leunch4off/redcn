@@ -71,8 +71,15 @@ def save_result(directory, result, result_id=None, *, actor='operator', kind='sa
     if not re.fullmatch(r'[a-f0-9]{32}', result_id): raise ValueError('Неверный ID карточки')
     connection = redcn.open_cache(directory)
     try:
+        from card_catalog import ensure_entries, record_save
+        connection.execute('BEGIN IMMEDIATE')
         connection.execute('CREATE TABLE IF NOT EXISTS results (id TEXT PRIMARY KEY, updated REAL, payload TEXT)')
-        connection.execute('INSERT OR REPLACE INTO results VALUES (?,max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),?)', (result_id, time.time(), json.dumps(result, ensure_ascii=False)))
+        ensure_entries(connection, directory)
+        old = connection.execute('SELECT payload FROM results WHERE id=?', (result_id,)).fetchone()
+        previous = json.loads(old[0]) if old else None
+        stamp = time.time()
+        connection.execute('INSERT INTO results VALUES (?,max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),?) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,payload=excluded.payload', (result_id, stamp, json.dumps(result, ensure_ascii=False)))
+        record_save(connection, directory, result_id, previous, result, at=stamp, publication_edit=kind!='import')
         record_fact_revision(connection, result_id, result.get('fields', {}), actor=actor, kind=kind)
         connection.commit()
     finally: connection.close()
@@ -102,8 +109,53 @@ def capture_listing_learning(directory, result, result_id):
                 'message': 'Карточка сохранена; сбор новых фраз временно недоступен.'}
 
 
-def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,photo_generated=None):
+def prepared_publication_revision(directory,baseline,revision,*,status=None,cancel=None):
+    """Keep the saved prose until changed photo facts earn a new model draft.
+
+    Photo analysis also refreshes observations and review controls. Those
+    metadata changes must not trigger another advertisement or replace an
+    individual description with the photo renderer's intermediate template.
+    """
+    if not isinstance(revision,dict):return None
+    proposed=json.loads(json.dumps(revision,ensure_ascii=False))
+    for key in ('title','body','titles','tags','tagSuggestions','templateInfo',
+                'translationWarnings','unknown','problems','warnings','aiAdvertisement'):
+        if key in baseline:proposed[key]=json.loads(json.dumps(baseline[key],ensure_ascii=False))
+        else:proposed.pop(key,None)
+
+    def unavailable():
+        proposed['aiAdvertisement']={'status':'unavailable','warnings':[
+            'Новые находки сохранены; индивидуальное описание пока недоступно. Текущий текст сохранён.']}
+        if status:status(proposed['aiAdvertisement']['warnings'][0],stage='generate',
+                         ai={'backend':'mlx','operation':'text','phase':'unavailable'})
+        return proposed
+
+    try:
+        from local_text_model import settings
+        enabled=settings(directory).get('advertisingEnabled') is True
+    except (OSError,ValueError,TypeError):return unavailable()
+    if not enabled:return proposed
+    if cancel is not None and cancel.is_set():return proposed
+    try:
+        from individual_copy import build_brief
+        from language_service import _profile
+        rules=_profile(directory).get('rules',{})
+        before=build_brief(baseline.get('fields'),rules)
+        after=build_brief(proposed.get('fields'),rules)
+        if before['factsHash']==after['factsHash']:return proposed
+        from local_content import generate_import_advertisement
+        candidate=generate_import_advertisement(directory,{**baseline,**proposed},status=status,cancel=cancel)
+    except (OSError,ValueError,TypeError,sqlite3.Error):return unavailable()
+    metadata=candidate.get('aiAdvertisement') if isinstance(candidate,dict) else None
+    if isinstance(metadata,dict):proposed['aiAdvertisement']=metadata
+    if isinstance(metadata,dict) and metadata.get('status')=='review' and metadata.get('fallback') is not True:
+        return candidate
+    return proposed
+
+
+def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,photo_generated=None,publication_edit=True):
     from phone_relay import source_images
+    from card_catalog import ensure_entries,publication_digest,record_save
     # Lock the read/merge/write so the completed download cannot save an old text snapshot.
     connection=redcn.open_cache(directory)
     try:
@@ -111,6 +163,8 @@ def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,phot
         row=connection.execute('SELECT payload FROM results WHERE id=?',(result_id,)).fetchone()
         current=json.loads(row[0]) if row else None
         if not current or source_images(current)!=source_images(prepared):raise ValueError('Фотографии карточки изменились. Повторите загрузку.')
+        previous=json.loads(row[0])
+        ensure_entries(connection,directory)
         current.update(media=prepared.get('media',[]),mediaStatus=prepared.get('mediaStatus','ready'))
         if isinstance(prepared.get('learningCapture'),dict):
             current['learningCapture']=prepared['learningCapture']
@@ -119,15 +173,17 @@ def merge_prepared_media(directory,result_id,prepared,*,photo_baseline=None,phot
             current['photoInventory']=prepared['photoInventory']
         if isinstance(photo_generated,dict) and isinstance(photo_baseline,dict):
             # Do not replace a manual edit made while the model was running.
-            unchanged=all(current.get(key)==photo_baseline.get(key) for key in ('fields','body','titles','tags'))
+            unchanged=all(current.get(key)==photo_baseline.get(key) for key in ('fields','title','body','titles','tags'))
             if unchanged:
-                for key in ('fields','body','titles','tags','tagSuggestions','templateInfo','translationWarnings','unknown','problems','warnings','aiAdvertisement'):
+                for key in ('fields','title','body','titles','tags','tagSuggestions','templateInfo','translationWarnings','unknown','problems','warnings','aiAdvertisement'):
                     if key in photo_generated:current[key]=photo_generated[key]
             if 'photoInventory' in current:
-                current['photoInventory']['textUpdated']=unchanged
+                current['photoInventory']['textUpdated']=unchanged and publication_digest(previous)!=publication_digest(current)
                 if not unchanged:
                     current['photoInventory']['message']='Карточка изменена во время анализа. Ваш текст сохранён; находки доступны для следующей генерации.'
-        connection.execute('UPDATE results SET updated=max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),payload=? WHERE id=?',(time.time(),json.dumps(current,ensure_ascii=False),result_id))
+        stamp=time.time()
+        connection.execute('UPDATE results SET updated=max(?,(SELECT COALESCE(MAX(updated),0)+0.000001 FROM results)),payload=? WHERE id=?',(stamp,json.dumps(current,ensure_ascii=False),result_id))
+        record_save(connection,directory,result_id,previous,current,at=stamp,publication_edit=publication_edit)
         connection.commit();return current
     except BaseException:
         connection.rollback();raise
@@ -163,7 +219,12 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     audit_tokens = {}
     from job_progress import DurationHistory, JobProgress
     timing_history=DurationHistory(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v30', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    from text_generation_jobs import TextGenerationJobs, dispatch as dispatch_text_job
+    text_jobs=TextGenerationJobs(directory,history=timing_history)
+    text_principal='desktop:'+owner_scope.owner_id
+    def authorize_text_job():
+        owner_scope.check(directory)
+    identity = {'app':'redcn', 'protocol':7, 'release':'v31', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
     from release_diagnostics import runtime_identity
     release_runtime=runtime_identity(redcn.ROOT)
 
@@ -309,7 +370,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if cancel.is_set():raise ValueError('Импорт отменён')
             report('Сохраняем карточку и подготовленные фотографии…',stage='save')
             owner_scope.check()
-            merge_prepared_media(directory,result_id,result,photo_baseline=photo_baseline,photo_generated=photo_generated)
+            merge_prepared_media(directory,result_id,result,photo_baseline=photo_baseline,photo_generated=photo_generated,publication_edit=False)
             learn,outcome=photo_outcome(result)
             readiness=listing['sourceReadiness']
             outcome.update(photoPartial=outcome['partial'],sourcePartial=readiness['partial'],sourceReadiness=readiness)
@@ -448,10 +509,11 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     from phone_relay import load_profile
                     profile=load_profile(directory)
                     generated=photo_revision(directory,result,rules=profile.get('rules'),prefs=profile.get('prefs'),report=report,cancel=cancel)
+                    generated=prepared_publication_revision(directory,baseline,generated,status=report,cancel=cancel)
                 if cancel.is_set():raise ValueError('Загрузка отменена')
                 report('Сохраняем подготовленные фотографии…',stage='save')
                 owner_scope.check()
-                merge_prepared_media(directory,result_id,result,photo_baseline=baseline,photo_generated=generated)
+                merge_prepared_media(directory,result_id,result,photo_baseline=baseline,photo_generated=generated,publication_edit=True)
                 learn,outcome=photo_outcome(result)
                 success=True
                 with lock:jobs[job_id].update(message='Фотографии готовы' if learn else 'Подготовка фотографий завершена не полностью.',result_id=result_id,**outcome)
@@ -522,7 +584,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 # Read-only aggregate for safe release checks; no job identifiers,
                 # source URLs, pairing material or card contents leave this route.
                 with lock: active_jobs=sum(job.get('state')=='running' for job in jobs.values())
-                self.respond(200,{**identity,'activeJobs':active_jobs});return
+                active_text=int(text_jobs.running())
+                self.respond(200,{**identity,'activeJobs':active_jobs+active_text,'activeTextJobs':active_text});return
             if path == '/api/local/owner-proof':
                 query=parse_qs(urlsplit(self.path).query)
                 try:
@@ -541,6 +604,8 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                     if relay is None:self.respond(409,{'error':'Сначала включите телефонный доступ на Mac'});return
                     self.respond(*dispatch_sessions(relay.pairing));return
                 try:
+                    document=dispatch_text_job(text_jobs,path.removeprefix('/api/local/'),principal=text_principal,authorize=authorize_text_job)
+                    if document:self.respond(*document);return
                     from release_diagnostics import dispatch as release_dispatch
                     document=release_dispatch(directory,redcn.ROOT,path.removeprefix('/api/local/'),server_release=identity['release'],server_runtime=release_runtime)
                     if document:self.respond(*document);return
@@ -622,6 +687,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
                 data = json.loads(self.rfile.read(size))
                 if not isinstance(data,dict): raise ValueError('Нужен JSON-объект')
                 path = urlsplit(self.path).path
+                document=dispatch_text_job(text_jobs,relative,data,principal=text_principal,authorize=authorize_text_job)
+                if document:self.respond(*document);return
+                viewed=re.fullmatch(r'cards/([a-f0-9]{32})/viewed',relative)
+                if viewed:
+                    if data:raise ValueError('Отметка просмотра не изменяет поля карточки')
+                    from card_catalog import mark_viewed
+                    self.respond(200,mark_viewed(directory,viewed[1]));return
                 if relative == 'phone-sessions':
                     from access_roles import dispatch_sessions
                     relay = self.server.phone_relay.server
@@ -710,11 +782,13 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     server = ThreadingHTTPServer(('127.0.0.1',port),Handler)
     server.workspace_owner=owner_scope
     server.desktop_access=desktop_access
+    server.text_generation_jobs=text_jobs
     from photo_ai_runtime import start_background
     start_background(directory)
     from learning_scheduler import start_background as start_learning_background
     def learning_busy():
-        with lock:return any(job['state']=='running' for job in jobs.values())
+        with lock:imports_running=any(job['state']=='running' for job in jobs.values())
+        return imports_running or text_jobs.running()
     server.learning_scheduler=start_learning_background(directory,busy=learning_busy)
     server.daemon_threads = True
     server.start_import=start_import;server.job_status=job_status;server.prepare_card=prepare_card;server.latest_job=latest_job
@@ -742,6 +816,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
             if worker is not threading.current_thread():worker.join(max(0,deadline-time.monotonic()))
         with lock:stopped=not workers
         if stopped:journal.close()
+        text_jobs.close()
         server.learning_scheduler.stop()
         workspace.close();server.connection_diagnostics.close();server.phone_relay.stop();close()
     server.server_close=close_all

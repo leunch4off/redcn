@@ -10,6 +10,16 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'cli'))
 from ai_status import inspect_ai, russian_status, server_status
 from photo_ai_settings import DEFAULTS, load_config
+from text_model_contract import ADVERTISING_MODEL, BASE_MODEL
+
+
+TEXT_CONFIG = {'model_type': 'qwen2', 'hidden_size': 896, 'num_hidden_layers': 24,
+               'num_attention_heads': 14, 'num_key_value_heads': 2}
+ADVERTISING_CONFIG = {'model_type': 'qwen3', 'hidden_size': 2560, 'num_hidden_layers': 36,
+                      'num_attention_heads': 32, 'num_key_value_heads': 8,
+                      'head_dim': 128, 'vocab_size': 151936, 'tie_word_embeddings': True,
+                      'rope_theta': 5000000, 'max_position_embeddings': 262144,
+                      'quantization': {'bits': 4, 'group_size': 64}}
 
 
 class AIStatusTests(unittest.TestCase):
@@ -107,6 +117,81 @@ class AIStatusTests(unittest.TestCase):
             root = Path(folder)
             (root / 'text-ai.json').write_text('{"enabled": true, "useCandidateAdapter": true}')
             self.assertFalse(inspect_ai(root)['text']['candidateAdapterSelected'])
+
+    def test_separate_advertising_profile_reports_its_architecture_and_runtime_read_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            model, advertising = root/'translation', root/'advertising'
+            model.mkdir(); advertising.mkdir()
+            (model/'config.json').write_text(json.dumps(TEXT_CONFIG))
+            (advertising/'config.json').write_text(json.dumps(ADVERTISING_CONFIG))
+            (advertising/'model.safetensors').write_bytes(b'not-real-weights-do-not-load')
+            runtime = root/'advertising-python'
+            runtime.write_text('not-an-executable')
+            (root/'text-ai.json').write_text(json.dumps({'enabled': True, 'advertisingEnabled': True,
+                'modelPath': str(model), 'pythonPath': str(root/'missing-translation-python'),
+                'advertisingModelPath': str(advertising), 'advertisingPythonPath': str(runtime),
+                'useCandidateAdapter': True, 'adapterPath': str(root/'translation-adapter')}))
+            before = {str(path.relative_to(root)): path.read_bytes() for path in root.rglob('*') if path.is_file()}
+            with patch('subprocess.Popen', side_effect=AssertionError('Status must not launch any worker')):
+                result = inspect_ai(root)
+            text, profile = result['text'], result['text']['advertising']
+            self.assertEqual(text['model'], BASE_MODEL)
+            self.assertFalse(text['runtimePresent'])
+            self.assertTrue(text['candidateAdapterSelected'])
+            self.assertEqual(profile['model'], ADVERTISING_MODEL)
+            self.assertTrue(profile['modelSupported'])
+            self.assertTrue(profile['modelConfigPresent'])
+            self.assertTrue(profile['runtimePresent'])
+            self.assertTrue(profile['separateProfile'])
+            self.assertTrue(profile['automaticGenerationEnabled'])
+            self.assertFalse(profile['candidateAdapterSelected'])
+            self.assertFalse(profile['weightsTrainingInspected'])
+            self.assertEqual(result['processActivity'], 'not-inspected')
+            summary = russian_status(result)
+            self.assertIn('Рекламный ИИ: ВКЛЮЧЕНО · '+ADVERTISING_MODEL+' · отдельный профиль', summary)
+            self.assertIn('Выбор рекламной модели не означает обучение новых весов.', summary)
+            self.assertNotIn(str(root), json.dumps(result))
+            self.assertEqual(before, {str(path.relative_to(root)): path.read_bytes() for path in root.rglob('*') if path.is_file()})
+
+    def test_shared_advertising_profile_uses_text_runtime_and_adapter_selection(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            model = root/'model'; model.mkdir()
+            (model/'config.json').write_text(json.dumps(TEXT_CONFIG))
+            runtime = root/'python'; runtime.write_text('placeholder')
+            (root/'text-ai.json').write_text(json.dumps({'enabled': True,
+                'modelPath': str(model), 'pythonPath': str(runtime),
+                'advertisingPythonPath': str(root/'ignored-without-separate-model'),
+                'useCandidateAdapter': True, 'adapterPath': str(root/'selected-adapter')}))
+            profile = inspect_ai(root)['text']['advertising']
+            self.assertFalse(profile['separateProfile'])
+            self.assertEqual(profile['model'], BASE_MODEL)
+            self.assertTrue(profile['runtimePresent'])
+            self.assertTrue(profile['candidateAdapterSelected'])
+            self.assertFalse(profile['automaticGenerationEnabled'])
+            self.assertEqual(profile['modelSource'], 'shared-text-profile')
+
+    def test_bad_separate_architecture_cannot_be_mislabeled_as_the_base_model(self):
+        for content in ('broken', '{}', json.dumps({**ADVERTISING_CONFIG, 'rope_theta': 10000})):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                model, advertising = root/'model', root/'advertising'
+                model.mkdir(); advertising.mkdir()
+                (model/'config.json').write_text(json.dumps(TEXT_CONFIG))
+                (advertising/'config.json').write_text(content)
+                (root/'text-ai.json').write_text(json.dumps({'enabled': True,
+                    'modelPath': str(model), 'advertisingModelPath': str(advertising)}))
+                result = inspect_ai(root)
+                profile = result['text']['advertising']
+                self.assertEqual(result['text']['model'], BASE_MODEL)
+                self.assertTrue(profile['separateProfile'])
+                self.assertTrue(profile['modelConfigPresent'])
+                self.assertFalse(profile['modelSupported'])
+                self.assertIsNone(profile['model'])
+                self.assertFalse(profile['runtimePresent'])
+                self.assertTrue(result['warnings'])
+                self.assertIn('Рекламный ИИ: ВКЛЮЧЕНО · модель не определена', russian_status(result))
 
     def test_bad_or_linked_config_is_not_mistaken_for_disabled(self):
         with tempfile.TemporaryDirectory() as folder:

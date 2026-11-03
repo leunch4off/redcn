@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {createAiProgress} from './ai-progress.mjs';
 import {clientPublicationCard} from './client-publication.mjs';
 import {isAutomaticPhotoObservation,PHOTO_FEATURE_IDS} from './photo-observation-policy.mjs';
@@ -25,6 +26,23 @@ export function presentationAcceptedCrop(value,originalId){
 const photoJournalFeatures=new Set(['sofa','bedAny','chairs','tv','fridge','oven','microwave','sink','table','desk','wardrobe','washer','dishwasher','piano','coffeeMachine','mirror','curtains','coffeeTable','stove','cabinet']);
 const photoJournalProviders=new Map([['redcn-furniture-v1','yolox-trained'],['redcn-furniture-world-v2','onnx-world']]);
 const photoJournalDigest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+
+// Completeness of a photo pass and acceptance of its objects are independent.
+// No detections never proves an empty room; a stored failure is not a scan.
+export function photoObservationSummary(items=[]){
+ const selected=items.filter(item=>item?.selected),reviewed=selected.filter(item=>['ok','review'].includes(item.analysis?.status)),failed=selected.filter(item=>item.analysis&&!['ok','review'].includes(item.analysis.status));
+ const unknown=selected.length-reviewed.length-failed.length;
+ const empty=reviewed.filter(item=>!(item.analysis.candidates||[]).length&&!validTeacherReview(item.teacherReview,item.analysis.originalId)).length;
+ const pending=reviewed.reduce((total,item)=>total+(item.analysis.candidates||[]).filter(row=>!item.rejected?.[row.id]&&!item.confirmed?.[row.id]&&!teacherReviewed(item,row.id)&&!(item.analysis.autoApply===true&&isAutomaticPhotoObservation({...row,status:'auto-visible',originalId:item.analysis.originalId,photoId:item.analysis.originalId}))).length,0);
+ const assistantReviewed=selected.filter(item=>validTeacherReview(item.teacherReview,item.analysis?.originalId)).length;
+ const parts=['Локальный фотоанализ: '+reviewed.length+' из '+selected.length+' фото.'];
+ if(failed.length)parts.push('Ошибки или незавершённый анализ: '+failed.length+'.');
+ if(unknown)parts.push('Ещё не проверено: '+unknown+'.');
+ if(empty)parts.push('На '+empty+' фото нет уверенных находок; это не означает отсутствие мебели.');
+ if(pending)parts.push('Находки для подтверждения: '+pending+'.');
+ if(assistantReviewed)parts.push('Отдельно просмотрено помощником: '+assistantReviewed+' фото.');
+ return {total:selected.length,checked:reviewed.length,failed:failed.length,unprocessed:unknown,unrecognized:empty,pending,assistantReviewed,text:parts.join(' ')};
+}
 const photoJournalScore=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1;
 const reviewedPhotoFeatures=new Set(PHOTO_FEATURE_IDS);
 
@@ -36,7 +54,7 @@ export function retainReviewedPhotoCandidates(previous,current,{originalId,confi
  const candidates=Array.isArray(current.candidates)?[...current.candidates]:[],present=new Set(candidates.map(row=>row?.id));
  for(const row of Array.isArray(previous.candidates)?previous.candidates.slice(0,64):[]){
   if(!row||!reviewedPhotoFeatures.has(row.id)||present.has(row.id))continue;
-  const confirmation=Object.hasOwn(confirmed,row.id)&&confirmed[row.id],teacher=validTeacherReview(teacherReview,originalId)&&teacherReview.features.includes(row.id),reviewed=teacher||confirmation===true||confirmation&&typeof confirmation==='object'&&!Array.isArray(confirmation)||Object.hasOwn(rejected,row.id)&&rejected[row.id]===true;
+  const confirmation=hasOwnKey(confirmed,row.id)&&confirmed[row.id],teacher=validTeacherReview(teacherReview,originalId)&&teacherReview.features.includes(row.id),reviewed=teacher||confirmation===true||confirmation&&typeof confirmation==='object'&&!Array.isArray(confirmation)||hasOwnKey(rejected,row.id)&&rejected[row.id]===true;
   if(!reviewed)continue;
   candidates.push({...JSON.parse(JSON.stringify(row)),reviewOrigin:teacher?'assistant-visual-review':'operator-kept',reviewOriginalId:originalId,autoEligible:false,automaticSuggestion:false});present.add(row.id);
  }
@@ -203,8 +221,8 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
   if(row.reviewOrigin==='operator-kept'&&row.reviewOriginalId===item.analysis.originalId)return row.label+decision+' · сохранено решение оператора для этого оригинала';
   return row.label+decision+' · '+(item.analysis.provider==='yolox-trained'?'оценка '+Number(row.confidence).toFixed(2):Math.round(row.confidence*100)+'%')+' · '+(row.evidence||[]).map(e=>e.text||e.label).join('; ');
  }
- function renderObservations(){observations.replaceChildren();const found=items.filter(i=>i.selected&&i.analysis);observations.classList.toggle('hidden',!found.length);if(!found.length)return;const title=document.createElement('h3'),help=document.createElement('p');title.textContent='Предметы на фотографиях';help.className='small';help.textContent='Автодобавление сохраняет находки ИИ в журнал проверки. Предположения обученной модели требуют подтверждения перед включением в описание. Отметьте видимые предметы; ошибочные снимите. Оценка модели не гарантирует точность, количество между ракурсами не суммируется.';observations.append(title,help);
-  for(const item of found){const section=document.createElement('div'),heading=document.createElement('p');heading.textContent='Фото '+(items.indexOf(item)+1)+' · '+item.analysis.engine;section.append(heading);if(!item.analysis.candidates?.length){const empty=document.createElement('p');empty.className='small';empty.textContent=validTeacherReview(item.teacherReview,item.analysis.originalId)?'Фото просмотрено помощником. Отдельные предметы не отмечены; это не означает их отсутствие.':'Предметы не распознаны уверенно. Можно отметить мебель в карточке вручную.';section.append(empty);}
+ function renderObservations(){observations.replaceChildren();const summary=photoObservationSummary(items),found=items.filter(i=>i.selected&&i.analysis);observations.classList.toggle('hidden',!summary.total);if(!summary.total)return;const title=document.createElement('h3'),help=document.createElement('p');title.textContent='Предметы на фотографиях';help.className='small';help.textContent=summary.text+' Автодобавление сохраняет находки ИИ в журнал проверки. Предположения обученной модели требуют подтверждения перед включением в описание. Отметьте видимые предметы; ошибочные снимите. Оценка модели не гарантирует точность, количество между ракурсами не суммируется.';observations.append(title,help);
+  for(const item of found){const section=document.createElement('div'),heading=document.createElement('p');heading.textContent='Фото '+(items.indexOf(item)+1)+' · '+item.analysis.engine;section.append(heading);if(!item.analysis.candidates?.length){const empty=document.createElement('p');empty.className='small';empty.textContent=!['ok','review'].includes(item.analysis.status)?'Анализ этого фото не завершён. Повторите анализ; сохранённый оригинал доступен.':validTeacherReview(item.teacherReview,item.analysis.originalId)?'Фото просмотрено помощником. Отдельные предметы не отмечены; это не означает их отсутствие.':'Предметы не распознаны уверенно. Можно отметить мебель в карточке вручную.';section.append(empty);}
    for(const row of item.analysis.candidates||[]){const line=document.createElement('label'),check=document.createElement('input'),count=document.createElement('input'),detail=document.createElement('span');check.type='checkbox';check.checked=!item.rejected?.[row.id]&&(!!item.confirmed?.[row.id]||teacherReviewed(item,row.id)||(item.analysis.autoApply===true&&isAutomaticPhotoObservation({...row,status:'auto-visible',originalId:item.analysis.originalId,photoId:item.analysis.originalId})));count.type='number';count.min='1';count.max='12';count.step='1';count.placeholder='Кол-во';count.style.width='90px';count.setAttribute('aria-label',row.label+': количество на фото '+(items.indexOf(item)+1));count.value=item.confirmed?.[row.id]?.count??row.count??'';detail.textContent=observationDetail(item,row);line.title='Проверьте видимый предмет. Неизвестное не означает отсутствие.';line.append(check,detail,count);line.style.display='flex';line.style.gap='8px';line.style.alignItems='center';
     const update=async()=>{item.confirmed??={};item.rejected??={};const n=Number(count.value);if(check.checked){delete item.rejected[row.id];item.confirmed[row.id]={count:count.value&&Number.isInteger(n)&&n>=1&&n<=12?n:null};}else{delete item.confirmed[row.id];item.rejected[row.id]=true;}await cachePut(item);changed();emitFeatures();detail.textContent=observationDetail(item,row);};check.onchange=update;count.onchange=update;section.append(line);}
    observations.append(section);}

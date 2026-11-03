@@ -5,6 +5,7 @@ import unittest
 import test_phone_browser as acceptance
 import local_server
 import phone_relay
+from browser_text_jobs_fixture import MockTextJobs,measured_ai
 
 
 class PhoneLanguageBrowserAcceptance(unittest.TestCase):
@@ -38,14 +39,26 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
         photo=self.page.locator('#phoneDownloadPhoto').get_attribute('href')
         self.page.evaluate("window.savedGalleryImage=document.querySelector('#phonePhotos img')")
         requests=[]
-        def rewrite(route):
-            part=route.request.post_data_json['part'];requests.append(part)
+        def result_for(request,ordinal):
+            part=request['part'];requests.append(part)
+            self.assertEqual(request['action'],'rewrite')
+            self.assertEqual(request['cardId'],self.card_id)
             if part in ('title','all'):self.result['titles']=['莫斯科两居出租｜54㎡']
             if part in ('body','all'):self.result['body']='两间独立房间，房屋信息以已确认的条件为准。'
             if part in ('tags','all'):self.result['tags']='#莫斯科租房 #莫斯科房源'
+            self.result['aiAdvertisement']={'status':'review','modelAccepted':True,'fallback':False,
+                'generationMode':'individual-model-prose','model':'fixture-individual-model',
+                'ai':measured_ai(complete=True)}
             local_server.save_result(self.directory,self.result,self.card_id)
-            route.fulfill(status=200,content_type='application/json',body=json.dumps(self.card_payload(),ensure_ascii=False))
-        self.page.route('**/api/phone/cards/'+self.card_id+'/rewrite',rewrite)
+            return {**self.card_payload(),'aiAdvertisement':self.result['aiAdvertisement']}
+        jobs=MockTextJobs(self.page,'phone',result_for,result_type='card')
+        def rewrite_tags(route):
+            request=route.request.post_data_json
+            self.assertEqual(request,{'part':'tags','mode':'template'})
+            requests.append('tags');self.result['tags']='#莫斯科租房 #莫斯科房源'
+            local_server.save_result(self.directory,self.result,self.card_id)
+            route.fulfill(json=self.card_payload())
+        self.page.route('**/api/phone/cards/'+self.card_id+'/rewrite',rewrite_tags)
         self.page.locator('#phoneRewriteTitle').scroll_into_view_if_needed();scroll=self.page.evaluate('window.scrollY')
         self.page.locator('#phoneRewriteTitle').click()
         self.page.wait_for_function("document.querySelector('#phoneTitleCopy').textContent==='莫斯科两居出租｜54㎡'")
@@ -62,8 +75,10 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
         self.page.locator('#phoneRewriteTags').click()
         self.page.wait_for_function("document.querySelector('#phoneTags').textContent.includes('莫斯科房源')")
         self.page.locator('#phoneRewriteAll').click()
-        self.page.wait_for_function("document.querySelector('#phoneWritingStatus').textContent==='Новая подача сохранена в карточке.'")
+        self.page.wait_for_function("document.querySelector('#phoneWritingStatus').textContent.includes('Новый текст локального ИИ сохранён в карточке.')")
         self.assertEqual(requests,['title','body','tags','all'])
+        self.assertEqual([request['part'] for request in jobs.requests],['title','body','all'])
+        self.assertIn('24.5 ток/с',self.page.locator('#phoneWritingStatus').inner_text())
         self.assertEqual(capabilities,[],'Language resources must stay lazy on the normal card path')
         acceptance.PhoneBrowserAcceptance.assert_mobile_fit(self)
 
@@ -144,6 +159,46 @@ class PhoneLanguageBrowserAcceptance(unittest.TestCase):
         self.assertEqual(self.page.locator('#phoneChineseDraft').input_value(),'')
         self.assertEqual(self.page.locator('#phoneRussianDraft').input_value(),'')
         self.assertTrue(self.page.locator('#phoneLanguageStudio').evaluate('node=>!node.open'))
+
+    def test_model_job_metrics_cancel_and_late_result_cannot_replace_another_card(self):
+        other=local_server.save_result(self.directory,{**self.result,'titles':['另一套莫斯科公寓'],'body':'这是第二套房的描述。'})
+        acceptance.PhoneBrowserAcceptance.connect(self);self.open_card()
+        original=self.page.locator('#phoneBody').inner_text()
+        def result_for(request,ordinal):
+            self.assertEqual(request['action'],'rewrite')
+            self.assertEqual(request['cardId'],self.card_id)
+            stored=local_server.read_result(self.directory,self.card_id)
+            stored['body']='这是第一套房的新描述，不能出现在第二套房。'
+            stored['aiAdvertisement']={'status':'review','modelAccepted':True,'fallback':False,
+                'generationMode':'individual-model-prose','ai':measured_ai(complete=True)}
+            local_server.save_result(self.directory,stored,self.card_id)
+            return {**self.card_payload(),'aiAdvertisement':stored['aiAdvertisement']}
+        jobs=MockTextJobs(self.page,'phone',result_for,result_type='card',hold=True)
+        self.page.locator('#phoneRewriteBody').click()
+        self.page.wait_for_function("document.querySelector('#phoneTextAiProgress').textContent.includes('24,5 токенов/с')")
+        self.assertIn('Создано 49 токенов',self.page.locator('#phoneTextAiProgress').inner_text())
+        self.assertEqual(self.page.locator('#phoneBody').inner_text(),original)
+        self.page.locator('#phoneTextCancel').click()
+        self.page.wait_for_function("document.querySelector('#phoneWritingStatus').textContent.includes('Генерация отменена')&&!document.getElementById('phoneRewriteBody').disabled")
+        self.assertEqual(len(jobs.cancellations),1)
+        self.assertEqual(local_server.read_result(self.directory,self.card_id)['body'],original)
+        self.assertEqual(self.page.locator('#phoneBody').inner_text(),original)
+
+        self.page.locator('#phoneRewriteBody').click()
+        self.page.wait_for_function("document.querySelector('#phoneTextAiProgress').textContent.includes('24,5 токенов/с')")
+        self.page.locator('#phoneBack').click();self.open_card(other)
+        jobs.release_all()
+        self.page.wait_for_response if False else None
+        self.page.wait_for_function("document.querySelector('#phoneDetailTitle').textContent==='另一套莫斯科公寓'")
+        # Wait for the old job's terminal response, then let its completion
+        # callback run before checking the currently selected card.
+        with self.page.expect_response(lambda response: '/api/phone/text-jobs/' in response.url and response.request.method=='GET' and response.json().get('state')=='done'):
+            self.page.evaluate('() => new Promise(resolve => requestAnimationFrame(resolve))')
+        self.page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+        self.assertEqual(self.page.locator('#phoneDetailTitle').inner_text(),'另一套莫斯科公寓')
+        self.assertEqual(self.page.locator('#phoneBody').inner_text(),'这是第二套房的描述。')
+        self.assertEqual(local_server.read_result(self.directory,other)['body'],'这是第二套房的描述。')
+        self.assertEqual(len(jobs.requests),2)
 
 
 if __name__=='__main__':unittest.main()

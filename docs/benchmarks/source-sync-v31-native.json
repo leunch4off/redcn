@@ -1,0 +1,78 @@
+{
+  "schema": "redcn-source-sync-verification-v1",
+  "evidenceKind": "isolated-staging-source-build-and-node-tests",
+  "snapshot": {
+    "capturedUtc": "2026-11-03T11:02:06.388734+00:00",
+    "appliedUtc": "2026-11-03T11:02:39.470955+00:00",
+    "nativeBaselineCommit": "f42ab1f1ef9a42d1e82335a823827fe0fa0e1a3d",
+    "sourceDigest": "1bb561b90deee749f646e6f386ea42aed179aba6712ed1ee38fa7d89fd7ff4ae",
+    "manifestSha256": "2a264d71b7bd9b3a1413b4520a4da8fc228e68b85cef340fb1bae1761a12ee8e",
+    "archiveSha256": "4e55b5a21e9311f251a74817f42d54ec27cd665994986f6b70c8d9e6b7fd538a",
+    "verifiedSourceFiles": 865,
+    "sourceFilesDifferentFromNativeBaseline": 101,
+    "lateSourceFilesWritten": 9,
+    "unexpectedStagingSourceFiles": 0,
+    "packageLockIncludedInVerification": true,
+    "dependenciesTransferred": false,
+    "generatedOutputsTransferred": false,
+    "generatedOutputsRebuiltNatively": true
+  },
+  "nativeBuild": {
+    "command": "npm run build",
+    "exitCode": 0,
+    "wallSeconds": 1.161,
+    "logSha256": "396738259606fd6f0e528a7f0d014b0d2c0d1f58ae11b2a76cd03f288337e57b"
+  },
+  "nativeNodeSuite": {
+    "command": "npm test",
+    "exitCode": 0,
+    "tests": 658,
+    "passed": 657,
+    "failed": 0,
+    "skipped": 1,
+    "cancelled": 0,
+    "durationMilliseconds": 12888.235917,
+    "wallSeconds": 13.19,
+    "logSha256": "e00e4ed5f54cebfa0e1d27fd71751474971a20efedfbcc014eb814aa4f3e1a86"
+  },
+  "localNodeSuite": {
+    "command": "npm test",
+    "exitCode": 0,
+    "tests": 658,
+    "passed": 657,
+    "failed": 0,
+    "skipped": 1,
+    "cancelled": 0,
+    "durationMilliseconds": 12165.333864,
+    "logSha256": "c7e21c4d12bbcbca1059d0232191c262f975c2b96ec88e76214eb28667582d56"
+  },
+  "diffCheck": {"nativeExitCode": 0, "localExitCode": 0},
+  "laterCodeSync": {
+    "capturedUtc": "2026-11-03T11:13:02.415553+00:00",
+    "appliedUtc": "2026-11-03T11:13:21.058142+00:00",
+    "sourceDigest": "34ba6ea1b191156263e5499ee1350fc86fc0a14d29548805c86814224ac1c228",
+    "manifestSha256": "f503e28d31c3720dc5f51ee8d40118a87b3d16dd1ca90e5254f3a39a5f1c7b8d",
+    "archiveSha256": "3171f920ac0758f7e70717213c4a6481fc699d7fc5de3bc2875e74e29ac0f952",
+    "verifiedSourceFiles": 868,
+    "writtenFiles": ["cli/individual_copy.py", "tests/test_individual_copy.py"],
+    "buildExitCode": 0,
+    "buildWallSeconds": 1.187,
+    "diffCheckExitCode": 0,
+    "localDriftAtVerification": [],
+    "realUiReceipt": "individual-real-ui-v31-native-followup.json",
+    "nodeSuiteBoundary": "The full Node results above remain attributed to the preceding snapshot. This later delta changed only Python prompt/semantic validation and its tests."
+  },
+  "precedingEnvironmentFailure": {
+    "snapshot": "002",
+    "failedTests": 2,
+    "reason": "Native test PATH did not include the existing Python virtualenv; two Node integration tests could not spawn python.",
+    "resolution": "Read-only use of the existing Python interpreter through an explicit PATH; native rerun passed all 655 non-skipped tests.",
+    "productChangesForThisFailure": false
+  },
+  "limits": [
+    "Staging only; this receipt does not claim a production deployment.",
+    "Whole-source hashes refer to the captured snapshot, before subsequent documentation-only receipts.",
+    "Node tests and a successful bundle build do not establish native model output quality or physical iPhone behavior.",
+    "No model inference was executed by this source synchronization or these Node checks."
+  ]
+}

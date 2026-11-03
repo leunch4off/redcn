@@ -3,6 +3,15 @@
 function rdAbortReason(){const error=Error('The request was cancelled.');error.name='AbortError';return error;}
 function rdTimeoutReason(){const error=Error('The request timed out.');error.name='TimeoutError';return error;}
 
+// The single-photo endpoint is synchronous. Its model may take up to 120s;
+// keep a small transport margin without extending other API requests.
+function localRequestTimeout(path,data){
+  if(path==='photo'&&data?.action==='analyze')return 125000;
+  if(path==='translate'||path==='learning'&&['generate-preview','translate-preview'].includes(data?.action))return 65000;
+  if(/^(?:card-export|dossier-import|listing-map|workspace-backup\/inspect|cloud-backup(?:\/(?:upload|restore|list))?)$/.test(path))return 120000;
+  return 15000;
+}
+
 async function withRequestDeadline(milliseconds,operation,{signal:externalSignal}={}){
   if(typeof milliseconds!=='number'||!Number.isFinite(milliseconds)||milliseconds<0||milliseconds>2147483647)throw RangeError('Invalid request deadline.');
   if(typeof operation!=='function')throw TypeError('A request operation is required.');

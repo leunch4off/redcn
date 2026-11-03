@@ -22,6 +22,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from photo_limits import PHOTO_SOURCE_LIMIT
 
 ROOT = Path(__file__).resolve().parents[1]
 LISTING_HOSTS = ('cian.ru', 'avito.ru')
@@ -303,7 +304,7 @@ def parse_html(markup, base_url):
         except ValueError:
             continue
     from source_schema_health import attach
-    return attach(markup, {'url': base_url, 'text': text, 'images': images[:30]}, base_url)
+    return attach(markup, {'url': base_url, 'text': text, 'images': images[:PHOTO_SOURCE_LIMIT]}, base_url)
 
 
 def open_cache(directory):

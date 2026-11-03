@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {PUBLICATION_POLICY_VERSION,clientPublicationCard,sanitizeClientText} from './client-publication.mjs';
 import {normalizePublicationDesign,defaultPublicationDesign,resolvePublicationData,clearPublicationDataCache,publicationPage,publicationWeChat,safePublicationLink,redactPublicationPhones} from './publication-model.mjs';
 import {renderPublicationPage,buildPublicationHtml,clearPublicationImageCache} from './publication-render.mjs';
@@ -91,7 +92,7 @@ async function renderLegacyPresentationImage(kind,card,input,photos=[],mapImage=
 
 
 const PS_STUDIO_KEY='most-presentation-design-v2';
-const psLegacyInput=value=>!!value&&typeof value==='object'&&(value.version===1||value.version!==2&&['editorial','minimal','night'].includes(value.preset)||value.version!==2&&['blocks','intro','outro','footer','contact'].some(key=>Object.hasOwn(value,key)));
+const psLegacyInput=value=>!!value&&typeof value==='object'&&(value.version===1||value.version!==2&&['editorial','minimal','night'].includes(value.preset)||value.version!==2&&['blocks','intro','outro','footer','contact'].some(key=>hasOwnKey(value,key)));
 // Explicit old-format consumers retain their ordering and styles. The interactive
 // studio always migrates through the new model and keeps its original backup.
 export function normalizeDesignTemplate(input={}){return psLegacyInput(input)?normalizeLegacyDesignTemplate(input):normalizePublicationDesign(input);}
@@ -137,7 +138,7 @@ export function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,relo
   const assetCache=new Map(),assetRoleEpoch={logo:0,avatar:0};let savedServerRules={};
   try{
     const stored=JSON.parse(localStorage.getItem(PS_STUDIO_KEY)||'null'),older=stored?null:JSON.parse(localStorage.getItem(PS_DESIGN_KEY)||'null');
-    if(stored){template=normalizePublicationDesign(stored.template||stored);dirty=stored.dirty===true;templateTouched=dirty;storedBaseline=Object.hasOwn(stored,'baseUpdated');if(storedBaseline)serverUpdated=stored.baseUpdated??null;}
+    if(stored){template=normalizePublicationDesign(stored.template||stored);dirty=stored.dirty===true;templateTouched=dirty;storedBaseline=hasOwnKey(stored,'baseUpdated');if(storedBaseline)serverUpdated=stored.baseUpdated??null;}
     else if(older){legacyBackup=older;template=normalizePublicationDesign(older);}
     if(!legacyBackup)legacyBackup=JSON.parse(localStorage.getItem('most-presentation-design-legacy-backup-v1')||'null');
     draftBackup=JSON.parse(localStorage.getItem('most-presentation-design-draft-backup-v2')||'null');
@@ -228,7 +229,7 @@ export function setupPresentationStudio({mount,getCard,getPhotos,ensureCard,relo
       if(reload){mount.dataset.photosReady='false';status.textContent='Готовим фотографии и предпросмотр…';const values=demo?(photos.length?photos:[{dataUrl:demoPhoto()}]):await getPhotos?.()||[];if(!valid())return false;const safe=await compressPresentationPhotos(values,psCompressedPhoto,valid);if(!valid())return false;photos=safe;photoCardKey=key;mount.dataset.photosReady='true';performance.mark?.('redcn-designer-photos-ready');mapImage='';mapAttribution='';if(!demo&&presentationCardData(card).mapUrl&&getMapImage)try{const result=await getMapImage(card,design);if(!valid())return false;mapImage=safePresentationImage(typeof result==='string'?result:result?.dataUrl);mapAttribution=typeof result==='object'?psSafeString(result?.attribution,300):'';}catch{mapFailed=true;}}
       else if(photoCardKey!==key){photos=[];mapImage='';mapAttribution='';photoCardKey=key;}
       if(!await loadBrandAssets(valid)||!valid())return false;
-      const imageAssets=assets(),imageKind=Object.hasOwn(options,'imageKind')?options.imageKind:active==='pdf'?null:active,designKey=JSON.stringify(design),previous=lastRendered;
+      const imageAssets=assets(),imageKind=hasOwnKey(options,'imageKind')?options.imageKind:active==='pdf'?null:active,designKey=JSON.stringify(design),previous=lastRendered;
       const sameInputs=previous?.key===key&&previous.designKey===designKey&&previous.ruleKey===ruleKey&&previous.mapImage===mapImage&&previous.mapAttribution===mapAttribution&&previous.logo===logo&&previous.avatar===avatar&&previous.photos?.length===photos.length&&photos.every((value,index)=>previous.photos[index]===value);
       const rasters=sameInputs&&previous[imageKind]?{intro:imageKind==='intro'?previous.intro:'',outro:imageKind==='outro'?previous.outro:''}:await preparePresentationRaster(imageKind,{card,design,photos,mapImage,assets:imageAssets},renderPresentationImage,valid);if(!rasters||!valid())return false;
       intro=rasters.intro||(sameInputs?previous.intro:'');outro=rasters.outro||(sameInputs?previous.outro:'');lastRendered={key,card,template:design,designKey,sourceDesignKey,ruleKey,photos:photos.slice(),mapImage,mapAttribution,logo,avatar,intro,outro,imageKind,html:buildPublicationHtml(card,design,imageAssets)};syncHtmlPreview();showImage();if(!sameInputs)editor?.refresh();

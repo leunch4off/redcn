@@ -157,6 +157,9 @@ def validate_draft(draft, baseline, fields=None, *, max_body=150):
 
 
 def generate_preview(directory, data, *, status=None, cancel=None):
+    if data.get('styleMode') == 'individual':
+        from individual_copy import generate_preview as individual_preview
+        return individual_preview(directory, data, status=status, cancel=cancel)
     if data.get('styleMode') == 'advertising-structure':
         return _structured_preview(directory, data, status=status, cancel=cancel)
     if data.get('styleMode') == 'advertising':
@@ -533,6 +536,14 @@ def _advertising_preview(directory, data, *, status=None, cancel=None):
             'warnings': [*issues[:8], 'Новый вариант не прошёл проверку. Текущий текст сохранён.']}
 
 
+def publication_generation_metadata(preview):
+    keys = ('status', 'model', 'backend', 'styleId', 'variation', 'factsHash', 'elapsedSeconds',
+        'fallback', 'warnings', 'ai', 'modelAccepted', 'textSource', 'modelIssues', 'generationMode',
+        'modelContribution', 'factualTextSource', 'contract', 'inventoryCount', 'photoInventoryCount',
+        'sourceContextCharacters', 'sourceContextTruncated', 'part')
+    return {key: preview[key] for key in keys if key in preview}
+
+
 def generate_import_advertisement(directory, result, *, status=None, cancel=None):
     """A new import may gain validated prose; manual-save protection is upstream.
 
@@ -542,7 +553,7 @@ def generate_import_advertisement(directory, result, *, status=None, cancel=None
     if cancel is not None and cancel.is_set():
         return result
     try:
-        preview = generate_preview(directory, {'fields': result.get('fields'), 'styleMode': 'advertising',
+        preview = generate_preview(directory, {'fields': result.get('fields'), 'styleMode': 'individual',
             'groupId': str(result.get('id') or result.get('sourceUrl') or result.get('url') or '') or None,
             'output': {'title': (result.get('titles') or [''])[0], 'body': result.get('body', '')}},
             status=status, cancel=cancel)
@@ -551,9 +562,7 @@ def generate_import_advertisement(directory, result, *, status=None, cancel=None
             'warnings': ['Рекламный вариант недоступен; сохранён исходный текст.'], 'errorType': type(error).__name__}}
     if cancel is not None and cancel.is_set():
         return result
-    metadata = {key: preview[key] for key in ('status', 'model', 'backend', 'styleId', 'variation',
-        'factsHash', 'elapsedSeconds', 'fallback', 'warnings', 'ai', 'modelAccepted', 'textSource',
-        'modelIssues', 'generationMode', 'modelContribution', 'factualTextSource') if key in preview}
+    metadata = publication_generation_metadata(preview)
     if preview.get('status') != 'review':
         return {**result, 'aiAdvertisement': metadata}
     return {**result, 'titles': [preview['title']], 'body': preview['body'], 'tags': preview['tags'],

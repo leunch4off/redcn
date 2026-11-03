@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {UNIVERSITY_CATALOG} from './university-catalog.mjs';
 import {normalizeUniversityRoutes,resolveUniversityRoutes} from './university-routes.mjs';
 import {calculateInitialPayment} from './initial-payment.mjs';
@@ -29,7 +30,7 @@ export function commuteTimeRange(value){
 export function rentalHousingContext(object={}){
  const fields=commuteFields(object),value=commuteText(object.workflow?.housingType||fields.workflow?.housingType||fields.housingType||fields.accommodationType||object.housingType,40);
  const kinds={apartment:'apartment',flat:'apartment',квартира:'apartment',room:'room',комната:'room',dormitory:'dormitory',общежитие:'dormitory'};
- const kind=Object.hasOwn(kinds,value.toLowerCase())?kinds[value.toLowerCase()]:'unknown';
+ const kind=hasOwnKey(kinds,value.toLowerCase())?kinds[value.toLowerCase()]:'unknown';
  const mentioned=/общежити|宿舍/iu.test([fields.details,fields.sourceDescription,fields.description].filter(text=>typeof text==='string').join('\n'));
  return {kind,label:{apartment:'Квартира',room:'Комната',dormitory:'Общежитие · явно указанный тип',unknown:'Тип жилья не подтверждён'}[kind],note:mentioned&&kind!=='dormitory'?'Упоминание общежития в описании окружения не меняет тип жилья.':'',district:commuteText(fields.district,180)||'Район не указан'};
 }

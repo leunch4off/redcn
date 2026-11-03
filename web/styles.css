@@ -68,3 +68,6 @@
 
 /* Long source paths must wrap instead of expanding the mobile layout viewport. */
 .task .evidence{min-width:0;overflow-wrap:anywhere}
+
+/* Viewing changes presentation only, never card order or editor availability. */
+.catalog-filters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.catalog-filters .active{background:#334155;color:#fff;border-color:#334155}.catalog-card{padding:12px;border-radius:9px}.catalog-viewed{background:#eef0f2!important;color:#58616c}.catalog-viewed>span{color:#58616c}.saved.catalog-viewed{padding:12px;border-radius:9px}

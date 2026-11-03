@@ -76,6 +76,15 @@ class GalleryCoverageTests(unittest.TestCase):
         ready=source_readiness({'capture':{'completed':True,'sections':[{'section':kind,'reads':1,'found':True,'ready':True} for kind in ('gallery','description','characteristics')],'galleryCoverage':large}})
         self.assertTrue(ready['partial']);self.assertEqual(ready['gallery']['overLimit'],10)
 
+    def test_expanded_album_limit_survives_normalization_and_reports_overflow(self):
+        urls=['https://images.cdn-cian.ru/images/retained-'+str(n)+'.jpg' for n in range(205)]
+        complete=gallery_coverage([],urls[:36],structured_count=36,limit=200)
+        self.assertEqual(normalized_coverage(complete)['limit'],200)
+        self.assertEqual(normalized_coverage(complete)['retained'],36)
+        large=gallery_coverage([],urls,structured_count=205,limit=200)
+        self.assertEqual(normalized_coverage(large)['overLimit'],5)
+        self.assertEqual(len(observed_images(urls,redcn.allowed_url,'https://www.cian.ru/')),200)
+
     def test_canonicalization_uses_only_explicit_same_photo_id_variants_and_excludes_layout(self):
         thumb=URLS[0].replace('.jpg','-thumb.jpg');unrelated=URLS[0].replace('.jpg','-unobserved.jpg')
         observed=[thumb,URLS[0],URLS[1],URLS[2],unrelated]

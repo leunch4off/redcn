@@ -1,6 +1,7 @@
 """Observed album completeness, independent of page/visible-image readiness."""
 from urllib.parse import urljoin, urlsplit
 import re
+from photo_limits import PHOTO_SOURCE_LIMIT
 
 
 def cian_photo_url_identity(value):
@@ -59,7 +60,7 @@ def _validated(value,validate_url,base_url):
     return checked if isinstance(checked,str) else absolute
 
 
-def observed_images(values, validate_url, base_url, photo_items=(), layouts=(), limit=180):
+def observed_images(values, validate_url, base_url, photo_items=(), layouts=(), limit=PHOTO_SOURCE_LIMIT):
     """Canonicalize explicit source variants or an observed CIAN URL family.
 
     No URL suffixes are generated and visually similar images are not merged.
@@ -212,7 +213,7 @@ def normalized_coverage(value):
     observed=value.get('observed');expected=value.get('expected');limit=value.get('limit',30)
     if type(observed) is not int or not 0<=observed<=1800:return None
     if expected is not None and (type(expected) is not int or not 0<expected<=400):return None
-    if type(limit) is not int or not 1<=limit<=180:limit=30
+    if type(limit) is not int or not 1<=limit<=PHOTO_SOURCE_LIMIT:limit=30
     check_roles=value.get('version')==2 or 'mainLinksObserved' in value or 'previewOnly' in value
     main=value.get('mainLinksObserved');preview=value.get('previewOnly')
     roles_valid=check_roles and type(main) is int and type(preview) is int and min(main,preview)>=0 and main+preview<=observed

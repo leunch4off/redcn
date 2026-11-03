@@ -143,16 +143,28 @@ def _model_versions(directory):
     adapter=Path(adapter).expanduser() if isinstance(adapter,str) and len(adapter)<=4096 else None
     adapter_sha=_file_sha(adapter/'adapters.safetensors',root,10_000_000) if adapter else None
     config_sha=_file_sha(base/'config.json',root,1_000_000)
+    advertising=text.get('advertisingModelPath')
+    advertising=Path(advertising).expanduser() if isinstance(advertising,str) and len(advertising)<=4096 else None
+    def model_name(folder):
+        try:
+            from text_model_contract import inference_model
+            return inference_model(_read(folder/'config.json',root,1_000_000))
+        except (OSError,ValueError,TypeError):return 'configured-local-model'
     known_photo={'redcn-furniture-v1','qwen3-vl:2b-instruct-q4_K_M'}
     model=photo.get('model','qwen3-vl:2b-instruct-q4_K_M')
     native_sha=None
     if model=='redcn-furniture-v1':
         from photo_native_runtime import MODEL_PATH
         native_sha=_file_sha(root/MODEL_PATH,root,60_000_000)
-    return {'text':{'configurationSha256':config_sha,'baseWeightsVerified':False,
+    return {'text':{'configurationSha256':config_sha,'baseWeightsVerified':False,'model':model_name(base),
                     'adapterSelected':text.get('useCandidateAdapter') is True,
                     'adapterWeightsSha256':adapter_sha,
                     'adapterVerified':bool(adapter_sha)},
+            'advertising':{'model':model_name(advertising or base),
+                    'separateProfile':advertising is not None,
+                    'configurationSha256':_file_sha((advertising or base)/'config.json',root,1_000_000),
+                    'adapterSelected':False if advertising else text.get('useCandidateAdapter') is True,
+                    'locallyTrained':False if advertising else None,'baseWeightsVerified':False},
             'photo':{'model':model if model in known_photo else 'configured-external-model',
                      'weightsSha256':native_sha,'weightsVerified':bool(native_sha)}}
 

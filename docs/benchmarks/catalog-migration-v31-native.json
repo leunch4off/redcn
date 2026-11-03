@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "release": "v31",
+  "status": "native-backup-and-isolated-migration-passed",
+  "date": "2026-11-03",
+  "environment": {
+    "os": "macOS",
+    "migrationTarget": "isolated copy of a consistent SQLite backup"
+  },
+  "productionDatabaseModified": false,
+  "productionSourceModified": false,
+  "productionRestarted": false,
+  "productionInstalled": false,
+  "backup": {
+    "method": "sqlite3.Connection.backup",
+    "databaseCount": 11,
+    "totalDatabaseBytes": 55263232,
+    "allQuickCheckOk": true,
+    "serverStayedRunning": true,
+    "configurationFilesCopied": 2,
+    "mediaFileMetadataSnapshot": {
+      "files": 4658,
+      "bytes": 167158712,
+      "sha256": "25db97b710f3980581f28fc3ad0bb4df0c16687e9a81e21ea0f8a4b04c3f5fd7",
+      "imageContentCopied": false
+    }
+  },
+  "migration": {
+    "resultCountBefore": 82,
+    "resultCountAfter": 82,
+    "payloadBytesUnchangedAfterMigration": true,
+    "resultRowidsAndUpdatedUnchanged": true,
+    "originalTableCountsAndContentHashesUnchanged": true,
+    "originalTableCounts": {
+      "cache": 79,
+      "fact_revisions": 151,
+      "history": 50,
+      "publication_review_events": 0,
+      "publication_reviews": 0,
+      "results": 82,
+      "seen": 0,
+      "variants": 79
+    },
+    "catalogueEntries": 82,
+    "catalogueOrigins": {
+      "import-journal": 68,
+      "fact-revision": 14,
+      "legacy-snapshot": 0
+    },
+    "independentOrderCheck": {
+      "passed": true,
+      "evidence": "Earliest import-job creation, otherwise first persisted fact revision; descending creation order with card identifier as the tie-breaker.",
+      "positionsChangedFromLegacyUpdatedOrder": 82,
+      "orderSha256": "7c54ffaf6c21363123ded8df53e7c21ca1d71cd550cd67e3ffb0110aff696b75"
+    },
+    "historicalChangedState": {
+      "historyRows": 50,
+      "cardsWithLinkedSaveSnapshots": 0,
+      "derivedEditedCards": 0,
+      "missingHistoryNotInferred": true
+    },
+    "idempotent": true,
+    "subsequentIsolatedEdit": {
+      "resultCount": 82,
+      "payloadsChanged": 1,
+      "catalogueOrderUnchanged": true,
+      "editedFlagSet": true
+    },
+    "immutableBackupUnchanged": true,
+    "productionOriginalTablesUnchanged": true,
+    "productionCatalogueTablesStillAbsent": true
+  },
+  "sourceFilesSha256": {
+    "cli/card_catalog.py": "d48a3f0e8dc15891ded6561c73fea820a2bc98d9d1059234cc02e1e5644c681c"
+  },
+  "evidenceSha256": {
+    "privateBackupReceipt": "fdff65cb0ea3ff4e0b37fdeb39c0017ecc0c14abae08b432edd5ee7a896abc7d",
+    "privateBaselineManifest": "444fca9a0a763cc342974d733849d4076d770858362b96d0b84a55b7e531f676",
+    "privateMigrationReceipt": "6dc0e7fffe7cdee1fa94b32990ef3af53aecca7f593feee86086c48506947236",
+    "privateMigrationOrderManifest": "dbc400bb1e654a79c508842e5fe9ad0388c65d7b605bcc3d11b5c241057b960d",
+    "aggregateCardSnapshot": "9943828f5b890f9018d8f591099e2b7ecf131acfbc89da20e0432c06e7f6f21d"
+  },
+  "privacy": {
+    "aggregateOnly": true,
+    "cardIdentifiersIncluded": false,
+    "privatePathsIncluded": false,
+    "sourceUrlsIncluded": false,
+    "cardTextIncluded": false,
+    "photographsIncluded": false,
+    "credentialsIncluded": false
+  },
+  "limits": [
+    "Migration ran on a disposable backup copy; no installed production migration or deployment is asserted.",
+    "Payload equality applies immediately after migration, before the separate intentional one-card edit on that disposable copy.",
+    "Restored creation/import order differs from the legacy updated-time order; the receipt does not claim the old visual positions were identical.",
+    "Absent linked historical save snapshots cannot prove which cards were edited before this catalogue existed.",
+    "SQLite databases and two configuration files were copied; image-file contents were not copied.",
+    "No model inference, training, text quality or final-release acceptance is asserted."
+  ]
+}

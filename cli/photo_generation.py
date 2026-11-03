@@ -9,6 +9,7 @@ def photo_revision(directory, result, *, text='', rules=None, prefs=None, report
     from listing_photo_inventory import analyze_listing_photos
     from photo_ai_settings import load_config
     from photo_teacher_review import valid_review, retain_teacher_candidates
+    from phone_relay import source_images
     config=load_config(directory)
     inventory=analyze_listing_photos(directory,result,report,cancel,max_seconds=config['maxSeconds'])
     result['photoInventory']=inventory
@@ -24,7 +25,7 @@ def photo_revision(directory, result, *, text='', rules=None, prefs=None, report
     source_positive={row['id'] for row in audit.get('furniture',[]) or []
                      if isinstance(row,dict) and row.get('status')=='present' and 'id' in row}
     current_originals={row.get('sourceUrl'):row.get('id') for row in result.get('media',[]) if isinstance(row,dict)}
-    current_sources=set(fields.get('photos') or [])-set((fields.get('photoEdits') or {}).get('excluded') or [])
+    current_sources=set(source_images(result))
     human=[row for row in fields.get('photoEvidence',[]) or [] if isinstance(row,dict) and
         (row.get('status')=='confirmed' or row.get('status')=='assistant-reviewed'
          and row.get('sourceUrl') in current_sources and row.get('originalId')==current_originals.get(row.get('sourceUrl')))]

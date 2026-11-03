@@ -10,6 +10,7 @@ _browser_lock = threading.Lock()
 from browser_dom import source_scripts, gallery_scroll_script,gallery_sweep_script
 from source_adapters import adapter_for
 from gallery_coverage import gallery_coverage, observed_images,merge_gallery_items
+from photo_limits import PHOTO_SOURCE_LIMIT
 
 SNAPSHOT, SECTION_PROBE = source_scripts(adapter_for('https://www.cian.ru/'))
 GALLERY_SCROLL=gallery_scroll_script(adapter_for('https://www.cian.ru/'))
@@ -105,7 +106,7 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
             if section=='gallery':
                 album=state.get('album') if isinstance(state.get('album'),dict) else initial.get('galleryState',{})
                 album_states.append(album)
-                coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+                coverage=gallery_coverage(album_states,images,photo_items=gallery_items,limit=PHOTO_SOURCE_LIMIT)
                 # The initial snapshot already found the carousel. One bounded
                 # in-page sweep must precede another expensive transport/probe;
                 # a busy source can otherwise consume all six seconds before
@@ -157,7 +158,7 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
                 if section=='gallery':
                     album=state.get('album',{}) if isinstance(state.get('album'),dict) else {}
                     album_states.append(album)
-                    coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+                    coverage=gallery_coverage(album_states,images,photo_items=gallery_items,limit=PHOTO_SOURCE_LIMIT)
                     if album.get('scrollable') and not gallery_swept and time.monotonic()<phase_end and coverage['state']!='complete':
                         sweep=_browser_read(page,gallery_sweep,{'budgetMs':min(1800,max(1,(phase_end-time.monotonic())*1000)),'maxMoves':40},kind='gallery-sweep',measurements=measurements)
                         gallery_swept=True;gallery_moves+=sweep.get('moves',0)
@@ -180,10 +181,10 @@ def capture_sections(page, initial, deadline, validate_url, status=None, cancel=
             if gallery_restore is not None:_browser_read(page,gallery_scroll,{'restore':gallery_restore},kind='restore-gallery-scroll',measurements=measurements)
             _browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
     elapsed=max(0,time.monotonic()-started)
-    coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+    coverage=gallery_coverage(album_states,images,photo_items=gallery_items,limit=PHOTO_SOURCE_LIMIT)
     sections_complete=len(sections)==3 and all(row.get('ready') for row in sections) and (from_snapshot or captures>0)
     complete=sections_complete and coverage['state']=='complete' and not coverage['overLimit']
-    return {**snapshot,'images':list(dict.fromkeys(images))[:180],'galleryPhotos':gallery_items}, {
+    return {**snapshot,'images':list(dict.fromkeys(images))[:PHOTO_SOURCE_LIMIT],'galleryPhotos':gallery_items}, {
         'version':3,'strategy':'sections','sections':sections,'completed':complete,'sectionsCompleted':sections_complete,'bounded':not complete,'pageBottomReached':False,
         'scrolls':sum(row['blocksVisited'] for row in sections),'imageCandidates':len(set(images)),
         'seconds':round(elapsed,3),'activeSeconds':round(max(0,elapsed-manual_seconds),3),
@@ -270,9 +271,9 @@ def capture_scrolled(page, initial, deadline, validate_url, status=None, cancel=
     finally:
         if not page.is_closed():
             _browser_read(page,SCROLL_TOP,kind='restore-scroll',measurements=measurements)
-    coverage=gallery_coverage(album_states,images,photo_items=gallery_items)
+    coverage=gallery_coverage(album_states,images,photo_items=gallery_items,limit=PHOTO_SOURCE_LIMIT)
     complete=bottom_stable>=2 and coverage['state']=='complete' and not coverage['overLimit']
-    return {**snapshot, 'images': list(dict.fromkeys(images))[:180],'galleryPhotos':gallery_items}, {
+    return {**snapshot, 'images': list(dict.fromkeys(images))[:PHOTO_SOURCE_LIMIT],'galleryPhotos':gallery_items}, {
         'version': 1, 'scrolls': scrolls, 'completed': complete,'pageWalkCompleted':bottom_stable>=2,
         'bounded': not complete, 'imageCandidates': len(set(images)),
         'seconds':round(max(0,time.monotonic()-started),3),'browserCalls':measurements,
@@ -453,10 +454,10 @@ def load_browser(url, profile, parse_html, validate_url, timeout=180, status=Non
                         if isinstance(result.get('fields'),dict) and result['photoItems']:result['fields']['photoItems']=result['photoItems']
                         collected=observed_images([*result.get('images',[]),*snapshot.get('images',[])],validate_url,page.url,result.get('photoItems',[]),result.get('layouts',[]))
                         album_states=[snapshot.get('galleryState',{}),capture.get('galleryCoverage',{})]
-                        capture['galleryCoverage']=gallery_coverage(album_states,collected,structured_count=structured or None,photo_items=result['photoItems'])
+                        capture['galleryCoverage']=gallery_coverage(album_states,collected,structured_count=structured or None,photo_items=result['photoItems'],limit=PHOTO_SOURCE_LIMIT)
                         capture['completed']=bool(capture.get('sectionsCompleted',capture.get('pageWalkCompleted',capture.get('completed')))) and capture['galleryCoverage']['state']=='complete' and not capture['galleryCoverage']['overLimit']
                         capture['bounded']=not capture['completed']
-                        result['images'] = collected[:30]
+                        result['images'] = collected[:PHOTO_SOURCE_LIMIT]
                         result['loader'] = 'chrome'
                         result['browser_channel'] = channel
                         capture['stabilityMethod']='adapter-fields' if snapshot.get('stabilityKey') else 'fallback-text'

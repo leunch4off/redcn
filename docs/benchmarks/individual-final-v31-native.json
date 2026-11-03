@@ -1,0 +1,676 @@
+{
+  "schema": "redcn-individual-final-native-semantic-proof-v1",
+  "date": "2026-11-03",
+  "evidenceKind": "real-native-mlx-with-independent-assistant-input-output-audit",
+  "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+  "inferenceExecutedDuringReceiptPreparation": false,
+  "testsExecutedDuringReceiptPreparation": false,
+  "humanEvaluation": false,
+  "nativeChineseEditorialApproval": false,
+  "newlyTrainedWeightsClaimed": false,
+  "receiptEstablishesProductionDeployment": false,
+  "privacy": {
+    "containsPrivatePaths": false,
+    "containsListingIds": false,
+    "containsAddresses": false,
+    "containsImages": false,
+    "containsFullModelOutputs": false
+  },
+  "interpretation": {
+    "formalReview": "A draft passed the application validator at its recorded source snapshot. Independent semantic review is recorded separately.",
+    "attemptMetrics": "The raw model transport status review is not semantic acceptance. selectedByApplication identifies only the final response selected by the then-current application validator.",
+    "timeMetrics": "Run and case elapsedSeconds include bounded retries and orchestration. ai.elapsedSeconds and modelCallElapsedSeconds describe the individual call; ai.generationSeconds is token generation time, not whole-request latency.",
+    "memoryMetrics": "peakMemoryBytes is the MLX worker's reported get_peak_memory value, not whole-machine RSS, total application memory, swap use or an OOM/parallel-load test.",
+    "inputConflict": "The source conflict case correctly performs zero model calls and requires clarification in the card. It is not counted as a generated advertisement.",
+    "multiSnapshot": "One independently acceptable output is from pipeline010 and two are from pipeline011. They are not a single clean 3/3 run on one snapshot.",
+    "releaseBoundary": "Recorded productionSelected=false describes these isolated trials. A subsequent production installation requires its own receipt.",
+    "sourceBoundary": "Hashes are the exact source subset recorded by each run; they do not claim a whole-repository snapshot hash."
+  },
+  "runs": [
+    {
+      "name": "pipeline010",
+      "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+      "privateResultSha256": "31886658dfb1f5cfc4e3a545a73039f38a9c2a45bcaed07a081cc18d1dfef037",
+      "recordedSourceHashes": {
+        "cli/individual_copy.py": "53b30ed54831c5d4c6729199f98bcfba9337b3029a510b24f433f12354c3b5f4",
+        "cli/local_text_model.py": "bc60d02b5697f7e418fe31dcfb5420aca6e6273e1cb61fcf9d56ffa2134cca95",
+        "cli/text_model_contract.py": "b6f002604e38e204c8c49454d9cf2bc687de4dd3320e193d22cf607777ea72a4",
+        "cli/language.mjs": "8ae1b1cc55805f2ae35c2d0cc6a9abd79aafa9bc821c3c670bfab11039a3c326",
+        "web/engine.mjs": "c57e5e71fda89bedb52445a5769fc0e073b87f4ee6463747fc59e5cda2a19dfb",
+        "web/fact-evidence.mjs": "a01233443b257430994571a514326e01efdfc2205b6aef60f171c04143936964"
+      },
+      "productionSelectedInTrial": false,
+      "newlyTrainedWeightsInTrial": false,
+      "elapsedSeconds": 94.43401608298882,
+      "counts": {
+        "requests": 4,
+        "rawModelCalls": 6,
+        "sourceConflictsBeforeInference": 1,
+        "formalBlocked": 1,
+        "formalReview": 2,
+        "independentlyAcceptableFinalDrafts": 1,
+        "formalReviewRejectedByIndependentAudit": 1
+      },
+      "resourceSummary": {
+        "generatedTokensAllAttempts": 1506,
+        "peakMemoryBytes": 2988623400,
+        "allStopReasons": "stop",
+        "allAdapterSha256": null
+      },
+      "cases": [
+        {
+          "ordinal": 0,
+          "scenario": "conflicting-utilities",
+          "applicationStatus": "source-conflict",
+          "formalModelAccepted": false,
+          "autoApply": null,
+          "fallback": null,
+          "inventoryCount": null,
+          "photoInventoryCount": null,
+          "omittedCorruptOptionalSourceFields": null,
+          "modelCalls": 0,
+          "caseElapsedSeconds": 0.3429517089971341,
+          "finalAttemptMetrics": null,
+          "attempts": [],
+          "independentAssistantAudit": {
+            "verdict": "correct-input-conflict-block",
+            "usableDraft": false,
+            "summary": "Explicit source utility charges disagreed with the stored known utility mode. The brief was rejected before any model call; the conflict was not silently resolved.",
+            "checks": {
+              "modelCalls": 0,
+              "sourceConflictSurfaced": true,
+              "manualOverrideClaimed": false
+            }
+          }
+        },
+        {
+          "ordinal": 1,
+          "scenario": "corrupt-optional-renovation",
+          "applicationStatus": "blocked",
+          "formalModelAccepted": false,
+          "autoApply": false,
+          "fallback": false,
+          "inventoryCount": 23,
+          "photoInventoryCount": 10,
+          "omittedCorruptOptionalSourceFields": [
+            "renovation"
+          ],
+          "modelCalls": 3,
+          "caseElapsedSeconds": 46.290741167002125,
+          "finalAttemptMetrics": {
+            "backend": "mlx",
+            "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+            "operation": "text",
+            "phase": "complete",
+            "generatedTokens": 229,
+            "promptTokens": 776,
+            "promptTokensProcessed": 776,
+            "promptTokensTotal": 776,
+            "elapsedSeconds": 15.019273,
+            "generationSeconds": 7.931846,
+            "tokensPerSecond": 28.870958,
+            "promptTokensPerSecond": 222.820521,
+            "tokenBased": true
+          },
+          "attempts": [
+            {
+              "ordinal": 1,
+              "transportStatus": "review",
+              "selectedByApplication": false,
+              "modelCallElapsedSeconds": 14.427874124987284,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 229,
+                "promptTokens": 590,
+                "promptTokensProcessed": 590,
+                "promptTokensTotal": 590,
+                "elapsedSeconds": 14.427861,
+                "generationSeconds": 7.735905,
+                "tokensPerSecond": 29.602227,
+                "promptTokensPerSecond": 221.237994,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2966046156,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            },
+            {
+              "ordinal": 2,
+              "transportStatus": "review",
+              "selectedByApplication": false,
+              "modelCallElapsedSeconds": 16.331623624981148,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 261,
+                "promptTokens": 762,
+                "promptTokensProcessed": 762,
+                "promptTokensTotal": 762,
+                "elapsedSeconds": 16.331612,
+                "generationSeconds": 9.349802,
+                "tokensPerSecond": 27.915031,
+                "promptTokensPerSecond": 225.944745,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2903017560,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            },
+            {
+              "ordinal": 3,
+              "transportStatus": "review",
+              "selectedByApplication": false,
+              "modelCallElapsedSeconds": 15.019288624986075,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 229,
+                "promptTokens": 776,
+                "promptTokensProcessed": 776,
+                "promptTokensTotal": 776,
+                "elapsedSeconds": 15.019273,
+                "generationSeconds": 7.931846,
+                "tokensPerSecond": 28.870958,
+                "promptTokensPerSecond": 222.820521,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2948565136,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            }
+          ],
+          "independentAssistantAudit": {
+            "verdict": "correctly-withheld-no-usable-draft",
+            "usableDraft": false,
+            "summary": "The final attempt omitted the required city. The optional damaged renovation property was omitted with a warning rather than guessed. The body also lacked an explicit room/layout statement.",
+            "checks": {
+              "typedPaymentRolesRetained": true,
+              "inventoryItemsRetained": 23,
+              "typedRoutesRetained": 3,
+              "petRestrictionRetained": true,
+              "damagedRenovationNotInvented": true
+            },
+            "caveat": "Earlier attempts remain unsuccessful; a correct block is not a usable advertisement."
+          }
+        },
+        {
+          "ordinal": 2,
+          "scenario": "smoking-and-occupancy",
+          "applicationStatus": "review",
+          "formalModelAccepted": true,
+          "autoApply": false,
+          "fallback": false,
+          "inventoryCount": 25,
+          "photoInventoryCount": 19,
+          "omittedCorruptOptionalSourceFields": [],
+          "modelCalls": 1,
+          "caseElapsedSeconds": 18.00399858300807,
+          "finalAttemptMetrics": {
+            "backend": "mlx",
+            "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+            "operation": "text",
+            "phase": "complete",
+            "generatedTokens": 318,
+            "promptTokens": 613,
+            "promptTokensProcessed": 613,
+            "promptTokensTotal": 613,
+            "elapsedSeconds": 17.412773,
+            "generationSeconds": 11.150831,
+            "tokensPerSecond": 28.518055,
+            "promptTokensPerSecond": 217.616828,
+            "tokenBased": true
+          },
+          "attempts": [
+            {
+              "ordinal": 1,
+              "transportStatus": "review",
+              "selectedByApplication": true,
+              "modelCallElapsedSeconds": 17.4127835840045,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 318,
+                "promptTokens": 613,
+                "promptTokensProcessed": 613,
+                "promptTokensTotal": 613,
+                "elapsedSeconds": 17.412773,
+                "generationSeconds": 11.150831,
+                "tokensPerSecond": 28.518055,
+                "promptTokensPerSecond": 217.616828,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2988623400,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            }
+          ],
+          "independentAssistantAudit": {
+            "verdict": "acceptable-within-reviewed-inputs",
+            "usableDraft": true,
+            "summary": "Rent, deposit, prepayment and minimum term retain their roles. The positive inventory, apartment layout, three transport routes, smoking prohibition, no-pets/no-registration conditions and 1–2-person admission range are retained.",
+            "checks": {
+              "inventoryItemsRetained": 25,
+              "photoBackedInventorySubset": 19,
+              "typedRoutesRetained": 3,
+              "paymentRolesPreserved": true,
+              "smokingRestrictionPreserved": true,
+              "occupancyRangePreserved": true,
+              "noInventedItemCounts": true,
+              "noUnsupportedRoomPlacementIdentified": true,
+              "noUnsupportedPhotoUniversalClaimIdentified": true,
+              "noUnsupportedFreeServiceIdentified": true
+            },
+            "caveat": "City is present in the title, not the body. The validator for city/layout at this snapshot checks combined title and body; this receipt does not claim a separate mandatory-body gate."
+          }
+        },
+        {
+          "ordinal": 3,
+          "scenario": "separate-internet-payment",
+          "applicationStatus": "review",
+          "formalModelAccepted": true,
+          "autoApply": false,
+          "fallback": false,
+          "inventoryCount": 25,
+          "photoInventoryCount": 12,
+          "omittedCorruptOptionalSourceFields": [],
+          "modelCalls": 2,
+          "caseElapsedSeconds": 29.792873084021267,
+          "finalAttemptMetrics": {
+            "backend": "mlx",
+            "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+            "operation": "text",
+            "phase": "complete",
+            "generatedTokens": 239,
+            "promptTokens": 781,
+            "promptTokensProcessed": 781,
+            "promptTokensTotal": 781,
+            "elapsedSeconds": 15.328932,
+            "generationSeconds": 8.351103,
+            "tokensPerSecond": 28.618973,
+            "promptTokensPerSecond": 222.832581,
+            "tokenBased": true
+          },
+          "attempts": [
+            {
+              "ordinal": 1,
+              "transportStatus": "review",
+              "selectedByApplication": false,
+              "modelCallElapsedSeconds": 13.792775333015015,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 230,
+                "promptTokens": 564,
+                "promptTokensProcessed": 564,
+                "promptTokensTotal": 564,
+                "elapsedSeconds": 13.792764,
+                "generationSeconds": 7.785875,
+                "tokensPerSecond": 29.540674,
+                "promptTokensPerSecond": 223.078881,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2939438436,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            },
+            {
+              "ordinal": 2,
+              "transportStatus": "review",
+              "selectedByApplication": true,
+              "modelCallElapsedSeconds": 15.328942499996629,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 239,
+                "promptTokens": 781,
+                "promptTokensProcessed": 781,
+                "promptTokensTotal": 781,
+                "elapsedSeconds": 15.328932,
+                "generationSeconds": 8.351103,
+                "tokensPerSecond": 28.618973,
+                "promptTokensPerSecond": 222.832581,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2951743652,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            }
+          ],
+          "independentAssistantAudit": {
+            "verdict": "rejected-by-independent-semantic-audit",
+            "usableDraft": false,
+            "summary": "The application formally accepted the final response, but its title made an unsupported full-furnishing/completeness claim. This is retained as a real false acceptance in the historical evidence.",
+            "checks": {
+              "inventoryItemsRetained": 25,
+              "photoBackedInventorySubset": 12,
+              "typedRoutesRetained": 4,
+              "paymentRolesPreserved": true,
+              "separateInternetChargePreserved": true,
+              "noUnsupportedRoomPlacementIdentified": true
+            },
+            "issue": {
+              "category": "unsupported-inventory-completeness",
+              "location": "title"
+            },
+            "caveat": "The later guard and follow-up do not retroactively turn this output into a successful generation."
+          }
+        }
+      ]
+    },
+    {
+      "name": "pipeline011",
+      "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+      "privateResultSha256": "d2b6c924cd5db47b6e53c01550368de93b7f0d377feb173492cb452d59f9a892",
+      "recordedSourceHashes": {
+        "cli/individual_copy.py": "8063bc06b7192cf1ddb972faa3f20c9c6fa774e9d98e0e83c7a47dee2e6aae44",
+        "cli/local_text_model.py": "bc60d02b5697f7e418fe31dcfb5420aca6e6273e1cb61fcf9d56ffa2134cca95",
+        "cli/text_model_contract.py": "b6f002604e38e204c8c49454d9cf2bc687de4dd3320e193d22cf607777ea72a4",
+        "cli/language.mjs": "8ae1b1cc55805f2ae35c2d0cc6a9abd79aafa9bc821c3c670bfab11039a3c326",
+        "web/engine.mjs": "c57e5e71fda89bedb52445a5769fc0e073b87f4ee6463747fc59e5cda2a19dfb",
+        "web/fact-evidence.mjs": "a01233443b257430994571a514326e01efdfc2205b6aef60f171c04143936964"
+      },
+      "productionSelectedInTrial": false,
+      "newlyTrainedWeightsInTrial": false,
+      "elapsedSeconds": 60.90122629201505,
+      "counts": {
+        "requests": 2,
+        "rawModelCalls": 4,
+        "sourceConflictsBeforeInference": 0,
+        "formalBlocked": 0,
+        "formalReview": 2,
+        "independentlyAcceptableFinalDrafts": 2,
+        "formalReviewRejectedByIndependentAudit": 0
+      },
+      "resourceSummary": {
+        "generatedTokensAllAttempts": 941,
+        "peakMemoryBytes": 2996438600,
+        "allStopReasons": "stop",
+        "allAdapterSha256": null
+      },
+      "cases": [
+        {
+          "ordinal": 0,
+          "scenario": "city-and-corrupt-renovation-followup",
+          "applicationStatus": "review",
+          "formalModelAccepted": true,
+          "autoApply": false,
+          "fallback": false,
+          "inventoryCount": 23,
+          "photoInventoryCount": 10,
+          "omittedCorruptOptionalSourceFields": [
+            "renovation"
+          ],
+          "modelCalls": 2,
+          "caseElapsedSeconds": 31.176857750018826,
+          "finalAttemptMetrics": {
+            "backend": "mlx",
+            "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+            "operation": "text",
+            "phase": "complete",
+            "generatedTokens": 247,
+            "promptTokens": 838,
+            "promptTokensProcessed": 838,
+            "promptTokensTotal": 838,
+            "elapsedSeconds": 15.949658,
+            "generationSeconds": 8.706415,
+            "tokensPerSecond": 28.369885,
+            "promptTokensPerSecond": 222.837641,
+            "tokenBased": true
+          },
+          "attempts": [
+            {
+              "ordinal": 1,
+              "transportStatus": "review",
+              "selectedByApplication": false,
+              "modelCallElapsedSeconds": 14.642748708021827,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 244,
+                "promptTokens": 621,
+                "promptTokensProcessed": 621,
+                "promptTokensTotal": 621,
+                "elapsedSeconds": 14.642738,
+                "generationSeconds": 8.273291,
+                "tokensPerSecond": 29.492497,
+                "promptTokensPerSecond": 218.688824,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2996438600,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            },
+            {
+              "ordinal": 2,
+              "transportStatus": "review",
+              "selectedByApplication": true,
+              "modelCallElapsedSeconds": 15.949669541005278,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 247,
+                "promptTokens": 838,
+                "promptTokensProcessed": 838,
+                "promptTokensTotal": 838,
+                "elapsedSeconds": 15.949658,
+                "generationSeconds": 8.706415,
+                "tokensPerSecond": 28.369885,
+                "promptTokensPerSecond": 222.837641,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2992294268,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            }
+          ],
+          "independentAssistantAudit": {
+            "verdict": "acceptable-within-reviewed-inputs",
+            "usableDraft": true,
+            "summary": "The city and apartment type now appear explicitly in the body. The original numeric property facts, payment roles, 23 positive items, three routes and pet restriction are retained. The damaged optional renovation value is absent, with an actionable warning.",
+            "checks": {
+              "cityExplicitInBody": true,
+              "layoutExplicitInBody": true,
+              "numericPropertyFactsPreserved": true,
+              "paymentRolesPreserved": true,
+              "inventoryItemsRetained": 23,
+              "photoBackedInventorySubset": 10,
+              "typedRoutesRetained": 3,
+              "petRestrictionPreserved": true,
+              "corruptOptionalRenovationOmittedWithWarning": true,
+              "noInventedItemCounts": true,
+              "noUnsupportedCompletenessClaimIdentified": true,
+              "noUnsupportedRoomPlacementIdentified": true,
+              "noUnsupportedPhotoUniversalClaimIdentified": true,
+              "noUnsupportedFreeServiceIdentified": true
+            },
+            "caveat": "No additional factual error was identified against these inputs. This is assistant review, not human or native-Chinese editorial approval."
+          }
+        },
+        {
+          "ordinal": 1,
+          "scenario": "inventory-completeness-followup",
+          "applicationStatus": "review",
+          "formalModelAccepted": true,
+          "autoApply": false,
+          "fallback": false,
+          "inventoryCount": 25,
+          "photoInventoryCount": 12,
+          "omittedCorruptOptionalSourceFields": [],
+          "modelCalls": 2,
+          "caseElapsedSeconds": 29.72252108398243,
+          "finalAttemptMetrics": {
+            "backend": "mlx",
+            "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+            "operation": "text",
+            "phase": "complete",
+            "generatedTokens": 223,
+            "promptTokens": 822,
+            "promptTokensProcessed": 822,
+            "promptTokensTotal": 822,
+            "elapsedSeconds": 14.82387,
+            "generationSeconds": 7.767638,
+            "tokensPerSecond": 28.708857,
+            "promptTokensPerSecond": 227.713723,
+            "tokenBased": true
+          },
+          "attempts": [
+            {
+              "ordinal": 1,
+              "transportStatus": "review",
+              "selectedByApplication": false,
+              "modelCallElapsedSeconds": 14.338300292001804,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 227,
+                "promptTokens": 596,
+                "promptTokensProcessed": 596,
+                "promptTokensTotal": 596,
+                "elapsedSeconds": 14.338289,
+                "generationSeconds": 7.909116,
+                "tokensPerSecond": 28.701057,
+                "promptTokensPerSecond": 218.378229,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2971485668,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            },
+            {
+              "ordinal": 2,
+              "transportStatus": "review",
+              "selectedByApplication": true,
+              "modelCallElapsedSeconds": 14.823881375021301,
+              "ai": {
+                "backend": "mlx",
+                "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+                "operation": "text",
+                "phase": "complete",
+                "generatedTokens": 223,
+                "promptTokens": 822,
+                "promptTokensProcessed": 822,
+                "promptTokensTotal": 822,
+                "elapsedSeconds": 14.82387,
+                "generationSeconds": 7.767638,
+                "tokensPerSecond": 28.708857,
+                "promptTokensPerSecond": 227.713723,
+                "tokenBased": true
+              },
+              "memoryLimitBytes": 3200000000,
+              "peakMemoryBytes": 2981202236,
+              "adapterSha256": null,
+              "stopReason": "stop",
+              "stopReasonSource": "mlx-finish-reason"
+            }
+          ],
+          "independentAssistantAudit": {
+            "verdict": "acceptable-within-reviewed-inputs",
+            "usableDraft": true,
+            "summary": "The city and studio type appear explicitly in the body. The 25 positive items, four walking routes and typed rental payments are retained; separate internet payment is explicit. The earlier unsupported completeness claim is absent.",
+            "checks": {
+              "cityExplicitInBody": true,
+              "layoutExplicitInBody": true,
+              "numericPropertyFactsPreserved": true,
+              "paymentRolesPreserved": true,
+              "inventoryItemsRetained": 25,
+              "photoBackedInventorySubset": 12,
+              "typedRoutesRetained": 4,
+              "separateInternetChargePreserved": true,
+              "noInventedItemCounts": true,
+              "noUnsupportedCompletenessClaimIdentified": true,
+              "noUnsupportedRoomPlacementIdentified": true,
+              "noUnsupportedPhotoUniversalClaimIdentified": true,
+              "noUnsupportedFreeServiceIdentified": true
+            },
+            "caveat": "The stated inventory is apartment-level. No full recognition, room association, new photo inspection or exhaustive furnishing claim is established."
+          }
+        }
+      ]
+    }
+  ],
+  "finalFollowupConclusion": {
+    "run": "pipeline011",
+    "formalReviewCount": 2,
+    "independentlyAcceptableFinalDrafts": 2,
+    "requests": 2,
+    "rawModelCalls": 4,
+    "attemptsPerRequest": [
+      2,
+      2
+    ],
+    "earlierAttemptsRetained": true,
+    "summary": "Both final follow-up outputs were independently checked against the existing input facts and no additional incorrect fact was identified. The damaged optional renovation value was omitted transparently, and the studio preserved separate internet payment without a complete-furnishing claim.",
+    "limit": "This is acceptance of two final development outputs after bounded retries, not evidence of first-attempt reliability, broad semantic accuracy, physical iPhone behavior or new training."
+  },
+  "historyAndDiversity": {
+    "historicalReceipt": "individual-model-v31-native.json",
+    "scope": "Pipelines007 through011",
+    "uniqueInputCases": 6,
+    "totalGenerationRequests": 17,
+    "totalRawModelCalls": 30,
+    "heldOutEvaluation": false,
+    "freshSelectionSeed": 3105,
+    "threeFreshInputsWerePreviouslyUnprobedAtPipeline008": true,
+    "laterRetestsReusedThoseInputs": true,
+    "sameApartmentHistoricalComparison": {
+      "run": "pipeline008",
+      "normalizedBodySequenceRatio": 0.9543,
+      "characterTrigramJaccard": 0.9274,
+      "identicalTags": true,
+      "scope": "Base draft and first rewrite of the same apartment; the detailed historical receipt also records the other two pair comparisons.",
+      "conclusion": "Distinct output strings did not establish strong editorial diversity; this limitation remains and was not remeasured by pipeline011."
+    },
+    "retainedFailures": "Pipeline010's formally accepted completeness claim remains an independently rejected output. Earlier blocked attempts and failures in pipelines007–009 are not erased by the final follow-up.",
+    "trainingBoundary": "These probes used an installed instruct model with no adapter hash in the raw calls; selecting or using it does not constitute new weight training."
+  },
+  "auditScope": [
+    "Known payment amounts and roles, prepayment and minimum term",
+    "Numeric property facts and the supplied apartment layout",
+    "Positive item coverage without invented counts or complete-furnishing promises",
+    "Photo/source provenance without universal-photo or unsupported room-placement claims",
+    "Known routes and explicit source restrictions, including smoking, occupancy range and separately payable internet",
+    "Unsupported free services, language leakage and damaged optional source property handling"
+  ],
+  "exclusions": [
+    "No representative recognition benchmark, new image inference or photo calibration was performed.",
+    "No global extraction of every date, negotiable condition, deposit installment arrangement or free-form source nuance is claimed.",
+    "No new model training, automatic weight acceptance, production deployment, whole-machine resource certification or native Chinese proofreading is established by this receipt."
+  ]
+}

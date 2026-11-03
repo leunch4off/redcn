@@ -185,5 +185,5 @@ def gallery_sweep_script(config):
           await frame();
         }
       }finally{if(target){target.scrollLeft=before;restored=true;}}
-      return {images:[...new Set(images)].slice(0,180),galleryPhotos:photos.slice(0,1200),galleryStates:states.slice(0,65),moves,restored,bounded:exhausted,domReadMs:readsMs,elapsedMs:performance.now()-began};
+      return {images:[...new Set(images)].slice(0,200),galleryPhotos:photos.slice(0,1200),galleryStates:states.slice(0,65),moves,restored,bounded:exhausted,domReadMs:readsMs,elapsedMs:performance.now()-began};
     }'''

@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 const caArchiveStatuses = {active:'В работе',rented:'Сдана',archived:'В архиве'};
 const caAttachmentCategories = {contract:'Договор',floorplan:'Планировка',lidar:'LiDAR / 3D',other:'Другой файл'};
 const caAttachmentExtensions = new Set(['pdf','jpg','jpeg','png','webp','txt','docx','usdz','obj','glb','gltf','ply','stl','zip','dxf','ifc']);
@@ -7,7 +8,7 @@ export function archiveValidateAttachmentFile(file) {
   if (!file || typeof file.name !== 'string' || !file.name.trim()) throw new Error('Выберите файл.');
   if (!Number.isSafeInteger(file.size) || file.size < 1) throw new Error('Файл пустой или его размер неизвестен.');
   if (file.size > caMaxAttachmentBytes) throw new Error('Один файл может занимать не больше 40 МБ.');
-  const extension = file.name.split('.').at(-1).toLowerCase();
+  const extension = file.name.split('.').slice(-1)[0].toLowerCase();
   if (!caAttachmentExtensions.has(extension)) throw new Error('Поддерживаются PDF, фотографии, DOCX, TXT, ZIP и файлы 3D-планировок.');
   return file;
 }
@@ -199,7 +200,7 @@ export function setupCardArchive({mount,getCardId,ensureCard,api,downloadAttachm
     if (!isCurrent(id,epoch)) return;
     loaded=true;
     if (!preserveDirty || !dirty) {
-      statusSelect.value=Object.hasOwn(caArchiveStatuses,data.status)?data.status:'active';
+      statusSelect.value=hasOwnKey(caArchiveStatuses,data.status)?data.status:'active';
       notes.value=typeof data.notes==='string'?data.notes:'';
       setDirty(false);
     }

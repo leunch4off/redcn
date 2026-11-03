@@ -1,0 +1,531 @@
+{
+  "schema": "redcn-individual-model-semantic-audit-v1",
+  "date": "2026-11-03",
+  "evidenceKind": "real-native-mlx-development-and-seeded-fresh-probes",
+  "auditKind": "independent-assistant-review-of-private-input-output-pairs",
+  "humanEvaluation": false,
+  "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+  "inferenceExecutedByThisAudit": false,
+  "trainingClaim": false,
+  "productionSelectionIsNotEstablishedByThisReceipt": true,
+  "privacy": {
+    "containsListingIds": false,
+    "containsAddresses": false,
+    "containsImages": false,
+    "containsFullModelOutputs": false,
+    "privateArtifactsRetainedOnAuthorizedMac": true
+  },
+  "interpretation": {
+    "formalReview": "The application accepted a draft for review. It does not mean that an independent semantic audit, a human, or a native Chinese editor approved it.",
+    "currentSource": "Historical outputs below retain the source version and shortcomings observed at the time. Later code fixes do not retroactively turn those outputs into successful generations.",
+    "cohort": "Pipeline007 uses three development inputs. Pipeline008 first evaluates three seeded previously unprobed inputs, then rewrites the same first apartment twice. Pipeline009 reuses those three fresh inputs after development changes.",
+    "heldOutEvaluation": false,
+    "seed": 3105,
+    "uniqueInputCases": 6,
+    "generationRequests": 11,
+    "rawInferenceCalls": 20,
+    "limitations": [
+      "The three fresh cases ceased to be unseen after pipeline008.",
+      "No representative held-out accuracy estimate is justified by this sample.",
+      "No weight update or new adapter training is established by these runs.",
+      "Photo evidence already present in the inputs includes assistant-reviewed observations; this audit is not a new photo recognition benchmark."
+    ]
+  },
+  "privateInputArtifactHashes": {
+    "development": "2181f3e9e820d751351e6bb86cfd1cccf9f85bd4e7a5f1f8c0a9f242c2efe3bf",
+    "seededFresh": "64275af74156f0bf2fd2b10ef9819194249467ffd762be6763dc2aaa74636ced"
+  },
+  "runs": [
+    {
+      "name": "pipeline007-development",
+      "privateResultSha256": "ac79b7bc147476a0e7a1e7a9c8d71d831bfd26e7e1ce23775dda40a5593aef66",
+      "sourceHashesRecorded": false,
+      "recordedSourceHashes": null,
+      "sourceHashCaveat": "The saved result contains no sourceHashes. Current file hashes must not be substituted for the historical run.",
+      "formal": {
+        "requests": 3,
+        "review": 3,
+        "blocked": 0,
+        "rawInferenceCalls": 5,
+        "autoApply": false,
+        "fallback": false
+      },
+      "runtime": {
+        "peakMemoryBytesRange": [
+          2771764000,
+          2981202236
+        ],
+        "memoryLimitBytes": 3200000000,
+        "allRawStopReasons": "stop",
+        "allRawAdapterSha256": null
+      },
+      "cases": [
+        {
+          "ordinal": 0,
+          "kind": "minimal-development-input",
+          "formalStatus": "review",
+          "attempts": 1,
+          "elapsedSeconds": 10.325,
+          "generatedTokens": 119,
+          "tokensPerSecond": 29.113098,
+          "inventoryCount": 3,
+          "photoInventoryCount": 0,
+          "independentVerdict": "no-additional-issue-identified-within-reviewed-brief",
+          "checks": {
+            "paymentRoles": "Rent and deposit remained distinct; no unprovided prepayment or term was added.",
+            "limits": "No extra source restrictions were available in this minimal input.",
+            "inventory": "All three positive items retained.",
+            "provenanceAndRooms": "No photo-visible or room-location claim added.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "No Cyrillic leakage identified.",
+            "transport": "Both typed walking routes retained."
+          }
+        },
+        {
+          "ordinal": 1,
+          "kind": "development-studio",
+          "formalStatus": "review",
+          "attempts": 2,
+          "elapsedSeconds": 34.822,
+          "generatedTokens": 282,
+          "tokensPerSecond": 27.637218,
+          "inventoryCount": 25,
+          "photoInventoryCount": 12,
+          "independentVerdict": "requires-source-condition-review",
+          "checks": {
+            "paymentRoles": "Typed rent, deposit, prepayment and minimum term retained.",
+            "limits": "Separate internet payment in the raw source was not preserved by the metered-utilities wording; other source details such as deposit installments were not typed.",
+            "inventory": "All 25 resolved items retained.",
+            "provenanceAndRooms": "Twelve photo-specific annotations aligned with the resolved photo subset; no additional unsupported room placement identified.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "No Cyrillic leakage identified.",
+            "transport": "Four typed routes retained."
+          },
+          "issues": [
+            {
+              "kind": "upstream-condition-coverage",
+              "severity": "material",
+              "detail": "The raw source explicitly charges meters and internet separately. The draft says only metered water/electricity, omitting the separately payable internet."
+            }
+          ],
+          "caveat": "Not a clean semantic pass merely because the then-current validators accepted it."
+        },
+        {
+          "ordinal": 2,
+          "kind": "development-euro-layout",
+          "formalStatus": "review",
+          "attempts": 2,
+          "elapsedSeconds": 34.576,
+          "generatedTokens": 324,
+          "tokensPerSecond": 25.781781,
+          "inventoryCount": 25,
+          "photoInventoryCount": 19,
+          "independentVerdict": "requires-correction",
+          "checks": {
+            "paymentRoles": "Typed rent, deposit, prepayment and minimum term retained.",
+            "limits": "No-pets and no-registration retained; explicit source smoking ban and admission range were missing from the earlier parsed brief and output.",
+            "inventory": "All 25 resolved items retained.",
+            "provenanceAndRooms": "Nineteen photo-specific annotations aligned with the resolved photo subset.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "No Cyrillic leakage identified, but title described an inventory document.",
+            "transport": "Three typed routes retained."
+          },
+          "issues": [
+            {
+              "kind": "meta-title",
+              "detail": "Title used 全屋物品清单; subsequently rejected by a stricter title guard."
+            },
+            {
+              "kind": "upstream-restriction-coverage",
+              "detail": "Explicit apartment smoking prohibition and admission for 1–2 people were not parsed into the old brief."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "pipeline008-seeded-fresh-and-rewrites",
+      "privateResultSha256": "972e0a1486e9e6ad7db5cf1caacbca84ada7af3907a932a9f768e045886bee91",
+      "sourceHashesRecorded": true,
+      "recordedSourceHashes": {
+        "cli/individual_copy.py": "f3ee542b17a721c0743ed59564a533be772788c136bb20b7040c1a2600b2e468",
+        "cli/local_text_model.py": "bc60d02b5697f7e418fe31dcfb5420aca6e6273e1cb61fcf9d56ffa2134cca95",
+        "cli/text_model_contract.py": "b6f002604e38e204c8c49454d9cf2bc687de4dd3320e193d22cf607777ea72a4",
+        "cli/language.mjs": "124af223feba73e1f7168b542e6525be3156133595ef389c6599a9c115b4bea2",
+        "web/engine.mjs": "c57e5e71fda89bedb52445a5769fc0e073b87f4ee6463747fc59e5cda2a19dfb"
+      },
+      "formal": {
+        "requests": 5,
+        "uniqueInputs": 3,
+        "rewritesOfFirstInput": 2,
+        "review": 4,
+        "blocked": 1,
+        "rawInferenceCalls": 10,
+        "autoApply": false,
+        "fallback": false,
+        "productionSelected": false,
+        "trained": false
+      },
+      "runtime": {
+        "elapsedSeconds": 179.433776,
+        "peakMemoryBytesRange": [
+          2920827760,
+          3083341664
+        ],
+        "memoryLimitBytes": 3200000000,
+        "allRawStopReasons": "stop",
+        "allRawAdapterSha256": null
+      },
+      "cases": [
+        {
+          "ordinal": 0,
+          "inputOrdinal": 0,
+          "repeat": false,
+          "formalStatus": "review",
+          "attempts": 1,
+          "elapsedSeconds": 17.551,
+          "generatedTokens": 303,
+          "tokensPerSecond": 29.290412,
+          "inventoryCount": 32,
+          "photoInventoryCount": 14,
+          "independentVerdict": "requires-correction",
+          "checks": {
+            "paymentRoles": "Typed rent, deposit, prepayment and minimum term retained.",
+            "limits": "Smoking, pets and registration restrictions retained; utility inclusion contradicted the explicit source bill.",
+            "inventory": "All 32 resolved items retained.",
+            "provenanceAndRooms": "Apartment-level inventory retained; no extra unsupported room placement identified in this base output.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "Russian renovation enum leaked into Chinese prose.",
+            "transport": "Three typed routes retained."
+          },
+          "issues": [
+            {
+              "kind": "source-field-contradiction",
+              "detail": "Source says communal bills plus internet are payable; structured field says metered utilities with included building fees. Title and body published inclusion without resolving the contradiction."
+            },
+            {
+              "kind": "language-leakage",
+              "detail": "Untranslated Дизайнерский remained in the Chinese body."
+            }
+          ]
+        },
+        {
+          "ordinal": 1,
+          "inputOrdinal": 1,
+          "repeat": false,
+          "formalStatus": "blocked",
+          "attempts": 3,
+          "elapsedSeconds": 50.804,
+          "generatedTokens": 283,
+          "tokensPerSecond": 27.479885,
+          "inventoryCount": 23,
+          "photoInventoryCount": 10,
+          "independentVerdict": "correctly-blocked",
+          "issues": [
+            {
+              "kind": "unsupported-transport-convenience",
+              "detail": "直达 was not supported by the typed route or source. The rejected result exposes no final publication body."
+            }
+          ],
+          "caveat": "A correct rejection is evidence of the guard, not a usable generated advertisement."
+        },
+        {
+          "ordinal": 2,
+          "inputOrdinal": 2,
+          "repeat": false,
+          "formalStatus": "review",
+          "attempts": 2,
+          "elapsedSeconds": 29.756,
+          "generatedTokens": 195,
+          "tokensPerSecond": 28.958317,
+          "inventoryCount": 27,
+          "photoInventoryCount": 19,
+          "independentVerdict": "incomplete-supported-context",
+          "checks": {
+            "paymentRoles": "Typed rent, deposit, prepayment and minimum term retained.",
+            "limits": "Children permission retained.",
+            "inventory": "All 27 resolved items retained.",
+            "provenanceAndRooms": "No unsupported room-specific or all-photos claim identified.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "No Cyrillic leakage identified.",
+            "transport": "Entire three-route section omitted despite routes in the input."
+          },
+          "issues": [
+            {
+              "kind": "transport-coverage",
+              "detail": "Station tags do not replace the omitted route/time information."
+            }
+          ],
+          "caveat": "Omission of internal commission is intentional publication policy and is not counted as an error."
+        },
+        {
+          "ordinal": 3,
+          "inputOrdinal": 0,
+          "repeat": true,
+          "formalStatus": "review",
+          "attempts": 2,
+          "elapsedSeconds": 40.572,
+          "generatedTokens": 330,
+          "tokensPerSecond": 27.464799,
+          "inventoryCount": 32,
+          "photoInventoryCount": 14,
+          "independentVerdict": "requires-correction",
+          "issues": [
+            {
+              "kind": "source-field-contradiction",
+              "detail": "Same unresolved utility inclusion conflict as ordinal 0."
+            },
+            {
+              "kind": "language-leakage",
+              "detail": "Same untranslated Russian renovation enum."
+            },
+            {
+              "kind": "unsupported-completeness",
+              "detail": "Title claims 全配家具家电 without evidence of complete furnishing."
+            },
+            {
+              "kind": "unsupported-room-placement",
+              "detail": "Bathroom clause assigns a basin, shelving and drying rack to the bathroom without room-associated evidence. Apartment-level presence is insufficient."
+            }
+          ],
+          "retained": "Typed payments, restrictions, inventory and routes were retained despite these semantic errors."
+        },
+        {
+          "ordinal": 4,
+          "inputOrdinal": 0,
+          "repeat": true,
+          "formalStatus": "review",
+          "attempts": 2,
+          "elapsedSeconds": 40.746,
+          "generatedTokens": 322,
+          "tokensPerSecond": 27.47892,
+          "inventoryCount": 32,
+          "photoInventoryCount": 14,
+          "independentVerdict": "requires-correction",
+          "issues": [
+            {
+              "kind": "source-field-contradiction",
+              "detail": "Same unresolved utility inclusion conflict as ordinal 0."
+            },
+            {
+              "kind": "language-leakage",
+              "detail": "Same untranslated Russian renovation enum."
+            },
+            {
+              "kind": "unsupported-completeness",
+              "detail": "Title claims 全配家具家电 without evidence of complete furnishing."
+            },
+            {
+              "kind": "unsupported-room-placement",
+              "detail": "Bathroom sentence adds room placement unsupported by apartment-level item evidence."
+            }
+          ],
+          "retained": "Typed payments, restrictions, inventory and routes were retained despite these semantic errors."
+        }
+      ],
+      "sameApartmentDiversity": {
+        "method": "Remove non-alphanumeric characters from Chinese bodies; Python difflib.SequenceMatcher with autojunk=False and character-trigram set Jaccard. This describes similarity, not a semantic quality score.",
+        "pairs": [
+          {
+            "ordinals": [
+              0,
+              3
+            ],
+            "bodySequenceRatio": 0.9543,
+            "bodyTrigramJaccard": 0.9274,
+            "identicalTags": true,
+            "identicalTitle": false
+          },
+          {
+            "ordinals": [
+              0,
+              4
+            ],
+            "bodySequenceRatio": 0.754,
+            "bodyTrigramJaccard": 0.761,
+            "identicalTags": true,
+            "identicalTitle": false
+          },
+          {
+            "ordinals": [
+              3,
+              4
+            ],
+            "bodySequenceRatio": 0.7742,
+            "bodyTrigramJaccard": 0.7544,
+            "identicalTags": true,
+            "identicalTitle": false
+          }
+        ],
+        "independentReading": "One rewrite largely preserves the same opening and section order. Another moves the payment section and compresses the property introduction. Titles differ mostly in token order and an unsupported completeness claim. Tags are identical.",
+        "conclusion": "Some actual prose variation exists, but this sample does not establish robust individual editorial diversity. Distinct strings or different apartments alone are not sufficient evidence."
+      }
+    },
+    {
+      "name": "pipeline009-retest-of-seeded-fresh",
+      "privateResultSha256": "939a0e5da913af3159daf950ce97cc5e1af36c3b3827444c8e3ca1c320835861",
+      "sourceHashesRecorded": true,
+      "recordedSourceHashes": {
+        "cli/individual_copy.py": "e9da0d5cdb41cb5eb9a146df044c22243972c97421b2d5b19ac5ea261c0eb448",
+        "cli/local_text_model.py": "bc60d02b5697f7e418fe31dcfb5420aca6e6273e1cb61fcf9d56ffa2134cca95",
+        "cli/text_model_contract.py": "b6f002604e38e204c8c49454d9cf2bc687de4dd3320e193d22cf607777ea72a4",
+        "cli/language.mjs": "124af223feba73e1f7168b542e6525be3156133595ef389c6599a9c115b4bea2",
+        "web/engine.mjs": "c57e5e71fda89bedb52445a5769fc0e073b87f4ee6463747fc59e5cda2a19dfb"
+      },
+      "formal": {
+        "requests": 3,
+        "review": 2,
+        "blocked": 1,
+        "rawInferenceCalls": 5,
+        "autoApply": false,
+        "fallback": false,
+        "productionSelected": false,
+        "trained": false
+      },
+      "runtime": {
+        "elapsedSeconds": 83.288836,
+        "peakMemoryBytesRange": [
+          2935916204,
+          2988623400
+        ],
+        "memoryLimitBytes": 3200000000,
+        "allRawStopReasons": "stop",
+        "allRawAdapterSha256": null
+      },
+      "cases": [
+        {
+          "ordinal": 0,
+          "inputOrdinal": 0,
+          "formalStatus": "review",
+          "attempts": 1,
+          "elapsedSeconds": 17.473,
+          "generatedTokens": 294,
+          "tokensPerSecond": 28.687372,
+          "inventoryCount": 32,
+          "photoInventoryCount": 14,
+          "independentVerdict": "requires-source-conflict-resolution",
+          "checks": {
+            "paymentRoles": "Typed amounts and roles retained.",
+            "limits": "Smoking, pets and registration restrictions retained, but the same unresolved utility inclusion conflict remains.",
+            "inventory": "All 32 resolved items retained.",
+            "provenanceAndRooms": "No unsupported room assignment or explicit photo-origin claim identified.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "Renovation translated; Cyrillic leakage no longer observed.",
+            "transport": "Three typed routes retained."
+          },
+          "issues": [
+            {
+              "kind": "source-field-contradiction",
+              "detail": "This historical output still claims included building fees; the later source-fee conflict guard must block this input until the card is clarified."
+            }
+          ]
+        },
+        {
+          "ordinal": 1,
+          "inputOrdinal": 1,
+          "formalStatus": "blocked",
+          "attempts": 3,
+          "elapsedSeconds": 49.926,
+          "generatedTokens": 277,
+          "tokensPerSecond": 28.6582,
+          "inventoryCount": 23,
+          "photoInventoryCount": 10,
+          "independentVerdict": "correctly-withheld-but-no-usable-output",
+          "issues": [
+            {
+              "kind": "corrupted-optional-source-property",
+              "detail": "Damaged UTF-8 in the renovation enum prevented a Chinese-only property description. Later code omits the damaged optional property with a warning; that change was not exercised by this run."
+            }
+          ]
+        },
+        {
+          "ordinal": 2,
+          "inputOrdinal": 2,
+          "formalStatus": "review",
+          "attempts": 1,
+          "elapsedSeconds": 15.887,
+          "generatedTokens": 250,
+          "tokensPerSecond": 28.669231,
+          "inventoryCount": 27,
+          "photoInventoryCount": 19,
+          "independentVerdict": "no-additional-issue-identified-within-reviewed-brief",
+          "checks": {
+            "paymentRoles": "Typed rent, deposit, prepayment and minimum term retained.",
+            "limits": "Children permission retained.",
+            "inventory": "All 27 resolved items retained.",
+            "provenanceAndRooms": "No unsupported room assignment, explicit photo-origin or completeness claim identified.",
+            "freeClaims": "No unsupported free service identified.",
+            "language": "No Cyrillic leakage identified.",
+            "transport": "All three typed walking routes restored."
+          },
+          "caveat": "One accepted retest is not a general semantic accuracy guarantee; internal commission remains intentionally excluded."
+        }
+      ]
+    }
+  ],
+  "sourceConflictInvestigation": {
+    "structuredOrigin": "The conflicting utilities=meters value was witnessed as JSON utilitiesTerms and already present in the import revision.",
+    "manualOriginNotProven": "A later general confirmation revision retained the value without a utilities change; it does not establish an explicit manual fee decision.",
+    "originalAudit": "No stored utility conflict or per-field condition confirmation was present in these input snapshots.",
+    "preservationDecision": "Keep stored card fields unchanged. Reject a new individual brief when explicit source utilities and an existing known field disagree, with an actionable message to clarify the card.",
+    "rangeDecision": "Occupancy admission ranges use a separate sourceRestrictions contract. They never overwrite the occupants budget divisor.",
+    "roomEvidenceLimit": "Saved photo evidence identifies apartment-level categories and review provenance, but contains no room or brand association. It cannot establish room-specific placement."
+  },
+  "postAuditSourceRegressionVerification": {
+    "nativeModelRerunIncluded": false,
+    "files": {
+      "web/fact-evidence.mjs": "a01233443b257430994571a514326e01efdfc2205b6aef60f171c04143936964",
+      "cli/language.mjs": "8ae1b1cc55805f2ae35c2d0cc6a9abd79aafa9bc821c3c670bfab11039a3c326",
+      "tests/source-conditions-v31.test.mjs": "6d284f7bbc510421fca162731c1b9fa943049d9b32ae1aae80d0679d96b50741",
+      "tests/test_language_service.py": "223c9632663ab8c454d8c7c0f6f9b1a5b68b8eaaa92006a6571e0aa208d87502"
+    },
+    "checks": [
+      {
+        "command": "node --test tests/source-conditions-v31.test.mjs tests/source.test.mjs tests/avito-source.test.mjs",
+        "scope": "Before the final internet-extra extension; all other source changes included",
+        "passed": 24,
+        "failed": 0
+      },
+      {
+        "command": "python3 -m unittest discover -s tests -p test_language_service.py -q",
+        "scope": "Before the final internet-extra extension; all other source changes included",
+        "passed": 13,
+        "failed": 0
+      },
+      {
+        "command": "python3 -m unittest discover -s tests -p test_individual_copy.py -q",
+        "scope": "Before the final internet-extra extension; all other source changes included",
+        "passed": 26,
+        "failed": 0
+      },
+      {
+        "command": "node --test tests/source-conditions-v31.test.mjs",
+        "scope": "Final source hash, including two positive and two negative internet-extra cases",
+        "passed": 5,
+        "failed": 0
+      }
+    ],
+    "behavior": [
+      "Explicit communal bills by receipt are recognized only in a narrowly scoped payment clause, with inclusion and negation guards.",
+      "Known source-versus-field utility disagreement blocks the individual brief without changing stored fields.",
+      "Explicit apartment smoking ban is recognized despite intervening location and strictness words.",
+      "Explicit admission range reaches the typed brief separately from budget division; integration validation requires it.",
+      "The explicit payment phrase adding meters and internet produces a separate internet-extra restriction with canonical network-fee text; it changes no utility or internet field. Inclusion and missing-internet forms are excluded."
+    ],
+    "internetExtraGap": {
+      "historicalFinding": "Pipeline007 studio omitted the separately payable internet charge.",
+      "codeStatus": "Fixed by the narrowly scoped internet-extra source restriction; focused parser regressions pass.",
+      "nativeStatus": "Awaiting separate pipeline010 native verification; no historical result regraded."
+    },
+    "remainingLimits": [
+      "No general extraction of all financial ranges, deposit installments, availability dates or source prose constraints is claimed.",
+      "No post-fix native model quality pass is inferred from unit or bridge tests."
+    ]
+  },
+  "relatedReceipts": [
+    "individual-real-ui-v31-native.json",
+    "individual-real-ui-v31-native-followup.json",
+    "../PHOTO-VLM-PROBE-v31.json"
+  ],
+  "overallConclusion": "Native 4B inference can produce complete item lists and typed rental facts, and the guarded workflow correctly withholds some bad drafts. The independent audit found real language, source-condition, room-placement, completeness and coverage failures that formal acceptance did not detect at earlier snapshots. Preserve those failures in the evidence, require explicit source conflict resolution, and evaluate later native reruns separately."
+}

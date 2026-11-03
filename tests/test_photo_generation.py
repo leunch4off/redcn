@@ -133,6 +133,21 @@ class PhotoGenerationTests(unittest.TestCase):
         self.assertIsNotNone(revision); make.assert_not_called()
         self.assertEqual(set(revision['fields']['features']), {'fridge', 'bedAny', 'desk'})
 
+    def test_reviewed_object_on_retained_source_photo_survives_small_editor_photo_list(self):
+        from photo_teacher_review import make_review, review_evidence
+        review=make_review(DIGEST,['fridge'],dataset_id='b'*64,reviewed_at='2026-11-03T00:00:00Z')
+        evidence=review_evidence(review,OTHER_PHOTO)
+        result=card(features=['fridge'],photoEvidence=evidence)
+        result['listing']['images'].append(OTHER_PHOTO)
+        result['media'].append({'id':DIGEST,'sourceUrl':OTHER_PHOTO,'kind':'original'})
+        revision,_,_=self.revision(result,inventory(features=()))
+        self.assertEqual(revision['fields']['photoEvidence'],evidence)
+        self.assertIn('fridge',revision['fields']['features'])
+        result['fields']['photoEdits']={'excluded':[OTHER_PHOTO]}
+        revision,_,_=self.revision(result,inventory(features=()))
+        self.assertEqual(revision['fields']['photoEvidence'],[])
+        self.assertNotIn('fridge',revision['fields']['features'])
+
     def test_human_rejections_and_confirmed_photo_controls_survive_same_original_only(self):
         controls = {'analysis': {'originalId': DIGEST},
             'confirmed': {'bedAny': {'count': 1}}, 'rejected': {'fridge': True}}

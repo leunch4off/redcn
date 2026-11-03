@@ -72,6 +72,31 @@ class PhotoBatchReliabilityTests(unittest.TestCase):
         self.assertEqual(urls[:2],[self.urls[18],self.urls[0]])
         self.assertEqual(len(urls),17);self.assertNotIn(self.urls[3],urls);self.assertNotIn(self.urls[4],urls)
 
+    def test_thirty_six_photos_download_and_retry_reports_last_failure(self):
+        urls=['https://images.cdn-cian.ru/images/large-album-'+str(index)+'.png' for index in range(36)]
+        result={'fields':{'photos':[urls[0]]},'listing':{'images':urls},'titles':['真实房源'],'body':'正文','tags':'#莫斯科租房'}
+        fetched=[];first=True
+        def fetch(url,**kwargs):
+            fetched.append(url)
+            if first and url==urls[-1]:raise RuntimeError('fixture last original failed')
+            return picture(urls.index(url)),'image/png'
+        with patch.object(redcn,'fetch_bytes',side_effect=fetch),patch.object(photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
+            phone_relay.cache_photos(self.directory,result)
+            self.assertEqual(len(result['media']),36)
+            self.assertEqual(result['mediaFailures'][0]['index'],36)
+            self.assertEqual(result['photoProcessing']['downloaded'],35)
+            first=False;fetched.clear()
+            phone_relay.cache_photos(self.directory,result)
+        self.assertEqual(fetched,[urls[-1]])
+        self.assertEqual(result['photoProcessing']['downloaded'],36)
+        self.assertEqual(result['mediaFailures'],[])
+        self.assertEqual(len(phone_relay.card_media(self.directory,result)),36)
+
+    def test_fallback_html_parser_retains_thirty_six_observed_images(self):
+        urls=['https://images.cdn-cian.ru/images/fallback-'+str(index)+'.jpg' for index in range(36)]
+        markup='<script type="application/ld+json">'+json.dumps({'description':'Объявление квартиры с отдельным полным альбомом фотографий.','image':urls})+'</script>'
+        self.assertEqual(redcn.parse_html(markup,'https://www.cian.ru/rent/flat/123/')['images'],urls)
+
     def test_cli_crop_failure_keeps_original_path_and_continues_nineteen_entries(self):
         def fetch(url,**kwargs):
             if url==self.urls[6]:raise RuntimeError('fixture download failed')

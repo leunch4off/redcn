@@ -1,0 +1,283 @@
+{
+  "version": 1,
+  "release": "v31",
+  "date": "2026-11-03",
+  "status": "diagnostic-candidates-rejected",
+  "scope": "Three same real private cards: 3/25/25 confirmed item categories. Different prompts/sampling are development probes, not an independent held-out benchmark.",
+  "experiments": [
+    {
+      "label": "selected",
+      "cases": 3,
+      "accepted": 0,
+      "results": [
+        {
+          "case": 0,
+          "accepted": false,
+          "issues": [
+            "JSONDecodeError: Invalid \\escape: line 1 column 77 (char 76)"
+          ],
+          "elapsedSeconds": 4.5182110000168905,
+          "generatedTokens": 139,
+          "tokensPerSecond": 154.985278
+        },
+        {
+          "case": 1,
+          "accepted": false,
+          "issues": [
+            "JSONDecodeError: Invalid \\escape: line 1 column 215 (char 214)"
+          ],
+          "elapsedSeconds": 4.9625944170111325,
+          "generatedTokens": 438,
+          "tokensPerSecond": 150.832287
+        },
+        {
+          "case": 2,
+          "accepted": false,
+          "issues": [
+            "JSONDecodeError: Extra data: line 3 column 1 (char 42)"
+          ],
+          "elapsedSeconds": 9.212231459008763,
+          "generatedTokens": 1024,
+          "tokensPerSecond": 144.797879
+        }
+      ]
+    },
+    {
+      "label": "base15",
+      "cases": 3,
+      "accepted": 0,
+      "results": [
+        {
+          "case": 0,
+          "accepted": false,
+          "issues": [
+            "Не подтверждена формулировка: 空调",
+            "Не подтверждена формулировка: 电视",
+            "Добавлен неподтверждённый предмет или условие: aircon",
+            "Добавлен неподтверждённый предмет или условие: tv",
+            "Не подтверждены предметы: 电视, 空调",
+            "Не сохранена сумма залога с правильным назначением",
+            "Не подтверждено рекламное утверждение: 设备齐全"
+          ],
+          "elapsedSeconds": 4.701055459008785,
+          "generatedTokens": 93,
+          "tokensPerSecond": 77.514025
+        },
+        {
+          "case": 1,
+          "accepted": false,
+          "issues": [
+            "Модель не вернула полный китайский текст",
+            "Заголовок должен быть на китайском; исходное имя станции или ЖК можно сохранить",
+            "В ИИ-черновике есть числа, отсутствующие в проверенном тексте",
+            "Проверьте соответствие суммы, площади и времени их единицам",
+            "В черновике не сохранена исходная цена с единицей оплаты",
+            "В черновике не сохранена исходная площадь",
+            "В черновике пропущена локация Москва",
+            "Модель не собрала полное описание квартиры",
+            "Пропущены подтверждённые предметы: 床, 床垫, 衣柜, 镜子, 窗帘, 沙发, 电视柜, 电视, 空调, 网络, 冰箱, 炉灶, 抽油烟机, 水槽, 微波炉, 电热水壶, 净水器, 餐桌, 餐椅, 厨房橱柜, 洗衣机, 淋浴设施, 洗手盆, 鞋柜, 吸尘器",
+            "Цена должна быть указана именно как месячная аренда с валютой",
+            "Не сохранена сумма залога с правильным назначением",
+            "Не сохранены этаж и этажность: 10/10层",
+            "Не сохранена открытая планировка студии",
+            "Изменено назначение суммы, площади или времени",
+            "Не сохранено: коммунальные включены, счётчики оплачиваются отдельно",
+            "Пропущен известный срок: 预付",
+            "Пропущен известный срок: 最低租期"
+          ],
+          "elapsedSeconds": 6.644788333011093,
+          "generatedTokens": 189,
+          "tokensPerSecond": 75.107465
+        },
+        {
+          "case": 2,
+          "accepted": false,
+          "issues": [
+            "Не сохранена сумма залога с правильным назначением",
+            "Не сохранено: коммунальные включены, счётчики оплачиваются отдельно",
+            "Пропущен известный запрет: 宠物",
+            "Пропущен известный срок: 预付",
+            "Пропущен известный срок: 最低租期"
+          ],
+          "elapsedSeconds": 6.38396800000919,
+          "generatedTokens": 161,
+          "tokensPerSecond": 74.799127
+        }
+      ]
+    },
+    {
+      "label": "individual-qwen35-probe001",
+      "cases": 3,
+      "accepted": 0,
+      "results": [
+        {
+          "case": 0,
+          "accepted": false,
+          "issues": [
+            "ValueError: ИИ-ответ повторяет ключ JSON"
+          ],
+          "elapsedSeconds": 7.277247749996604,
+          "generatedTokens": 226,
+          "tokensPerSecond": 64.11537590238991
+        },
+        {
+          "case": 1,
+          "accepted": false,
+          "issues": [
+            "JSONDecodeError: Unterminated string starting at: line 1 column 491 (char 490)"
+          ],
+          "elapsedSeconds": 6.842616834008368,
+          "generatedTokens": 331,
+          "tokensPerSecond": 62.21472729039427
+        },
+        {
+          "case": 2,
+          "accepted": false,
+          "issues": [
+            "В ИИ-черновике есть числа, отсутствующие в проверенном тексте",
+            "Проверьте соответствие суммы, площади и времени их единицам",
+            "Не подтверждена формулировка: 公交",
+            "Добавлен неподтверждённый предмет или условие: metro",
+            "Добавлен неподтверждённый предмет или условие: bus",
+            "В черновик попал контакт или комиссия",
+            "В черновике не сохранена исходная площадь",
+            "В черновике пропущена локация Москва",
+            "Не сохранены этаж и этажность: 14/15层",
+            "Не сохранён подтверждённый тип планировки: 一室一厅",
+            "Изменено назначение суммы, площади или времени",
+            "Не сохранено: коммунальные включены, счётчики оплачиваются отдельно"
+          ],
+          "elapsedSeconds": 8.170322374993702,
+          "generatedTokens": 401,
+          "tokensPerSecond": 63.84253066652935
+        }
+      ]
+    },
+    {
+      "label": "individual-qwen35-probe002",
+      "cases": 3,
+      "accepted": 0,
+      "results": [
+        {
+          "case": 0,
+          "accepted": false,
+          "issues": [
+            "Сократите заголовок до 45, а описание до 800 китайских знаков"
+          ],
+          "elapsedSeconds": 17.93389895799919,
+          "generatedTokens": 1024,
+          "tokensPerSecond": 62.82658894104131
+        },
+        {
+          "case": 1,
+          "accepted": false,
+          "issues": [
+            "В ИИ-черновике есть числа, отсутствующие в проверенном тексте",
+            "Пропущен известный срок: 预付"
+          ],
+          "elapsedSeconds": 17.840446542017162,
+          "generatedTokens": 1024,
+          "tokensPerSecond": 62.48153469287655
+        },
+        {
+          "case": 2,
+          "accepted": false,
+          "issues": [
+            "В ИИ-черновике есть числа, отсутствующие в проверенном тексте",
+            "Проверьте соответствие суммы, площади и времени их единицам",
+            "Добавлен неподтверждённый предмет или условие: children",
+            "Добавлен неподтверждённый предмет или условие: metro",
+            "В черновик попал контакт или комиссия",
+            "Изменено назначение суммы, площади или времени",
+            "Не подтверждено рекламное утверждение: 森林"
+          ],
+          "elapsedSeconds": 10.932174166984623,
+          "generatedTokens": 569,
+          "tokensPerSecond": 61.860647600384894
+        }
+      ]
+    },
+    {
+      "label": "individual-qwen35-probe003",
+      "cases": 3,
+      "accepted": 0,
+      "results": [
+        {
+          "case": 0,
+          "accepted": false,
+          "issues": [
+            "Цена должна быть указана именно как месячная аренда с валютой",
+            "Не сохранены этаж и этажность: 11/17层"
+          ],
+          "elapsedSeconds": 3.6557470000116155,
+          "generatedTokens": 122,
+          "tokensPerSecond": 65.104680578161
+        },
+        {
+          "case": 1,
+          "accepted": false,
+          "issues": [
+            "ValueError: Нужны одна строка 标题： и полный текст после 正文："
+          ],
+          "elapsedSeconds": 7.432252792001236,
+          "generatedTokens": 379,
+          "tokensPerSecond": 62.961543205925615
+        },
+        {
+          "case": 2,
+          "accepted": false,
+          "issues": [
+            "ValueError: Нужны одна строка 标题： и полный текст после 正文："
+          ],
+          "elapsedSeconds": 9.937871082976926,
+          "generatedTokens": 518,
+          "tokensPerSecond": 63.08207190908688
+        }
+      ]
+    },
+    {
+      "label": "individual-base15-probe002",
+      "cases": 3,
+      "accepted": 0,
+      "results": [
+        {
+          "case": 0,
+          "accepted": false,
+          "issues": [
+            "Model reached token limit; response is not confirmed complete",
+            "Цена должна быть указана именно как месячная аренда с валютой"
+          ],
+          "elapsedSeconds": 18.624202167004114,
+          "generatedTokens": 1024,
+          "tokensPerSecond": 70.909393
+        },
+        {
+          "case": 1,
+          "accepted": false,
+          "issues": [
+            "Добавлено неподтверждённое условие оплаты: internet",
+            "Пропущены подтверждённые предметы: 窗帘",
+            "Цена должна быть указана именно как месячная аренда с валютой",
+            "Не сохранена сумма залога с правильным назначением"
+          ],
+          "elapsedSeconds": 14.233121583994944,
+          "generatedTokens": 661,
+          "tokensPerSecond": 65.070506
+        },
+        {
+          "case": 2,
+          "accepted": false,
+          "issues": [
+            "ValueError: Нужны одна строка 标题： и полный текст после 正文："
+          ],
+          "elapsedSeconds": 8.281810084008612,
+          "generatedTokens": 277,
+          "tokensPerSecond": 69.450742
+        }
+      ]
+    }
+  ],
+  "selectedNewWeights": false,
+  "newFineTuning": false,
+  "privateInputsAndOutputsPublished": false
+}

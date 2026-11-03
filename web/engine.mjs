@@ -198,7 +198,7 @@ export function extractUniversityReferences(text){
 // Its historical factual blocks keep the same production validation; new
 // advertising introductions belong only to publication copy.
 export const FACTUAL_REFERENCE_VERSION='rental-facts-v1';
-export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVersion=null}={}) {
+export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVersion=null,includeFactualBrief=false}={}) {
   if(referenceVersion!==null&&referenceVersion!==FACTUAL_REFERENCE_VERSION)throw Error('Неизвестная версия фактического контекста');
   const schema=validateListingFields(v);if(!schema.valid)return {titles:[],body:'',tags:'',problems:schema.problems,unknown:[],tagSuggestions:[],semanticWarnings:[]};
   v={...v};
@@ -408,7 +408,20 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{refer
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
   try{assertClientServiceClaims({fields:{...v,serviceBenefits:typeof prefs.benefits==='string'?prefs.benefits:''},titles,body,tags:renderedTags});}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';tagSuggestions=[];}
   if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
-  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo,...(referenceVersion?{referenceVersion}:{})};
+  // This is a separate, opt-in inference contract. Historical factual-reference
+  // output and training corpora must not change when live copy gains new fields.
+  const factualBrief=includeFactualBrief?{
+    version:'individual-rental-v1',layout,metro,
+    sections:Object.fromEntries(Object.entries(sections).filter(([key])=>key!=='contact').map(([key,value])=>[key,value.join('\n').trim()])),
+    inventory:FEATURES.filter(row=>featureSet.has(row[0])).map(row=>({id:row[0],zh:row[1],label:equipmentLabel(row),
+      count:Number(v.featureCounts?.[row[0]])||null,
+      countKind:Number(v.featureCounts?.[row[0]])>0?(v.sourceAudit?.furniture?.find(item=>item.id===row[0])?.countKind==='minimum'?'minimum':'exact'):null,
+      photoVisible:photoFacts.visualFeatures.includes(row[0])})),
+    featureVocabulary:FEATURES.map(row=>({id:row[0],zh:row[1]})),
+    photoConflicts:photoFacts.conflicts.map(row=>row.label),
+    services:serviceChecks.claims.filter(row=>row.confirmed).map(row=>row.id),
+  }:null;
+  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo,...(referenceVersion?{referenceVersion}:{}),...(includeFactualBrief?{factualBrief}:{})};
 }
 
 // Trigger dictionaries describe vocabulary, not evidence. A larger vocabulary
@@ -416,7 +429,7 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{refer
 function confirmedDetailTrigger(text,phrase){
   const source=fold(text),needle=fold(phrase);let from=0,found=false,blocked=false,index;
   while((index=source.indexOf(needle,from))!==-1){
-    const before=source.slice(Math.max(0,index-75),index).split(/[.!?;\n,]/).at(-1);
+    const before=source.slice(Math.max(0,index-75),index).split(/[.!?;\n,]/).slice(-1)[0];
     const after=source.slice(index+needle.length,index+needle.length+75).split(/[.!?;\n,]/)[0];
     const beforeBlock=/(?:^|\s)(?:не|нет|без|отсутствует|не будет|планир[а-я]*)\s*(?:[^\s]+\s+){0,2}$/.test(before);
     const afterBlock=/^\s*(?:(?:только|пока|еще|скоро)\s+)?(?:нет|отсутств|не\s+(?:будет|предусмотр)|будет|будут|планиру|ожидается|запланирован)/.test(after);

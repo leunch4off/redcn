@@ -28,7 +28,7 @@
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
-      <details id="phoneDiagnostics"><summary>Диагностика подключения · v30</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v31</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -44,6 +44,8 @@
     <div class="section-title"><div><div class="eyebrow">ВАША МОБИЛЬНАЯ СТУДИЯ</div><h1>Объявления</h1></div><button id="phoneRefresh" class="icon-button" type="button" aria-label="Обновить карточки">↻</button></div>
     <p id="phoneSync" class="sync-note" role="status">Ждём карточки с Mac</p><div id="phoneInstallTop" class="install-banner"></div>
     <div class="search-wrap"><label class="visually-hidden" for="phoneSearch">Поиск по карточкам</label><input id="phoneSearch" type="search" placeholder="Метро, название, цена…" enterkeyhint="search"></div>
+    <div class="catalog-filters" role="group" aria-label="Фильтр объявлений"><button type="button" data-phone-card-filter="all" aria-pressed="true" class="active">Все</button><button type="button" data-phone-card-filter="edited" aria-pressed="false">Изменённые</button></div>
+    <p class="sync-note">Новые объявления сверху. Редактирование сохраняет место в списке.</p>
     <div id="phoneCards" class="cards-list"></div>
     <div id="phoneEmpty" class="empty-state hidden"><span aria-hidden="true">▧</span><h2>Здесь появятся квартиры</h2><p>Загрузите объявление на Mac или отправьте ссылку с телефона. Компьютер подготовит карточку и фотографии.</p><button class="button primary" type="button" data-phone-view="import">Отправить ссылку</button></div>
     <button id="phoneMore" class="button secondary hidden" type="button">Показать ещё</button>

@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {UNIVERSITY_CATALOG,resolveUniversity,resolveCampus,verifiedCampusPoint,universityCampusAvailability} from './university-catalog.mjs';
 
 // Map links ask the provider for a current route. They are not a local routing
@@ -16,7 +17,7 @@ const universityRouteNumber=value=>{
 const universityRouteClone=value=>JSON.parse(JSON.stringify(value));
 const universityRouteCampusById=new Map(UNIVERSITY_CATALOG.campuses.map(row=>[row.id,row]));
 const universityRouteSchoolById=new Map(UNIVERSITY_CATALOG.universities.map(row=>[row.id,row]));
-function universityRouteMode(value){const aliases={'步行':'walk','乘坐地铁':'metro','地铁':'metro','乘坐公交':'bus','公交':'bus','公共交通':'public','驾车':'car','骑行':'bike'};const mode=aliases[value]||value;return Object.hasOwn(universityRouteModes,mode)?mode:'unknown';}
+function universityRouteMode(value){const aliases={'步行':'walk','乘坐地铁':'metro','地铁':'metro','乘坐公交':'bus','公交':'bus','公共交通':'public','驾车':'car','骑行':'bike'};const mode=aliases[value]||value;return hasOwnKey(universityRouteModes,mode)?mode:'unknown';}
 function universityRouteInteger(value,maximum){const n=universityRouteNumber(value);return n!==null&&Number.isInteger(n)&&n>=0&&n<=maximum?n:'';}
 function universityRouteEvidenceUrl(value){const text=universityRouteText(value,2048);try{const url=new URL(text);return url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&['', '443'].includes(url.port)?text:'';}catch{return '';}}
 function universityRouteDate(value){const text=universityRouteText(value,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(text))return '';const stamp=Date.parse(text+'T00:00:00Z');return Number.isFinite(stamp)&&new Date(stamp).toISOString().slice(0,10)===text?text:'';}

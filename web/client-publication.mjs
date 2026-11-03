@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 import {serviceClaimChecklist} from './fact-ledger.mjs';
 // One client-publication policy. Source facts, drafts and stored cards are private
 // inputs and must never be overwritten by this derived projection.
@@ -110,7 +111,7 @@ function clientCheckServiceContext(card,context){
  const grant=clientServiceGrant(context);
  if(grant?.kind==='server'){
   for(const text of clientServiceTexts(card)){try{assertClientServiceClaims({body:text,fields:{}});}catch(error){if(!(error instanceof ClientPublicationReviewRequired)||!grant.texts.includes(clientServiceCanonical(text)))throw error;}}
-  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(Object.hasOwn(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
+  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(hasOwnKey(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
   return grant;
  }
  const original=grant?.kind==='private'?grant.context:context,merged={...(original?.fields||original||{}),...(card.fields||{})},privateContext={fields:Object.fromEntries(['url','editorIdentity','resultId','id','registrationMonths','registrationPeople','pickup','luggage','arrival','support','serviceBenefits','serviceConfirmations'].filter(key=>merged[key]!==undefined).map(key=>[key,merged[key]]))};

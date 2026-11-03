@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="redcn-build" content="38347a8f49174a824660173b9d7a8e7bb1771885826be1f96c1b342948ba4fde">
+<meta charset="utf-8"><meta name="redcn-build" content="3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#eff2eb">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -48,6 +48,8 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
 .learning-studio .card-file-row>div{min-width:0;max-width:100%}
 .learning-studio .card-file-row strong{font-size:14px;line-height:1.7}
 .learning-studio [hidden]{display:none!important}
+
+.catalog-filters{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px}.catalog-filters button{padding:9px 16px;border:1px solid #ccd3c8;border-radius:24px;background:#fff;color:#344438}.catalog-filters button.active{background:#38533d;border-color:#38533d;color:#fff}.listing-card.catalog-viewed{background:#eceeed;border-color:#d0d5d1}.listing-card.catalog-viewed .listing-cover img{filter:grayscale(.7)}.listing-card.catalog-viewed h3,.listing-card.catalog-viewed .listing-price{color:#5a625e}.listing-card.catalog-viewed .listing-updated{color:#515a55}
 
 .card-archive{--archive-ink:#334638;--archive-muted:#75816f;--archive-line:#dfe5d8;box-sizing:border-box;min-width:0;margin:20px 0;padding:24px;border:1px solid var(--archive-line);border-radius:18px;background:#fffefb;color:var(--archive-ink);overflow-wrap:anywhere}
 .card-archive *{box-sizing:border-box}
@@ -152,7 +154,7 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
       </ol>
       <p id="phoneLoadHelp" class="quiet">Первое подключение проверяется до 9 секунд. Детали останутся доступны здесь.</p>
       <button id="phoneLoadRetry" class="button secondary hidden" type="button">Повторить загрузку</button>
-      <details id="phoneDiagnostics"><summary>Диагностика подключения · v30</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
+      <details id="phoneDiagnostics"><summary>Диагностика подключения · v31</summary><pre id="phoneDiagnosticText" class="connection-diagnostic"></pre><button id="phoneDiagnosticCopy" class="button secondary" type="button">Скопировать диагностику</button></details>
     </div>
   </details>
 </section>
@@ -168,6 +170,8 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
     <div class="section-title"><div><div class="eyebrow">ВАША МОБИЛЬНАЯ СТУДИЯ</div><h1>Объявления</h1></div><button id="phoneRefresh" class="icon-button" type="button" aria-label="Обновить карточки">↻</button></div>
     <p id="phoneSync" class="sync-note" role="status">Ждём карточки с Mac</p><div id="phoneInstallTop" class="install-banner"></div>
     <div class="search-wrap"><label class="visually-hidden" for="phoneSearch">Поиск по карточкам</label><input id="phoneSearch" type="search" placeholder="Метро, название, цена…" enterkeyhint="search"></div>
+    <div class="catalog-filters" role="group" aria-label="Фильтр объявлений"><button type="button" data-phone-card-filter="all" aria-pressed="true" class="active">Все</button><button type="button" data-phone-card-filter="edited" aria-pressed="false">Изменённые</button></div>
+    <p class="sync-note">Новые объявления сверху. Редактирование сохраняет место в списке.</p>
     <div id="phoneCards" class="cards-list"></div>
     <div id="phoneEmpty" class="empty-state hidden"><span aria-hidden="true">▧</span><h2>Здесь появятся квартиры</h2><p>Загрузите объявление на Mac или отправьте ссылку с телефона. Компьютер подготовит карточку и фотографии.</p><button class="button primary" type="button" data-phone-view="import">Отправить ссылку</button></div>
     <button id="phoneMore" class="button secondary hidden" type="button">Показать ещё</button>
@@ -203,7 +207,7 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
 <script>/* Independent ES5 startup guard: it must run even when the module cannot parse. */
 (function () {
   'use strict';
-  var version = 'v30', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var version = 'v31', started = Date.now(), attempt = 0, timer = 0, done = false;
   var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
   var moduleStarted = false, probeTimer = 0, probing = false;
   function el(id) { return document.getElementById(id); }
@@ -285,7 +289,58 @@ html{scroll-padding-top:100px;scroll-padding-bottom:130px}
   update(); arm();
 }());
 </script>
-<script type="module">// Only measured backend counters and elapsed wall time are shown here.
+<script type="module">// ES2022 Object.hasOwn is absent on older WebKit. Keep the same own-key
+// semantics without modifying the global Object or trusting a record's methods.
+const ownPropertyCheck=Object.prototype.hasOwnProperty;
+function hasOwnKey(value,key){return ownPropertyCheck.call(value,key);}
+
+// Presentation order is independent from the server's change-feed timestamp.
+function catalogTimestamp(value){
+ if(typeof value==='number')return Number.isFinite(value)&&value>=0?value:null;
+ if(typeof value!=='string'||!value.trim())return null;
+ const parsed=Date.parse(value);return Number.isFinite(parsed)&&parsed>=0?parsed/1000:null;
+}
+function catalogOrderValue(card){return catalogTimestamp(card?.catalogOrder)??catalogTimestamp(card?.addedAt)??catalogTimestamp(card?.updated)??0;}
+function compareCatalogCards(a,b){return catalogOrderValue(b)-catalogOrderValue(a)||String(a?.id||'').localeCompare(String(b?.id||''));}
+function catalogWasViewed(card){return card?.viewed===true||catalogTimestamp(card?.viewedAt)!==null;}
+function catalogMatchesFilter(card,mode='all'){return mode!=='edited'||card?.contentEdited===true;}
+function catalogViewedState(previous,current){
+  const viewed=catalogWasViewed(previous)||catalogWasViewed(current);
+  const candidates=[previous?.viewedAt,current?.viewedAt].filter(value=>catalogTimestamp(value)!==null);
+  candidates.sort((a,b)=>catalogTimestamp(a)-catalogTimestamp(b));
+  return {viewed,viewedAt:viewed?(candidates[0]??null):null};
+}
+// A view acknowledgement can arrive after an edit. It owns only these two
+// fields, never publication metadata, ordering or the synchronization stamp.
+function mergeCatalogViewed(previous,acknowledgement){
+  return {...previous,...catalogViewedState(previous,acknowledgement)};
+}
+function mergeCatalogCard(previous,current){
+ const merged={...previous,...current};
+ if(catalogTimestamp(current?.catalogOrder)===null)merged.catalogOrder=catalogOrderValue(previous||current);
+  // There is no unview action. Within one authenticated reader scope a late
+  // feed snapshot cannot undo a confirmed view; callers clear on scope change.
+  return {...merged,...catalogViewedState(previous,current)};
+}
+function catalogPublication(card){
+ const clean=value=>typeof value==='string'?value.replace(/\r\n?/g,'\n').trim():'';
+  return JSON.stringify([clean(card?.title??card?.titles?.[0]),clean(card?.output??card?.body),clean(card?.tags)]);
+}
+function saveBrowserCatalogCard(objects,card,at=new Date().toISOString()){
+ const index=objects.findIndex(row=>row.id===card.id),previous=index>=0?objects[index]:null;
+ const edited=!!previous&&catalogPublication(previous)!==catalogPublication(card);
+ const saved={...card,addedAt:previous?(previous.addedAt??null):at,
+  contentEdited:previous?.contentEdited===true||edited,
+  contentEditedAt:edited?at:previous?.contentEditedAt??null,
+  viewed:catalogWasViewed(previous),viewedAt:previous?.viewedAt??null};
+ if(index<0)return [saved,...objects];
+ return objects.map((row,position)=>position===index?saved:row);
+}
+function markBrowserCatalogViewed(objects,id,at=new Date().toISOString()){
+ return objects.map(row=>row.id===id?{...row,viewed:true,viewedAt:row.viewedAt??at}:row);
+}
+
+// Only measured backend counters and elapsed wall time are shown here.
 // A detector has no tokens; cached inference must not look like a fresh run.
 const aiProgressPhases={waiting:'Ожидаем свободную память',loading:'Загружаем модель',preparing:'Готовим запрос',prefill:'Модель читает запрос',generating:'Создаём китайское описание',analyzing:'Ищем видимую мебель и технику',complete:'Обработка завершена',cached:'Результат из кеша',cancelled:'Запрос отменён',timeout:'Время запроса истекло',unavailable:'Модель сейчас недоступна',error:'Не удалось завершить запрос'};
 const aiProgressActivePhases=new Set(['waiting','loading','preparing','prefill','generating','analyzing']);
@@ -296,6 +351,7 @@ const aiProgressIdentity=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9
 
 function aiTextOutcome(value){
  if(!value||typeof value!=='object')return '';
+ if(value.generationMode==='explicit-template')return 'Текст собран по выбранной схеме из фактов карточки.';
  if(value.fallback===true||value.backend==='grounded-advertising'||value.textSource==='rules')return 'Ответ локальной модели отклонён. Этот текст составлен правилами по фактам карточки.';
  if(value.modelContribution==='selection-of-layout-only'||value.generationMode==='model-structure-verified-renderer')return 'ИИ выбрал схему подачи; формулировки и факты собраны генератором.';
  if(value.status==='review')return 'Черновик локальной модели: требуется проверка китайского текста и фактов.';
@@ -304,7 +360,7 @@ function aiTextOutcome(value){
 }
 
 function aiProgressText(value,{extraElapsed=0}={}){
- if(!value||typeof value!=='object'||Array.isArray(value)||!Object.hasOwn(aiProgressPhases,value.phase))return null;
+ if(!value||typeof value!=='object'||Array.isArray(value)||!hasOwnKey(aiProgressPhases,value.phase))return null;
  const active=value.active!==false&&aiProgressActivePhases.has(value.phase),cached=value.cached===true||value.phase==='cached';
  const rules=value.textSource==='rules',model=aiProgressIdentity(value.model),kind=rules?'Китайский текст по правилам · ответ ИИ отклонён':value.operation==='text'?'Текстовый ИИ':'ИИ · мебель и техника';
  const details=[],metrics=[],elapsed=aiProgressNumber(value.elapsedSeconds),index=aiProgressCount(value.photoIndex),total=aiProgressCount(value.photoTotal);
@@ -351,10 +407,63 @@ function createAiProgress({after,id}){
  function stop(phase){
   if(!latest)return;
   const elapsed=aiProgressNumber(latest.elapsedSeconds);
-  update({...latest,...(phase&&Object.hasOwn(aiProgressPhases,phase)?{phase}:{}),active:false,
+  update({...latest,...(phase&&hasOwnKey(aiProgressPhases,phase)?{phase}:{}),active:false,
    ...(elapsed!==null?{elapsedSeconds:elapsed+(latest.active!==false&&aiProgressActivePhases.has(latest.phase)?(performance.now()-received)/1000:0)}:{})});
  }
- return {update,stop,clear:()=>update(null),destroy(){clearInterval(timer);panel.remove();}};
+ return {element:panel,update,stop,clear:()=>update(null),destroy(){clearInterval(timer);panel.remove();}};
+}
+
+// The primary editor requests free model prose; explicit catalogue choices keep
+// their separate deterministic path. Neither a fallback nor a failed response
+// may replace the user's current publication here.
+function individualCopyRequest(fields,output,groupId,part='all'){
+ if(!['title','body','all'].includes(part))throw Error('Выберите заголовок, описание или всё объявление');
+ if(!fields||typeof fields!=='object'||Array.isArray(fields))throw Error('Откройте карточку объявления');
+ return {action:'generate-preview',styleMode:'individual',part,fields,output:{title:String(output?.title||''),body:String(output?.body||'')},groupId:String(groupId||'')||undefined};
+}
+function individualCopyCandidate(value,part='all'){
+ if(value?.status!=='review'||value.modelAccepted!==true||value.fallback===true||value.generationMode!=='individual-model-prose'){
+  throw Error((Array.isArray(value?.warnings)?value.warnings.filter(text=>typeof text==='string').join(' · '):'')||'Локальная модель не создала пригодный текст. Текущий текст сохранён.');
+ }
+ if(!['title','body','all'].includes(part)||typeof value.title!=='string'||!value.title.trim()||typeof value.body!=='string'||!value.body.trim())throw Error('ИИ вернул неполный текст. Текущий текст сохранён.');
+ if(value.title.length>240||value.body.length>6000)throw Error('Ответ ИИ превышает допустимый размер');
+ if(part==='title')return {title:value.title};
+ if(part==='body')return {body:value.body};
+ return {title:value.title,body:value.body,tags:typeof value.tags==='string'?value.tags:''};
+}
+function individualCopyMetadata(value){
+ const keys=['status','model','backend','styleId','variation','factsHash','elapsedSeconds','fallback','warnings','ai','modelAccepted','textSource','generationMode','modelContribution','factualTextSource','contract','inventoryCount','photoInventoryCount','sourceContextCharacters','sourceContextTruncated','part'];
+ return Object.fromEntries(keys.filter(key=>Object.prototype.hasOwnProperty.call(value||{},key)).map(key=>[key,value[key]]));
+}
+
+function startIndividualTextJob(api,payload,{onProgress=()=>{},pollInterval=400,maximumWait=90000}={}){
+ let id=null,cancelRequested=false,ended=false,cancelPromise=null;
+ const requestId=globalThis.crypto?.randomUUID?.()||'text-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+ const cancel=()=>{
+  cancelRequested=true;
+  if(id&&!ended&&!cancelPromise)cancelPromise=api('text-jobs/'+id+'/cancel',{});
+  return cancelPromise||Promise.resolve(null);
+ };
+ const completion=(async()=>{
+  const started=Date.now();
+  try{
+   const value=await api('text-jobs',{...payload,requestId});
+   if(typeof value?.job_id!=='string'||!/^[a-f0-9]{32}$/.test(value.job_id))throw Error('Сервер не вернул ID текстового задания');
+   id=value.job_id;if(cancelRequested)await cancel();
+   while(true){
+    const job=await api('text-jobs/'+id);onProgress(job);
+    if(job.state==='done'){
+     if(!job.result||!['draft','card'].includes(job.resultType))throw Error('Текстовое задание завершилось без результата');
+     return {result:job.result,resultType:job.resultType,cancellationRequested:cancelRequested};
+    }
+    if(job.state==='cancelled')throw Error(job.message||'Генерация отменена.');
+    if(job.state==='error')throw Error(job.message||'Не удалось подготовить текст.');
+    if(Date.now()-started>maximumWait){await cancel();throw Error('Не удалось дождаться результата. Запрошена отмена; проверьте состояние карточки.');}
+    await new Promise(resolve=>setTimeout(resolve,pollInterval));
+   }
+  }finally{ended=true;}
+ })();
+ return {completion,cancel,get id(){return id;},get cancellationRequested(){return cancelRequested;}};
 }
 
 // Respond to the visible viewport rather than guessing a physical keyboard
@@ -547,6 +656,15 @@ function setupPhotoInstanceEditor({mount,api,cardId,loadPhoto,onSaved=()=>{}}){
 // Older Safari has AbortController but no static AbortSignal timeout/any APIs.
 function rdAbortReason(){const error=Error('The request was cancelled.');error.name='AbortError';return error;}
 function rdTimeoutReason(){const error=Error('The request timed out.');error.name='TimeoutError';return error;}
+
+// The single-photo endpoint is synchronous. Its model may take up to 120s;
+// keep a small transport margin without extending other API requests.
+function localRequestTimeout(path,data){
+  if(path==='photo'&&data?.action==='analyze')return 125000;
+  if(path==='translate'||path==='learning'&&['generate-preview','translate-preview'].includes(data?.action))return 65000;
+  if(/^(?:card-export|dossier-import|listing-map|workspace-backup\/inspect|cloud-backup(?:\/(?:upload|restore|list))?)$/.test(path))return 120000;
+  return 15000;
+}
 
 async function withRequestDeadline(milliseconds,operation,{signal:externalSignal}={}){
   if(typeof milliseconds!=='number'||!Number.isFinite(milliseconds)||milliseconds<0||milliseconds>2147483647)throw RangeError('Invalid request deadline.');
@@ -968,7 +1086,7 @@ function clientCheckServiceContext(card,context){
  const grant=clientServiceGrant(context);
  if(grant?.kind==='server'){
   for(const text of clientServiceTexts(card)){try{assertClientServiceClaims({body:text,fields:{}});}catch(error){if(!(error instanceof ClientPublicationReviewRequired)||!grant.texts.includes(clientServiceCanonical(text)))throw error;}}
-  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(Object.hasOwn(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
+  if(card.fields&&context.fields)for(const key of ['registrationMonths','registrationPeople','pickup','luggage','arrival','support'])if(hasOwnKey(card.fields,key)&&JSON.stringify(card.fields[key])!==JSON.stringify(context.fields[key]))throw new ClientPublicationReviewRequired(key,'Объём услуги изменился');
   return grant;
  }
  const original=grant?.kind==='private'?grant.context:context,merged={...(original?.fields||original||{}),...(card.fields||{})},privateContext={fields:Object.fromEntries(['url','editorIdentity','resultId','id','registrationMonths','registrationPeople','pickup','luggage','arrival','support','serviceBenefits','serviceConfirmations'].filter(key=>merged[key]!==undefined).map(key=>[key,merged[key]]))};
@@ -1003,7 +1121,7 @@ const sectionReasons={partial:'полнота раздела не подтвер
 const schemaReasons={'unknown-schema':'Форма страницы источника изменилась: проверьте извлечённые сведения.','critical-fields-missing':'Не все обязательные сведения извлечены из источника.','invalid-critical-value':'В источнике есть неоднозначное или недопустимое значение.','field-conflict':'В источнике есть противоречивые сведения.','no-photo-evidence':'Фотографии источника не подтверждены.'};
 function schemaSummary(value){
  if(!value||value.version!==1||!['recognized','partial','unsupported'].includes(value.state))return null;
- const names=['price','area','layout','description'],reasons=Array.isArray(value.reasons)?value.reasons.filter(key=>Object.hasOwn(schemaReasons,key)):[];
+ const names=['price','area','layout','description'],reasons=Array.isArray(value.reasons)?value.reasons.filter(key=>hasOwnKey(schemaReasons,key)):[];
  return {version:1,state:value.state,platform:['cian','avito'].includes(value.platform)?value.platform:'unknown',reasons,missingCritical:Array.isArray(value.missingCritical)?value.missingCritical.filter(key=>names.includes(key)):[],criticalCoverage:Object.fromEntries(names.map(key=>[key,value.criticalCoverage?.[key]===true])),unknownDoesNotMeanAbsent:true};
 }
 
@@ -1018,8 +1136,8 @@ function readinessOf(value){
 
 function albumStatus(value){
  if(!value||typeof value!=='object'||!Number.isInteger(value.observed)||value.observed<0||value.observed>1800)return null;
- const expected=value.expected===null?null:Number.isInteger(value.expected)&&value.expected>0&&value.expected<=400?value.expected:null,observed=value.observed,limit=Number.isInteger(value.limit)&&value.limit>0&&value.limit<=180?value.limit:30;
- const hasRoles=value.version===2||Object.hasOwn(value,'previewOnly')||Object.hasOwn(value,'mainLinksObserved');
+ const expected=value.expected===null?null:Number.isInteger(value.expected)&&value.expected>0&&value.expected<=400?value.expected:null,observed=value.observed,limit=Number.isInteger(value.limit)&&value.limit>0&&value.limit<=200?value.limit:30;
+ const hasRoles=value.version===2||hasOwnKey(value,'previewOnly')||hasOwnKey(value,'mainLinksObserved');
  const rolesValid=hasRoles&&Number.isInteger(value.previewOnly)&&value.previewOnly>=0&&Number.isInteger(value.mainLinksObserved)&&value.mainLinksObserved>=0&&value.previewOnly+value.mainLinksObserved<=observed;
  const missing=expected===null?null:Math.max(0,expected-observed),countConflict=value.countConflict===true||expected!==null&&observed>expected;
  const state=missing||rolesValid&&value.previewOnly?'partial':expected===null||countConflict||hasRoles&&(!rolesValid||value.mainLinksObserved+value.previewOnly<observed)?'unknown':'complete';
@@ -1233,7 +1351,18 @@ function photoBatchSummary(card={},available=0,crops=0,prepared=true){
  if(Number(processing.review)>0)parts.push(processing.review+' фото оставлено целиком: безопасная обрезка не подтверждена.');
  if(cropFailed)parts.push('Автообрезка недоступна для '+cropFailed+' фото; оригиналы сохранены.');
  if(deferred)parts.push('Проверка краёв отложена для '+deferred+' фото по лимиту обработки.');
- const failures=(Array.isArray(card.mediaFailures)?card.mediaFailures:[]).filter(row=>row&&Number.isInteger(row.index)&&row.index>0&&row.index<=30&&typeof row.message==='string').slice(0,30).map(row=>({index:row.index,stage:row.stage==='download'?'download':'crop',originalSaved:row.originalSaved===true,message:row.message.replace(/[\x00-\x1f\x7f]/g,' ').slice(0,300)}));
+ const inventory=card.photoInventory;
+ if(inventory?.state==='disabled')parts.push('Анализ мебели и техники выключен.');
+ else if(inventory&&Number.isInteger(inventory.total)&&inventory.total>=0){
+  const total=Math.max(inventory.total,Number(inventory.totalAvailable)||0),checked=Math.max(0,Number(inventory.checked)||0),failed=Math.max(0,Number(inventory.failed)||0);
+  const duplicates=(Array.isArray(inventory.photos)?inventory.photos:[]).filter(row=>row?.status==='duplicate').length,remaining=Math.max(0,total-checked-duplicates-failed);
+  parts.push('Мебель и техника: проверено '+checked+' из '+total+' фото'+(duplicates?' · '+duplicates+' повторных ракурсов с одинаковыми байтами':'')+'.');
+  if(failed)parts.push('Не удалось проанализировать '+failed+' фото.');
+  if(remaining)parts.push('Ещё не проверено '+remaining+' фото.');
+  if(inventory.truncated)parts.push('Лимит одного альбома — '+(inventory.coverageLimit||PHOTO_SOURCE_LIMIT)+' фото; остаток не считается проверенным.');
+  if(Number(inventory.autoApplySummary?.needsReview)>0)parts.push('Неподтверждённых находок: '+inventory.autoApplySummary.needsReview+'.');
+ }
+ const failures=(Array.isArray(card.mediaFailures)?card.mediaFailures:[]).filter(row=>row&&Number.isInteger(row.index)&&row.index>0&&row.index<=PHOTO_SOURCE_LIMIT&&typeof row.message==='string').slice(0,PHOTO_SOURCE_LIMIT).map(row=>({index:row.index,stage:row.stage==='download'?'download':'crop',originalSaved:row.originalSaved===true,message:row.message.replace(/[\x00-\x1f\x7f]/g,' ').slice(0,300)}));
  return {count,expected,text:parts.join(' '),retry:expected>count||cropFailed>0||deferred>0,failures};
 }
 
@@ -1262,7 +1391,7 @@ function archiveValidateAttachmentFile(file) {
   if (!file || typeof file.name !== 'string' || !file.name.trim()) throw new Error('Выберите файл.');
   if (!Number.isSafeInteger(file.size) || file.size < 1) throw new Error('Файл пустой или его размер неизвестен.');
   if (file.size > caMaxAttachmentBytes) throw new Error('Один файл может занимать не больше 40 МБ.');
-  const extension = file.name.split('.').at(-1).toLowerCase();
+  const extension = file.name.split('.').slice(-1)[0].toLowerCase();
   if (!caAttachmentExtensions.has(extension)) throw new Error('Поддерживаются PDF, фотографии, DOCX, TXT, ZIP и файлы 3D-планировок.');
   return file;
 }
@@ -1454,7 +1583,7 @@ function setupCardArchive({mount,getCardId,ensureCard,api,downloadAttachment,toa
     if (!isCurrent(id,epoch)) return;
     loaded=true;
     if (!preserveDirty || !dirty) {
-      statusSelect.value=Object.hasOwn(caArchiveStatuses,data.status)?data.status:'active';
+      statusSelect.value=hasOwnKey(caArchiveStatuses,data.status)?data.status:'active';
       notes.value=typeof data.notes==='string'?data.notes:'';
       setDirty(false);
     }
@@ -1633,7 +1762,7 @@ function normalizeDeviceNotice(row){
 function createDeviceDeliveryStore(indexedDB=globalThis.indexedDB){
  let opening;
  function db(){if(!indexedDB)return Promise.reject(Error('Браузер не предоставляет надёжное локальное хранилище уведомлений.'));if(!opening)opening=new Promise((resolve,reject)=>{const request=indexedDB.open('redcn-device-delivery-v1',1);request.onupgradeneeded=()=>{for(const name of['settings','events'])if(!request.result.objectStoreNames.contains(name))request.result.createObjectStore(name);};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(Error('Не удалось открыть журнал уведомлений'));request.onblocked=()=>reject(Error('Закройте старую вкладку, чтобы обновить журнал уведомлений'));});return opening;}
- async function transaction(name,key,edit){const connection=await db();return new Promise((resolve,reject)=>{const tx=connection.transaction(name,'readwrite'),store=tx.objectStore(name),read=store.get(key);let output;read.onsuccess=()=>{try{const changed=edit(read.result);output=changed?.result;if(changed&&Object.hasOwn(changed,'value'))store.put(changed.value,key);}catch(error){tx.abort();reject(error);}};tx.oncomplete=()=>resolve(output);tx.onerror=()=>reject(Error('Не удалось записать журнал уведомлений'));tx.onabort=()=>reject(Error('Запись уведомления отменена'));});}
+ async function transaction(name,key,edit){const connection=await db();return new Promise((resolve,reject)=>{const tx=connection.transaction(name,'readwrite'),store=tx.objectStore(name),read=store.get(key);let output;read.onsuccess=()=>{try{const changed=edit(read.result);output=changed?.result;if(changed&&hasOwnKey(changed,'value'))store.put(changed.value,key);}catch(error){tx.abort();reject(error);}};tx.oncomplete=()=>resolve(output);tx.onerror=()=>reject(Error('Не удалось записать журнал уведомлений'));tx.onabort=()=>reject(Error('Запись уведомления отменена'));});}
  return {setting(scope,value){return transaction('settings',scope,old=>value===undefined?{result:old||{enabled:false,label:''}}:{value,result:value});},
   claim(scope,id,now){return transaction('events',scope+':'+id,old=>{const row=old||{attempts:0,state:'pending',nextAt:0,leaseUntil:0};if(row.state==='delivered'||row.state==='failed'||row.nextAt>now||row.leaseUntil>now)return {result:null};const value={...row,state:'delivering',attempts:row.attempts+1,leaseUntil:now+30000};return {value,result:value};});},
   finish(scope,id,result,now){return transaction('events',scope+':'+id,old=>{if(!old)return {result:false};let value;if(result==='delivered')value={...old,state:'delivered',leaseUntil:0,nextAt:0};else if(result==='cancelled')value={...old,state:'pending',attempts:Math.max(0,old.attempts-1),leaseUntil:0,nextAt:now};else value={...old,state:old.attempts>=5?'failed':'pending',leaseUntil:0,nextAt:now+Math.min(300000,5000*2**(old.attempts-1))};return {value,result:value};});},
@@ -2114,7 +2243,7 @@ function publicationReviewActions(snapshot={}){
 }
 function publicationReviewMutation(snapshot,action,comment=''){
  const allowed=publicationReviewActions(snapshot);
- if(!Object.hasOwn(allowed,action)||!allowed[action])throw Error('Обновите состояние проверки; согласование доступно другому участнику для актуального поста');
+ if(!hasOwnKey(allowed,action)||!allowed[action])throw Error('Обновите состояние проверки; согласование доступно другому участнику для актуального поста');
  if(typeof comment!=='string'||comment.length>1000)throw Error('Комментарий: до 1000 символов');
  if(action==='reject'&&!comment.trim())throw Error('Укажите причину возврата на доработку');
  return {action,expectedRevision:snapshot.revision,expectedUpdated:snapshot.savedUpdated,comment:comment.trim()};
@@ -2289,7 +2418,11 @@ function setupModelHistory({mount,api}={}){
 function learningTextLanguage(text){return /\p{Script=Han}/u.test(String(text))?'zh':'ru';}
 function learningGroundingFields(fields={}){
  const keys=['city','district','districtZh','complex','metro','metroLine','walk','area','rooms','floor','floors','price','priceCurrency','pricePeriod','deposit','depositCurrency','layout','separate','bedrooms','livingRooms','children','pets','petPolicy','childrenPolicy','registration','serviceConfirmations','features','featureCounts','photoEvidence','photoRejectedFeatures','sourceAudit','utilities','ceiling','balconies','loggias','universityRoutes','kitchen','living','bedroomArea','occupants','registrationMonths','registrationPeople','shortTerm','minMonths','shortTermPolicy','smokingPolicy','guestPolicy','subletPolicy','leaseTerm','contractMonths','prepayMonths'];
- return Object.fromEntries(keys.filter(key=>Object.hasOwn(fields,key)).map(key=>[key,fields[key]]));
+ return Object.fromEntries(keys.filter(key=>hasOwnKey(fields,key)).map(key=>[key,fields[key]]));
+}
+function individualGroundingFields(fields={}){
+ const extra=['description','sourceDescription','renovation','windows','bathroom','buildingYear','details','transit','universities','university','uniTime','uniMode','route','highlight','registrationPolicy','url','editorIdentity','resultId','id','pickup','luggage','arrival','support','serviceBenefits'];
+ return {...learningGroundingFields(fields),...Object.fromEntries(extra.filter(key=>hasOwnKey(fields,key)).map(key=>[key,fields[key]]))};
 }
 
 const LEARNING_PHOTO_MODELS=Object.freeze([
@@ -2364,6 +2497,8 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
   status.textContent='На проверке: '+Number(counts.pending||0)+' · утверждено: '+Number(counts.approved||0)+' · отклонено: '+Number(counts.rejected||0)+' · отозвано: '+Number(counts.withdrawn||0)+'. Обучение весов и приёмка новой версии выполняются отдельно.';
   const scheduler=value.scheduler||{},config=scheduler.config||scheduler,model=value.text_ai||{},promotion=scheduler.promotion||{},evaluation=promotion.latestEvaluation||{};schedulerEnabled.checked=config.enabled===true;promotionEnabled.checked=config.automaticPromotion===true;schedulerForm.hidden=!canManageSettings();rollback.disabled=promotion.rollbackAvailable!==true;
   schedulerStatus.textContent=[model.installed?'Текстовая модель установлена'+(model.enabled?' и включена':''): 'Текстовая модель ещё не установлена',scheduler.message||'Ожидаем состояние планировщика',model.trainedParameters?'Обученных параметров адаптера: '+Number(model.trainedParameters).toLocaleString('ru-RU'):'',scheduler.stepsCompleted?'Выполнено шагов: '+Number(scheduler.stepsCompleted):'',config.automaticPromotion?'Автоприёмка включена: только после полного сравнения качества':'Автоприёмка выключена',evaluation.stepsCompleted?'Последний кандидат обучен: '+Number(evaluation.stepsCompleted)+' шагов':'',evaluation.requested?'Последняя проверка: '+Number(evaluation.candidatePassed||0)+'/'+Number(evaluation.requested):'',evaluation.message||'',scheduler.adapterReady&&scheduler.qualityOutcome!=='accepted'?'Кандидат сохранён; текущие веса работают до успешной приёмки':'',promotion.state==='accepted'?'Проверенные новые веса подключены; предыдущую версию можно вернуть':''].filter(Boolean).join(' · ');
+  if(model.model)schedulerStatus.textContent+=' · Перевод и обучение: '+model.model+(model.candidateAdapterSelected?' с выбранным локальным адаптером':' без локального адаптера');
+  if(model.advertising){const ad=model.advertising;schedulerStatus.textContent+=' · Объявления: '+(ad.model||'модель не определена')+(ad.installed&&ad.supported?' установлена':' не готова')+(ad.enabled?' · генерация включена':' · генерация выключена')+(ad.separateProfile?' · отдельная предобученная модель, адаптер перевода не применяется; её веса локально не обучались':' · общий профиль текстовой модели')+(ad.automaticGenerationEnabled?' · автоматическое описание при импорте включено':' · автоматическое описание при импорте выключено');}
   if(scheduler.trainingProgress)schedulerStatus.textContent+=' · Сохранённая контрольная точка: '+Number(scheduler.trainingProgress.stepsCompleted)+'/'+Number(scheduler.trainingProgress.requestedSteps)+' шагов';
   schedulerStatus.textContent+=' · '+(scheduler.modelProcessRunning?'Сейчас выполняется фоновый процесс обучения или проверки':scheduler.workerAlive?'Планировщик работает; его процесс обучения сейчас не запущен':'Живая работа планировщика этим ответом не подтверждена')+(scheduler.updatedAt?' · Проверка: '+new Date(scheduler.updatedAt*1000).toLocaleString('ru-RU'):'');
   const discovery=value.discovery||{},last=discovery.lastCapture;
@@ -2401,8 +2536,8 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
  button(controls,'Подготовить утверждённые данные к обучению',async()=>{await api('learning',{action:'snapshot'});await refresh();status.textContent+=' Подготовлена версия данных для обучения; веса модели ещё не изменены.';});
  const compose=make('section'),composeActions=make('div','',{className:'output-options'}),draftStatus=make('p','Модель составляет черновик по цене, расположению и подтверждённым характеристикам. Проверьте смысл перед применением.',{className:'muted',role:'status'});
  const draftMode=field(compose,'Способ подготовки объявления',make('select'));
- for(const [value,label]of [['advertising','Новый рекламный текст · проверка фактов'],['advertising-structure','Новая подача · фактические блоки сохраняются']])draftMode.append(make('option',label,{value}));
- compose.append(make('p','В режиме новой подачи модель выбирает расположение блоков, а подтверждённые факты сохраняются целиком. Уже использованные варианты не повторяются; когда схемы закончатся, появится сообщение. Каждый черновик применяется после вашей проверки.',{className:'muted'}));
+ for(const [value,label]of [['individual','Полное объявление ИИ · описание и подтверждённые фото-находки'],['advertising-structure','Компоновка проверенных блоков · модель выбирает схему']])draftMode.append(make('option',label,{value}));
+ compose.append(make('p','В первом режиме локальная модель пишет заголовок и весь текст по исходному описанию, параметрам и подтверждённому перечню предметов. Непринятый ответ сохраняет текущий текст. Компоновка блоков доступна отдельно; каждый черновик применяется после вашей проверки.',{className:'muted'}));
  const draftTitle=field(compose,'Название · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:240})),draftBody=field(compose,'Описание · редактируемый ИИ-черновик',make('textarea','',{rows:7,maxLength:20000})),draftTags=field(compose,'Теги · редактируемый ИИ-черновик',make('textarea','',{rows:2,maxLength:3000}));
  let draftContext=null,translationContext=null;
  const fingerprint=()=>JSON.stringify([getGroup(),getFields(),getOutput()]);
@@ -2417,7 +2552,7 @@ function setupLearningStudio({mount,api,toast=()=>{},getGroup=()=>'',getFields=(
  draftMode.onchange=()=>{draftContext=null;draftApply.disabled=true;draftStatus.textContent='Режим изменён. Создайте новый черновик.';};
  const generate=button(composeActions,'Создать ИИ-черновик по карточке',async()=>{
   const expected=fingerprint(),expectedDraft=draftFingerprint(),expectedRevision=revision,selectedMode=draftMode.value;draftApply.disabled=true;draftContext=null;draftStatus.textContent=selectedMode==='advertising-structure'?'Локальная модель выбирает новую подачу подтверждённых фактов…':'Локальная модель составляет текст. Первый запуск включает загрузку весов…';
-  const value=await api('learning',{action:'generate-preview',styleMode:selectedMode,fields:learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
+  const value=await api('learning',{action:'generate-preview',styleMode:selectedMode,fields:selectedMode==='individual'?individualGroundingFields(getFields()):learningGroundingFields(getFields()),output:getOutput(),groupId:getGroup()});
   if(expectedRevision!==revision)return;
   if(expected!==fingerprint()||selectedMode!==draftMode.value)throw Error('Во время генерации изменилась карточка или выбранный режим. Повторите запрос.');
   if(expectedDraft!==draftFingerprint()){draftStatus.textContent='Вы изменили черновик во время генерации. Ручной текст сохранён; ответ модели не применён.';return;}
@@ -2469,7 +2604,7 @@ const cityPoiFold=value=>String(value??'').normalize('NFC').toLocaleLowerCase('r
 const CITY_POI_CATEGORIES=Object.freeze({'chinese-grocery':'Азиатские продукты, включая китайские','chinese-restaurant':'Китайская кухня',park:'Парки · опубликованные ориентиры'});
 function cityPoiStats(){return {places:CITY_POIS.places.length,categories:Object.fromEntries(Object.keys(CITY_POI_CATEGORIES).map(key=>[key,CITY_POIS.places.filter(row=>row.category===key).length])),verifiedAt:CITY_POIS.verifiedAt,exhaustive:false};}
 function searchCityPois(query='',{category='',offset=0,limit=30}={}){
- const q=cityPoiFold(query);if(q.length>200)throw Error('Поиск мест: не более 200 символов.');if(category&&!Object.hasOwn(CITY_POI_CATEGORIES,category))throw Error('Неизвестная категория мест.');
+ const q=cityPoiFold(query);if(q.length>200)throw Error('Поиск мест: не более 200 символов.');if(category&&!hasOwnKey(CITY_POI_CATEGORIES,category))throw Error('Неизвестная категория мест.');
  const start=Math.max(0,Math.min(10000,Math.trunc(Number(offset)||0))),size=Math.max(1,Math.min(100,Math.trunc(Number(limit)||30))),sources=new Map(CITY_POIS.sources.map(row=>[row.id,row]));
  const matches=CITY_POIS.places.filter(row=>(!category||row.category===category)&&(!q||[row.ru,row.zh,row.addressRu,...row.aliases].some(value=>cityPoiFold(value).includes(q))));
  return {entries:matches.slice(start,start+size).map(row=>({...row,aliases:[...row.aliases],sourceIds:[...row.sourceIds],coordinateEvidence:{...row.coordinateEvidence,sourceIds:[...row.coordinateEvidence.sourceIds]},sources:row.sourceIds.map(id=>({...sources.get(id)})),sourceId:'city-pois',reviewed:false})),total:matches.length,offset:start,limit:size,stats:cityPoiStats()};
@@ -2570,12 +2705,13 @@ let phoneDossierUI=null,phoneDossierCard=null,phoneDossierRole=null;
 let phonePublicationReviewUI=null,phoneRoleRefreshing=null;
 let phoneLearningUI=null;
 let phoneCityPoisUI=null,phoneAcceptanceUI=null,phoneInstanceEditor=null;
-const phoneFeedViews=new Map();let phoneFeedSignature='';
-const phoneState={authEpoch:0,paired:false,csrf:'',cards:new Map(),cursor:null,hasMore:false,view:'cards',detail:null,detailId:null,media:[],photo:0,variant:'prepared',job:null,jobResult:null,lastSync:0,polling:false};
+const phoneFeedViews=new Map(),phoneViewedAcknowledgements=new Map();let phoneFeedSignature='';
+const phoneState={authEpoch:0,paired:false,csrf:'',cards:new Map(),cursor:null,hasMore:false,catalogFilter:'all',view:'cards',detail:null,detailId:null,media:[],photo:0,variant:'prepared',job:null,jobResult:null,lastSync:0,polling:false};
 const phoneDesignerLoader=createPhoneDesignerLoader({importModule:()=>import('/phone/designer.mjs'),getState:()=>({epoch:phoneState.authEpoch,paired:phoneState.paired,canEdit:phoneCanEdit(),saveData:navigator.connection?.saveData===true})});
 let phoneDesignerWarmEpoch=null;
 let phoneJobProgressTimer=0,phoneJobLatest=null,phoneJobLast=null,phoneAiProgress=null;
 const phoneWriting={revision:0,draftRevision:0,busy:false,capabilities:null,loading:null};
+let phoneTextJob=null,phoneTextProgress=null,phoneTextCancel=null;
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
 const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
 const phoneTime=value=>phoneDate(value)?.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})||'';
@@ -2620,14 +2756,15 @@ function phoneApplyRole(state){
  if(!owner){phoneArchiveUI?.destroy();phoneArchiveUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;}
  if(!edit){phoneDictionaryUI?.clear();phonePublicationReviewUI?.clear();phoneRoutesUI?.destroy();phoneRoutesUI=null;phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;phoneResetWriting();clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneState.job=null;phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');}
  ph('phoneRewriteAll')?.closest('section')?.classList.toggle('hidden',!edit);
- const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v29 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
+ const badge=ph('phoneRoleStatus');if(badge)badge.textContent=caps.supported?'Интерфейс v31 · сервер '+(state.release||'неизвестен')+' · Доступ: '+({owner:'владелец',editor:'редактор',viewer:'читатель'}[caps.role]):'Роли недоступны в этой версии сервера Mac. Обновите сервер для управления правами.';
  if(!edit&&['import','watch','design'].includes(phoneState.view))phoneView('cards');
  if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
+ if(previous&&previous!==phoneState.role){phoneViewedAcknowledgements.clear();for(const [id,card] of phoneState.cards)phoneState.cards.set(id,{...card,viewed:false,viewedAt:null});phoneState.cursor=null;phoneFeedSignature='';}
  return !!previous&&previous!==phoneState.role;
 }
 const phoneCanEdit=()=>phoneState.access?.supported?phoneState.access.editCards:phoneState.role!=='viewer';
 async function phoneRefreshRole(){if(phoneRoleRefreshing||!phoneState.paired)return phoneRoleRefreshing;const epoch=phoneState.authEpoch;const pending=phoneApi('state').then(state=>{if(epoch!==phoneState.authEpoch)return;phoneState.csrf=state.csrfToken||phoneState.csrf;const changed=phoneApplyRole(state);if(changed&&phoneState.detailId)return phoneOpenCard(phoneState.detailId,{keepScroll:true});}).finally(()=>{if(phoneRoleRefreshing===pending)phoneRoleRefreshing=null;});phoneRoleRefreshing=pending;return pending;}
-function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){try{sessionStorage.removeItem('redcn-phone-pending-job-v29');}catch{}phoneAcceptanceUI?.destroy();phoneAcceptanceUI=null;phoneInstanceEditor?.dispose();phoneInstanceEditor=null;ph('phoneAcceptanceMount')?.classList.add('hidden');phoneCityPoisUI?.destroy();phoneCityPoisUI=null;ph('phoneCityPoisSection')?.classList.add('hidden');phoneDesignerLoader.invalidate();phoneDesignerWarmEpoch=null;ph('phoneDesignMount').dataset.editorReady='false';ph('phoneDesignMount').dataset.editorStage='signed-out';phoneDictionaryUI?.clear();phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.cards.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
+function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.toggle('hidden',paired);ph('phoneWorkspace').classList.toggle('hidden',!paired);ph('phoneTabs').classList.toggle('hidden',!paired);if(!paired){try{sessionStorage.removeItem('redcn-phone-pending-job-v29');}catch{}phoneAcceptanceUI?.destroy();phoneAcceptanceUI=null;phoneInstanceEditor?.dispose();phoneInstanceEditor=null;ph('phoneAcceptanceMount')?.classList.add('hidden');phoneCityPoisUI?.destroy();phoneCityPoisUI=null;ph('phoneCityPoisSection')?.classList.add('hidden');phoneDesignerLoader.invalidate();phoneDesignerWarmEpoch=null;ph('phoneDesignMount').dataset.editorReady='false';ph('phoneDesignMount').dataset.editorStage='signed-out';phoneDictionaryUI?.clear();phoneWatchUI?.destroy();phoneWatchUI=null;phoneImportAuditUI?.destroy();phoneImportAuditUI=null;phoneRoutesUI?.destroy();phoneRoutesUI=null;phoneResetWriting();phonePresentationUI?.destroy();phonePresentationUI=null;phoneDesignInitializing=null;ph('phonePairSubmit').disabled=false;phoneArchiveUI?.clear();phoneFilesUI?.clear();if(ph('phonePhotoViewer').open)ph('phonePhotoViewer').close();ph('phoneViewerImage').removeAttribute('src');phoneState.authEpoch++;phoneDetailRevision++;phoneState.job=null;phoneState.jobResult=null;phoneState.cursor=null;phoneState.polling=false;phoneState.csrf='';phoneState.catalogFilter='all';phoneState.cards.clear();phoneViewedAcknowledgements.clear();phoneFeedViews.clear();phoneFeedSignature='';phoneState.detail=null;phoneState.detailId=null;phoneState.media=[];phoneShareFile=null;phoneShareRevision++;ph('phoneCards').replaceChildren();ph('phonePhotos').replaceChildren();ph('phoneDetail').classList.add('hidden');for(const id of ['phoneDetailTitle','phoneTitleCopy','phoneBody','phoneTags'])ph(id).textContent='';clearTimeout(phonePollTimer);clearTimeout(phoneJobTimer);clearInterval(phoneJobProgressTimer);phoneJobLatest=phoneJobLast=null;phoneAiProgress?.clear();ph('phoneJob').classList.add('hidden');for(const id of ['phoneJobMessage','phoneJobSteps','phoneJobEstimate','phoneJobElapsed'])ph(id).textContent='';ph('phoneImportUrl').value='';}}
 // The first usable feed has a shared budget; PDF and attachment work keep their
 // longer operation deadlines and cannot make initial navigation wait for them.
 async function phoneApi(path,data,{deadline=0}={}){
@@ -2655,6 +2792,7 @@ function phoneCardView(card){
     view={button,cover,badge,price,title,meta,stamp,source:undefined,image:null};phoneFeedViews.set(card.id,view);
   }
   const signature=JSON.stringify(card);if(view.signature===signature)return view.button;view.signature=signature;
+  view.button.classList.toggle('catalog-viewed',catalogWasViewed(card));
   view.button.setAttribute('aria-label','Открыть '+(card.title||'карточку квартиры'));
   const source=phoneAsset(card.coverUrl);
   if(source!==view.source){
@@ -2666,27 +2804,69 @@ function phoneCardView(card){
   view.badge.textContent=Number(card.photoCount)>0?Number(card.cachedPhotoCount??card.photoCount)+' / '+card.photoCount+' фото':card.mediaStatus==='loading'?'Фото готовятся':'Без фотографий';
   view.price.textContent=phoneMoney(card.price)||'Цена в карточке';if(phoneMoney(card.price)){const period=document.createElement('small');period.textContent='/ месяц';view.price.append(period);}
   view.title.textContent=card.title||'Квартира в Москве';view.meta.replaceChildren();if(card.metro){const station=document.createElement('span');station.textContent='🚇 '+card.metro;view.meta.append(station);}
-  view.stamp.textContent=phoneTime(card.updated)?'Обновлено в '+phoneTime(card.updated):'С компьютера';return view.button;
+  view.stamp.textContent=[catalogWasViewed(card)?'Просмотрено':'Не просмотрено',card.contentEdited?'Текст изменён':'',phoneTime(card.updated)?'Обновлено в '+phoneTime(card.updated):''].filter(Boolean).join(' · ');return view.button;
 }
 function phoneRenderCards(){
   const query=ph('phoneSearch').value.toLocaleLowerCase('ru').trim();
-  const rows=[...phoneState.cards.values()].sort((a,b)=>(phoneDate(b.updated)?.getTime()||0)-(phoneDate(a.updated)?.getTime()||0)).filter(card=>[card.title,card.price,card.metro].join(' ').toLocaleLowerCase('ru').includes(query));
-  const signature=JSON.stringify([query,phoneState.hasMore,rows]);if(signature===phoneFeedSignature)return;phoneFeedSignature=signature;
+  const rows=[...phoneState.cards.values()].sort(compareCatalogCards).filter(card=>catalogMatchesFilter(card,phoneState.catalogFilter)&&[card.title,card.price,card.metro].join(' ').toLocaleLowerCase('ru').includes(query));
+  const signature=JSON.stringify([query,phoneState.catalogFilter,phoneState.hasMore,rows]);if(signature===phoneFeedSignature)return;phoneFeedSignature=signature;
+  document.querySelectorAll('[data-phone-card-filter]').forEach(button=>{const selected=button.dataset.phoneCardFilter===phoneState.catalogFilter;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});
   ph('phoneEmpty').classList.toggle('hidden',phoneState.cards.size>0||!!query);ph('phoneMore').classList.toggle('hidden',!phoneState.hasMore);
   const container=ph('phoneCards');
-  if(!rows.length){container.replaceChildren();if(query){const note=document.createElement('p');note.className='surface';note.textContent='По этому запросу карточек пока нет.';container.append(note);}return;}
+  if(!rows.length){container.replaceChildren();if(query||phoneState.catalogFilter==='edited'){const note=document.createElement('p');note.className='surface';note.textContent=query?'По этому запросу карточек пока нет.':'Пока нет карточек с сохранёнными изменениями заголовка, описания или тегов.';container.append(note);}return;}
   const nodes=rows.map(phoneCardView),wanted=new Set(nodes);
   for(const child of [...container.children])if(!wanted.has(child))child.remove();
   for(let index=0;index<nodes.length;index++)if(container.children[index]!==nodes[index])container.insertBefore(nodes[index],container.children[index]||null);
 }
 async function phoneRefreshCards({reset=false,deadline=0}={}){
-  if(!phoneState.paired||phoneState.polling)return;const epoch=phoneState.authEpoch;phoneState.polling=true;ph('phoneRefresh').disabled=true;if(!phoneState.cards.size)ph('phoneSync').textContent='Загружаем карточки с Mac…';
-  try{const after=!reset&&phoneState.cursor!==null?'?after='+encodeURIComponent(phoneState.cursor):'';const data=await phoneApi('cards'+after,undefined,{deadline});const roleChanged=data.role?phoneApplyRole(data):false;for(const card of data.cards||[]){if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,card);}if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);phoneRenderCards();const changed=(data.cards||[]).find(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));if((changed||roleChanged)&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(phoneState.detailId,{keepScroll:true});if(phoneState.view==='detail'&&phoneState.detail){if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();}}
+  if(!phoneState.paired||phoneState.polling)return;
+  const epoch=phoneState.authEpoch,seenCursors=new Set();
+  let cursor=!reset?phoneState.cursor:null,detailChanged=false,roleChanged=false;
+  phoneState.polling=true;ph('phoneRefresh').disabled=true;
+  if(!phoneState.cards.size)ph('phoneSync').textContent='Загружаем карточки с Mac…';
+  try{
+    // /cards is a paginated change feed, not the catalogue's visual order.
+    // Drain it sequentially so a cold reload includes recently edited cards
+    // beyond the first page. Keep every server cursor unchanged for sync.
+    while(phoneState.paired&&epoch===phoneState.authEpoch){
+      const requestedCursor=cursor;
+      const after=cursor!==null?'?after='+encodeURIComponent(cursor):'';
+      const data=await phoneApi('cards'+after,undefined,{deadline});
+      if(epoch!==phoneState.authEpoch||!phoneState.paired)return;
+      const changedRole=data.role?phoneApplyRole(data):false;
+      roleChanged=roleChanged||changedRole;
+      for(const card of data.cards||[]){
+        if(/^[a-f0-9]{32}$/.test(card.id))phoneState.cards.set(card.id,
+          mergeCatalogViewed(mergeCatalogCard(phoneState.cards.get(card.id),card),phoneViewedAcknowledgements.get(card.id)));
+      }
+      detailChanged=detailChanged||(data.cards||[]).some(card=>card.id===phoneState.detailId&&String(card.updated)!==String(phoneState.detail?.updated));
+      if(data.cursor!==undefined&&data.cursor!==null)phoneState.cursor=data.cursor;
+      phoneState.hasMore=data.hasMore===true;phoneState.lastSync=data.serverTime||Date.now();
+      ph('phoneSync').textContent=phoneCardCount(phoneState.cards.size)+' · обновлено в '+phoneTime(phoneState.lastSync);
+      phoneRenderCards();
+      // A role change invalidates personal view marks on every loaded card;
+      // refresh from the beginning if this was only an incremental response.
+      if(changedRole&&requestedCursor!==null){cursor=null;phoneState.cursor=null;seenCursors.clear();continue;}
+      if(!phoneState.hasMore)break;
+      if(typeof data.cursor!=='string'||!data.cursor||data.cursor===requestedCursor||seenCursors.has(data.cursor))throw Error('Сервер повторил страницу карточек. Обновите список.');
+      seenCursors.add(data.cursor);cursor=data.cursor;
+    }
+    if(epoch!==phoneState.authEpoch||!phoneState.paired)return;
+    if((detailChanged||roleChanged)&&phoneState.view==='detail'&&phoneState.detail)await phoneOpenCard(phoneState.detailId,{keepScroll:true});
+    if(phoneState.view==='detail'&&phoneState.detail){if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();}
+  }
   catch(error){if(epoch===phoneState.authEpoch&&!phoneState.cards.size)ph('phoneSync').textContent=error.message;throw error;}
   finally{if(epoch===phoneState.authEpoch){phoneState.polling=false;ph('phoneRefresh').disabled=false;phoneSchedulePoll();}}
 }
 function phoneSchedulePoll(){clearTimeout(phonePollTimer);if(phoneState.paired&&!document.hidden)phonePollTimer=setTimeout(()=>phoneRefreshCards().catch(()=>{}),5000);}
 ph('phoneRefresh').onclick=()=>phoneRefreshCards({reset:true}).catch(error=>phoneToast(error.message));ph('phoneMore').onclick=()=>phoneRefreshCards().catch(error=>phoneToast(error.message));ph('phoneSearch').oninput=phoneRenderCards;
+document.querySelectorAll('[data-phone-card-filter]').forEach(button=>button.onclick=()=>{phoneState.catalogFilter=button.dataset.phoneCardFilter;phoneRenderCards();phoneRefreshCards({reset:true}).catch(error=>phoneToast(error.message));});
+async function phoneMarkViewed(id){
+  if(catalogWasViewed(phoneState.cards.get(id))||catalogWasViewed(phoneViewedAcknowledgements.get(id)))return;
+  const epoch=phoneState.authEpoch,role=phoneState.role;
+  try{const state=await phoneApi('cards/'+id+'/viewed',{});if(epoch!==phoneState.authEpoch||role!==phoneState.role)return;phoneViewedAcknowledgements.set(id,mergeCatalogViewed(phoneViewedAcknowledgements.get(id),state));const card=phoneState.cards.get(id);if(card){phoneState.cards.set(id,mergeCatalogViewed(card,state));phoneRenderCards();}}
+  catch(error){if(epoch===phoneState.authEpoch&&role===phoneState.role)phoneToast('Карточка открыта, но отметка просмотра не сохранена: '+error.message);}
+}
 async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
   try{if(code.includes('#'))code=new URL(code).hash.slice(1);}catch{}
   const epoch=++phoneState.authEpoch,load=loading||phoneLoadBegin();
@@ -2698,7 +2878,7 @@ async function phonePair(code,{deadline=performance.now()+9000,loading=0}={}){
 ph('phonePairForm').onsubmit=event=>{event.preventDefault();const value=ph('phonePairCode').value.trim();if(value)phonePair(value);};
 async function phoneOpenCard(id,{keepScroll=false,deadline=0}={}){
   if(!/^[a-f0-9]{32}$/.test(id))return;const revision=++phoneDetailRevision,oldScroll=window.scrollY;if(phoneState.detailId!==id){phoneInstanceEditor?.dispose();phoneInstanceEditor=null;phoneResetWriting();phoneArchiveUI?.clear();phoneFilesUI?.clear();}phoneState.detailId=id;if(!keepScroll){phoneState.photo=0;phoneState.variant='prepared';phoneView('detail');ph('phoneDetail').classList.add('hidden');ph('phoneDetailLoading').classList.remove('hidden');ph('phoneDetailLoading').textContent='Открываем карточку с Mac…';}phoneShareFile=null;phoneShareRevision++;
-  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=captureLoadedPresentationSource(acceptAuthenticatedClientCard(card));phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phonePrewarmDesigner();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);return phoneState.detail;}
+  try{const card=await phoneApi('cards/'+id,undefined,{deadline});if(revision!==phoneDetailRevision)return;phoneState.detail=captureLoadedPresentationSource(acceptAuthenticatedClientCard(card));phoneUpdateRouteTools();phoneInitializeCardTools();phoneWritingButtons();ph('phoneDetailTitle').textContent=card.titles?.[0]||card.fields?.name||'Квартира в Москве';ph('phoneTitleCopy').textContent=card.titles?.[0]||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);ph('phoneDetailFacts').replaceChildren();for(const text of [phoneMoney(card.fields?.price),card.fields?.area?card.fields.area+' м²':'',card.fields?.metro])if(text){const span=document.createElement('span');span.textContent=text;ph('phoneDetailFacts').append(span);}ph('phoneDetailLoading').classList.add('hidden');ph('phoneDetail').classList.remove('hidden');phoneRenderMedia();phonePrewarmDesigner();if(phoneState.access?.role==='owner')phoneArchiveUI?.refresh();phoneFilesUI?.refresh();window.scrollTo(0,keepScroll?oldScroll:0);phoneMarkViewed(id);return phoneState.detail;}
   catch(error){if(revision===phoneDetailRevision)ph('phoneDetailLoading').textContent=error.message;}
 }
 ph('phoneBack').onclick=()=>{phoneDetailRevision++;phoneView('cards');};
@@ -2766,6 +2946,7 @@ function phoneWritingButtons(){
   ph('phoneApplyDraft').disabled=disabled||!ph('phoneChineseDraft').value.trim();
 }
 function phoneResetWriting(){
+  phoneTextProgress?.clear();if(phoneTextCancel)phoneTextCancel.hidden=true;
   const designMount=ph('phoneDesignMount');designMount.dataset.photosReady='false';designMount.dataset.photosStage='idle';delete designMount.dataset.photosFetchMs;
   phoneLearningUI?.clear();
   phonePublicationReviewUI?.clear();if(typeof phoneInitializeDossierTransfer==='function')phoneInitializeDossierTransfer();
@@ -2789,10 +2970,27 @@ function phoneApplyWrittenCard(card,request){
   if(phoneState.view==='detail')window.scrollTo(0,oldScroll);return true;
 }
 async function phoneRewrite(part){
-  const request=phoneWritingBegin(part==='all'?'Создаём новую подачу по фактам квартиры…':'Подбираем новый вариант по фактам квартиры…');if(!request)return;
-  try{const card=await phoneApi('cards/'+request.id+'/rewrite',{part});if(!phoneApplyWrittenCard(card,request))return;ph('phoneWritingStatus').textContent=part==='all'?'Новая подача сохранена в карточке.':'Новый вариант сохранён. Остальные части текста оставлены как были.';phoneToast('Текст обновлён.');}
-  catch(error){if(phoneWritingCurrent(request)){ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
-  finally{phoneWritingEnd(request);}
+  const request=phoneWritingBegin(part==='tags'?'Подбираем теги по фактам квартиры…':'Локальный ИИ пишет текст по исходному описанию и подтверждённым предметам с фото…');if(!request)return;
+  let ownedJob=null;
+  try{
+    let card,cancellationRequested=false;
+    if(part==='tags')card=await phoneApi('cards/'+request.id+'/rewrite',{part,mode:'template'});
+    else{
+      phoneTextProgress??=createAiProgress({after:ph('phoneWritingStatus'),id:'phoneTextAiProgress'});
+      if(!phoneTextCancel){phoneTextCancel=document.createElement('button');phoneTextCancel.id='phoneTextCancel';phoneTextCancel.className='btn';phoneTextCancel.type='button';phoneTextCancel.textContent='Отменить генерацию';ph('phoneTextAiProgress').append(phoneTextCancel);phoneTextCancel.onclick=async()=>{phoneTextCancel.disabled=true;try{await phoneTextJob?.cancel();ph('phoneWritingStatus').textContent='Отмена текстового задания…';}catch(error){ph('phoneWritingStatus').textContent='Не удалось подтвердить отмену: '+error.message;}};}
+      phoneTextCancel.hidden=false;phoneTextCancel.disabled=false;phoneTextProgress.update({backend:'mlx',operation:'text',phase:'waiting',tokenBased:true,elapsedSeconds:0});
+      ownedJob=startIndividualTextJob(phoneApi,{action:'rewrite',cardId:request.id,part},
+        {onProgress:job=>{if(phoneWritingCurrent(request)){if(job.message)ph('phoneWritingStatus').textContent=job.message;if(job.progress?.ai)phoneTextProgress.update(job.progress.ai);}}});
+      phoneTextJob=ownedJob;const completed=await ownedJob.completion;
+      if(completed.resultType!=='card')throw Error('Сервер вернул результат другого типа');
+      card=completed.result;cancellationRequested=completed.cancellationRequested;
+    }
+    if(!phoneApplyWrittenCard(card,request))return;const ai=card.aiAdvertisement?.ai;
+    if(part!=='tags')phoneTextProgress.update({...ai,backend:ai?.backend||'mlx',operation:'text',phase:'complete',active:false,tokenBased:true});
+    ph('phoneWritingStatus').textContent=[cancellationRequested?'Задание успело завершиться до отмены; сохранённый текст показан в карточке.':part==='tags'?'Теги по фактам квартиры сохранены.':part==='all'?'Новый текст локального ИИ сохранён в карточке.':'Новый текст локального ИИ сохранён. Остальные части оставлены как были.',Number.isFinite(ai?.tokensPerSecond)&&ai.tokensPerSecond>0?ai.tokensPerSecond.toFixed(1)+' ток/с':''].filter(Boolean).join(' ');phoneToast('Текст обновлён.');
+  }
+  catch(error){if(phoneWritingCurrent(request)){phoneTextProgress?.stop('error');ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
+  finally{if(phoneTextJob===ownedJob){phoneTextJob=null;if(phoneTextCancel)phoneTextCancel.hidden=true;}phoneWritingEnd(request);}
 }
 for(const [part,id] of [['title','phoneRewriteTitle'],['body','phoneRewriteBody'],['tags','phoneRewriteTags'],['all','phoneRewriteAll']])ph(id).onclick=()=>phoneRewrite(part);
 function phoneLanguageCount(value){const number=typeof value==='number'?value:Number(value?.count??value?.total??value?.size);return Number.isFinite(number)&&number>=0?number.toLocaleString('ru-RU'):null;}
@@ -2884,7 +3082,7 @@ function phoneInitializeLearning(){
  if(!phoneCanEdit())return null;
  if(!phoneLearningUI){let mount=ph('phoneLearningMount');if(!mount){mount=document.createElement('div');mount.id='phoneLearningMount';ph('phoneSetupView').prepend(mount);}mount.classList.remove('hidden');
   phoneLearningUI=setupLearningStudio({mount,api:phoneApi,toast:phoneToast,canManageSettings:()=>phoneState.access?.manageSettings===true,getGroup:()=>phoneState.detail?.fields?.editorIdentity||phoneState.detailId||'phone-editor',getFields:()=>phoneState.detail?.fields||{},getOutput:()=>({title:phoneState.detail?.titles?.[0]||'',body:phoneState.detail?.body||'',tags:phoneState.detail?.tags||''}),
-   onApply:async candidate=>{const request=phoneWritingBegin('Сохраняем проверенный ИИ-черновик…');if(!request)throw Error('Сначала откройте карточку и дождитесь текущей операции');let changed=0;try{for(const part of ['title','body','tags'])if(Object.hasOwn(candidate,part)){if(!phoneWritingCurrent(request))throw Error('Открыта другая карточка. Обновите её перед применением.');const card=await phoneApi('cards/'+request.id+'/edit-text',{part,text:candidate[part]});if(!phoneApplyWrittenCard(card,request))throw Error('Карточка изменилась во время сохранения');changed++;}phoneToast('Проверенный текст сохранён в карточке');}catch(error){throw Error((changed?'Сохранены частей: '+changed+'. ':'')+error.message);}finally{phoneWritingEnd(request);}}});
+   onApply:async candidate=>{const request=phoneWritingBegin('Сохраняем проверенный ИИ-черновик…');if(!request)throw Error('Сначала откройте карточку и дождитесь текущей операции');let changed=0;try{for(const part of ['title','body','tags'])if(hasOwnKey(candidate,part)){if(!phoneWritingCurrent(request))throw Error('Открыта другая карточка. Обновите её перед применением.');const card=await phoneApi('cards/'+request.id+'/edit-text',{part,text:candidate[part]});if(!phoneApplyWrittenCard(card,request))throw Error('Карточка изменилась во время сохранения');changed++;}phoneToast('Проверенный текст сохранён в карточке');}catch(error){throw Error((changed?'Сохранены частей: '+changed+'. ':'')+error.message);}finally{phoneWritingEnd(request);}}});
  }
  return phoneLearningUI;
 }

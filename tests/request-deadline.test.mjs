@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {photoSourceUrl} from '../web/media-core.mjs';
+import {localRequestTimeout} from '../web/request-deadline.mjs';
 
 const deadlineSource=(await readFile(new URL('../web/request-deadline.mjs',import.meta.url),'utf8')).replace(/^export /gm,'');
 function harness(extra={}){
@@ -70,6 +71,39 @@ test('without AbortController the UI still has a deadline and existing external 
 test('invalid timeouts fail before creating timers',async()=>{
   const env=harness();for(const milliseconds of [-1,NaN,Infinity,2147483648,'8000'])await assert.rejects(env.run(milliseconds,()=>1),error=>error.name==='RangeError');
   assert.equal(env.timers.size,0);
+});
+
+test('only synchronous photo analysis gets the model deadline plus transport margin',()=>{
+  assert.equal(localRequestTimeout('photo',{action:'analyze'}),125000);
+  for(const data of [undefined,{}, {action:'load'}, {action:'crop'}, {action:'accepted'}, {action:'attach'}])assert.equal(localRequestTimeout('photo',data),15000);
+  for(const path of ['import','jobs/abc','cards/abc/analyze','photo/analyze','save'])assert.equal(localRequestTimeout(path,{action:'analyze'}),15000);
+  assert.equal(localRequestTimeout('translate'),65000);
+  assert.equal(localRequestTimeout('learning',{action:'generate-preview'}),65000);
+  assert.equal(localRequestTimeout('learning',{action:'translate-preview'}),65000);
+  assert.equal(localRequestTimeout('learning',{action:'save'}),15000);
+  for(const path of ['card-export','dossier-import','listing-map','workspace-backup/inspect','cloud-backup','cloud-backup/upload','cloud-backup/restore','cloud-backup/list'])assert.equal(localRequestTimeout(path),120000);
+});
+
+test('actual Mac photo analysis client survives a 60s response and keeps the epoch guard',async()=>{
+  const app=await readFile(new URL('../web/app.js',import.meta.url),'utf8');
+  const localApi=app.split('\n').find(line=>line.startsWith('async function localApi('));
+  assert.match(localApi,/withRequestDeadline\(localRequestTimeout\(path,data\),/);
+  assert.match(app,/import \{[^}]*localRequestTimeout[^}]*\} from '\.\/request-deadline\.mjs'/);
+  const photo=await readFile(new URL('../web/photo-ui.mjs',import.meta.url),'utf8');
+  assert.match(photo,/const analysis=await api\('photo',\{action:'analyze',id:originalId\}\);\s*if\(epoch!==token\)break;/);
+  let now=0,sequence=0,requestSignal,settled=false;const timers=new Map();
+  const schedule=(callback,delay)=>{const id=sequence++;timers.set(id,{at:now+delay,callback});return id;};
+  const advance=milliseconds=>{now=milliseconds;for(const [id,timer]of [...timers].sort((a,b)=>a[1].at-b[1].at))if(timer.at<=now&&timers.has(id)){timers.delete(id);timer.callback();}};
+  const env=harness({setTimeout:schedule,clearTimeout:id=>timers.delete(id),
+    document:{querySelector:()=>null},fetch:async(url,options)=>{assert.equal(url,'/api/local/photo');assert.equal(JSON.parse(options.body).action,'analyze');requestSignal=options.signal;return {ok:true,json:()=>new Promise(resolve=>schedule(()=>resolve({status:'review'}),60000))};}});
+  vm.runInContext(localApi+'\nglobalThis.photoCall=localApi;',env.context);
+  const pending=env.context.photoCall('photo',{action:'analyze',id:'a'.repeat(64)});pending.then(()=>{settled=true;});
+  for(let n=0;n<8;n++)await Promise.resolve();
+  assert([...timers.values()].some(timer=>timer.at===125000));
+  advance(15000);for(let n=0;n<4;n++)await Promise.resolve();
+  assert.equal(settled,false);assert.equal(requestSignal.aborted,false);
+  advance(60000);assert.equal((await pending).status,'review');
+  assert.equal(requestSignal.aborted,false);assert.equal(timers.size,0);
 });
 
 async function serviceWorker(fetch){

@@ -1,3 +1,4 @@
+import {hasOwnKey} from './own-property.mjs';
 // Operator workflow is separate from source publication status and client copy.
 export const WORKFLOW_STATES=Object.freeze({new:'Новый',verified:'Проверен',ready:'Готов',published:'Опубликован',archive:'Архив'});
 const wfServices=Object.freeze({pickup:'Встреча / трансфер',arrival:'Помощь по прибытии',support:'Поддержка',luggage:'Помощь с багажом'});
@@ -28,7 +29,7 @@ export function normalizeWorkflowMetric(value){
 }
 export function normalizeWorkflow(value={}){
  if(!wfObject(value))throw Error('Неверные данные рабочего процесса');
- const status=value.status||'new';if(!Object.hasOwn(WORKFLOW_STATES,status))throw Error('Неизвестный рабочий статус карточки');
+ const status=value.status||'new';if(!hasOwnKey(WORKFLOW_STATES,status))throw Error('Неизвестный рабочий статус карточки');
  const dueDate=value.dueDate||'';if(dueDate&&!wfDate(dueDate))throw Error('Неверный срок карточки');
  const housingType=value.housingType||'unknown';if(!['unknown','apartment','room','dormitory'].includes(housingType))throw Error('Неизвестный тип жилья');
  if(value.tasks!==undefined&&(!Array.isArray(value.tasks)||value.tasks.length>100))throw Error('Допускается до 100 задач карточки');
@@ -64,9 +65,9 @@ export function workflowBoard(cards){
 function wfBulkPatch(patch){
  if(!wfObject(patch))throw Error('Нужны поля массового изменения');const result={};
  for(const [key,value]of Object.entries(patch)){
-  if(Object.hasOwn(wfServices,key)){if(typeof value!=='boolean')throw Error('Услуга должна быть отметкой: '+key);result[key]=value;}
+  if(hasOwnKey(wfServices,key)){if(typeof value!=='boolean')throw Error('Услуга должна быть отметкой: '+key);result[key]=value;}
   else if(key==='registration'){if(!['assist','included'].includes(value))throw Error('Неизвестный вариант регистрации');result[key]=value;}
-  else if(key==='audience'){if(!Object.hasOwn(wfAudience,value))throw Error('Неизвестный профиль тегов');result[key]=value;}
+  else if(key==='audience'){if(!hasOwnKey(wfAudience,value))throw Error('Неизвестный профиль тегов');result[key]=value;}
   else throw Error('Поле не разрешено для массового изменения: '+key);
  }
  if(!Object.keys(result).length)throw Error('Выберите хотя бы одно изменение');return result;
@@ -122,13 +123,13 @@ export function workflowTagPerformance(cards){
  const series=new Map(),groups=new Map(),observations=new Map();
  for(const card of cards||[])for(const metric of wfData(card).metrics){const key=JSON.stringify([metric.source,metric.postId,metric.kind,metric.day]),previous=observations.get(key);if(!previous)observations.set(key,metric);else if(JSON.stringify([previous.views,previous.leads,[...previous.tags].sort()])!==JSON.stringify([metric.views,metric.leads,[...metric.tags].sort()]))observations.set(key,{...previous,views:null,leads:null,tags:[...new Set([...previous.tags,...metric.tags])],metricConflict:true});}
  for(const metric of observations.values()){const key=JSON.stringify([metric.source,metric.postId,metric.kind,[...metric.tags].sort()]);if(!series.has(key))series.set(key,new Map());series.get(key).set(metric.day,metric);}
- for(const [key,byDay]of series){const rows=[...byDay.values()].sort((a,b)=>a.day.localeCompare(b.day)),latest=rows.at(-1),values={},notes=[];
+ for(const [key,byDay]of series){const rows=[...byDay.values()].sort((a,b)=>a.day.localeCompare(b.day)),latest=rows[rows.length-1],values={},notes=[];
   if(rows.some(row=>row.metricConflict))notes.push('Разные карточки содержат противоречивые показатели или теги одного поста за одну дату; спорное наблюдение исключено');
   for(const name of ['views','leads']){
    if(latest.kind==='daily'){const supplied=rows.map(row=>row[name]).filter(value=>value!==null);values[name]=supplied.length?supplied.reduce((a,b)=>a+b,0):null;if(supplied.length<rows.length)notes.push('Часть дневных '+(name==='views'?'просмотров':'обращений')+' неизвестна');}
-   else{const previous=rows.at(-2);values[name]=previous&&latest[name]!==null&&previous[name]!==null&&latest[name]>=previous[name]?latest[name]-previous[name]:null;if(values[name]===null)notes.push('Нужны два непротиворечивых накопительных снимка '+name);}
+   else{const previous=rows[rows.length-2];values[name]=previous&&latest[name]!==null&&previous[name]!==null&&latest[name]>=previous[name]?latest[name]-previous[name]:null;if(values[name]===null)notes.push('Нужны два непротиворечивых накопительных снимка '+name);}
   }
-  for(const tag of latest.tags){const groupKey=tag+'|'+latest.kind;if(!groups.has(groupKey))groups.set(groupKey,{tag,kind:latest.kind,posts:new Set(),views:null,leads:null,notes:new Set(),periods:[]});const group=groups.get(groupKey);group.posts.add(latest.source+'|'+latest.postId);for(const name of ['views','leads'])if(values[name]!==null)group[name]=(group[name]??0)+values[name];for(const note of notes)group.notes.add(note);group.periods.push({from:latest.kind==='cumulative'?rows.at(-2)?.day||null:rows[0].day,to:latest.day});}
+  for(const tag of latest.tags){const groupKey=tag+'|'+latest.kind;if(!groups.has(groupKey))groups.set(groupKey,{tag,kind:latest.kind,posts:new Set(),views:null,leads:null,notes:new Set(),periods:[]});const group=groups.get(groupKey);group.posts.add(latest.source+'|'+latest.postId);for(const name of ['views','leads'])if(values[name]!==null)group[name]=(group[name]??0)+values[name];for(const note of notes)group.notes.add(note);group.periods.push({from:latest.kind==='cumulative'?rows[rows.length-2]?.day||null:rows[0].day,to:latest.day});}
  }
  return [...groups.values()].map(row=>({...row,posts:row.posts.size,notes:[...row.notes]})).sort((a,b)=>a.tag.localeCompare(b.tag)||a.kind.localeCompare(b.kind));
 }

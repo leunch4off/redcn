@@ -78,6 +78,10 @@ class AiImportIntegrationTests(unittest.TestCase):
         self.assertEqual(saved['fields']['features'],['fridge'])
         self.assertEqual(job['progress']['ai']['generatedTokens'],30)
         self.assertFalse(job['progress']['ai']['active'])
+        import card_catalog
+        with redcn.open_cache(self.directory) as db:
+            state=card_catalog.summaries(db,[job['result_id']])[job['result_id']]
+        self.assertFalse(state['contentEdited'],'the initial import is still the first publication')
 
     def test_disabled_advertising_does_not_run_model(self):
         saved,job,calls=self.run_import(enabled=False)

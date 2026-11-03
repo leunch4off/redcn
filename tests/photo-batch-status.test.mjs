@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {photoBatchSummary} from '../web/photo-batch-status.mjs';
 import {readCianHtml} from '../web/source-adapters/cian.mjs';
+import {photoObservationSummary} from '../web/photo-ui.mjs';
 
 test('a failed download and failed crop report separate reasons and keep18 originals of19',()=>{
  const summary=photoBatchSummary({photoCount:19,mediaStatus:'partial',photoProcessing:{downloadFailed:1,failed:1,skipped:0},mediaFailures:[{index:3,stage:'crop',originalSaved:true,message:'OCR unavailable'},{index:7,stage:'download',originalSaved:false,message:'HTTP failed'}]},18,2);
@@ -13,6 +14,25 @@ test('a failed download and failed crop report separate reasons and keep18 origi
 test('zero downloaded photos explain failed status instead of endlessly saying Mac is preparing',()=>{
  const summary=photoBatchSummary({photoCount:19,mediaStatus:'partial',photoProcessing:{downloadFailed:19}},0,0);
  assert.match(summary.text,/0 из 19/);assert.match(summary.text,/Не удалось скачать 19/);assert.equal(summary.retry,true);
+});
+test('failure after the30thphoto and incomplete inventory remain visible',()=>{
+ const summary=photoBatchSummary({photoCount:36,mediaStatus:'partial',photoProcessing:{downloadFailed:1},
+  mediaFailures:[{index:36,stage:'download',originalSaved:false,message:'last photo failed'}],
+  photoInventory:{state:'partial',total:36,totalAvailable:36,checked:30,failed:1,skipped:5,autoApplySummary:{needsReview:4}}},35,0);
+ assert.equal(summary.failures[0].index,36);assert.match(summary.text,/Мебель и техника: проверено 30 из 36/);
+ assert.match(summary.text,/Не удалось проанализировать 1/);assert.match(summary.text,/Ещё не проверено 5/);assert.match(summary.text,/Неподтверждённых находок: 4/);
+});
+test('over200photos is reported and never claimed to be a complete inventory',()=>{
+ const summary=photoBatchSummary({photoCount:200,photoInventory:{state:'partial',total:200,totalAvailable:205,checked:200,failed:0,truncated:true,coverageLimit:200}},200);
+ assert.match(summary.text,/200 из 205/);assert.match(summary.text,/Ещё не проверено 5/);assert.match(summary.text,/Лимит одного альбома — 200/);
+});
+test('photo UI separates unchecked, failed and no confident findings',()=>{
+ const summary=photoObservationSummary([{selected:true},{selected:true,analysis:{status:'timeout',candidates:[]}},
+  {selected:true,analysis:{status:'review',candidates:[]}},
+  {selected:true,analysis:{status:'review',candidates:[{id:'sofa'}]}},
+  {selected:false,analysis:{status:'review',candidates:[]}}]);
+ assert.deepEqual([summary.total,summary.checked,summary.failed,summary.unprocessed,summary.unrecognized,summary.pending],[4,2,1,1,1,1]);
+ assert.match(summary.text,/не означает отсутствие мебели/);
 });
 
 test('intentional original choices and absent watermarks do not require endless retries',()=>{

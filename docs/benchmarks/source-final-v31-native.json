@@ -1,0 +1,121 @@
+{
+  "schema": "redcn-final-source-test-verification-v1",
+  "createdUtc": "2026-11-03T11:51:20.472976+00:00",
+  "evidenceKind": "immutable-source-build-and-bounded-test-verification",
+  "nativeBaselineCommit": "f42ab1f1ef9a42d1e82335a823827fe0fa0e1a3d",
+  "snapshot008": {
+    "capturedUtc": "2026-11-03T11:39:30.923389+00:00",
+    "sourceDigest": "4b1b2464bb76bb5d4eacb886ff716f7185fcfeeb9e5f9d2d68e80271d0b75261",
+    "manifestSha256": "0a2fc4cabc7187069993869c3a388701d13b91f6be5e4282979ee0124e0a8a9c",
+    "archiveSha256": "0ca50d74f4485859b54579fbc520cdaaf7148b03fa636e98c7efcae26a37062a",
+    "verifiedSourceFiles": 871,
+    "sourceFilesDifferentFromBaseline": 108,
+    "appliedUtc": "2026-11-03T11:40:13.332252+00:00",
+    "nativeBuildId": "3fb8db4db741663c5d2cfeb0168cf25ac3b43bc77fb7027bca02f728312fb0a1",
+    "localVerification": {
+      "execution": "Disposable local copy of all 871 immutable source files, rebuilt locally before artifact validation.",
+      "authoritativeSourceModified": false,
+      "nativeExecutionRequired": false,
+      "buildId": "3fb8db4db741663c5d2cfeb0168cf25ac3b43bc77fb7027bca02f728312fb0a1",
+      "buildIdMatchesNativeSnapshot": true,
+      "build": {
+        "name": "build",
+        "exitCode": 0,
+        "seconds": 0.512,
+        "logSha256": "04bee84039e480d3f7bcfd43adf5006d4dfb7dceb81ee0e2fb629e674f703a59"
+      },
+      "nodeSuite": {
+        "name": "npm-test",
+        "exitCode": 0,
+        "seconds": 13.072,
+        "logSha256": "3ce5237b80582d104d3195f0e90b5eda470b7679b235280d41c839f8cf56c9b2",
+        "command": "npm test",
+        "tests": 663,
+        "passed": 662,
+        "failed": 0,
+        "skipped": 1,
+        "cancelled": 0,
+        "durationMilliseconds": 12860.450693
+      },
+      "artifactValidation": {
+        "name": "validate",
+        "exitCode": 0,
+        "seconds": 0.469,
+        "logSha256": "6726e3ad6acac97e92adbaf9eb0fbb5379a93f81b8fc4e48f302c3858de2d6e2",
+        "command": "npm run validate",
+        "result": "Valid ESM artifact exports default.fetch"
+      },
+      "pagesValidation": {
+        "name": "validate-pages",
+        "exitCode": 0,
+        "seconds": 0.962,
+        "logSha256": "dddc31133879919f491b586cd86bd8a2d91dbe71432523cf05fb8ad7fe1821e9",
+        "command": "npm run validate:pages",
+        "result": "Standalone main/phone shells, public datasets, manifest/icons, lazy modules and bundled request deadlines pass"
+      }
+    },
+    "focusedPythonValidationBeforeSnapshot": {
+      "executionOrigin": "Release owner local run",
+      "moduleCount": 4,
+      "tests": 58,
+      "outcome": "PASS",
+      "durationSeconds": 21.732
+    }
+  },
+  "snapshot009": {
+    "capturedUtc": "2026-11-03T11:48:30.027751+00:00",
+    "sourceDigest": "a510831d5f0124ca16561cd68e63b1843301b2b1105d42750db337a1146c6234",
+    "manifestSha256": "8fba073f09707eda3e4fde819d122c00098e9e47d55a0d3121d9720eea9f047f",
+    "archiveSha256": "af2c131b9fa5696afb047143abb9526f12322ab95dff35bbe638741de1094f0b",
+    "verifiedSourceFiles": 871,
+    "sourceFilesDifferentFromBaseline": 108,
+    "appliedUtc": "2026-11-03T11:48:50.181516+00:00",
+    "changedPathsSince008": [
+      "cli/individual_copy.py",
+      "tests/test_individual_copy.py"
+    ],
+    "changeScope": "Only individual-copy city/layout instructions and retry guidance, unsupported completeness guards, and their existing regression tests changed.",
+    "buildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+    "nativeBuild": {
+      "command": "npm run build",
+      "exitCode": 0,
+      "wallSeconds": 1.046,
+      "logSha256": "396738259606fd6f0e528a7f0d014b0d2c0d1f58ae11b2a76cd03f288337e57b"
+    },
+    "diffCheck": {
+      "nativeExitCode": 0,
+      "localExitCode": 0
+    },
+    "localManifestVerificationUtc": "2026-11-03T11:48:55.363780+00:00",
+    "localSourceMismatchPaths": [],
+    "unexpectedSourcePaths": [],
+    "focusedPythonValidationBeforeSnapshot": {
+      "executionOrigin": "Release owner local run",
+      "module": "test_individual_copy",
+      "tests": 27,
+      "outcome": "PASS",
+      "durationSeconds": 9.964
+    },
+    "codeHashes": {
+      "cli/individual_copy.py": "8063bc06b7192cf1ddb972faa3f20c9c6fa774e9d98e0e83c7a47dee2e6aae44",
+      "tests/test_individual_copy.py": "980a0369261dd814c164fbea7d6fc948f1582d741441e60adca11dee89e17d7a",
+      "web/fact-evidence.mjs": "a01233443b257430994571a514326e01efdfc2205b6aef60f171c04143936964",
+      "cli/language.mjs": "8ae1b1cc55805f2ae35c2d0cc6a9abd79aafa9bc821c3c670bfab11039a3c326",
+      "tests/source-conditions-v31.test.mjs": "6d284f7bbc510421fca162731c1b9fa943049d9b32ae1aae80d0679d96b50741",
+      "tests/test_language_service.py": "223c9632663ab8c454d8c7c0f6f9b1a5b68b8eaaa92006a6571e0aa208d87502"
+    }
+  },
+  "sourceModeVerification": {
+    "baselineTrackedFiles": 853,
+    "baselineExecutables": 4,
+    "executableClassMismatches": 0,
+    "modeSemantics": "Canonical Git executable classes; existing native 0600 read/write permissions are preserved separately by the guarded installer."
+  },
+  "boundaries": [
+    "The 663-test Node suite and both local artifact validators are attributed to exact snapshot008, not relabelled as tests of snapshot009.",
+    "Snapshot009 adds only the two stated Python paths; its focused 27-test result and native rebuild are reported separately.",
+    "The full Python suite was not repeated for this final verification.",
+    "This receipt does not claim production installation, service restart, post-push CI success, or general model-output quality. Those require separate evidence.",
+    "No model inference was executed by these local source/build/test checks."
+  ]
+}

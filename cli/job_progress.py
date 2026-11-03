@@ -26,7 +26,7 @@ LABELS = dict(STAGES)
 SECTION_NAMES = ('gallery','description','characteristics')
 SECTION_REASONS = ('ready','partial','not_found','not_visited_budget')
 STAGE_QUALITIES = ('complete','partial','unknown')
-PROFILES = ('import:auto', 'import:chrome', 'import:http', 'import:cache', 'prepare', 'import:vision', 'prepare:vision')
+PROFILES = ('import:auto', 'import:chrome', 'import:http', 'import:cache', 'prepare', 'import:vision', 'prepare:vision', 'text:individual')
 
 
 def emit(report, message, **fields):
@@ -128,7 +128,7 @@ class JobProgress:
         self.lock = threading.RLock()
         self.started = self.stage_started = clock()
         self.started_at = wall_clock()
-        self.current = 'preflight' if key.startswith('import:') else 'photos'
+        self.current = 'preflight' if key.startswith('import:') else 'generate' if key.startswith('text:') else 'photos'
         self.message = ''
         self.state = 'running'
         self.stopped = None
