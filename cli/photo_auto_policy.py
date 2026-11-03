@@ -113,6 +113,25 @@ def human_decisions(fields, url, digest):
     return rejected, confirmed - rejected
 
 
+def assistant_reviews(fields, digest):
+    """Explicit reviews of these bytes, separate from human/model acceptance."""
+    from photo_teacher_review import valid_review
+    fields = fields if isinstance(fields, dict) else {}
+    edits = fields.get('photoEdits') if isinstance(fields.get('photoEdits'), dict) else {}
+    observations = edits.get('observations') if isinstance(edits.get('observations'), dict) else {}
+    reviews = {}
+    for observation in list(observations.values())[:MAX_JOURNAL_ENTRIES]:
+        if not isinstance(observation, dict):
+            continue
+        analysis, review = observation.get('analysis'), observation.get('teacherReview')
+        if (not isinstance(analysis, dict) or analysis.get('originalId') != digest
+                or not valid_review(review, digest)):
+            continue
+        for feature in review['features']:
+            reviews.setdefault(feature, review)
+    return reviews
+
+
 def review_journal(fields, photos, *, requested=False, now=None):
     """Merge a bounded per-card review queue without changing confirmed facts.
 
@@ -128,18 +147,18 @@ def review_journal(fields, photos, *, requested=False, now=None):
     current = {row.get('sourceUrl'): row.get('originalId') for row in photos if isinstance(row, dict)}
     entries = {}
     moment = now or datetime.now(timezone.utc).isoformat(timespec='seconds')
-    for row in old_rows[:MAX_JOURNAL_ENTRIES]:
-        if not isinstance(row, dict):
-            continue
-        digest, feature = row.get('originalId'), row.get('featureId')
-        if (not isinstance(digest, str) or not _DIGEST.fullmatch(digest)
-                or not isinstance(feature, str) or feature not in TRAINED_REVIEW_IDS or row.get('state') not in ('pending', 'confirmed', 'rejected', 'stale')
-                or not isinstance(row.get('sourceUrl'), str)):
-            continue
-        identity = hashlib.sha256((digest + '|' + feature).encode()).hexdigest()
-        if row.get('id') != identity:
-            continue
-        saved = copy.deepcopy(row)
+    reviews_by_original = {}
+    current_originals = set(current.values())
+
+    def resolve(entry):
+        saved = copy.deepcopy(entry)
+        digest, feature = saved['originalId'], saved['featureId']
+        # Assistant decisions must be revalidated, never retained as a human
+        # confirmation after removing the review or replacing the photograph.
+        if saved['state'] == 'assistant-reviewed':
+            saved['state'] = 'pending'
+        for key in ('reviewOrigin', 'assistantReviewId', 'humanVerified'):
+            saved.pop(key, None)
         if saved['state'] == 'pending' and current.get(saved['sourceUrl']) != digest:
             saved['state'] = 'stale'
         rejected, confirmed = human_decisions(fields, saved['sourceUrl'], digest)
@@ -147,7 +166,27 @@ def review_journal(fields, photos, *, requested=False, now=None):
             saved['state'] = 'rejected'
         elif feature in confirmed:
             saved['state'] = 'confirmed'
-        entries[identity] = saved
+        elif saved['state'] not in ('confirmed', 'rejected') and digest in current_originals:
+            if digest not in reviews_by_original:
+                reviews_by_original[digest] = assistant_reviews(fields, digest)
+            review = reviews_by_original[digest].get(feature)
+            if review:
+                saved.update(state='assistant-reviewed', reviewOrigin='assistant-visual-review',
+                    assistantReviewId=review['reviewId'], humanVerified=False)
+        return saved
+
+    for row in old_rows[:MAX_JOURNAL_ENTRIES]:
+        if not isinstance(row, dict):
+            continue
+        digest, feature = row.get('originalId'), row.get('featureId')
+        if (not isinstance(digest, str) or not _DIGEST.fullmatch(digest)
+                or not isinstance(feature, str) or feature not in TRAINED_REVIEW_IDS or row.get('state') not in ('pending', 'confirmed', 'rejected', 'stale', 'assistant-reviewed')
+                or not isinstance(row.get('sourceUrl'), str)):
+            continue
+        identity = hashlib.sha256((digest + '|' + feature).encode()).hexdigest()
+        if row.get('id') != identity:
+            continue
+        entries[identity] = resolve(row)
     added = 0
     for photo in photos if requested is True else []:
         if not isinstance(photo, dict) or photo.get('status') != 'review':
@@ -172,11 +211,109 @@ def review_journal(fields, photos, *, requested=False, now=None):
                 'createdAt': old.get('createdAt', moment), 'lastSeenAt': moment}
             if identity not in entries:
                 added += 1
-            entries[identity] = entry
+            entries[identity] = resolve(entry)
     # Keep current observations first when old originals fill the bounded journal.
     ordered = sorted(entries.values(), key=lambda row: (
         current.get(row['sourceUrl']) != row['originalId'], row['state'] != 'pending', row['id']))[:MAX_JOURNAL_ENTRIES]
     return {'version': VERSION, 'requested': requested is True, 'entries': ordered,
         'added': added, 'pending': sum(row['state'] == 'pending' for row in ordered),
         'confirmed': sum(row['state'] == 'confirmed' for row in ordered),
-        'rejected': sum(row['state'] == 'rejected' for row in ordered)}
+        'rejected': sum(row['state'] == 'rejected' for row in ordered),
+        'assistantReviewed': sum(row['state'] == 'assistant-reviewed' for row in ordered)}
+
+
+def reconcile_saved_review_journal(result):
+    """Return a copy with current review state, without inference or new facts.
+
+    Used after a visual review and by explicit saved-card migrations. Scan
+    coverage, model output, human confirmation and publication text stay intact.
+    """
+    from phone_relay import source_images
+    updated = copy.deepcopy(result)
+    fields = updated.get('fields') if isinstance(updated.get('fields'), dict) else {}
+    edits = fields.get('photoEdits') if isinstance(fields.get('photoEdits'), dict) else {}
+    previous = edits.get('reviewJournal')
+    if not isinstance(previous, dict) or previous.get('version') != VERSION:
+        return updated
+    observations = edits.get('observations') if isinstance(edits.get('observations'), dict) else {}
+    media = {row.get('sourceUrl'): row.get('id') for row in updated.get('media', [])
+        if isinstance(row, dict) and row.get('kind', 'original') == 'original'}
+    photos = []
+    for url in source_images(updated):
+        digest = media.get(url)
+        if not isinstance(digest, str) or not _DIGEST.fullmatch(digest):
+            continue
+        observation = observations.get(url) if isinstance(observations.get(url), dict) else {}
+        analysis = observation.get('analysis') if isinstance(observation.get('analysis'), dict) else {}
+        photos.append({**(analysis if analysis.get('originalId') == digest else {}),
+            'sourceUrl': url, 'originalId': digest})
+    journal = review_journal(fields, photos, requested=False)
+    journal.update(requested=previous.get('requested') is True, added=0)
+    edits['reviewJournal'] = journal
+    inventory = updated.get('photoInventory')
+    if isinstance(inventory, dict):
+        inventory['reviewJournal'] = copy.deepcopy(journal)
+        current = {photo['sourceUrl']: photo['originalId'] for photo in photos}
+        # The phone renders per-photo candidates as well as the aggregate.
+        # Detach this derived view from any in-memory aliases of observations;
+        # original model output and accepted listing fields remain untouched.
+        inventory_photos = inventory.get('photos')
+        if isinstance(inventory_photos, list):
+            inventory['photos'] = copy.deepcopy(inventory_photos)
+            for photo in inventory['photos']:
+                if not isinstance(photo, dict):
+                    continue
+                digest, url = photo.get('originalId'), photo.get('sourceUrl')
+                active = current.get(url) == digest and digest is not None
+                rejected, confirmed = human_decisions(fields, url, digest) if active else (set(), set())
+                assistant = assistant_reviews(fields, digest) if active else {}
+                candidates = photo.get('candidates') if isinstance(photo.get('candidates'), list) else []
+                for candidate in candidates:
+                    if not isinstance(candidate, dict) or candidate.get('id') not in FEATURE_LABELS:
+                        continue
+                    feature = candidate['id']
+                    if candidate.get('reviewDecision') == 'assistant-reviewed':
+                        for key in ('reviewDecision', 'reviewOrigin', 'assistantReviewId', 'humanVerified'):
+                            candidate.pop(key, None)
+                        candidate.update(status='candidate', autoEligible=False,
+                            automaticSuggestion=active and photo.get('autoApply') is True
+                                and detector_suggestion(candidate, photo, digest))
+                    if feature in rejected:
+                        candidate.update(status='rejected', autoEligible=False,
+                            automaticSuggestion=False, reviewDecision='rejected')
+                    elif feature in confirmed:
+                        candidate.update(status='confirmed', automaticSuggestion=False, reviewDecision='confirmed')
+                    elif feature in assistant:
+                        candidate.update(status='assistant-reviewed', autoEligible=False,
+                            automaticSuggestion=False, reviewDecision='assistant-reviewed',
+                            reviewOrigin='assistant-visual-review', humanVerified=False,
+                            assistantReviewId=assistant[feature]['reviewId'])
+                if isinstance(photo.get('autoApplySummary'), dict):
+                    photo['autoApplySummary'].update(
+                        automaticSuggestions=sum(row.get('automaticSuggestion') is True
+                            for row in candidates if isinstance(row, dict)),
+                        assistantReviewed=sum(row.get('reviewDecision') == 'assistant-reviewed'
+                            for row in candidates if isinstance(row, dict)),
+                        needsReview=sum(row.get('reviewDecision') not in ('confirmed', 'rejected', 'assistant-reviewed')
+                            and not (photo.get('autoApply') and row.get('autoEligible'))
+                            for row in candidates if isinstance(row, dict)))
+        summary = inventory.get('autoApplySummary')
+        if isinstance(summary, dict):
+            pending, reviewed = set(), set()
+            for photo in photos:
+                digest = photo['originalId']
+                rejected, confirmed = human_decisions(fields, photo['sourceUrl'], digest)
+                assistant = assistant_reviews(fields, digest)
+                for candidate in photo.get('candidates', []):
+                    if not isinstance(candidate, dict) or candidate.get('id') not in FEATURE_LABELS:
+                        continue
+                    feature = candidate['id']
+                    if feature in rejected or feature in confirmed:
+                        continue
+                    if feature in assistant:
+                        reviewed.add((digest, feature))
+                    elif not (photo.get('autoApply') and candidate.get('autoEligible')):
+                        pending.add((digest, feature))
+            summary.update(automaticSuggestions=journal['pending'], newSuggestions=0,
+                needsReview=len(pending), assistantReviewed=len(reviewed))
+    return updated

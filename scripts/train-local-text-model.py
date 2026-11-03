@@ -1,8 +1,8 @@
 """Offline, bounded native-MLX supervised adaptation; never promotes a model.
 
 Install mlx-lm into an isolated arm64 Python environment. The local model must
-already exist: this script cannot download anything. Only 540672 real q/v LoRA
-parameters are optimized; immutable base weights stay frozen. Same-directory
+already exist: this script cannot download anything. The selected translation
+or advertising contract determines real q/v LoRA parameters; the base stays frozen. Same-directory
 resume restores adapter and optimizer together after validating their receipts.
 """
 import argparse
@@ -23,7 +23,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'cli'))
 from text_model_contract import (BASE_MODEL, EXPECTED_TRAINABLE, LAYERS, LORA,
     canonical, content_sha, encode_record, expected_parameters, file_sha,
-    validate_dataset, MAX_DATASET_BYTES, validation_gate, answer_loss_mask)
+    validate_dataset, MAX_DATASET_BYTES, validation_gate, answer_loss_mask, training_contract)
 from training_job_state import with_candidate_lease
 
 
@@ -46,6 +46,22 @@ def training_row(rows, *, seed, step, sampling='random'):
     return rows[order[offset]]
 
 
+def advertising_target_logits(current, inputs, answer_start):
+    """Keep the complete context; project only supervised answer positions.
+
+    Qwen3's normal __call__ applies the vocabulary head independently to every
+    hidden position. Prompt logits receive zero loss, so projecting them wastes
+    hundreds of MB without changing any target loss or gradient. The backbone
+    still sees every prompt token and keeps the original causal attention.
+    """
+    if type(answer_start) is not int or not 1 <= answer_start <= inputs.shape[1]:
+        raise ValueError('Invalid assistant target boundary')
+    hidden = current.model(inputs)[:, answer_start-1:, :]
+    if current.args.tie_word_embeddings:
+        return current.model.embed_tokens.as_linear(hidden)
+    return current.lm_head(hidden)
+
+
 def resume_receipt(output, args, model_path):
     output = Path(output)
     receipt_path = output/'trainreceipt.json'
@@ -56,8 +72,13 @@ def resume_receipt(output, args, model_path):
     if receipt_path.is_symlink() or not receipt_path.is_file():
         raise ValueError('Missing checkpoint receipt')
     value = json.loads(receipt_path.read_text())
+    contract = training_contract(json.loads((Path(model_path)/'config.json').read_text()),
+                                 getattr(args, 'profile', 'translation'))
     expected = {'datasetSha256': file_sha(args.dataset), 'baseConfigSha256': file_sha(Path(model_path)/'config.json'),
-        'trainableParameters': EXPECTED_TRAINABLE, 'seed': args.seed, 'lora': LORA}
+        'trainableParameters': contract['trainableParameters'], 'seed': args.seed, 'lora': contract['lora']}
+    if contract['lane'] == 'advertising':
+        expected.update(trainingLane='advertising', trainingContract=contract['name'],
+            targetFormat=contract['targetFormat'], layers=contract['layers'])
     if any(value.get(key) != item for key, item in expected.items()):
         raise ValueError('Checkpoint dataset, model, seed or adapter configuration changed')
     if value.get('sampling', 'random') != getattr(args, 'sampling', 'random'):
@@ -154,11 +175,14 @@ def run(args):
     if not model_path.is_dir() or not (model_path/'config.json').is_file():
         raise ValueError('A downloaded local MLX model directory is required')
     config = json.loads((model_path/'config.json').read_text())
-    count = expected_parameters(config)
-    if count != EXPECTED_TRAINABLE:
-        raise ValueError('Architecture has an unexpected adapter parameter count')
+    contract = training_contract(config, getattr(args, 'profile', 'translation'))
+    if args.max_seq_length > contract['maxSequenceLength']:
+        raise ValueError('Requested context exceeds the selected training profile')
     snapshot = FrozenTrainingDataset(args.dataset)
     data = snapshot.data
+    if contract['lane'] == 'advertising':
+        from advertising_learning import validate_training_dataset
+        validate_training_dataset(data)
     consent = prepare_consent(args, data, snapshot=snapshot)
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -172,7 +196,7 @@ def run(args):
     from mlx_lm.tuner.utils import linear_to_lora_layers
     from mlx_lm.tuner.trainer import grad_checkpoint
     # One process, one model, short contexts. OS pressure still needs supervising.
-    mx.set_memory_limit(3_500_000_000)
+    mx.set_memory_limit(contract['memoryBytes'])
     mx.set_cache_limit(128_000_000)
     mx.random.seed(args.seed)
     start = time.monotonic()
@@ -180,11 +204,11 @@ def run(args):
     signal.signal(signal.SIGTERM, lambda *_: cancel_signal.__setitem__(0, True))
     model, tokenizer = load(str(model_path))
     model.freeze()
-    linear_to_lora_layers(model, LAYERS, LORA)
+    linear_to_lora_layers(model, contract['layers'], contract['lora'])
     actual = dict(tree_flatten(model.trainable_parameters()))
     trainable = sum(int(array.size) for array in actual.values())
-    if trainable != EXPECTED_TRAINABLE or len(actual) != LAYERS*4:
-        raise ValueError(f'Expected {EXPECTED_TRAINABLE} adapter weights, got {trainable}')
+    if trainable != contract['trainableParameters'] or len(actual) != contract['tensorCount']:
+        raise ValueError(f"Expected {contract['trainableParameters']} adapter weights, got {trainable}")
     if args.resume_adapter:
         adapter = Path(args.resume_adapter)
         if not adapter.is_file() or adapter.is_symlink():
@@ -200,17 +224,27 @@ def run(args):
     for split in ('train', 'validation'):
         encoded[split], skipped[split] = [], []
         for row in data['splits'][split]:
-            item = encode_record(tokenizer, row, args.max_seq_length)
+            item = encode_record(tokenizer, row, args.max_seq_length,
+                                 chat_template_kwargs=contract['chatTemplateKwargs'],
+                                 target_format=contract.get('targetFormat'))
             if item is None:
                 skipped[split].append(row['id'])
             else:
                 encoded[split].append(item)
         if len(encoded[split]) < 2:
             raise ValueError(f'{split} has fewer than two complete examples within the token limit')
+        if contract['lane'] == 'advertising' and skipped[split]:
+            # A genuine reviewed listing cannot silently lose its long target
+            # or disappear from the declared corpus to make a run look complete.
+            raise ValueError(f'{split} contains {len(skipped[split])} complete examples above the token limit; prepare a fitting corpus explicitly')
     snapshot.assert_consent(consent)
 
     def loss_fn(current, tokens, answer_start):
         inputs, targets = tokens[:, :-1], tokens[:, 1:]
+        if contract['lane'] == 'advertising':
+            logits = advertising_target_logits(current, inputs, answer_start)
+            losses = nn.losses.cross_entropy(logits, tokens[:, answer_start:])
+            return losses.astype(mx.float32).mean()
         logits = current(inputs)
         mask = mx.array(answer_loss_mask(tokens.shape[1], answer_start))
         losses = nn.losses.cross_entropy(logits, targets)
@@ -234,17 +268,22 @@ def run(args):
     if previous:
         optimizer.state = tree_unflatten(list(mx.load(str(output/'optimizer.safetensors')).items()))
     gradient = nn.value_and_grad(model, loss_fn)
-    receipt = {'version': 1, 'status': 'training', 'baseModel': BASE_MODEL,
+    receipt = {'version': 1, 'status': 'training', 'baseModel': contract['baseModel'],
+        'trainingLane': contract['lane'], 'trainingContract': contract['name'],
         'baseConfigSha256': file_sha(model_path/'config.json'),
         'baseArtifacts': {path.name:file_sha(path) for path in sorted(model_path.glob('*.safetensors'))
             if path.is_file() and not path.is_symlink()},
+        'baseSupportArtifacts': {path.name:file_sha(path) for path in sorted(model_path.iterdir())
+            if path.is_file() and not path.is_symlink() and path.name.endswith(('.json','.model','.tiktoken','.jinja'))},
+        'targetFormat': contract.get('targetFormat'),
+        'logitPositions': 'assistant-targets-only' if contract['lane']=='advertising' else 'all-inputs-masked-loss',
         'datasetSha256': snapshot.sha256, 'datasetContentSha256': content_sha(data),
         'trainableParameters': trainable, 'adapterTensorCount': len(actual),
-        'lora': LORA, 'layers': LAYERS, 'seed': args.seed, 'sampling': args.sampling,
+        'lora': contract['lora'], 'layers': contract['layers'], 'seed': args.seed, 'sampling': args.sampling,
         'learningRate': args.learning_rate, 'initialSha256': file_sha(output/'initial.safetensors'),
         'packages': {key: importlib.metadata.version(key) for key in ('mlx', 'mlx-lm')},
         'limits': {'seconds': args.max_seconds, 'steps': args.steps, 'maxSequenceLength': args.max_seq_length,
-            'memoryBytes': 3_500_000_000, 'batchSize': 1},
+            'memoryBytes': contract['memoryBytes'], 'batchSize': 1},
         'examples': {key: len(rows) for key, rows in encoded.items()},
         'skippedTooLongIds': skipped, 'validationExampleIds': [row['id'] for row in validation_rows],
         'baselineValidationLoss': before, 'stepsCompleted': previous['stepsCompleted'] if previous else 0,
@@ -260,7 +299,7 @@ def run(args):
                                      mx.get_peak_memory())
     receipt['elapsedSeconds'] = receipt['previousElapsedSeconds']+time.monotonic()-start
     atomic_json(output/'adapter_config.json', {'fine_tune_type': 'lora',
-        'num_layers': LAYERS, 'lora_parameters': LORA, 'model': str(model_path)})
+        'num_layers': contract['layers'], 'lora_parameters': contract['lora'], 'model': str(model_path)})
     atomic_json(output/'trainreceipt.json', receipt)
     print(canonical({'status': 'training', 'parameters': trainable,
         'examples': receipt['examples'], 'baselineLoss': before}), flush=True)
@@ -344,7 +383,7 @@ def run(args):
         'uniqueGroups': len({row['groupId'] for row in seen}),
         'sampledTaskCounts': {task: sum(tasks[row['id']]==task for row in seen) for task in sorted(set(tasks.values()))},
         'completeTrainingPass': len({row['id'] for row in seen}) == len(encoded['train'])}
-    receipt['objective'] = 'assistant-targets-including-template-terminator-and-suffix-v1'
+    receipt['objective'] = contract.get('targetFormat') or 'assistant-targets-including-template-terminator-and-suffix-v1'
     checkpoint()
     print(canonical({key: receipt[key] for key in ('status', 'stepsCompleted', 'trainableParameters',
         'changedParameterElements', 'baselineValidationLoss', 'finalValidationLoss', 'elapsedSeconds')}), flush=True)
@@ -354,6 +393,7 @@ def run(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model', required=True)
+    parser.add_argument('--profile', choices=('translation', 'advertising'), default='translation')
     parser.add_argument('--dataset', required=True)
     parser.add_argument('--output', required=True)
     parser.add_argument('--steps', type=int, default=20)
@@ -368,7 +408,8 @@ def main():
     parser.add_argument('--resume-adapter')
     parser.add_argument('--consent-cache',help='Required for approved/operator examples; rechecked during training')
     args = parser.parse_args()
-    if not 1 <= args.steps <= 2000 or not 30 <= args.max_seconds <= 3600 or not 64 <= args.max_seq_length <= 1024:
+    limit = 1536 if args.profile == 'advertising' else 1024
+    if not 1 <= args.steps <= 2000 or not 30 <= args.max_seconds <= 3600 or not 64 <= args.max_seq_length <= limit:
         parser.error('Bounded steps, seconds and sequence length are required')
     if not 2 <= args.eval_examples <= 32 or not 0 < args.learning_rate <= .001:
         parser.error('Invalid evaluation or learning-rate limit')

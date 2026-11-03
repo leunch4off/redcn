@@ -16,7 +16,8 @@ from ai_telemetry import read_progress, sanitize_ai, write_progress
 from job_progress import emit
 from text_model_contract import (BASE_MODEL, EXPECTED_TRAINABLE, expected_parameters,
                                 inference_model, file_sha, sampling_parameters,
-                                inference_sampling_parameters, inference_memory_limit)
+                                inference_sampling_parameters, inference_memory_limit,
+                                training_contract)
 
 MAX_INPUT = 40_000
 MAX_OUTPUT = 100_000
@@ -80,6 +81,7 @@ def settings(directory):
         'pythonPath': value.get('pythonPath', str(defaults/'venv'/'bin'/'python')),
         'advertisingModelPath': value.get('advertisingModelPath'),
         'advertisingPythonPath': value.get('advertisingPythonPath'),
+        'advertisingAdapterPath': value.get('advertisingAdapterPath') if value.get('useAdvertisingAdapter') is True else None,
         'adapterPath': value.get('adapterPath') if value.get('useCandidateAdapter') is True else None,
         'maxSeconds': max(5, min(55, float(value.get('maxSeconds', 55))))}
 
@@ -139,7 +141,7 @@ def generate(request, directory, *, cancel=None, deadline=None, status=None):
         if request.get('purpose') == 'advertising' and config.get('advertisingModelPath'):
             config = {**config, 'modelPath': config['advertisingModelPath'],
                 'pythonPath': config.get('advertisingPythonPath') or config['pythonPath'],
-                'adapterPath': None}
+                'adapterPath': config.get('advertisingAdapterPath')}
         if not config['enabled']:
             return unavailable('Локальная текстовая модель выключена')
         python = Path(config['pythonPath'])
@@ -252,20 +254,38 @@ def worker(model_path, adapter_path, request, *, progress_path=None):
     mx.set_cache_limit(64_000_000)
     adapter_sha = None
     if adapter_path != '-':
-        # A trained 0.5B adapter cannot be attached to the 1.5B candidate.
-        expected_parameters(model_config)
         adapter = Path(adapter_path)
         receipt_path = adapter/'trainreceipt.json'
         if not receipt_path.is_file() or receipt_path.is_symlink() or receipt_path.stat().st_size > 2_000_000:
             raise ValueError('Missing adapter receipt')
         receipt = json.loads(receipt_path.read_text())
+        lane = receipt.get('trainingLane', 'translation')
+        contract = training_contract(model_config, lane)
         weights = adapter/'adapters.safetensors'
-        if (receipt.get('status') != 'trained-unaccepted' or receipt.get('trainableParameters') != EXPECTED_TRAINABLE
+        if (receipt.get('status') != 'trained-unaccepted' or receipt.get('trainableParameters') != contract['trainableParameters']
                 or not receipt.get('stepsCompleted') or weights.is_symlink() or not weights.is_file()
                 or not 0 < weights.stat().st_size < 8_000_000
                 or receipt.get('baseConfigSha256') != file_sha(model_path/'config.json')
                 or file_sha(weights) != receipt.get('adapterSha256')):
             raise ValueError('Incompatible adapter')
+        if lane == 'advertising':
+            adapter_config_path = adapter/'adapter_config.json'
+            if (not adapter_config_path.is_file() or adapter_config_path.is_symlink()
+                    or adapter_config_path.stat().st_size > 100_000):
+                raise ValueError('Missing advertising adapter configuration')
+            adapter_config = json.loads(adapter_config_path.read_text())
+            if (request.get('purpose') != 'advertising' or receipt.get('trainingContract') != contract['name']
+                    or receipt.get('baseModel') != contract['baseModel']
+                    or receipt.get('layers') != contract['layers'] or receipt.get('lora') != contract['lora']
+                    or receipt.get('stoppedEarly') is not False
+                    or receipt.get('stepsCompleted') != receipt.get('limits', {}).get('steps')
+                    or type(receipt.get('changedParameterElements')) is not int or receipt['changedParameterElements'] <= 0
+                    or adapter_config.get('fine_tune_type') != 'lora'
+                    or adapter_config.get('num_layers') != contract['layers']
+                    or adapter_config.get('lora_parameters') != contract['lora']):
+                raise ValueError('Unfinished or incompatible advertising adapter')
+            from advertising_promotion import adapter_identity
+            adapter_identity(adapter,model_path)
         adapter_sha = receipt['adapterSha256']
     model, tokenizer = load(str(model_path), adapter_path=None if adapter_path == '-' else adapter_path)
     progress('preparing', force=True)

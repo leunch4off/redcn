@@ -86,8 +86,10 @@ try{
     const fields={...input.fields},sourceConditions=detectConditions(fields.sourceDescription||fields.sourceAudit?.description||''),source=sourceConditions.facts;
     const utilityValues=new Set(['included','meters','extra']);
     if(utilityValues.has(source.utilities)&&utilityValues.has(fields.utilities)&&source.utilities!==fields.utilities)throw Error('В описании и полях расходятся коммунальные расходы. Уточните в карточке, какие платежи входят в аренду и какие оплачиваются отдельно.');
-    const conditionKeys=['petPolicy','childrenPolicy','registrationPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','shortTerm','contractMonths','prepayMonths','minMonths','leaseTerm','utilities'];
-    for(const key of conditionKeys)if((fields[key]===undefined||fields[key]===null||fields[key]==='')&&source[key]!==undefined)fields[key]=source[key];
+    if(source.deposit==='0'&&Number(fields.deposit)>0)throw Error('В исходном описании залог отсутствует, а в карточке указана сумма. Уточните залог перед генерацией.');
+    if(sourceConditions.restrictions.some(row=>row.kind==='adjacent-rooms')&&fields.separate===true)throw Error('В источнике комнаты смежные, а в карточке указаны изолированные. Уточните планировку перед генерацией.');
+    const conditionKeys=['petPolicy','childrenPolicy','registrationPolicy','smokingPolicy','guestPolicy','subletPolicy','shortTermPolicy','shortTerm','contractMonths','prepayMonths','minMonths','leaseTerm','utilities','deposit'];
+    for(const key of conditionKeys)if((fields[key]===undefined||fields[key]===null||fields[key]===''||fields[key]==='unknown')&&source[key]!==undefined)fields[key]=source[key];
     for(const [key,flag] of [['petPolicy','pets'],['childrenPolicy','children']])if(source[key]==='no'&&!['no','conflict'].includes(fields[key])){fields[key]='conflict';fields[flag]=false;}
     result=generateListing({...fields,templateMode:'catalog',titleVariant:0,copyVariant:0,tagVariant:0},rules,
       {...DEFAULT_PREFS,benefits:'',contact:'',brandTags:''},{referenceVersion:FACTUAL_REFERENCE_VERSION,includeFactualBrief:true});

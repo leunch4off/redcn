@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import sys
 from pathlib import Path
 import unittest
@@ -67,7 +68,8 @@ class AssistantReviewTests(unittest.TestCase):
         old_sha = 'c' * 64
         old = {'analysis': {'originalId': old_sha, 'candidates': [{'id': 'washer'}, {'id': 'sofa'}]},
                'confirmed': {'washer': {'count': 2}}, 'rejected': {'sofa': True}}
-        journal = {'version': 1, 'entries': [{'originalId': old_sha, 'featureId': 'washer', 'state': 'confirmed'}]}
+        journal = {'version': 1, 'entries': [{'id': hashlib.sha256((old_sha + '|washer').encode()).hexdigest(),
+            'originalId': old_sha, 'sourceUrl': URL, 'featureId': 'washer', 'state': 'confirmed', 'count': None}]}
         result['fields']['photoEdits'] = {'observations': {URL: old}, 'reviewJournal': journal}
         original = copy.deepcopy(result)
         output, summary = merge_reviews(result, reviews)
@@ -77,7 +79,9 @@ class AssistantReviewTests(unittest.TestCase):
         self.assertEqual(observation['rejected'], {})
         self.assertEqual(output['fields']['featureCounts'], {'tv': 1})
         self.assertIn('tv', output['fields']['features'])
-        self.assertEqual(output['fields']['photoEdits']['reviewJournal'], journal)
+        self.assertEqual(output['fields']['photoEdits']['reviewJournal']['entries'], journal['entries'])
+        self.assertEqual(output['fields']['photoEdits']['reviewJournal']['confirmed'], 1)
+        self.assertEqual(output['fields']['photoEdits']['reviewJournal']['assistantReviewed'], 0)
         self.assertEqual(sorted(summary['addedFeatures']), ['sofa', 'washer'])
         self.assertTrue(all(row['humanVerified'] is False and row['count'] is None
                             for row in output['fields']['photoEvidence']))

@@ -6,6 +6,7 @@ approved or explicitly project-authored pairs; an output never approves itself.
 import hashlib
 import json
 import math
+from collections.abc import Mapping
 from pathlib import Path
 
 BASE_MODEL = 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
@@ -21,6 +22,10 @@ LORA = {'rank': 8, 'scale': 16.0, 'dropout': 0.0,
 LAYERS = 24
 EXPECTED_TRAINABLE = 540_672
 MAX_DATASET_BYTES = 8_000_000
+ADVERTISING_LORA = {'rank': 4, 'scale': 8.0, 'dropout': 0.0,
+                    'keys': ['self_attn.q_proj', 'self_attn.v_proj']}
+ADVERTISING_LAYERS = 4
+ADVERTISING_TRAINABLE = 163_840
 
 
 def sampling_parameters(temperature, *, top_p=INFERENCE_TOP_P):
@@ -72,11 +77,11 @@ def expected_parameters(config):
 
 
 def inference_model(config):
-    """Permit researched text architectures for optional inference only.
+    """Identify supported bases; each training lane has its own exact contract.
 
-Training still uses the exact 0.5B contract above. Selecting a different base
-does not make an existing adapter compatible or approve that model's quality.
-"""
+    Selecting a different base never makes an existing adapter compatible or
+    approves that model's quality.
+    """
     if not isinstance(config,dict):
         raise ValueError('Unsupported local text architecture')
     shape=tuple(config.get(key) for key in ('hidden_size','num_hidden_layers','num_attention_heads','num_key_value_heads'))
@@ -93,6 +98,35 @@ does not make an existing adapter compatible or approve that model's quality.
     if shape not in INFERENCE_MODELS:
         raise ValueError('Unsupported local text architecture')
     return INFERENCE_MODELS[shape]
+
+
+def training_contract(config, lane='translation'):
+    """Explicit, incompatible adapter contracts for the two actual base models.
+
+    Advertising adapts only the last four q/v blocks of the already installed
+    4B model. It never attaches the historical 0.5B adapter to another base.
+    """
+    if lane == 'translation':
+        count = expected_parameters(config)
+        return {'lane': lane, 'name': 'translation-qwen2.5-0.5b-lora-v1',
+                'baseModel': BASE_MODEL, 'layers': LAYERS, 'lora': dict(LORA),
+                'trainableParameters': count, 'tensorCount': LAYERS*4,
+                'memoryBytes': 3_500_000_000, 'maxSequenceLength': 1024,
+                'chatTemplateKwargs': {}}
+    if lane != 'advertising' or inference_model(config) != ADVERTISING_MODEL:
+        raise ValueError('Advertising training requires the installed Qwen3 4B base')
+    hidden = config['hidden_size']
+    query = config['num_attention_heads']*config['head_dim']
+    value = config['num_key_value_heads']*config['head_dim']
+    count = ADVERTISING_LAYERS*ADVERTISING_LORA['rank']*(hidden+query+hidden+value)
+    if count != ADVERTISING_TRAINABLE:
+        raise ValueError('Unexpected advertising adapter dimensions')
+    return {'lane': lane, 'name': 'advertising-qwen3-4b-lora-v1',
+            'baseModel': ADVERTISING_MODEL, 'layers': ADVERTISING_LAYERS,
+            'lora': dict(ADVERTISING_LORA), 'trainableParameters': count,
+            'tensorCount': ADVERTISING_LAYERS*4, 'memoryBytes': 4_000_000_000,
+            'maxSequenceLength': 1536, 'chatTemplateKwargs': {'enable_thinking': False},
+            'targetFormat': 'live-advertising-answer-plus-native-terminator-v1'}
 
 
 def validate_dataset(value):
@@ -153,12 +187,46 @@ def load_dataset(path):
     return validate_dataset(json.loads(path.read_text()))
 
 
-def encode_record(tokenizer, row, max_length):
+def _token_ids(value):
+    # Transformers 5 returns BatchEncoding by default; older installations and
+    # MLX wrappers may return the unbatched list directly. Dictionary keys are
+    # not token IDs, and no batched/tensor shape is silently flattened here.
+    if isinstance(value, Mapping):
+        if 'input_ids' not in value:
+            raise ValueError('Chat tokenizer did not return input_ids')
+        value=value['input_ids']
+    value=list(value)
+    if not value or any(type(token) is not int or token < 0 for token in value):
+        raise ValueError('Chat tokenizer must return one complete sequence of token IDs')
+    return value
+
+
+def encode_record(tokenizer, row, max_length, *, chat_template_kwargs=None, target_format=None):
     """Only answer tokens receive loss; never silently discard a long answer."""
     messages = row['messages']
-    prefix = tokenizer.apply_chat_template(messages[:-1], tokenize=True, add_generation_prompt=True)
-    full = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False)
-    prefix, full = list(prefix), list(full)
+    kwargs = chat_template_kwargs or {}
+    prefix = _token_ids(tokenizer.apply_chat_template(messages[:-1], tokenize=True, add_generation_prompt=True, **kwargs))
+    if target_format is None:
+        full = _token_ids(tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False, **kwargs))
+    elif target_format == 'live-advertising-answer-plus-native-terminator-v1':
+        prompt=tokenizer.apply_chat_template(messages[:-1],tokenize=False,add_generation_prompt=True,**kwargs)
+        rendered=tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=False,**kwargs)
+        target=messages[-1]['content']; eos=getattr(tokenizer,'eos_token',None)
+        if (not isinstance(prompt,str) or not isinstance(rendered,str) or not rendered.startswith(prompt)
+                or eos!='<|im_end|>' or any(marker in target for marker in ('<think>','</think>','<|im_'))):
+            raise ValueError('Advertising tokenizer does not expose the exact live answer boundary')
+        tail=rendered[len(prompt):]
+        # The installed Qwen3 full-conversation template inserts an empty
+        # thinking wrapper even though its live generation prefix has none.
+        # It is not part of the reviewed answer and is forbidden in published
+        # text. Supervise the exact live answer plus the verified native suffix.
+        empty_thinking='<think>\n\n</think>\n\n'
+        if tail.startswith(empty_thinking): tail=tail[len(empty_thinking):]
+        if tail not in (target+eos,target+eos+'\n'):
+            raise ValueError('Advertising template changes the reviewed target or native terminator')
+        full=_token_ids(tokenizer.encode(prompt+tail,add_special_tokens=False))
+    else:
+        raise ValueError('Unknown supervised assistant format')
     if full[:len(prefix)] != prefix or not 0 < len(prefix) < len(full)-1:
         raise ValueError('Chat tokenizer does not expose a stable assistant boundary')
     if len(full) > max_length:

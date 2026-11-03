@@ -139,6 +139,18 @@ class InventoryValidationTests(unittest.TestCase):
             self.assertFalse(row['autoEligible'])
         self.assertTrue(self.normalize(inventory(item(confidence=.9)))['candidates'][0]['autoEligible'])
 
+    def test_new_reviewed_household_objects_have_no_automatic_detector_acceptance(self):
+        from photo_auto_policy import TRAINED_REVIEW_IDS
+        evidence = {'toilet': 'Белый унитаз с бачком виден у стены',
+            'towelRail': 'Держатель для полотенец с металлическими перекладинами',
+            'cutlery': 'Столовые приборы: ножи, вилки и ложки в ящике',
+            'dishware': 'Посуда: тарелки, чашки и стаканы на полке'}
+        result = self.normalize(inventory(*(item(feature, confidence=1, evidence=text)
+            for feature, text in evidence.items())))
+        self.assertEqual({row['id'] for row in result['candidates']}, set(evidence))
+        self.assertTrue(all(row['autoEligible'] is False for row in result['candidates']))
+        self.assertTrue(set(evidence).isdisjoint(TRAINED_REVIEW_IDS))
+
     def test_new_hardware_ids_remain_distinct_and_do_not_imply_other_equipment(self):
         result = self.normalize(inventory(
             item('router', evidence='Роутер с двумя антеннами и сетевыми разъёмами'),

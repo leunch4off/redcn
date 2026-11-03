@@ -1,7 +1,8 @@
 import {hasOwnKey} from './own-property.mjs';
+import {setupBuildNotice} from './build-notice.mjs';
 import {compareCatalogCards,catalogWasViewed,catalogMatchesFilter,mergeCatalogCard,mergeCatalogViewed} from './catalog-state.mjs';
 import {createAiProgress} from './ai-progress.mjs';
-import {startIndividualTextJob} from './individual-copy.mjs';
+import {startIndividualTextJob,individualCopySummary} from './individual-copy.mjs';
 import {sanitizeClientText,clientPublicationCard,acceptAuthenticatedClientCard} from './client-publication.mjs';
 import {captureLoadedPresentationSource,loadedPresentationSource} from './presentation-export-boundary.mjs';
 import {photoBatchSummary} from './photo-batch-status.mjs';
@@ -40,11 +41,12 @@ const phoneDesignerLoader=createPhoneDesignerLoader({importModule:()=>import('/p
 let phoneDesignerWarmEpoch=null;
 let phoneJobProgressTimer=0,phoneJobLatest=null,phoneJobLast=null,phoneAiProgress=null;
 const phoneWriting={revision:0,draftRevision:0,busy:false,capabilities:null,loading:null};
+let phoneBuildNoticeUI=null,phonePendingWrites=0,phoneSavedLanguageDraft='';
 let phoneTextJob=null,phoneTextProgress=null,phoneTextCancel=null;
 let phonePollTimer=0,phoneJobTimer=0,phoneToastTimer=0,phoneDetailRevision=0,phoneShareRevision=0,phoneShareFile=null,phoneSharePath='';
 const phoneDate=value=>{if(!value)return null;const number=Number(value);const date=new Date(Number.isFinite(number)?number*(number<1e12?1000:1):value);return Number.isNaN(date.getTime())?null:date;};
 const phoneTime=value=>phoneDate(value)?.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})||'';
-function phoneDetailStamp(card){const feedback=sourceReadinessFeedback(card),review=card.publicationNeedsReview===true?(typeof card.publicationReviewReason==='string'?card.publicationReviewReason.slice(0,500):'Клиентский текст требует обновления на Mac.'):'';ph('phoneDetailStamp').textContent=['С Mac · '+phoneTime(card.updated),feedback.message,review].filter(Boolean).join(' · ');ph('phoneDetailStamp').dataset.sourceState=feedback.state;ph('phoneDetailStamp').dataset.publicationNeedsReview=String(card.publicationNeedsReview===true);}
+function phoneDetailStamp(card){const feedback=sourceReadinessFeedback(card),review=card.publicationNeedsReview===true?(typeof card.publicationReviewReason==='string'?card.publicationReviewReason.slice(0,500):'Клиентский текст требует обновления на Mac.'):'';const origin=individualCopySummary(card.aiAdvertisement||card.fields?.aiGeneration,{title:card.titles?.[0]||card.title,body:card.body,tags:card.tags});ph('phoneDetailStamp').textContent=['С Mac · '+phoneTime(card.updated),feedback.message,review,origin].filter(Boolean).join(' · ');ph('phoneDetailStamp').dataset.sourceState=feedback.state;ph('phoneDetailStamp').dataset.publicationNeedsReview=String(card.publicationNeedsReview===true);}
 const phoneCardCount=count=>count+' '+(count%100>=11&&count%100<=14?'карточек':count%10===1?'карточка':count%10>=2&&count%10<=4?'карточки':'карточек');
 const phoneMoney=value=>Number.isFinite(Number(value))&&Number(value)>0?Number(value).toLocaleString('ru-RU')+' ₽':'';
 // This is a trace of completed requests, not a percentage estimate. It stays in
@@ -97,6 +99,7 @@ function phoneAuth(paired){phoneState.paired=paired;ph('phonePair').classList.to
 // The first usable feed has a shared budget; PDF and attachment work keep their
 // longer operation deadlines and cannot make initial navigation wait for them.
 async function phoneApi(path,data,{deadline=0}={}){
+  if(data)phonePendingWrites++;phoneBuildNoticeUI?.updateState();try{
   const epoch=phoneState.authEpoch;
   const normalTimeout=path==='translate'||path==='learning'&&['generate-preview','translate-preview'].includes(data?.action)||/^cards\/[a-f0-9]{32}\/(?:rewrite|edit-text)$/.test(path)?65000:path==='route-provider/calculate'?15000:path==='card-export'?120000:path==='listing-map'?60000:path.startsWith('card-archive/')?90000:8000;
   const timeout=deadline?Math.min(normalTimeout,Math.max(1,Math.ceil(deadline-performance.now()))):normalTimeout;
@@ -108,6 +111,7 @@ async function phoneApi(path,data,{deadline=0}={}){
   if(!response.ok){const gateway=[502,503,504].includes(response.status),message=gateway?(location.protocol==='https:'?'Внешний адрес':'Сервер')+' вернул HTTP '+response.status+'. Соединение с приложением недоступно; проверьте сервер и внешний доступ на Mac.':typeof value?.error==='string'?value.error:response.status===401?'Для этого окна нужен вход. Введите текущие 8 цифр с Mac.':'Сервер вернул HTTP '+response.status+' без ответа приложения. Повторите запрос или проверьте внешний адрес.';const error=Error(message);error.code=response.status===401?'SESSION_REQUIRED':gateway?'GATEWAY_ERROR':value?.code==='ROLE_FORBIDDEN'?'ROLE_FORBIDDEN':'HTTP_ERROR';error.status=response.status;error.proxy=gateway||(!value&&response.status!==401);if(error.proxy)phoneConnection(false);if(response.status===401)error.authEpoch=phoneState.authEpoch;if(error.code==='ROLE_FORBIDDEN'&&path!=='state')phoneRefreshRole().catch(()=>{});throw error;}
   if(!value||typeof value!=='object'||Array.isArray(value)){const error=Error('Адрес вернул HTTP '+response.status+', но данные приложения не получены. Проверьте адрес и внешний доступ на Mac.');error.code='RESPONSE_NOT_JSON';error.status=response.status;error.proxy=true;phoneConnection(false);throw error;}
   window.redcnPhoneBoot?.request(path,'complete',response.status);phoneConnection(true);return value;
+  }finally{if(data)phonePendingWrites--;phoneBuildNoticeUI?.updateState();}
 }
 function phoneView(view){phoneState.view=view;if(view==='setup'&&phoneState.paired&&phoneState.role!=='viewer')phoneInitializeDictionary().refresh();if(view==='watch'&&phoneState.paired)phoneInitializeWatch().refresh();if(view==='import'&&phoneState.paired&&phoneState.access?.role==='owner')phoneInitializeAudit().refresh();if(view==='design')phoneInitializeDesigner().then(studio=>{if(studio&&phoneState.paired&&phoneState.view==='design')studio.refresh();}).catch(error=>phoneToast(error.message));for(const [key,id] of Object.entries({cards:'phoneCardsView',watch:'phoneWatchView',import:'phoneImportView',setup:'phoneSetupView',design:'phoneDesignView',detail:'phoneDetailView'}))ph(id).classList.toggle('hidden',key!==view);document.querySelectorAll('#phoneTabs [data-phone-view]').forEach(button=>{const selected=button.dataset.phoneView===(view==='detail'?'cards':view);button.classList.toggle('active',selected);button.setAttribute('aria-current',selected?'page':'false');});window.scrollTo({top:0,behavior:'instant'});}
 document.querySelectorAll('[data-phone-view]').forEach(button=>button.addEventListener('click',()=>{phoneView(button.dataset.phoneView);if(button.dataset.phoneView==='cards')phoneRefreshCards().catch(error=>phoneToast(error.message));}));
@@ -235,6 +239,7 @@ function phoneRenderPhotoInventory(card){
  summary.textContent='Мебель и техника · проверено '+checked+' / '+total+' фото';
  note.className='quiet';note.textContent=inventory.state==='disabled'?'Локальная модель ещё не включена на Mac.':inventory.reviewRequired&&inventory.coverageComplete?'Все доступные фото обработаны. Находки обученной модели требуют подтверждения перед добавлением в описание.':inventory.state==='partial'?'Часть фото не проверена. Неопознанные предметы остаются неизвестными.':'Фото обработаны. Оценка модели не гарантирует полноту списка или работоспособность техники.';
  const pending=inventory.reviewJournal?.pending??inventory.autoApplySummary?.automaticSuggestions;if(inventory.autoApplySummary?.requested===true&&Number.isInteger(pending)&&pending>=0)note.textContent+=' Автодобавление в журнал проверки включено. Ожидают подтверждения: '+pending+'.';
+ const assistantReviewed=inventory.reviewJournal?.assistantReviewed;if(Number.isInteger(assistantReviewed)&&assistantReviewed>0)note.textContent+=' Проверено помощником: '+assistantReviewed+'.';
  if(inventory.message)note.textContent+=' '+inventory.message;
  if(inventory.truncated)note.textContent+=' В этой проверке лимит '+inventory.coverageLimit+' фото из '+inventory.totalAvailable+'.';
  panel.append(summary,note);
@@ -242,7 +247,7 @@ function phoneRenderPhotoInventory(card){
   const row=document.createElement('p'),button=document.createElement('button'),text=document.createElement('span');button.type='button';button.className='button secondary';button.textContent='Фото '+(index+1);
   const mediaIndex=phoneState.media.findIndex(item=>item.sourceUrl===photo.sourceUrl);button.disabled=mediaIndex<0;button.onclick=()=>phoneSelectPhoto(mediaIndex);
   const candidates=Array.isArray(photo.candidates)?photo.candidates:[];
-  text.textContent=' '+(photo.status==='duplicate'?'Повторный ракурс того же файла':candidates.length?candidates.map(item=>item.label+(item.reviewDecision==='rejected'?' · отклонено':item.reviewDecision==='confirmed'?' · подтверждено':item.automaticSuggestion?' · автодобавлено в журнал · требует подтверждения':item.autoEligible?' · видно на фото':' · проверьте')).join('; '):photo.status==='review'?'Уверенных находок нет; это не означает отсутствие мебели.':'Анализ не завершён.');
+  text.textContent=' '+(photo.status==='duplicate'?'Повторный ракурс того же файла':candidates.length?candidates.map(item=>item.label+(item.reviewDecision==='rejected'?' · отклонено':item.reviewDecision==='confirmed'?' · подтверждено':item.reviewDecision==='assistant-reviewed'?' · проверено помощником':item.automaticSuggestion?' · автодобавлено в журнал · требует подтверждения':item.autoEligible?' · видно на фото':' · проверьте')).join('; '):photo.status==='review'?'Уверенных находок нет; это не означает отсутствие мебели.':'Анализ не завершён.');
   row.append(button,text);panel.append(row);
  }
  mount.append(panel);renderInstances();
@@ -282,7 +287,7 @@ function phoneResetWriting(){
   phoneWriting.revision++;phoneWriting.draftRevision++;phoneWriting.busy=false;if(!phoneState.paired){phoneWriting.capabilities=null;phoneWriting.loading=null;}
   ph('phoneRussianDraft').value='';ph('phoneChineseDraft').value='';ph('phoneChineseDraft').maxLength=20000;ph('phoneLanguagePart').value='body';ph('phoneLanguageStudio').open=false;
   ph('phoneTranslationReview').textContent='Неизвестные фразы будут показаны для проверки.';ph('phoneTranslationReview').dataset.state='';
-  ph('phoneWritingStatus').textContent='';ph('phoneWritingStatus').dataset.state='';phoneWritingButtons();
+  ph('phoneWritingStatus').textContent='';ph('phoneWritingStatus').dataset.state='';phoneWritingButtons();phoneSavedLanguageDraft=phoneLanguageDraftKey();phoneBuildNoticeUI?.updateState();
 }
 function phoneWritingBegin(message){
   if(phoneWriting.busy||!phoneState.paired||!phoneState.detailId||!phoneState.detail||!phoneCanEdit())return null;
@@ -295,7 +300,7 @@ function phoneApplyWrittenCard(card,request){
   phonePublicationReviewUI?.clear();
   const oldScroll=window.scrollY;++phoneDetailRevision;phoneState.detail=captureLoadedPresentationSource(acceptAuthenticatedClientCard(card));phoneUpdateRouteTools();
   const title=card.titles?.[0]||card.title||card.fields?.name||'Квартира в Москве';ph('phoneDetailTitle').textContent=title;ph('phoneTitleCopy').textContent=card.titles?.[0]||card.title||'';ph('phoneBody').textContent=card.body||'';ph('phoneTags').textContent=card.tags||'';phoneDetailStamp(card);
-  const summary=phoneState.cards.get(card.id);if(summary){phoneState.cards.set(card.id,{...summary,title,updated:card.updated});phoneRenderCards();}
+  const summary=phoneState.cards.get(card.id);if(summary){const catalogue=Object.fromEntries(['catalogOrder','addedAt','catalogOrigin','contentEdited','contentEditedAt'].filter(key=>hasOwnKey(card,key)).map(key=>[key,card[key]]));phoneState.cards.set(card.id,mergeCatalogCard(summary,{id:card.id,title,updated:card.updated,...catalogue}));phoneRenderCards();}
   if(phoneState.view==='detail')window.scrollTo(0,oldScroll);return true;
 }
 async function phoneRewrite(part){
@@ -350,8 +355,8 @@ ph('phoneTranslateDraft').onclick=async()=>{
   finally{phoneWritingEnd(request);}
 };
 ph('phoneApplyDraft').onclick=async()=>{
-  const text=ph('phoneChineseDraft').value.trim(),part=ph('phoneLanguagePart').value,sourceRu=ph('phoneRussianDraft').value.trim();if(!text)return;const request=phoneWritingBegin('Сохраняем ваш текст в карточке…');if(!request)return;
-  try{const card=await phoneApi('cards/'+request.id+'/edit-text',{part,text,...(sourceRu?{sourceRu}:{})});if(!phoneApplyWrittenCard(card,request))return;ph('phoneWritingStatus').textContent='Ваш текст сохранён в карточке.';phoneToast('Текст сохранён.');}
+  const text=ph('phoneChineseDraft').value.trim(),part=ph('phoneLanguagePart').value,sourceRu=ph('phoneRussianDraft').value.trim();if(!text)return;const request=phoneWritingBegin('Сохраняем ваш текст в карточке…');if(!request)return;const savedDraft=phoneLanguageDraftKey();
+  try{const card=await phoneApi('cards/'+request.id+'/edit-text',{part,text,...(sourceRu?{sourceRu}:{})});if(!phoneApplyWrittenCard(card,request))return;phoneSavedLanguageDraft=savedDraft;phoneBuildNoticeUI?.updateState();ph('phoneWritingStatus').textContent='Ваш текст сохранён в карточке.';phoneToast('Текст сохранён.');}
   catch(error){if(phoneWritingCurrent(request)){ph('phoneWritingStatus').textContent=error.message;ph('phoneWritingStatus').dataset.state='error';}}
   finally{phoneWritingEnd(request);}
 };
@@ -527,3 +532,11 @@ function phoneUpdateRouteTools(){
  phoneRoutesUI.cardChanged(phoneState.detail);
 }
 phoneStart();
+
+function phoneLanguageDraftKey(){return JSON.stringify([ph('phoneLanguagePart').value,ph('phoneRussianDraft').value,ph('phoneChineseDraft').value]);}
+phoneSavedLanguageDraft=phoneLanguageDraftKey();
+const phoneBuildMount=document.createElement('div');document.querySelector('main').prepend(phoneBuildMount);
+phoneBuildNoticeUI=setupBuildNotice({mount:phoneBuildMount,mode:'phone',getActivity:()=>{
+ const learning=phoneLearningUI?.activity?.()||{dirty:false,busy:false},design=phonePresentationUI?.activity?.()||{dirty:false,busy:false};
+ return {known:true,dirty:phoneLanguageDraftKey()!==phoneSavedLanguageDraft||learning.dirty||design.dirty,busy:!!(phonePendingWrites||phoneWriting.busy||phoneStarting||phoneState.job||phoneDesignInitializing||learning.busy||design.busy),connected:phoneState.paired};
+},onBeforeReload:()=>true});

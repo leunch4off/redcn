@@ -84,7 +84,8 @@ class SamplingTests(unittest.TestCase):
             model = base/'model'; model.mkdir()
             output = base/'output'; output.mkdir()
             dataset = base/'data.json'; dataset.write_text('{}')
-            (model/'config.json').write_text('{}')
+            (model/'config.json').write_text(json.dumps({'model_type':'qwen2','hidden_size':896,
+                'num_hidden_layers':24,'num_attention_heads':14,'num_key_value_heads':2}))
             files = [('adapters.safetensors', 'adapterSha256'),
                 ('optimizer.safetensors', 'optimizerSha256'), ('initial.safetensors', 'initialSha256')]
             for filename, _ in files:

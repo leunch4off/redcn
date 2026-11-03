@@ -306,11 +306,12 @@ def rewrite(directory, card_id, data, *, actor='Mac owner', status=None, cancel=
                 card['titles'] = [_text(preview.get('title'), LIMITS['title'], 'Заголовок')]
             else:
                 card[target] = _text(preview.get(target), LIMITS[target], 'Описание' if target == 'body' else 'Теги', empty=target == 'tags')
+        from publication_provenance import bind_generation, part_origin
         metadata = publication_generation_metadata(preview)
-        card['aiAdvertisement'] = metadata
-        card.setdefault('fields', {})['aiGeneration'] = metadata
+        card = bind_generation(card, metadata, previous=previous, parts=targets)
         info = copy.deepcopy(previous.get('templateInfo') or {})
-        info.update(mode='individual', generationMode='individual-model-prose', modelContribution='full-publication-prose')
+        info.update(mode='individual' if {'title', 'body'} <= set(targets) else 'mixed',
+            generationMode='individual-model-prose', modelContribution=card['aiAdvertisement']['modelContribution'])
         for target in targets:
             for key in {'title': ('titleId', 'titleIds'), 'body': ('descriptionId', 'copyEngine'), 'tags': ('tagId',)}[target]:
                 info.pop(key, None)
@@ -384,6 +385,10 @@ def rewrite(directory, card_id, data, *, actor='Mac owner', status=None, cancel=
     if isinstance(info.get('manualParts'), list):
         info['manualParts'] = [name for name in info['manualParts'] if name not in targets]
     card['templateInfo'] = info
+    from publication_provenance import bind_generation
+    card = bind_generation(card, {'status': 'saved', 'part': part,
+        'generationMode': 'explicit-template', 'textSource': 'rules', 'modelAccepted': False},
+        previous=previous, parts=targets)
     allow_save()
     return _save(directory, card_id, original_payload, card, actor=actor)
 
@@ -407,6 +412,8 @@ def edit_text(directory, card_id, data, *, actor='Mac owner'):
     manual = [name for name in info.get('manualParts', []) if name in PARTS] if isinstance(info.get('manualParts'), list) else []
     info['manualParts'] = list(dict.fromkeys([*manual, part]))
     card['templateInfo'] = info
+    from publication_provenance import bind_manual
+    card = bind_manual(card, part, previous=previous)
     saved = _save(directory, card_id, original_payload, card, actor=actor)
     from learning_capture import capture_edit
     group_id = card.get('fields',{}).get('editorIdentity') or card_id

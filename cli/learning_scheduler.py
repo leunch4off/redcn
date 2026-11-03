@@ -18,12 +18,12 @@ import threading
 import time
 import uuid
 
-from learning_memory import LearningMemory
+from learning_memory import LearningMemory, LANE_KINDS
 
 DEFAULTS = {'enabled': False, 'idleSeconds': 120, 'checkSeconds': 60,
             'minNewExamples': 20, 'maxSteps': 20, 'maxSeconds': 600,
             'maxSequenceLength': 256, 'automaticPromotion': False,
-            'evaluationSeconds': 900}
+            'evaluationSeconds': 900, 'advertisingMaxSequenceLength': 1536}
 _THREADS = {}
 _THREADS_LOCK = threading.Lock()
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,7 +76,8 @@ def load_config(directory):
         raise ValueError('Включение обучения задаётся переключателем')
     for key, low, high in [('idleSeconds',60,3600), ('checkSeconds',30,300),
             ('minNewExamples',20,1000), ('maxSteps',1,200),
-            ('maxSeconds',30,600), ('maxSequenceLength',64,512), ('evaluationSeconds',60,1800)]:
+            ('maxSeconds',30,600), ('maxSequenceLength',64,512), ('evaluationSeconds',60,1800),
+            ('advertisingMaxSequenceLength',512,1536)]:
         if type(config[key]) is not int or not low <= config[key] <= high:
             raise ValueError('Неверный предел обучения: '+key)
     return config
@@ -92,7 +93,8 @@ def save_config(directory, updates):
         raise ValueError('Включение обучения задаётся переключателем')
     for key, low, high in [('idleSeconds',60,3600), ('checkSeconds',30,300),
             ('minNewExamples',20,1000), ('maxSteps',1,200),
-            ('maxSeconds',30,600), ('maxSequenceLength',64,512), ('evaluationSeconds',60,1800)]:
+            ('maxSeconds',30,600), ('maxSequenceLength',64,512), ('evaluationSeconds',60,1800),
+            ('advertisingMaxSequenceLength',512,1536)]:
         if type(value[key]) is not int or not low <= value[key] <= high:
             raise ValueError('Неверный предел обучения: '+key)
     _write(previous, value)
@@ -177,10 +179,22 @@ def valid_checkpoint(folder,dataset):
         return False
 
 
-def _samples(memory):
+def training_lane(directory):
+    """A configured separate writer is trained in its own lane, never 0.5B."""
+    from local_text_model import settings
+    return 'advertising' if settings(directory).get('advertisingModelPath') else 'translation'
+
+
+def _state_path(folder, lane):
+    return folder/('advertising-scheduler-state.json' if lane == 'advertising' else 'scheduler-state.json')
+
+
+def _samples(memory, lane='translation'):
     # Only dataset identities are read; payloads are left to the approved export.
     with sqlite3.connect(memory.path.as_uri()+'?mode=ro', uri=True, timeout=1) as db:
-        return sorted({row[0] for row in db.execute("SELECT fingerprint FROM examples WHERE status='approved' AND kind<>'tag_stat'")})
+        kinds = LANE_KINDS[lane]
+        return sorted({row[0] for row in db.execute("SELECT fingerprint FROM examples WHERE status='approved' AND kind IN ("+
+            ','.join('?' for _ in kinds)+')', kinds)})
 
 
 def _training_rows(path, limit, budget):
@@ -205,10 +219,14 @@ def _training_rows(path, limit, budget):
 
 
 def status(directory):
-    state = _read(_folder(directory)/'scheduler-state.json', {})
+    lane = training_lane(directory)
+    state = _read(_state_path(_folder(directory), lane), {})
     if not isinstance(state, dict):
         state = {}
-    from model_promotion import public_status
+    if lane == 'advertising':
+        from advertising_promotion import public_status
+    else:
+        from model_promotion import public_status
     config = load_config(directory)
     with _THREADS_LOCK:
         current = _THREADS.get(str(Path(directory).resolve()))
@@ -227,9 +245,10 @@ def status(directory):
             progress = {'stepsCompleted':receipt['stepsCompleted'], 'requestedSteps':config['maxSteps'],
                 'source':'last-written-native-checkpoint', 'elapsedSeconds':receipt.get('elapsedSeconds'),
                 'peakMemoryBytes':receipt.get('peakMemoryBytes')}
-    memory = LearningMemory(directory).status()
+    memory = LearningMemory(directory).status(lane=lane)
     return {**{key: value for key, value in state.items() if key not in {'sampleHashes'}},
-            **config, 'promotion': public_status(directory),
+            **config, 'lane': lane, 'promotion': public_status(directory),
+            'readiness': memory['lanes'][lane], 'styleOnlyExamples': memory['styleOnlyExamples'],
             'workerAlive': worker_alive, 'modelProcessRunning': running,
             'trainingProgress': progress,
             'recordedPhaseIsProcessProof': False,
@@ -254,13 +273,15 @@ class IdleTrainer:
         self._process = None
         self._process_lock = threading.Lock()
         self.started = clock()
-        self.state = _read(self.folder/'scheduler-state.json', {})
+        self.lane = training_lane(self.directory)
+        self.state_path = _state_path(self.folder, self.lane)
+        self.state = _read(self.state_path, {})
         if not isinstance(self.state, dict):
             self.state = {}
         if self.state.get('phase') in {'training','evaluating'}:
             self.state.update(phase='recovery-pending',updatedAt=self.clock(),
                 message='Предыдущий процесс прерван. Проверяем блокировку и контрольную точку до возобновления.')
-            _write(self.folder/'scheduler-state.json',self.state)
+            _write(self.state_path,self.state)
 
     def _state(self, phase, message, **extra):
         if self.stopped.is_set():
@@ -268,8 +289,8 @@ class IdleTrainer:
         if phase=='training' and extra.get('jobId')!=self.state.get('jobId'):
             self.state.update(stepsCompleted=0,trainableParameters=0,adapterReady=False,
                 resourceStopReason=None,resourceGuard=None,qualityPassed=None,qualityRequested=None,qualityMessage=None)
-        self.state.update(phase=phase, message=message, updatedAt=self.clock(), **extra)
-        _write(self.folder/'scheduler-state.json', self.state)
+        self.state.update(phase=phase, lane=self.lane, message=message, updatedAt=self.clock(), **extra)
+        _write(self.state_path, self.state)
         return status(self.directory)
 
     def _busy(self):
@@ -289,6 +310,18 @@ class IdleTrainer:
         base = self.directory/'tools/text-ai'
         python = base/'venv/bin/python'
         model = base/'model'
+        if self.lane == 'advertising':
+            from local_text_model import settings
+            from text_model_contract import training_contract
+            profile = settings(self.directory)
+            if not profile['enabled'] or not profile.get('advertisingModelPath'):
+                return None
+            python = Path(profile.get('advertisingPythonPath') or profile['pythonPath'])
+            model = Path(profile['advertisingModelPath'])
+            try:
+                training_contract(_read(model/'config.json', {}), 'advertising')
+            except (OSError, ValueError):
+                return None
         script = ROOT/'scripts/train-local-text-model.py'
         if not python.is_file() or not (model/'config.json').is_file() or not script.is_file():
             return None
@@ -299,6 +332,11 @@ class IdleTrainer:
         if self.stopped.is_set():
             return {key:value for key,value in self.state.items() if key!='sampleHashes'}
         config = load_config(self.directory)
+        lane = training_lane(self.directory)
+        if lane != self.lane:
+            self.lane, self.state_path = lane, _state_path(self.folder, lane)
+            self.state = _read(self.state_path, {})
+            if not isinstance(self.state, dict): self.state = {}
         if not config['enabled']:
             return self._state('disabled', 'Фоновое обучение выключено.')
         if self._busy() or not self._idle(config):
@@ -314,13 +352,14 @@ class IdleTrainer:
                 and self.state.get('jobId') and self.state.get('qualityOutcome') not in {'accepted', 'blocked'}
                 and self.clock() >= self.state.get('qualityRetryAfter', 0)):
             return self._evaluate(config)
-        summary = self.memory.status()
+        summary = self.memory.status(lane=self.lane)
         if not summary['trainingEligible']:
             return self._state('collecting',
                 'Проверено примеров: '+str(summary['approvedExamples'])+'/20; независимых групп: '+
-                str(summary['approvedGroups'])+'/5. Новые исходные фразы собраны отдельно; их перевод ещё нужно проверить.',
+                str(summary['approvedGroups'])+'/5. '+('Для объявлений нужны полные тексты, проверенные по фактам каждой квартиры. Старые примеры стиля в этот счёт не входят.' if self.lane == 'advertising' else
+                'Новые исходные фразы собраны отдельно; их перевод ещё нужно проверить.'),
                 approvedExamples=summary['approvedExamples'], approvedGroups=summary['approvedGroups'])
-        samples = _samples(self.memory)
+        samples = _samples(self.memory, self.lane)
         fingerprint = hashlib.sha256('\n'.join(samples).encode()).hexdigest()
         if fingerprint == self.state.get('holdoutFingerprint'):
             return self._state('needs-holdout', 'Нужны новые независимые проверочные примеры.')
@@ -359,7 +398,13 @@ class IdleTrainer:
     def _run(self, config, runtime, fingerprint, samples, same, *, resource_fd=None):
         command, model = runtime
         from training_resources import ResourceGuard
-        resources = ResourceGuard(self.resource_sampler)
+        limits = {'maxProcessGroupRssBytes': 4_500_000_000,
+            'minimumAvailableEstimateBytes': 768*1024**2, 'maxSwapGrowthBytes': 512*1024**2} if self.lane == 'advertising' else None
+        resources = ResourceGuard(self.resource_sampler, limits=limits)
+        expected_parameters = 540672
+        if self.lane == 'advertising':
+            from text_model_contract import training_contract
+            expected_parameters = training_contract(_read(model/'config.json', {}), self.lane)['trainableParameters']
         reason = resources.check(admission=True)
         if reason:
             return self._state('waiting-resources', 'Фоновое обучение ждёт достаточной памяти Mac.',
@@ -374,7 +419,7 @@ class IdleTrainer:
             output = dataset.parent/'candidate'
         else:
             job_id = 'idle-'+uuid.uuid4().hex
-            snapshot = self.memory.snapshot(job_id)
+            snapshot = self.memory.snapshot(job_id, lane=self.lane)
             manifest = snapshot['manifest']
             if manifest['trainExamples'] < 16 or manifest['validExamples'] < 4:
                 return self._state('needs-holdout', 'Нужны независимые проверочные примеры: минимум 16 учебных и 4 проверочных.', holdoutFingerprint=fingerprint)
@@ -387,6 +432,9 @@ class IdleTrainer:
                 return self._state('needs-holdout', 'Недостаточно коротких независимых примеров для ограниченного учебного прогона.', holdoutFingerprint=fingerprint)
             _write(dataset, {'version':1, 'splits': {'train':train, 'validation':valid},
                 'provenance': {'kind': 'approved-local-memory', 'snapshot': snapshot['manifest']}})
+        if self.lane == 'advertising':
+            from advertising_learning import validate_training_dataset
+            validate_training_dataset(_read(dataset, {}))
         try:
             self.memory.register_dataset(dataset)
         except ValueError:
@@ -403,8 +451,10 @@ class IdleTrainer:
         attempt = self.state.get('attempts', 0)+1 if same else 1
         args = [*command, '--model', str(model), '--dataset', str(dataset), '--output', str(output),
                 '--steps', str(config['maxSteps']), '--max-seconds', str(config['maxSeconds']),
-                '--max-seq-length', str(config['maxSequenceLength']), '--cancel-file', str(cancel),
+                '--max-seq-length', str(config['advertisingMaxSequenceLength'] if self.lane == 'advertising' else config['maxSequenceLength']), '--cancel-file', str(cancel),
                 '--consent-cache', str(self.directory)]
+        if self.lane == 'advertising':
+            args += ['--profile', 'advertising', '--sampling', 'shuffled']
         adapter = output/'adapters.safetensors'
         if job_id == self.state.get('jobId') and adapter.is_file():
             args += ['--resume-adapter', str(adapter)]
@@ -416,9 +466,13 @@ class IdleTrainer:
         with self._process_lock:
             if self.stopped.is_set():
                 return self._state('paused', 'Обучение остановлено вместе с сервером.')
-            process = self.popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                                 stderr=subprocess.DEVNULL, start_new_session=True,
-                                 **({'pass_fds':(resource_fd,)} if resource_fd is not None else {}))
+            log_path=output.parent/('worker-'+str(attempt)+'.log')
+            if log_path.is_symlink(): raise ValueError('Журнал обучения не должен быть ссылкой')
+            descriptor=os.open(log_path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|getattr(os,'O_NOFOLLOW',0),0o600)
+            with os.fdopen(descriptor,'wb') as log:
+                process = self.popen(args, stdin=subprocess.DEVNULL, stdout=log,
+                                     stderr=log, start_new_session=True,
+                                     **({'pass_fds':(resource_fd,)} if resource_fd is not None else {}))
             self._process = process
         interrupted = False
         consent_withdrawn = False
@@ -479,7 +533,9 @@ class IdleTrainer:
         adapter_sha = hashlib.sha256(adapter.read_bytes()).hexdigest() if adapter.is_file() and not adapter.is_symlink() and adapter.stat().st_size <= 8_000_000 else None
         complete = (not interrupted and process.returncode == 0
             and receipt.get('status') == 'trained-unaccepted'
-            and receipt.get('trainableParameters') == 540672
+            and receipt.get('trainableParameters') == expected_parameters
+            and (self.lane != 'advertising' or receipt.get('trainingLane') == 'advertising'
+                 and type(receipt.get('changedParameterElements')) is int and receipt['changedParameterElements'] > 0)
             and type(receipt.get('stepsCompleted')) is int and receipt['stepsCompleted']==config['maxSteps']
             and receipt.get('stoppedEarly') is False and valid_checkpoint(output,dataset)
             and adapter_sha is not None and receipt.get('adapterSha256') == adapter_sha)
@@ -492,21 +548,35 @@ class IdleTrainer:
         step = receipt.get('stepsCompleted', 0)
         step = step if type(step) is int and step >= 0 else 0
         outcome = 'unaccepted' if complete else 'paused' if interrupted else 'failed'
+        failure_reason=None
+        if not complete and not interrupted:
+            log_path=output.parent/('worker-'+str(attempt)+'.log')
+            try:
+                with log_path.open('rb') as log:
+                    log.seek(max(0,log_path.stat().st_size-16_000)); diagnostic=log.read(16_000).decode(errors='replace')
+                failure_reason=('complete-example-exceeds-token-limit' if 'complete examples above the token limit' in diagnostic else
+                    'not-enough-complete-examples' if 'fewer than two complete examples' in diagnostic else
+                    'native-memory-limit' if any(item in diagnostic.lower() for item in ('out of memory','memory limit','failed to allocate')) else
+                    'native-worker-failed')
+            except OSError: failure_reason='native-worker-failed'
         if not complete and not interrupted and attempt >= 3:
             outcome = 'exhausted'
         self.memory.save_checkpoint(job_id, {'state': 'unaccepted' if complete else 'paused' if interrupted else 'failed',
             'step':step, 'snapshot':str(dataset), 'model':str(model),
             **({'adapter':str(adapter)} if adapter.is_file() else {}),
-            'metrics': {'trainableParameters':540672 if complete else 0}})
+            'metrics': {'trainableParameters':expected_parameters if complete else 0}})
         return self._state('consent-withdrawn' if consent_withdrawn else 'ready-for-review' if complete else 'paused' if interrupted else 'failed',
             'Согласие на учебный пример отозвано. Кандидат заблокирован; нужна новая версия данных и переобучение.' if consent_withdrawn else
             'Обучение приостановлено из-за давления на память. Следующая попытка проверит сохранённую контрольную точку.' if resource_reason else
             'Кандидат сохранён и ожидает проверки качества.' if complete else
             'Обучение приостановлено для текущей работы; контрольная точка сохранена.' if interrupted else
-            'Фоновое обучение не завершилось; состояние сохранено для проверки.',
+            'Полный текст примера превышает учебное окно. Ничего не обрезано: нужен явно проверенный корпус подходящей длины.' if failure_reason=='complete-example-exceeds-token-limit' else
+            'Модели не хватило памяти в установленном бюджете; кандидат не принят.' if failure_reason=='native-memory-limit' else
+            'Фоновое обучение не завершилось; частный журнал сохранён для проверки.',
             lastOutcome='consent-withdrawn' if consent_withdrawn else outcome, retryAfter=self.clock()+3600, stepsCompleted=step,
-            trainableParameters=540672 if complete else 0, adapterReady=not consent_withdrawn and (complete or valid_checkpoint(output,dataset)),
-            resourceStopReason=resource_reason, resourceGuard={key:value for key,value in resources.receipt().items() if key!='samples'})
+            trainableParameters=expected_parameters if complete else 0, adapterReady=not consent_withdrawn and (complete or valid_checkpoint(output,dataset)),
+            failureReason=failure_reason, resourceStopReason=resource_reason,
+            resourceGuard={key:value for key,value in resources.receipt().items() if key!='samples'})
 
     def _evaluate(self, config):
         """Evaluate saved weights offline; imports and foreground work preempt it."""
@@ -521,7 +591,8 @@ class IdleTrainer:
         run = self.folder/'training-runs'/job_id
         output = run/'candidate'
         report = run/('quality-'+uuid.uuid4().hex+'.json')
-        command = runtime[0][:-1]+[str(ROOT/'scripts/evaluate-text-candidate.py'),
+        evaluator = 'evaluate-advertising-adapter.py' if self.lane == 'advertising' else 'evaluate-text-candidate.py'
+        command = runtime[0][:-1]+[str(ROOT/'scripts'/evaluator),
             '--cache', str(self.directory), '--candidate', str(output),
             '--training-dataset', str(run/'dataset.json'), '--output', str(report),
             '--max-seconds', str(config['evaluationSeconds'])]
@@ -566,7 +637,10 @@ class IdleTrainer:
             return self._state('quality-blocked', 'Сравнение не завершилось. Текущие веса сохранены; нужна проверка кандидата.',
                 qualityOutcome='blocked', qualityMessage='Сравнение не завершилось; текущие веса сохранены.')
         try:
-            from model_promotion import promote
+            if self.lane == 'advertising':
+                from advertising_promotion import promote
+            else:
+                from model_promotion import promote
             decision = promote(self.directory, report, automatic=True)
         except ModelBusy:
             return self._state('quality-paused', 'Локальная модель занята; приёмка весов отложена.',
@@ -628,7 +702,7 @@ class IdleTrainer:
             if evaluating:
                 self.state.update(phase='quality-paused', lastOutcome='unaccepted', qualityOutcome='paused',
                     qualityRetryAfter=0, message='Проверка новых весов приостановлена вместе с сервером.')
-            _write(self.folder/'scheduler-state.json', self.state)
+            _write(self.state_path, self.state)
         with _THREADS_LOCK:
             if _THREADS.get(str(self.directory)) is self:
                 del _THREADS[str(self.directory)]

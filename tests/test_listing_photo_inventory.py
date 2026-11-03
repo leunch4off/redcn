@@ -187,6 +187,31 @@ class ListingInventoryTests(unittest.TestCase):
             self.assertEqual(output['photos'][0]['candidates'][0]['reviewDecision'], 'rejected')
             self.assertEqual(result, before)
 
+    def test_existing_assistant_review_is_not_counted_as_pending_or_model_acceptance(self):
+        from test_photo_auto_policy import observation as detection
+        from photo_teacher_review import make_review
+        result = card(1)
+        digest, url = result['media'][0]['id'], result['media'][0]['sourceUrl']
+        review = make_review(digest, ['sofa'], dataset_id='c' * 64,
+                             reviewed_at='2026-11-03T12:00:00Z')
+        result['fields']['photoEdits'] = {'observations': {url: {
+            'analysis': {'originalId': digest}, 'teacherReview': review}}}
+        def trained(_, original, **kwargs):
+            return {**detection(original), 'autoApply': True, 'autoApplyMode': 'suggestions-only'}
+        output, _, _ = self.analyze(result, config={**CONFIG, 'model': 'redcn-furniture-v1'}, analysis=trained)
+        self.assertEqual(output['features'], [])
+        self.assertEqual(output['photoEvidence'], [])
+        self.assertEqual(output['autoApplySummary']['automaticFacts'], 0)
+        self.assertEqual(output['autoApplySummary']['acceptedClasses'], 0)
+        self.assertEqual(output['autoApplySummary']['needsReview'], 0)
+        self.assertEqual(output['autoApplySummary']['assistantReviewed'], 1)
+        self.assertEqual(output['reviewJournal']['pending'], 0)
+        self.assertEqual(output['reviewJournal']['confirmed'], 0)
+        self.assertEqual(output['reviewJournal']['assistantReviewed'], 1)
+        self.assertEqual(output['photos'][0]['candidates'][0]['reviewDecision'], 'assistant-reviewed')
+        self.assertFalse(output['photos'][0]['candidates'][0]['autoEligible'])
+        self.assertTrue(output['coverageComplete'])
+
     def test_provider_progress_carries_photo_index_without_invented_tokens(self):
         events = []
         def analyze(_, digest, **options):

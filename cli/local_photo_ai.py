@@ -52,11 +52,15 @@ FEATURE_LABELS = {
     'shoeCabinet': 'Обувница', 'ottoman': 'Пуф', 'bench': 'Скамья',
     'mirror': 'Зеркало', 'curtains': 'Шторы', 'dryingRack': 'Сушилка для белья',
     'iron': 'Утюг', 'vacuum': 'Пылесос', 'coffeeMachine': 'Кофемашина',
-    'toaster': 'Тостер', 'router': 'Маршрутизатор · наличие интернета не подтверждено',
+    'toaster': 'Тостер', 'cutlery': 'Столовые приборы · ножи, вилки, ложки',
+    'dishware': 'Посуда',
+    'toilet': 'Унитаз', 'towelRail': 'Держатель для полотенец · без вывода об обогреве',
+    'router': 'Маршрутизатор · наличие интернета не подтверждено',
     'monitor': 'Монитор · без вывода о компьютере', 'speakers': 'Колонки',
     'waterHeater': 'Водонагреватель', 'waterFilter': 'Фильтр воды',
 }
-REVIEW_ONLY = frozenset(('closet', 'pantry', 'balcony', 'loggia', 'homeCinema', 'roomFurniture'))
+REVIEW_ONLY = frozenset(('closet', 'pantry', 'balcony', 'loggia', 'homeCinema', 'roomFurniture',
+    'toilet', 'towelRail', 'cutlery', 'dishware'))
 _MODEL = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.:/-]{0,127}\Z')
 _SHA256 = re.compile(r'[a-f0-9]{64}\Z')
 _NON_DIRECT = re.compile(
@@ -98,6 +102,10 @@ _OBJECT_WORDS = {
     'iron': r'утюг|\biron\b|熨斗', 'vacuum': r'пылесос|vacuum|吸尘器',
     'coffeeMachine': r'кофемаш|кофеварк|coffee.?machine|coffee.?maker|咖啡机',
     'toaster': r'тостер|toaster|烤面包机', 'router': r'роутер|маршрутизатор|router|路由器',
+    'cutlery': r'столов\w*\s+прибор|вилк|ложк|нож|cutlery|flatware|fork|spoon|knife|餐用刀叉匙',
+    'dishware': r'посуд|тарелк|чашк|стакан|dishware|crockery|plate|cup|glass|餐具',
+    'toilet': r'унитаз|toilet|马桶',
+    'towelRail': r'полотенц|towel.?rail|towel.?rack|毛巾架',
     'monitor': r'монитор|monitor|显示器', 'speakers': r'колон|динамик|speaker|音箱',
     'waterHeater': r'водонагрев|бойлер|water.?heater|boiler|热水器',
     'waterFilter': r'фильтр|water.?filter|净水器',

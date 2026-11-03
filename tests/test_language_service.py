@@ -18,6 +18,10 @@ import local_server
 import phone_relay
 import test_card_api as route_fixture
 
+# Keep non-generation actions real when the deterministic template fixture is
+# installed. Capturing an edited body now freezes an individual factual brief.
+REAL_NODE_LANGUAGE = language.node_language
+
 
 class LanguageUpdates(unittest.TestCase):
     def setUp(self):
@@ -35,6 +39,10 @@ class LanguageUpdates(unittest.TestCase):
 
     @staticmethod
     def render(payload):
+        if payload.get('action') == 'individual-brief':
+            return REAL_NODE_LANGUAGE(payload)
+        if payload.get('action') != 'generate':
+            raise AssertionError('Unexpected template fixture action: '+str(payload.get('action')))
         fields=payload['fields'];indices={'title':fields['titleVariant'],
             'description':fields['copyVariant'],'tags':fields['tagVariant']}
         return {'titles':['标题'+str(indices['title'])],'body':'正文'+str(indices['description']),

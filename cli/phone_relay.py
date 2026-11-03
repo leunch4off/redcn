@@ -483,9 +483,18 @@ def public_card(directory,result_id):
     # refuses concurrent updates instead of blessing a mixed read.
     revision=snapshot(directory,result_id,expected_card=result)
     db=redcn.open_cache(directory)
-    try:updated=db.execute('SELECT updated FROM results WHERE id=?',(result_id,)).fetchone()[0]
+    try:
+        updated=db.execute('SELECT updated FROM results WHERE id=?',(result_id,)).fetchone()[0]
+        # Write responses carry global edit/order state immediately. Personal
+        # view marks remain scoped to the authenticated catalogue feed.
+        try:
+            from card_catalog import summaries
+            entry=summaries(db,[result_id]).get(result_id,{})
+            catalogue={key:entry[key] for key in ('catalogOrder','addedAt','catalogOrigin','contentEdited','contentEditedAt') if key in entry}
+        except sqlite3.OperationalError:
+            catalogue={}
     finally:db.close()
-    raw={**result,'id':result_id,'updated':updated,'photoCount':len(source_images(result)),
+    raw={**result,'id':result_id,'updated':updated,**catalogue,'photoCount':len(source_images(result)),
         'mediaFailures':media_failures(result),'media':card_media(directory,result)}
     try:
         projected=client_card(raw)

@@ -122,7 +122,9 @@ class RuntimeTests(unittest.TestCase):
             helper = Path(td) / 'scripts' / 'helper.py'
             helper.parent.mkdir()
             marker = Path(td) / 'pid'
-            helper.write_text('import os,time\nfrom pathlib import Path\nPath(%r).write_text(str(os.getpid()))\ntime.sleep(30)\n' % str(marker))
+            # Publish the PID only after its bytes are complete. Existence of
+            # a newly opened file alone can race with the parent reading it.
+            helper.write_text('import os,time\nfrom pathlib import Path\np=Path(%r)\nt=p.with_suffix(".tmp")\nt.write_text(str(os.getpid()))\nt.replace(p)\ntime.sleep(30)\n' % str(marker))
             cancel = threading.Event()
             result = []
             with patch.object(runtime.sys, 'platform', 'darwin'), patch.object(runtime, '_installed', return_value=True), \

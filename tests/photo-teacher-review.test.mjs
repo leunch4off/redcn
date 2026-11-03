@@ -4,6 +4,8 @@ import {teacherReviewed,teacherEvidence,isTeacherEvidence} from '../web/photo-te
 import {confirmedPhotoFeatures} from '../web/media-core.mjs';
 import {resolvePhotoFurniture} from '../web/fact-evidence.mjs';
 import {retainReviewedPhotoCandidates} from '../web/photo-ui.mjs';
+import {FEATURES,generateListing} from '../web/engine.mjs';
+import {isAutomaticPhotoObservation} from '../web/photo-observation-policy.mjs';
 const sha='a'.repeat(64),other='c'.repeat(64);
 const make=()=>({selected:true,url:'https://images.cdn-cian.ru/images/test-1.jpg',analysis:{originalId:sha,candidates:[{id:'washer',label:'Стиральная машина'}]},teacherReview:{version:1,kind:'assistant-visual-review',originalId:sha,reviewId:'b'.repeat(64),datasetId:'d'.repeat(64),humanVerified:false,exhaustive:false,reviewedAt:'2026-11-03T00:00:00Z',features:['washer']}});
 test('assistant visual review adds a generic fact with explicit provenance and no invented count',()=>{
@@ -24,4 +26,19 @@ test('reanalysis preserves reviewed candidates separately from local model predi
  const item=make(),next=retainReviewedPhotoCandidates(item.analysis,{originalId:sha,candidates:[]},{originalId:sha,teacherReview:item.teacherReview});
  assert.equal(next.candidates[0].reviewOrigin,'assistant-visual-review');assert.equal(next.candidates[0].autoEligible,false);
  assert.deepEqual(confirmedPhotoFeatures([{...item,analysis:next}]).features,['washer']);
+});
+
+test('new household objects enter typed facts only with explicit review and no heating or counts',()=>{
+ const item=make(),features=['toilet','towelRail','cutlery','dishware'];
+ item.teacherReview.features=features;
+ item.analysis.candidates=features.map(id=>({id,label:FEATURES.find(row=>row[0]===id)[2]}));
+ const result=confirmedPhotoFeatures([item]);
+ assert.deepEqual(new Set(result.features),new Set(features));assert.deepEqual(result.featureCounts,{});
+ for(const row of result.photoEvidence){
+  assert.equal(isTeacherEvidence(row),true);assert.equal(row.humanVerified,false);assert.equal(row.count,null);
+  assert.equal(isAutomaticPhotoObservation({...row,status:'auto-visible',autoEligible:true,confidence:1}),false);
+ }
+ const generated=generateListing({features:[],photoEvidence:result.photoEvidence,style:'compact',templateMode:'catalog'});
+ for(const term of ['马桶','毛巾架','餐用刀叉匙','餐具'])assert.ok(generated.body.includes(term),term);
+ assert.doesNotMatch(generated.body,/加热|电热毛巾|全套餐具/);
 });

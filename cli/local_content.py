@@ -537,11 +537,8 @@ def _advertising_preview(directory, data, *, status=None, cancel=None):
 
 
 def publication_generation_metadata(preview):
-    keys = ('status', 'model', 'backend', 'styleId', 'variation', 'factsHash', 'elapsedSeconds',
-        'fallback', 'warnings', 'ai', 'modelAccepted', 'textSource', 'modelIssues', 'generationMode',
-        'modelContribution', 'factualTextSource', 'contract', 'inventoryCount', 'photoInventoryCount',
-        'sourceContextCharacters', 'sourceContextTruncated', 'part')
-    return {key: preview[key] for key in keys if key in preview}
+    from publication_provenance import clean_metadata
+    return clean_metadata(preview)
 
 
 def generate_import_advertisement(directory, result, *, status=None, cancel=None):
@@ -565,8 +562,9 @@ def generate_import_advertisement(directory, result, *, status=None, cancel=None
     metadata = publication_generation_metadata(preview)
     if preview.get('status') != 'review':
         return {**result, 'aiAdvertisement': metadata}
-    return {**result, 'titles': [preview['title']], 'body': preview['body'], 'tags': preview['tags'],
-            'aiAdvertisement': metadata}
+    from publication_provenance import bind_generation
+    return bind_generation({**result, 'titles': [preview['title']], 'body': preview['body'], 'tags': preview['tags']},
+        metadata, previous=result, parts=('title', 'body', 'tags'))
 
 
 def translate_preview(directory, data):

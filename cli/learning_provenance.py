@@ -163,6 +163,38 @@ def dataset_rows(path, *, snapshot=None):
     return hashlib.sha256(raw).hexdigest(), value, rows
 
 
+def _consent_row(row):
+    """Compare durable consent with the exact approved text, without inference.
+
+    Grounded targets are validated when approved/exported and again against
+    the frozen dataset before MLX loads. Re-rendering every property here would
+    spawn Node repeatedly while a large native model is resident. Consent is
+    about the same immutable event remaining approved, including its original
+    request/target and fingerprint; stale facts are not silently reconstructed.
+    """
+    from learning_memory import LearningMemory, _json, _hash
+    if row['kind'] != 'grounded_listing':
+        return LearningMemory._training_row(row)
+    try:
+        payload = json.loads(row['payload'])
+        if _hash(row['kind']+'\n'+_json(payload)) != row['fingerprint']:
+            raise ValueError('Изменились сохранённые данные проверенного примера')
+        request, target, review = payload['request'], payload['target'], payload['review']
+        if (not isinstance(request,dict) or not isinstance(request.get('messages'),list)
+                or not request['messages'] or not isinstance(target,dict)
+                or any(not isinstance(target.get(key),str) or not target[key] for key in ('title','body'))
+                or not isinstance(review,dict) or type(review.get('humanVerified')) is not bool
+                or not isinstance(review.get('actor'),str)
+                or review['humanVerified'] == review['actor'].startswith('assistant_')):
+            raise ValueError('Неверная сохранённая проверка учебного примера')
+        messages = [*request['messages'], {'role':'assistant','content':
+            '标题：'+target['title']+'\n正文：\n'+target['body']}]
+        return {'id':row['id'],'kind':row['kind'],'groupId':row['group_id'],
+                'messages':messages,'source':row['source']}
+    except (KeyError,TypeError,json.JSONDecodeError) as error:
+        raise ValueError('Неверные сохранённые данные учебного примера') from error
+
+
 def dataset_consent(db, path, *, register=False, snapshot=None):
     sha, document, rows = dataset_rows(path, snapshot=snapshot)
     provenance = document.get('provenance', {})
@@ -175,9 +207,8 @@ def dataset_consent(db, path, *, register=False, snapshot=None):
         return hashlib.sha256(json.dumps(value,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()
     # A renamed ID/envelope does not erase a known revoked payload. This also
     # covers whitespace-only copies with their row provenance stripped.
-    from learning_memory import LearningMemory
-    withdrawn_messages={message_key(LearningMemory._training_row(row)['messages']) for row in
-        db.execute("SELECT e.* FROM examples e JOIN learning_withdrawals w ON w.event_id=e.id WHERE e.kind IN ('dictionary','translation','furniture','title','description')")}
+    withdrawn_messages={message_key(_consent_row(row)['messages']) for row in
+        db.execute("SELECT e.* FROM examples e JOIN learning_withdrawals w ON w.event_id=e.id WHERE e.kind IN ('dictionary','translation','furniture','title','description','grounded_listing')")}
     for item in rows:
         row_provenance=item.get('provenance',{})
         if not isinstance(row_provenance,dict):raise ValueError('Неверное происхождение учебной строки')
@@ -199,7 +230,9 @@ def dataset_consent(db, path, *, register=False, snapshot=None):
         if row['status'] != 'approved' or db.execute('SELECT 1 FROM learning_withdrawals WHERE event_id=? OR fingerprint=?',
                 (row['id'], row['fingerprint'])).fetchone():
             raise ValueError('Учебный корпус содержит отозванный или неутверждённый пример')
-        expected = LearningMemory._training_row(row)
+        expected = _consent_row(row)
+        if row['kind']=='grounded_listing' and fingerprint!=row['fingerprint']:
+            raise ValueError('Происхождение корпуса отличается от утверждённого примера')
         if any(item.get(key) != expected[key] for key in ('id', 'kind', 'groupId', 'messages', 'source')):
             raise ValueError('Содержимое корпуса отличается от утверждённого примера')
         if register:

@@ -95,7 +95,8 @@ class ObjectiveAndCorpusTests(unittest.TestCase):
             (model/'config.json').write_text(json.dumps({'model_type':'qwen2','hidden_size':896,
                 'num_hidden_layers':24,'num_attention_heads':14,'num_key_value_heads':2}))
             output=Path(folder)/'candidate'
-            args=SimpleNamespace(dataset=str(path),consent_cache=folder,model=str(model),output=str(output))
+            args=SimpleNamespace(dataset=str(path),consent_cache=folder,model=str(model),
+                output=str(output),max_seq_length=256)
             prepare=trainer.prepare_consent
             def swap_after_preparation(*args,**kwargs):
                 result=prepare(*args,**kwargs)

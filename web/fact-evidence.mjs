@@ -22,7 +22,9 @@ Object.assign(furniturePatterns,{
 });
 export function detectFurniture(text,features,offer={},origin='JSON'){
  const raw=String(text||''),t=normalizeRussian(raw),negative=[];
- for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует|не будет|не предусмотрен[а-я]*)\s+/gu)){
+ // Source extracts put unrelated form answers on adjacent lines, for example
+ // «Аварийность\nНет\nХолодильник». A negative list cannot start on a new line.
+ for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует|не будет|не предусмотрен[а-я]*)[^\S\r\n]+/gu)){
   const rest=t.slice(m.index+m[0].length),end=rest.search(/[);\n.!?]|(?:,?\s+)(?:но|зато|есть|имеется)(?![а-я])/u);
   negative.push([m.index,m.index+m[0].length+(end<0?rest.length:end)]);
  }
@@ -94,27 +96,37 @@ export function detectConditions(text){const t=normalizeRussian(text),facts={},e
  if((m=t.match(/(?:^|[\n.!?])\s*(\d+)\s*человек/)))put('occupants',m[1],m);
  // Admission ranges are source restrictions, not the editor's per-person
  // budget divisor. Require an explicit admission predicate and a real range.
- if((m=t.match(/(?:рассмотрим|рассматриваем)\s+(?:к|для)\s+проживани[а-я]*\s*(?:только\s+)?(\d{1,2})\s*[-–—]\s*(\d{1,2})(?:\s*[-–—]?\s*х)?\s*человек[а-я]*/))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
+ if((m=t.match(/(?:рассмотрим|рассматриваем)\s+(?:(?:к|для)\s+)?проживани[а-я]*\s*(?:только\s+)?(\d{1,2})\s*[-–—]\s*(\d{1,2})(?:\s*[-–—]?\s*х)?\s*человек[а-я]*/))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
   const minimum=Number(m[1]),maximum=Number(m[2]);
   if(minimum>=1&&maximum>=minimum)restrictions.push({kind:'occupancy-range',minimum,maximum,text:`入住人数：${minimum}–${maximum}人。`});
+ }
+ const occupancyWords={одного:1,одной:1,двух:2,трех:3,четырех:4,пяти:5,шести:6};
+ if((m=t.match(/(?:к\s+проживанию\s+(?:рассматриваем|рассматриваются|допускаются)|(?:рассмотрим|рассматриваем|допускаем)\s+(?:к|для)\s+проживания)\s+не\s+более\s+(\d{1,2}|одного|одной|двух|трех|четырех|пяти|шести)\s+(?:(взросл[а-я]*)\s+)?(?:человек[а-я]*|жильц[а-я]*|арендатор[а-я]*)/u))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
+  const maximum=Number(m[1])||occupancyWords[m[1]],adultsOnly=!!m[2];
+  if(maximum>=1&&maximum<=50)restrictions.push({kind:'occupancy-maximum',maximum,adultsOnly,text:adultsOnly?`最多${maximum}名成人入住。`:`入住人数不超过${maximum}人。`});
  }
  if((m=t.match(/(?:договор[а-я]*\s+на|срок[а-я]*\s+(?:аренды\s+)?)\s*(\d+)\s*месяц/)))put('contractMonths',m[1],m);
  if((m=t.match(/срок аренды\s*от года|от\s*12\s*месяц/)))put('minMonths','12',m);
  if((m=t.match(/(?:долгосрочн[а-я]*\s+аренда|длительн[а-я]*\s+срок)/)))put('leaseTerm','long',m);
- if((m=t.match(/регистраци[а-я]*\s+(?:не\s+(?:сделаем|делаем|оформляем|предоставляем|будет)|невозможна)|без регистрации/)))put('registrationPolicy','not_available',m);
- if((m=t.match(/без\s+(?:животных|питомцев)|(?:животные|питомцы|с\s+животными|с\s+питомцами)\s*(?:запрещены|нельзя|не допускаются|не разрешено)|(?:нельзя|не разрешено|не допускается)\s+с\s+(?:животными|питомцами)/))){put('petPolicy','no',m);facts.pets=false;}
+ if((m=t.match(/регистраци[а-я]*\s+(?:не\s+(?:сделаем|делаем|делаю|оформляем|оформляю|предоставляем|предоставляю|предоставляют|будет)|невозможна)|без регистрации/)))put('registrationPolicy','not_available',m);
+ if((m=t.match(/без\s+(?:домашних\s+)?(?:животных|питомцев)|(?:животные|питомцы|с\s+животными|с\s+питомцами)\s*(?:запрещены|нельзя|не допускаются|не разрешено)|с\s+(?:животными|питомцами)[\s,]*(?:к\s+сожалению[\s,]*)?не\s+рассматрива(?:ем|ются)(?!\s+(?:только|на\s))|(?:нельзя|не разрешено|не допускается|не рассматриваем)\s+с\s+(?:животными|питомцами)/))){put('petPolicy','no',m);facts.pets=false;}
  else if((m=t.match(/(?<!не\s)(?:можно|разрешено|допускается)\s+(?:с\s+)?(?:детьми\s+и\s+)?(?:животными|питомцами)|(?:животные|питомцы)\s+разрешены/))){put('petPolicy','yes',m);facts.pets=true;}
- else if((m=t.match(/обсужда[а-я]+\s+(?:с\s+)?(?:животными|питомцами)/)))put('petPolicy','negotiable',m);
+ else if((m=t.match(/обсужда[а-я]+\s+(?:с\s+)?(?:животными|питомцами)|(?:животные|питомцы)\s+обсуждаются/)))put('petPolicy','negotiable',m);
  if((m=t.match(/без\s+детей|(?:с\s+детьми|дети)\s*(?:нельзя|запрещены|не допускаются|не разрешено)|(?:нельзя|не разрешено|не допускается)\s+с\s+детьми/))){put('childrenPolicy','no',m);facts.children=false;}
  else if((m=t.match(/(?:можно|разрешено|допускается)\s+с\s+детьми|дети\s+разрешены/))){put('childrenPolicy','yes',m);facts.children=true;}
  if((m=t.match(/(?:две|2)\s+(?:отдельн[а-я]*|изолированн[а-я]*)\s+комнат[а-я]*|комнат[а-я]*\s+(?:изолированн[а-я]*|раздельн[а-я]*)/)))put('separate',true,m);
+ if((m=t.match(/(?<![а-я])(?:комнаты\s+смежные|смежные\s+комнаты)(?![а-я])/u))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index)))restrictions.push({kind:'adjacent-rooms',text:'房间相连。'});
+ // This is a specific affirmative building notice, not an inference from
+ // an old building's age or from the word renovation in a sales narrative.
+ if(/(?<![а-я])дом\s+включен\s+в\s+программу\s+реновации\s+и\s+будет\s+снесен(?![а-я])/u.test(t))restrictions.push({kind:'building-demolition',text:'该楼已纳入城市更新计划，将被拆除。'});
  if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+(?:в\s+(?:квартире|помещении|доме)\s+)?(?:(?:категорически|строго)\s+)?запрещено)/)))put('smokingPolicy','no',m);
  if((m=t.match(/без\s+(?:компаний\s*[/,]\s*)?гостей|без компаний\s*[/,]\s*гостей/)))put('guestPolicy','no',m);
  if((m=t.match(/(?:субаренда|пересдача)[^\n]{0,100}?(?:исключена|запрещена|не допускается)/)))put('subletPolicy','no',m);
  if((m=t.match(/(?:посуточно|краткосрочн[а-я]*)[^.!?\n]{0,30}(?:исключена|запрещена)/))){put('shortTermPolicy','no',m);facts.shortTerm=false;}
  if((m=t.match(/без комиссии|комиссия с арендатора\s*(?:нет|0)/)))put('commission','0',m);
  if((m=t.match(/предоплата\s*(\d+)\s*месяц/)))put('prepayMonths',m[1],m);
- if((m=t.match(/оплата жкх включена\s*\(без счетчиков\)/)))put('utilities','meters',m);
+ if((m=t.match(/(?:^|[\n.!?])\s*(?:залог|депозит)\s*[:—–-]?\s*(?:нет|0)(?![\dа-я])/u)))put('deposit','0',m);
+ if((m=t.match(/оплата\s+жкх\s+включена\s*\(без\s+счетчиков\)/)))put('utilities','meters',m);
  // This explicit additive payment clause does not change the utility mode
  // or infer an internet connection; it carries only the separate network fee.
  if((m=t.match(/(?<![а-я])оплата[^.!?;\n]{0,80}?(?:\+|(?<![а-я])плюс)\s*счетчики\s+и\s+интернет(?![а-я])/u))){

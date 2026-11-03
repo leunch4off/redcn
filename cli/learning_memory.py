@@ -17,8 +17,9 @@ import time
 import uuid
 import learning_provenance
 
-KINDS = {'title', 'description', 'translation', 'dictionary', 'furniture', 'tag_stat'}
-SOURCES = {'user', 'user-edit', 'manual', 'generated', 'imported', 'dictionary'}
+KINDS = {'title', 'description', 'translation', 'dictionary', 'furniture', 'tag_stat', 'grounded_listing'}
+SOURCES = {'user', 'user-edit', 'manual', 'generated', 'imported', 'dictionary', 'assistant-reviewed'}
+LANE_KINDS = {'translation': ('dictionary', 'translation'), 'advertising': ('grounded_listing',)}
 STATES = {'pending', 'approved', 'rejected', 'superseded', 'withdrawn'}
 MAX_EVENTS = 100_000
 MAX_TEXT = 12_000
@@ -78,6 +79,9 @@ def _stamp(value):
 def _payload(kind, value):
     if not isinstance(value, dict):
         raise ValueError('Неверный учебный пример')
+    if kind == 'grounded_listing':
+        from advertising_learning import normalize_payload
+        return normalize_payload(value)
     if kind in {'title', 'description'}:
         if set(value) != {'text', 'language'} or value['language'] not in {'ru', 'zh'}:
             raise ValueError('Нужны текст и язык ru/zh')
@@ -212,9 +216,18 @@ class LearningMemory:
             raise ValueError('Неверные параметры учебного события')
         payload = _payload(kind, payload)
         actor = learning_provenance.actor_name(actor)
+        if source == 'assistant-reviewed' and (kind != 'grounded_listing'
+                or not actor.startswith('assistant_') or payload['review'] is None
+                or payload['review']['humanVerified'] or payload['review']['actor'] != actor):
+            raise ValueError('Проверка ассистента должна содержать связанные факты и явное происхождение')
         source_ids = learning_provenance.parents(derived_from, supersedes)
         if source in {'generated', 'imported'} and status == 'approved':
             status = 'pending'
+        if kind == 'grounded_listing' and status == 'approved':
+            from advertising_learning import verify_target
+            payload = verify_target(payload)
+            if payload['review']['actor'] != actor:
+                raise ValueError('Участник утверждения не совпадает с записью проверки')
         event_id = event_id or uuid.uuid4().hex
         if not isinstance(event_id, str) or not re.fullmatch(r'[\w-]{8,100}', event_id):
             raise ValueError('Неверный ID учебного события')
@@ -265,6 +278,9 @@ class LearningMemory:
             row = db.execute('SELECT * FROM examples WHERE id=?', (event_id,)).fetchone()
             if row is None or row['status'] in {'superseded', 'withdrawn'}:
                 raise ValueError('Пример не найден или заменён исправлением')
+            if row['kind'] == 'grounded_listing' and status == 'approved':
+                from advertising_learning import verify_target
+                verify_target(json.loads(row['payload']))
             learning_provenance.assert_ingest(db, row['fingerprint'], [])
             changed = row['status'] != status
             if changed:
@@ -322,16 +338,31 @@ class LearningMemory:
                               (status, limit) if status else (limit,)).fetchall()
         return [self._row(row) for row in rows]
 
-    def status(self):
+    def status(self, lane=None):
+        if lane is not None and lane not in LANE_KINDS:
+            raise ValueError('Неизвестное направление обучения')
         with self._db() as db:
             counts = {state: 0 for state in sorted(STATES)}
             counts.update({row[0]: row[1] for row in db.execute('SELECT status,COUNT(*) FROM examples GROUP BY status')})
-            trainable = db.execute("SELECT COUNT(*) FROM examples WHERE status='approved' AND kind<>'tag_stat'").fetchone()[0]
-            groups = db.execute("SELECT COUNT(DISTINCT group_id) FROM examples WHERE status='approved' AND kind<>'tag_stat'").fetchone()[0]
+            rows = db.execute('SELECT * FROM examples ORDER BY created,id').fetchall()
+            partitions = dict(db.execute('SELECT group_id,partition FROM splits'))
             last = db.execute('SELECT updated,payload FROM checkpoints ORDER BY updated DESC LIMIT 1').fetchone()
+        from advertising_learning import lane_summary
+        advertising = lane_summary(rows, partitions=partitions)
+        paired = [row for row in rows if row['status'] == 'approved' and row['kind'] in LANE_KINDS['translation']]
+        translation = {'lane': 'translation', 'approvedExamples': len(paired),
+            'approvedGroups': len({row['group_id'] for row in paired}),
+            'trainingEligible': len(paired) >= 20 and len({row['group_id'] for row in paired}) >= 5}
+        lanes = {'translation': translation, 'advertising': advertising}
+        selected = lanes.get(lane)
+        approved = [row for row in rows if row['status'] == 'approved' and row['kind'] != 'tag_stat']
+        trainable = selected['approvedExamples'] if selected else len(approved)
+        groups = selected['approvedGroups'] if selected else len({row['group_id'] for row in approved})
+        eligible = selected['trainingEligible'] if selected else any(item['trainingEligible'] for item in lanes.values())
         return {'schemaVersion': SCHEMA_VERSION, 'counts': counts, 'approvedExamples': trainable,
-                'approvedGroups': groups, 'trainingEligible': trainable >= 20 and groups >= 5,
-                'queueState': 'ready' if trainable >= 20 and groups >= 5 else 'collecting',
+                'approvedGroups': groups, 'trainingEligible': eligible,
+                'queueState': 'ready' if eligible else 'collecting', 'activeLane': lane,
+                'lanes': lanes, 'styleOnlyExamples': sum(row['kind'] in {'title', 'description', 'furniture'} for row in rows),
                 'weightsUpdated': False, 'automaticPromotion': False,
                 'lastCheckpoint': {'updatedAt': last[0], **json.loads(last[1])} if last else None}
 
@@ -465,6 +496,9 @@ class LearningMemory:
     @staticmethod
     def _training_row(row):
         payload, kind = json.loads(row['payload']), row['kind']
+        if kind == 'grounded_listing':
+            from advertising_learning import training_row
+            return training_row(row)
         if kind in {'dictionary', 'translation'}:
             prompt, answer = 'Переведи на упрощённый китайский, сохрани факты:\n'+payload['ru'], payload['zh']
         elif kind == 'furniture':
@@ -483,7 +517,7 @@ class LearningMemory:
                     'permission':'approved-for-local-training', 'sourceSha256':row['fingerprint'],
                     'groupId':row['group_id']}}
 
-    def snapshot(self, destination=None, eval_fraction=.2):
+    def snapshot(self, destination=None, eval_fraction=.2, *, lane=None):
         """Write approved-only JSONL + manifest; partitions persist across snapshots.
 
         The optional destination is a new direct subdirectory name under the
@@ -492,12 +526,16 @@ class LearningMemory:
         """
         if type(eval_fraction) not in (float, int) or not .05 <= eval_fraction <= .5:
             raise ValueError('Доля проверки: 0.05–0.5')
+        if lane is not None and lane not in LANE_KINDS:
+            raise ValueError('Неизвестное направление обучения')
         destination = destination or uuid.uuid4().hex
         if not isinstance(destination, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', destination):
             raise ValueError('Неверное имя снимка обучения')
         with self._db() as db:
             db.execute('BEGIN IMMEDIATE')
             rows = db.execute("SELECT * FROM examples WHERE status='approved' AND kind<>'tag_stat' ORDER BY created,id").fetchall()
+            if lane is not None:
+                rows = [row for row in rows if row['kind'] in LANE_KINDS[lane]]
             partitions = {}
             for row in rows:
                 group = row['group_id']
@@ -506,11 +544,16 @@ class LearningMemory:
                 part = existing[0] if existing else ('valid' if int(group[:8],16)/2**32 < eval_fraction else 'train')
                 db.execute('INSERT OR IGNORE INTO splits VALUES (?,?)', (group, part))
                 partitions[group] = part
-        validation_fingerprints = {row['fingerprint'] for row in rows if partitions[row['group_id']] == 'valid'}
+        def training_fingerprint(row):
+            if row['kind'] == 'grounded_listing':
+                payload = json.loads(row['payload'])
+                return _hash(_json([payload['request']['messages'], payload['target']]))
+            return row['fingerprint']
+        validation_fingerprints = {training_fingerprint(row) for row in rows if partitions[row['group_id']] == 'valid'}
         train, valid, seen = [], [], set()
         for row in rows:
             part = partitions[row['group_id']]
-            fingerprint = row['fingerprint']
+            fingerprint = training_fingerprint(row)
             if fingerprint in seen or (part == 'train' and fingerprint in validation_fingerprints): continue
             seen.add(fingerprint)
             (valid if part == 'valid' else train).append(self._training_row(row))
@@ -524,6 +567,8 @@ class LearningMemory:
         for name, values in [('train.jsonl',train), ('valid.jsonl',valid)]:
             contents[name] = ''.join(_json(row)+'\n' for row in values).encode('utf-8')
         manifest = {'schemaVersion': SCHEMA_VERSION, 'createdAt': _now(),
+                    'lane': lane or 'legacy-memory-export',
+                    'groundedAdvertising': lane == 'advertising',
                     'trainExamples': len(train), 'validExamples': len(valid),
                     'trainGroups': len({row['groupId'] for row in train}),
                     'validGroups': len({row['groupId'] for row in valid}),

@@ -162,10 +162,11 @@ class WorkspacePhoneAttribution(unittest.TestCase):
 
     def test_two_cookie_text_edit_and_rewrite_forward_verified_actor_to_save_receipts(self):
         first,second=self.two_devices();card_id=self.add_card()
-        with patch.object(fact_ledger,'record_fact_revision',wraps=fact_ledger.record_fact_revision) as receipt,patch.object(language_service,'node_language',side_effect=language_fixture.LanguageUpdates.render):
+        with patch.object(fact_ledger,'record_fact_revision',wraps=fact_ledger.record_fact_revision) as receipt,patch.object(language_service,'node_language',side_effect=language_fixture.LanguageUpdates.render) as render:
             self.as_device(first,'cards/'+card_id+'/edit-text',{'part':'body','text':'第一部正文','actor':'forged-owner'})
             self.as_device(second,'cards/'+card_id+'/edit-text',{'part':'tags','text':'#第二部','actor':'forged-owner'})
             self.as_device(second,'cards/'+card_id+'/rewrite',{'part':'title','actor':'forged-owner'})
+        self.assertIn('individual-brief',[call.args[0]['action'] for call in render.call_args_list])
         self.assertEqual([call.kwargs['actor'] for call in receipt.call_args_list],[first['actor'],second['actor'],second['actor']])
         saved=local_server.read_result(self.directory,card_id)
         self.assertEqual(saved['body'],'第一部正文');self.assertEqual(saved['tags'],'#第二部')

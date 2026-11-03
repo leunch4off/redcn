@@ -36,6 +36,20 @@ class IndividualContractTests(unittest.TestCase):
     def setUpClass(cls):
         cls.brief = individual.build_brief(FIELDS)
 
+    def test_unknown_fields_gain_explicit_source_restrictions_without_losing_the_adult_scope(self):
+        fields = {**FIELDS, 'deposit': '', 'utilities': 'unknown', 'petPolicy': 'unknown',
+            'sourceDescription': 'К проживанию рассматриваются не более двух взрослых человек. С животными к сожалению не рассматриваем.\nОплата ЖКХ\nвключена (без счётчиков)\nЗалог\nнет'}
+        brief = individual.build_brief(fields)
+        self.assertEqual(brief['fields']['petPolicy'], 'no')
+        self.assertEqual(brief['fields']['utilities'], 'meters')
+        self.assertEqual(brief['fields']['deposit'], '0')
+        self.assertNotIn('childrenPolicy', brief['fields'])
+        self.assertIn('最多2名成人入住。', brief['facts']['已知费用与限制'])
+        draft = complete(brief)
+        self.assertEqual(individual.validate_individual(draft, brief), [])
+        draft['body'] = draft['body'].replace('最多2名成人入住。', '最多2人入住。')
+        self.assertTrue(any('числа жильцов' in issue for issue in individual.validate_individual(draft, brief)))
+
     def test_full_valid_body_and_optional_secondary_detail_can_be_retained(self):
         self.assertEqual(individual.validate_individual(complete(self.brief), self.brief), [])
         brief = individual.build_brief({**FIELDS, 'kitchen': '11', 'living': '21'})
@@ -44,6 +58,32 @@ class IndividualContractTests(unittest.TestCase):
         self.assertEqual(individual.validate_individual(draft, brief), [])
         draft['body'] += '\n厨房21㎡。'
         self.assertTrue(any('площадь помещения' in issue for issue in individual.validate_individual(draft, brief)))
+
+    def test_missing_city_is_not_filled_by_the_legacy_moscow_default(self):
+        fields = {key: value for key, value in FIELDS.items() if key != 'city'}
+        brief = individual.build_brief(fields)
+        self.assertFalse(any(line.startswith('城市：') for line in brief['facts']['核心参数']))
+        self.assertNotIn('莫斯科', brief['baseline']['body'])
+        self.assertNotIn('城市：莫斯科', individual.generation_request(brief)['messages'][1]['content'])
+        draft = complete(brief)
+        draft['title'] = draft['title'].replace('莫斯科', '')
+        self.assertEqual(individual.validate_individual(draft, brief), [])
+        self.assertTrue(any('Город Москва' in issue for issue in individual.validate_individual(
+            {**draft, 'body': '莫斯科。'+draft['body']}, brief)))
+
+    def test_material_source_facts_and_no_daily_rent_survive_the_writer_prompt(self):
+        source = 'Комнаты смежные. Дом включен в программу реновации и будет снесен. Субаренда, пересдача в том числе посуточно исключена.'
+        brief = individual.build_brief({**FIELDS, 'sourceDescription': source})
+        context = individual.generation_request(brief)['messages'][1]['content']
+        for clause in ('房间相连。', '该楼已纳入城市更新计划，将被拆除。', '不接受按日短租'):
+            self.assertIn(clause, context)
+        good = complete(brief)
+        self.assertEqual(individual.validate_individual(good, brief), [])
+        for clause, fragment in [('房间相连。', 'смежные'), ('该楼已纳入城市更新计划，将被拆除。', 'сносе')]:
+            bad = {**good, 'body': good['body'].replace(clause, '')}
+            self.assertTrue(any(fragment in issue for issue in individual.validate_individual(bad, brief)))
+        with self.assertRaisesRegex(ValueError, 'смежные'):
+            individual.build_brief({**FIELDS, 'separate': True, 'sourceDescription': source})
 
     def test_long_full_inventory_is_not_rejected_by_legacy_280_limit(self):
         features = ['bedAny', 'mattress', 'wardrobe', 'nightstands', 'desk', 'dresser', 'mirror',
@@ -210,6 +250,19 @@ class IndividualContractTests(unittest.TestCase):
         self.assertTrue(any('оплата интернета' in issue for issue in individual.validate_individual(missing, brief)))
         contradictory = {**draft, 'body': draft['body']+'网络费用已包含。'}
         self.assertTrue(any('ошибочно названа' in issue for issue in individual.validate_individual(contradictory, brief)))
+
+    def test_including_a_connection_in_an_equipment_list_does_not_include_its_bill(self):
+        from rental_conditions import fee_claims
+        self.assertEqual(fee_claims('家电与其他配置包括空调、冰箱、洗手盆和网络。', 'zh'), {})
+        self.assertEqual(fee_claims('已有配置包含网络。', 'zh'), {})
+        for clause in ('租金包括网络。', '费用包含网络。', '网络费用已包含。', '租金包含配置与网络。'):
+            self.assertEqual(fee_claims(clause, 'zh').get('internet'), {'included'}, clause)
+        brief = individual.build_brief({**FIELDS, 'features': [*FIELDS['features'], 'internet']})
+        draft = complete(brief)
+        draft['body'] += '\n家电与其他配置包括冰箱、烤箱和网络。'
+        self.assertEqual(individual.validate_individual(draft, brief), [])
+        draft['body'] += '\n网络费用已包含。'
+        self.assertTrue(any('условие оплаты' in issue for issue in individual.validate_individual(draft, brief)))
 
     def test_negated_source_quality_is_not_permission_for_advertising_claim(self):
         for source, claim in [('Это не дизайнерский ремонт.', '房屋是精装修。'),

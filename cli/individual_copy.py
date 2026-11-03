@@ -76,6 +76,12 @@ def build_brief(fields, rules=None):
     # historical renderer may offer generic registration help by default; that
     # is not evidence that the source apartment permits/finances registration.
     sections = dict(resolved['sections'])
+    city = str(fields.get('city') or '').strip()
+    city_zh = '莫斯科' if city.casefold() in ('москва', 'moscow', '莫斯科') else city
+    if not city:
+        # The legacy renderer targets Moscow by default. A missing city in a
+        # saved card is not evidence for that default in individual prose.
+        sections['location'] = sections.get('location', '').replace('📍 莫斯科｜', '📍 ')
     if not resolved.get('services'):
         sections['service'] = ''
     baseline_body = '\n\n'.join(sections[key] for key in ('location', 'facts', 'equipment', 'transport', 'conditions', 'service') if sections.get(key))
@@ -84,9 +90,25 @@ def build_brief(fields, rules=None):
         extra_conditions += '\n房东不提供落地签登记。'
     source_restrictions = []
     for row in resolved.get('sourceRestrictions') or []:
+        material = {'adjacent-rooms': '房间相连。',
+            'building-demolition': '该楼已纳入城市更新计划，将被拆除。'}
+        if isinstance(row, dict) and row.get('kind') in material:
+            line = material[row['kind']]
+            source_restrictions.append({'kind': row['kind'], 'text': line})
+            extra_conditions += '\n'+line
+            continue
         if isinstance(row, dict) and row.get('kind') == 'internet-extra':
             line = '网络费用另付。'
             source_restrictions.append({'kind': 'internet-extra', 'text': line})
+            extra_conditions += '\n'+line
+            continue
+        if isinstance(row, dict) and row.get('kind') == 'occupancy-maximum':
+            maximum, adults_only = row.get('maximum'), row.get('adultsOnly')
+            if type(maximum) is not int or not 1 <= maximum <= 50 or type(adults_only) is not bool:
+                raise ValueError('Не подтверждён предел числа жильцов')
+            line = f'最多{maximum}名成人入住。' if adults_only else f'入住人数不超过{maximum}人。'
+            source_restrictions.append({'kind': 'occupancy-maximum', 'maximum': maximum,
+                'adultsOnly': adults_only, 'text': line})
             extra_conditions += '\n'+line
             continue
         if not isinstance(row, dict) or row.get('kind') != 'occupancy-range':
@@ -100,16 +122,14 @@ def build_brief(fields, rules=None):
         extra_conditions += '\n'+line
     if extra_conditions:
         baseline_body += '\n' + extra_conditions
-    baseline = {**baseline, 'body': '城市：莫斯科\n'+baseline_body, 'titles': []}
+    baseline = {**baseline, 'body': ('城市：'+city_zh+'\n' if city_zh else '')+baseline_body, 'titles': []}
     inventory = resolved.get('inventory') or []
     single_counts = [row['zh']+'（'+('至少' if row.get('countKind') == 'minimum' else '')+'1件）' for row in inventory if row.get('count') == 1]
     if single_counts:
         baseline['body'] += '\n已确认物品数量：'+'、'.join(single_counts)
     core = []
-    if fields.get('city'):
-        core.append('城市：莫斯科' if str(fields['city']).lower() in ('москва', 'moscow', '莫斯科') else '城市：'+str(fields['city']))
-    else:
-        core.append('城市：莫斯科')
+    if city_zh:
+        core.append('城市：'+city_zh)
     core.append('户型：'+resolved['layout'])
     for key, label, suffix in (('price', '月租', '₽/月'), ('area', '总面积', '㎡')):
         if fields.get(key) not in (None, '', 0):
@@ -164,6 +184,8 @@ def _retry_instructions(problems):
         ('счётчики', '保留“物业费已包含，水电按表另付”的费用条件。'),
         ('срок', '保留已知的预付月数、合同期限和最低租期，按各自名称写出。'),
         ('числа жильцов', '正文必须保留已知入住人数限制，不能变成合租预算建议。'),
+        ('сносе здания', '必须保留“该楼已纳入城市更新计划，将被拆除”。不要推测拆除日期。'),
+        ('смежные комнаты', '明确写出房间相连，不能说房间独立。'),
         ('оплата интернета', '明确保留网络费用另付，不能写费用已包含。'),
         ('Маршрут', '站名、时间和方式必须逐一对应核实交通资料，不能挪用另一个车站的数字。'),
         ('запрет', '必须清楚写出已知限制，不允许宠物等条件不得遗漏或改成允许。'),
@@ -232,8 +254,10 @@ def generation_request(brief, *, seed=0, instruction='', previous_title='', prev
     # Keep explicit roles and numbers. Neither Chinese payment shorthand nor
     # a rent multiple is evidence for a differently valued deposit.
     conditions = payload.get('已知费用与限制', '')
+    # Calendar-marked source restrictions (e.g. no daily rentals) are facts,
+    # not numeric payment terms. Replace only the exact roles rebuilt below.
     lines = [line for line in conditions.splitlines()
-        if not re.match(r'\s*[💰🔐📄📅]', line)]
+        if not re.match(r'\s*(?:[💰🔐]|📄\s*预付|📅\s*(?:描述所列合同期限|卡片所列最低租期|合同期限|最低租期))', line)]
     fields = brief['fields']
     exact = []
     if fields.get('price') not in (None, ''):
@@ -524,6 +548,8 @@ def validate_individual(draft, brief, *, part='all'):
     semantic_baseline = {**baseline, 'body': semantic_text(reference)+('\n地铁' if brief.get('metro') else '')}
     semantic_draft = {key: semantic_text(value) for key, value in draft.items()}
     issues = validate_draft(semantic_draft, semantic_baseline, fields, max_body=maximum)
+    if not str(fields.get('city') or '').strip() and '莫斯科' in output and '莫斯科' not in reference:
+        issues.append('Город Москва не указан в фактах карточки; значение по умолчанию не подтверждает локацию')
     if fields.get('layout') == 'studio' and language_check(re.sub(r'Studio', '', draft['title'], flags=re.I), 'zh')['passed']:
         issues = [issue for issue in issues if not issue.startswith('Заголовок должен быть на китайском')]
     body = draft['body']
@@ -612,12 +638,27 @@ def validate_individual(draft, brief, *, part='all'):
             if not re.search(labels+r'.{0,15}'+re.escape(count)+r'\s*个月', body):
                 issues.append('Пропущен известный срок: '+label)
     for restriction in brief.get('sourceRestrictions', []):
+        if restriction['kind'] == 'building-demolition':
+            if not re.search(r'(?:楼|楼栋|建筑|房屋).{0,18}(?:更新|改造|拆迁).{0,12}计划', body) or not re.search(r'(?:将|会|拟|计划).{0,6}(?:被)?拆(?:除|迁)', body):
+                issues.append('Пропущено прямое уведомление о сносе здания')
+            if re.search(r'不(?:会|需|将|用).{0,6}拆(?:除|迁)', output):
+                issues.append('Изменён смысл уведомления о сносе здания')
+            continue
+        if restriction['kind'] == 'adjacent-rooms':
+            if not re.search(r'房间.{0,5}(?:相连|连通)|连通式房间', body) or re.search(r'房间.{0,5}(?:独立|分开)', output):
+                issues.append('Не сохранены смежные комнаты')
+            continue
         if restriction['kind'] == 'internet-extra':
             fee = r'(?:网络(?:费用|费)|网费|宽带费)'
             if not re.search(fee+r'.{0,10}(?:另付|另计|单独支付|自付|额外支付)|(?:另付|另计|单独支付)\s*'+fee, body):
                 issues.append('Пропущена отдельная оплата интернета: 网络费用另付。')
             if re.search(fee+r'.{0,8}(?:已含|包含|免费|全包|免收)', output):
                 issues.append('Отдельная оплата интернета ошибочно названа включённой')
+            continue
+        if restriction['kind'] == 'occupancy-maximum':
+            subject = r'(?:名|位)?(?:成人|成年人)' if restriction['adultsOnly'] else r'(?:名|位)?(?:人|租客)'
+            if not re.search(r'(?:最多|至多|不超过)\s*'+str(restriction['maximum'])+r'\s*'+subject, body):
+                issues.append('Пропущено ограничение числа жильцов: '+restriction['text'])
             continue
         minimum, maximum = restriction['minimum'], restriction['maximum']
         interval = str(minimum)+r'\s*[-–—至到]\s*'+str(maximum)+r'\s*(?:位|名)?(?:人|租客)'

@@ -66,23 +66,28 @@ export function retainReviewedPhotoCandidates(previous,current,{originalId,confi
 export function mergePhotoReviewJournal(previous,items,{now=new Date().toISOString(),refresh=false,rejectedFeatures=[]}={}){
  const sources=Array.isArray(items)?items.slice(0,600):[],entries=new Map(),current=new Map(),rejected=new Set(Array.isArray(rejectedFeatures)?rejectedFeatures:[]);
  const knownPrevious=previous?.version===1&&Array.isArray(previous.entries);
- for(const item of sources){const digest=item?.analysis?.originalId||item?.serverId;if(typeof item?.url==='string'&&photoJournalDigest(digest))current.set(item.url,digest);}
+ for(const item of sources){const digest=item?.analysis?.originalId||item?.serverId;if(item?.selected!==false&&typeof item?.url==='string'&&photoJournalDigest(digest))current.set(item.url,digest);}
+ const currentOriginals=new Set(current.values());
  function decision(digest,feature,old){
-  if(rejected.has(feature))return 'rejected';
+  if(rejected.has(feature))return {state:'rejected'};
   const same=sources.filter(item=>item?.analysis?.originalId===digest);
-  if(same.some(item=>item.rejected?.[feature]===true))return 'rejected';
-  if(same.some(item=>item.confirmed?.[feature]&&typeof item.confirmed[feature]==='object'))return 'confirmed';
-  return old;
+  if(same.some(item=>item.rejected?.[feature]===true))return {state:'rejected'};
+  if(same.some(item=>item.confirmed?.[feature]&&typeof item.confirmed[feature]==='object'))return {state:'confirmed'};
+  const reviewed=currentOriginals.has(digest)&&!['confirmed','rejected'].includes(old)&&same.find(item=>teacherReviewed(item,feature));
+  if(reviewed)return {state:'assistant-reviewed',reviewOrigin:'assistant-visual-review',assistantReviewId:reviewed.teacherReview.reviewId,humanVerified:false};
+  return {state:old};
  }
  for(const row of knownPrevious?previous.entries.slice(0,600):[]){
-  if(!row||!photoJournalDigest(row.id)||!photoJournalDigest(row.originalId)||!photoJournalFeatures.has(row.featureId)||typeof row.sourceUrl!=='string'||!['pending','confirmed','rejected','stale'].includes(row.state))continue;
-  const state=row.state==='pending'&&current.has(row.sourceUrl)&&current.get(row.sourceUrl)!==row.originalId?'stale':row.state;
-  entries.set(row.id,{...row,state:decision(row.originalId,row.featureId,state),count:null});
+  if(!row||!photoJournalDigest(row.id)||!photoJournalDigest(row.originalId)||!photoJournalFeatures.has(row.featureId)||typeof row.sourceUrl!=='string'||!['pending','confirmed','rejected','stale','assistant-reviewed'].includes(row.state))continue;
+  const prior=row.state==='assistant-reviewed'?'pending':row.state;
+  const state=prior==='pending'&&(current.has(row.sourceUrl)&&current.get(row.sourceUrl)!==row.originalId||row.state==='assistant-reviewed'&&!currentOriginals.has(row.originalId))?'stale':prior;
+  const saved={...row};for(const key of ['reviewOrigin','assistantReviewId','humanVerified'])delete saved[key];
+  entries.set(row.id,{...saved,...decision(row.originalId,row.featureId,state),count:null});
  }
  let added=0;
  for(const item of sources){
   const analysis=item?.analysis,digest=analysis?.originalId;
-  if(analysis?.autoApply!==true||!photoJournalProviders.has(analysis.model)||analysis.provider!==photoJournalProviders.get(analysis.model)||!['review','ok'].includes(analysis.status)||!photoJournalDigest(digest)||!photoSources([item.url]).length)continue;
+  if(item?.selected===false||analysis?.autoApply!==true||!photoJournalProviders.has(analysis.model)||analysis.provider!==photoJournalProviders.get(analysis.model)||!['review','ok'].includes(analysis.status)||!photoJournalDigest(digest)||!photoSources([item.url]).length)continue;
   for(const candidate of Array.isArray(analysis.candidates)?analysis.candidates.slice(0,64):[]){
    if(!candidate||candidate.automaticSuggestion!==true||!photoJournalDigest(candidate.reviewId)||!photoJournalFeatures.has(candidate.id)||!photoJournalScore(candidate.confidence)||candidate.confidence<.85||(Array.isArray(analysis.unknownIds)&&analysis.unknownIds.includes(candidate.id)))continue;
    const evidence=Array.isArray(candidate.evidence)?candidate.evidence.slice(0,8):[];
@@ -90,11 +95,11 @@ export function mergePhotoReviewJournal(previous,items,{now=new Date().toISOStri
    if(!bound)continue;
    const old=entries.get(candidate.reviewId);
    if(old&&(old.originalId!==digest||old.featureId!==candidate.id))continue;
-   const state=decision(digest,candidate.id,['confirmed','rejected'].includes(old?.state)?old.state:'pending');
+   const resolved=decision(digest,candidate.id,['confirmed','rejected'].includes(old?.state)?old.state:'pending');
    entries.set(candidate.reviewId,{id:candidate.reviewId,originalId:digest,sourceUrl:item.url,
     featureId:candidate.id,label:typeof candidate.label==='string'?candidate.label.slice(0,150):candidate.id,
     confidence:candidate.confidence,evidence:JSON.parse(JSON.stringify(evidence)),provider:analysis.provider,model:analysis.model,
-    automatic:true,state,reason:'model-unaccepted',count:null,createdAt:old?.createdAt||now,lastSeenAt:refresh?now:old?.lastSeenAt||now});
+    automatic:true,...resolved,reason:'model-unaccepted',count:null,createdAt:old?.createdAt||now,lastSeenAt:refresh?now:old?.lastSeenAt||now});
    if(!old)added++;
   }
  }
@@ -102,7 +107,7 @@ export function mergePhotoReviewJournal(previous,items,{now=new Date().toISOStri
  const rows=[...entries.values()].sort((a,b)=>Number(current.get(a.sourceUrl)!==a.originalId)-Number(current.get(b.sourceUrl)!==b.originalId)||Number(a.state!=='pending')-Number(b.state!=='pending')||a.id.localeCompare(b.id)).slice(0,600);
  return {version:1,requested:sources.some(item=>item?.analysis?.autoApply===true),entries:rows,
   added:Math.min(600,(Number.isInteger(previous?.added)?Math.max(0,previous.added):0)+added),
-  pending:rows.filter(row=>row.state==='pending').length,confirmed:rows.filter(row=>row.state==='confirmed').length,rejected:rows.filter(row=>row.state==='rejected').length};
+  pending:rows.filter(row=>row.state==='pending').length,confirmed:rows.filter(row=>row.state==='confirmed').length,rejected:rows.filter(row=>row.state==='rejected').length,assistantReviewed:rows.filter(row=>row.state==='assistant-reviewed').length};
 }
 
 export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,onFeatures,getCardId=()=>null,getRejectedFeatures=()=>[]}){
@@ -215,7 +220,7 @@ export function setupPhotos({local,hosted,api,toast,read,write,onChange,getPost,
  function emitFeatures(){onFeatures?.(confirmedPhotoFeatures(items));}
  function observationDetail(item,row){
   const journal=edits.reviewJournal?.entries,pending=Array.isArray(journal)&&journal.some(entry=>entry?.originalId===item.analysis.originalId&&entry.featureId===row.id&&entry.state==='pending');
-  const decision=item.rejected?.[row.id]?' · отклонено':item.confirmed?.[row.id]?' · подтверждено':row.automaticSuggestion&&pending?' · автодобавлено в журнал · требует подтверждения':'';
+  const decision=item.rejected?.[row.id]?' · отклонено':item.confirmed?.[row.id]?' · подтверждено':row.automaticSuggestion&&pending&&!teacherReviewed(item,row.id)?' · автодобавлено в журнал · требует подтверждения':'';
   if(teacherReviewed(item,row.id)&&!item.confirmed?.[row.id])return row.label+decision+' · проверено помощником по этому фото · не оценка локальной модели';
   if(row.reviewOrigin==='assistant-visual-review')return row.label+decision+' · разбор помощником';
   if(row.reviewOrigin==='operator-kept'&&row.reviewOriginalId===item.analysis.originalId)return row.label+decision+' · сохранено решение оператора для этого оригинала';

@@ -52,6 +52,18 @@ class CardCatalogTests(unittest.TestCase):
         with redcn.open_cache(self.root) as db:
             return db.execute('SELECT rowid,updated,payload FROM results WHERE id=?', (identifier,)).fetchone()
 
+    def test_saved_detail_immediately_reports_global_edits_without_personal_view_marks(self):
+        self.save(self.one, card(), 100)
+        card_catalog.mark_viewed(self.root, self.one, viewer='owner')
+        initial = phone_relay.public_card(self.root, self.one)
+        self.assertFalse(initial['contentEdited'])
+        self.save(self.one, card(body='新描述：独立卧室。'), 300)
+        updated = phone_relay.public_card(self.root, self.one)
+        self.assertTrue(updated['contentEdited'])
+        self.assertEqual(updated['catalogOrder'], initial['catalogOrder'])
+        for key in ('viewed', 'viewedAt'):
+            self.assertNotIn(key, updated)
+
     def test_edit_never_reorders_old_card_or_replaces_rowid(self):
         self.save(self.one, card(), 100)
         self.save(self.two, card('新房源'), 200)

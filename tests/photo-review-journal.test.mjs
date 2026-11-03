@@ -14,6 +14,51 @@ function item(original=sha('original')){
    evidence:[{kind:'object-detection',provider:'yolox-trained',model:'redcn-furniture-v1',source:'local-photo',
     originalId:original,photoId:original,confidence:score,region:[.1,.1,.3,.4]}]}]},confirmed:{},rejected:{}};
 }
+function assistantReview(original){
+ return {version:1,kind:'assistant-visual-review',humanVerified:false,exhaustive:false,
+  originalId:original,reviewId:sha('synthetic-independent-review'),datasetId:sha('synthetic-dataset'),
+  reviewedAt:'2026-11-03T12:00:00Z',features:['fridge']};
+}
+
+test('current assistant review closes only its proposal without human confirmation or model acceptance',()=>{
+ const photo=item(),before=structuredClone(photo),pending=mergePhotoReviewJournal(null,[photo]);
+ photo.teacherReview=assistantReview(photo.analysis.originalId);
+ const reviewed=mergePhotoReviewJournal(pending,[photo]);
+ assert.equal(reviewed.pending,0);assert.equal(reviewed.confirmed,0);assert.equal(reviewed.assistantReviewed,1);
+ assert.equal(reviewed.entries[0].state,'assistant-reviewed');
+ assert.equal(reviewed.entries[0].reviewOrigin,'assistant-visual-review');
+ assert.equal(reviewed.entries[0].assistantReviewId,photo.teacherReview.reviewId);
+ assert.equal(reviewed.entries[0].humanVerified,false);assert.equal(reviewed.entries[0].count,null);
+ assert.deepEqual(photo.analysis,before.analysis);assert.deepEqual(photo.confirmed,{});
+ assert.equal(photo.analysis.candidates[0].autoEligible,false);
+ delete photo.teacherReview;
+ const reopened=mergePhotoReviewJournal(reviewed,[photo]);
+ assert.equal(reopened.pending,1);assert.equal(reopened.assistantReviewed,0);
+ assert.equal(reopened.entries[0].assistantReviewId,undefined);
+ photo.teacherReview=assistantReview(photo.analysis.originalId);
+ const replacement=item(sha('replacement'));
+ const replaced=mergePhotoReviewJournal(reviewed,[replacement]);
+ assert.equal(replaced.pending,1);assert.equal(replaced.assistantReviewed,0);
+ assert.equal(replaced.entries.find(row=>row.originalId===photo.analysis.originalId).state,'stale');
+ photo.selected=false;
+ assert.equal(mergePhotoReviewJournal(reviewed,[photo]).assistantReviewed,0);
+});
+
+test('assistant review never overrides human rejection and invalid reviews cannot resolve a proposal',()=>{
+ for(const change of ['global','alias','confirmed','forged','wrong-original']){
+  const photo=item();photo.teacherReview=assistantReview(photo.analysis.originalId);
+  const options={},photos=[photo];
+  if(change==='global')options.rejectedFeatures=['fridge'];
+  if(change==='alias')photos.push({...item(),url:url+'?alias',rejected:{fridge:true}});
+  if(change==='confirmed')photo.confirmed.fridge={count:1};
+  if(change==='forged')photo.teacherReview.humanVerified=true;
+  if(change==='wrong-original')photo.teacherReview.originalId=sha('wrong');
+  const journal=mergePhotoReviewJournal(null,photos,options);
+  assert.equal(journal.assistantReviewed,0);
+  assert.equal(journal.entries[0].state,['global','alias'].includes(change)?'rejected':change==='confirmed'?'confirmed':'pending');
+  assert.equal(journal.entries[0].assistantReviewId,undefined);
+ }
+});
 
 test('direct analysis creates a real pending entry and repeated scans deduplicate',()=>{
  const photo=item(),journal=mergePhotoReviewJournal(null,[photo],{now:'first'});

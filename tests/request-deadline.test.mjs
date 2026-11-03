@@ -96,13 +96,15 @@ test('actual Mac photo analysis client survives a 60s response and keeps the epo
   const advance=milliseconds=>{now=milliseconds;for(const [id,timer]of [...timers].sort((a,b)=>a[1].at-b[1].at))if(timer.at<=now&&timers.has(id)){timers.delete(id);timer.callback();}};
   const env=harness({setTimeout:schedule,clearTimeout:id=>timers.delete(id),
     document:{querySelector:()=>null},fetch:async(url,options)=>{assert.equal(url,'/api/local/photo');assert.equal(JSON.parse(options.body).action,'analyze');requestSignal=options.signal;return {ok:true,json:()=>new Promise(resolve=>schedule(()=>resolve({status:'review'}),60000))};}});
-  vm.runInContext(localApi+'\nglobalThis.photoCall=localApi;',env.context);
+  vm.runInContext('let desktopPendingWrites=0,buildNoticeUI=null;\n'+localApi+'\nglobalThis.photoCall=localApi;globalThis.pendingWrites=()=>desktopPendingWrites;',env.context);
   const pending=env.context.photoCall('photo',{action:'analyze',id:'a'.repeat(64)});pending.then(()=>{settled=true;});
   for(let n=0;n<8;n++)await Promise.resolve();
+  assert.equal(env.context.pendingWrites(),1);
   assert([...timers.values()].some(timer=>timer.at===125000));
   advance(15000);for(let n=0;n<4;n++)await Promise.resolve();
   assert.equal(settled,false);assert.equal(requestSignal.aborted,false);
   advance(60000);assert.equal((await pending).status,'review');
+  assert.equal(env.context.pendingWrites(),0);
   assert.equal(requestSignal.aborted,false);assert.equal(timers.size,0);
 });
 

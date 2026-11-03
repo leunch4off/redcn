@@ -5,6 +5,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'cli'))
 import photo_auto_policy as policy
+from photo_teacher_review import make_review
 
 DIGEST = 'a' * 64
 URL = 'https://images.cdn-cian.ru/images/policy-fixture.jpg'
@@ -113,6 +114,96 @@ class PhotoAutomaticReviewTests(unittest.TestCase):
         rejected, confirmed = policy.human_decisions(fields, URL, 'b' * 64)
         self.assertEqual(rejected, {'washer'})
         self.assertEqual(confirmed, set())
+
+    def test_assistant_review_resolves_only_its_current_original_without_human_acceptance(self):
+        photo = policy.trained_policy(observation(), requested=True)
+        first = policy.review_journal({}, [photo], requested=True, now='first')
+        review = make_review(DIGEST, ['sofa'], dataset_id='c' * 64,
+                             reviewed_at='2026-11-03T12:00:00Z')
+        fields = {'features': ['sofa'], 'photoEdits': {'reviewJournal': first,
+            'observations': {URL: {'analysis': {'originalId': DIGEST}, 'teacherReview': review}}}}
+        before = copy.deepcopy(fields)
+        resolved = policy.review_journal(fields, [photo], requested=True)
+        self.assertEqual((resolved['pending'], resolved['confirmed'], resolved['assistantReviewed']), (0, 0, 1))
+        entry = resolved['entries'][0]
+        self.assertEqual(entry['state'], 'assistant-reviewed')
+        self.assertEqual(entry['assistantReviewId'], review['reviewId'])
+        self.assertEqual(entry['reviewOrigin'], 'assistant-visual-review')
+        self.assertFalse(entry['humanVerified'])
+        self.assertIsNone(entry['count'])
+        self.assertEqual(fields, before)
+        self.assertFalse(photo['candidates'][0]['autoEligible'])
+        self.assertEqual(photo['autoApplySummary']['acceptedClasses'], 0)
+        fields['photoEdits']['reviewJournal'] = resolved
+        fields['photoEdits']['observations'][URL].pop('teacherReview')
+        reopened = policy.review_journal(fields, [photo], requested=False)
+        self.assertEqual((reopened['pending'], reopened['assistantReviewed']), (1, 0))
+        self.assertNotIn('assistantReviewId', reopened['entries'][0])
+        fields['photoEdits']['observations'][URL]['teacherReview'] = review
+        replaced = policy.review_journal(fields, [policy.trained_policy(observation('b' * 64), requested=True)], requested=True)
+        self.assertEqual((replaced['pending'], replaced['assistantReviewed']), (1, 0))
+        self.assertEqual(next(row for row in replaced['entries'] if row['originalId'] == DIGEST)['state'], 'stale')
+
+    def test_assistant_review_cannot_override_rejection_or_be_a_forged_human_label(self):
+        photo = policy.trained_policy(observation(), requested=True)
+        review = make_review(DIGEST, ['sofa'], dataset_id='c' * 64,
+                             reviewed_at='2026-11-03T12:00:00Z')
+        for change, expected in [('global', 'rejected'), ('alias', 'rejected'),
+                                 ('human', 'confirmed'), ('forged', 'pending'), ('wrong-original', 'pending')]:
+            with self.subTest(change=change):
+                observed = {'analysis': {'originalId': DIGEST}, 'teacherReview': copy.deepcopy(review)}
+                fields = {'photoEdits': {'observations': {URL: observed}}}
+                if change == 'global': fields['photoRejectedFeatures'] = ['sofa']
+                if change == 'alias': fields['photoEdits']['observations'][URL + '?alias'] = {
+                    'analysis': {'originalId': DIGEST}, 'rejected': {'sofa': True}}
+                if change == 'human': observed['confirmed'] = {'sofa': {'count': 2}}
+                if change == 'forged': observed['teacherReview']['humanVerified'] = True
+                if change == 'wrong-original': observed['teacherReview']['originalId'] = 'b' * 64
+                resolved = policy.review_journal(fields, [photo], requested=True)
+                self.assertEqual(resolved['entries'][0]['state'], expected)
+                self.assertEqual(resolved['assistantReviewed'], 0)
+                self.assertNotIn('assistantReviewId', resolved['entries'][0])
+
+    def test_saved_card_reconciliation_never_changes_publication_facts_or_scan_coverage(self):
+        photo = policy.trained_policy(observation(), requested=True)
+        journal = policy.review_journal({}, [photo], requested=True)
+        review = make_review(DIGEST, ['sofa'], dataset_id='c' * 64,
+                             reviewed_at='2026-11-03T12:00:00Z')
+        card = {'body': 'Operator text', 'fields': {'photos': [URL], 'features': ['sofa'],
+            'photoEdits': {'reviewJournal': journal, 'observations': {
+                URL: {'analysis': photo, 'teacherReview': review}}}},
+            'media': [{'id': DIGEST, 'sourceUrl': URL, 'kind': 'original'}],
+            'photoInventory': {'checked': 1, 'total': 2, 'coverageComplete': False,
+                'photos': [photo],
+                'autoApplySummary': {'acceptedClasses': 0, 'automaticFacts': 0, 'needsReview': 1}}}
+        before = copy.deepcopy(card)
+        output = policy.reconcile_saved_review_journal(card)
+        self.assertEqual(card, before)
+        self.assertEqual(output['body'], card['body'])
+        self.assertEqual(output['fields']['features'], card['fields']['features'])
+        self.assertNotIn('photoEvidence', output['fields'])
+        self.assertEqual(output['fields']['photoEdits']['observations'], before['fields']['photoEdits']['observations'])
+        candidate = output['photoInventory']['photos'][0]['candidates'][0]
+        self.assertEqual(candidate['reviewDecision'], 'assistant-reviewed')
+        self.assertFalse(candidate['autoEligible'])
+        self.assertFalse(candidate['humanVerified'])
+        self.assertEqual(output['fields']['photoEdits']['reviewJournal']['assistantReviewed'], 1)
+        summary = output['photoInventory']['autoApplySummary']
+        self.assertEqual((summary['automaticFacts'], summary['acceptedClasses'], summary['needsReview']), (0, 0, 0))
+        self.assertEqual((output['photoInventory']['checked'], output['photoInventory']['total'],
+                          output['photoInventory']['coverageComplete']), (1, 2, False))
+        output['fields']['photoEdits']['observations'][URL]['rejected'] = {'sofa': True}
+        rejected = policy.reconcile_saved_review_journal(output)
+        candidate = rejected['photoInventory']['photos'][0]['candidates'][0]
+        self.assertEqual(candidate['reviewDecision'], 'rejected')
+        self.assertNotIn('assistantReviewId', candidate)
+        output['fields']['photoEdits']['observations'][URL].pop('rejected')
+        output['fields']['photoEdits']['observations'][URL].pop('teacherReview')
+        reopened = policy.reconcile_saved_review_journal(output)
+        self.assertNotEqual(reopened['photoInventory']['photos'][0]['candidates'][0].get('reviewDecision'), 'assistant-reviewed')
+        output['media'][0]['id'] = 'b' * 64
+        stale = policy.reconcile_saved_review_journal(output)
+        self.assertNotEqual(stale['photoInventory']['photos'][0]['candidates'][0].get('reviewDecision'), 'assistant-reviewed')
 
 
 if __name__ == '__main__':

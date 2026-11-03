@@ -145,6 +145,19 @@ def _model_versions(directory):
     config_sha=_file_sha(base/'config.json',root,1_000_000)
     advertising=text.get('advertisingModelPath')
     advertising=Path(advertising).expanduser() if isinstance(advertising,str) and len(advertising)<=4096 else None
+    advertising_adapter=text.get('advertisingAdapterPath')
+    advertising_adapter=Path(advertising_adapter).expanduser() if isinstance(advertising_adapter,str) and len(advertising_adapter)<=4096 else None
+    advertising_selected=bool(advertising and advertising_adapter and text.get('useAdvertisingAdapter') is True)
+    advertising_sha=_file_sha(advertising_adapter/'adapters.safetensors',root,8_000_000) if advertising_selected else None
+    advertising_trained=False
+    if advertising_sha and _safe_file(advertising/'config.json',root) and all(
+            _safe_file(advertising_adapter/name,root) for name in ('trainreceipt.json','adapter_config.json')):
+        try:
+            from advertising_promotion import adapter_identity
+            identity=adapter_identity(advertising_adapter,advertising,verify_base=False)
+            advertising_trained=identity['weightsSha256']==advertising_sha
+        except (OSError,ValueError,TypeError,KeyError):
+            pass
     def model_name(folder):
         try:
             from text_model_contract import inference_model
@@ -163,8 +176,9 @@ def _model_versions(directory):
             'advertising':{'model':model_name(advertising or base),
                     'separateProfile':advertising is not None,
                     'configurationSha256':_file_sha((advertising or base)/'config.json',root,1_000_000),
-                    'adapterSelected':False if advertising else text.get('useCandidateAdapter') is True,
-                    'locallyTrained':False if advertising else None,'baseWeightsVerified':False},
+                    'adapterSelected':advertising_selected if advertising else text.get('useCandidateAdapter') is True,
+                    'adapterWeightsSha256':advertising_sha,'adapterVerified':advertising_trained,
+                    'locallyTrained':advertising_trained if advertising else None,'baseWeightsVerified':False},
             'photo':{'model':model if model in known_photo else 'configured-external-model',
                      'weightsSha256':native_sha,'weightsVerified':bool(native_sha)}}
 

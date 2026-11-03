@@ -224,7 +224,7 @@ def create_server(directory, port=8765, browser_channel='chrome'):
     text_principal='desktop:'+owner_scope.owner_id
     def authorize_text_job():
         owner_scope.check(directory)
-    identity = {'app':'redcn', 'protocol':7, 'release':'v31', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
+    identity = {'app':'redcn', 'protocol':7, 'release':'v32', 'storage':hashlib.sha256(str(directory.expanduser().resolve()).encode()).hexdigest(), 'browser_channel':browser_channel}
     from release_diagnostics import runtime_identity
     release_runtime=runtime_identity(redcn.ROOT)
 

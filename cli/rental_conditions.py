@@ -55,6 +55,16 @@ def fee_claims(text, language):
                     # turn an unknown condition into a confirmed promise.
                     candidates = []
                     for left, right, policy in markers:
+                        # In a furniture list, “配置包括…网络” confirms a
+                        # connection, not who pays its bill. Keep actual rent,
+                        # fee and free-service predicates under the fee guard.
+                        inventory_inclusion = (language == 'zh' and category == 'internet'
+                            and match[0] in ('网络', '宽带') and policy == 'included'
+                            and clause[left:right] in ('包括', '包含')
+                            and re.search(r'(?:家具|家电|设备|配置|设施|用品|物品)[^，,。；;]{0,12}$', clause[:left])
+                            and not re.search(r'费用|租金|房租|月租|网费|付费|收费|全包|免费|承担', clause))
+                        if inventory_inclusion:
+                            continue
                         distance = max(0, match.start()-right, left-match.end())
                         if distance <= 65:
                             candidates.append((distance, policy))

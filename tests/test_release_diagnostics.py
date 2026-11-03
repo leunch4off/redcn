@@ -33,6 +33,29 @@ class ReleaseDiagnosticsTests(unittest.TestCase):
 
     def snapshot(self):return {str(path.relative_to(self.base)):hashlib.sha256(path.read_bytes()).hexdigest() for path in self.base.rglob('*') if path.is_file()}
 
+    def test_advertising_selection_reports_verified_training_without_loading_a_model(self):
+        model=self.cache/'advertising-base';adapter=self.cache/'advertising-adapter'
+        model.mkdir();adapter.mkdir();(model/'config.json').write_text('{}')
+        for name in ('adapter_config.json','trainreceipt.json'):(adapter/name).write_text('{}')
+        weights=b'measured-adapter-fixture';(adapter/'adapters.safetensors').write_bytes(weights)
+        config={'advertisingModelPath':str(model),'advertisingAdapterPath':str(adapter),'useAdvertisingAdapter':True}
+        (self.cache/'text-ai.json').write_text(json.dumps(config))
+        before=self.snapshot()
+        with patch('advertising_promotion.adapter_identity',return_value={'weightsSha256':hashlib.sha256(weights).hexdigest()}) as verify:
+            status=diagnostic._model_versions(self.cache)['advertising']
+            self.assertTrue(status['adapterSelected']);self.assertTrue(status['locallyTrained'])
+            self.assertTrue(status['adapterVerified']);self.assertFalse(status['baseWeightsVerified'])
+            verify.assert_called_once_with(adapter,model,verify_base=False)
+        self.assertEqual(before,self.snapshot())
+        with patch('advertising_promotion.adapter_identity',side_effect=ValueError('unfinished')):
+            status=diagnostic._model_versions(self.cache)['advertising']
+            self.assertTrue(status['adapterSelected']);self.assertFalse(status['locallyTrained'])
+        config['useAdvertisingAdapter']=False;(self.cache/'text-ai.json').write_text(json.dumps(config))
+        with patch('advertising_promotion.adapter_identity') as verify:
+            status=diagnostic._model_versions(self.cache)['advertising']
+            self.assertFalse(status['adapterSelected']);self.assertFalse(status['locallyTrained'])
+            verify.assert_not_called()
+
     def test_old_tab_partial_update_and_restart_identity_are_distinct(self):
         before=self.snapshot()
         value=diagnostic.versions(self.cache,self.root,server_release='v29',client_build=self.build)

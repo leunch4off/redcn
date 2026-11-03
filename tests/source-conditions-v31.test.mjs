@@ -1,6 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {detectConditions} from '../web/fact-evidence.mjs';
+import {detectConditions,detectFurniture} from '../web/fact-evidence.mjs';
+import {FEATURES} from '../web/engine.mjs';
+
+test('source admission limits, qualified pet refusals and multiline Cian costs remain explicit',()=>{
+ const source='К проживанию рассматриваются не более двух взрослых человек. С животными, к сожалению, не рассматриваем.\nОплата ЖКХ\nвключена (без счётчиков)\nЗалог\nнет\nПредоплата\n2 месяца';
+ const value=detectConditions(source);
+ assert.equal(value.facts.petPolicy,'no');assert.equal(value.facts.pets,false);
+ assert.equal(value.facts.utilities,'meters');assert.equal(value.facts.deposit,'0');assert.equal(value.facts.prepayMonths,'2');
+ assert.deepEqual(value.restrictions,[{kind:'occupancy-maximum',maximum:2,adultsOnly:true,text:'最多2名成人入住。'}]);
+ assert.equal(value.facts.childrenPolicy,undefined);
+ for(const text of ['С животными рассматриваем.','С животными не рассматриваем только на один месяц.'])assert.equal(detectConditions(text).facts.petPolicy,undefined);
+ assert.deepEqual(detectConditions('Бюджет не более двух взрослых человек.').restrictions,[]);
+ assert.deepEqual(detectConditions('Не рассматриваем для проживания не более двух человек.').restrictions,[]);
+});
 
 test('explicit utility bills become an extra-charge witness without guessing the amount',()=>{
  const result=detectConditions('Дополнительно коммунальные платежи по квитанции (7-9т.р в месяц) + интернет.');
@@ -46,6 +59,29 @@ test('admission range has its own contract and never changes the budget divisor'
   'Рассматриваем 13 человек.',
   'Рассмотрим к проживанию 2–1 человек.',
   'Рассмотрим к проживанию 0–2 человек.'])assert.deepEqual(detectConditions(source).restrictions,[],source);
+ assert.deepEqual(detectConditions('Рассмотрим проживание 1–3 человек.').restrictions,[{kind:'occupancy-range',minimum:1,maximum:3,text:'入住人数：1–3人。'}]);
+ assert.deepEqual(detectConditions('Не рассматриваем проживание 1–3 человек.').restrictions,[]);
+});
+
+test('unrelated negative form answers do not negate furniture on the following line',()=>{
+ const rows=detectFurniture('Аварийность\nНет\nХолодильник\nСтиральная машина',FEATURES);
+ assert.equal(rows.find(row=>row.id==='fridge').status,'present');
+ assert.equal(rows.find(row=>row.id==='washer').status,'present');
+ const negative=detectFurniture('Нет холодильника и стиральной машины. Есть телевизор.',FEATURES);
+ assert.equal(negative.find(row=>row.id==='fridge').status,'absent');
+ assert.equal(negative.find(row=>row.id==='washer').status,'absent');
+ assert.equal(negative.find(row=>row.id==='tv').status,'present');
+});
+
+test('explicit domestic-pet, negotiated-pet and registration conditions retain their meaning',()=>{
+ assert.equal(detectConditions('Без домашних животных.').facts.petPolicy,'no');
+ assert.equal(detectConditions('Животные обсуждаются.').facts.petPolicy,'negotiable');
+ for(const source of ['Регистрацию не делаю.','Регистрацию не предоставляют.'])assert.equal(detectConditions(source).facts.registrationPolicy,'not_available');
+});
+
+test('material building and room facts require explicit affirmative source clauses',()=>{
+ assert.deepEqual(detectConditions('Комнаты смежные. По результатам голосования жильцов дом включен в программу реновации и будет снесен.').restrictions,[{kind:'adjacent-rooms',text:'房间相连。'},{kind:'building-demolition',text:'该楼已纳入城市更新计划，将被拆除。'}]);
+ for(const source of ['Комнаты не смежные.','Не смежные комнаты.','Дом не включен в программу реновации и не будет снесен.','Новый ремонт. Программа реновации рядом.'])assert.deepEqual(detectConditions(source).restrictions,[],source);
 });
 
 test('only an explicit additive meters-and-internet payment clause creates a network fee restriction',()=>{

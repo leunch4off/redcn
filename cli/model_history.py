@@ -45,7 +45,7 @@ def _public_record(value):
         return None
     decision = value.get('decision') if isinstance(value.get('decision'),dict) else {}
     examples = value.get('examples') if isinstance(value.get('examples'),dict) else {}
-    return {'version':1,'scope':'diagnostic-only' if value.get('scope')=='diagnostic-only' else 'production-gate',
+    return {'version':1,'lane':value.get('lane','translation'),'scope':'diagnostic-only' if value.get('scope')=='diagnostic-only' else 'production-gate',
             'origin':'imported-historical' if value.get('origin')=='imported-historical' else 'local-evaluator',
             'freshProductionAcceptanceRequired':True, **{key:_hash_value(value.get(key)) for key in
             ('weightsSha256','reportSha256','datasetSha256','casesSha256','checkersSha256')},
@@ -80,7 +80,7 @@ def record_evaluation(directory, report, decision, receipt, *, report_sha, scope
                        'candidatePassed','regressions','candidateFailures','currentDistinctCases','candidateDistinctCases')}
     # No prompts, answers, paths, dataset row IDs, credentials, or free-form
     # external message enter this public summary.
-    payload = {'version':1,'scope':scope,'freshProductionAcceptanceRequired':True,
+    payload = {'version':1,'scope':scope,'lane':inputs.get('lane',receipt.get('trainingLane','translation')),'freshProductionAcceptanceRequired':True,
                'weightsSha256':digest,'recordedAt':report.get('finishedAt'),
                'reportSha256':report_sha, 'datasetSha256':inputs.get('datasetSha256'),
                'casesSha256':inputs.get('casesSha256'), 'decision':decision_fields,
@@ -104,6 +104,7 @@ def public_history(directory, limit=25):
     from local_text_model import settings
     config = settings(root)
     selected = Path(config['adapterPath']).resolve() if config.get('adapterPath') else None
+    advertising_selected = Path(config['advertisingAdapterPath']).resolve() if config.get('advertisingAdapterPath') else None
     folders = []
     for parent, child in ((root/'tools/text-ai/runs',None),(root/'learning/training-runs','candidate'),(root/'learning/imported-models',None)):
         if parent.is_symlink() or not parent.is_dir():
@@ -114,6 +115,8 @@ def public_history(directory, limit=25):
         folders.extend((path/child if child else path) for path in entries if path.is_dir() and not path.is_symlink())
     if selected and selected.is_relative_to(root) and selected not in folders:
         folders.append(selected)
+    if advertising_selected and advertising_selected.is_relative_to(root) and advertising_selected not in folders:
+        folders.append(advertising_selected)
     records = {}
     db_path = root/'learning/memory.sqlite3'
     if db_path.is_file() and not db_path.is_symlink():
@@ -137,7 +140,7 @@ def public_history(directory, limit=25):
         if not receipt_path.is_file() and not current_activity['active']:continue
         if restored and (folder/'model.onnx').is_file() and not (folder/'adapters.safetensors').exists():continue
         identifier = hashlib.sha256(str(folder.relative_to(root)).encode()).hexdigest()[:20]
-        base = {'id':identifier,'selected':folder.resolve()==selected,'historicalEvaluation':None,'activity':current_activity}
+        base = {'id':identifier,'selected':folder.resolve() in {selected,advertising_selected},'historicalEvaluation':None,'activity':current_activity}
         try:
             receipt = _read(receipt_path)
             examples = receipt.get('examples') if isinstance(receipt.get('examples'),dict) else {}
@@ -145,7 +148,8 @@ def public_history(directory, limit=25):
             bound = receipt.get('adapterSha256') == digest
             state = ('training' if current_activity['active'] else 'invalid-receipt' if not bound else 'restored-unaccepted' if restored else 'paused' if receipt.get('stoppedEarly') is True
                      else 'trained-unaccepted' if receipt.get('status')=='trained-unaccepted' else 'unfinished')
-            row = {**base,'state':state,'weightsSha256':digest,'receiptMatchesWeights':bound,
+            row = {**base,'lane':receipt.get('trainingLane','translation'),'baseModel':receipt.get('baseModel'),
+                   'state':state,'weightsSha256':digest,'receiptMatchesWeights':bound,
                    'receiptModifiedAt':receipt_path.stat().st_mtime,
                    'datasetSha256':receipt.get('datasetSha256') if isinstance(receipt.get('datasetSha256'),str) and _SHA.fullmatch(receipt['datasetSha256']) else None,
                    'stepsCompleted':_number(receipt.get('stepsCompleted'),integer=True),
@@ -166,6 +170,6 @@ def public_history(directory, limit=25):
     candidates.sort(key=lambda row:(row['selected'],row.get('receiptModifiedAt',0)),reverse=True)
     active = any(row['activity']['active'] for row in candidates)
     return {'version':1,'candidates':candidates[:limit],'total':len(candidates),
-            'selectedAdapterPresent':selected is not None,
+            'selectedAdapterPresent':selected is not None,'advertisingAdapterSelected':advertising_selected is not None,
             'activeTraining':active, 'activeStateSource':'candidate-os-lease',
             'note':'Выбранные веса определяются текущими настройками. Каждая квитанция и проверка относится только к указанной версии; принятие требует новой проверки всех артефактов.'}

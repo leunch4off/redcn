@@ -78,7 +78,7 @@ def merge_reviews(result, reviews):
     A review is attached only to the currently selected original. Explicit user
     rejection and contradictory source facts are kept for operator resolution.
     """
-    from photo_auto_policy import human_decisions
+    from photo_auto_policy import human_decisions, reconcile_saved_review_journal
     from phone_relay import source_images
     updated = copy.deepcopy(result)
     fields = updated.setdefault('fields', {})
@@ -140,4 +140,4 @@ def merge_reviews(result, reviews):
     updated['assistantPhotoReview'] = summary
     if isinstance(updated.get('photoInventory'), dict):
         updated['photoInventory']['assistantReview'] = copy.deepcopy(summary)
-    return updated, summary
+    return reconcile_saved_review_journal(updated), summary

@@ -36,10 +36,24 @@ def _text_ai(directory, scheduler):
     separate_advertising = bool(config.get('advertisingModelPath'))
     advertising = describe_profile(config.get('advertisingModelPath') or model,
         (config.get('advertisingPythonPath') or runtime) if separate_advertising else runtime)
+    selected_ad = config.get('advertisingAdapterPath') if separate_advertising else None
     advertising.update(enabled=config['enabled'], automaticGenerationEnabled=config.get('advertisingEnabled') is True,
-        separateProfile=separate_advertising, candidateAdapterSelected=False if separate_advertising else bool(config.get('adapterPath')),
-        modelSource='pretrained-local-inference' if separate_advertising else 'shared-text-profile',
-        trainedByRedcn=False if separate_advertising else None)
+        separateProfile=separate_advertising, candidateAdapterSelected=bool(selected_ad),
+        modelSource='separate-advertising-profile' if separate_advertising else 'shared-text-profile',
+        trainedByRedcn=False, stepsCompleted=0, trainedParameters=None, adapterCompatible=False,
+        adapterActive=False, selectionProof='configuration-only')
+    if selected_ad:
+        try:
+            from advertising_promotion import adapter_identity
+            # Activity polling checks bounded metadata. The native load and
+            # promotion independently hash all base weights before using it.
+            adapter_identity(selected_ad,config['advertisingModelPath'],verify_base=False)
+            receipt=json.loads((Path(selected_ad)/'trainreceipt.json').read_text())
+            advertising.update(trainedByRedcn=True,stepsCompleted=receipt['stepsCompleted'],
+                trainedParameters=receipt['trainableParameters'],adapterCompatible=True,
+                adapterActive=config['enabled'] is True,selectionProof='configured-compatible-adapter')
+        except (OSError,ValueError,TypeError,KeyError):
+            advertising['adapterProblem']='Выбранный адаптер не прошёл проверку совместимости'
     receipt_folder = Path(config.get('adapterPath') or Path(directory)/'tools/text-ai/runs/first')
     receipt_path, weights = receipt_folder/'trainreceipt.json', receipt_folder/'adapters.safetensors'
     trained = None
@@ -56,7 +70,7 @@ def _text_ai(directory, scheduler):
                 trained, steps = receipt['trainableParameters'], receipt['stepsCompleted']
     except (OSError, ValueError, TypeError):
         pass
-    return {**text_profile, 'enabled': config['enabled'],
+    return {**text_profile, 'enabled': config['enabled'], 'lane':'translation',
         'candidateAdapterSelected': bool(config.get('adapterPath')),
         'trainedParameters': trained, 'stepsCompleted': steps, 'advertising': advertising}
 
@@ -64,7 +78,7 @@ def _text_ai(directory, scheduler):
 def _activity(directory, memory):
     scheduler = _scheduler(directory)
     from learning_discovery import status as discovery_status
-    return {'status': memory.status(),
+    return {'status': memory.status(lane=scheduler.get('lane')),
         'scheduler': scheduler, 'text_ai': _text_ai(directory, scheduler),
         'discovery': discovery_status(directory, limit=0)}
 
@@ -103,6 +117,35 @@ def dispatch(directory, path, data=None, *, actor='operator'):
                 group_id=data.get('groupId'), supersedes=data.get('supersedes'),
                 event_id=data.get('eventId'), actor=actor,
                 derived_from=data.get('derivedFrom'))}
+        elif action in ('record-grounded', 'review-grounded'):
+            from advertising_learning import prepare_payload, verify_target
+            from datetime import datetime, timezone
+            if action == 'record-grounded':
+                if set(data)-{'action','fields','target','groupId','reviewed','reason'}:
+                    raise ValueError('Неизвестные поля проверяемого объявления')
+                fields, rules, target = data.get('fields'), None, data.get('target')
+                group_id, supersedes = data.get('groupId'), None
+                from advertising_evaluation import active_rules
+                rules = active_rules(directory)
+            else:
+                if set(data)-{'action','id','target','reviewed','reason'}:
+                    raise ValueError('Неизвестные поля проверки объявления')
+                with memory._db() as db:
+                    old = db.execute("SELECT * FROM examples WHERE id=? AND kind='grounded_listing'",(data.get('id'),)).fetchone()
+                if old is None or old['status'] in ('withdrawn','superseded'):
+                    raise ValueError('Проверяемый пример не найден или уже заменён')
+                previous=json.loads(old['payload']); fields,rules=previous['fields'],previous['rules']
+                target=data.get('target') or previous['target']; supersedes=old['id']; group_id=None
+            reviewed=data.get('reviewed',False)
+            if type(reviewed) is not bool or action=='review-grounded' and not reviewed:
+                raise ValueError('Нужно явное подтверждение сверки полного текста с исходными фактами')
+            review=({'actor':actor,'humanVerified':not actor.startswith('assistant_'),
+                'reason':data.get('reason'),'reviewedAt':datetime.now(timezone.utc).isoformat()} if reviewed else None)
+            payload=prepare_payload(fields,target,rules=rules,review=review)
+            if reviewed: payload=verify_target(payload)
+            value={'event':memory.record('grounded_listing',payload,
+                source='assistant-reviewed' if reviewed and actor.startswith('assistant_') else 'manual',
+                status='approved' if reviewed else 'pending',group_id=group_id,supersedes=supersedes,actor=actor)}
         elif action == 'review-source-phrase':
             if set(data) != {'action', 'id', 'zh'}:
                 raise ValueError('Нужны ID исходной фразы и проверенный китайский перевод')
@@ -141,7 +184,11 @@ def dispatch(directory, path, data=None, *, actor='operator'):
         elif action == 'rollback-model':
             if set(data) != {'action'}:
                 raise ValueError('Откат использует только сохранённую предыдущую конфигурацию')
-            from model_promotion import rollback
+            from learning_scheduler import training_lane
+            if training_lane(directory)=='advertising':
+                from advertising_promotion import rollback
+            else:
+                from model_promotion import rollback
             value = {**rollback(directory), 'scheduler': _scheduler(directory)}
         elif action == 'retrieve':
             value = {'matches': memory.retrieve(data.get('query', ''), limit=data.get('limit', 6))}
@@ -149,8 +196,10 @@ def dispatch(directory, path, data=None, *, actor='operator'):
             value = {'tags': memory.rank_tags(data.get('tags', []), limit=data.get('limit', 8))}
         elif action == 'snapshot':
             # Snapshot is private on the Mac, never a training trigger or promotion.
-            prepared = memory.snapshot()
-            value = {'snapshot': prepared.get('manifest', {}), 'status': memory.status()}
+            from learning_scheduler import training_lane
+            lane=training_lane(directory)
+            prepared = memory.snapshot(lane=lane)
+            value = {'snapshot': prepared.get('manifest', {}), 'status': memory.status(lane=lane)}
         else:
             raise ValueError('Неизвестное действие памяти')
     return 200, value, 'application/json; charset=utf-8', {}

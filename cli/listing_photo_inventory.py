@@ -11,7 +11,7 @@ import time
 from job_progress import emit
 from ai_telemetry import sanitize_ai
 from local_photo_ai import AUTO_CONFIDENCE, FEATURE_LABELS, normalize_inventory
-from photo_auto_policy import detector_suggestion, human_decisions, review_journal
+from photo_auto_policy import assistant_reviews, detector_suggestion, human_decisions, review_journal
 from photo_limits import PHOTO_SOURCE_LIMIT
 import photo_store
 
@@ -202,11 +202,17 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                 else:
                     candidates = _candidates(analysis, digest, model, auto_apply=photo['autoApply'])
                     rejected, confirmed = human_decisions(fields,url,digest)
+                    assistant = assistant_reviews(fields, digest)
                     for candidate in candidates:
                         if candidate['id'] in rejected:
                             candidate.update(status='rejected',autoEligible=False,automaticSuggestion=False,reviewDecision='rejected')
                         elif candidate['id'] in confirmed:
                             candidate.update(status='confirmed',automaticSuggestion=False,reviewDecision='confirmed')
+                        elif candidate['id'] in assistant:
+                            candidate.update(status='assistant-reviewed', autoEligible=False,
+                                automaticSuggestion=False, reviewDecision='assistant-reviewed',
+                                reviewOrigin='assistant-visual-review', humanVerified=False,
+                                assistantReviewId=assistant[candidate['id']]['reviewId'])
                     photo.update(status='review', candidates=candidates)
                     unknown = analysis.get('unknownIds')
                     if isinstance(unknown, list):
@@ -228,7 +234,8 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
                     photo['autoApplySummary']={'requested':output['autoApply'],'mode':photo['autoApplyMode'],
                         'automaticFacts':sum(row['autoEligible'] for row in candidates) if photo['autoApply'] else 0,
                         'automaticSuggestions':sum(row.get('automaticSuggestion') is True for row in candidates),
-                        'needsReview':sum(row.get('reviewDecision') not in ('confirmed','rejected') and not (photo['autoApply'] and row['autoEligible']) for row in candidates)}
+                        'assistantReviewed':sum(row.get('reviewDecision') == 'assistant-reviewed' for row in candidates),
+                        'needsReview':sum(row.get('reviewDecision') not in ('confirmed','rejected','assistant-reviewed') and not (photo['autoApply'] and row['autoEligible']) for row in candidates)}
             except (OSError, ValueError):
                 _cancelled(cancel)
                 photo['status'] = 'unavailable'
@@ -240,12 +247,14 @@ def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_s
     output['reviewJournal']=review_journal(fields,output['photos'],requested=output['autoApply'])
     review_needed={(row['originalId'],row['featureId']) for row in output['reviewJournal']['entries'] if row['state']=='pending'}
     review_needed.update((photo['originalId'],row['id']) for photo in output['photos'] for row in photo['candidates']
-        if row.get('reviewDecision') not in ('confirmed','rejected') and not (photo.get('autoApply') and row['autoEligible']))
+        if row.get('reviewDecision') not in ('confirmed','rejected','assistant-reviewed') and not (photo.get('autoApply') and row['autoEligible']))
     output['autoApplySummary']={'requested':output['autoApply'],'mode':output['autoApplyMode'],
         'automaticFacts':len(output['photoEvidence']),
         'automaticSuggestions':output['reviewJournal']['pending'],
         'newSuggestions':output['reviewJournal']['added'],
         'needsReview':len(review_needed),
+        'assistantReviewed':len({(photo['originalId'], row['id']) for photo in output['photos']
+            for row in photo['candidates'] if row.get('reviewDecision') == 'assistant-reviewed'}),
         **({'reason':'model-unaccepted','acceptedClasses':0} if model in ('redcn-furniture-v1','redcn-furniture-world-v2') else {})}
     output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
         and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))

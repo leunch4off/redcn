@@ -1,7 +1,7 @@
 /* Independent ES5 startup guard: it must run even when the module cannot parse. */
 (function () {
   'use strict';
-  var version = 'v31', started = Date.now(), attempt = 0, timer = 0, done = false;
+  var version = 'v32', started = Date.now(), attempt = 0, timer = 0, done = false;
   var stage = 'script', route = '', phase = '', http = 0, code = '', errorType = '', line = 0, probe = '';
   var moduleStarted = false, probeTimer = 0, probing = false;
   function el(id) { return document.getElementById(id); }

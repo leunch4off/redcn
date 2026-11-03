@@ -45,13 +45,17 @@ export const PHOTO_OBJECT_TERMS=Object.freeze({
   "vacuum": "пылесос|vacuum|吸尘器",
   "coffeeMachine": "кофемаш|кофеварк|coffee.?machine|coffee.?maker|咖啡机",
   "toaster": "тостер|toaster|烤面包机",
+  "cutlery": "столов\\w*\\s+прибор|вилк|ложк|нож|cutlery|flatware|fork|spoon|knife|餐用刀叉匙",
+  "dishware": "посуд|тарелк|чашк|стакан|dishware|crockery|plate|cup|glass|餐具",
+  "toilet": "унитаз|toilet|马桶",
+  "towelRail": "полотенц|towel.?rail|towel.?rack|毛巾架",
   "router": "роутер|маршрутизатор|router|路由器",
   "monitor": "монитор|monitor|显示器",
   "speakers": "колон|динамик|speaker|音箱",
   "waterHeater": "водонагрев|бойлер|water.?heater|boiler|热水器",
   "waterFilter": "фильтр|water.?filter|净水器"
 });
-export const PHOTO_REVIEW_ONLY=Object.freeze(['bed','internet','closet','pantry','balcony','loggia','homeCinema','roomFurniture']);
+export const PHOTO_REVIEW_ONLY=Object.freeze(['bed','internet','closet','pantry','balcony','loggia','homeCinema','roomFurniture','toilet','towelRail','cutlery','dishware']);
 export const PHOTO_FEATURE_IDS=Object.freeze([...new Set([...Object.keys(PHOTO_OBJECT_TERMS),...PHOTO_REVIEW_ONLY])]);
 const photoPolicyReviewOnly=new Set(PHOTO_REVIEW_ONLY);
 // Python's \w and \b are Unicode-aware; JavaScript's are ASCII-only with /u.

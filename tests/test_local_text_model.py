@@ -121,7 +121,9 @@ class RuntimeTests(unittest.TestCase):
         from types import SimpleNamespace
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder); out=base/'out'; out.mkdir(); model=base/'model'; model.mkdir()
-            dataset=base/'data.json'; dataset.write_text('{}'); (model/'config.json').write_text('{}')
+            dataset=base/'data.json'; dataset.write_text('{}')
+            (model/'config.json').write_text(json.dumps({'model_type':'qwen2','hidden_size':896,
+                'num_hidden_layers':24,'num_attention_heads':14,'num_key_value_heads':2}))
             for name in ('adapters.safetensors','optimizer.safetensors','initial.safetensors'):
                 (out/name).write_bytes(name.encode())
             args=SimpleNamespace(resume_adapter=str(out/'adapters.safetensors'),dataset=str(dataset),

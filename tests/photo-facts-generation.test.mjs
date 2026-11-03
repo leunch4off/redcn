@@ -213,7 +213,7 @@ test('the eighteen new vocabulary entries do not turn negative or planned mentio
 
 test('automatic policy covers the exact generator feature set and uses the same object terms as Python',()=>{
   assert.deepEqual([...PHOTO_FEATURE_IDS].sort(),FEATURES.map(row=>row[0]).sort());
-  assert.equal(PHOTO_FEATURE_IDS.length,57);
+  assert.equal(PHOTO_FEATURE_IDS.length,61);
   const script="import ast,json,pathlib; tree=ast.parse(pathlib.Path('cli/local_photo_ai.py').read_text()); values={target.id:node.value for node in tree.body if isinstance(node,ast.Assign) for target in node.targets if isinstance(target,ast.Name)}; print(json.dumps({'terms':ast.literal_eval(values['_OBJECT_WORDS']),'nonDirect':ast.literal_eval(values['_NON_DIRECT'].args[0])}))";
   const python=spawnSync('python3',['-c',script],{cwd:new URL('../',import.meta.url),encoding:'utf8'});
   assert.equal(python.status,0,python.stderr);

@@ -22,6 +22,11 @@ import test_phone_relay as phone_fixture
 PREVIEW = {'action': 'preview', 'fields': {'price': '85000', 'sourceDescription': 'PRIVATE SOURCE'},
     'output': {'title': '旧标题', 'body': '旧正文'}, 'part': 'body', 'requestId': 'request_text_001'}
 DRAFT = {'status': 'review', 'modelAccepted': True, 'fallback': False,
+    # Synthetic accepted-response contract. These tests exercise auth, CAS and
+    # cancellation around the real save; they do not measure model quality.
+    'generationMode': 'individual-model-prose', 'textSource': 'model',
+    'modelContribution': 'full-publication-prose',
+    'factualTextSource': 'checked-listing-and-accepted-photo-evidence',
     'title': '新标题', 'body': '新的中文房源正文', 'tags': '#莫斯科'}
 
 
