@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "kind": "post-hoc-codex-audit-of-native-heldout-answers",
+  "author": "Codex; no independent native-speaker acceptance",
+  "originalReceiptUnchanged": true,
+  "frozenCheckerRescored": false,
+  "sourceReceipt": "rental-heldout-1.5-base-v26.json",
+  "summary": {
+    "ru-zh": {
+      "requested": 6,
+      "measured": 6,
+      "checksPassed": 0
+    },
+    "zh-ru": {
+      "requested": 6,
+      "measured": 5,
+      "checksPassed": 0
+    },
+    "listing": {
+      "requested": 18,
+      "measured": 18,
+      "checksPassed": 9
+    }
+  },
+  "originality": [
+    {
+      "caseId": "heldout-01",
+      "parseableVariants": 2,
+      "uniqueNormalizedTitles": 2,
+      "uniqueNormalizedBodies": 2,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-02",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 2,
+      "uniqueNormalizedBodies": 3,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-03",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 3,
+      "uniqueNormalizedBodies": 3,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": true,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-04",
+      "parseableVariants": 2,
+      "uniqueNormalizedTitles": 2,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-05",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 2,
+      "uniqueNormalizedBodies": 2,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    },
+    {
+      "caseId": "heldout-06",
+      "parseableVariants": 3,
+      "uniqueNormalizedTitles": 2,
+      "uniqueNormalizedBodies": 1,
+      "onlyEmojiOrPunctuationCountsAsVariation": false,
+      "allThreeSurfacesDifferent": false,
+      "nativeEditorialOriginalityAccepted": false
+    }
+  ],
+  "seconds": 56.86033933399813,
+  "parseableListingAnswers": 16,
+  "propertiesWithThreeDifferentSurfaces": 1,
+  "propertiesWithThreeDifferentPassingDrafts": 0,
+  "observations": [
+    {
+      "probeId": "heldout-01-ru-zh",
+      "finding": "Changes RUB to yuan, changes source station identities and invents pet prohibition.",
+      "sourceClaim": "70000 рублей в месяц; owner smoking/sublet policy; no pet statement",
+      "outputExcerpt": "每月租金70000元。...禁止吸烟和养宠物。",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "probeId": "heldout-03-zh-ru",
+      "finding": "Token-limited repeated invented34000 payment loop; counted incomplete, not a measured successful translation.",
+      "outputExcerpt": "Доплата 34000 рублей.",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "probeId": "heldout-03-listing-1",
+      "finding": "Partial frozen checks pass, but station-nearby claim was not established by literal station-name occurrence.",
+      "sourceClaim": "原文提及Рассказовка和Переделкино站。",
+      "outputExcerpt": "位于Рассказовка和Переделкино站附近。",
+      "detectedByFrozenChecks": false
+    },
+    {
+      "probeId": "heldout-03-listing-2",
+      "finding": "Three distinct normalized surfaces for this property include a third title that fails Chinese-language checks; this is not three accepted original descriptions.",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "probeId": "heldout-06-listing-1",
+      "finding": "Known facts generally copied into structured title/body; third style reuses body and drops Chinese title.",
+      "detectedByFrozenChecks": true
+    }
+  ],
+  "limits": [
+    "9/18 conjunction passes does not verify every semantic claim.",
+    "No output has independent native-speaker editorial acceptance.",
+    "All source-derived corpus conflicts/AI-assisted annotation limits remain in the original receipt.",
+    "The same frozen checker/cases were used; subsequent runtime guards do not silently replace scores.",
+    "No model, adapter or unreviewed publication is promoted."
+  ]
+}

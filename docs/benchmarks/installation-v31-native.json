@@ -1,0 +1,229 @@
+{
+  "advertisingProfile": {
+    "automaticGenerationEnabled": true,
+    "candidateAdapterSelected": false,
+    "enabled": true,
+    "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+    "modelConfigPresent": true,
+    "modelSource": "separate-inference-profile",
+    "modelSupported": true,
+    "runtimePresent": true,
+    "separateProfile": true
+  },
+  "catalogue": {
+    "editedCards": 0,
+    "entries": 82,
+    "orderMatchesIndependentImportRevisionEvidence": true,
+    "orderSha256": "12b10fa643d34e9134695ef23a27b105f97080465e5104dc2632525b250dc3bf",
+    "origins": {
+      "fact-revision": 14,
+      "import-journal": 68
+    },
+    "publicationDigestsMatching": 82,
+    "viewMarkers": 0,
+    "viewedCards": 0,
+    "viewerScopesWithMarkers": 0
+  },
+  "configuration": {
+    "photo-ai.json": {
+      "autoApplyUnchanged": true,
+      "changedKeys": [
+        "maxSeconds"
+      ],
+      "maxSecondsAfter": 600,
+      "maxSecondsBefore": 60,
+      "modelUnchanged": true,
+      "onlyIntendedKeysChanged": true,
+      "otherKeysUnchanged": true
+    },
+    "text-ai.json": {
+      "advertisingTargetsMatchReviewedCandidate": true,
+      "changedKeys": [
+        "advertisingModelPath",
+        "advertisingPythonPath"
+      ],
+      "onlyIntendedKeysChanged": true,
+      "otherKeysUnchanged": true,
+      "translationAdapterUnchanged": true
+    }
+  },
+  "database": {
+    "addedTables": [
+      "card_catalog_state",
+      "card_catalog_views"
+    ],
+    "cardsSnapshotSha256": "072b6b7f7ff57983d43f5486defd075e9a9d04c1c48272820fdf49954eb12e3f",
+    "originalSchemasUnchanged": true,
+    "originalTables": {
+      "cache": {
+        "count": 79,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "d66abfa77d294d7053a33d365d3b8447411c0ac43c075d7c75beb9848ea2d189"
+      },
+      "fact_revisions": {
+        "count": 151,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "d845c64ccb1e92142c7999c4ab856f881f15dd05ca547a46c5a7c4fb22e7fff7"
+      },
+      "history": {
+        "count": 50,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "66dc53576ce2890dfa26cd53554d58889db507ac23f45a0405a6420edf5c6756"
+      },
+      "publication_review_events": {
+        "count": 0,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "publication_reviews": {
+        "count": 0,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "results": {
+        "count": 82,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "304dca18ccc35e1de09c0b56fd95affb8cfe378d12b099548b1370af9dddc988"
+      },
+      "seen": {
+        "count": 0,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "variants": {
+        "count": 79,
+        "rowsByteEquivalent": true,
+        "schemaUnchanged": true,
+        "sha256": "5c2e62b8ebf3cca23c52f70e08f15473bdf67007370d941635d9eef171271354"
+      }
+    },
+    "originalTablesCount": 8,
+    "originalTablesUnchanged": true,
+    "payloadsRowidsAndUpdatedUnchanged": true,
+    "quickCheck": "ok",
+    "resultCountAfter": 82,
+    "resultCountBefore": 82
+  },
+  "evidenceSha256": {
+    "importJournalBackup": "9b1595ae475fa58927c5fe3151f70adf0122f8b3d3fee8f3d6df330c5ee73d02",
+    "installer": "933e62f9f03d56d7ee0b3b91468a58d6eeeb7f27341e26ff34d26bbde95c5b9b",
+    "listingsBackup": "97cd0c6090377ed4928dcd244fc7ec43147e789fdcd98526feaad49129887a5d",
+    "privateInstallationReceipt": "42779d9a720d5a55477fa24e3707b3e994fccc00381f3729d53dd852606c488e"
+  },
+  "installation": {
+    "databaseAutomaticRestore": false,
+    "existingPosixPermissionsPreserved": true,
+    "modelInferencePerformedByInstaller": false,
+    "sourceDeltaFiles": 108,
+    "sourceModeOnlyFiles": 0,
+    "tunnelModified": false
+  },
+  "installationStartedAt": "2026-11-03T11:51:09.099482+00:00",
+  "installedAt": "2026-11-03T11:51:15.391528+00:00",
+  "limits": [
+    "Verification issued only read-only SQLite and filesystem operations and loopback GET requests; it did not restart services, run tests, or invoke a model.",
+    "Database preservation is independently checked against the fresh installation backup, including original schemas and row values.",
+    "This installation receipt does not replace the separate real-model quality and browser acceptance reports.",
+    "Configured World photo automation records review suggestions; zero model classes are accepted for automatic publication facts.",
+    "Training configuration and recorded phase do not prove a live training process; no training or new-weight approval is asserted.",
+    "The code was installed before the later release commit; this receipt records the observed snapshot and HEAD at verification.",
+    "Idle-training and automatic-promotion settings were observed as enabled with recorded phase collecting; trainingPerformedByInstallation=false does not mean those pre-existing settings are disabled."
+  ],
+  "photoProfile": {
+    "acceptedClasses": 0,
+    "autoApplyConfigured": true,
+    "automaticApplication": false,
+    "automaticFacts": 0,
+    "automaticReviewCapture": true,
+    "effectiveMode": "suggestions-only",
+    "enabled": true,
+    "model": "redcn-furniture-world-v2",
+    "provider": "onnx-world",
+    "reviewRequired": true
+  },
+  "privacy": {
+    "aggregateOnly": true,
+    "cardIdentifiersIncluded": false,
+    "credentialsIncluded": false,
+    "ownerIdentifiersIncluded": false,
+    "photographsIncluded": false,
+    "privatePathsIncluded": false,
+    "rawTextIncluded": false
+  },
+  "release": "v31",
+  "runtime": {
+    "activeJobs": 0,
+    "activeTextJobs": 0,
+    "builds": {
+      "declaredBuildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+      "serverBuildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+      "sourceOnDiskBuildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8"
+    },
+    "compatible": true,
+    "liveShells": {
+      "desktop": {
+        "buildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+        "httpStatus": 200,
+        "matchesInstalledSource": true
+      },
+      "phone": {
+        "buildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+        "httpStatus": 200,
+        "matchesInstalledSource": true
+      }
+    },
+    "mismatches": [],
+    "pidAfter": 81524,
+    "pidBefore": 74401,
+    "pidChanged": true,
+    "release": "v31",
+    "workspaceAuthenticationVerified": true
+  },
+  "sourceSnapshot": {
+    "buildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+    "commitStatusAtInstallation": "uncommitted",
+    "files": 871,
+    "filesMismatched": 0,
+    "gitHeadAtVerification": "f42ab1f1ef9a42d1e82335a823827fe0fa0e1a3d",
+    "manifestSha256": "8fba073f09707eda3e4fde819d122c00098e9e47d55a0d3121d9720eea9f047f",
+    "number": 9,
+    "sourceDigest": "a510831d5f0124ca16561cd68e63b1843301b2b1105d42750db337a1146c6234"
+  },
+  "status": "installed-independent-read-only-verification-passed",
+  "training": {
+    "automaticPromotion": true,
+    "enabled": true,
+    "newWeightsAcceptedByThisReceipt": false,
+    "processActivityInspected": false,
+    "recordedPhase": "collecting",
+    "trainingPerformedByInstallation": false,
+    "trainingConfigurationModifiedByInstaller": false
+  },
+  "verificationReadOnly": true,
+  "verifiedAt": "2026-11-03T11:55:30.359596+00:00",
+  "version": 1,
+  "installerApplyPhaseSeconds": 6.292,
+  "installerCommandElapsedSeconds": 8.68,
+  "installerCommandElapsedSource": "Root's completed native execution",
+  "rootObservedPublicPhone": {
+    "observer": "root",
+    "protocol": "HTTPS",
+    "route": "/phone/",
+    "httpStatus": 200,
+    "cacheControl": "no-store",
+    "buildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+    "matchesInstalledSource": true,
+    "commandElapsedSeconds": 1.93,
+    "existingTunnelConfigurationUnchanged": true,
+    "hostnameIncluded": false,
+    "physicalIPhoneTested": false,
+    "screenshotEvidence": false
+  }
+}

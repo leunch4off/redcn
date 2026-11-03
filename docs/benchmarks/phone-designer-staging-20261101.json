@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "verifiedOn": "2026-11-01",
+  "scope": "v25-staging UI on the user's Mac; disposable synthetic fixtures",
+  "device": "Mac mini M2, 8 GB RAM",
+  "runtime": "Installed Chrome on macOS; test controller uses the existing x86_64 Python environment",
+  "viewport": {"width": 393, "height": 852},
+  "liveApplicationSourceEdits": false,
+  "serverRestarted": false,
+  "realImportsCreated": 0,
+  "livePrivateApiRequests": 0,
+  "changes": [
+    "Prewarm only the public designer module after selecting a card; honor Save-Data and invalidate session/permission cache.",
+    "Read the authenticated shared template in parallel with the module and consume that response in the common studio.",
+    "Await a validated paint of the current canvas before marking editorReady; photo readiness remains separate.",
+    "Defer the initial canvas/full preview until shared data is available, avoiding an unnecessary initial render before the template read.",
+    "Avoid constructing the complete Moscow-name trie when no catalogue name can start at any eligible input boundary. Exact names, custom overrides and the complete catalogue remain available."
+  ],
+  "referenceObservation": {
+    "milliseconds": 12740.1,
+    "source": "Earlier native fixture run reported by the parent controller",
+    "limitation": "Earlier editorReady semantics did not explicitly await a validated canvas paint. This is context, not an equivalent controlled baseline or an estimated percentage speedup."
+  },
+  "measurements": [
+    {
+      "revision": "shared current-canvas readiness and deferred initial render, before geographic negative filter",
+      "moduleReleaseToObservedPaintedEditorMs": 8801.1,
+      "editorMs": 7236,
+      "moduleWaitMs": 2178,
+      "templateReadMs": 538,
+      "controlsBuildMs": 243,
+      "canvasSetupMs": 1416,
+      "setupSyncMs": 1682,
+      "canvasWaitMs": 3286,
+      "canvasPreviewReady": true
+    },
+    {
+      "revision": "repeat in native 12-test UI suite, before geographic negative filter",
+      "moduleReleaseToObservedPaintedEditorMs": 8728.9,
+      "editorMs": 7734,
+      "moduleWaitMs": 2657,
+      "templateReadMs": 522,
+      "controlsBuildMs": 241,
+      "canvasSetupMs": 1488,
+      "setupSyncMs": 1748,
+      "canvasWaitMs": 3254,
+      "firstCanvasDrawMs": 3005,
+      "canvasPreviewReady": true,
+      "photosReadyAtObservation": false
+    },
+    {
+      "revision": "final source with geographic negative filter",
+      "moduleReleaseToObservedPaintedEditorMs": 7520.0,
+      "editorMs": 6902,
+      "moduleWaitMs": 2238,
+      "templateReadMs": 540,
+      "controlsBuildMs": 140,
+      "canvasSetupMs": 1425,
+      "setupSyncMs": 1585,
+      "canvasWaitMs": 2999,
+      "firstCanvasDrawMs": 2753,
+      "canvasPreviewReady": true,
+      "photosStageAtObservation": "fetching",
+      "photosReadyAtObservation": false
+    }
+  ],
+  "timingInterpretation": [
+    "The fixture deliberately holds the module until it has established concurrent template reading; moduleReleaseToObservedPaintedEditorMs measures from releasing that hold.",
+    "editorMs measures the application's start-to-current-canvas-ready interval, including its initial fixture hold. Observation and event-loop scheduling make it a different interval.",
+    "The template read overlaps module loading; the durations must not all be summed.",
+    "The final observation is faster, but module/setup timing and observer delay also vary. The full 1.21-second difference between the last two observations is not attributed solely to the geographic filter."
+  ],
+  "checks": [
+    {"environment": "Mac staging Chrome", "suite": "test_phone_designer_loading_browser + test_mobile_editor_learning_browser + test_design_canvas_browser", "tests": 12, "status": "passed", "elapsedSeconds": 213.725, "note": "Four designer, two mobile editor/learning, six canvas regressions; before the geographic negative filter, with the same final UI source hashes."},
+    {"environment": "Mac staging Node", "suite": "tests/geo.test.mjs", "tests": 11, "status": "passed", "note": "Final source: Chinese negative path, custom overrides, Cyrillic, Latin, digit and word-boundary behavior."},
+    {"environment": "Mac staging Chrome", "suite": "cold designer painted-editor test + Ciliev default Chinese landscape export/permanent-theme test", "tests": 2, "status": "passed", "elapsedSeconds": 91.421, "note": "Final source: common HTML export, saved design reload, intro image and strict current-canvas readiness."},
+    {"environment": "Local Node", "suite": "design-canvas/publication/phone-designer-loader tests", "tests": 57, "status": "passed"},
+    {"environment": "Local Python", "suite": "test_phone_designer_benchmark.py", "tests": 3, "status": "passed", "note": "URL constraints, synthetic data and API-write blocking contract."}
+  ],
+  "geographicDataset": {
+    "sha256BeforeAndAfter": "b3c9232c523bc993340b5fda18f8221df8280bec732086378ddd25d5c5a1df77",
+    "records": 20470,
+    "metroRecords": 453,
+    "streetRecords": 5537,
+    "stopRecords": 14480,
+    "fullCatalogRetained": true,
+    "sourceDatesAndOfficialCoverageUnchanged": true
+  },
+  "limits": [
+    "This does not verify a physical iPhone, Safari or a physical iOS keyboard. Mobile focus was checked against visualViewport at 393x852 and a constrained 393x500 viewport.",
+    "The under-10-second observations are local synthetic fixtures, not a complete real paired session through external HTTPS.",
+    "scripts/benchmark-phone-designer.py can measure real public HTTPS HTML/module transfer with intercepted synthetic APIs. It explicitly reports realUserSessionAcceptance=false.",
+    "Real gallery delivery, actual saved branding/maps, phone hardware and external-network variance can add time. RCN-287 live-session acceptance is not claimed here."
+  ],
+  "matchingLocalAndMacStagingSha256": {
+    "web/phone.mjs": "e8fd3d5bb107122ae4f9a416bb3e4c92ef74e7395afee635fc82b1d7c9cde3d6",
+    "web/phone-designer-loader.mjs": "86481b037ea4d3300ab855f19dbb1eb1c26573e56ed494a4fa7da42e5c47570f",
+    "web/presentation-studio.mjs": "a4f5e025fbd9d07a28c468419193ae3bfd526ac2c629f2501b491668ef5465d5",
+    "web/design-canvas-editor.mjs": "d6d012a53f47cde936b60bdddfc5f016fd56ddbfc3f7dbc44f6b754fc2d920f7",
+    "web/phone.css": "660c3ee14537d492cd0d8fd4a5136faf04b7e743808cb5f685802bb52e4bf284",
+    "web/learning-studio.mjs": "e84e72b7faf290c42482c0a6fed1f303963aeab203cffadfd696578f59a4fabc",
+    "scripts/build.mjs": "f5b80bf265269446d377dc9707fa423bfde0a962848648c4c8da2dcf2db29bfd",
+    "scripts/geo-catalog-runtime.mjs": "d7e2d696083f531f7d6e1897f06f9499bcda386692e09bb788bc2fa35ac08b88",
+    "web/geo-catalog.mjs": "5679a0b2c125eb94ac6f122572a683958cc9ff64c5d3e2f6c5ab93c75d1e64e5",
+    "data/moscow-geo.json": "b3c9232c523bc993340b5fda18f8221df8280bec732086378ddd25d5c5a1df77",
+    "tests/test_phone_designer_loading_browser.py": "df4703ec83a8f690ab294b2fa4916e60a5e76115bb551bc4d09479766e24b22e",
+    "tests/test_mobile_editor_learning_browser.py": "1e98c85827d7f96990176625a2d158d6bdfac0112ab3585cde3f7fbaa2207d19",
+    "tests/geo.test.mjs": "9d5128e4142fb82c71f2b5a5483a3781c02fdc233dd89ba8ad9542c6175c9cd1",
+    "scripts/benchmark-phone-designer.py": "b532cfc026300c9f917b7f34c6cf2da785ec28ea12c690699074d88b90082149"
+  }
+}

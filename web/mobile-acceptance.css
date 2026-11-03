@@ -1,0 +1,10 @@
+@media(max-width:600px){html[data-mobile-keyboard] textarea{max-height:max(110px,calc(var(--redcn-visible-height,100svh) - 150px));overflow:auto}}
+.acceptance-studio{max-width:100%;min-width:0;overflow-wrap:anywhere;margin-top:20px}
+.acceptance-studio fieldset{min-width:0;border:1px solid #d8dfd1;border-radius:12px;padding:12px;margin:18px 0}
+.acceptance-studio legend{font-size:14px;line-height:1.7;padding:0 6px}
+.acceptance-studio label{display:block;font-size:14px;line-height:1.7;margin:15px 0}
+.acceptance-studio input:not([type=checkbox]),.acceptance-studio select,.acceptance-studio textarea{box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:48px;font:inherit;font-size:16px;line-height:1.6;padding:11px;border:1px solid #d8dfd1;border-radius:10px;background:#fff;color:#35482f}
+.acceptance-studio input[type=checkbox]{width:22px;height:22px;vertical-align:middle;margin:0 8px}
+.acceptance-studio p{font-size:13px;line-height:1.7;white-space:pre-wrap}
+.acceptance-studio button{min-height:48px;white-space:normal;max-width:100%;font-size:14px}
+.acceptance-studio [hidden]{display:none!important}

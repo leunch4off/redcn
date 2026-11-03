@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "kind": "authored-contract-fixtures",
+  "isRealCianCorpus": false,
+  "fulfillsRCN020": false,
+  "policy": "These original synthetic fixtures exercise declared DOM contracts. No private source HTML, cookies, contacts or listing photos are included. They do not substitute for authorized anonymized captures of real CIAN schema variants.",
+  "fixtures": [
+    {
+      "path": "cian-virtual-gallery.synthetic.html",
+      "origin": "self-authored synthetic test",
+      "rights": "Project-authored fixture; no external listing content",
+      "features": ["19 announced slides", "one mounted slide", "horizontal virtualization", "aria-setsize", "data-photo-count", "bounded collection"],
+      "photos": "Inline one-pixel placeholder; generated URLs are test identifiers"
+    }
+  ],
+  "realCorpusGate": "RCN-020 remains open until multiple real, explicitly permitted, anonymized schema captures are supplied with provenance and sanitation evidence."
+}

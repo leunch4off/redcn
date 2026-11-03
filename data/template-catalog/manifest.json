@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "version": "zh-rental-compositions-v1",
+  "mode": "indexed-compositions",
+  "titles": 262144,
+  "descriptions": 262144,
+  "tagSets": 262144,
+  "total": 786432,
+  "baseLanguageBlocks": 128,
+  "genericTagAtoms": 48,
+  "factPolicy": "caller-confirmed-only",
+  "sparseContextMayReduceDistinctOutputs": true,
+  "countsDescribe": "unique-composed-skeletons-not-handwritten-texts-or-individual-hashtags",
+  "sourceSha256": "c53261e8255e83e754b85de7950b908ee40452f7f8ec9378dc23f852bc4eb59b",
+  "auditContext": "complete-confirmed-fixture",
+  "qualification": "Counts are composed skeletons; sparse listings can have fewer different renderings.",
+  "kinds": {
+    "title": {
+      "skeletons": 262144,
+      "distinctNormalizedFixtureTexts": 262144,
+      "expandedNdjsonBytes": 49565178,
+      "sha256": "50a303f52bd5164cb41c4b58b96e08186348101484e12a2931345246aabc0589",
+      "fixtureLength": {
+        "min": 26,
+        "max": 54
+      },
+      "file": "title.ndjson.gz",
+      "gzipBytes": 4315506,
+      "gzipSha256": "ef2b1fc3b43c0ae6741bde904a00ce17834f4cb278e7a42e3e8658b28e17cca2"
+    },
+    "description": {
+      "skeletons": 262144,
+      "distinctNormalizedFixtureTexts": 262144,
+      "expandedNdjsonBytes": 80203258,
+      "sha256": "f926f7c35fb2172f2806eeb024dac51ad4ccd2f8e6473199c0d0b07986bd08fd",
+      "fixtureLength": {
+        "min": 113,
+        "max": 128
+      },
+      "file": "description.ndjson.gz",
+      "gzipBytes": 4925411,
+      "gzipSha256": "5e7836652aee39372c787eab53976f26b2b8bbcac347af8a2fab4f7d42195a78"
+    },
+    "tags": {
+      "skeletons": 262144,
+      "distinctNormalizedFixtureTexts": 262144,
+      "expandedNdjsonBytes": 46026234,
+      "sha256": "db6cb1652c700a7a9634dfef2065bc2646b475dab2d2e666a921c44e98ab7e71",
+      "fixtureLength": {
+        "min": 30,
+        "max": 40
+      },
+      "file": "tags.ndjson.gz",
+      "gzipBytes": 3511315,
+      "gzipSha256": "be977da5fa2a9e5f83ffcc725e29ac6a0392a860af033b97e419f57f80e6681c"
+    }
+  }
+}

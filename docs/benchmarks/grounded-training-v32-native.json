@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "release": "v32",
+  "scope": "isolated-native-grounded-advertising-training",
+  "generatedAt": "2026-11-03T22:00:07.486116+00:00",
+  "nativeArm64": true,
+  "physicalMemoryBytes": 8589934592,
+  "baseModel": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+  "trainingContract": "advertising-qwen3-4b-lora-v1",
+  "lane": "advertising",
+  "dataset": {
+    "sha256": "ed6f538726837ab761cba7a3fabd53052f1df6fe36f39bc905ffc93c6d373491",
+    "reviewedLabelsSha256": "8c44f51ec01d0e5abdf43aadd179922e9c9be1c61be7fab8ef8f75f932f2a020",
+    "trainExamples": 20,
+    "validationExamples": 6,
+    "trainGroups": 20,
+    "validationGroups": 6,
+    "assistantReviewed": 26,
+    "humanVerified": 0,
+    "crossPartitionOverlap": 0,
+    "validationTargetsReceivedGradients": false,
+    "unprovedDefaultCityCasesExcluded": 2,
+    "excludedBeforeAnyCompletedTrainingStep": true,
+    "activeSubsetFullTokenMinimum": 741,
+    "activeSubsetFullTokenMaximum": 1013,
+    "tokenizer": {
+      "nativeCheckedOriginalRows": 28,
+      "exactActiveSubsetRows": 26,
+      "wholeTargetsPreserved": true,
+      "limit": 1536
+    }
+  },
+  "nativePreparation": {
+    "canonicalFinalSubsetPassed": true,
+    "canonicalAndConsentFinalizationSeconds": 30.01349466701504,
+    "answerHeadEquivalence": {
+      "allEquivalent": true,
+      "cases": 12,
+      "downloadedModelLoaded": false,
+      "elapsedSeconds": 0.9471806249930523,
+      "gradientTolerance": 2e-05,
+      "lossTolerance": 2e-06,
+      "nativeArm64": true,
+      "peakMemoryBytes": 785435,
+      "trainingDatasetUsed": false,
+      "version": 1
+    }
+  },
+  "training": {
+    "completed": true,
+    "stepsCompleted": 60,
+    "trainableParameters": 163840,
+    "changedParameterElements": 163840,
+    "changedTensorCount": 16,
+    "coverage": {
+      "uniqueExamples": 20,
+      "uniqueGroups": 20,
+      "sampledTaskCounts": {
+        "individual-listing": 60
+      },
+      "completeTrainingPass": true
+    },
+    "baselineValidationLoss": 1.0926355520884197,
+    "finalValidationLoss": 0.3760971153775851,
+    "lossIsTeacherForcedNotGenerationQuality": true,
+    "peakMlxMemoryBytes": 3446306178,
+    "cumulativeActiveSeconds": 397.2863035420014,
+    "maximumActiveSeconds": 600,
+    "resumedFromExactCheckpointStep": 40,
+    "sampling": "shuffled",
+    "batchSize": 1,
+    "maxSequenceLength": 1536,
+    "learningRate": 0.0001,
+    "seed": 20261103,
+    "lora": {
+      "rank": 4,
+      "scale": 8.0,
+      "dropout": 0.0,
+      "keys": [
+        "self_attn.q_proj",
+        "self_attn.v_proj"
+      ]
+    },
+    "adaptedLayers": 4,
+    "adapterSha256": "025bf9a523fc332e44c97fc890608547b5236b35c08ad052641a7fdcb6c1e4ef",
+    "initialSha256": "16923faa197801193cae9a8877c04e2bcec1e5fa71943cf85180856f27ce0348",
+    "optimizerSha256": "89f1527fee0e80d9500c906ceef691aa86eb5e729c71152dbe6e6849504771c3",
+    "baseArtifacts": {
+      "model.safetensors": "2a73c6c248601ab904e035548abd8e6abb65ea27dcb5f342fb0a8910eb44173f"
+    },
+    "baseSupportArtifacts": {
+      "added_tokens.json": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680",
+      "chat_template.jinja": "40c21f34cf67d8c760ef72f8ad3ae5afad514299d4b06e91dd9a8d705af7b541",
+      "config.json": "574349e5a343236546fda55e4744a76e181f534182d7dc60ff1bad7e7a502849",
+      "generation_config.json": "835fffe355c9438e7a25be099b3fccaa98350b83451f9fd2d99512e74f1ade48",
+      "model.safetensors.index.json": "388d811b8b7c2608dd04cce1bcb04a8bf715d19b42790894e6d3427ff429a777",
+      "special_tokens_map.json": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd",
+      "tokenizer.json": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+      "tokenizer_config.json": "4397cc477eb6d79715ccd2000accd6b3531928f30029665832fa1b255f24d2b9",
+      "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    },
+    "baseArtifactsStillExact": true,
+    "nativePackages": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.32.2"
+    },
+    "originalSwapBaselineBytes": 4882232770,
+    "originalSwapBaselinePreservedAcrossResume": true,
+    "resourceLimits": {
+      "consecutivePressureSamples": 2,
+      "maxProcessGroupRssBytes": 4500000000,
+      "maxSwapGrowthBytes": 536870912,
+      "minimumAvailableEstimateBytes": 805306368
+    },
+    "resumeResourceStopReason": null
+  },
+  "attempts": [
+    {
+      "completed": false,
+      "outcome": "swap-growth-limit",
+      "elapsedSeconds": 75.93398379199789,
+      "stepsCompleted": null,
+      "changedParameterElements": null,
+      "baselineValidationLoss": null,
+      "finalValidationLoss": null,
+      "peakMemoryBytes": null,
+      "attempt": "smoke001",
+      "qualityAccepted": false,
+      "selected": false
+    },
+    {
+      "completed": false,
+      "outcome": "swap-growth-limit",
+      "elapsedSeconds": 50.18213283398654,
+      "stepsCompleted": 0,
+      "changedParameterElements": null,
+      "baselineValidationLoss": 1.0926355421543121,
+      "finalValidationLoss": null,
+      "peakMemoryBytes": 3205630130,
+      "attempt": "smoke002",
+      "qualityAccepted": false,
+      "selected": false
+    },
+    {
+      "completed": true,
+      "outcome": "completed",
+      "elapsedSeconds": 65.00485212498461,
+      "stepsCompleted": 1,
+      "changedParameterElements": 81920,
+      "baselineValidationLoss": 1.0926355520884197,
+      "finalValidationLoss": 1.0738487839698792,
+      "peakMemoryBytes": 3378141016,
+      "attempt": "smoke003",
+      "qualityAccepted": false,
+      "selected": false
+    },
+    {
+      "completed": false,
+      "outcome": "swap-growth-limit",
+      "elapsedSeconds": 262.4643020000076,
+      "stepsCompleted": 40,
+      "changedParameterElements": null,
+      "baselineValidationLoss": 1.0926355520884197,
+      "finalValidationLoss": null,
+      "peakMemoryBytes": 3446306178,
+      "attempt": "full001",
+      "qualityAccepted": false,
+      "selected": false
+    },
+    {
+      "completed": true,
+      "outcome": "completed",
+      "elapsedSeconds": 134.8220015419938,
+      "stepsCompleted": 60,
+      "changedParameterElements": 163840,
+      "baselineValidationLoss": 1.0926355520884197,
+      "finalValidationLoss": 0.3760971153775851,
+      "peakMemoryBytes": 3446306178,
+      "attempt": "full002-resume",
+      "qualityAccepted": false,
+      "selected": false
+    }
+  ],
+  "sourceSha256": {
+    "cli/individual_copy.py": "b38d5c57037248509286fcf11c389d93e0e966553fb9cd810a0a0bec16cd4fc4",
+    "cli/advertising_learning.py": "834813ec655f56a17ba328c7b700096a5ff88154b25be872f390682660bb6d08",
+    "cli/learning_provenance.py": "75452400e6393a06b87206220124e32e3e66f50137696432a05be141a032e933",
+    "cli/text_model_contract.py": "1e8d64707d36548a785e3e7f7f8eb885aa7e4981920e13a2ab874ac2693bec55",
+    "scripts/train-local-text-model.py": "6d0f4f3ed0f11b0c6a9d12f7d6ae69e599ad55061de8308a8a447fe48d41571f"
+  },
+  "production": {
+    "merged": false,
+    "adapterSelected": false,
+    "pairedHoldoutGateCompleted": false,
+    "qualityAccepted": false,
+    "historicalTranslationAdapterChanged": false,
+    "existingLearningDatabaseReplaced": false
+  },
+  "limitations": [
+    "Assistant editorial labels are not human verification.",
+    "Held-out teacher-forced loss does not certify generated descriptions.",
+    "Production selection still requires a complete paired holdout gate.",
+    "Two smoke attempts and the first long attempt stopped under unchanged resource guards; their results remain failures."
+  ]
+}

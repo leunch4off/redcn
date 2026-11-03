@@ -1,0 +1,32 @@
+{
+  "platform": "cian",
+  "observedSections": [
+    "OfferTitleNew",
+    "AddressContainer",
+    "UndergroundList",
+    "OfferGallery",
+    "Description",
+    "OfferSummaryInfoLayout",
+    "FeaturesLayout",
+    "PriceItem",
+    "PriceItem",
+    "PriceInfo",
+    "OfferFactItem",
+    "OfferFactItem",
+    "OfferFactItem",
+    "OfferFactItem",
+    "OfferFactItem",
+    "OfferFactItem"
+  ],
+  "retainedTags": 261,
+  "replacementPhotos": 20,
+  "valuesAreFictional": true,
+  "scriptsRetained": 0,
+  "externalOriginalResourcesRetained": 0,
+  "deactivatedMarkerObserved": false,
+  "sanitizedSha256": "c9836bd359c7ab51fc868dd91caebfb86237598148f467ea8e2b58867efe83d4",
+  "inputFormat": "webarchive-main-html",
+  "sourceSha256": "e253bb3b65c5b540cda5ad001d4a13d19d0326b5d9a525dd07d73d313cb1c8ae",
+  "mainHtmlSha256": "49898a66c5132434b583de848ca79abc438f5bda6cf03cb5428953511d515469",
+  "permission": "User supplied this capture and explicitly requested source analysis and development; only anonymized structural derivatives are retained."
+}

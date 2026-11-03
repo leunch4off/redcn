@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "response": [
+    {
+      "input_lat": 55.699876,
+      "input_lon": 37.529543,
+      "radius": 2000,
+      "istransit": false
+    },
+    {
+      "input_lat": 55.7558,
+      "input_lon": 37.6173,
+      "radius": 2000,
+      "istransit": false
+    }
+  ],
+  "endpoint": "https://valhalla1.openstreetmap.de/transit_available",
+  "request": {
+    "locations": [
+      {
+        "lat": 55.699876,
+        "lon": 37.529543,
+        "radius": 2000
+      },
+      {
+        "lat": 55.7558,
+        "lon": 37.6173,
+        "radius": 2000
+      }
+    ]
+  },
+  "checkedAt": "2026-11-01T19:01:43Z",
+  "seconds": 6.921,
+  "scope": "Only requested public points and radii; not a global Moscow transit audit"
+}

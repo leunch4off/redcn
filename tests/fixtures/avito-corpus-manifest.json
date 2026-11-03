@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "created": "2026-11-01",
+  "provenance": "Synthetic, manually authored contract fixtures derived from the project's Avito selector/label contract. These are not downloaded HTML snapshots and do not establish live availability or current production markup coverage.",
+  "privacy": "No seller names, contacts, account IDs, profiles or source photographs. The address is a fictitious test label. All cases are parsed offline.",
+  "cases": [
+    {"file": "avito-corpus-monthly-modern.html", "kind": "monthly apartment", "markup": "data-marker price and parameter groups", "status": "active"},
+    {"file": "avito-corpus-daily-studio.html", "kind": "daily studio", "markup": "data-marker price and parameter groups", "status": "active"},
+    {"file": "avito-corpus-legacy-monthly.html", "kind": "monthly apartment", "markup": "id=item-price and semantic headings", "status": "active"},
+    {"file": "avito-corpus-room-weekly.html", "kind": "weekly room", "markup": "data-marker price container", "status": "active"},
+    {"file": "avito-corpus-partial.html", "kind": "partial loading", "markup": "title and price only", "status": "unknown"},
+    {"file": "avito-corpus-removed.html", "kind": "removed listing", "markup": "closed-warning with stale apartment fields", "status": "removed"},
+    {"file": "avito-corpus-archived.html", "kind": "archived listing", "markup": "item-status with stale apartment fields", "status": "archived"},
+    {"file": "avito-corpus-unavailable.html", "kind": "unavailable listing", "markup": "closed-warning and recommendations only", "status": "removed"}
+  ]
+}

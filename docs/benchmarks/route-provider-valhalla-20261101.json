@@ -1,0 +1,78 @@
+{
+  "request": {
+    "origin": {
+      "latitude": 55.699876,
+      "longitude": 37.529543,
+      "name": "MSU Physics published point"
+    },
+    "destination": {
+      "latitude": 55.701111111,
+      "longitude": 37.5425,
+      "name": "MSU Sternberg published point"
+    },
+    "mode": "walk",
+    "shareCoordinates": true
+  },
+  "transport": "system",
+  "publicCataloguePointsOnly": true,
+  "entranceAcceptance": false,
+  "providerScriptSha256": "108e75b7a4a84f7512ae6461767cc29111bd9e75c2c9b6b9b20c91604d04e8c1",
+  "pilotScriptSha256": "897b60956d3ea370c140af3538137d47d87fb9edf4e3a8b094f3f564d5829f6d",
+  "status": "measured",
+  "result": {
+    "provider": "valhalla-fossgis-demo",
+    "calculatedAt": "2026-11-01T19:13:08.061076Z",
+    "expiresAt": "2026-11-01T19:23:08.061076Z",
+    "checkedAt": "2026-11-01",
+    "mode": "walk",
+    "durationSeconds": 769.302,
+    "distanceKm": 1.085,
+    "time": "13",
+    "routeDistanceKm": 1.085,
+    "sourceUrl": "https://valhalla1.openstreetmap.de/route?json=%7B%22alternates%22%3A0%2C%22costing%22%3A%22pedestrian%22%2C%22directions_options%22%3A%7B%22language%22%3A%22ru-RU%22%7D%2C%22locations%22%3A%5B%7B%22lat%22%3A55.699876%2C%22lon%22%3A37.529543%2C%22radius%22%3A30%2C%22search_cutoff%22%3A100%2C%22type%22%3A%22break%22%7D%2C%7B%22lat%22%3A55.701111111%2C%22lon%22%3A37.5425%2C%22radius%22%3A30%2C%22search_cutoff%22%3A100%2C%22type%22%3A%22break%22%7D%5D%2C%22units%22%3A%22kilometers%22%7D",
+    "origin": {
+      "latitude": 55.699876,
+      "longitude": 37.529543,
+      "name": "MSU Physics published point",
+      "kind": "point",
+      "availability": "unknown",
+      "checkedAt": "",
+      "sourceUrl": ""
+    },
+    "destination": {
+      "latitude": 55.701111111,
+      "longitude": 37.5425,
+      "name": "MSU Sternberg published point",
+      "kind": "point",
+      "availability": "unknown",
+      "checkedAt": "",
+      "sourceUrl": ""
+    },
+    "useEntrances": false,
+    "correlatedPoints": [
+      null,
+      null
+    ],
+    "networkEndpointSnapMeters": [
+      14.86,
+      25.86
+    ],
+    "attribution": "© OpenStreetMap contributors · Valhalla / FOSSGIS e.V.",
+    "travelTimeKind": "network-estimate",
+    "transitSupported": false,
+    "liveTrafficConfirmed": false,
+    "responseSha256": "2b95cea0e2a0a9f3fc63088b3148406d7a394acad92b07fc4df0d29cbd8d0483",
+    "warnings": [
+      "Время рассчитано по дорожной сети; фактическая поездка, пробки и доступность входов могут отличаться.",
+      "Публичный демонстрационный сервис без SLA; расчёт не содержит расписаний автобусов и пересадок."
+    ],
+    "cached": false
+  },
+  "elapsedSeconds": 4.8,
+  "observedAt": "2026-11-01T19:13:12Z",
+  "limits": [
+    "Public campus points are published building points, not verified doors.",
+    "Route duration is a provider network estimate, not a physically measured journey.",
+    "System transport is for this executor network only; deployed code uses bounded direct/pinned HTTPS."
+  ]
+}

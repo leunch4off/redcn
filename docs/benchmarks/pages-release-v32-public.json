@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-03T22:29:37.617760+00:00",
+  "url": "https://leunch4off.github.io/redcn/",
+  "httpFetchSucceeded": true,
+  "tlsVerificationDisabled": false,
+  "buildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+  "expectedBuildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+  "buildMatches": true,
+  "htmlSha256": "18a7aeafb53164a3e84130325c0b6b53e8d7a3ccb5b46e406e72244d5fe17a23",
+  "githubPagesBuild": {
+    "status": "built",
+    "commit": "b254082d8f95905b62a2b57cfa0d71592c8e36eb",
+    "created_at": "2026-11-03T22:24:01Z",
+    "updated_at": "2026-11-03T22:24:27Z",
+    "error": {
+      "message": null
+    }
+  },
+  "source": {
+    "branch": "feature/rcn-v8-knowledge-photos",
+    "path": "/docs"
+  },
+  "visibilityPreserved": true,
+  "httpsEnforced": true
+}

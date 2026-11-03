@@ -1,0 +1,1098 @@
+{
+  "kind": "redcn-isolated-public-furniture-evaluation",
+  "status": "measured-unaccepted",
+  "engine": "baseline",
+  "modelSha256": "650c6d96cd8b9e0c0422174467590b6ec377bc7fefa6c6ff01b0546db5392de5",
+  "inputShape": [
+    1,
+    3,
+    416,
+    416
+  ],
+  "outputShape": [
+    1,
+    3549,
+    26
+  ],
+  "providers": [
+    "CPUExecutionProvider"
+  ],
+  "images": 80,
+  "scoreThreshold": 0.35,
+  "matchingIoU": 0.5,
+  "classIds": [
+    "sofa",
+    "bedAny",
+    "chairs",
+    "tv",
+    "fridge",
+    "oven",
+    "microwave",
+    "sink",
+    "table",
+    "desk",
+    "wardrobe",
+    "washer",
+    "dishwasher",
+    "gasStove",
+    "piano",
+    "cabinetry",
+    "cupboard",
+    "coffeeMachine",
+    "mirror",
+    "curtains",
+    "coffeeTable"
+  ],
+  "prompts": null,
+  "totals": {
+    "tp": 37,
+    "fp": 20,
+    "fn": 134,
+    "verifiedNegativeImages": 0
+  },
+  "classMetrics": [
+    {
+      "id": "sofa",
+      "tp": 3,
+      "fp": 0,
+      "fn": 2,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": 1,
+      "recall": 0.6,
+      "precisionWilsonLower95": 0.4385029682449545,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "bedAny",
+      "tp": 4,
+      "fp": 1,
+      "fn": 3,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": 0.8,
+      "recall": 0.5714285714285714,
+      "precisionWilsonLower95": 0.37553462976252533,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "chairs",
+      "tp": 14,
+      "fp": 7,
+      "fn": 16,
+      "verifiedImages": 9,
+      "verifiedNegativeImages": 0,
+      "precision": 0.6666666666666666,
+      "recall": 0.4666666666666667,
+      "precisionWilsonLower95": 0.45373451974255247,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "tv",
+      "tp": 4,
+      "fp": 1,
+      "fn": 1,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": 0.8,
+      "recall": 0.8,
+      "precisionWilsonLower95": 0.37553462976252533,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "fridge",
+      "tp": 0,
+      "fp": 0,
+      "fn": 5,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "oven",
+      "tp": 0,
+      "fp": 1,
+      "fn": 8,
+      "verifiedImages": 8,
+      "verifiedNegativeImages": 0,
+      "precision": 0,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "microwave",
+      "tp": 0,
+      "fp": 0,
+      "fn": 5,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "sink",
+      "tp": 4,
+      "fp": 7,
+      "fn": 5,
+      "verifiedImages": 8,
+      "verifiedNegativeImages": 0,
+      "precision": 0.36363636363636365,
+      "recall": 0.4444444444444444,
+      "precisionWilsonLower95": 0.15166471095367573,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "table",
+      "tp": 0,
+      "fp": 0,
+      "fn": 11,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "desk",
+      "tp": 4,
+      "fp": 0,
+      "fn": 17,
+      "verifiedImages": 6,
+      "verifiedNegativeImages": 0,
+      "precision": 1,
+      "recall": 0.19047619047619047,
+      "precisionWilsonLower95": 0.5101091635454027,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "wardrobe",
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "verifiedImages": 1,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "washer",
+      "tp": 1,
+      "fp": 0,
+      "fn": 3,
+      "verifiedImages": 3,
+      "verifiedNegativeImages": 0,
+      "precision": 1,
+      "recall": 0.25,
+      "precisionWilsonLower95": 0.20654931437723742,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "dishwasher",
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "verifiedImages": 0,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": null,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "gasStove",
+      "tp": 2,
+      "fp": 0,
+      "fn": 3,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": 1,
+      "recall": 0.4,
+      "precisionWilsonLower95": 0.3423802275066531,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "piano",
+      "tp": 0,
+      "fp": 1,
+      "fn": 6,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": 0,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "cabinetry",
+      "tp": 0,
+      "fp": 0,
+      "fn": 14,
+      "verifiedImages": 9,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "cupboard",
+      "tp": 0,
+      "fp": 0,
+      "fn": 15,
+      "verifiedImages": 7,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "coffeeMachine",
+      "tp": 1,
+      "fp": 1,
+      "fn": 2,
+      "verifiedImages": 3,
+      "verifiedNegativeImages": 0,
+      "precision": 0.5,
+      "recall": 0.3333333333333333,
+      "precisionWilsonLower95": 0.09453120573423071,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "mirror",
+      "tp": 0,
+      "fp": 0,
+      "fn": 6,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "curtains",
+      "tp": 0,
+      "fp": 1,
+      "fn": 5,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": 0,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    },
+    {
+      "id": "coffeeTable",
+      "tp": 0,
+      "fp": 0,
+      "fn": 6,
+      "verifiedImages": 5,
+      "verifiedNegativeImages": 0,
+      "precision": null,
+      "recall": 0,
+      "precisionWilsonLower95": 0,
+      "statisticalGatePassed": false
+    }
+  ],
+  "perImage": [
+    {
+      "imageId": "00714f9e7d062900",
+      "imageSha256": "25d3823c8bc2e97e870777cec93047758b1975c73e114694f74d7b6aa9ea2d59",
+      "seconds": 0.06219491699994251,
+      "verifiedPositiveClassIds": [
+        "piano"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "007f71665b0812a7",
+      "imageSha256": "414d28641191941f763f59e8ab9a7a3f435c3ed4425055bb163dce6b6abca9e9",
+      "seconds": 0.0325198749997071,
+      "verifiedPositiveClassIds": [
+        "tv"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "00a36f96e31731c4",
+      "imageSha256": "c87a0134a53af87739cc60bcf6cec966e7fc475f3d3ae9032095299dbe8a8124",
+      "seconds": 0.031732957999338396,
+      "verifiedPositiveClassIds": [
+        "desk"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "00ec4ba83d648c33",
+      "imageSha256": "12977bb8e2519252d8db94caec1e1f0d5c56541bac0a3afe7b9b41cb41103695",
+      "seconds": 0.03206737499931478,
+      "verifiedPositiveClassIds": [
+        "tv"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "00f3dbbbf5bdf2cf",
+      "imageSha256": "13f64a1ab4e9d02097a3650c9c167a59d8090885945e3fa635d37062bbfd8de0",
+      "seconds": 0.030120458999590483,
+      "verifiedPositiveClassIds": [
+        "sofa",
+        "coffeeTable"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "02d3d8579d152a67",
+      "imageSha256": "a505f22c298a41dc21a0a69c4ec44850aba21eea9cdfa1c47f125b779cbd2a66",
+      "seconds": 0.031178999999610824,
+      "verifiedPositiveClassIds": [],
+      "predictedAboveThreshold": 4
+    },
+    {
+      "imageId": "03646bb2f288eaae",
+      "imageSha256": "e5ec53f2f31c179dbe75913f98fffb1e8b10c3e903c90a4c02609546e90f9746",
+      "seconds": 0.034955166000145255,
+      "verifiedPositiveClassIds": [
+        "bedAny"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "03d459ae21e00e9a",
+      "imageSha256": "12565704a7c39579e925088059a9a8b245534f89a25b82aa35b2e03533bab6e5",
+      "seconds": 0.03556720800042967,
+      "verifiedPositiveClassIds": [
+        "washer"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "043506a25417f384",
+      "imageSha256": "6697d0e70310611b62ea3e92beacd954d75ab45b735973d7c8df5d66b5bd419c",
+      "seconds": 0.03162499999962165,
+      "verifiedPositiveClassIds": [
+        "piano"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "0477154c66e5ddcb",
+      "imageSha256": "672b60fa61daae32ee994a216632e82e46e57d396f9c56d1bf8e343fcb8e76b2",
+      "seconds": 0.035516791000191006,
+      "verifiedPositiveClassIds": [
+        "fridge"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "04b1367c2c475c5a",
+      "imageSha256": "d8084ced1cf0a858fb6ac1eb25d5f0b3f961f46ce5c9069fd72c28a4b06e90e8",
+      "seconds": 0.03363116699983948,
+      "verifiedPositiveClassIds": [
+        "piano"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "04b5017f1384f197",
+      "imageSha256": "37cc102e9f6b8c32c4db80f28170de816bc35af41b29b1c3ada37201d3477394",
+      "seconds": 0.03343945799861103,
+      "verifiedPositiveClassIds": [
+        "fridge"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "05042cfa44abe4f6",
+      "imageSha256": "ed6c8bafcac452967f8caff4d08b47086736e0402c892a6ae1fb722a43bf8f31",
+      "seconds": 0.031929749999108026,
+      "verifiedPositiveClassIds": [
+        "sink",
+        "cabinetry",
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 5
+    },
+    {
+      "imageId": "05489aa3e2b24d6a",
+      "imageSha256": "185851cf02025d44cc9567a8502d1ca802c78cd26cd32f71eebb5062658216c0",
+      "seconds": 0.03063674999975774,
+      "verifiedPositiveClassIds": [
+        "cabinetry"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "0555611d6ba08875",
+      "imageSha256": "9cdcd918d24eab2465fc4c38517de8fd1be805f063f0f1f37b4163255a92d32b",
+      "seconds": 0.03212120900025184,
+      "verifiedPositiveClassIds": [
+        "piano"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "058e15fa186f01f2",
+      "imageSha256": "b12c4334ee4a769f5c7814d5914342cf755614625630a644922523e16eefa2e5",
+      "seconds": 0.030958999999711523,
+      "verifiedPositiveClassIds": [
+        "oven"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "05a18d04f2f02d4b",
+      "imageSha256": "0a28c154d4ecb318526f00f3f37cd9e6983689d05f61a2dc24c03c5db12b3e94",
+      "seconds": 0.02923154099880776,
+      "verifiedPositiveClassIds": [
+        "sink"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "05e697eba59741a6",
+      "imageSha256": "5ddd988cd288c4986f08df8e13df9134916d4fe9c18af3d2626a8915eb2e10f2",
+      "seconds": 0.033432415999413934,
+      "verifiedPositiveClassIds": [
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "066a928c92d07120",
+      "imageSha256": "1610e091f9fc5a82b9488b4281fc7787f11de85bd14344b7251126693d84f5f7",
+      "seconds": 0.030869459000314237,
+      "verifiedPositiveClassIds": [
+        "sink"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "06df78346e1d333e",
+      "imageSha256": "90ad6b77f3058c35c47a09b3067d5fb16b823ca03dd874203d4616ca16fe03a2",
+      "seconds": 0.03216400000019348,
+      "verifiedPositiveClassIds": [
+        "cabinetry",
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "06e011fbb8d24f19",
+      "imageSha256": "38b8226bc5606f816cc3fc9c0e54b5f4d0278684988d860771b4bb049fef678f",
+      "seconds": 0.03216683299979195,
+      "verifiedPositiveClassIds": [
+        "chairs"
+      ],
+      "predictedAboveThreshold": 4
+    },
+    {
+      "imageId": "0761477b3d184780",
+      "imageSha256": "1b489898c83cd87f895f089c6a5b3b2a9d5e277f8619e59b0e2245235f2e2982",
+      "seconds": 0.031589708998581045,
+      "verifiedPositiveClassIds": [
+        "piano"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "0774d2f6414c4b10",
+      "imageSha256": "de978b9b88a18babe1e07f7c29f2d1ac9e1ec25e071d0b21f924568daf5927a4",
+      "seconds": 0.030779624999922817,
+      "verifiedPositiveClassIds": [
+        "cabinetry"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "07b12cccb39c75a5",
+      "imageSha256": "20c2ce0e5461d83f3a1bb8af75709771924582613ca64dc1335ce7812f65cc87",
+      "seconds": 0.031107916998735163,
+      "verifiedPositiveClassIds": [
+        "chairs"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "07bb1574590ad7fd",
+      "imageSha256": "6c90db0cbebe3d6a610b2032a1b22b77b34b310fd011743989709f95c48da406",
+      "seconds": 0.030702834001203883,
+      "verifiedPositiveClassIds": [
+        "chairs",
+        "desk"
+      ],
+      "predictedAboveThreshold": 4
+    },
+    {
+      "imageId": "091af8d4a3c6c6f1",
+      "imageSha256": "e736740e87ff474ba065cf15606a490a84697c2eef0e52c8a074ecdff52b533e",
+      "seconds": 0.03228754100018705,
+      "verifiedPositiveClassIds": [
+        "desk",
+        "cabinetry",
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 3
+    },
+    {
+      "imageId": "093118b7220093e6",
+      "imageSha256": "d051f04bda4048fcdee491cddc31822c95ddbb124b78a06312e678634d01ac73",
+      "seconds": 0.028699459000563365,
+      "verifiedPositiveClassIds": [
+        "desk"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "095dff8dc2e5405b",
+      "imageSha256": "72de5eb5634f64641d5c2ad11d48788b0bce8bd5aa579471a0b95e5bb12c78e8",
+      "seconds": 0.030373167001016554,
+      "verifiedPositiveClassIds": [
+        "cabinetry",
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "09e094375efab7fe",
+      "imageSha256": "4a8235504fad018485b2d4e2ecb96f435c20301228c2a2a42f2e1bff4e5fee06",
+      "seconds": 0.032702041000447934,
+      "verifiedPositiveClassIds": [],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "0a6bc386b28f2aac",
+      "imageSha256": "5cc88437aa3bbe7b707a2c20aa6fd348c7ef98e679461a07f045ef1fb766112c",
+      "seconds": 0.030028082999706385,
+      "verifiedPositiveClassIds": [
+        "bedAny",
+        "chairs"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "0af4ba8fd2a7e628",
+      "imageSha256": "ac04ce42266e855d59658f91a6c9a56ac2b099b9c40c7420e6bfc6e6b11c26b6",
+      "seconds": 0.031464957999560283,
+      "verifiedPositiveClassIds": [
+        "sink"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "0b3445eeb72b3803",
+      "imageSha256": "81c2bcb4b80ce8fd7dc471ac30a18c2ba7675a1fbd9743f00d50b177319e1b3a",
+      "seconds": 0.031697415999587975,
+      "verifiedPositiveClassIds": [
+        "desk"
+      ],
+      "predictedAboveThreshold": 10
+    },
+    {
+      "imageId": "0b730c49ccf74eae",
+      "imageSha256": "b081381dae7f8b7a23b0e1bb6b41ab348a3dd98c85cebc27708ac06f86a2f3e9",
+      "seconds": 0.029913124999438878,
+      "verifiedPositiveClassIds": [
+        "fridge"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "0ba9d2cc31b93d70",
+      "imageSha256": "3c15b5f69c8bbe60660203a994866ee443a07ff5e15bd74e03a4af9da3ae6b1c",
+      "seconds": 0.03285320800023328,
+      "verifiedPositiveClassIds": [
+        "table"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "0e2868759e7a615c",
+      "imageSha256": "0acf1d1c80c17f4cc3c2a516bfe3866a3f41cf9aee6acb5ec703d6045ed0eefd",
+      "seconds": 0.03140420899944729,
+      "verifiedPositiveClassIds": [
+        "sink",
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "0f731adcd7458c2b",
+      "imageSha256": "c5b558e23ca0eef4561b9b0fb0b8a405f0ed33e6fb7a761d46db2c47618619a7",
+      "seconds": 0.03199424999911571,
+      "verifiedPositiveClassIds": [
+        "sofa",
+        "chairs",
+        "tv"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "0fb3a760f909c8c9",
+      "imageSha256": "a80e33afb669ae2bb77b1528fa4a8e454cb847fddcb1a379c4ed3d1918bfbbc8",
+      "seconds": 0.031188208000457962,
+      "verifiedPositiveClassIds": [
+        "bedAny"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "10487b082a620b1a",
+      "imageSha256": "1dd15a6825810f6fc575659b68b434a08fe1dc3ad15a7ad9dde119b30c7593be",
+      "seconds": 0.03352804200039827,
+      "verifiedPositiveClassIds": [
+        "coffeeTable"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1050b3c3f36090a3",
+      "imageSha256": "c1dcd6878ef9599bf30d2367c283a24414809447eb56992f148ce710bbac69dc",
+      "seconds": 0.03070191699953284,
+      "verifiedPositiveClassIds": [
+        "sofa"
+      ],
+      "predictedAboveThreshold": 3
+    },
+    {
+      "imageId": "10c183f776fe5e73",
+      "imageSha256": "b51265a6e5b103bea44245a96994d965e801c98d512df9f093b22c221dc67794",
+      "seconds": 0.02985570800046844,
+      "verifiedPositiveClassIds": [
+        "oven",
+        "gasStove",
+        "cabinetry",
+        "cupboard"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "10fb73ee47a33a83",
+      "imageSha256": "95415dcab58d20f27edc6a11983d2d0a49d803f16afb17b3d7147bd5d558a37c",
+      "seconds": 0.03034095800103387,
+      "verifiedPositiveClassIds": [
+        "gasStove"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1137115713a9b356",
+      "imageSha256": "1b7adbedea17b1fa2a1f93be15e2f909a1ab1818e8c2ae5e0d060fad60777b60",
+      "seconds": 0.030450333000771934,
+      "verifiedPositiveClassIds": [
+        "tv"
+      ],
+      "predictedAboveThreshold": 4
+    },
+    {
+      "imageId": "115ca6aa3522da5a",
+      "imageSha256": "e62ad3efdb876c5cd9e3d169c44d2574621c7e9d17bfe5db4b436e1f56cb0bdf",
+      "seconds": 0.03082195800016052,
+      "verifiedPositiveClassIds": [
+        "sofa",
+        "chairs"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "117142f3ff2f20d1",
+      "imageSha256": "300c1b8ed75985879da98f731a1383d5019888461be6033113f09ed839e697bc",
+      "seconds": 0.031051959000251372,
+      "verifiedPositiveClassIds": [
+        "mirror"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1229d5e203956ac6",
+      "imageSha256": "4ea789b208247cdefcb27baf61ee8bd256d08691b0ade893516b96f1219e3163",
+      "seconds": 0.033508500000607455,
+      "verifiedPositiveClassIds": [
+        "bedAny"
+      ],
+      "predictedAboveThreshold": 4
+    },
+    {
+      "imageId": "123933088352eb12",
+      "imageSha256": "21ca04c41773ffd1d926bad93e4980e736c4cd42e7720ad1b6ce3544dffc4790",
+      "seconds": 0.029962750000777305,
+      "verifiedPositiveClassIds": [
+        "mirror"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1250a079d3fbd919",
+      "imageSha256": "b8a28b7292559f6d854281373349b91e7fa2a162d5ec5ae4bdb88abfeb23bfd7",
+      "seconds": 0.03249058400069771,
+      "verifiedPositiveClassIds": [
+        "sofa"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "12e4c0ed71c75b87",
+      "imageSha256": "bb1daf8949ac13b282925f255ff0c8fe80cb14320b07426cbb75b39c68a7f09e",
+      "seconds": 0.030154459000186762,
+      "verifiedPositiveClassIds": [
+        "chairs",
+        "table"
+      ],
+      "predictedAboveThreshold": 7
+    },
+    {
+      "imageId": "1347925c9c5e401d",
+      "imageSha256": "5ea6d59740c6df4b99fa9f84db0a2feca7990c852f2447cbbf1632ea543008b8",
+      "seconds": 0.03696875000059663,
+      "verifiedPositiveClassIds": [
+        "chairs",
+        "table"
+      ],
+      "predictedAboveThreshold": 7
+    },
+    {
+      "imageId": "13959d4be0ed2e5e",
+      "imageSha256": "d270009b36439915eb331a605284b33d420b5b463ff900d801e778fc35279148",
+      "seconds": 0.029585415999463294,
+      "verifiedPositiveClassIds": [
+        "oven"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "13cfe71ebbf0ae3b",
+      "imageSha256": "9046ea260172055dbd7826fe5e8e217b8e1aa5d847c360164be36c37661a5bbc",
+      "seconds": 0.03497387499919569,
+      "verifiedPositiveClassIds": [
+        "table"
+      ],
+      "predictedAboveThreshold": 6
+    },
+    {
+      "imageId": "140d247f79fc0516",
+      "imageSha256": "bfe47f68d18706593749f6f1f7166d707876a226c0eaf1d9a2c83a1e706d61e8",
+      "seconds": 0.0306052500000078,
+      "verifiedPositiveClassIds": [
+        "chairs",
+        "tv",
+        "desk"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "1459f98b6a04c90e",
+      "imageSha256": "8abe94cf4a56afbf95ab15a4920ed33c4a82140e5aa6396cc0f0adb0d7288f7d",
+      "seconds": 0.030814249999821186,
+      "verifiedPositiveClassIds": [
+        "fridge"
+      ],
+      "predictedAboveThreshold": 8
+    },
+    {
+      "imageId": "14f3007674b36f65",
+      "imageSha256": "60a20dd53b8e5bf58089e3ce08fab35501433eadb3f8269ee71d05400e292391",
+      "seconds": 0.030616999998528627,
+      "verifiedPositiveClassIds": [
+        "mirror"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "154bb12ff0554141",
+      "imageSha256": "e93735f54bd2094e6948658b29692368ee391f84c65ae4e15b5564de816153e7",
+      "seconds": 0.03106395800023165,
+      "verifiedPositiveClassIds": [
+        "microwave"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "15e9f230f8f0609f",
+      "imageSha256": "ceb66349f26461cada96e6c14b496687aceaf11b3969b723b99570f7cca07133",
+      "seconds": 0.03221745799964992,
+      "verifiedPositiveClassIds": [
+        "bedAny"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1681f749e331106f",
+      "imageSha256": "00b9bb117545b330adfb9b2faa7526666d55321174ba1b4fc4e2a7e24ddb98e7",
+      "seconds": 0.030032125001525856,
+      "verifiedPositiveClassIds": [
+        "table"
+      ],
+      "predictedAboveThreshold": 3
+    },
+    {
+      "imageId": "169eea9ca620095d",
+      "imageSha256": "6fe38efbf1e717c8777fe31bf72c793e68376eac7f1780b1ccaca52cbbcf2e4a",
+      "seconds": 0.04099562500050524,
+      "verifiedPositiveClassIds": [
+        "coffeeTable"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "1773ef49f38531a9",
+      "imageSha256": "1cd24fe9d398f2904d64b6dafd1153fb82e3453a4ee7fadbc8d2e4ef15815cd3",
+      "seconds": 0.0319513750000624,
+      "verifiedPositiveClassIds": [
+        "mirror"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "182c1f2bfa4b4280",
+      "imageSha256": "b6f84420d26526e8cb76ee20715560a87acd3aea2cd6c1f90598a3a0629bb37d",
+      "seconds": 0.03453875000013795,
+      "verifiedPositiveClassIds": [
+        "coffeeMachine"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "19154348693be6b6",
+      "imageSha256": "96aab308e10d8a2a9f1c95df474eff3a03be653ff180d4beab03237e7f3a6efa",
+      "seconds": 0.039652916999330046,
+      "verifiedPositiveClassIds": [
+        "coffeeTable"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1b8500e0e4938e77",
+      "imageSha256": "1d0dd4ba6466cae500e793e846afcb9fe60a2d440a0f2d4ac5c18449c2c043a3",
+      "seconds": 0.038159457999427104,
+      "verifiedPositiveClassIds": [
+        "coffeeTable"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "1c15929e31f4ff7f",
+      "imageSha256": "052f0bedcb5760d741501c0c375d8139b70bc4ab8932100a5e70075b29644a44",
+      "seconds": 0.03119416700064903,
+      "verifiedPositiveClassIds": [
+        "oven"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "1c638bccdd166c99",
+      "imageSha256": "4d7622c2333931f3d26383a08afec1879a0d3404d35518ba7b684ad8519109f7",
+      "seconds": 0.03446891699968546,
+      "verifiedPositiveClassIds": [
+        "oven",
+        "microwave"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "1e2c50b991a82ee8",
+      "imageSha256": "1fe8ed73684d566f4d296edc8907cf220d76e6c3f9ddbcecf5b5c016dd20d8d6",
+      "seconds": 0.03149429200129816,
+      "verifiedPositiveClassIds": [
+        "coffeeMachine"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "1f2dc2f1001d56d7",
+      "imageSha256": "40988e20e8e9706a6fcdd9442e5a2dab948acd30a77e58c565ce90a0deb962ff",
+      "seconds": 0.030465666999589303,
+      "verifiedPositiveClassIds": [
+        "microwave"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "1f74ce3e07a2ffd4",
+      "imageSha256": "10371e998996d6a92b0322203a15ce2c5a7ecfbf832f245311e011cfee929e65",
+      "seconds": 0.0365027089992509,
+      "verifiedPositiveClassIds": [
+        "curtains"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "22ada91f55c8370b",
+      "imageSha256": "50446e6c53e8e628e8377c26f67555c0f66705c0baede048a26bd352bb2f150d",
+      "seconds": 0.037692334000894334,
+      "verifiedPositiveClassIds": [
+        "curtains"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "2305e785c4e0bf51",
+      "imageSha256": "b5ca9394e59c60e8746e5f2493d62ed448779a42803305235a77779371c107c0",
+      "seconds": 0.03197741700023471,
+      "verifiedPositiveClassIds": [
+        "sink",
+        "mirror"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "242da0bc08931f8b",
+      "imageSha256": "c186e5b7e98db7760be334e821ac63ac963e4f12d1557fdde5a545ce95954d3d",
+      "seconds": 0.03610829200079024,
+      "verifiedPositiveClassIds": [
+        "curtains"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "2523ac25dfbfa2f8",
+      "imageSha256": "d637f045fbb5c4bf7597c1240c286cd86a8d67eceed26646fd27bca7f4ce3c75",
+      "seconds": 0.03448133300116751,
+      "verifiedPositiveClassIds": [
+        "fridge",
+        "oven",
+        "microwave",
+        "sink",
+        "gasStove",
+        "cabinetry"
+      ],
+      "predictedAboveThreshold": 3
+    },
+    {
+      "imageId": "2540d6d0d881c2ba",
+      "imageSha256": "12cf2d9b7346e70d5569e6e95fe759e41c6005ebcf09dc939553a2897a07c9da",
+      "seconds": 0.03520974999992177,
+      "verifiedPositiveClassIds": [
+        "coffeeMachine"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "258d4b14b0a13e52",
+      "imageSha256": "a1bcbf752f59d30fe6c43e3e1504f088a8575aab24716314a433fa924e994f1a",
+      "seconds": 0.10542712499955087,
+      "verifiedPositiveClassIds": [
+        "oven",
+        "gasStove"
+      ],
+      "predictedAboveThreshold": 2
+    },
+    {
+      "imageId": "25d2f50cc91acc29",
+      "imageSha256": "edcdb32c561cacdacca1c53e0ef7f3d15d59eba4be96ed3d0e0a7cb364e02b0f",
+      "seconds": 0.03330095899946173,
+      "verifiedPositiveClassIds": [
+        "wardrobe"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "2752a1c19bb01f78",
+      "imageSha256": "d8be3e0487625eae88b0d272bd5a06f9d02baa24e6a1a2fd8b2aee8954b00ac6",
+      "seconds": 0.030485749999570544,
+      "verifiedPositiveClassIds": [
+        "gasStove"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "306433065547cabc",
+      "imageSha256": "8576025ad58988f844b1c82e91bbcf588e71c8b8e00ccce3593932c8303c7df7",
+      "seconds": 0.034240750001117704,
+      "verifiedPositiveClassIds": [
+        "curtains"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "3243876480654953",
+      "imageSha256": "ea6d5ee1b735c8645f697699905451d963ba587fe3cb9195771b3a7b3b145ddb",
+      "seconds": 0.029915708999396884,
+      "verifiedPositiveClassIds": [
+        "washer"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "32ad9a324aeedcef",
+      "imageSha256": "e293cb6e6aa277d71c3f5f2b174cbc4b9853f2ae4950b0c52e682180d61dffc1",
+      "seconds": 0.030423250000239932,
+      "verifiedPositiveClassIds": [
+        "washer"
+      ],
+      "predictedAboveThreshold": 1
+    },
+    {
+      "imageId": "32ec4cc7b95ce746",
+      "imageSha256": "7386e2cea93ce8f5a554483768c43fb7548ee5aa7c4f17731049f2c8777531ba",
+      "seconds": 0.035105041999486275,
+      "verifiedPositiveClassIds": [
+        "curtains"
+      ],
+      "predictedAboveThreshold": 0
+    },
+    {
+      "imageId": "3692c7b2c4697ed9",
+      "imageSha256": "a6abd664c74200b41198e3b1f98392dd72f7ba7ffb7fbf5eb39f6880ab983573",
+      "seconds": 0.034762000001137494,
+      "verifiedPositiveClassIds": [
+        "oven",
+        "microwave",
+        "sink",
+        "cabinetry"
+      ],
+      "predictedAboveThreshold": 4
+    }
+  ],
+  "phaseSeconds": {
+    "runtimeImports": 0.1683515830009128,
+    "modelSessionLoad": 0.034137541999371024,
+    "firstImage": 0.06219491699994251,
+    "imageP50": 0.03183135399922321,
+    "imageP95": 0.038159457999427104,
+    "imageMax": 0.10542712499955087,
+    "fiveWarmRepeatP50": 0.018873625000196625
+  },
+  "torchImported": false,
+  "clipImported": false,
+  "packages": {
+    "numpy": "1.26.4",
+    "onnxruntime": "1.23.2",
+    "Pillow": "11.3.0",
+    "opencv-python": "4.11.0.86"
+  },
+  "processMaxRssBytes": 171589632,
+  "source": "getrusage(RUSAGE_SELF); Darwin bytes, Linux KiB converted; not unified-memory total",
+  "networkAttemptsBlocked": 0,
+  "automaticPromotion": false,
+  "autoApply": false,
+  "limitations": [
+    "Only explicitly verified positive image/class pairs count; unknown classes are not negatives.",
+    "No independently verified negative image/class pairs; precision is conditional, not global accuracy.",
+    "These same 80 public validation images were used for the prior first-pass model; this is not a new blind corpus.",
+    "Images have dataset metadata declaring CC BY 2.0, not a new individual-license audit.",
+    "Candidate 640px centered OpenCV RGB/255 letterbox; baseline 416px top-left Pillow BGR 0..255 preprocessing.",
+    "Range hood, computer, watermark, hidden equipment, working condition and cross-view counts are not evaluated."
+  ],
+  "version": 1,
+  "scriptSha256": "229f917ceb7622083895ad8ce528f80af022fa743c0acda8d77bc16c7516848f",
+  "readyManifestSha256": "dc53ecb5e38e0a87e2fe6084c1e6738ab33c3c7f5016b9b272e7f047b49151ee",
+  "originalTrainingManifestSha256": "33b741b0f9162379ae58c9cd23dd03ee73c9fc9c5a875abf22f7dcfaf0416e0c",
+  "platform": {
+    "system": "Darwin",
+    "machine": "arm64",
+    "python": "3.11.9 (v3.11.9:de54cf5be3, Apr  2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]"
+  },
+  "processSeconds": 3.0746105830003216,
+  "privateDataRead": false,
+  "activeProviderChanged": false
+}

@@ -1,0 +1,955 @@
+{
+  "schemaVersion": 1,
+  "origin": "redacted-user-webarchive",
+  "scope": "DOM and serialized-photo-metadata regression fixtures; no photo bytes or source-page JavaScript are included",
+  "redactions": [
+    "All listing IDs and photo IDs are replaced by stable fixture-only identifiers.",
+    "Addresses, contact details, page text, tracking parameters, analytics, executable scripts and event attributes are removed.",
+    "The original main gallery nesting, classes, data-name values, src/loading attributes and main/thumb order are retained.",
+    "Only two originally external recommendation images per case remain, with their observed ancestor path.",
+    "Serialized photo objects are stored only in this JSON manifest, never as executable HTML.",
+    "CSS contains a literal subset of observed gallery rules; absent page styles and lazy-loading JavaScript are not reconstructed."
+  ],
+  "measurementScope": "Dimensions/format/byte counts come from decoded image bytes embedded in the original user webarchive, not from generated images or current CDN responses. Variants without embedded bytes have no measured dimensions.",
+  "variantFields": {
+    "fullUrl": "-1.jpg",
+    "thumbnailUrl": "-2.jpg",
+    "miniUrl": "-3.jpg",
+    "thumbnail2Url": "-4.jpg"
+  },
+  "cases": [
+    {
+      "caseId": "gallery-10-layout",
+      "fixture": "cian-gallery-10-layout-v29-fullsize.html",
+      "fixtureSha256": "f0c690c9ef0af5c9b31db2a23a6652d7562ec7f93f53530930e9c274f8a4b4fd",
+      "originalSHA256": "e253bb3b65c5b540cda5ad001d4a13d19d0326b5d9a525dd07d73d313cb1c8ae",
+      "originalMainHtmlSha256": "49898a66c5132434b583de848ca79abc438f5bda6cf03cb5428953511d515469",
+      "fixtureListingId": 9500000999,
+      "observedCounts": {
+        "mainGallery": 10,
+        "thumbnails": 10,
+        "serializedPhotos": 10,
+        "separateLayouts": 1,
+        "externalThumbnailTags": 23,
+        "externalThumbnailUniqueUrls": 12,
+        "retainedExternalThumbnails": 2
+      },
+      "observedMainOrder": [
+        9500000001,
+        9500000002,
+        9500000003,
+        9500000004,
+        9500000005,
+        9500000006,
+        9500000007,
+        9500000008,
+        9500000009,
+        9500000010
+      ],
+      "observedThumbnailOrder": [
+        9500000001,
+        9500000002,
+        9500000003,
+        9500000004,
+        9500000005,
+        9500000006,
+        9500000007,
+        9500000008,
+        9500000009,
+        9500000010
+      ],
+      "observedLazyAttributes": {
+        "firstMainLoading": null,
+        "otherMainLoading": {
+          "lazy": 9
+        },
+        "thumbnailLoading": {
+          "lazy": 10
+        },
+        "allMainHaveSrc": true,
+        "dataSrcPresent": false,
+        "srcsetPresent": false,
+        "dataPhotoIdPresent": false,
+        "preScrollPlaceholderBehavior": "not inferable from the saved post-interaction DOM"
+      },
+      "structure": {
+        "gallery": "[data-name=\"OfferGallery\"]#photos",
+        "inner": "[data-name=\"GalleryInnerComponent\"]",
+        "mainOuter": "[data-name=\"Scroller\"]",
+        "mainOuterOverflow": "hidden",
+        "mainScrollElement": "[data-name=\"Scroller\"] > ul.xa15a2ab7--52367d--container",
+        "mainScrollOverflowX": "scroll",
+        "mainItemWidth": "100%",
+        "thumbnailScrollElement": "[data-name=\"PaginationThumbsComponent\"]",
+        "thumbnailScrollOverflowX": "scroll",
+        "thumbnailItemWidth": "64px",
+        "activeThumbnailPosition": 9,
+        "statePath": "window._cianConfig[\"frontend-offer-card\"] .concat array / key=defaultState / value.offerData.offer",
+        "sourceJsonSlashesEscapedAs": "\\u002F",
+        "fullUrlMeans": "largest explicitly declared gallery variant; not proof of an unresized camera original"
+      },
+      "serializedPhotoState": {
+        "offerData": {
+          "offer": {
+            "id": 9500000999,
+            "photos": [
+              {
+                "id": 9500000001,
+                "isDefault": true,
+                "fullUrl": "https://images.cdn-cian.ru/images/01/101/201/kvartira-fixture-gallery-b-9500000001-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/01/101/201/kvartira-fixture-gallery-b-9500000001-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/01/101/201/kvartira-fixture-gallery-b-9500000001-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/01/101/201/kvartira-fixture-gallery-b-9500000001-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000002,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000002-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000002-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000002-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000002-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000003,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000003-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000003-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000003-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000003-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000004,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000004-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000004-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000004-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000004-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000005,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000005-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000005-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000005-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000005-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000006,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000006-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000006-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000006-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/02/102/202/kvartira-fixture-gallery-b-9500000006-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000007,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000007-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000007-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000007-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000007-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000008,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000008-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000008-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000008-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/03/103/203/kvartira-fixture-gallery-b-9500000008-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000009,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000009-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000009-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000009-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000009-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              },
+              {
+                "id": 9500000010,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000010-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000010-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000010-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-b-9500000010-3.jpg",
+                "isLayout": false,
+                "isCianLayout": false
+              }
+            ],
+            "cianLayouts": [
+              {
+                "id": 9500000100,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/04/104/204/9500000100-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/04/104/204/9500000100-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/04/104/204/9500000100-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/04/104/204/9500000100-3.jpg",
+                "isLayout": true,
+                "isCianLayout": true
+              }
+            ]
+          }
+        }
+      },
+      "embeddedMeasurements": [
+        {
+          "photoId": 9500000001,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 18388
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 6252
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000002,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 26526
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 8130
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000003,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 27924
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 8436
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000004,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 38404
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 7810
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000005,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 32694
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 8668
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000006,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 27670
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 7390
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000007,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1040,
+              "height": 780,
+              "format": "WEBP",
+              "bytes": 45350
+            },
+            "thumbnailUrl": {
+              "width": 260,
+              "height": 195,
+              "format": "WEBP",
+              "bytes": 6920
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000008,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 51086
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 11300
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000009,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 57134
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 11188
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000010,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 34086
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 8608
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9500000100,
+          "sourceArray": "cianLayouts",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 679,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 5932
+            }
+          },
+          "notEmbeddedVariants": [
+            "thumbnailUrl",
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        }
+      ],
+      "variant3And4ByteMeasurementsAvailable": false,
+      "photoBytesIncluded": false,
+      "pageScriptsIncluded": false,
+      "fixtureIsExecutableSourcePage": false,
+      "liveSliderOrCdnRequestsPerformed": false
+    },
+    {
+      "caseId": "gallery-13",
+      "fixture": "cian-gallery-13-v29-fullsize.html",
+      "fixtureSha256": "a1ee22511f813fae0b062dd012b7dbdede3429faccd1e8d5dbb38a738087bcf2",
+      "originalSHA256": "959febfe0d824640440c939819ff2224073823dbf0d406bb631eb0a6f26311e8",
+      "originalMainHtmlSha256": "5faa14ecf15b7a295b3b91ca3494a8409d7c947cb1564b67217a08d32b0e795e",
+      "fixtureListingId": 9400000999,
+      "observedCounts": {
+        "mainGallery": 13,
+        "thumbnails": 13,
+        "serializedPhotos": 13,
+        "separateLayouts": 0,
+        "externalThumbnailTags": 23,
+        "externalThumbnailUniqueUrls": 12,
+        "retainedExternalThumbnails": 2
+      },
+      "observedMainOrder": [
+        9400000001,
+        9400000002,
+        9400000003,
+        9400000004,
+        9400000005,
+        9400000006,
+        9400000007,
+        9400000008,
+        9400000009,
+        9400000010,
+        9400000011,
+        9400000012,
+        9400000013
+      ],
+      "observedThumbnailOrder": [
+        9400000001,
+        9400000002,
+        9400000003,
+        9400000004,
+        9400000005,
+        9400000006,
+        9400000007,
+        9400000008,
+        9400000009,
+        9400000010,
+        9400000011,
+        9400000012,
+        9400000013
+      ],
+      "observedLazyAttributes": {
+        "firstMainLoading": null,
+        "otherMainLoading": {
+          "lazy": 12
+        },
+        "thumbnailLoading": {
+          "lazy": 13
+        },
+        "allMainHaveSrc": true,
+        "dataSrcPresent": false,
+        "srcsetPresent": false,
+        "dataPhotoIdPresent": false,
+        "preScrollPlaceholderBehavior": "not inferable from the saved post-interaction DOM"
+      },
+      "structure": {
+        "gallery": "[data-name=\"OfferGallery\"]#photos",
+        "inner": "[data-name=\"GalleryInnerComponent\"]",
+        "mainOuter": "[data-name=\"Scroller\"]",
+        "mainOuterOverflow": "hidden",
+        "mainScrollElement": "[data-name=\"Scroller\"] > ul.xa15a2ab7--52367d--container",
+        "mainScrollOverflowX": "scroll",
+        "mainItemWidth": "100%",
+        "thumbnailScrollElement": "[data-name=\"PaginationThumbsComponent\"]",
+        "thumbnailScrollOverflowX": "scroll",
+        "thumbnailItemWidth": "64px",
+        "activeThumbnailPosition": 0,
+        "statePath": "window._cianConfig[\"frontend-offer-card\"] .concat array / key=defaultState / value.offerData.offer",
+        "sourceJsonSlashesEscapedAs": "\\u002F",
+        "fullUrlMeans": "largest explicitly declared gallery variant; not proof of an unresized camera original"
+      },
+      "serializedPhotoState": {
+        "offerData": {
+          "offer": {
+            "id": 9400000999,
+            "photos": [
+              {
+                "id": 9400000001,
+                "isDefault": true,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000001-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000001-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000001-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000001-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000002,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000002-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000002-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000002-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000002-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000003,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000003-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000003-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000003-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000003-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000004,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000004-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000004-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000004-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000004-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000005,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000005-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000005-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000005-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000005-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000006,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000006-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000006-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000006-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000006-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000007,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000007-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000007-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000007-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000007-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000008,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000008-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000008-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000008-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000008-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000009,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000009-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000009-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000009-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000009-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000010,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000010-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000010-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000010-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000010-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000011,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000011-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000011-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000011-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000011-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000012,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000012-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000012-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000012-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000012-3.jpg",
+                "isCianLayout": false
+              },
+              {
+                "id": 9400000013,
+                "isDefault": false,
+                "fullUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000013-1.jpg",
+                "thumbnailUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000013-2.jpg",
+                "thumbnail2Url": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000013-4.jpg",
+                "miniUrl": "https://images.cdn-cian.ru/images/kvartira-fixture-gallery-a-9400000013-3.jpg",
+                "isCianLayout": false
+              }
+            ],
+            "cianLayouts": []
+          }
+        }
+      },
+      "embeddedMeasurements": [
+        {
+          "photoId": 9400000001,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 102150
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 8826
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000002,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 71804
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 7894
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000003,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 92278
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 9334
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000004,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 89012
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 8466
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000005,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 74506
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 8050
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000006,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 92370
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 7396
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000007,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 62868
+            },
+            "thumbnailUrl": {
+              "width": 240,
+              "height": 320,
+              "format": "WEBP",
+              "bytes": 12020
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000008,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 201628
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 14478
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000009,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 50502
+            },
+            "thumbnailUrl": {
+              "width": 240,
+              "height": 320,
+              "format": "WEBP",
+              "bytes": 9912
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000010,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 39898
+            },
+            "thumbnailUrl": {
+              "width": 240,
+              "height": 320,
+              "format": "WEBP",
+              "bytes": 9024
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000011,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 179426
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 13334
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000012,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 1280,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 184978
+            },
+            "thumbnailUrl": {
+              "width": 301,
+              "height": 226,
+              "format": "WEBP",
+              "bytes": 13586
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        },
+        {
+          "photoId": 9400000013,
+          "sourceArray": "photos",
+          "embeddedVariants": {
+            "fullUrl": {
+              "width": 720,
+              "height": 960,
+              "format": "WEBP",
+              "bytes": 113890
+            },
+            "thumbnailUrl": {
+              "width": 262,
+              "height": 349,
+              "format": "WEBP",
+              "bytes": 19874
+            }
+          },
+          "notEmbeddedVariants": [
+            "miniUrl",
+            "thumbnail2Url"
+          ]
+        }
+      ],
+      "variant3And4ByteMeasurementsAvailable": false,
+      "photoBytesIncluded": false,
+      "pageScriptsIncluded": false,
+      "fixtureIsExecutableSourcePage": false,
+      "liveSliderOrCdnRequestsPerformed": false
+    }
+  ]
+}

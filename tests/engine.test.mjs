@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DICTIONARY,DEFAULT_PREFS,generateListing,extractFacts,translate,wan} from '../web/engine.mjs';
+import {DICTIONARY,DEFAULT_PREFS,generateListing,extractFacts,translate,wan,rubles} from '../web/engine.mjs';
+import {serviceClaimChecklist,factLedgerKey} from '../web/fact-ledger.mjs';
 const property={rooms:'2',layout:'euro2',style:'detailed',price:'70000',deposit:'35000',area:'39.3',floor:'3',floors:'17',occupants:'4',registration:'assist',features:['bed','ac','dishwasher']};
-test('separate titles and body, exact money and sharing budget',()=>{
-  const r=generateListing(property);assert.equal(r.titles.length,3);assert.match(r.titles[0],/7W/);assert.match(r.body,/35,000₽/);assert.match(r.body,/4人：约1.75W/);assert.match(r.body,/一室一厅/);assert.match(r.body,/洗碗机/);assert.doesNotMatch(r.body,/冰箱|大学通勤|35–50/);
+test('separate titles and body, exact money and no unsupported sharing budget',()=>{
+  const r=generateListing(property);assert.equal(r.titles.length,3);assert.match(r.titles[0],/7W/);assert.match(r.body,/35,000₽/);assert.doesNotMatch(r.body,/合租预算/);assert.match(r.body,/一室一厅/);assert.match(r.body,/洗碗机/);assert.doesNotMatch(r.body,/冰箱|大学通勤|35–50/);
 });
 test('route ranges and modes stay with their own station',()=>{
   const r=generateListing({...property,transit:'Прокшино | 6–10 | walk | 1\nФилатов Луг | 8 | bus',universities:'МГУ | 35–50 | public'});
@@ -12,10 +13,14 @@ test('route ranges and modes stay with their own station',()=>{
 test('no times invented for university or metro',()=>{
   const r=generateListing({...property,transit:'Румянцево',universities:'РУДН'});assert.match(r.body,/时间待确认/);assert.doesNotMatch(r.body,/15–20|25–30|红线/);
 });
-test('registration can be removed or scoped; never promise visa',()=>{
-  const r=generateListing({...property,registration:'provided',registrationMonths:'6',registrationPeople:'3'});
-  assert.match(r.body,/免费提供临时居住登记（6个月），最多3人/);assert.doesNotMatch(r.body,/落地签/);
-  assert.doesNotMatch(generateListing({...property,registration:'none'}).body,/临时居住登记/);
+test('studio arrival registration assistance is always present and can be scoped',()=>{
+  const fields={...property,editorIdentity:'scoped-registration',registration:'provided',registrationMonths:'6',registrationPeople:'3'};
+  assert.doesNotMatch(generateListing(fields).body,/6个月|最多3人|免费/);
+  const claim=serviceClaimChecklist(fields).claims.find(row=>row.id==='registration');
+  fields.serviceConfirmations={registration:{value:claim.value,actor:'Оператор',at:new Date(Date.now()-1000).toISOString(),cardKey:factLedgerKey(fields)}};
+  const r=generateListing(fields);
+  assert.match(r.body,/抵达登记（临时居住登记）：提供办理协助（6个月），最多3人/);assert.doesNotMatch(r.body,/落地签/);
+  assert.match(generateListing({...property,registration:'none'}).body,/抵达登记（临时居住登记）/);
 });
 test('no irrelevant university tags',()=>{const r=generateListing(property);assert.doesNotMatch(r.tags,/莫大|国立大学/);assert.match(r.tags,/#齐工作室/);});
 test('custom dictionary special chars, overlapping terms and no recursive replacement',()=>{
@@ -34,5 +39,27 @@ test('facts extract area decimals, price, deposit, floors and multiple station r
   assert.equal(r.facts.area,'39.3');assert.equal(r.facts.price,'70000');assert.equal(r.facts.deposit,'35000');assert.equal(r.facts.kitchen,'8');assert.equal(r.facts.floor,'3');assert.match(r.facts.transit,/Потапово \| 4 \| walk/);assert.match(r.facts.transit,/Новомосковская \| 21–30 \| walk/);
 });
 test('thousands, W, no deposit',()=>{assert.equal(extractFacts('Цена: 6,4 тыс. руб. Без залога').facts.price,'6400');assert.equal(extractFacts('租金：6.4W/月').facts.price,'64000');assert.equal(extractFacts('Без залога').facts.deposit,'0');assert.equal(wan(95000),'9.5W');});
+test('W notation retains the exact rent and deposit down to kopecks',()=>{
+  for(const [value,expected] of [[135250,'13.525W'],[67625,'6.7625W'],[95000,'9.5W'],[95000.01,'9.500001W'],[67625.99,'6.762599W'],[0.01,'0.000001W']])assert.equal(wan(value),expected);
+  assert.equal(wan(135250,2),'13.53W');
+  for(const value of [0.005,1.005,2.675,10000.005,135250.01,67625.99]){
+    const shownRubles=Number(rubles(value).replaceAll(',',''));
+    assert.equal(Math.round(Number(wan(value).slice(0,-1))*1000000),Math.round(shownRubles*100),String(value));
+  }
+  const result=generateListing({...property,price:'135250',deposit:'67625'});
+  assert.match(result.titles[0],/13\.525W/);
+  assert.match(result.body,/租金：13\.525W\/月（135,250₽）/);
+  assert.match(result.body,/押金：6\.7625W（67,625₽）/);
+});
+test('approximate sharing examples show the same rounded amount in W and rubles',()=>{
+  const result=generateListing({...property,layout:'classic',rooms:'2',separate:true,price:'135251',deposit:'67625.50'});
+  assert(result.titles.some(title=>title.includes('13.5251W')));
+  assert.match(result.body,/2人：约6\.7626W（67,626₽）\/人\/月/);
+  assert.match(result.body,/4人：约3\.3813W（33,813₽）\/人\/月/);
+  assert.match(result.body,/押金：6\.76255W（67,625\.5₽）/);
+  assert.match(result.body,/仅为租金分摊示例/);
+  assert.match(result.body,/入住人数及合租安排需与房东确认/);
+  assert.doesNotMatch(generateListing({...property,price:'135251'}).body,/合租预算/);
+});
 test('invalid facts flagged; zero deposit preserved',()=>{assert(generateListing({...property,floor:'18',floors:'17'}).problems.length);assert.match(generateListing({...property,deposit:'0'}).body,/无需押金/);});
 test('styles change presentation without introducing features',()=>{for(const style of ['compact','detailed','story']){const r=generateListing({...property,style});assert.match(r.body,/空调/);assert.doesNotMatch(r.body,/河景|衣帽间|采光明亮/);}});

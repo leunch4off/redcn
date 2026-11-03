@@ -1,13 +1,30 @@
+import {isAutomaticPhotoObservation} from './photo-observation-policy.mjs';
+import {isTeacherEvidence} from './photo-teacher-review.mjs';
 export function normalizeRussian(text){const map={a:'а',b:'в',c:'с',e:'е',h:'н',k:'к',m:'м',o:'о',p:'р',t:'т',x:'х',y:'у'};return String(text||'').toLowerCase().replace(/ё/g,'е').replace(/[a-zа-я]+/g,word=>/[а-я]/.test(word)?word.replace(/[abcehkmoptxy]/g,c=>map[c]):word);}
 const furniturePatterns={
  bed:'двуспальн[а-я]*\\s+кроват[а-я]*|двойн[а-я]*\\s+кроват[а-я]*',bedAny:'кроват(?:ь|и|ью|ей)',wardrobe:'шкаф(?:ы|а|ом|ов)?',slidingWardrobe:'шкаф(?:а|ы|ов)?[ -]?купе',desk:'(?:письменн|рабоч|учебн)[а-я]*\\s+стол[а-я]*',
  sofa:'диван[а-я]*',armchair:'кресл[а-я]*',tv:'телевизор[а-я]*|тв',tvStand:'тв[ -]?тумб[а-я]*|тумб[а-я]*\\s+(?:под|для)\\s+(?:тв|телевизор[а-я]*)',nightstands:'прикроватн[а-я]*\\s+тумб[а-я]*',
- ac:'кондиционер[а-я]*',internet:'wi[ -]?fi|wifi|интернет[а-я]*',fridge:'холодильник[а-я]*',stove:'плит[а-я]*|варочн[а-я]*\\s+панел[а-я]*',oven:'духовк[а-я]*|духов[а-я]*\\s+шкаф[а-я]*',microwave:'микроволнов[а-я]*(?:\\s+печ[а-я]*)?|свч',dishwasher:'посудомо[а-я]*(?:\\s+машин[а-я]*)?',kettle:'чайник[а-я]*',table:'обеденн[а-я]*\\s+стол[а-я]*|стол(?:а|ом|ы|ов)?',chairs:'стул[а-я]*|стуль[а-я]*',washer:'стиральн[а-я]*(?:\\s+машин[а-я]*)?|стиралк[а-я]*',dryer:'сушильн[а-я]*(?:\\s+машин[а-я]*)?',bath:'ванн(?:а|у|ой|ы|е)',shower:'душ(?:а|ем)?|душев[а-я]*\\s+кабин[а-я]*',closet:'гардеробн[а-я]*',balcony:'балкон[а-я]*',loggia:'лоджи[а-я]*',kitchenFurniture:'мебел[а-я]*\\s+на\\s+кухне|кухонн[а-я]*\\s+(?:мебел[а-я]*|гарнитур[а-я]*)',roomFurniture:'мебел[а-я]*\\s+в\\s+комнат[а-я]*',mattress:'матрас[а-я]*'
+ ac:'кондиционер[а-я]*',internet:'wi[ -]?fi|wifi|интернет[а-я]*',fridge:'холодильник[а-я]*',stove:'(?:электро|газо)?плит[а-я]*|варочн[а-я]*\\s+(?:панел[а-я]*|плит[а-я]*)',oven:'духовк[а-я]*|духов[а-я]*\\s+шкаф[а-я]*',hood:'вытяжк[а-я]*',sink:'(?:кухонн[а-я]*\\s+)?(?:раковин[а-я]*|мойк[а-я]*)',washbasin:'раковин[а-я]*|умывальник[а-я]*|рукомойник[а-я]*',microwave:'микроволнов[а-я]*(?:\\s+печ[а-я]*)?|свч',dishwasher:'посудомо[а-я]*(?:\\s+машин[а-я]*)?',kettle:'чайник[а-я]*',table:'обеденн[а-я]*\\s+стол[а-я]*|стол(?:а|ом|ы|ов)?',chairs:'стул[а-я]*|стуль[а-я]*',washer:'стиральн[а-я]*(?:\\s+машин[а-я]*)?|стиралк[а-я]*',dryer:'сушильн[а-я]*(?:\\s+машин[а-я]*)?',bath:'ванн(?:а|у|ой|ы|е)',shower:'душ(?:а|ем)?|душев[а-я]*\\s+кабин[а-я]*',closet:'гардеробн[а-я]*',pantry:'кладов[а-я]*',shelves:'стеллаж[а-я]*|полк(?:а|и|ами|ах|ок|у)',computer:'компьютер[а-я]*|моноблок[а-я]*',projector:'проектор[а-я]*',homeCinema:'домашн[а-я]*\\s+кинотеатр[а-я]*',piano:'пианино|фортепиано|роял[а-я]*|цифров[а-я]*\\s+пианино',balcony:'балкон[а-я]*',loggia:'лоджи[а-я]*',kitchenFurniture:'мебел[а-я]*\\s+на\\s+кухне|кухонн[а-я]*\\s+(?:мебел[а-я]*|гарнитур[а-я]*|шкаф[а-я]*)|шкаф[а-я]*\\s+на\\s+кухн[а-я]*',roomFurniture:'мебел[а-я]*\\s+в\\s+комнат[а-я]*',mattress:'матрас[а-я]*'
 };
 const sourceBooleans={fridge:'hasFridge',dishwasher:'hasDishwasher',washer:'hasWasher',ac:'hasConditioner',tv:'hasTv',internet:'hasInternet',bath:'hasBathtub',shower:'hasShower',kitchenFurniture:'hasKitchenFurniture',roomFurniture:'hasFurniture'};
-export function detectFurniture(text,features,offer={}){
+function furnitureUnseenMention(before,term,after){
+ const boundary=/[;.!?\n。；]|\s+(?:но|зато|однако|but|however)\s+|但是|不过|但/iu;
+ const left=before.split(boundary).slice(-1)[0]||'',right=after.split(boundary)[0]||'',scope=left+term+right;
+ // A direct availability predicate belongs to this object. It must not be
+ // invalidated by another coordinated object that is outside the photograph.
+ const direct=/(?:^|\s)(?:есть|имеется|имеются|оборудован[а-я]*|оснащен[а-я]*|укомплектован[а-я]*|установлен[а-я]*)\s*$/iu.exec(left);
+ if(direct&&!/(?:^|\s)(?:не|нет|без)\s*$/iu.test(left.slice(0,direct.index))||/^\s*(?:есть|имеется|имеются|установлен[а-я]*|оборудован[а-я]*|оснащен[а-я]*)(?:\s|$)/iu.test(right))return false;
+ if(/не\s*(?:вид(?:ен|на|но|ны|им[а-я]*)|показан[а-я]*|показыва[а-я]*|разгляд[а-я]*|различим[а-я]*|попал[а-я]*\s+в\s+кадр)|вне\s+кадра|not\s+(?:visible|seen|shown|pictured|in\s+(?:the\s+)?(?:photo|picture|image|frame))|(?:can(?:not|['’]t)|could\s+not)\s+see|unseen|out\s+of\s+(?:the\s+)?(?:frame|view)|isn['’]?t\s+visible|看不到|看不见|看不見|不可见|不可見|未显示|未顯示|未展示|照片外/iu.test(scope))return true;
+ return /на\s+(?:фото|снимк[а-я]*|фотограф[а-я]*)|в\s+кадре|photo|picture|image|frame|照片|图片|圖片/iu.test(scope)&&/(?:^|\s)(?:нет|без|отсутству[а-я]*|no|without|absent|missing)(?:\s|$)|没有|沒有|未见|未見/iu.test(scope);
+}
+Object.assign(furniturePatterns,{
+ coffeeTable:'журнальн[а-я]*\\s+стол(?:ик[а-я]*|[а-я]*)',dresser:'комод[а-я]*',cabinet:'буфет[а-я]*|тумб[а-я]*',shoeCabinet:'обувниц[а-я]*|шкаф[а-я]*\\s+для\\s+обуви',ottoman:'пуф(?:ик)?[а-я]*|банкетк[а-я]*',bench:'скам(?:ья|ьи|ей|ью|ейк[а-я]*)',mirror:'зеркал[а-я]*',curtains:'штор[а-я]*',dryingRack:'сушилк[а-я]*\\s+для\\s+белья',iron:'утюг[а-я]*',vacuum:'пылесос[а-я]*',coffeeMachine:'кофемашин[а-я]*|кофевар[а-я]*',toaster:'тостер[а-я]*',router:'роутер[а-я]*|маршрутизатор[а-я]*',monitor:'монитор[а-я]*',speakers:'колонк[а-я]*|акустическ[а-я]*\\s+систем[а-я]*',waterHeater:'водонагревател[а-я]*|бойлер[а-я]*',waterFilter:'(?:фильтр[а-я]*|систем[а-я]*\\s+фильтрации)\\s+(?:для\\s+)?вод[а-я]*'
+});
+export function detectFurniture(text,features,offer={},origin='JSON'){
  const raw=String(text||''),t=normalizeRussian(raw),negative=[];
- for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует)\s+/gu)){
+ // Source extracts put unrelated form answers on adjacent lines, for example
+ // «Аварийность\nНет\nХолодильник». A negative list cannot start on a new line.
+ for(const m of t.matchAll(/(?<![а-яa-z])(?:кроме|за исключением|без|нет|отсутствует|не будет|не предусмотрен[а-я]*)[^\S\r\n]+/gu)){
   const rest=t.slice(m.index+m[0].length),end=rest.search(/[);\n.!?]|(?:,?\s+)(?:но|зато|есть|имеется)(?![а-я])/u);
   negative.push([m.index,m.index+m[0].length+(end<0?rest.length:end)]);
  }
@@ -15,37 +32,115 @@ export function detectFurniture(text,features,offer={}){
   const expression=furniturePatterns[id];const matches=[];
   if(expression)for(const m of t.matchAll(new RegExp('(?<![а-яa-z])(?:'+expression+')(?![а-яa-z])','gu'))){
    const before=t.slice(Math.max(0,m.index-75),m.index),after=t.slice(m.index+m[0].length,m.index+m[0].length+65);
+   const clauseBefore=before.split(/[.!?;\n]/).slice(-1)[0],clauseAfter=after.split(/[.!?;\n]/)[0],clause=clauseBefore+m[0]+clauseAfter;
+   const kitchenContext=/кухн[а-я]*|кухонн[а-я]*/.test(clause),bathContext=/ванн[а-я]*|сануз[а-я]*|душев[а-я]*|туалет[а-я]*|умывальник[а-я]*|рукомойник[а-я]*/.test(clause);
    if(id==='tv'&&(/^[ -]?тумб/.test(after)||/тумб[а-я]*\s+(?:под|для)\s+$/.test(before)))continue;
-   if(id==='wardrobe'&&/духов[а-я]*\s+$/.test(before))continue;
+   if(id==='wardrobe'&&/(?:духов[а-я]*|кухонн[а-я]*)\s+$/.test(before))continue;
+   if(['wardrobe','slidingWardrobe'].includes(id)&&kitchenContext&&!/спальн[а-я]*|гардероб[а-я]*|одежд[а-я]*|в\s+комнат[а-я]*/.test(clause))continue;
+   if(id==='sink'&&(bathContext||/раковин/.test(m[0])&&!kitchenContext))continue;
+   if(id==='washbasin'&&(!bathContext||kitchenContext))continue;
    if(id==='table'&&/(?:письменн|рабоч|учебн)[а-я]*\s+$/.test(before))continue;
+   if(id==='table'&&/журнальн[а-я]*\s+$/.test(before))continue;
+   if(id==='cabinet'&&/(?:прикроватн[а-я]*|тв[ -]?|телевизионн[а-я]*)\s*$/.test(before))continue;
    let status='present';
-   if(negative.some(([a,b])=>m.index>=a&&m.index<b)||/^\s*(?:отсутствует|нет|не будет)/.test(after))status='absent';
-   else if(/(?:может|можно|планирует|планируется|готов[аы]?)\s+(?:[а-я]+\s*){0,3}(?:установить|купить|привезти)\s*$|(?:будет установлен[ао]?|установит|установят)\s*$/.test(before)||/^\s*(?:будет установлен[ао]?|установят|привезут|купят)/.test(after))status='planned';
-   matches.push({status,text:raw.slice(Math.max(0,m.index-24),m.index+m[0].length+38).trim(),source:'Описание',count:before.match(/(?:^|\s)(\d+)\s+$/)?.[1]});
+   if(furnitureUnseenMention(t.slice(0,m.index),m[0],t.slice(m.index+m[0].length)))status='unknown';
+   else if(/(?:^|[.!?;]\s*|\s)не\s+$/.test(before)&&/^\s*,?\s*а\s+/.test(after)||negative.some(([a,b])=>m.index>=a&&m.index<b)||/^\s*(?:отсутствует|нет|не будет|не предусмотрен[а-я]*)/.test(after))status='absent';
+   else if(/(?:может|можно|планир[а-я]*|готов[аы]?)\s+(?:[а-я]+\s*){0,3}(?:установить|купить|привезти|поставить)\s*$|(?:будет установлен[ао]?|установит|установят|купим|привезем|поставим)\s*$/.test(before)||/^\s*(?:будет (?:установлен[ао]?|куплен[ао]?|привезен[ао]?|поставлен[ао]?)|установят|привезут|купят|(?:можно|планир[а-я]*)\s+(?:установить|купить|привезти|поставить))/.test(after))status='planned';
+   const number=before.match(/(?:^|\s)(\d+)\s+(?:кухонн[а-я]*\s+|обеденн[а-я]*\s+)?$/)?.[1];
+   const words={один:'1',одна:'1',одно:'1',два:'2',две:'2',три:'3',четыре:'4',пять:'5',шесть:'6',семь:'7',восемь:'8'};
+   const written=before.match(/(?:^|\s)(один|одна|одно|два|две|три|четыре|пять|шесть|семь|восемь)\s+(?:кухонн[а-я]*\s+|обеденн[а-я]*\s+)?$/)?.[1];
+   const minimum=/(?:минимум|не менее|как минимум)\s+(?:\d+|два|две|три|четыре)\s+(?:кухонн[а-я]*\s+|обеденн[а-я]*\s+)?$/.test(before);
+   matches.push({status,text:raw.slice(Math.max(0,m.index-24),m.index+m[0].length+38).trim(),source:'Описание',count:number||words[written],countKind:minimum?'minimum':'exact'});
   }
   if(id==='kitchenFurniture'&&/из мебели\s*:\s*кухня/.test(t))matches.push({status:'present',source:'Описание',text:'Из мебели: кухня…'});
-  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:'JSON '+key,text:key+' = '+offer[key]});
-  const states=new Set(matches.map(m=>m.status));let status=states.has('absent')&&states.has('present')?'conflict':states.has('planned')?'planned':states.has('absent')?'absent':states.has('present')?'present':'unknown';
-  return {id,label,status,matches,count:matches.find(m=>m.count)?.count||''};
+  const key=sourceBooleans[id];if(key&&typeof offer[key]==='boolean')matches.push({status:offer[key]?'present':'absent',source:origin+' '+key,text:key+' = '+offer[key]});
+  const states=new Set(matches.map(m=>m.status));let status=states.has('absent')&&states.has('present')?'conflict':states.has('present')?'present':states.has('planned')?'planned':states.has('absent')?'absent':'unknown';
+  const counted=matches.find(m=>m.count&&m.status==='present');
+  return {id,label,status,matches,count:counted?.count||'',countKind:counted?.countKind||'exact'};
  });
  if(rows.find(r=>r.id==='bed')?.status==='present')rows.find(r=>r.id==='bedAny').status='covered';
  if(rows.find(r=>r.id==='slidingWardrobe')?.status==='present')rows.find(r=>r.id==='wardrobe').status='covered';
  return rows;
 }
 
-export function detectConditions(text){const t=normalizeRussian(text),facts={},evidence=[],warnings=[];const put=(field,value,match)=>{facts[field]=value;evidence.push({field,value,source:'Описание / условия',text:match[0]});};let m;
+// Missing observations are unknown, never proof of absence. Keep the original
+// source audit, while resolving positively identified objects independently.
+export function resolvePhotoFurniture(fields={},catalog=[]){
+ const allowed=new Set(catalog.map(row=>row[0])),features=new Set((Array.isArray(fields.features)?fields.features:[]).filter(id=>allowed.has(id)));
+ const rejected=new Set(Array.isArray(fields.photoRejectedFeatures)?fields.photoRejectedFeatures:[]);
+ for(const id of rejected)features.delete(id);
+ const counts={...(fields.featureCounts||{})},visual=new Set(),confirmed=new Set(),evidence=[],conflicts=[];
+ const reviewOnly=new Set(['internet','roomFurniture','closet','pantry','balcony','loggia','bed','homeCinema']);
+ for(const row of Array.isArray(fields.photoEvidence)?fields.photoEvidence:[]){
+  if(!row||!allowed.has(row.id)||rejected.has(row.id))continue;
+  const human=row.status==='confirmed';
+  const teacher=isTeacherEvidence(row);
+  const automatic=!reviewOnly.has(row.id)&&isAutomaticPhotoObservation(row);
+  if(!human&&!teacher&&!automatic)continue;
+  features.add(row.id);evidence.push(row);(human?confirmed:visual).add(row.id);
+  // Different photographs can show the same chair. Never sum their counts.
+  if(human&&Number.isInteger(row.count)&&row.count>=1&&row.count<=12)counts[row.id]=Math.max(Number(counts[row.id])||0,row.count);
+ }
+ for(const id of confirmed)visual.delete(id);
+ for(const row of fields.sourceAudit?.furniture||[]){
+  if(!features.has(row.id))continue;
+  if(row.status==='present')visual.delete(row.id);
+  if(['absent','planned','conflict'].includes(row.status)&&evidence.some(item=>item.id===row.id))conflicts.push({id:row.id,label:row.label,status:row.status,source:'photo/source'});
+ }
+ if(features.has('bed'))features.delete('bedAny');
+ if(features.has('slidingWardrobe'))features.delete('wardrobe');
+ return {features:[...features],featureCounts:counts,visualFeatures:[...visual],photoEvidence:evidence,conflicts};
+}
+
+export function detectConditions(text){const t=normalizeRussian(text),facts={},evidence=[],warnings=[],restrictions=[];const put=(field,value,match)=>{facts[field]=value;evidence.push({field,value,source:'Описание / условия',text:match[0]});};let m;
  if((m=t.match(/(?:^|[\n.!?])\s*(\d+)\s*человек/)))put('occupants',m[1],m);
+ // Admission ranges are source restrictions, not the editor's per-person
+ // budget divisor. Require an explicit admission predicate and a real range.
+ if((m=t.match(/(?:рассмотрим|рассматриваем)\s+(?:(?:к|для)\s+)?проживани[а-я]*\s*(?:только\s+)?(\d{1,2})\s*[-–—]\s*(\d{1,2})(?:\s*[-–—]?\s*х)?\s*человек[а-я]*/))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
+  const minimum=Number(m[1]),maximum=Number(m[2]);
+  if(minimum>=1&&maximum>=minimum)restrictions.push({kind:'occupancy-range',minimum,maximum,text:`入住人数：${minimum}–${maximum}人。`});
+ }
+ const occupancyWords={одного:1,одной:1,двух:2,трех:3,четырех:4,пяти:5,шести:6};
+ if((m=t.match(/(?:к\s+проживанию\s+(?:рассматриваем|рассматриваются|допускаются)|(?:рассмотрим|рассматриваем|допускаем)\s+(?:к|для)\s+проживания)\s+не\s+более\s+(\d{1,2}|одного|одной|двух|трех|четырех|пяти|шести)\s+(?:(взросл[а-я]*)\s+)?(?:человек[а-я]*|жильц[а-я]*|арендатор[а-я]*)/u))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))){
+  const maximum=Number(m[1])||occupancyWords[m[1]],adultsOnly=!!m[2];
+  if(maximum>=1&&maximum<=50)restrictions.push({kind:'occupancy-maximum',maximum,adultsOnly,text:adultsOnly?`最多${maximum}名成人入住。`:`入住人数不超过${maximum}人。`});
+ }
  if((m=t.match(/(?:договор[а-я]*\s+на|срок[а-я]*\s+(?:аренды\s+)?)\s*(\d+)\s*месяц/)))put('contractMonths',m[1],m);
  if((m=t.match(/срок аренды\s*от года|от\s*12\s*месяц/)))put('minMonths','12',m);
  if((m=t.match(/(?:долгосрочн[а-я]*\s+аренда|длительн[а-я]*\s+срок)/)))put('leaseTerm','long',m);
- if((m=t.match(/регистраци[а-я]*\s+(?:не\s+(?:сделаем|делаем|оформляем|предоставляем|будет)|невозможна)|без регистрации/))){put('registrationPolicy','not_available',m);facts.registration='none';}
- if((m=t.match(/без\s+(?:животных|питомцев)|(?:животные|питомцы)\s*(?:запрещены|не допускаются)/))){put('petPolicy','no',m);facts.pets=false;}
- else if((m=t.match(/(?:можно|разрешено|обсужда[а-я]+)\s+(?:с\s+)?(?:животными|питомцами)/))){put('petPolicy','negotiable',m);facts.pets=true;}
- if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+запрещено)/)))put('smokingPolicy','no',m);
+ if((m=t.match(/регистраци[а-я]*\s+(?:не\s+(?:сделаем|делаем|делаю|оформляем|оформляю|предоставляем|предоставляю|предоставляют|будет)|невозможна)|без регистрации/)))put('registrationPolicy','not_available',m);
+ if((m=t.match(/без\s+(?:домашних\s+)?(?:животных|питомцев)|(?:животные|питомцы|с\s+животными|с\s+питомцами)\s*(?:запрещены|нельзя|не допускаются|не разрешено)|с\s+(?:животными|питомцами)[\s,]*(?:к\s+сожалению[\s,]*)?не\s+рассматрива(?:ем|ются)(?!\s+(?:только|на\s))|(?:нельзя|не разрешено|не допускается|не рассматриваем)\s+с\s+(?:животными|питомцами)/))){put('petPolicy','no',m);facts.pets=false;}
+ else if((m=t.match(/(?<!не\s)(?:можно|разрешено|допускается)\s+(?:с\s+)?(?:детьми\s+и\s+)?(?:животными|питомцами)|(?:животные|питомцы)\s+разрешены/))){put('petPolicy','yes',m);facts.pets=true;}
+ else if((m=t.match(/обсужда[а-я]+\s+(?:с\s+)?(?:животными|питомцами)|(?:животные|питомцы)\s+обсуждаются/)))put('petPolicy','negotiable',m);
+ if((m=t.match(/без\s+детей|(?:с\s+детьми|дети)\s*(?:нельзя|запрещены|не допускаются|не разрешено)|(?:нельзя|не разрешено|не допускается)\s+с\s+детьми/))){put('childrenPolicy','no',m);facts.children=false;}
+ else if((m=t.match(/(?:можно|разрешено|допускается)\s+с\s+детьми|дети\s+разрешены/))){put('childrenPolicy','yes',m);facts.children=true;}
+ if((m=t.match(/(?:две|2)\s+(?:отдельн[а-я]*|изолированн[а-я]*)\s+комнат[а-я]*|комнат[а-я]*\s+(?:изолированн[а-я]*|раздельн[а-я]*)/)))put('separate',true,m);
+ if((m=t.match(/(?<![а-я])(?:комнаты\s+смежные|смежные\s+комнаты)(?![а-я])/u))&&!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index)))restrictions.push({kind:'adjacent-rooms',text:'房间相连。'});
+ // This is a specific affirmative building notice, not an inference from
+ // an old building's age or from the word renovation in a sales narrative.
+ if(/(?<![а-я])дом\s+включен\s+в\s+программу\s+реновации\s+и\s+будет\s+снесен(?![а-я])/u.test(t))restrictions.push({kind:'building-demolition',text:'该楼已纳入城市更新计划，将被拆除。'});
+ if((m=t.match(/(?:некурящ[а-я]*|без вредных привычек|курени[а-я]*\s+(?:в\s+(?:квартире|помещении|доме)\s+)?(?:(?:категорически|строго)\s+)?запрещено)/)))put('smokingPolicy','no',m);
  if((m=t.match(/без\s+(?:компаний\s*[/,]\s*)?гостей|без компаний\s*[/,]\s*гостей/)))put('guestPolicy','no',m);
  if((m=t.match(/(?:субаренда|пересдача)[^\n]{0,100}?(?:исключена|запрещена|не допускается)/)))put('subletPolicy','no',m);
  if((m=t.match(/(?:посуточно|краткосрочн[а-я]*)[^.!?\n]{0,30}(?:исключена|запрещена)/))){put('shortTermPolicy','no',m);facts.shortTerm=false;}
  if((m=t.match(/без комиссии|комиссия с арендатора\s*(?:нет|0)/)))put('commission','0',m);
  if((m=t.match(/предоплата\s*(\d+)\s*месяц/)))put('prepayMonths',m[1],m);
- if((m=t.match(/оплата жкх включена\s*\(без счетчиков\)/)))put('utilities','meters',m);
- return {facts,evidence,warnings};}
+ if((m=t.match(/(?:^|[\n.!?])\s*(?:залог|депозит)\s*[:—–-]?\s*(?:нет|0)(?![\dа-я])/u)))put('deposit','0',m);
+ if((m=t.match(/оплата\s+жкх\s+включена\s*\(без\s+счетчиков\)/)))put('utilities','meters',m);
+ // This explicit additive payment clause does not change the utility mode
+ // or infer an internet connection; it carries only the separate network fee.
+ if((m=t.match(/(?<![а-я])оплата[^.!?;\n]{0,80}?(?:\+|(?<![а-я])плюс)\s*счетчики\s+и\s+интернет(?![а-я])/u))){
+  const scope=t.slice(m.index).split(/[.!?;\n]/)[0];
+  if(!/(?:^|[^а-я])не\s*$/u.test(t.slice(0,m.index))&&!/включ[а-я]*|вход[а-я]*\s+в\s+(?:аренд[а-я]*|стоимост[а-я]*|цен[а-я]*)|без\s+доплат[а-я]*|бесплатн[а-я]*/u.test(scope))restrictions.push({kind:'internet-extra',text:'网络费用另付。'});
+ }
+ // A bill paid separately is an explicit condition; its amount and internet
+ // charge remain untyped. Do not turn a negated payment or included bill into
+ // an extra charge, and keep the original witness for conflict review.
+ for(const receipt of t.matchAll(/коммунальн[а-я]*\s+(?:платеж[а-я]*|услуг[а-я]*|расход[а-я]*)\s*[:—–-]?\s*(?:(?:оплачива[а-я]*|оплат[а-я]*)\s+)?(?:отдельно\s+)?по\s+квитанци[а-я]*/gu)){
+  const left=t.slice(0,receipt.index).split(/[.!?;\n]/).slice(-1)[0]||'',right=t.slice(receipt.index+receipt[0].length).split(/[.!?;\n]/)[0]||'',scope=left+receipt[0]+right;
+  const inclusionScope=scope.replace(/(?:^|[^а-я])не\s+(?:включен[а-я]*|вход[а-я]*)/gu,' ');
+  if(/включен[а-я]*|вход[а-я]*\s+в\s+(?:аренд[а-я]*|стоимост[а-я]*|цен[а-я]*)/u.test(inclusionScope))continue;
+  if(/не\s+(?:нужн[а-я]*|надо|требу[а-я]*|оплачива[а-я]*|платить|предусмотрен[а-я]*)|без\s+оплат[а-я]*/u.test(scope))continue;
+  put('utilities','extra',receipt);break;
+ }
+ return {facts,evidence,warnings,restrictions};}

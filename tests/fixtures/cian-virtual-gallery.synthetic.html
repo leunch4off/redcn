@@ -1,0 +1,16 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><title>Синтетическая карточка · виртуальная галерея</title>
+<main><h1 data-name="OfferTitle">2-комнатная квартира, 54 м²</h1>
+<div data-name="PriceInfo">80 000 ₽ в месяц</div>
+<div data-name="OfferGallery" data-photo-count="19" style="width:300px">
+<div id="fixtureViewport" style="width:300px;height:180px;overflow-x:auto;overflow-y:hidden">
+<div style="width:5700px;height:180px;position:relative"><img id="fixtureSlide" width="300" height="180" style="position:absolute;left:0;top:0" aria-setsize="19" aria-posinset="1" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-original="https://images.cdn-cian.ru/images/synthetic-virtual-0.jpg"></div>
+</div></div>
+<div data-name="OfferDescription">Изолированные комнаты, рабочий стол и шкаф. Учебная карточка без настоящего предложения и персональных данных.</div>
+<div data-name="GeneralInfoSection">Мебель: шкаф и стол. Техника: холодильник и плита. Площадь 54 м², этаж 3 из 9.</div>
+</main><script>
+// Authored test mechanics, not code copied from a property platform.
+fixtureViewport.addEventListener('scroll',()=>{
+ const index=Math.min(18,Math.floor(fixtureViewport.scrollLeft/300));
+ fixtureSlide.style.left=(index*300)+'px';fixtureSlide.dataset.original='https://images.cdn-cian.ru/images/synthetic-virtual-'+index+'.jpg';fixtureSlide.setAttribute('aria-posinset',String(index+1));
+});
+</script></html>

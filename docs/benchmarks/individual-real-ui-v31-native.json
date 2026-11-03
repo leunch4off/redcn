@@ -1,0 +1,98 @@
+{
+  "schema": "redcn-real-individual-ui-proof-v1",
+  "evidenceKind": "real-native-chrome-with-real-mlx",
+  "utc": "2026-11-03T11:05:18.118196+00:00",
+  "modelInferenceExecuted": true,
+  "syntheticTextResponses": false,
+  "sourceSnapshotDigest": "1bb561b90deee749f646e6f386ea42aed179aba6712ed1ee38fa7d89fd7ff4ae",
+  "inputFieldsSha256": "4b79b432d6759b2cda3b2ea4c0b601627fdafe1dc2d3d29f5c3d0d06d0c185df",
+  "modelConfigSha256": "574349e5a343236546fda55e4744a76e181f534182d7dc60ff1bad7e7a502849",
+  "privateEvidenceSha256": "c9d4b483b1ad63f517fa6900b5c73274102002e8a4661b8b079c2c0b16eab6dd",
+  "sourceHashes": {
+    "web/app.js": "22ffb5901a87eb9ee0ccc248e50f18d701c2c3491918b29c78448a29c0de7b1d",
+    "web/phone.mjs": "2cc083f81cb212c69472e93b1d7c30d509365a1adbecad447b181da81b9c9112",
+    "web/individual-copy.mjs": "0d10ec1967c6fa5da67d9335a1fe5dcbb7446c6193a3b7e214e5ba7484d88c4d",
+    "web/ai-progress.mjs": "91126af01668dc7c3f8a908ac35200db6699f9ca8c2293f6a8ac9ee639631347",
+    "web/request-deadline.mjs": "4da7ffa1c3811e9c74bdae2b129b2cae488dfaafe51abb1e30c50116beeb7d9a",
+    "cli/local_server.py": "41d745f2c7be0a524dc76c18573b7f48c031fd177691e9acae0d70c07c237a84",
+    "cli/individual_copy.py": "f3ee542b17a721c0743ed59564a533be772788c136bb20b7040c1a2600b2e468",
+    "cli/text_generation_jobs.py": "3ff0dd109a1dfbaa9fe27a8dc5ab6bbe6b259eb72211856a31ac92e79a0b1fce",
+    "cli/local_text_model.py": "bc60d02b5697f7e418fe31dcfb5420aca6e6273e1cb61fcf9d56ffa2134cca95",
+    "cli/text_model_contract.py": "b6f002604e38e204c8c49454d9cf2bc687de4dd3320e193d22cf607777ea72a4",
+    "docs/index.html": "a092cfbd8d9ad15cf7868a0870276161570dca2a7bae34a728030e3397e31723",
+    "docs/phone.html": "21a62513a3746867499cb914ef2f54d3434d6b11f2b6c65a81e5b82c4b46521c"
+  },
+  "scenarios": [
+    {
+      "flow": "desktop-preview-apply-save-reopen",
+      "outcome": "model-rejected",
+      "actualTokensObserved": true,
+      "maxObservedTokensInOneAttempt": 113,
+      "measuredThroughputSamples": 30,
+      "elapsedSeconds": 48.719,
+      "terminalState": "done",
+      "resultType": "draft",
+      "modelStatus": "blocked",
+      "modelAccepted": false,
+      "rejectionCategory": "unsupported item placement in a room",
+      "oldEditorTextPreserved": true,
+      "oldSavedTextPreserved": true,
+      "templateFallbackUsed": false,
+      "acceptedApplySaveReopenExercised": false
+    },
+    {
+      "flow": "phone-rewrite-save",
+      "outcome": "model-accepted-and-saved",
+      "actualTokensObserved": true,
+      "maxObservedTokensInOneAttempt": 113,
+      "measuredThroughputSamples": 19,
+      "elapsedSeconds": 28.711,
+      "terminalState": "done",
+      "resultType": "card",
+      "modelAccepted": true,
+      "fallback": false,
+      "finalAcceptedAi": {
+        "backend": "mlx",
+        "model": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+        "generatedTokens": 117,
+        "promptTokens": 565,
+        "tokensPerSecond": 28.216636,
+        "elapsedSeconds": 11.472941
+      },
+      "saved": true,
+      "reopenExercised": false,
+      "acceptanceBehavior": "Existing phone rewrite action saves directly"
+    },
+    {
+      "flow": "desktop-cancel-real-generation",
+      "outcome": "passed",
+      "actualTokensObserved": true,
+      "maxObservedTokensInOneAttempt": 58,
+      "measuredThroughputSamples": 4,
+      "elapsedSeconds": 18.71,
+      "terminalState": "cancelled",
+      "terminalCode": "TEXT_JOB_CANCELLED",
+      "oldEditorTextPreserved": true,
+      "oldSavedTextPreserved": true,
+      "noApplyOffered": true
+    }
+  ],
+  "pageErrorCount": 0,
+  "elapsedSeconds": 110.641,
+  "observationCorrection": {
+    "reason": "The original observer read its event list before response.json() appended two terminal bodies. Full private HTTP evidence later contained both done responses.",
+    "desktopFinalStateRecovered": true,
+    "phoneFinalStateRecovered": true,
+    "originalNullWasNotProofOfModelRejection": true,
+    "reopenStepsWereNotExecutedAndAreNotClaimed": true,
+    "nextRunnerChange": "Explicit authenticated GET of the real job endpoint when a terminal observation is missing."
+  },
+  "limits": [
+    "Disposable cards/settings/cache; production not changed",
+    "Chrome with mobile viewport; not physical iPhone or Safari",
+    "Text generation only; photo autoload and analysis disabled",
+    "Accepted means current semantic validators passed; manual factual review remains necessary",
+    "This first actual-model run did not complete desktop apply/save/reopen or phone reopen acceptance. The rejected desktop attempt is preserved as evidence.",
+    "No source validator was weakened to make these observations pass."
+  ]
+}

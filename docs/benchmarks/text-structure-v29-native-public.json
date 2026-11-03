@@ -1,0 +1,270 @@
+{
+  "adapterSide": "current",
+  "automaticPromotion": false,
+  "completeFullThirtyGroupComparison": true,
+  "completeTenByTwentySeries": true,
+  "elapsedSeconds": 129.5480209160014,
+  "finitePlanCount": 48,
+  "freeGeneration": {
+    "adapterSide": "current",
+    "allExpectedAttemptsPresent": true,
+    "factsPassed": 0,
+    "maximumBodyHan": 280,
+    "maximumOutputTokens": 768,
+    "meanSeconds": 1.5325335444222825,
+    "measured": 89,
+    "modelContribution": "full-title-and-body",
+    "reportSha256": "3aea42e7845c32f9e5f1ad7f90ebcdc72c07c2b93a7410423f7482f7058e9368",
+    "requested": 90,
+    "stopReasons": {
+      "eos": 89,
+      "token-limit": 1
+    },
+    "validSchema": 65
+  },
+  "inputsStillFresh": true,
+  "limitations": [
+    "Project-authored synthetic independent groups, not native-editor reviewed.",
+    "Structure mode preserves complete fact blocks; it changes framing/order, not factual prose.",
+    "48 finite variants per unchanged source; indefinite uniqueness is not promised."
+  ],
+  "nativeSpeakerReviewCompleted": false,
+  "overlappingComparisonAndSeriesGenerations": 30,
+  "peakMemoryBytes": 572207336,
+  "priorFailedStructureAttempt": {
+    "attempted": 1,
+    "cause": "native-mlx-prefill-callback-contract",
+    "completed": 0,
+    "fixedStructureModuleSha256": "504edb2dfbd4b34cacceca70019bbcd646ef1f5558a373f3e13e4cd9c1c037a1",
+    "reportSha256": "abf15ffae829d491c3d441c284a2710a6c0c7f6814901d00b9bd474edcefc78b",
+    "retained": true
+  },
+  "qualityAccepted": false,
+  "rawAnswerJournalSha256": "ac8b43f4b1017b861602fe138df5f14bcd55e7fe55ac339f8a05405261957201",
+  "rawReportSha256": "40f7b7bec878137e0718534fcc304d2cc0e79d582d5b519d05375decc8549903",
+  "rendererFactsAreNotModelQuality": true,
+  "scope": "diagnostic-structure-only",
+  "scriptSha256": "8ce0c0cc5bce6eb5b8242d8d1012279d64e5c3cb933f4ce51d80ae8bf523ec99",
+  "series": {
+    "acceptedUniqueFraction": 1.0,
+    "acceptedUniqueRendered": 200,
+    "attempted": 200,
+    "completed": 200,
+    "groups": [
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-01",
+        "completed": 20,
+        "maximumSeconds": 0.5012157919991296,
+        "meanSeconds": 0.35844660205038964,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-02",
+        "completed": 20,
+        "maximumSeconds": 0.454580084013287,
+        "meanSeconds": 0.3685338604998833,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-03",
+        "completed": 20,
+        "maximumSeconds": 0.46812087499711197,
+        "meanSeconds": 0.35307185415076675,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-04",
+        "completed": 20,
+        "maximumSeconds": 0.35305704199709,
+        "meanSeconds": 0.34161562279841745,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-05",
+        "completed": 20,
+        "maximumSeconds": 0.3563635409955168,
+        "meanSeconds": 0.34702005405197267,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-06",
+        "completed": 20,
+        "maximumSeconds": 0.4433557090087561,
+        "meanSeconds": 0.34979547495167934,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-07",
+        "completed": 20,
+        "maximumSeconds": 0.36380525000276975,
+        "meanSeconds": 0.3335373793495819,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-08",
+        "completed": 20,
+        "maximumSeconds": 0.44141516600211617,
+        "meanSeconds": 0.3679103435009893,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-09",
+        "completed": 20,
+        "maximumSeconds": 0.37115454200829845,
+        "meanSeconds": 0.3527816686517326,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      },
+      {
+        "acceptedUniqueRendered": 20,
+        "attempted": 20,
+        "caseId": "heldout-10",
+        "completed": 20,
+        "maximumSeconds": 0.4718617079925025,
+        "meanSeconds": 0.36850469799974234,
+        "modelAuthoredFactsCredited": 0,
+        "rendererFactsPassed": 20,
+        "repeats": 0,
+        "stopReasons": {
+          "eos": 20
+        },
+        "validModelSchema": 20
+      }
+    ],
+    "maximumSeconds": 0.5012157919991296,
+    "meanSeconds": 0.3541217558005155,
+    "modelAuthoredFactsCredited": 0,
+    "normalization": "NFKC-casefold-alphanumeric; punctuation/emoji/spacing do not count",
+    "rendererFactsPassed": 200,
+    "repeats": 0,
+    "requestedGroups": 10,
+    "requestedPerGroup": 20,
+    "stopReasons": {
+      "eos": 200
+    },
+    "validModelSchema": 200
+  },
+  "sourceFiles": {
+    "cli/advertising_structure.py": "504edb2dfbd4b34cacceca70019bbcd646ef1f5558a373f3e13e4cd9c1c037a1",
+    "data/learning/text-v29-translation-retention.json": "bda5c2b6561235040beccf324b585c8bdfd48d5b4687e4e075478553c321a7f6",
+    "data/quality/rental-heldout-v29.json": "b351584ef81f8ffdca04d9548ba5c8592d4f43d677b27728430e449f2bbe6b7d",
+    "scripts/evaluate-advertising-structure.py": "8ce0c0cc5bce6eb5b8242d8d1012279d64e5c3cb933f4ce51d80ae8bf523ec99",
+    "scripts/evaluate-text-candidate.py": "37feb2ac15394cf32df4675c3da230e71b3f3cdd90402a87c406ff5857dd2113"
+  },
+  "sourceIdentity": {
+    "adapters": {
+      "candidate": {
+        "receiptSha256": "3f515dde6b60e0cea0612b0d8e807e27ac6e7593efbd4ef53e58602f3507dffd",
+        "weightsSha256": "a50bacf07cc300ac79949d080820402b33d6580be66c96b97c5626fc6e73bd5f"
+      },
+      "current": {
+        "receiptSha256": "fa1c6227319eb2d34a4ec6fab034f6b60dac296abe7330151834447673391a78",
+        "weightsSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581"
+      }
+    },
+    "advertisingBasisSha256": "0f1c24d63eedc35e805f22a3e852fcea20a24b1a643d479f72b7e7c2d86404f5",
+    "baseSha256": "049f4f2c7130a3cc3c3eae93afd4702d90b2faafd1f0aa227636aaeb85cf7e9f",
+    "casesSha256": "b351584ef81f8ffdca04d9548ba5c8592d4f43d677b27728430e449f2bbe6b7d",
+    "checkersSha256": "d94f8f2c074e5b6f1d62fc4a9cd5743c4822830b942b384c73b826d2ee1a39ce",
+    "datasetSha256": "bda5c2b6561235040beccf324b585c8bdfd48d5b4687e4e075478553c321a7f6",
+    "evaluatorSha256": "37feb2ac15394cf32df4675c3da230e71b3f3cdd90402a87c406ff5857dd2113",
+    "inputsSha256": "9fa5a1c37a71279af7df7c2441ee7a2ec742f2afb3b012146a951226abce44b1",
+    "policySha256": "176a6b9037e9d0b62278494bb6d5348fab947b2144f9a9232f443900060f75e8",
+    "rendererArtifactsSha256": "4043e6fcadf2efde84da377a124fce54851ad48f0c6dd4952d280cf98ae1603a",
+    "rendererRulesSha256": "078ff57aa553937a9f4eb20e6054b729ec35cc1c8e942c4175e48c62dce26259",
+    "runtimeConfigSha256": "e89c44247a30966e0095b60f2225370f388dbd63812f6445b404d54cc4934dee"
+  },
+  "sourceManifestSha256": "f79dda7dc0990a10b6c93fc35447e122bb6bcbd17ce557367538582696275c60",
+  "stopReason": "finished",
+  "structureComparison": {
+    "acceptedUniqueRendered": 90,
+    "attempted": 90,
+    "completed": 90,
+    "maximumBodyHan": "full verified facts + 100 framing characters",
+    "maximumOutputTokens": 48,
+    "maximumSeconds": 0.565498458003276,
+    "meanSeconds": 0.37911459391163793,
+    "modelAuthoredFactsCredited": 0,
+    "rendererFactsPassed": 90,
+    "repeats": 0,
+    "requested": 90,
+    "requestedGroups": 30,
+    "stopReasons": {
+      "eos": 90
+    },
+    "validModelSchema": 90
+  },
+  "uniqueNativeGenerations": 260,
+  "version": 1
+}

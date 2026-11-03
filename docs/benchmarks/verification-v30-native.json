@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "kind": "v30-native-release-checks",
+  "sourceCommit": "a471225c3743567310a3197cd9a941ffcc8169f0",
+  "javascript": {
+    "tests": 634,
+    "passed": 633,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "optional ZXing",
+    "logSha256": "5057ad4dd890d6df203016cb53cc7c06613076597d389cb7829c1b8dec89f64e"
+  },
+  "pythonBeforeTransportFix": {
+    "tests": 239,
+    "passed": 239,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 23.564388583996333,
+    "logSha256": "80f6c2d947c6998f3aa1926f8e13c44f48d50860f53614ce4230b735e05ebf0f"
+  },
+  "transportAfterFix": {
+    "tests": 14,
+    "passed": 14,
+    "failed": 0,
+    "scope": "includes slow-reader subprocess regression, cancellation, deadlines and cleanup; overlaps prior Python suite",
+    "sourceSha256": "ca5f258e584ca070d2554e8e9ebc2dc0a32de1435e1d2a79c792d5d7e1995e52"
+  },
+  "learningBrowser": {
+    "tests": 12,
+    "passed": 12,
+    "failed": 0,
+    "seconds": 156.431,
+    "logSha256": "f518b5b4493d130c9c9da5bee9ffc2fbfaf58a3ec9dcdc5e99cef817de84479c"
+  },
+  "rewriteBrowser": {
+    "tests": 2,
+    "passed": 2,
+    "rewrites": 20,
+    "normalizedDistinctBodies": 20,
+    "reloadPreserved": true,
+    "manualTitleAndTagsPreserved": true
+  },
+  "installedPhotoRoute": {
+    "version": 1,
+    "kind": "installed-first-photo-regression-v30",
+    "sourceCommit": "a471225c3743567310a3197cd9a941ffcc8169f0",
+    "transportSourceSha256": "ca5f258e584ca070d2554e8e9ebc2dc0a32de1435e1d2a79c792d5d7e1995e52",
+    "model": "redcn-furniture-world-v2",
+    "route": "configured-vision-pipeline",
+    "cardsWritten": false,
+    "weightsChanged": false,
+    "cacheWritten": false,
+    "status": "passed",
+    "seconds": 61.22327045802376,
+    "processed": 65,
+    "successful": 65,
+    "nativeArmVerified": 65,
+    "automaticFacts": 0,
+    "receiptSha256": "88a70f296a0e1ccc12160fbe55df858785c6637b5fbc98f18591ba989df33399",
+    "photoSeconds": {
+      "min": 0.8956197910010815,
+      "median": 0.9220315419952385,
+      "max": 1.4101797080074903
+    },
+    "errors": [],
+    "limitations": [
+      "Runtime regression on the first room photo of each of65recentcards, not a test of detection accuracy.",
+      "The full1155photos were visually reviewed separately; this transport gate does not invent additional model acceptance."
+    ]
+  },
+  "physicalIPhoneAccepted": false,
+  "nativeArmPhotoTrainingAccepted": false,
+  "buildAndValidationPassed": true,
+  "roadmapStructuralAuditPassed": true,
+  "allLegacyRoadmapCriteriaIndependentlyAccepted": false
+}

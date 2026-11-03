@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "scope": "public-allowlisted-native-summary",
+  "nativeArm64": true,
+  "rawTextIncluded": false,
+  "privatePathsIncluded": false,
+  "objective": {
+    "reportSha256": "986794fbae2d1441516a1935b8475c74771b1c64041ea99496c4ce23c9176d00",
+    "noModelWeightsLoaded": true,
+    "elapsedSeconds": 0.831578791,
+    "maxSequenceLength": 1024,
+    "splits": {
+      "train": {
+        "records": 600,
+        "minimumTokens": 203,
+        "maximumTokens": 987,
+        "maximumSupervisedTargets": 270
+      },
+      "validation": {
+        "records": 120,
+        "minimumTokens": 211,
+        "maximumTokens": 946,
+        "maximumSupervisedTargets": 242
+      }
+    },
+    "allPrefixesMatchInference": true,
+    "allMasksExcludePrompt": true,
+    "eosSupervisedExactlyOnce": true,
+    "skipped": 0,
+    "maxPostEosWhitespaceTokens": 1
+  },
+  "reload": {
+    "advertising-only": {
+      "reportSha256": "edf0cb0e6ce7b190f414862fc2d371195e15c35b65a7ee5431f1b4de35de74ec",
+      "validationExamples": 32,
+      "absoluteLossDifference": 0,
+      "lossReproduced": true,
+      "nativeArm64": true,
+      "peakMemoryBytes": 1222787358,
+      "elapsedSeconds": 14.243879042,
+      "qualityAccepted": false,
+      "directSamplesAreDiagnosticOnly": true,
+      "directSamples": [
+        {
+          "split": "train",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 154
+        },
+        {
+          "split": "train",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 132
+        },
+        {
+          "split": "validation",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 175
+        },
+        {
+          "split": "validation",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 180
+        }
+      ]
+    },
+    "translation-retention": {
+      "reportSha256": "507e47c883fe29a06549e553074bd3b4e9b52da93f7eff32061e82af3ed70fac",
+      "validationExamples": 32,
+      "absoluteLossDifference": 0,
+      "lossReproduced": true,
+      "nativeArm64": true,
+      "peakMemoryBytes": 1222787358,
+      "elapsedSeconds": 13.75274725,
+      "qualityAccepted": false,
+      "directSamplesAreDiagnosticOnly": true,
+      "directSamples": [
+        {
+          "split": "train",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 115
+        },
+        {
+          "split": "train",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 184
+        },
+        {
+          "split": "validation",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 161
+        },
+        {
+          "split": "validation",
+          "status": "measured",
+          "stopReason": "eos",
+          "generationTokens": 122
+        }
+      ]
+    }
+  }
+}

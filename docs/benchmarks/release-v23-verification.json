@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "sourceHead": "25ecc9ea34591d6be303fed9b13e403592f7c3cb",
+  "runUrl": "https://github.com/leunch4off/redcn/actions/runs/41290700728",
+  "conclusion": "success",
+  "javascript": {
+    "total": 479,
+    "passed": 478,
+    "skipped": 1,
+    "failed": 0
+  },
+  "pythonHosted": {
+    "total": 694,
+    "passed": 693,
+    "skipped": 1,
+    "failed": 0,
+    "partitions": [
+      200,
+      187,
+      125,
+      182
+    ],
+    "skipReason": "Exact macOS Chrome PDF test; executed separately on the native Mac."
+  },
+  "requiredEditorBrowser": {
+    "total": 10,
+    "passed": 10,
+    "seconds": 16.114,
+    "additionalUniqueTests": false
+  },
+  "pythonLocal": {
+    "run": 551,
+    "skipped": 43,
+    "seconds": 80.683,
+    "browserInstalled": false
+  },
+  "native": {
+    "sourceHead": "29c5524bb0583e2c6a76a8971715a5e9c7246d82",
+    "run": 25,
+    "passed": 24,
+    "errors": 1,
+    "seconds": 531.368,
+    "reason": "Test inspected intentionally closed HTML preview",
+    "correctedHead": "25ecc9ea34591d6be303fed9b13e403592f7c3cb",
+    "correctedRun": 2,
+    "correctedPassed": 2,
+    "correctedSeconds": 59.721,
+    "productionCodeUnchanged": true
+  },
+  "liveDeployment": {
+    "performed": false,
+    "head": "54d12480200802f41ce8fee034b00674d248b35e",
+    "serverRestarted": false
+  },
+  "privateCampaignChanged": false,
+  "localPhotoAIEnabled": false,
+  "laterPdfSupervisionFix": {
+    "contract": "90-second total deadline; confirmed observed-child cessation; unknown metadata stays unknown; controlled completion protocol after Playwright cleanup; arbitrary unobserved detached processes not guaranteed stopped",
+    "protocol": "redcn-pdf-v1",
+    "focusedPython": {
+      "run": 36,
+      "passed": 35,
+      "macOnlySkipped": 1,
+      "seconds": 4.677
+    },
+    "stressCases": {
+      "run": 15,
+      "passed": 15,
+      "seconds": 14.972
+    },
+    "independentRoot": {
+      "run": 14,
+      "passed": 14,
+      "seconds": 4.146
+    },
+    "fullMatrixCases": 701,
+    "latestChecks": "https://github.com/leunch4off/redcn/pull/6",
+    "nativeFollowup": {
+      "sourceHead": "53ed8c5421ab2d13e53b4e233ed9e6b8ab001de6",
+      "run": 15,
+      "passed": 13,
+      "linuxOnlySkipped": 2,
+      "seconds": 15.841
+    },
+    "additionalRegression": "Index0 non-root discovery skips denied unrelated root metadata; known own PID denial remains unknown. Reproduced before fix and passed after."
+  }
+}

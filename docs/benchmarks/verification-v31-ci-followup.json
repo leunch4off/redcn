@@ -1,0 +1,376 @@
+{
+  "version": 1,
+  "release": "v31",
+  "purpose": "CI failure diagnosis, native regression verification and guarded follow-up installation",
+  "originalGithubRun": {
+    "repository": "leunch4off/redcn",
+    "commit": "c35d297824eddc6b722551b2e1ca28cec3bebf67",
+    "workflow": "verification.yml",
+    "event": "push",
+    "runId": 41632343695,
+    "url": "https://github.com/leunch4off/redcn/actions/runs/41632343695",
+    "completedAt": "2026-11-03T12:10:18Z",
+    "conclusion": "failure",
+    "jobs": [
+      {
+        "name": "verify",
+        "jobId": 125904788970,
+        "conclusion": "success"
+      },
+      {
+        "name": "mac-portability",
+        "jobId": 125904788653,
+        "conclusion": "success"
+      },
+      {
+        "name": "python (0)",
+        "jobId": 125905386912,
+        "conclusion": "failure",
+        "tests": 378,
+        "failures": 2,
+        "errors": 0,
+        "skipped": 1,
+        "durationSeconds": 224.095
+      },
+      {
+        "name": "python (1)",
+        "jobId": 125905386911,
+        "conclusion": "failure",
+        "tests": 384,
+        "failures": 1,
+        "errors": 3,
+        "skipped": 0,
+        "durationSeconds": 219.851
+      },
+      {
+        "name": "python (2)",
+        "jobId": 125905386982,
+        "conclusion": "failure",
+        "tests": 396,
+        "failures": 2,
+        "errors": 5,
+        "skipped": 0,
+        "durationSeconds": 280.577
+      },
+      {
+        "name": "python (3)",
+        "jobId": 125905386856,
+        "conclusion": "failure",
+        "tests": 430,
+        "failures": 3,
+        "errors": 6,
+        "skipped": 0,
+        "durationSeconds": 367.134
+      },
+      {
+        "name": "sites-release-artifact",
+        "jobId": 125908579095,
+        "conclusion": "skipped"
+      }
+    ],
+    "totalPartitionTests": 1588,
+    "totalPartitionFailures": 8,
+    "totalPartitionErrors": 14,
+    "partitionFailureMethods": 22,
+    "rerunRequested": false
+  },
+  "diagnosedCauses": [
+    {
+      "kind": "product",
+      "summary": "The generated phone bundle omitted media-core and its dependency while photoBatchSummary referenced PHOTO_SOURCE_LIMIT.",
+      "consequence": "Rendering stopped after images were created and before the photo status, download link, inventory, designer prewarm and viewed acknowledgement were completed.",
+      "correction": "Include photoTeacherReview and mediaCore before photoBatchStatus in the phone bundle.",
+      "sourceFile": "scripts/build.mjs",
+      "affectedCatalogTestsChanged": false,
+      "galleryZipTestChanged": false
+    },
+    {
+      "kind": "product",
+      "summary": "Committing a rewrite of one text field cleared manual protection on other, untouched fields.",
+      "correction": "Pass only the candidate field keys to contentStudioUI.markCommitted.",
+      "sourceFile": "web/app.js",
+      "preservedBehavior": "Independent title/body/tag edits retain manual state on the other fields."
+    },
+    {
+      "kind": "test-fixture",
+      "summary": "Older browser fixtures assumed the advertising style default or immediate template generation, while the application now starts an individual text job.",
+      "correction": "Use explicit synthetic MockTextJobs replies and wait for the preview/apply lifecycle; keep source policy, manual edit, save/readback, real photo/ZIP/HTML and stable card assertions.",
+      "modelInferencePerformed": false,
+      "modelQualityMeasured": false
+    }
+  ],
+  "nativeBrowserVerification": {
+    "environment": "Native macOS isolated worktree at the original CI commit plus reviewed follow-up changes",
+    "concurrency": "One browser suite at a time under a shared file lock",
+    "totalRuns": 5,
+    "totalTests": 19,
+    "passed": 19,
+    "failed": 0,
+    "fullPythonSuiteRerun": false,
+    "directlyRetestedOriginalFailingScenarios": 16,
+    "additionalCatalogScenarios": 3,
+    "runs": [
+      {
+        "name": "catalog-and-phone",
+        "tests": 9,
+        "passed": 9,
+        "exitCode": 0,
+        "durationSeconds": 168.48,
+        "runnerSeconds": 168.785,
+        "evidence": "Direct process output observed by catalog_compat; no separate file log was recorded",
+        "sourceScope": "Phone dependency correction present; exact per-page build identifiers were not recorded",
+        "targets": [
+          "test_catalog_state_browser",
+          "test_phone_job_browser.PhoneJobBrowserAcceptance.test_prepared_gallery_and_zip_keep_untrimmed_photo_beside_safe_crop",
+          "test_phone_browser.PhoneBrowserAcceptance.test_cards_photos_live_update_downloads_and_install_visibility"
+        ],
+        "testFilesModified": false
+      },
+      {
+        "name": "individual-generation-fixtures",
+        "tests": 2,
+        "passed": 2,
+        "exitCode": 0,
+        "durationSeconds": 34.142,
+        "runnerSeconds": 34.461,
+        "evidence": "Native log read and hashed independently",
+        "sourceScope": "Phone dependency correction present; before the final manual-state correction",
+        "logArtifact": "ci-individual-browser-target01.log",
+        "targets": [
+          "test_learning_studio_browser.LearningStudioBrowserTests.test_grounded_advertising_is_distinguished_from_model_text_with_measured_rates",
+          "test_ui_browser.BrowserAcceptance.test_existing_dictionary_and_generation_geo"
+        ],
+        "logSha256": "83ee9388fce11e202eb7bd24c7bb05300a341baa108f28bef4aab961ac8b76d9"
+      },
+      {
+        "name": "photo-inventory-and-instances",
+        "tests": 3,
+        "passed": 3,
+        "exitCode": 0,
+        "durationSeconds": 86.263,
+        "runnerSeconds": 86.569,
+        "evidence": "Native process output reported by photo_evidence; no separate file log was recorded",
+        "sourceScope": "Phone dependency correction present; exact per-page build identifiers were not recorded",
+        "targets": [
+          "test_photo_instance_editor_browser.PhotoInstanceEditorBrowserTests.test_two_angles_one_instance_and_visible_wrong_merge_do_not_rewrite_listing",
+          "test_photo_inventory_browser.PhotoInventoryBrowserAcceptance.test_desktop_local_observations_override_source_flag_and_rejection_survives_save",
+          "test_photo_inventory_browser.PhotoInventoryBrowserAcceptance.test_phone_inventory_is_readonly_fits_and_analyzes_only_on_explicit_request"
+        ],
+        "fixtureChange": "Desktop test receives a synthetic text job; real photo/reject/save/reopen checks retained",
+        "instanceAndPhoneTestsModified": false
+      },
+      {
+        "name": "first-export-service-and-university",
+        "tests": 3,
+        "passed": 3,
+        "exitCode": 0,
+        "durationSeconds": 117.344,
+        "runnerSeconds": 117.626,
+        "evidence": "Native process output reported by root; no separate file log was recorded",
+        "buildId": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71",
+        "targets": [
+          "test_presentation_browser.PresentationAcceptance.test_new_card_first_export_keeps_stable_id_in_draft",
+          "test_service_checklist_browser.ServiceChecklistLocalSave.test_unsourced_receipt_survives_first_mac_save_then_real_presentation_html",
+          "test_university_ui_browser.UniversityReferenceAcceptance.test_selected_school_reaches_individual_job_and_applies_checked_reference_copy"
+        ]
+      },
+      {
+        "name": "manual-field-protection-and-phone-save",
+        "tests": 2,
+        "passed": 2,
+        "exitCode": 0,
+        "durationSeconds": 57.889,
+        "runnerSeconds": 58.193,
+        "evidence": "Native log read and hashed independently",
+        "buildId": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71",
+        "logArtifact": "ci-individual-browser-target02.log",
+        "targets": [
+          "test_language_studio_browser.LanguageStudioAcceptance.test_independent_rewrites_preserve_manual_other_parts_and_new_card_clears_draft",
+          "test_phone_browser.PhoneBrowserAcceptance.test_mac_generation_and_text_edits_sync_without_duplicate_cards"
+        ],
+        "logSha256": "71fddc50c350a34bcf2e978a7fbc7c0984b67c0a24a64815a477e87d8ed370a1"
+      }
+    ],
+    "originalScenariosNotDirectlyRerun": [
+      "test_mobile_editor_learning_browser.MobileEditorLearningBrowserTests.test_manual_instance_panel_opens_when_no_model_inventory_exists",
+      "test_phone_designer_loading_browser.PhoneDesignerLoadingBrowserTests.test_late_template_response_after_logout_is_discarded_and_reconnect_reads_fresh",
+      "test_phone_designer_loading_browser.PhoneDesignerLoadingBrowserTests.test_selected_card_prewarms_only_public_module_and_open_reads_template_in_parallel",
+      "test_phone_designer_loading_browser.PhoneDesignerLoadingBrowserTests.test_warmed_module_does_not_mark_editor_ready_before_shared_template_response",
+      "test_client_publication_browser.ClientPublicationBrowserAcceptance.test_old_draft_phone_copy_and_zip_share_one_clean_projection_without_mutating_source",
+      "test_photo_variant_browser.PhotoVariantBrowserAcceptance.test_phone_prepared_photo_uses_selected_variant_and_original_tab_keeps_primary_bytes"
+    ],
+    "remainingScope": "These six original phone failures share the diagnosed rendering interruption, but this targeted verification does not claim an observed pass for them."
+  },
+  "modelValidation": {
+    "inferencePerformed": false,
+    "trainingPerformed": false,
+    "weightsChangedByThisVerification": false,
+    "qualityClaim": false
+  },
+  "scopeLimitations": [
+    "This receipt does not change the conclusion of the original GitHub run.",
+    "The follow-up has not yet received a new push CI result at the time this receipt was created.",
+    "The native browser results were collected in five separate runs, not a single full Python suite.",
+    "Synthetic text-job fixtures verify application data flow and preservation, not model prose quality.",
+    "The installation section was added by root after the successful guarded apply."
+  ],
+  "createdAt": "2026-11-03T12:31:55.229137+00:00",
+  "finalNonBrowserVerification": {
+    "buildId": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71",
+    "allPassed": true,
+    "rebuildPerformed": false,
+    "checks": [
+      {
+        "name": "npm-test",
+        "command": [
+          "npm",
+          "test"
+        ],
+        "exitCode": 0,
+        "elapsedSeconds": 13.908,
+        "logSha256": "8c01d8ce674547a024d9c025e58ef98c91d0767cd638ab7af6b5692aae516c0b",
+        "logArtifact": "ci-followup-final-checks-20261103T122918Z-npm-test.log",
+        "counts": {
+          "tests": 663,
+          "pass": 662,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 1,
+          "todo": 0
+        },
+        "reportedDurationMs": 13500.217291
+      },
+      {
+        "name": "validate",
+        "command": [
+          "npm",
+          "run",
+          "validate"
+        ],
+        "exitCode": 0,
+        "elapsedSeconds": 0.609,
+        "logSha256": "aa21e70d478860d5c49c1390865c1dd68638cdd1f6a3f416ccab46b61f04c220",
+        "logArtifact": "ci-followup-final-checks-20261103T122918Z-validate.log"
+      },
+      {
+        "name": "validate-pages",
+        "command": [
+          "npm",
+          "run",
+          "validate:pages"
+        ],
+        "exitCode": 0,
+        "elapsedSeconds": 1.119,
+        "logSha256": "0c244fee782593ef47439e7d3847b108ec97e26cedf965a804b4f95245afc86e",
+        "logArtifact": "ci-followup-final-checks-20261103T122918Z-validate-pages.log"
+      }
+    ]
+  },
+  "reviewedSourceChanges": {
+    "fileCount": 11,
+    "files": {
+      "scripts/build.mjs": {
+        "sha256": "856cebcdfc6a092b28c7f58a31c5102bc88be521d86d16f1b9de073c7675399d",
+        "size": 12407
+      },
+      "tests/test_language_studio_browser.py": {
+        "sha256": "fc27fb58c2074743cef0e8694bff96941f8c2471ce47e55c29d0caff63be6e66",
+        "size": 18258
+      },
+      "tests/test_learning_studio_browser.py": {
+        "sha256": "806420e5103081ef2a3cb49c42fee2248e4a1253f1d686d17e4bb540628cf278",
+        "size": 25777
+      },
+      "tests/test_phone_browser.py": {
+        "sha256": "0bb95d49191e9b613d67dac06b14e0fba0f331d77688a77433c201bcd12522f6",
+        "size": 19025
+      },
+      "tests/test_photo_inventory_browser.py": {
+        "sha256": "fe4c0bb9148ed29cb6091752350b4fffba3219599c78a2a34718876117fa0f34",
+        "size": 13379
+      },
+      "tests/test_presentation_browser.py": {
+        "sha256": "b66b46bcba50edb021acc8ed31ed003df3e52ce09a6c1c60ddf52bd192506165",
+        "size": 19103
+      },
+      "tests/test_service_checklist_browser.py": {
+        "sha256": "33f2a04f8766d6b2287b433e7ed3a68f038daf18f9a42b7dd75746db23c4ef8e",
+        "size": 11407
+      },
+      "tests/test_twenty_editor_browser.py": {
+        "sha256": "c5cb31857601b578db954491dc705dd299bdf571a5e2c5b55fdfb29e5b4e9e3d",
+        "size": 9732
+      },
+      "tests/test_ui_browser.py": {
+        "sha256": "5a60c31749a5cbe9191977e00cc176235fc146d4bbaba139220281b1afbdaf6a",
+        "size": 16512
+      },
+      "tests/test_university_ui_browser.py": {
+        "sha256": "204d97495bf02ef4861a1a07d9c207b68a8b32450d42505b305616567f93f829",
+        "size": 9315
+      },
+      "web/app.js": {
+        "sha256": "25e7de8a87f18bbb934e0ba32088f97eb053bba8dc0706a0ad0a08428d6268d0",
+        "size": 96264
+      }
+    },
+    "mapSha256": "30525a88a842d5a6f55ebb1ffb33227cc9289b4c08f442c778a39e028ea4d881"
+  },
+  "installation": {
+    "startedAt": "2026-11-03T12:39:07.865487+00:00",
+    "finishedAt": "2026-11-03T12:39:14.661952+00:00",
+    "status": "installed-and-verified-uncommitted",
+    "baseCommit": "c35d297824eddc6b722551b2e1ca28cec3bebf67",
+    "sourceFiles": 11,
+    "sourceMapSha256": "d42bba4d78abeddc308f066173075ffd05139142b54db19694275d798e95563d",
+    "oldBuildId": "3d0ac56d983c5a0811ba1d18c2293cc2e8c2bd10a6d662ea1ec2dd7f3cb6bfa8",
+    "newBuildId": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71",
+    "serviceBeforePid": 81819,
+    "serviceAfterPid": 83356,
+    "databaseBackups": {
+      "files": 12,
+      "bytes": 55275520,
+      "allQuickChecksPassed": true,
+      "backupMapSha256": "001be2bf3f6426f81f25ce35fc1ac06c05feb4705d3c3729ff5ea2bfd8820e8b"
+    },
+    "beforeRestartDatabaseAcceptance": {
+      "databaseFiles": 12,
+      "allSchemasAndTablesUnchanged": true,
+      "allRowValuesAndRowidsUnchanged": true,
+      "listingTables": 10,
+      "listingPayloadsUpdatedAndCatalogueUnchanged": true,
+      "cardCount": 82,
+      "cardsSha256": "072b6b7f7ff57983d43f5486defd075e9a9d04c1c48272820fdf49954eb12e3f"
+    },
+    "liveAcceptance": {
+      "ownerProofVerified": true,
+      "release": "v31",
+      "buildId": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71",
+      "compatible": true,
+      "activeJobsAfterRestart": 0
+    },
+    "liveShells": {
+      "desktop": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71",
+      "phone": "ea0eb1dfc53cedda4fb1564638d8ab5dacf5f2ef4ff00d6a033d22d028aa6c71"
+    },
+    "afterRestartDatabaseObservation": {
+      "cardCount": 82,
+      "currentDataPreserved": true
+    },
+    "privateReceiptSha256": "d0b63db51b01214ff8b393d50df0353bb6ec8baff2cf50d6203570a25724cfc2",
+    "installerSha256": "7e6b2e5c9c685e237c020c701a83e5dbbb61e67fe8c80b2ac09bde8e7fc7d61c",
+    "configurationWritesPerformed": false,
+    "configurationHashesObservedEqualAfterRestart": true,
+    "trainingPerformed": false,
+    "databaseMigrationPerformed": false,
+    "databaseRestorePerformed": false,
+    "tunnelModified": false,
+    "rootObservedCommandSeconds": 9.25
+  },
+  "finalGithubRun": {
+    "statusAtCapture": "pending-new-commit",
+    "originalFailedRunRetained": true,
+    "newRunMustMatchFinalCommit": true
+  },
+  "updatedAt": "2026-11-03T12:40:43.746463+00:00"
+}

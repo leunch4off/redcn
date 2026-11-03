@@ -1,0 +1,249 @@
+"""Optional real-browser acceptance for the paired iPhone-sized companion."""
+import base64
+import io
+import json
+from pathlib import Path
+import sys
+import tempfile
+import threading
+import unittest
+from unittest.mock import patch
+import zipfile
+
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'cli'))
+import local_server
+import phone_relay
+import photo_store
+import redcn
+
+
+def grant_paired_role(fixture,role):
+    """Explicit disposable-fixture grant; pairing itself remains editor-only."""
+    snapshot=fixture.phone.pairing.list_sessions()
+    fixture.assertEqual(len(snapshot['sessions']),1,'This fixture grants its one paired device only')
+    fixture.phone.pairing.manage_session(snapshot['sessions'][0]['id'],role=role,expected_revision=snapshot['revision'])
+    fixture.page.locator('#phoneRefresh').click()
+    expected={'owner':'владелец','editor':'редактор','viewer':'читатель'}[role]
+    fixture.page.wait_for_function("expected=>document.getElementById('phoneRoleStatus').textContent.includes(expected)",arg=expected)
+
+
+class PhoneBrowserAcceptance(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            raise unittest.SkipTest('Optional Playwright/Chrome acceptance')
+        cls.runtime=sync_playwright().start()
+        try:cls.browser=cls.runtime.chromium.launch(channel='chrome',headless=True)
+        except Exception as error:
+            cls.runtime.stop();raise unittest.SkipTest(str(error).splitlines()[0])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.browser.close();cls.runtime.stop()
+
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.directory=Path(self.temp.name)
+        self.controller=local_server.create_server(self.directory,0)
+        self.phone=phone_relay.create_phone_server(self.directory,self.controller,0,'127.0.0.1',hosts={'127.0.0.1'})
+        self.thread=threading.Thread(target=self.phone.serve_forever,daemon=True);self.thread.start()
+        self.base='http://127.0.0.1:'+str(self.phone.server_port)
+        self.context=self.browser.new_context(viewport={'width':393,'height':852},device_scale_factor=3,is_mobile=True,has_touch=True,user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1')
+        self.page=self.context.new_page();self.errors=[];self.page.on('pageerror',lambda error:self.errors.append(str(error)))
+        from PIL import Image
+        self.assets=[]
+        for number,color in enumerate(['#d5bba4','#8baca9'],1):
+            stream=io.BytesIO();Image.new('RGB',(640,420),color).save(stream,'PNG')
+            url=f'https://images.cdn-cian.ru/images/phone-browser-{number}.jpg'
+            self.assets.append(photo_store.attach_photo(self.directory,url,'data:image/png;base64,'+base64.b64encode(stream.getvalue()).decode()))
+        self.result={'fields':{'price':'80000','area':'54','metro':'Юго-Западная','photos':[a['sourceUrl'] for a in self.assets]},'titles':['莫斯科温馨两居室'],'body':'两间独立房间，家具与家电按照片确认。','tags':'#莫斯科租房','mediaStatus':'ready'}
+        self.card_id=local_server.save_result(self.directory,self.result)
+
+    def tearDown(self):
+        self.context.close();self.phone.shutdown();self.phone.server_close();self.thread.join();self.controller.server_close();self.temp.cleanup()
+        self.assertEqual(self.errors,[])
+
+    def connect(self):
+        code,_=self.phone.pairing.issue();self.page.goto(self.base+'/phone/pair#'+code)
+        self.page.locator('#phoneWorkspace').wait_for(state='visible')
+        self.page.locator('#phoneCards .listing-card').first.wait_for()
+        self.assertNotIn('#',self.page.url)
+
+    def assert_mobile_fit(self):
+        width=self.page.evaluate('document.documentElement.scrollWidth')
+        if width>393:
+            state=self.page.evaluate("""() => {
+                const expectedWidth=393,root=document.documentElement;
+                const key=el=>el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+
+                    (typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).filter(Boolean).slice(0,4).join('.'):'');
+                const rectangle=el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom};};
+                const describe=el=>{const c=getComputedStyle(el);return {element:key(el),rect:rectangle(el),
+                    scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,scrollLeft:el.scrollLeft,
+                    display:c.display,position:c.position,zIndex:c.zIndex,width:c.width,minWidth:c.minWidth,
+                    maxWidth:c.maxWidth,overflowX:c.overflowX,overflowY:c.overflowY,whiteSpace:c.whiteSpace,
+                    overflowWrap:c.overflowWrap,wordBreak:c.wordBreak,boxSizing:c.boxSizing,
+                    flex:c.flex,flexBasis:c.flexBasis,gridTemplateColumns:c.gridTemplateColumns};};
+                const clipAncestor=el=>{for(let parent=el.parentElement;parent;parent=parent.parentElement){
+                    const c=getComputedStyle(parent);
+                    if(['auto','scroll','hidden','clip'].includes(c.overflowX))return describe(parent);
+                }return null;};
+                const all=Array.from(document.body.querySelectorAll('*')),overflow=[];
+                for(const el of all.slice(0,20000)){
+                    if(!el.getClientRects().length)continue;
+                    const c=getComputedStyle(el);if(c.display==='none'||c.visibility==='hidden'||c.visibility==='collapse')continue;
+                    const r=el.getBoundingClientRect();if(r.width===0||r.height===0)continue;
+                    const outside=r.right>expectedWidth+1||r.left< -1;
+                    const contentOverflow=el.scrollWidth>el.clientWidth+1&&c.overflowX==='visible';
+                    if(!outside&&!contentOverflow)continue;
+                    const clip=clipAncestor(el);
+                    overflow.push({...describe(el),outsideViewport:outside,contentOverflow,
+                        intersectsVisibleHeight:r.bottom>0&&r.top<innerHeight,
+                        nearestOverflowClip:clip,
+                        mayExpandDocument:!clip||clip.rect.right>expectedWidth+1||clip.rect.left< -1,
+                        parent:el.parentElement?key(el.parentElement):null,
+                        text:(el.innerText||el.textContent||'').replace(/\\s+/g,' ').slice(0,150)});
+                }
+                overflow.sort((a,b)=>Number(b.mayExpandDocument)-Number(a.mayExpandDocument)||
+                    Math.max(b.rect.right-expectedWidth,-b.rect.left,b.scrollWidth-b.clientWidth)-
+                    Math.max(a.rect.right-expectedWidth,-a.rect.left,a.scrollWidth-a.clientWidth));
+                return {url:location.pathname,activeCrumb:document.getElementById('crumb')?.textContent,
+                    activeTabs:Array.from(document.querySelectorAll('nav button.active,[data-phone-view][aria-selected=true]')).map(el=>({element:key(el),tab:el.dataset.tab||el.dataset.phoneView,text:el.textContent})),
+                    visibleSections:Array.from(document.querySelectorAll('main>section')).filter(el=>el.getClientRects().length).map(describe),
+                    viewport:{expectedWidth,innerWidth,innerHeight,rootClientWidth:root.clientWidth,rootScrollWidth:root.scrollWidth,
+                        bodyScrollWidth:document.body.scrollWidth,scrollX,scrollY,
+                        visual:visualViewport?{width:visualViewport.width,height:visualViewport.height,offsetLeft:visualViewport.offsetLeft,
+                            offsetTop:visualViewport.offsetTop,scale:visualViewport.scale}:null},
+                    nav:document.querySelector('aside nav')?describe(document.querySelector('aside nav')):null,
+                    overflowingCount:overflow.length,scannedElements:Math.min(all.length,20000),truncated:all.length>20000,
+                    overflowingElements:overflow.slice(0,40)};
+            }""")
+            state['observedScrollWidth']=width
+            print('MOBILE_FIT_DIAGNOSTICS '+json.dumps(state,ensure_ascii=False),flush=True)
+            self.assertLessEqual(width,393,'Mobile overflow; measured details printed as MOBILE_FIT_DIAGNOSTICS')
+        self.assertLessEqual(width,393)
+
+    def test_cards_photos_live_update_downloads_and_install_visibility(self):
+        self.connect();self.assert_mobile_fit()
+        install=self.page.locator('#phoneInstallTop [data-pwa-install]');self.assertTrue(install.is_visible())
+        install.click();dialog=self.page.locator('.pwa-install-dialog[open]');dialog.wait_for()
+        self.assertIn('Safari',dialog.inner_text());dialog.get_by_role('button',name='Понятно').click()
+        self.assertTrue(install.is_visible(),'Opening instructions is not installation')
+        self.page.locator('#phoneCards .listing-card').first.click()
+        self.page.wait_for_function("document.querySelector('#phonePhotos img')?.naturalWidth>0")
+        self.assertIn('两间独立',self.page.locator('#phoneBody').inner_text());self.assert_mobile_fit()
+        self.page.locator('#phonePhotoNext').click()
+        self.page.wait_for_function("document.getElementById('phonePhotoPosition').textContent.startsWith('2 /')")
+        self.result['body']='Mac 已更新正文，照片顺序保持不变。'
+        local_server.save_result(self.directory,self.result,self.card_id)
+        self.page.wait_for_function("document.getElementById('phoneBody').textContent.includes('Mac 已更新')",timeout=15000)
+        self.assertTrue(self.page.locator('#phonePhotoPosition').inner_text().startswith('2 /'))
+        self.page.wait_for_function("document.getElementById('phonePhotos').scrollLeft>=document.getElementById('phonePhotos').clientWidth*.8")
+        self.page.locator('#phoneOpenPhoto').click()
+        self.page.locator('#phonePhotoViewer').wait_for(state='visible')
+        self.page.wait_for_function("document.getElementById('phoneViewerImage').naturalWidth>0")
+        self.page.locator('#phoneViewerClose').click()
+        asset=self.page.locator('#phoneDownloadPhoto').get_attribute('href')
+        response=self.context.request.get(self.base+asset)
+        self.assertEqual(response.status,200);self.assertIn('attachment',response.headers['content-disposition'])
+        self.assertEqual(response.body(),photo_store.asset(self.directory,self.assets[1]['id'])[0])
+        archive=self.context.request.get(self.base+self.page.locator('#phoneDownloadZip').get_attribute('href'))
+        zipped=zipfile.ZipFile(io.BytesIO(archive.body()));self.assertEqual(zipped.testzip(),None)
+        self.assertIn('Mac 已更新',zipped.read('post.txt').decode());self.assertEqual(len([n for n in zipped.namelist() if n.endswith('.png')]),2)
+        self.page.evaluate("window.dispatchEvent(new Event('appinstalled'))")
+        self.assertTrue(install.is_hidden())
+
+    def test_standalone_hides_install_and_phone_link_uses_mac_import_queue(self):
+        self.page.add_init_script("Object.defineProperty(navigator,'standalone',{value:true})")
+        self.connect();self.assertTrue(self.page.locator('#phoneInstallTop [data-pwa-install]').is_hidden())
+        self.page.locator('#phoneTabs [data-phone-view="setup"]').click()
+        self.assertTrue(self.page.locator('#phoneInstall [data-pwa-install]').is_hidden());self.assert_mobile_fit()
+        source='https://www.cian.ru/rent/flat/300691182/'
+        prepared={**self.result,'fields':{**self.result['fields'],'photos':[self.assets[0]['sourceUrl']]},'titles':['通过 Mac 准备的新房源']}
+        with patch.object(redcn,'load_listing',return_value={'url':source,'text':'Квартира 54 м². Аренда 80 000 руб.','images':[self.assets[0]['sourceUrl']]}),patch.object(redcn,'generate',return_value=prepared),patch.object(photo_store,'load_photo',return_value=self.assets[0]) as load,patch.object(photo_store,'auto_crop_photo',return_value={'autoStatus':'unchanged'}):
+            self.page.locator('#phoneTabs [data-phone-view="import"]').click();self.assert_mobile_fit()
+            self.page.locator('#phoneImportUrl').fill(source);self.page.locator('#phoneImportSubmit').click()
+            self.page.locator('#phoneJobOpen').wait_for(state='visible',timeout=15000)
+            load.assert_called_once();self.page.locator('#phoneJobOpen').click()
+            self.page.wait_for_function("document.getElementById('phoneDetailTitle').textContent.includes('通过 Mac')")
+            self.assert_mobile_fit()
+
+    def test_main_editor_navigation_and_inputs_fit_iphone_width(self):
+        thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
+        try:
+            self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port))
+            self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
+            for tab in ['editor','rules','library','settings','history','analytics','knowledge','roadmap']:
+                self.page.locator('aside nav [data-tab="'+tab+'"]').click()
+                if tab=='roadmap':
+                    self.page.wait_for_function("document.getElementById('roadmapList').children.length>0")
+                self.assert_mobile_fit()
+            try:
+                self.page.locator('aside nav [data-tab="editor"]').click()
+            except Exception as error:
+                state=self.page.evaluate("""() => {
+                    const nav=document.querySelector('aside nav'),button=nav.querySelector('[data-tab="editor"]');
+                    const describe=el=>{const r=el.getBoundingClientRect(),c=getComputedStyle(el);return {
+                        rect:r.toJSON(),position:c.position,zIndex:c.zIndex,overflowX:c.overflowX,
+                        overflowY:c.overflowY,scrollSnapType:c.scrollSnapType,
+                        scrollLeft:el.scrollLeft,scrollTop:el.scrollTop,scrollWidth:el.scrollWidth,
+                        scrollHeight:el.scrollHeight,clientWidth:el.clientWidth,clientHeight:el.clientHeight};};
+                    const r=button.getBoundingClientRect(),x=Math.max(1,Math.min(innerWidth-1,r.x+r.width/2)),
+                        y=Math.max(1,Math.min(innerHeight-1,r.y+r.height/2));
+                    return {viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY,
+                        visual:visualViewport?{width:visualViewport.width,height:visualViewport.height,
+                            offsetLeft:visualViewport.offsetLeft,offsetTop:visualViewport.offsetTop,scale:visualViewport.scale}:null},
+                        nav:describe(nav),button:describe(button),hitPoint:{x,y},
+                        hits:document.elementsFromPoint(x,y).slice(0,8).map(el=>({tag:el.tagName,id:el.id,
+                            className:String(el.className),text:el.textContent.slice(0,160)}))};
+                }""")
+                raise AssertionError('Mobile editor tab click failed: '+json.dumps(state,ensure_ascii=False)) from error
+            self.page.locator('#metro').fill('Юго-Западная')
+            self.assertGreaterEqual(self.page.locator('#metro').evaluate('el=>parseFloat(getComputedStyle(el).fontSize)'),16)
+            self.assertGreaterEqual(self.page.locator('#generate').bounding_box()['height'],44)
+            self.assert_mobile_fit()
+        finally:
+            self.controller.shutdown();thread.join()
+
+    def test_mac_generation_and_text_edits_sync_without_duplicate_cards(self):
+        # Synthetic job response checks autosave/sync; no model is invoked.
+        from browser_text_jobs_fixture import MockTextJobs
+        jobs=MockTextJobs(self.page,'local',hold=True)
+        thread=threading.Thread(target=self.controller.serve_forever,daemon=True);thread.start()
+        try:
+            with patch.object(self.controller.phone_relay,'status',return_value={'enabled':True,'port':self.phone.server_port,'urls':[]}):
+                self.page.goto(self.controller.desktop_access.launch_url(self.controller.server_port))
+                self.page.wait_for_function("document.documentElement.dataset.editorReady==='true'")
+                self.page.wait_for_function("document.getElementById('phoneConnectionStatus').textContent.includes('включён')")
+                self.page.locator('#price').fill('90000');self.page.locator('#area').fill('55')
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/text-jobs') and response.request.method=='POST') as queued:
+                    self.page.locator('#generate').click()
+                self.assertEqual(queued.value.status,202)
+                self.assertEqual(len(jobs.requests),1)
+                self.assertEqual(jobs.requests[0]['action'],'preview')
+                self.assertEqual(jobs.requests[0]['part'],'all')
+                self.assertEqual(jobs.requests[0]['fields']['price'],'90000')
+                self.assertEqual(jobs.requests[0]['fields']['area'],'55')
+                self.assertTrue(self.page.locator('#generate').is_disabled())
+                self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),1,
+                                 'An unfinished text job must not create a synced card')
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000) as saved:
+                    jobs.release_all()
+                self.assertEqual(saved.value.status,200)
+                self.page.wait_for_function("!document.getElementById('generate').disabled&&document.getElementById('resultLink').getAttribute('href')?.startsWith('/listing/')")
+                result_id=self.page.locator('#resultLink').get_attribute('href').rsplit('/',1)[-1]
+                generated_body=self.page.locator('#output').input_value()
+                self.assertIn('90,000₽',generated_body)
+                self.assertIn('55㎡',generated_body)
+                self.assertEqual(local_server.read_result(self.directory,result_id)['body'],generated_body)
+                self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),2)
+                with self.page.expect_response(lambda response:response.url.endswith('/api/local/save') and response.request.method=='POST',timeout=12000):
+                    self.page.locator('#output').fill('运营人员修订后的最终中文说明。')
+                self.assertEqual(local_server.read_result(self.directory,result_id)['body'],'运营人员修订后的最终中文说明。')
+                self.assertEqual(len(phone_relay.list_cards(self.directory)['cards']),2)
+                self.assertEqual(len(jobs.requests),1,'Manual text editing must save without regenerating')
+        finally:
+            self.controller.shutdown();thread.join()
+
+
+if __name__=='__main__':unittest.main()

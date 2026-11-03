@@ -1,0 +1,73 @@
+{
+  "version": 2,
+  "kind": "dictionary-and-source-phrase-audit",
+  "cardsInspected": 82,
+  "sourceSnapshotSha256": "b73b7b40c63ea2765b034576d4090e532b62a411a371f34d64f932cffe17aee4",
+  "totals": {
+    "newPhrases": 945,
+    "duplicatePhrases": 107,
+    "knownPhrases": 34,
+    "sourceSentences": 1086
+  },
+  "uniqueSourcePhrases": 945,
+  "indexedCards": 80,
+  "approvedExamplesCreated": 0,
+  "weightsUpdated": false,
+  "scope": "Dictionary census plus isolated replay and native production source-phrase backfill; no source content published",
+  "dictionary": {
+    "previousPairCount": 91120,
+    "normalizedPairs": 90824,
+    "normalizedRussianKeys": 68200,
+    "openRawRows": 89171,
+    "openNormalizedPairs": 88894,
+    "openNormalizedRussianKeys": 66360,
+    "openHumanReviewedPairs": 0,
+    "baseRules": 2024,
+    "meaning": "Dictionary records, never model-trained vocabulary",
+    "coreNormalizedPairs": 1985,
+    "coreOpenNormalizedOverlap": 55,
+    "unionFormula": "1985 + 88894 - 55 = 90824",
+    "scope": "Shipped dictionary with no custom profile rules; UI recomputes active profile separately"
+  },
+  "sourceRawTextPublished": false,
+  "allDictionaryIndicesComplete": true,
+  "dryRun": {
+    "cardsInspected": 82,
+    "indexedCards": 80,
+    "totals": {
+      "newPhrases": 945,
+      "duplicatePhrases": 107,
+      "knownPhrases": 34,
+      "sourceSentences": 1086
+    },
+    "uniqueSourcePhrases": 945,
+    "approvedExamplesCreated": 0,
+    "weightsUpdated": false
+  },
+  "productionBackfill": {
+    "status": "completed",
+    "cardsInspected": 82,
+    "cardsWithSourceDescription": 80,
+    "totals": {
+      "newPhrases": 945,
+      "duplicatePhrases": 107,
+      "knownPhrases": 34,
+      "sourceSentences": 1086
+    },
+    "pendingUniqueSourcePhrases": 945,
+    "approvedExamplesCreated": 0,
+    "weightsUpdated": false,
+    "memoryBackupCreated": true,
+    "memoryBackupFile": "learning-memory-before-discovery-v30.sqlite3",
+    "evidenceSource": "Native deployment-agent backfill result, reported to the audit agent on 2026-11-03; complete private receipt remains on the operator Mac",
+    "fullPrivateReceiptPublished": false
+  },
+  "idlePrerequisitesAtAudit": {
+    "approvedExamples": 0,
+    "independentApprovedGroups": 0,
+    "minimumNewExamples": 20,
+    "minimumIndependentGroups": 5,
+    "pendingPhrasesAreTrainingExamples": false,
+    "liveProcessIsSeparateFromSavedPhase": true
+  }
+}

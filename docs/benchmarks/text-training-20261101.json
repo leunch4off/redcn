@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-01",
+  "hardware": "Mac mini M2, 8 GB; native ARM64 Python 3.11",
+  "baseModel": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+  "revision": "a5339a4131f135d0fdc6a5c8b5bbed2753bbe0f3",
+  "baseBytes": 278064920,
+  "baseSha256": "ddffab9cbc7bf6dde941c6724841eeca8981fcfa81ca20ff8efff1396326d153",
+  "packages": {"mlx": "0.32.4", "mlx-lm": "0.30.6"},
+  "trainableParameters": 540672,
+  "adapterBytes": 2172841,
+  "experiments": [
+    {"name":"first","train":107,"validation":25,"validationLossExamples":8,"steps":60,"elapsedSeconds":11.382371042,"changedElements":540672,"baselineLoss":3.2475889772,"finalLoss":2.0892445445,"peakMlxBytes":558911400,"adapterSha256":"9a62ab74c4b9c71ba785d4b5de4134f8cca1c8e527f27ab54ec69816bc601a97","status":"rejected-for-promotion","findings":["sofa omitted in RU-ZH probe","figures lost in ZH-RU probe","invalid grounded JSON"]},
+    {"name":"low-rate","train":107,"validation":25,"validationLossExamples":8,"steps":120,"elapsedSeconds":17.411343375,"changedElements":540672,"baselineLoss":3.2475889772,"finalLoss":1.5218520686,"peakMlxBytes":564865884,"adapterSha256":"d259cf0c59130bc0feaf6f281a1732a67596edab99659ffe366ef4654c6a57fa","status":"rejected-for-promotion","findings":["furniture terms preserved in RU-ZH smoke","mixed languages in ZH-RU","JSON format not followed"]},
+    {"name":"balanced","train":84,"validation":24,"validationLossExamples":8,"steps":462,"requestedSteps":500,"stoppedAtTimeBudget":true,"elapsedSeconds":120.864442,"changedElements":540672,"baselineLoss":1.3690013587,"finalLoss":0.6454663761,"peakMlxBytes":632613032,"adapterSha256":"3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581","status":"candidate-review-only","findings":["furniture terms and figures preserved in short smoke checks","wrong output language can still occur","JSON format not reliable","application checks require human editorial review"]}
+  ],
+  "applicationPilot": {"ruZhSeconds":1.601109041,"zhRuSeconds":1.445195042,"threeDraftRequestSeconds":[3.894182166,4.823425667,3.55524],"draftAttemptsPerRequest":2,"automaticPublication":false,"note":"Timing includes isolated worker startup. Short synthetic requests only; not production p50/p95. Guards subsequently tightened for output language, missing price/area and equivalent 8W/8万/80000 notation."},
+  "automaticPromotion": false,
+  "limitations": ["Loss uses eight fixed held-out examples, not all held-out rows.","Three public probes are not independent editorial acceptance.","Peak MLX allocations exclude other process/OS memory.","No claim that the entire open dictionary has been learned."]
+}

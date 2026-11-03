@@ -1,3 +1,4 @@
+import {clientPublicationCard} from './client-publication.mjs';
 const HISTORY_LIMIT=200;
 export function historyFingerprint(value){const s=JSON.stringify([value.title,value.body,value.tags,value.fields]);let hash=2166136261;for(let i=0;i<s.length;i++)hash=Math.imul(hash^s.charCodeAt(i),16777619);return (hash>>>0).toString(16);}
 export function historyEntry(kind,value,now=new Date().toISOString()){
@@ -6,11 +7,12 @@ export function historyEntry(kind,value,now=new Date().toISOString()){
  const frozen=JSON.parse(JSON.stringify(value));
  return {version:1,id:globalThis.crypto?.randomUUID?.()||'event-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),kind,at:now,...frozen,fingerprint:historyFingerprint(frozen)};
 }
-export function historyHtml(entry){const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function historyHtml(entry){entry=clientPublicationCard(entry);const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const rows=Object.entries(entry.fields).filter(([k,v])=>!['sourceAudit','photos'].includes(k)&&v!==''&&v!==undefined).map(([k,v])=>'<tr><th>'+escape(k)+'</th><td><pre>'+escape(typeof v==='object'?JSON.stringify(v,null,2):v)+'</pre></td></tr>').join('');
- return '<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>'+escape(entry.title)+'</title><style>body{max-width:1050px;margin:40px auto;padding:25px;font:16px/1.7 system-ui;background:#fafaf6;color:#28382e}article,details{padding:24px;background:white;border:1px solid #dbe2d8;border-radius:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}table{width:100%;border-collapse:collapse}th,td{padding:12px;border:1px solid #ddd;text-align:left;vertical-align:top}th{width:220px}small{color:#657763}</style><small>МОСТ · '+escape(entry.at)+' · '+escape(entry.kind)+'</small><article><h1>'+escape(entry.title)+'</h1><pre>'+escape(entry.body)+'</pre><pre>'+escape(entry.tags)+'</pre></article><details open><summary>Поля редактора на момент действия</summary><table>'+rows+'</table></details><details><summary>Доказательства разбора источника</summary><pre>'+escape(JSON.stringify(entry.fields.sourceAudit||{},null,2))+'</pre></details></html>';
+ return '<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>'+escape(entry.title)+'</title><style>body{max-width:1050px;margin:40px auto;padding:25px;font:16px/1.7 system-ui;background:#fafaf6;color:#28382e}article,details{padding:24px;background:white;border:1px solid #dbe2d8;border-radius:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit}table{width:100%;border-collapse:collapse}th,td{padding:12px;border:1px solid #ddd;text-align:left;vertical-align:top}th{width:220px}small{color:#657763}</style><small>МОСТ · '+escape(entry.at)+' · '+escape(entry.kind)+'</small><article><h1>'+escape(entry.title)+'</h1><pre>'+escape(entry.body)+'</pre><pre>'+escape(entry.tags)+'</pre></article><details open><summary>Поля редактора на момент действия</summary><table>'+rows+'</table></details></html>';
 }
 export async function publicationPng(entry){
+ entry=clientPublicationCard(entry);
  const width=1200,padding=64,lineHeight=38,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');if(!ctx)throw Error('Браузер не поддерживает PNG-снимок');
  ctx.font='26px system-ui, sans-serif';const wrapped=[];
  const segments=text=>globalThis.Intl?.Segmenter?[...new Intl.Segmenter('zh',{granularity:'grapheme'}).segment(text)].map(x=>x.segment):Array.from(text);

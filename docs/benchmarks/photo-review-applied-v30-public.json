@@ -1,0 +1,34 @@
+{
+  "cards": 82,
+  "textPreserved": true,
+  "manualCountsPreserved": true,
+  "selectedPhotosPreserved": true,
+  "libraryOrderPreserved": true,
+  "configuredPhotoModel": "redcn-furniture-world-v2",
+  "photoAutoApply": true,
+  "summary": {
+    "cards": 82,
+    "reviewedPhotos": 1149,
+    "positiveWitnesses": 2954,
+    "addedFeatures": 947,
+    "conflicts": 23,
+    "skipped": 6
+  },
+  "applicationReceiptSha256": "3703827214335f93cc7edae8c776866b9cebfc42df7d76a15c5f8cea2c024083",
+  "sourceCommit": "083355df9e7a758d8e3abb6c71ebaf61654302c7",
+  "version": 1,
+  "kind": "installed-assistant-photo-review-v30",
+  "humanVerified": false,
+  "exhaustive": false,
+  "modelWeightsChangedByReview": false,
+  "corpusCards": 82,
+  "corpusPhotos": 1155,
+  "rawPositiveWitnesses": 3009,
+  "cardsWithoutPhotos": 4,
+  "sourcePhotosPreserved": true,
+  "limitations": [
+    "Assistant observations are separate from local model predictions and human labels.",
+    "Counts of witnesses are not numbers of unique objects across angles.",
+    "23 conflicts remain for review; six replaced or excluded photos are not rebound."
+  ]
+}

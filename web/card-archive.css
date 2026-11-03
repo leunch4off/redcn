@@ -1,0 +1,37 @@
+.card-archive{--archive-ink:#334638;--archive-muted:#75816f;--archive-line:#dfe5d8;box-sizing:border-box;min-width:0;margin:20px 0;padding:24px;border:1px solid var(--archive-line);border-radius:18px;background:#fffefb;color:var(--archive-ink);overflow-wrap:anywhere}
+.card-archive *{box-sizing:border-box}
+.card-archive .archive-title-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-archive h2{font-size:19px;line-height:1.4;margin:0}
+.card-archive h3{font-size:15px;line-height:1.5;margin:22px 0 12px}
+.card-archive .archive-private{display:inline-block;font-size:11px;line-height:1.4;padding:6px 9px;background:#ecf0e6;color:#627455;border-radius:99px}
+.card-archive p{font-size:13px;line-height:1.65;margin:8px 0;color:var(--archive-muted)}
+.card-archive .archive-status{min-height:23px;color:#527047}
+.card-archive .archive-status.archive-error{color:#a15139}
+.card-archive .archive-form{display:grid;gap:12px}
+.card-archive label{display:block;font-size:12px;font-weight:550;line-height:1.5;color:#63735b;margin:0}
+.card-archive input,.card-archive select,.card-archive textarea{display:block;width:100%;min-width:0;max-width:100%;min-height:46px;border:1px solid #d6dfce;border-radius:10px;padding:11px 12px;margin-top:7px;font:inherit;font-size:16px;line-height:1.5;background:#fbfcf7;color:#334638}
+.card-archive textarea{resize:vertical;min-height:120px}
+.card-archive input[type=file]{font-size:13px;background:#f5f7ef;white-space:normal;overflow-wrap:anywhere;padding:9px}
+.card-archive input[type=file]::file-selector-button{font:inherit;padding:8px 9px;margin-right:10px;border:0;border-radius:6px;background:#e3ebd9;color:#47603b}
+.card-archive .archive-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:11px 15px;border:1px solid #d4ddcb;border-radius:10px;background:#f6f8f1;color:#4a6540;font:inherit;font-size:13px;line-height:1.4;text-align:center;cursor:pointer;white-space:normal}
+.card-archive .archive-button.archive-primary{background:#38533d;border-color:#38533d;color:#fff}
+.card-archive .archive-button[hidden]{display:none!important}
+.card-archive .archive-button.archive-remove{color:#9c5b46;border-color:#eadacf;background:#fffaf5}
+.card-archive .archive-button:disabled,.card-archive input:disabled,.card-archive select:disabled,.card-archive textarea:disabled{opacity:.55;cursor:default}
+.card-archive .archive-button:focus-visible,.card-archive input:focus-visible,.card-archive select:focus-visible,.card-archive textarea:focus-visible{outline:3px solid #a0b98e;outline-offset:3px}
+.card-archive .archive-dirty{margin:0;color:#9b7644;font-size:12px;min-height:18px}
+.card-archive .archive-upload{display:grid;gap:12px;margin-top:14px;border-top:1px solid var(--archive-line);padding-top:3px}
+.card-archive .archive-upload h3{margin-bottom:0}
+.card-archive .archive-confidentiality{padding:11px 12px;border-left:3px solid #bbcbb0;background:#f2f6ec;border-radius:0 8px 8px 0;font-size:12px;color:#66745d;margin:0}
+.card-archive .archive-file-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.card-archive .archive-file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:14px;border:1px solid var(--archive-line);border-radius:12px;background:#fafbf6;min-width:0}
+.card-archive .archive-file-info{min-width:0;align-self:center}
+.card-archive .archive-file-info strong{font-size:13px;line-height:1.6;font-weight:600;word-break:break-word}
+.card-archive .archive-file-info p{font-size:11px;margin:3px 0 0}
+.card-archive .archive-file-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.card-archive .archive-file-actions .archive-button{font-size:12px;padding:10px 11px}
+.card-archive .archive-remove-confirm{grid-column:1/-1;padding-top:8px;border-top:1px solid #e5e9df}
+.card-archive .archive-remove-confirm[hidden],.card-archive .archive-empty[hidden]{display:none!important}
+.card-archive .archive-remove-confirm .archive-button{margin:7px 7px 0 0}
+.card-archive .archive-empty{padding:15px 0}
+@media(max-width:600px){.card-archive{padding:18px;border-radius:17px;margin:18px 0}.card-archive h2{font-size:17px}.card-archive .archive-file{grid-template-columns:minmax(0,1fr)}.card-archive .archive-file-actions{display:grid;grid-template-columns:1fr 1fr}.card-archive .archive-form>.archive-button,.card-archive .archive-upload>.archive-button{width:100%}.card-archive .archive-button{min-height:46px}.card-archive .archive-private{font-size:10px}}

@@ -1,0 +1,262 @@
+"""Collect local observations for cached selected originals, once per SHA-256.
+
+This module never downloads photos, changes listing facts or stores image bytes
+in the result. The import coordinator merges the returned evidence separately.
+"""
+import math
+import hashlib
+import re
+import time
+
+from job_progress import emit
+from ai_telemetry import sanitize_ai
+from local_photo_ai import AUTO_CONFIDENCE, FEATURE_LABELS, normalize_inventory
+from photo_auto_policy import assistant_reviews, detector_suggestion, human_decisions, review_journal
+from photo_limits import PHOTO_SOURCE_LIMIT
+import photo_store
+
+VERSION = 1
+COVERAGE_LIMIT = PHOTO_SOURCE_LIMIT
+_DIGEST = re.compile(r'[a-f0-9]{64}\Z')
+
+
+def _configuration(directory):
+    from photo_ai_settings import load_config
+    return load_config(directory)
+
+
+def _cancelled(cancel):
+    if cancel is not None and cancel.is_set():
+        raise ValueError('Анализ фотографий отменён')
+
+
+def _sources(result):
+    from phone_relay import source_images
+    # Count exactly the same union that is scanned: source gallery, editable
+    # photos and retained source metadata, excluding layouts/operator removals.
+    # An old one-photo editor field must not hide a larger source album.
+    available = source_images(result, limit=None)
+    return available[:COVERAGE_LIMIT], len(available)
+
+
+def _evidence(raw):
+    rows = []
+    for evidence in raw[:8] if isinstance(raw, list) else []:
+        if not isinstance(evidence, dict):
+            continue
+        row = {key: value[:300] for key, value in evidence.items() if key in (
+            'kind', 'text', 'label', 'photoId', 'originalId', 'provider', 'model', 'source', 'rawClassId') and isinstance(value, str)}
+        score = evidence.get('confidence')
+        if type(score) in (int, float) and math.isfinite(score) and 0 <= score <= 1:
+            row['confidence'] = score
+        if type(evidence.get('directlyVisible')) is bool:
+            row['directlyVisible'] = evidence['directlyVisible']
+        region = evidence.get('region')
+        if isinstance(region, list) and len(region) == 4 and all(type(value) in (int, float) and math.isfinite(value) and 0 <= value <= 1 for value in region):
+            row['region'] = region[:]
+        if row:
+            rows.append(row)
+    return rows
+
+
+def _positive(candidate, analysis, digest, model):
+    if candidate.get('autoEligible') is not True or analysis.get('provider') != 'ollama' or analysis.get('model') != model:
+        return False
+    if isinstance(analysis.get('unknownIds'), list) and candidate['id'] in analysis['unknownIds']:
+        return False
+    for evidence in candidate['evidence']:
+        if (evidence.get('kind') != 'model-visual-observation' or evidence.get('provider') != 'ollama'
+                or evidence.get('model') != model or evidence.get('photoId') != digest
+                or evidence.get('source') != 'local-photo'
+                or evidence.get('originalId') != digest or evidence.get('directlyVisible') is not True
+                or evidence.get('confidence') != candidate['confidence']):
+            continue
+        # Revalidate rather than trusting a stale cache's autoEligible flag.
+        raw = {'objects': [{'id': candidate['id'], 'visible': True,
+            'confidence': candidate['confidence'], 'count': None, 'countExact': False,
+            'evidence': evidence.get('text', '')}], 'unknownIds': []}
+        normalized = normalize_inventory(raw, digest, model)['candidates']
+        if normalized and normalized[0]['autoEligible']:
+            return True
+    return False
+
+
+def _candidates(analysis, digest, model, *, auto_apply=False):
+    output = []
+    rows = analysis.get('candidates')
+    seen = set()
+    for row in rows[:len(FEATURE_LABELS)] if isinstance(rows, list) else []:
+        if not isinstance(row, dict) or not isinstance(row.get('id'), str) or row['id'] not in FEATURE_LABELS:
+            continue
+        feature = 'bedAny' if row['id'] == 'bed' else row['id']
+        score = row.get('confidence')
+        if feature in seen or type(score) not in (int, float) or not math.isfinite(score) or not 0 <= score <= 1:
+            continue
+        seen.add(feature)
+        count = row.get('count')
+        candidate = {'id': feature, 'label': FEATURE_LABELS[feature], 'confidence': score,
+            'count': count if type(count) is int and 1 <= count <= 12 else None,
+            'status': 'candidate', 'evidence': _evidence(row.get('evidence')),
+            'autoEligible': row.get('autoEligible') is True, 'autoCountEligible': False}
+        candidate['autoEligible'] = _positive(candidate, analysis, digest, model)
+        candidate['automaticSuggestion'] = auto_apply is True and detector_suggestion(candidate, analysis, digest)
+        if candidate['automaticSuggestion']:
+            candidate.update(status='auto-proposed',requiresConfirmation=True,reviewReason='model-unaccepted',
+                reviewId=hashlib.sha256((digest+'|'+feature).encode()).hexdigest())
+        output.append(candidate)
+    return output
+
+
+def analyze_listing_photos(directory, result, report=None, cancel=None, *, max_seconds=600):
+    """Analyze at most 200 cached originals within one explicit wall deadline.
+
+    Missing files, bad responses, timeouts and duplicates are represented per
+    source URL. Cancellation raises ValueError. An incomplete album never
+    becomes a complete inventory, and no visual result means absence.
+    """
+    _cancelled(cancel)
+    selected, available = _sources(result if isinstance(result, dict) else {})
+    output = {'version': VERSION, 'state': 'complete', 'total': len(selected),
+        'totalAvailable': available, 'coverageLimit': COVERAGE_LIMIT,
+        'truncated': available > COVERAGE_LIMIT, 'overLimit': max(0, available-COVERAGE_LIMIT),
+        'coverageComplete': False, 'checked': 0, 'failed': 0,
+        'skipped': 0, 'features': [], 'photoEvidence': [], 'photos': []}
+    try:
+        config = _configuration(directory)
+    except (OSError, ValueError, ImportError):
+        config = {}
+    if not isinstance(config, dict) or config.get('enabled') is not True or not isinstance(config.get('model'), str) or not config['model'].strip():
+        return {**output, 'state': 'disabled', 'skipped': len(selected),
+            'message': 'Локальный анализ фото не включён'}
+    model = config['model'].strip()
+    output['autoApply'] = config.get('autoApply') is True
+    output['autoApplyMode'] = ('suggestions-only' if model in ('redcn-furniture-v1','redcn-furniture-world-v2') else 'direct-observations') if output['autoApply'] else 'off'
+    fields = result.get('fields') if isinstance(result.get('fields'), dict) else {}
+    configured_budget = config.get('maxSeconds', max_seconds)
+    if type(max_seconds) not in (int, float) or not math.isfinite(max_seconds) or not 0 < max_seconds <= 1800:
+        return {**output, 'state': 'partial', 'skipped': len(selected), 'message': 'Неверный общий лимит анализа фото'}
+    if type(configured_budget) not in (int, float) or not math.isfinite(configured_budget) or configured_budget <= 0:
+        configured_budget = max_seconds
+    deadline = time.monotonic() + min(max_seconds, configured_budget, 1800)
+    by_url = {}
+    for row in result.get('media', []) if isinstance(result, dict) and isinstance(result.get('media'), list) else []:
+        if isinstance(row, dict) and isinstance(row.get('sourceUrl'), str):
+            by_url.setdefault(row['sourceUrl'], row)
+    seen, features = {}, set()
+    incomplete = output['truncated']
+    emit(report, 'Проверяем мебель и технику на фотографиях: ' + str(len(selected)), stage='vision', completed=0, total=len(selected))
+    for index, url in enumerate(selected):
+        _cancelled(cancel)
+        row = by_url.get(url, {})
+        digest = row.get('id')
+        photo = {'sourceUrl': url, 'originalId': digest if isinstance(digest, str) and _DIGEST.fullmatch(digest) else '',
+            'status': 'pending', 'candidates': [], 'unknownIds': [key for key in FEATURE_LABELS if key != 'bed']}
+        output['photos'].append(photo)
+        if time.monotonic() >= deadline:
+            photo['status'] = 'skipped'; photo['reason'] = 'budget'
+            output['skipped'] += 1; incomplete = True
+        elif not photo['originalId'] or row.get('error'):
+            photo['status'] = 'skipped'; photo['reason'] = 'original-unavailable'
+            output['skipped'] += 1; incomplete = True
+        elif digest in seen:
+            photo['status'] = 'duplicate'; photo['duplicateOf'] = seen[digest]
+            output['skipped'] += 1
+        else:
+            seen[digest] = url
+            emit(report, 'Фото ' + str(index + 1) + ' из ' + str(len(selected)) + ': распознаём видимые предметы',
+                stage='vision', completed=index, total=len(selected))
+            try:
+                _, _, original = photo_store.asset(directory, digest)
+                if original.get('kind') != 'original' or original.get('id') != digest:
+                    raise ValueError('Нужен проверенный оригинал')
+                def photo_progress(message, **details):
+                    ai = sanitize_ai({**(details.get('ai') if isinstance(details.get('ai'), dict) else {}),
+                        'photoIndex': index + 1, 'photoTotal': len(selected), 'operation': 'furniture'})
+                    emit(report, message, **{**details, 'stage': 'vision', 'ai': ai,
+                        'completed': index, 'total': len(selected)})
+                analysis = photo_store.analyze_photo(directory, digest, cancel=cancel,
+                    deadline=min(deadline, time.monotonic() + 120), status=photo_progress)
+                _cancelled(cancel)
+                if not isinstance(analysis, dict) or analysis.get('originalId') != digest:
+                    raise ValueError('Анализ относится к другому оригиналу')
+                status = analysis.get('status')
+                photo['engine'] = str(analysis.get('engine', ''))[:300]
+                photo['provider']=str(analysis.get('provider',''))[:40]
+                photo['model']=str(analysis.get('model',''))[:150]
+                photo['cached']=analysis.get('cached') is True
+                photo['autoApply']=output['autoApply'] and analysis.get('autoApply',True) is True
+                photo['autoApplyMode']=str(analysis.get('autoApplyMode',output['autoApplyMode']))[:40]
+                if isinstance(analysis.get('ai'),dict):
+                    photo['ai']=sanitize_ai({**analysis['ai'],'photoIndex':index+1,'photoTotal':len(selected)})
+                for key in ('errorCode', 'failurePhase'):
+                    if isinstance(analysis.get(key), str):
+                        photo[key] = analysis[key][:100]
+                if isinstance(analysis.get('diagnostics'), dict):
+                    photo['diagnostics'] = {key: value for key, value in analysis['diagnostics'].items()
+                        if key in ('coldStart', 'budgetSeconds', 'runtimeVerificationSeconds', 'runtimeImportSeconds',
+                            'artifactReadSeconds', 'imagePrepareSeconds', 'sessionLoadSeconds', 'inferenceSeconds',
+                            'workerTotalSeconds', 'workerWaitSeconds', 'decoderVersion')}
+                if status not in ('ok', 'review'):
+                    photo['status'] = status if status in ('disabled', 'unavailable', 'invalid', 'timeout', 'busy', 'cancelled') else 'invalid'
+                    output['failed'] += 1; incomplete = True
+                else:
+                    candidates = _candidates(analysis, digest, model, auto_apply=photo['autoApply'])
+                    rejected, confirmed = human_decisions(fields,url,digest)
+                    assistant = assistant_reviews(fields, digest)
+                    for candidate in candidates:
+                        if candidate['id'] in rejected:
+                            candidate.update(status='rejected',autoEligible=False,automaticSuggestion=False,reviewDecision='rejected')
+                        elif candidate['id'] in confirmed:
+                            candidate.update(status='confirmed',automaticSuggestion=False,reviewDecision='confirmed')
+                        elif candidate['id'] in assistant:
+                            candidate.update(status='assistant-reviewed', autoEligible=False,
+                                automaticSuggestion=False, reviewDecision='assistant-reviewed',
+                                reviewOrigin='assistant-visual-review', humanVerified=False,
+                                assistantReviewId=assistant[candidate['id']]['reviewId'])
+                    photo.update(status='review', candidates=candidates)
+                    unknown = analysis.get('unknownIds')
+                    if isinstance(unknown, list):
+                        photo['unknownIds'] = list(dict.fromkeys(key for key in unknown[:len(FEATURE_LABELS)] if isinstance(key, str) and key in FEATURE_LABELS and key != 'bed'))
+                    output['checked'] += 1
+                    if analysis.get('provider') != 'ollama' or analysis.get('fallbackReason'):
+                        incomplete = True
+                    if analysis.get('provider') in ('yolox-trained','onnx-world'):
+                        output['reviewRequired'] = True
+                    if photo['autoApply']:
+                        for candidate in candidates:
+                            if not candidate['autoEligible'] or candidate['confidence'] < AUTO_CONFIDENCE:
+                                continue
+                            feature = candidate['id']; features.add(feature)
+                            output['photoEvidence'].append({'id': feature, 'status': 'auto-visible',
+                                'autoEligible': True, 'originalId': digest, 'photoId': digest,
+                                'sourceUrl': url, 'confidence': candidate['confidence'],
+                                'evidence': candidate['evidence'], 'engine': photo['engine'], 'count': None})
+                    photo['autoApplySummary']={'requested':output['autoApply'],'mode':photo['autoApplyMode'],
+                        'automaticFacts':sum(row['autoEligible'] for row in candidates) if photo['autoApply'] else 0,
+                        'automaticSuggestions':sum(row.get('automaticSuggestion') is True for row in candidates),
+                        'assistantReviewed':sum(row.get('reviewDecision') == 'assistant-reviewed' for row in candidates),
+                        'needsReview':sum(row.get('reviewDecision') not in ('confirmed','rejected','assistant-reviewed') and not (photo['autoApply'] and row['autoEligible']) for row in candidates)}
+            except (OSError, ValueError):
+                _cancelled(cancel)
+                photo['status'] = 'unavailable'
+                output['failed'] += 1; incomplete = True
+        emit(report, 'Фото проверены: ' + str(index + 1) + ' из ' + str(len(selected)),
+            stage='vision', completed=index + 1, total=len(selected))
+    _cancelled(cancel)
+    output['features'] = sorted(features)
+    output['reviewJournal']=review_journal(fields,output['photos'],requested=output['autoApply'])
+    review_needed={(row['originalId'],row['featureId']) for row in output['reviewJournal']['entries'] if row['state']=='pending'}
+    review_needed.update((photo['originalId'],row['id']) for photo in output['photos'] for row in photo['candidates']
+        if row.get('reviewDecision') not in ('confirmed','rejected','assistant-reviewed') and not (photo.get('autoApply') and row['autoEligible']))
+    output['autoApplySummary']={'requested':output['autoApply'],'mode':output['autoApplyMode'],
+        'automaticFacts':len(output['photoEvidence']),
+        'automaticSuggestions':output['reviewJournal']['pending'],
+        'newSuggestions':output['reviewJournal']['added'],
+        'needsReview':len(review_needed),
+        'assistantReviewed':len({(photo['originalId'], row['id']) for photo in output['photos']
+            for row in photo['candidates'] if row.get('reviewDecision') == 'assistant-reviewed'}),
+        **({'reason':'model-unaccepted','acceptedClasses':0} if model in ('redcn-furniture-v1','redcn-furniture-world-v2') else {})}
+    output['coverageComplete'] = (not output['truncated'] and len(output['photos']) == output['total']
+        and all(row.get('status') in ('review', 'duplicate') for row in output['photos']))
+    output['state'] = 'partial' if incomplete else 'complete'
+    return output

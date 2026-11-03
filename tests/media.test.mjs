@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
-import {photoSourceUrl,photoSources,cropRectangle,photoZip} from '../web/media-core.mjs';
+import {photoSourceUrl,photoSources,listingPhotoSources,cropRectangle,photoZip} from '../web/media-core.mjs';
 import {listingSourceUrl,readRelatedHtml,relatedRank} from '../web/related.mjs';
 import {analyzeListingSource} from '../web/engine.mjs';
 
@@ -10,6 +10,11 @@ test('photo source normalization never turns a relative image into a loopback li
  const url='https://images.cdn-cian.ru/images/123.jpg';assert.equal(photoSourceUrl({sourceUrl:url}),url);assert.equal(photoSourceUrl('//images.cdn-cian.ru/images/123.jpg'),url);
  for(const bad of ['images/1.jpg','http://127.0.0.1:8765/photo.jpg','https://cian.ru.evil.test/x','https://user:pass@cian.ru/a.jpg','data:image/svg+xml,hi','https://cian.ru:444/a'])assert.equal(photoSourceUrl(bad),null);
  assert.deepEqual(photoSources([url,url,{url}]),[url]);
+});
+test('editor retains the36photo source album beyond its one selected field and bounds only after union',()=>{
+ const urls=Array.from({length:205},(_,n)=>'https://images.cdn-cian.ru/images/album-'+n+'.jpg');
+ assert.deepEqual(listingPhotoSources({fields:{photos:[urls[0]]},listing:{images:urls.slice(0,36)}}),urls.slice(0,36));
+ assert.deepEqual(photoSources([urls[0],...urls,'https://evil.test/photo.jpg']),urls.slice(0,200));
 });
 test('crop percentages scale to portrait, landscape and square without stretching',()=>{
  for(const [w,h] of [[1280,978],[720,960],[1000,1000],[4032,3024]]){const r=cropRectangle(w,h,{bottom:12});assert.equal(r.width,w);assert.equal(r.height,Math.ceil(h*.88));assert.equal(r.y,0);}

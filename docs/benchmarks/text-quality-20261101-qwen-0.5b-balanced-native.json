@@ -1,0 +1,648 @@
+{
+  "version": 1,
+  "probeVersion": "authored-heldout-v1-18",
+  "probeSha256": "7235774d47f19b14cae155144eb3f429e0fe99e331fbdc8aab2f30e3d48f64de",
+  "selectedProbeIds": [
+    "ru-zh-equipment-negation",
+    "ru-zh-unconfirmed",
+    "ru-zh-numeric-units",
+    "ru-zh-registration-conditional",
+    "ru-zh-permissions",
+    "ru-zh-rent-deposit",
+    "ru-zh-transit",
+    "zh-ru-equipment-negation",
+    "zh-ru-unconfirmed",
+    "zh-ru-numeric-units",
+    "zh-ru-conditional",
+    "zh-ru-kitchen",
+    "zh-ru-bed-negation",
+    "zh-ru-rent-deposit",
+    "json-price-area",
+    "json-unknown-equipment",
+    "json-two-bedrooms",
+    "json-negative-equipment"
+  ],
+  "backend": "mlx",
+  "model": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+  "baseConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4",
+  "baseArtifacts": {
+    "model.safetensors": "ddffab9cbc7bf6dde941c6724841eeca8981fcfa81ca20ff8efff1396326d153"
+  },
+  "adapterSha256": "3b5a50a32bb1485eee9f6501ed870b822d57e0bbc22bd8704551977e79d22581",
+  "peakMemoryBytes": 438400620,
+  "rss": {
+    "method": "getrusage.ru_maxrss",
+    "platform": "darwin",
+    "nativeUnit": "bytes",
+    "selfPeakRssBytes": 566083584,
+    "childrenPeakRssBytes": 0,
+    "simultaneousProcessTreePeakMeasured": false
+  },
+  "nativeImportSeconds": 0.8866131249997125,
+  "modelLoadSeconds": 0.2575392920007289,
+  "freshProcessStartupSeconds": 1.1441524170004413,
+  "modelReusedAcrossProbes": true,
+  "firstProbeSeconds": 0.2337159579992658,
+  "warmProbeMedianSeconds": 0.241012624999712,
+  "elapsedSeconds": 6.008454167000309,
+  "limits": {
+    "seconds": 600,
+    "tokens": 200
+  },
+  "rows": [
+    {
+      "id": "ru-zh-equipment-negation",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "冰箱和微波炉已配备，但没有洗碗机。",
+      "seconds": 0.2337159579992658,
+      "generatedChunks": 15,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "zh",
+          "han": 15,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "dishwasher",
+          "fridge",
+          "microwave"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-unconfirmed",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "被动空调已配备，沙发已存在。",
+      "seconds": 0.1663459999999759,
+      "generatedChunks": 10,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Изменено наличие, отрицание или условие: aircon",
+          "В переводе не сохранено условие или неопределённость"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 12,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "aircon",
+          "sofa"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-numeric-units",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "月租88300卢布，面积47.2㎡，7楼。",
+      "seconds": 0.23007358399991062,
+      "generatedChunks": 21,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "zh",
+          "han": 7,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-registration-conditional",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "注册时间已确认，需与相关部门协商。",
+      "seconds": 0.17109287499988568,
+      "generatedChunks": 11,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: registration"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 15,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "registration"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-permissions",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "孩子可与宠物同处，宠物不可与人类同处。",
+      "seconds": 0.19683608299965272,
+      "generatedChunks": 15,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Изменено наличие, отрицание или условие: pets"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 17,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "children",
+          "pets"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-rent-deposit",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "公寓无家具。42000元/月，月租76000元。",
+      "seconds": 0.241012624999712,
+      "generatedChunks": 23,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 10,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "ru-zh-transit",
+      "task": "ru-zh",
+      "status": "measured",
+      "text": "步行11分钟即可到达地铁。地铁2号车将在停车处等你。",
+      "seconds": 0.21783616699940467,
+      "generatedChunks": 19,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: bus"
+        ],
+        "language": {
+          "target": "zh",
+          "han": 21,
+          "cyrillic": 0,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "bus",
+          "metro",
+          "walk"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-equipment-negation",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "В квартире есть машина для хода, но нет телевизора.",
+      "seconds": 0.22027029199944081,
+      "generatedChunks": 21,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: washer"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 41,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "tv",
+          "washer"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-unconfirmed",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Во входе нет информации о том, приобретен ли комплект. Ворота уже есть.",
+      "seconds": 0.2483591249992969,
+      "generatedChunks": 25,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: fridge",
+          "В переводе пропущен предмет или условие: wardrobe",
+          "В переводе не сохранено условие или неопределённость"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 57,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "fridge",
+          "wardrobe"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-numeric-units",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Возможность установки составляет 91200 рублей/суту, площадь 51.5 м², расположена на 16 этаже.",
+      "seconds": 0.3278774580003301,
+      "generatedChunks": 39,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 66,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-conditional",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "В случае приобретения жилья необходимо получить согласие собственника. Не стоит сразу попытаться прожить там.",
+      "seconds": 0.2811409169999024,
+      "generatedChunks": 30,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: pets",
+          "В переводе не сохранено условие или неопределённость",
+          "В переводе не сохранено отрицание"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 94,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "pets"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-kitchen",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "В Kitchen есть oven and microwave, but there's no computer.",
+      "seconds": 0.18790695799998502,
+      "generatedChunks": 14,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Модель не вернула полный перевод на выбранном языке",
+          "В переводе пропущен предмет или условие: microwave",
+          "В переводе пропущен предмет или условие: computer",
+          "В переводе пропущен предмет или условие: oven",
+          "В переводе не сохранено отрицание"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 5,
+          "latin": 42,
+          "passed": false
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "computer",
+          "microwave",
+          "oven"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-bed-negation",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Вместе нет кровати-double bed. Вместе нет armchair.",
+      "seconds": 0.20194987500053685,
+      "generatedChunks": 18,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Модель не вернула полный перевод на выбранном языке",
+          "В переводе пропущен предмет или условие: sofa"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 25,
+          "latin": 17,
+          "passed": false
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "bed",
+          "sofa"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-rent-deposit",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Прилично 68000 рублей на счет, 34000 рублей опоздали.",
+      "seconds": 0.2551972080000269,
+      "generatedChunks": 26,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Проверьте, что суммы аренды и залога сохранили своё значение",
+          "В переводе изменён или пропущен период оплаты"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 34,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": false,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "json-price-area",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\"title\": \"莫斯科46.7㎡，售价83800卢布\", \"body\": \"已确认面积46.7㎡，租金83800卢布/月。配有冰箱和书桌。\"}",
+      "seconds": 0.4220979579995401,
+      "generatedChunks": 52,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Аренда ошибочно описана как продажа или покупка"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "json-unknown-equipment",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\"title\": \"莫斯科43.5㎡公寓｜77500卢布/月\", \"body\": \"已确认沙发，洗碗机是否配备未确认。面积43.5㎡，租金77500卢布/月。\"}",
+      "seconds": 0.45714137499999197,
+      "generatedChunks": 58,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "json-two-bedrooms",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\"title\": \"莫斯科公寓｜61㎡，月租105500卢布\", \"body\": \"桌已设，两间独立卧室，冰箱。\"}",
+      "seconds": 0.34991941699991,
+      "generatedChunks": 39,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "json-negative-equipment",
+      "task": "listing",
+      "status": "measured",
+      "text": "{\"title\": \"莫斯科33.5㎡｜61500卢布\", \"body\": \"床已配备，洗衣机和空调未加。\"}",
+      "seconds": 0.32556366699918726,
+      "generatedChunks": 35,
+      "tokenBudgetReached": false,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Изменено наличие, отрицание или условие: washer"
+        ],
+        "jsonShapeCorrect": true,
+        "automaticSemanticVerification": false
+      }
+    }
+  ],
+  "summary": {
+    "all": {
+      "applicable": 18,
+      "measured": 18,
+      "checksPassed": 4,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": 0.2373642914994889,
+      "maxSeconds": 0.45714137499999197
+    },
+    "ru-zh": {
+      "applicable": 7,
+      "measured": 7,
+      "checksPassed": 2,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": 0.21783616699940467,
+      "maxSeconds": 0.241012624999712
+    },
+    "zh-ru": {
+      "applicable": 7,
+      "measured": 7,
+      "checksPassed": 0,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": 0.2483591249992969,
+      "maxSeconds": 0.3278774580003301
+    },
+    "listing": {
+      "applicable": 4,
+      "measured": 4,
+      "checksPassed": 2,
+      "unavailable": 0,
+      "incomplete": 0,
+      "medianSeconds": 0.38600868749972506,
+      "maxSeconds": 0.45714137499999197
+    }
+  },
+  "checkerSha256": {
+    "text_quality.py": "53058d583d0d52c1812ab2297b0568de8bd76c44ff74ce3086159e1b9fed3c1e",
+    "local_content.py": "30d11c1ae41f07a0691a7dfd3ea458158024a409a2eb9016835189c69de87403"
+  },
+  "styleDiagnostics": {
+    "jsonCards": 4,
+    "uniqueNormalizedTitles": 4,
+    "repeatedTitleCount": 0,
+    "bodyCopiedVerbatimFromInputIds": [],
+    "originalityAutomaticallyEstablished": false
+  },
+  "automaticPromotion": false,
+  "nativeLanguageReviewCompleted": false,
+  "limitations": [
+    "These are development probes, not unseen native-reviewed benchmarks.",
+    "Known concept, number, language and JSON checks do not establish all semantic accuracy.",
+    "Compare the same probeSha256 and task subgroup; Argos does not support this project's reverse direction or JSON writing."
+  ]
+}

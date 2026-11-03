@@ -1,0 +1,935 @@
+{
+  "version": 1,
+  "kind": "real-frame-watermark-calibration",
+  "sourceSha256": {
+    "watermark-manifest.frozen.json": "7d2170f3185ad87149f34438fec19d6d453aabab89f10db0ed1d5166ebb8a1d7",
+    "evaluate-real-watermarks.py": "6beaabba3f39a1951c4f0a60be5e6e3b9215acad9b5cc7acb8775b47d867f270",
+    "photo_store.py": "b43419417e687ceef15bdba21d397111476abfc0cb439f6df0e7494b44f06ea5",
+    "recognize-photo.swift": "96738cb67727812cc3406d8a1a5c7122e9a919832267e67f103c09c1d8706de7",
+    "watermark_quality.py": "866b6b50f97219aed1ff7ca277ea34a3d17961b11603e01e92ba7280ff548f11"
+  },
+  "annotation": {
+    "kind": "Codex visual inspection",
+    "independentHuman": false,
+    "frozenBeforeDetectorOutput": true,
+    "syntheticOverlayFrames": 0,
+    "annotationApproximate": true,
+    "pixelBoxTolerance": "approximately 3 percent; boxes conservatively include icon and identifier footer",
+    "trainingUseAllowed": false,
+    "frozenAt": "2026-11-01T19:38:49.650629+00:00",
+    "targetWatermarks": [
+      "Cian",
+      "Avito"
+    ],
+    "positiveSourceCoverage": [
+      "Cian only; no real Avito positive in this subset"
+    ],
+    "publicControlSelection": "Four pinned validation photographs selected by byte budget, before visual labels or detector output; all four retained."
+  },
+  "platform": {
+    "system": "Linux",
+    "release": "6.18.57",
+    "machine": "x86_64"
+  },
+  "software": {
+    "macOS": null,
+    "tesseractBinarySha256": "9f831cab7525c3dab04af41bda35182af7ea1df9dceeaaa2f3bf207ac45c06a5",
+    "tesseractVersion": "tesseract 5.3.4"
+  },
+  "requestedFrames": 20,
+  "measuredFrames": 20,
+  "unmeasuredFrameIds": [],
+  "complete": true,
+  "stopReason": null,
+  "scoreThreshold": 0.8,
+  "metrics": {
+    "tp": 0,
+    "fp": 0,
+    "fn": 14,
+    "tn": 5,
+    "detectorErrors": 0,
+    "unknownTruthExcluded": 1,
+    "verifiedPositiveFrames": 14,
+    "verifiedNegativeFrames": 5,
+    "precision": null,
+    "recall": 0.0,
+    "falsePositiveRate": 0.0,
+    "falseNegativeRate": 1.0,
+    "noDetectionProvesClean": false
+  },
+  "frames": [
+    {
+      "id": "frame-01",
+      "sha256": "12c61a696e1c4fcfd09d220b3f97d625ce9bf584e2658597d979c7ce0f02aede",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "glass shelving",
+          "region": [
+            0.75,
+            0.23,
+            0.25,
+            0.77
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.8504675210060668,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-02",
+      "sha256": "b3823f11881fae2f33545a146167ad298bb2d2c352967a69d5f1d61d00fdb842",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "oven",
+          "region": [
+            0.46,
+            0.72,
+            0.28,
+            0.28
+          ]
+        },
+        {
+          "label": "fridge",
+          "region": [
+            0.1,
+            0.35,
+            0.23,
+            0.61
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.92582360200322,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-03",
+      "sha256": "3299d9a6b850c1e81c82d715c583a4c908e52c29e962f1f36d4343db4af40639",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "oven",
+          "region": [
+            0.21,
+            0.74,
+            0.29,
+            0.26
+          ]
+        },
+        {
+          "label": "kitchen sink",
+          "region": [
+            0.47,
+            0.59,
+            0.23,
+            0.11
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.9191873150048195,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-04",
+      "sha256": "2b654f3a2565e7afbf19ca7264235f0429db1aeffd7ad08425fcb02d25eec109",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "toilet",
+          "region": [
+            0.31,
+            0.56,
+            0.24,
+            0.4
+          ]
+        },
+        {
+          "label": "visible basin",
+          "region": [
+            0.87,
+            0.76,
+            0.13,
+            0.24
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 1.0812216869962867,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-05",
+      "sha256": "c331baa3c02d1d515835ce2a982daaee45efd052b4c0cb6eb28ef714ce4b1edd",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "basin",
+          "region": [
+            0.41,
+            0.73,
+            0.45,
+            0.18
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.9832749419947504,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-06",
+      "sha256": "ce93495199d900f4bf7a7689214c2a7121d5ea50d8bde431741854b757f0953c",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "sofa",
+          "region": [
+            0.4,
+            0.65,
+            0.6,
+            0.34
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 1.005604135003523,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-07",
+      "sha256": "5f0605516b864dfafc838619516df83526f8bfb4dd38073c22d6b683b45eac20",
+      "width": 1040,
+      "height": 780,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "medium",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.69,
+          0.78,
+          0.23,
+          0.15
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "wardrobe",
+          "region": [
+            0.05,
+            0.3,
+            0.5,
+            0.58
+          ]
+        },
+        {
+          "label": "visible bed",
+          "region": [
+            0.14,
+            0.86,
+            0.63,
+            0.14
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 1.1596627370017814,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-08",
+      "sha256": "276656ba590db12b9ec3bea95d731474c73dfbb4b53a099a79c9fcb48c518596",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "window",
+          "region": [
+            0.02,
+            0.26,
+            0.67,
+            0.4
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.9196053600026062,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-09",
+      "sha256": "35dab7d6eae37aa7860776de7bfc12f1b3e31f36eab467466a31fd9d755e4095",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.8,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "shower curtain",
+          "region": [
+            0.35,
+            0.03,
+            0.39,
+            0.97
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 2.960487453994574,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-10",
+      "sha256": "ad0868c6a70dca455129bcf7c13777c6d61c7c43e6e695c522ac5e22279ff010",
+      "width": 720,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.59,
+          0.83,
+          0.32,
+          0.12
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "basin",
+          "region": [
+            0.4,
+            0.76,
+            0.46,
+            0.18
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 1.0742228400049498,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-11",
+      "sha256": "b536392e899ada87368a8368182a46fae5a86aa20f0fbb2f3c56c52325cdcbc5",
+      "width": 262,
+      "height": 349,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "medium",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.06,
+          0.63,
+          0.86,
+          0.31
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "glass shelving",
+          "region": [
+            0.74,
+            0.23,
+            0.26,
+            0.77
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review",
+        "reason": "small-image"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.43991921900305897,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-12",
+      "sha256": "4fae161a21eff91af33bf293d247060ab832169c0630a5ba5e86540c620e4988",
+      "width": 262,
+      "height": 349,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "medium",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.07,
+          0.64,
+          0.86,
+          0.3
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "oven",
+          "region": [
+            0.45,
+            0.71,
+            0.29,
+            0.29
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review",
+        "reason": "small-image"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.5762549110004329,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-13",
+      "sha256": "715673acd01cdc5ddb19a152a709110dc4bc82f95dffe38fc8ff37e54a6bbc9a",
+      "width": 262,
+      "height": 349,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "medium",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.06,
+          0.64,
+          0.86,
+          0.3
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "toilet",
+          "region": [
+            0.31,
+            0.56,
+            0.24,
+            0.4
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review",
+        "reason": "small-image"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.4254133130016271,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-14",
+      "sha256": "f458bb43ceefefbc7d6e6c921d48929c479287d9f6698adf9d74e6185e53e50d",
+      "width": 262,
+      "height": 349,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "low",
+      "watermarkPresent": true,
+      "marks": [
+        [
+          0.07,
+          0.63,
+          0.86,
+          0.31
+        ]
+      ],
+      "importantRegions": [
+        {
+          "label": "basin",
+          "region": [
+            0.41,
+            0.73,
+            0.45,
+            0.18
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review",
+        "reason": "small-image"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.393516643998737,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-15",
+      "sha256": "bdae5d64417af594545354e0354c368eb76b39b6e4e023d5a769d438ce5f5fd9",
+      "width": 260,
+      "height": 195,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "room",
+      "contrast": "unknown",
+      "watermarkPresent": null,
+      "marks": [],
+      "importantRegions": [
+        {
+          "label": "wardrobe",
+          "region": [
+            0.05,
+            0.3,
+            0.5,
+            0.58
+          ]
+        },
+        {
+          "label": "visible bed",
+          "region": [
+            0.14,
+            0.86,
+            0.63,
+            0.14
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review",
+        "reason": "small-image"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.5233729629981099,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-16",
+      "sha256": "bf9961c92bc1c5c1a49f9a958fccff0dcd58723758f416583b466844dce38134",
+      "width": 679,
+      "height": 960,
+      "sourceClass": "user-attachment",
+      "sourceGroup": "attachment-main-gallery",
+      "kind": "layout",
+      "contrast": "none",
+      "watermarkPresent": false,
+      "marks": [],
+      "importantRegions": [],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "skip-layout",
+      "seconds": 0.5052110239994363,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-17",
+      "sha256": "1610e091f9fc5a82b9488b4281fc7787f11de85bd14344b7251126693d84f5f7",
+      "width": 1024,
+      "height": 737,
+      "sourceClass": "licensed-public-open-images",
+      "sourceGroup": "public-control-0",
+      "kind": "room",
+      "contrast": "none",
+      "watermarkPresent": false,
+      "marks": [],
+      "importantRegions": [
+        {
+          "label": "basin",
+          "region": [
+            0.53,
+            0.17,
+            0.38,
+            0.74
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.9206188049938646,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-18",
+      "sha256": "d051f04bda4048fcdee491cddc31822c95ddbb124b78a06312e678634d01ac73",
+      "width": 1024,
+      "height": 599,
+      "sourceClass": "licensed-public-open-images",
+      "sourceGroup": "public-control-1",
+      "kind": "product",
+      "contrast": "none",
+      "watermarkPresent": false,
+      "marks": [],
+      "importantRegions": [
+        {
+          "label": "electronic organ",
+          "region": [
+            0.3,
+            0.15,
+            0.46,
+            0.76
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 0.8133139510027831,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-19",
+      "sha256": "bb1daf8949ac13b282925f255ff0c8fe80cb14320b07426cbb75b39c68a7f09e",
+      "width": 1024,
+      "height": 769,
+      "sourceClass": "licensed-public-open-images",
+      "sourceGroup": "public-control-2",
+      "kind": "room",
+      "contrast": "none",
+      "watermarkPresent": false,
+      "marks": [],
+      "importantRegions": [
+        {
+          "label": "dining table and chairs",
+          "region": [
+            0.02,
+            0.1,
+            0.93,
+            0.8
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 1.1867320780002046,
+      "originalBytesUnchanged": true
+    },
+    {
+      "id": "frame-20",
+      "sha256": "e293cb6e6aa277d71c3f5f2b174cbc4b9853f2ae4950b0c52e682180d61dffc1",
+      "width": 1024,
+      "height": 768,
+      "sourceClass": "licensed-public-open-images",
+      "sourceGroup": "public-control-3",
+      "kind": "room",
+      "contrast": "none",
+      "watermarkPresent": false,
+      "marks": [],
+      "importantRegions": [
+        {
+          "label": "washing machine",
+          "region": [
+            0.08,
+            0.1,
+            0.79,
+            0.88
+          ]
+        }
+      ],
+      "detected": false,
+      "detectorEngine": "Tesseract",
+      "boxes": [],
+      "proposal": {
+        "status": "review"
+      },
+      "runtimeAction": "requires-review",
+      "seconds": 1.2734731179953087,
+      "originalBytesUnchanged": true
+    }
+  ],
+  "distinctSourceGroups": 5,
+  "metricsBySourceClass": {
+    "user-attachment": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 14,
+      "tn": 1,
+      "detectorErrors": 0,
+      "unknownTruthExcluded": 1,
+      "verifiedPositiveFrames": 14,
+      "verifiedNegativeFrames": 1,
+      "precision": null,
+      "recall": 0.0,
+      "falsePositiveRate": 0.0,
+      "falseNegativeRate": 1.0,
+      "noDetectionProvesClean": false
+    },
+    "licensed-public-open-images": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 4,
+      "detectorErrors": 0,
+      "unknownTruthExcluded": 0,
+      "verifiedPositiveFrames": 0,
+      "verifiedNegativeFrames": 4,
+      "precision": null,
+      "recall": null,
+      "falsePositiveRate": 0.0,
+      "falseNegativeRate": null,
+      "noDetectionProvesClean": false
+    }
+  },
+  "metricsByKind": {
+    "layout": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 1,
+      "detectorErrors": 0,
+      "unknownTruthExcluded": 0,
+      "verifiedPositiveFrames": 0,
+      "verifiedNegativeFrames": 1,
+      "precision": null,
+      "recall": null,
+      "falsePositiveRate": 0.0,
+      "falseNegativeRate": null,
+      "noDetectionProvesClean": false
+    },
+    "room": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 14,
+      "tn": 3,
+      "detectorErrors": 0,
+      "unknownTruthExcluded": 1,
+      "verifiedPositiveFrames": 14,
+      "verifiedNegativeFrames": 3,
+      "precision": null,
+      "recall": 0.0,
+      "falsePositiveRate": 0.0,
+      "falseNegativeRate": 1.0,
+      "noDetectionProvesClean": false
+    },
+    "product": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "tn": 1,
+      "detectorErrors": 0,
+      "unknownTruthExcluded": 0,
+      "verifiedPositiveFrames": 0,
+      "verifiedNegativeFrames": 1,
+      "precision": null,
+      "recall": null,
+      "falsePositiveRate": 0.0,
+      "falseNegativeRate": null,
+      "noDetectionProvesClean": false
+    }
+  },
+  "allOriginalBytesUnchanged": true,
+  "seconds": 19.136811849995865,
+  "automaticPromotion": false,
+  "productionSettingsChanged": false,
+  "originalPixelsIncluded": false,
+  "cropPixelsIncluded": false,
+  "noDetectionProvesClean": false,
+  "limitations": [
+    "Visual annotations are Codex AI inspection, not independent human truth.",
+    "Correlated variants of one listing are not independent apartments.",
+    "Important-region retention measures rectangle area, not complete aesthetic composition.",
+    "Geometric minimum depends on approximate visual boxes and two-pixel padding.",
+    "Post-crop no detection does not prove absence of every logo.",
+    "False positives/negatives are local to this fixed corpus and detector version."
+  ]
+}

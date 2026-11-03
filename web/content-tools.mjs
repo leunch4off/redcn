@@ -28,7 +28,7 @@ export const TAG_CATALOG = [
 ];
 
 export function suggestTags(v, rules, translateFn, routesFn) {
-  const seed=Math.abs(Number(v.titleVariant)||0), candidates=[];
+  const seed=Math.abs(Number(v.tagVariant??v.titleVariant)||0), candidates=[];
   const add=(tag,reason)=>{tag=tag.replace(/^#/,'');if(!candidates.some(x=>x.tag===tag))candidates.push({tag,reason,ru:TAG_CATALOG.find(x=>x[0]===tag)?.[1]||'Тег из указанного названия'});};
   add('莫斯科租房','Основная тема');add('莫斯科租房信息','Информация об объекте');
   const routes=routesFn(v.transit),universities=routesFn(v.universities);
@@ -44,14 +44,23 @@ export function suggestTags(v, rules, translateFn, routesFn) {
   else if(v.layout==='euro2')add('莫斯科一室一厅','Спальня + кухня-гостиная');
   else if(v.layout==='euro3')add('莫斯科两室一厅','Две спальни + кухня-гостиная');
   else {const groups={1:'one',2:v.separate?'twoSeparate':'two',3:v.separate?'threeSeparate':'three',4:'four'};const options=TAG_CATALOG.filter(x=>x[2]===groups[v.rooms]);if(options.length)add(options[seed%options.length][0],'Планировка из карточки');}
-  if(Number(v.occupants)>=2)add('莫斯科合租','Включён расчёт совместной аренды');
-  if(universities.length||v.audience==='student')add(seed%2?'留学生租房':'莫斯科留学','Указан вуз или студенческая аудитория');
+  if(Number(v.rooms)===2&&v.separate===true&&!['studio','euro2'].includes(v.layout))add('莫斯科合租','Две изолированные комнаты; приведён пример деления бюджета, условия заселения требуют согласования');
+  if(v.audience==='student')add(seed%2?'留学生租房':'莫斯科留学','Оператор выбрал студенческую аудиторию');
   if(v.audience==='professional')add('莫斯科外派','Выбрана рабочая аудитория');
   if(routes.length)add(seed%2?'莫斯科地铁':'莫斯科通勤','Есть транспортный блок');
   if(routes.some(r=>r.mode==='walk'&&/^\d+$/.test(String(r.time))&&Number(r.time)<=10))add('近地铁','Пешком до метро не более 10 минут по введённым данным');
   if(v.region==='southwest'){const options=TAG_CATALOG.filter(x=>x[2]==='southwest');add(options[seed%options.length][0],'Район отмечен оператором');}
   if(v.ready)add('拎包入住','Готовность к заселению подтверждена отметкой');
   if(v.newRenovation)add('全新装修','Новый ремонт подтверждён отметкой');
+  const featureTags={desk:['带书桌','Подтверждён рабочий стол'],piano:['带钢琴','Подтверждено пианино'],
+    computer:['配有电脑','Подтверждён компьютер'],oven:['配有烤箱','Подтверждена духовка'],
+    washer:['配有洗衣机','Подтверждена стиральная машина'],dishwasher:['配有洗碗机','Подтверждена посудомоечная машина'],
+    ac:['配有空调','Подтверждён кондиционер'],closet:['独立衣帽间','Подтверждена гардеробная'],
+    pantry:['带储藏室','Подтверждена кладовая'],balcony:['带阳台','Подтверждён балкон']};
+  const selected=(v.features||[]).filter(id=>featureTags[id]);
+  if(selected.length){const id=selected[seed%selected.length],[tag,reason]=featureTags[id];add(tag,reason);}
+  if(v.pets&&!['no','conflict','negotiable'].includes(v.petPolicy))add('可带宠物','Разрешение на животных подтверждено источником или оператором');
+  if(v.children&&!['no','conflict'].includes(v.childrenPolicy))add('可带孩子','Разрешение на детей подтверждено источником или оператором');
   add(seed%2?'租房也要幸福':'莫斯科生活','Общий редакционный тег');
   return candidates;
 }
@@ -66,9 +75,14 @@ export const PHRASES = [
   ['客厅沙发','Диван в гостиной',['客厅里的沙发']],['冰箱','Холодильник',[]],['洗衣机','Стиральная машина',[]],
   ['洗碗机','Посудомоечная машина',[]],['空调','Кондиционер',[]],['电视','Телевизор',[]],['浴缸','Ванна',[]],
   ['烤箱','Духовка',[]],['微波炉','Микроволновая печь',[]],['电热水壶','Электрический чайник',[]],
+  ['抽油烟机','Кухонная вытяжка',[]],['灶台','Варочная панель',[]],['水槽','Раковина / мойка',[]],
+  ['洗手盆','Раковина в ванной / умывальник',[]],
+  ['书桌','Рабочий / письменный стол',[]],['电脑','Компьютер',[]],['钢琴','Пианино / фортепиано',[]],
+  ['投影仪','Проектор',[]],['家庭影院','Домашний кинотеатр',[]],['储藏室','Кладовая',[]],['置物架','Стеллаж / полки',[]],
   ['阳台','Балкон',[]],['独立衣帽间','Отдельная гардеробная',['单独衣帽间']],
   ['步行','Пешком',['走路']],['公共交通','Общественный транспорт',[]],['地铁','Метро',[]],['分钟','Минуты',[]],
   ['临时居住登记','Временная регистрация',[]],['免费协助办理','Бесплатно помогаем оформить',[]],
+  ['抵达登记（临时居住登记）','Виза прибытия (временная регистрация) — содействие студии оформлению регистрации, без обещания выдачи визы',[]],
   ['免费接送到家','Бесплатный трансфер до дома',['免费接送至住处']],
   ['协助搬运行李','Помогаем с багажом',['协助搬送行李']],['中文沟通','Общение на китайском',['提供中文沟通']],
   ['我们的优势','Наши преимущества',['我们的服务优势']],['欢迎中文咨询','Можно обратиться на китайском',['欢迎用中文咨询']],

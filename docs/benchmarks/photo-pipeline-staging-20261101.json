@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "checkedAt": "2026-11-01",
+  "status": "pass",
+  "environment": {
+    "deviceId": "c188764f-762b-4be1-93b1-83f396c8feda",
+    "staging": "/Users/n1estate/.cache/redcn/tools/releases/v25-staging",
+    "hostModel": "Mac14,3",
+    "macOS": "26.0.1",
+    "chromeVersion": "156.0.8078.79",
+    "python": "3.11.9",
+    "processArchitecture": "x86_64"
+  },
+  "scope": {
+    "productionRepositoryChanged": false,
+    "productionServerRestarted": false,
+    "liveImportsCreated": 0,
+    "diagnosticCampaignAccessed": false,
+    "privatePhotosOrHtmlAccessed": false,
+    "onlyAuthoredSolidColorAndSyntheticDomFixtures": true,
+    "isRealCianCorpus": false
+  },
+  "nativeRuns": [
+    {
+      "pid": 5304,
+      "exitCode": 0,
+      "tests": 33,
+      "unittestSeconds": 74.391,
+      "processSeconds": 74.7,
+      "modules": {
+        "test_photo_variant_browser": 2,
+        "test_photo_variant_pipeline": 14,
+        "test_photo_variant_portable": 6,
+        "test_gallery_coverage": 11
+      },
+      "checks": [
+        "Desktop gallery selected observed800px blue raster and retains600px red original in dialog.",
+        "Phone prepared/original/prepared tabs select blue/red/blue raster.",
+        "Actual downloaded intro and outro PNGs contain selected blue pixels.",
+        "Downloaded HTML embeds selected blue source in every raster image.",
+        "Actual native Chrome PDF embeds selected blue RGB pixels, inspected from its length-delimited compressed image stream.",
+        "Prepared/original ZIP bytes and CLI prepared path agree with shared accepted resolver.",
+        "Per-card historical groups remain distinct after same canonical URL is reimported; legacy/no-group cards do not inherit latest variant.",
+        "Manual crop and original preference have priority; crop of variant retains canonical and selected-source identities.",
+        "Pure portable validation rejects wrong group/SHA/MIME/dimensions/quality/clean claims; missing declined original blocks complete backup.",
+        "Virtual gallery actually observes19/19 and restores scroll; non-scrollable virtual gallery reports18 missing.",
+        "Picture source/img are one observed photo; nested recommendations do not inflate source count."
+      ]
+    },
+    {
+      "pid": 5484,
+      "exitCode": 0,
+      "tests": 29,
+      "unittestSeconds": 13.925,
+      "processSeconds": 14.45,
+      "modules": {
+        "test_source_adapters": 7,
+        "test_gallery_coverage": 11,
+        "test_cli": 11
+      },
+      "checks": [
+        "CIAN and Avito legacy source caches refresh only when load_listing is invoked, once, then reuse the current provider stamp.",
+        "Failed manual refresh preserves previous payload and version; no old cache is blessed with a new parser revision.",
+        "Browser fallback captures receive active source contract revision, so valid current captures are reused."
+      ]
+    }
+  ],
+  "timingMeaning": "Acceptance-suite elapsed times, not measured real listing-import latency.",
+  "providerCacheContracts": {
+    "cian": "cian-v2-gallery-variants",
+    "avito": "avito-v2-gallery-variants"
+  },
+  "ownedPdf": {
+    "bytes": 168218,
+    "images": [
+      {
+        "centerRgb": [
+          0,
+          0,
+          254
+        ],
+        "decodedBytes": 1574400,
+        "height": 800,
+        "width": 656
+      }
+    ],
+    "sha256": "d63878403e04c583b24ec0307beb3744eb6311225c0eaf9a854e59b3003c8455"
+  },
+  "sourceSha256AtMainFormatRun": {
+    "cli/browser_dom.py": "1c5c4ce8b29b3524b92e540f9eec6836eeb6ad862df71d3f1b0cb063156e5790",
+    "cli/browser_import.py": "849bb91674883fb61dd368e2843c5dd7d3e28780673a45f8528c8d33e2781ec1",
+    "cli/gallery_coverage.py": "b06d9309881eb43cab423b3942ce6c5b30fe0b4781a9e8cb648b9cba7753738b",
+    "cli/local_server.py": "db08ba0b59c975c61a9493599eecf0f344f979a96bfb01d1228185791e0b900c",
+    "cli/phone_relay.py": "108ec11a7817378ced71ed7b806cdb8414b550ddda960f7b22b3ec45247a8901",
+    "cli/photo_instances.py": "5e1aacb3f0870aa5c2fe588b239f374ca59adafe6e2b800529d83c12d42d3ad7",
+    "cli/photo_store.py": "3c33e219857fef54d5ab63b78c263854c9c454b1ac212eb23008f42697a96003",
+    "cli/photo_variants.py": "8f74a360cb589745c3277b9fda0eaf10c9821d7b55faaa78e36d115058252bfb",
+    "cli/redcn.py": "cc473693db8e0dd776c01b9cfe27997487f8fc23707da6f21653b1607074f44c",
+    "cli/source_readiness.py": "e96f106603857d973bc9185124e8eb8ca4565e268a5585756fe68257a6309176",
+    "scripts/build.mjs": "f5b80bf265269446d377dc9707fa423bfde0a962848648c4c8da2dcf2db29bfd",
+    "tests/test_gallery_coverage.py": "2201b8f6113c7151e4cddb81bf5804007486720d11569a8a8c7cdb5572f145f4",
+    "tests/test_photo_variant_browser.py": "d40aefb88dadfa833e81460dca3f3a9b54dec9081d44dd5cae4fb8ab0dd77a2d",
+    "tests/test_photo_variant_pipeline.py": "4327d8dc39815cf5767b3721aa4011f90098d809f1b3665cf54b69f87346f512",
+    "tests/test_photo_variant_portable.py": "b04b309b525e680cc8432e49332baa446da3a23e8c396c44e2b7681527288231",
+    "web/app.js": "caadc3fc4c7d17b3b956c0adacf3ad1e2d894e9566107c17c8c97335958da276",
+    "web/index.html": "38d3bf0d2eae20d1d5b64e34815224e92d1b358965a24000161535e6a925137a",
+    "web/media-core.mjs": "c2f26ec5b271eb98eb800d446671fc178070c90df3d65314ceb5ffdad1090b5c",
+    "web/phone.mjs": "e8fd3d5bb107122ae4f9a416bb3e4c92ef74e7395afee635fc82b1d7c9cde3d6",
+    "web/photo-ui.mjs": "d518b65c6d3dce48535eef726f1721a9cce3cb41e2f99414757f485ff84270f7",
+    "web/presentation-studio.mjs": "a4f5e025fbd9d07a28c468419193ae3bfd526ac2c629f2501b491668ef5465d5",
+    "web/source-adapters/avito.mjs": "dd0f78dff442d0b9b0de760d017b04b8abf976c40b247281efc53ac211c1fd9b",
+    "web/source-adapters/cian.mjs": "396997fff4a33ba9e6f9aa280f42e8fddeeb1baf7eeb989583221163546e6e47",
+    "web/source-readiness.mjs": "421fecd3cb87f7eb95f9c15a682a2f63ea73b4117246ea6f6af2e4968894fe14"
+  },
+  "sourceSha256AtFinalCacheRun": {
+    "cli/browser_dom.py": "1c5c4ce8b29b3524b92e540f9eec6836eeb6ad862df71d3f1b0cb063156e5790",
+    "cli/browser_import.py": "849bb91674883fb61dd368e2843c5dd7d3e28780673a45f8528c8d33e2781ec1",
+    "cli/gallery_coverage.py": "b06d9309881eb43cab423b3942ce6c5b30fe0b4781a9e8cb648b9cba7753738b",
+    "cli/local_server.py": "db08ba0b59c975c61a9493599eecf0f344f979a96bfb01d1228185791e0b900c",
+    "cli/phone_relay.py": "108ec11a7817378ced71ed7b806cdb8414b550ddda960f7b22b3ec45247a8901",
+    "cli/photo_instances.py": "5e1aacb3f0870aa5c2fe588b239f374ca59adafe6e2b800529d83c12d42d3ad7",
+    "cli/photo_store.py": "3c33e219857fef54d5ab63b78c263854c9c454b1ac212eb23008f42697a96003",
+    "cli/photo_variants.py": "8f74a360cb589745c3277b9fda0eaf10c9821d7b55faaa78e36d115058252bfb",
+    "cli/redcn.py": "b3d4d7c2d5099c6e453b8a15fbeb8a4f44b20afaa7af6ee94483bef5f8b372e0",
+    "cli/source_adapters/avito.py": "319be03b887dab1c77015c43e20ff09d1ed4e586048ae505ebf58ac12c582669",
+    "cli/source_adapters/cian.py": "e9f04ada2305b0e060b53f664612bf8329eb645de365dc6a48546094647d212f",
+    "cli/source_readiness.py": "e96f106603857d973bc9185124e8eb8ca4565e268a5585756fe68257a6309176",
+    "scripts/build.mjs": "f5b80bf265269446d377dc9707fa423bfde0a962848648c4c8da2dcf2db29bfd",
+    "tests/test_gallery_coverage.py": "2201b8f6113c7151e4cddb81bf5804007486720d11569a8a8c7cdb5572f145f4",
+    "tests/test_photo_variant_browser.py": "d40aefb88dadfa833e81460dca3f3a9b54dec9081d44dd5cae4fb8ab0dd77a2d",
+    "tests/test_photo_variant_pipeline.py": "4327d8dc39815cf5767b3721aa4011f90098d809f1b3665cf54b69f87346f512",
+    "tests/test_photo_variant_portable.py": "b04b309b525e680cc8432e49332baa446da3a23e8c396c44e2b7681527288231",
+    "tests/test_source_adapters.py": "8bd5335180985261529f4fba925eb31362aef67c90c2f1fa5bbfbd947b2f3b89",
+    "web/app.js": "caadc3fc4c7d17b3b956c0adacf3ad1e2d894e9566107c17c8c97335958da276",
+    "web/index.html": "38d3bf0d2eae20d1d5b64e34815224e92d1b358965a24000161535e6a925137a",
+    "web/media-core.mjs": "c2f26ec5b271eb98eb800d446671fc178070c90df3d65314ceb5ffdad1090b5c",
+    "web/phone.mjs": "e8fd3d5bb107122ae4f9a416bb3e4c92ef74e7395afee635fc82b1d7c9cde3d6",
+    "web/photo-ui.mjs": "d518b65c6d3dce48535eef726f1721a9cce3cb41e2f99414757f485ff84270f7",
+    "web/presentation-studio.mjs": "a4f5e025fbd9d07a28c468419193ae3bfd526ac2c629f2501b491668ef5465d5",
+    "web/source-adapters/avito.mjs": "86628a08de0b862b035a39ae8f1f38855b65e1a0d8fd7b83d60d9e8d08df2a4b",
+    "web/source-adapters/cian.mjs": "988394800033cdf80dabf69ad8899d813d8622b3c12d113780ce406d537e5924",
+    "web/source-readiness.mjs": "421fecd3cb87f7eb95f9c15a682a2f63ea73b4117246ea6f6af2e4968894fe14"
+  },
+  "sharedIntegrationDeltasAfterStaging": [
+    "web/phone.mjs",
+    "web/app.js",
+    "scripts/build.mjs"
+  ],
+  "sharedIntegrationNote": "Other agents added city-POI integration after the native staging snapshot. Root must include their latest sources/dependencies in final sync/build; all photo-owned sources and tests matched staged readback hashes.",
+  "localRegressionEvidence": {
+    "test_photo_variants.py": 12,
+    "test_photo_variant_pipeline.py": 14,
+    "test_photo_variant_portable.py": 6,
+    "test_photo_batch_reliability.py": 4,
+    "test_photos.py": 11,
+    "test_auto_photo_crop.py": 11,
+    "test_avito_photo_crop.py": 6,
+    "test_photo_provenance.py": 7,
+    "test_photo_instances.py": 13,
+    "test_source_adapters.py": 7,
+    "test_cli.py": 11,
+    "test_dossier_variants_backup.py": 11,
+    "photo-variants.test.mjs": 9,
+    "source-readiness.test.mjs": 11,
+    "publication-compact.test.mjs": 9
+  },
+  "harnessCorrections": [
+    "Wait for saved-card hydration and scroll stable photoCard before reading lazy gallery images; a replaced default tile is not the saved card.",
+    "Keep test localStorage init in top-level window so sandboxed static HTML preview does not receive privileged test initialization.",
+    "Check actual pixel identity in native PDF's clipped656x800 image rather than assuming the original800x800 square is embedded unchanged."
+  ],
+  "acceptanceBoundaries": {
+    "RCN-215": "Supports acceptance of bounded observed-gallery collection and explicit missing/unknown/retention indicators. It does not guarantee every live source DOM supports horizontal scrolling.",
+    "RCN-330": "Supports observed-only resolution/MIME/byte-qualified selection with one shared prepared choice, source-scoped ledger, cache/reimport safety and portable backup helpers. Backup integration tests are separately owned by backup agent.",
+    "RCN-020": "Still open: authored synthetic fixtures are not multiple permitted real anonymized CIAN schema captures.",
+    "RCN-213/RCN-319": "Manual instance ledger groundwork is tested; reviewed cross-view identity UI and independently labelled real-image benchmark remain acceptance gates.",
+    "RCN-329": "Watermark calibration is not established by source-variant selection; unknown and OCR not-detected never claim clean.",
+    "PhotoAI": "These pipeline fixtures measure content routing, not furniture detection accuracy or model training."
+  }
+}

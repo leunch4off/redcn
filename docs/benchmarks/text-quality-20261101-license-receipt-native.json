@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "qwen": {
+    "declared": "Apache-2.0",
+    "sources": [
+      "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct",
+      "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct",
+      "https://huggingface.co/mlx-community/Qwen2.5-1.5B-Instruct-4bit"
+    ]
+  },
+  "argosCode": {
+    "declared": "MIT or CC0",
+    "source": "https://github.com/argosopentech/argos-translate"
+  },
+  "argosPackages": [
+    {
+      "package": "translate-ru_en-1_9",
+      "metadata": {
+        "package_version": "1.9",
+        "argos_version": "1.9",
+        "from_code": "ru",
+        "from_name": "Russian",
+        "to_code": "en",
+        "to_name": "English",
+        "reference": "https://community.libretranslate.com/t/new-argos-model-en-ru-and-ru-en/872/"
+      },
+      "metadataSha256": "2034d666010673068722bc15af5bb8561173665872867c89a1b99695f0fb25d0",
+      "readmeSha256": "5a157fd062b9786eb4c7d5aa8fce0f3f01de0fa71c2f34fbf16e222c66ecd090",
+      "licenseFiles": [],
+      "modelLicense": "not stated for overall model weights in installed metadata/README",
+      "readmeHeader": "# Russian - English version 1.3",
+      "caveat": "Dataset credits do not establish an overall weights license; do not infer from Argos code license."
+    },
+    {
+      "package": "translate-en_zh-1_9",
+      "metadata": {
+        "package_version": "1.9",
+        "argos_version": "1.9.0",
+        "from_code": "en",
+        "from_name": "English",
+        "to_code": "zh",
+        "to_name": "Chinese"
+      },
+      "metadataSha256": "106086bc1b77d2d5c298aa38be69e8e87263eeb4167b4614b08a030c43d31b6a",
+      "readmeSha256": "050e546664f0e70d80b6f83aa1da5f04ee85335f4a1b62d1c89184f76100b5dc",
+      "licenseFiles": [],
+      "modelLicense": "CC-BY-4.0 upstream OPUS model",
+      "readmeHeader": "# English - Chinese version 1.9",
+      "caveat": "Installed README declares upstream OPUS model CC-BY-4.0."
+    }
+  ]
+}

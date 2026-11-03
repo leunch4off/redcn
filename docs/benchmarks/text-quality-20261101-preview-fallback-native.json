@@ -1,0 +1,38 @@
+{
+  "status": "review",
+  "text": "尚未证实存在空调。 有沙发.",
+  "model": "existing-argos-ru-en-zh",
+  "backend": "nmt-pivot",
+  "fallbackFrom": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+  "elapsedSeconds": 3.7912505829999645,
+  "knowledgeContext": {
+    "matched": 0,
+    "sources": [],
+    "openLexiconCandidatesUsed": 0,
+    "modelWeightsUpdated": false
+  },
+  "qualityChecks": {
+    "passed": true,
+    "issues": [],
+    "language": {
+      "target": "zh",
+      "han": 11,
+      "cyrillic": 0,
+      "latin": 0,
+      "passed": true
+    },
+    "numbersPreserved": true,
+    "missingNumbers": [],
+    "unitsPreserved": true,
+    "moneyRolesPreserved": true,
+    "paymentPeriodsPreserved": true,
+    "extraNumbers": [],
+    "conditionalPreserved": true,
+    "knownConceptsChecked": [
+      "aircon",
+      "sofa"
+    ],
+    "automaticSemanticVerification": false
+  },
+  "autoApply": false
+}

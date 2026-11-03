@@ -1,0 +1,2115 @@
+{
+  "version": 1,
+  "license": "CC-BY-SA-4.0",
+  "attribution": "Chinese Wikipedia contributors; individual source revisions linked below.",
+  "updated_at": "2026-10-30",
+  "language": "zh-Hans",
+  "notes": [
+    "Community-supplied whole station names; these entries are not declared official transport translations.",
+    "Russian names remain available for disambiguation and exact lookup. Newer stations and MCD coverage may remain incomplete.",
+    "Names are joined by complete Russian station identity; no partial mixed-language station names are generated."
+  ],
+  "sources": [
+    {
+      "id": "zhwiki-list",
+      "url": "https://zh.wikipedia.org/zh-cn/%E8%8E%AB%E6%96%AF%E7%A7%91%E5%9C%B0%E9%93%81%E8%BD%A6%E7%AB%99%E5%88%97%E8%A1%A8",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=莫斯科地铁车站列表&oldid=91601299",
+      "title": "莫斯科地铁车站列表",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-1",
+      "url": "https://zh.wikipedia.org/zh-cn/%E5%A4%A7%E7%92%B0%E7%B7%9A",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=大環線&oldid=94860733",
+      "title": "大環線",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-2",
+      "url": "https://zh.wikipedia.org/zh-cn/%E6%9D%BE%E9%87%87%E6%B2%83%E7%BA%BF",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=加里宁-松采沃线&oldid=87202765",
+      "title": "松采沃线",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-3",
+      "url": "https://zh.wikipedia.org/zh-cn/%E6%9F%B3%E5%B8%83%E5%88%A9%E8%AF%BA-%E5%BE%B7%E7%B1%B3%E7%89%B9%E7%BD%97%E5%A4%AB%E7%BA%BF",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=柳布利诺-德米特罗夫线&oldid=87202767",
+      "title": "柳布利诺-德米特罗夫线",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-4",
+      "url": "https://zh.wikipedia.org/zh-cn/%E6%B6%85%E5%85%8B%E6%8B%89%E7%B4%A2%E5%A4%AB%E5%8D%A1%E7%BA%BF",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=涅克拉索夫卡线&oldid=87203663",
+      "title": "涅克拉索夫卡线",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-5",
+      "url": "https://zh.wikipedia.org/zh-cn/%E7%89%B9%E7%BE%85%E4%BC%8A%E8%8C%A8%E5%85%8B%E7%B7%9A",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=特羅伊茨克線&oldid=94239095",
+      "title": "特羅伊茨克線",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-6",
+      "url": "https://zh.wikipedia.org/zh-cn/%E7%B4%A2%E7%A7%91%E5%88%A9%E5%B0%BC%E5%9F%BA%E7%BA%BF",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=索科利尼基线&oldid=91601182",
+      "title": "索科利尼基线",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-7",
+      "url": "https://zh.wikipedia.org/zh-cn/%E8%8E%AB%E6%96%AF%E7%A7%91%E6%B2%B3%E7%95%94%E7%BA%BF",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=莫斯科河畔线&oldid=87202761",
+      "title": "莫斯科河畔线",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "zhwiki-mcd-d1",
+      "url": "https://zh.wikipedia.org/zh-cn/%E8%8E%AB%E6%96%AF%E7%A7%91%E4%B8%AD%E5%A4%AE%E7%9B%B4%E5%BE%84%E7%BA%BF",
+      "revision_url": "https://zh.wikipedia.org/w/index.php?title=莫斯科中央直径线&oldid=91875134",
+      "title": "莫斯科中央直径线 — D1 station diagram",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "join_method": "Whole-name phonetic identity and route-order comparison against current HH D1; source is a Chinese route diagram rather than a bilingual table."
+    }
+  ],
+  "stations": [
+    {
+      "ru": "Авиамоторная",
+      "zh": "航空发动机",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Автозаводская",
+      "zh": "汽车厂",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Академическая",
+      "zh": "科学院",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Александровский сад",
+      "zh": "亚历山大公园",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Алексеевская",
+      "zh": "阿列克谢耶夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Алма-Атинская",
+      "zh": "阿拉木图",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Алтуфьево",
+      "zh": "阿尔图菲耶沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Аминьевская",
+      "zh": "阿米尼耶沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Андроновка",
+      "zh": "安德罗诺夫卡",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Аннино",
+      "zh": "安宁诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Арбатская",
+      "zh": "阿尔巴特",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Аэропорт",
+      "zh": "机场",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Аэропорт Внуково",
+      "zh": "伏努科沃机场",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бабушкинская",
+      "zh": "巴布希金",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Багратионовская",
+      "zh": "巴格拉季昂",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Баковка",
+      "zh": "巴科夫卡",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Балтийская",
+      "zh": "波罗的海",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Баррикадная",
+      "zh": "路障",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бауманская",
+      "zh": "鲍曼",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Беговая",
+      "zh": "别戈沃伊",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Белокаменная",
+      "zh": "白石",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Беломорская",
+      "zh": "白海",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Белорусская",
+      "zh": "白俄罗斯",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Беляево",
+      "zh": "别利亚耶沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бескудниково",
+      "zh": "别斯库德尼科沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бибирево",
+      "zh": "碧比列沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Библиотека им.Ленина",
+      "zh": "列宁图书馆",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied",
+      "alias_of": "Библиотека имени Ленина"
+    },
+    {
+      "ru": "Библиотека имени Ленина",
+      "zh": "列宁图书馆",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Битцевский парк",
+      "zh": "比察公园",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Борисово",
+      "zh": "博里索沃",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Боровицкая",
+      "zh": "博罗维茨基",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Боровское Шоссе",
+      "zh": "博罗夫斯克公路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Боровское шоссе",
+      "zh": "博罗夫斯克公路",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ботанический сад",
+      "zh": "植物园",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Братиславская",
+      "zh": "布拉迪斯拉发",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бульвар Адмирала Ушакова",
+      "zh": "乌沙科夫海军上将林荫路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бульвар Дмитрия Донского",
+      "zh": "德米特里·顿斯科伊林荫路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бульвар Рокоссовского",
+      "zh": "罗科索夫斯基林荫路",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бунинская аллея",
+      "zh": "蒲宁路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Бутырская",
+      "zh": "布特尔斯卡",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "ВДНХ",
+      "zh": "国经成就展",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Вавиловская",
+      "zh": "瓦维洛夫",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Варшавская",
+      "zh": "华沙",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Верхние Котлы",
+      "zh": "上科特利",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Верхние Лихоборы",
+      "zh": "上利霍博雷",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Владыкино",
+      "zh": "弗拉德金诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Водники",
+      "zh": "沃德尼基",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Водный стадион",
+      "zh": "水运馆",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Войковская",
+      "zh": "沃伊科夫",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Волгоградский проспект",
+      "zh": "伏尔加格勒大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Волжская",
+      "zh": "伏尔加",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Волоколамская",
+      "zh": "沃洛科拉姆斯克",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Волхонка",
+      "zh": "沃尔洪卡",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Воробьёвы горы",
+      "zh": "麻雀山",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Воронцовская",
+      "zh": "沃龙佐沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Выставочная",
+      "zh": "会展",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Выставочный центр",
+      "zh": "展览中心",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Выхино",
+      "zh": "维欣诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Генерала Тюленева",
+      "zh": "秋列涅夫将军",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Говорово",
+      "zh": "戈沃罗沃",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Давыдково",
+      "zh": "达维德科沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Дегунино",
+      "zh": "德古尼诺",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Деловой Центр",
+      "zh": "商业中心",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Деловой центр",
+      "zh": "商业中心",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Деловой центр (Выставочная)",
+      "zh": "会展",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied",
+      "alias_of": "Выставочная"
+    },
+    {
+      "ru": "Динамо",
+      "zh": "迪纳摩",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Дмитровская",
+      "zh": "德米特罗夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Добрынинская",
+      "zh": "多勃雷宁",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Долгопрудная",
+      "zh": "多尔戈普鲁德内",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Домодедовская",
+      "zh": "多莫杰多沃",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Дорогомиловская",
+      "zh": "多罗戈米洛沃",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Достоевская",
+      "zh": "陀思妥耶夫斯基",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Дубровка",
+      "zh": "橡木",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Жулебино",
+      "zh": "茹列宾诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "ЗИЛ",
+      "zh": "利哈乔夫工厂",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Зорге",
+      "zh": "佐尔格",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Зюзино",
+      "zh": "久济诺",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Зябликово",
+      "zh": "贾布利科沃",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Измайлово",
+      "zh": "伊兹迈洛沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Измайловская",
+      "zh": "伊兹迈诺沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Калужская",
+      "zh": "卡卢加",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кантемировская",
+      "zh": "坎捷米罗夫卡",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Каховская",
+      "zh": "卡霍夫卡",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Каширская",
+      "zh": "卡希拉",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Киевская",
+      "zh": "基辅",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Китай-город",
+      "zh": "中国城",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кленовый бульвар",
+      "zh": "枫树大道",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кожуховская",
+      "zh": "科茹霍夫",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Коломенская",
+      "zh": "科洛姆纳",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Коммунарка",
+      "zh": "科穆纳尔卡",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Комсомольская",
+      "zh": "共青团",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Коньково",
+      "zh": "科恩科沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Коптево",
+      "zh": "科普捷沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Корниловская",
+      "zh": "科尔尼洛夫",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Косино",
+      "zh": "科西诺",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Котельники",
+      "zh": "科捷利尼基",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Красногвардейская",
+      "zh": "赤卫队",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Краснопресненская",
+      "zh": "红普列斯尼亚",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Красносельская",
+      "zh": "红村",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Красные ворота",
+      "zh": "红门",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Крестьянская застава",
+      "zh": "农民哨岗",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кропоткинская",
+      "zh": "克鲁泡特金",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Крылатское",
+      "zh": "克雷拉茨",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Крымская",
+      "zh": "克里米亚",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кузнецкий мост",
+      "zh": "库兹涅茨克桥",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кузьминки",
+      "zh": "库济明基",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кунцевская",
+      "zh": "昆采沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Курская",
+      "zh": "库尔斯克",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Кутузовская",
+      "zh": "库图佐夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ленинский проспект",
+      "zh": "列宁大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лермонтовский проспект",
+      "zh": "莱蒙托夫大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лесопарковая",
+      "zh": "森林公园",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лефортово",
+      "zh": "列福尔托沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лианозово",
+      "zh": "利安诺佐沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лихоборы",
+      "zh": "利霍波瑞",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лобня",
+      "zh": "洛布尼亚",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Локомотив",
+      "zh": "火车头",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ломоносовский проспект",
+      "zh": "洛蒙诺索夫大道",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лубянка",
+      "zh": "卢比扬卡",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лужники",
+      "zh": "卢日尼基",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Лухмановская",
+      "zh": "卢哈曼诺夫",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Люблино",
+      "zh": "柳布林诺",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Марк",
+      "zh": "马尔克",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Марксистская",
+      "zh": "马克思主义者",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Марьина Роща",
+      "zh": "玛莉灌林",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Марьина роща",
+      "zh": "玛莉灌林",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Марьино",
+      "zh": "马里诺",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Маяковская",
+      "zh": "马雅科夫斯基",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Медведково",
+      "zh": "梅德韦德克沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Международная",
+      "zh": "国际",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Менделеевская",
+      "zh": "门捷列夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Минская",
+      "zh": "明斯克",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Митино",
+      "zh": "米金诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Мичуринский Проспект",
+      "zh": "米丘林大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Мичуринский проспект",
+      "zh": "米丘林大道",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Мнёвники",
+      "zh": "姆尼奥夫尼基",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Молодёжная",
+      "zh": "青年",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Мякинино",
+      "zh": "米亚金宁诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Нагатинская",
+      "zh": "纳加金诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Нагатинский Затон",
+      "zh": "纳加金诺湾",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Нагорная",
+      "zh": "纳戈尔内",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Народное Ополчение",
+      "zh": "民兵",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Нахимовский проспект",
+      "zh": "纳希莫夫大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Некрасовка",
+      "zh": "涅克拉索夫卡",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Немчиновка",
+      "zh": "涅姆奇诺夫卡",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Нижегородская",
+      "zh": "下诺夫哥罗德",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новаторская",
+      "zh": "革新家",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новогиреево",
+      "zh": "新吉列耶沃",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новодачная",
+      "zh": "新达恰",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новокосино",
+      "zh": "新科西诺",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новокузнецкая",
+      "zh": "新库兹涅茨克",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новомосковская",
+      "zh": "新莫斯科",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новомосковская (Коммунарка)",
+      "zh": "新莫斯科",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied",
+      "alias_of": "Новомосковская"
+    },
+    {
+      "ru": "Новопеределкино",
+      "zh": "新佩列杰尔金诺",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новослободская",
+      "zh": "新村庄",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новохохловская",
+      "zh": "新霍赫罗夫卡",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новоясеневская",
+      "zh": "新亚先涅沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Новые Черёмушки",
+      "zh": "新稠李",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Одинцово",
+      "zh": "奥金佐沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Озёрная",
+      "zh": "湖区",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Окружная",
+      "zh": "环形线",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Окская",
+      "zh": "奥卡",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Октябрьская",
+      "zh": "十月",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Октябрьское поле",
+      "zh": "十月平原",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ольховая",
+      "zh": "桤木",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Орехово",
+      "zh": "奥列霍沃",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Отрадное",
+      "zh": "愉悦",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Охотный ряд",
+      "zh": "猎人商行",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Павелецкая",
+      "zh": "帕维列茨",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Панфиловская",
+      "zh": "潘菲洛夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Парк Культуры",
+      "zh": "文化公园",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Парк Победы",
+      "zh": "胜利公园",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Парк культуры",
+      "zh": "文化公园",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Партизанская",
+      "zh": "游击队",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Первомайская",
+      "zh": "五一",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Перово",
+      "zh": "佩罗沃",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Петровский парк",
+      "zh": "彼得罗夫斯基公园",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Петровско-Разумовская",
+      "zh": "彼得罗夫-拉祖莫夫",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Печатники",
+      "zh": "印刷工",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Пионерская",
+      "zh": "少先队",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Планерная",
+      "zh": "滑翔机",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Площадь Гагарина",
+      "zh": "加加林广场",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Площадь Ильича",
+      "zh": "伊里奇广场",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Площадь Революции",
+      "zh": "革命广场",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Плющиха",
+      "zh": "普柳希哈",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Полежаевская",
+      "zh": "波列扎耶夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Полянка",
+      "zh": "林地",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Потапово",
+      "zh": "波塔波沃",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Пражская",
+      "zh": "布拉格",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Преображенская площадь",
+      "zh": "革新广场",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Прокшино",
+      "zh": "普罗克希诺",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Пролетарская",
+      "zh": "无产阶级",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Проспект Вернадского",
+      "zh": "韦尔纳茨基大道",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Проспект Мира",
+      "zh": "和平大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Профсоюзная",
+      "zh": "工会",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Пушкинская",
+      "zh": "普希金",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Пыхтино",
+      "zh": "佩赫金诺",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Пятницкое шоссе",
+      "zh": "皮亚尼察公路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Рабочий Посёлок",
+      "zh": "工人新村",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Раменки",
+      "zh": "拉缅基",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Рассказовка",
+      "zh": "拉斯卡佐夫卡",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Речной вокзал",
+      "zh": "河运码头",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Рижская",
+      "zh": "里加",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Римская",
+      "zh": "罗马",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ростокино",
+      "zh": "罗斯托金诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Румянцево",
+      "zh": "鲁缅采沃",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Рязанский проспект",
+      "zh": "梁赞大道",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Савёловская",
+      "zh": "萨维奥洛沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Саларьево",
+      "zh": "莎拉里耶沃",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Свиблово",
+      "zh": "斯维布洛沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Севастопольская",
+      "zh": "塞瓦斯托波尔",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Селигерская",
+      "zh": "谢利格尔",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Семёновская",
+      "zh": "谢苗诺夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Серпуховская",
+      "zh": "谢尔普霍夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сетунь",
+      "zh": "谢通",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сколково",
+      "zh": "斯科尔科沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Славянский бульвар",
+      "zh": "斯拉夫林荫路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Смоленская",
+      "zh": "斯摩棱斯克",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сокол",
+      "zh": "隼鸟",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Соколиная гора",
+      "zh": "猎鹰山",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сокольники",
+      "zh": "索科利尼基",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Солнцево",
+      "zh": "松采沃",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Спартак",
+      "zh": "斯巴达",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Спортивная",
+      "zh": "运动",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сретенский бульвар",
+      "zh": "斯利坚斯克林荫路",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Стахановская",
+      "zh": "斯达汉诺夫",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Стрешнево",
+      "zh": "斯特列什涅沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Строгино",
+      "zh": "斯特罗金诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Студенческая",
+      "zh": "学生",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сухаревская",
+      "zh": "苏哈列夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Сходненская",
+      "zh": "斯霍德尼亚",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Таганская",
+      "zh": "塔甘卡",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тверская",
+      "zh": "特维尔",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Театральная",
+      "zh": "剧院",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Текстильщики",
+      "zh": "纺织工",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Телецентр",
+      "zh": "电视中心",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Терехово",
+      "zh": "捷列霍沃",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тестовская",
+      "zh": "杰斯托沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Технопарк",
+      "zh": "科技园",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тимирязевская",
+      "zh": "季米里亚泽夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Третьяковская",
+      "zh": "特列季亚科夫",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тропарёво",
+      "zh": "特罗帕廖沃",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Трубная",
+      "zh": "引水管",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тульская",
+      "zh": "图拉",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тургеневская",
+      "zh": "屠格涅夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тушинская",
+      "zh": "图申诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тютчевская",
+      "zh": "秋切夫",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Тёплый Стан",
+      "zh": "暖营",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Угрешская",
+      "zh": "乌格列沙",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица 1905 года",
+      "zh": "1905年街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Академика Королёва",
+      "zh": "科罗廖夫院士街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Горчакова",
+      "zh": "戈尔恰科夫街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Дмитриевского",
+      "zh": "德米特里耶夫街",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Милашенкова",
+      "zh": "米拉申科夫街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Сергея Эйзенштейна",
+      "zh": "谢尔盖·艾森施泰因街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Скобелевская",
+      "zh": "斯科别列夫街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица Старокачаловская",
+      "zh": "旧卡恰洛夫街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Улица академика Янгеля",
+      "zh": "杨格尔院士街",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Университет",
+      "zh": "大学",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Университет Дружбы Народов",
+      "zh": "俄罗斯人民友谊大学",
+      "source": "zhwiki-5",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Филатов луг",
+      "zh": "菲拉托夫草地",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Фили",
+      "zh": "菲利",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Филёвский парк",
+      "zh": "菲利公园",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Фонвизинская",
+      "zh": "冯维金",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Фрунзенская",
+      "zh": "伏龙芝",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Хлебниково",
+      "zh": "赫列勃尼科沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ховрино",
+      "zh": "霍夫里诺",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Хорошёво",
+      "zh": "霍洛绍沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Хорошёвская",
+      "zh": "霍罗绍夫",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "ЦСКА",
+      "zh": "中央陆军运动俱乐部",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Царицыно",
+      "zh": "察里津",
+      "source": "zhwiki-7",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Цветной бульвар",
+      "zh": "七彩林荫路",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Черкизовская",
+      "zh": "切尔基佐沃",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Чертановская",
+      "zh": "切尔坦诺沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Чеховская",
+      "zh": "契诃夫",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Чистые пруды",
+      "zh": "清塘",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Чкаловская",
+      "zh": "契卡洛夫",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Шаболовская",
+      "zh": "沙博罗夫卡",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Шелепиха",
+      "zh": "谢列彼哈",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Шереметьевская",
+      "zh": "谢列梅捷沃",
+      "source": "zhwiki-mcd-d1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Шипиловская",
+      "zh": "希皮洛夫",
+      "source": "zhwiki-3",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Шоссе Энтузиастов",
+      "zh": "热情公路",
+      "source": "zhwiki-2",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Щукинская",
+      "zh": "休金诺",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Щёлковская",
+      "zh": "晓尔科沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Электрозаводская",
+      "zh": "发电厂",
+      "source": "zhwiki-1",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Юго-Восточная",
+      "zh": "东南",
+      "source": "zhwiki-4",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Юго-Западная",
+      "zh": "西南",
+      "source": "zhwiki-6",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Южная",
+      "zh": "南区",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    },
+    {
+      "ru": "Ясенево",
+      "zh": "亚先涅沃",
+      "source": "zhwiki-list",
+      "quality": "community",
+      "translation_status": "source_supplied"
+    }
+  ]
+}

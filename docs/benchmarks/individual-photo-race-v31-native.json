@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "kind": "native-mock-browser-acceptance",
+  "release": "v31",
+  "stage": "staging-working-snapshot",
+  "suite": "tests/test_individual_photo_race_browser.py",
+  "environment": {
+    "platform": "macOS",
+    "browser": "Chrome headless",
+    "disposableWorkspace": true
+  },
+  "results": {
+    "testsRun": 5,
+    "passed": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "elapsedSeconds": 166.199,
+    "pageErrors": 0
+  },
+  "criteria": [
+    "Multiple photo batches during a held text job produce exactly one retry with the latest accepted evidence.",
+    "Manual body edits before or after photo completion prevent automatic retry and preserve the edit.",
+    "Explicit cancellation discards the queued photo retry.",
+    "Switching cards prevents stale text or its queued retry from writing into the new card."
+  ],
+  "evidenceBoundaries": {
+    "modelInferenceExecuted": false,
+    "authoredMockText": true,
+    "authoredMockVision": true,
+    "productionDataModified": false,
+    "installedReleaseAccepted": false,
+    "physicalIPhoneAccepted": false
+  },
+  "setupFailuresResolved": [
+    "The staging snapshot lacked the synthetic text-job fixture; it was synchronized.",
+    "The staging bundler omitted the new individual-copy module; the build script and module were synchronized and rebuilt before the successful suite."
+  ],
+  "baseCommit": "f42ab1f1ef9a42d1e82335a823827fe0fa0e1a3d",
+  "sources": {
+    "web/app.js": "cb47e302983ebeeb2eb06394bdb735931368baf45f17c90c09ab6751f433c4b3",
+    "web/ai-progress.mjs": "91126af01668dc7c3f8a908ac35200db6699f9ca8c2293f6a8ac9ee639631347",
+    "web/individual-copy.mjs": "0d10ec1967c6fa5da67d9335a1fe5dcbb7446c6193a3b7e214e5ba7484d88c4d",
+    "web/photo-ui.mjs": "67965bfff552e7393c6ad48acead93670927cde152da57d1fef2b999109ca396",
+    "scripts/build.mjs": "77726ac0eb90f5d43ad866df47f699d6dd5d52ab8e42fe9bc11a8c3adc24e9ce",
+    "tests/test_individual_photo_race_browser.py": "d7556977efd0491aa93b6cdb5f51fe7c33af8d47841cd0535cedc013c74daa14",
+    "tests/browser_text_jobs_fixture.py": "86111f940cdf8494c1998b4773c79ab261c9d27389206784761c523eb5e2beff",
+    "tests/test_photo_inventory_browser.py": "b61843b2918b179a4486ed43f6755a01066330986b3981b817ce9654b14c9f73",
+    "tests/test_phone_browser.py": "d7b90ebb7b030648a70f3e1ae3191ddf21f3d6ee031899914034b6111ca16a55",
+    "docs/index.html": "1c1300b293f9989cb0081b6c942fc598106a9bc7cfd74faa287f13e74956042e"
+  },
+  "logSha256": "3cf49326b42dc6a9508b714d42e177bd8df55247893190c5866a9253be9438f9"
+}

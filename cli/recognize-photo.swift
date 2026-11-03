@@ -9,7 +9,7 @@ request.recognitionLevel = .accurate
 request.usesLanguageCorrection = false
 let supported = (try? request.supportedRecognitionLanguages()) ?? ["en-US"]
 request.recognitionLanguages = ["en-US", "ru-RU"].filter { supported.contains($0) }
-request.customWords = ["ЦИАН", "CIAN", "cian.ru", "циан"]
+request.customWords = ["ЦИАН", "CIAN", "cian.ru", "циан", "Avito", "Авито", "avito.ru", "авито"]
 try VNImageRequestHandler(url: url).perform([request])
 let rows: [[String: Any]] = (request.results ?? []).compactMap { observation in
     guard let text = observation.topCandidates(1).first else { return nil }

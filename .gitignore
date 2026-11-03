@@ -1,4 +1,6 @@
 dist/
+# Generated at install/build from the current checkout; contains build time.
+/data/build-identity.json
 node_modules/
 *.tar.gz
 site.tar.gz
@@ -11,3 +13,10 @@ __pycache__/
 output/
 .venv/
 *.sqlite3
+
+.venv-translate/
+desktop-owner.json
+
+# Runtime cloud capabilities/recovery keys must never enter public source.
+cloud-backup-credentials.json
+redcn-cloud-recovery-key.json

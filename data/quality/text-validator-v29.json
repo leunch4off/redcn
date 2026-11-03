@@ -1,0 +1,451 @@
+{
+  "version": 1,
+  "trainingUseAllowed": false,
+  "annotation": {
+    "author": "Project-authored explicit expected decisions, independent of candidate outputs",
+    "humanOrNativeEditorApproved": false
+  },
+  "cases": [
+    {
+      "id": "decimal-ok",
+      "category": "money",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц.",
+      "output": "月租8.5万卢布。",
+      "expectedPass": true
+    },
+    {
+      "id": "decimal-changed",
+      "category": "money",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц.",
+      "output": "月租8万卢布。",
+      "expectedPass": false
+    },
+    {
+      "id": "money-role-ok",
+      "category": "money-role",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц. Залог42500 рублей.",
+      "output": "月租85000卢布。押金42500卢布。",
+      "expectedPass": true
+    },
+    {
+      "id": "money-role-swap",
+      "category": "money-role",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц. Залог42500 рублей.",
+      "output": "月租42500卢布。押金85000卢布。",
+      "expectedPass": false
+    },
+    {
+      "id": "unit-ok",
+      "category": "units",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Площадь40 м². Аренда85000 рублей в месяц.",
+      "output": "面积40㎡。月租85000卢布。",
+      "expectedPass": true
+    },
+    {
+      "id": "unit-swap",
+      "category": "units",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Площадь40 м². Аренда85000 рублей в месяц.",
+      "output": "面积85000㎡。月租40卢布。",
+      "expectedPass": false
+    },
+    {
+      "id": "period-ok",
+      "category": "period",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц.",
+      "output": "每月租金85000卢布。",
+      "expectedPass": true
+    },
+    {
+      "id": "period-changed",
+      "category": "period",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц.",
+      "output": "日租85000卢布。",
+      "expectedPass": false
+    },
+    {
+      "id": "period-missing",
+      "category": "period",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Аренда85000 рублей в месяц.",
+      "output": "租金85000卢布。",
+      "expectedPass": false
+    },
+    {
+      "id": "absent-ok",
+      "category": "polarity",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Нет посудомоечной машины.",
+      "output": "没有洗碗机。",
+      "expectedPass": true
+    },
+    {
+      "id": "absent-reversed",
+      "category": "polarity",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Нет посудомоечной машины.",
+      "output": "有洗碗机。",
+      "expectedPass": false
+    },
+    {
+      "id": "unknown-ok",
+      "category": "uncertainty",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Наличие кондиционера не подтверждено.",
+      "output": "空调是否配备尚未确认。",
+      "expectedPass": true
+    },
+    {
+      "id": "unknown-promised",
+      "category": "uncertainty",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Наличие кондиционера не подтверждено.",
+      "output": "已确认配有空调。",
+      "expectedPass": false
+    },
+    {
+      "id": "equipment-ok",
+      "category": "equipment",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Есть холодильник и стиральная машина.",
+      "output": "配有冰箱和洗衣机。",
+      "expectedPass": true
+    },
+    {
+      "id": "equipment-missing",
+      "category": "equipment",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Есть холодильник и стиральная машина.",
+      "output": "配有冰箱。",
+      "expectedPass": false
+    },
+    {
+      "id": "equipment-added",
+      "category": "equipment",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Есть холодильник.",
+      "output": "配有冰箱和洗衣机。",
+      "expectedPass": false
+    },
+    {
+      "id": "oven-not-cupboard",
+      "category": "equipment",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Есть духовой шкаф.",
+      "output": "配有烤箱。",
+      "expectedPass": true
+    },
+    {
+      "id": "tvstand-not-tv",
+      "category": "equipment",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Есть тумба под телевизор.",
+      "output": "配有电视柜。",
+      "expectedPass": true
+    },
+    {
+      "id": "tv-invented",
+      "category": "equipment",
+      "task": "translation",
+      "direction": "ru-zh",
+      "source": "Есть тумба под телевизор.",
+      "output": "配有电视和电视柜。",
+      "expectedPass": false
+    },
+    {
+      "id": "ru-period-ok",
+      "category": "period",
+      "task": "translation",
+      "direction": "zh-ru",
+      "source": "月租85000卢布。",
+      "output": "Аренда85000 рублей в месяц.",
+      "expectedPass": true
+    },
+    {
+      "id": "ru-period-wrong",
+      "category": "period",
+      "task": "translation",
+      "direction": "zh-ru",
+      "source": "月租85000卢布。",
+      "output": "Аренда85000 рублей в сутки.",
+      "expectedPass": false
+    },
+    {
+      "id": "ru-unknown-ok",
+      "category": "uncertainty",
+      "task": "translation",
+      "direction": "zh-ru",
+      "source": "宠物条件待确认。",
+      "output": "Условия для животных неизвестны.",
+      "expectedPass": true
+    },
+    {
+      "id": "ru-unknown-wrong",
+      "category": "uncertainty",
+      "task": "translation",
+      "direction": "zh-ru",
+      "source": "宠物条件待确认。",
+      "output": "Животные разрешены.",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-original",
+      "category": "money",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。\"}",
+      "expectedPass": true
+    },
+    {
+      "id": "ad-unit-equivalent",
+      "category": "money",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租85000卢布/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。\"}",
+      "expectedPass": true
+    },
+    {
+      "id": "ad-role-swap",
+      "category": "money-role",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租42500₽/月。押金85000₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-commission",
+      "category": "commission",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。中介费一个月。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-free-promise",
+      "category": "service",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。免费办理落地签。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-unknown-change",
+      "category": "uncertainty",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。可以带宠物。水电按表另付。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-missing-absence",
+      "category": "polarity",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。宠物条件待确认。水电按表另付。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-added-equipment",
+      "category": "equipment",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。配有空调。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-currency-change",
+      "category": "currency",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000元）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "ad-safe-wording",
+      "category": "uncertainty",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\": \"莫斯科房源说明\", \"body\": \"莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件尚未确认。水电按表另付。\"}",
+      "expectedPass": true
+    },
+    {
+      "id": "json-extra",
+      "category": "format",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\":\"标题\",\"body\":\"正文\",\"claim\":1}",
+      "expectedPass": false
+    },
+    {
+      "id": "json-duplicate",
+      "category": "format",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\":\"甲\",\"title\":\"乙\",\"body\":\"正文\"}",
+      "expectedPass": false
+    },
+    {
+      "id": "json-truncated",
+      "category": "format",
+      "task": "advertising",
+      "baseline": {
+        "titles": [
+          "莫斯科租房资料"
+        ],
+        "body": "莫斯科。月租8.5W（85000₽）/月。押金42500₽。面积40㎡。未配备洗碗机。宠物条件待确认。水电按表另付。"
+      },
+      "fields": {
+        "price": "85000",
+        "area": "40",
+        "priceCurrency": "RUB"
+      },
+      "output": "{\"title\":\"标题\",\"body\":\"正文",
+      "expectedPass": false
+    }
+  ]
+}

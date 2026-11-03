@@ -1,0 +1,19 @@
+[
+ {"name":"neutral assistance remains available","body":"抵达登记（临时居住登记）：提供办理协助。","confirmed":false,"allowed":true},
+ {"name":"unconfirmed Chinese free pickup","body":"免费接送到家。","confirmed":false,"allowed":false},
+ {"name":"unconfirmed Chinese no-charge pickup","body":"无偿接送到家。","confirmed":false,"allowed":false},
+ {"name":"unconfirmed English complimentary pickup","body":"Complimentary airport pickup.","confirmed":false,"allowed":false},
+ {"name":"unconfirmed English free pickup","body":"Free airport pickup.","confirmed":false,"allowed":false},
+ {"name":"unconfirmed Russian free transfer","body":"Бесплатный трансфер до квартиры.","confirmed":false,"allowed":false},
+ {"name":"unconfirmed arrival forward order","body":"免费协助了解抵达后的相关手续。","confirmed":false,"allowed":false},
+ {"name":"unconfirmed arrival reverse order","body":"Arrival procedures free.","confirmed":false,"allowed":false},
+ {"name":"registration assistance never means free registration","body":"免费登记。","confirmed":true,"allowed":false},
+ {"name":"unconfirmed registration duration","body":"抵达登记：6个月，最多3人。","confirmed":false,"allowed":false},
+ {"name":"confirmed exact registration duration","body":"抵达登记：6个月，最多3人。","confirmed":true,"allowed":true},
+ {"name":"confirmed wrong registration duration","body":"抵达登记：12个月，最多3人。","confirmed":true,"allowed":false},
+ {"name":"confirmed exact pickup","body":"免费接送到入住地点。","confirmed":true,"allowed":true},
+ {"name":"confirmed exact arrival","body":"免费协助了解抵达后的相关手续。","confirmed":true,"allowed":true},
+ {"name":"confirmed benefits with emoji","body":"我们的优势：\n✅ 免费接送到家\n✅ 中文沟通","confirmed":true,"allowed":true},
+ {"name":"confirmed benefits after emoji removal","body":"我们的优势：\n免费接送到家\n中文沟通","confirmed":true,"allowed":true},
+ {"name":"unconfirmed benefits cannot use a public marker","body":"我们的优势：\n免费接送到家\n中文沟通","confirmed":false,"allowed":false}
+]

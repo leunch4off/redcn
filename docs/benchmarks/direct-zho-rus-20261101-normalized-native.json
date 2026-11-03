@@ -1,0 +1,417 @@
+{
+  "version": 1,
+  "status": "development-pilot-unaccepted",
+  "model": "Helsinki-NLP/Tatoeba-Challenge/zho-rus/opus-2021-05-16",
+  "backend": "direct-marian-ct2-int8",
+  "probeSha256": "7235774d47f19b14cae155144eb3f429e0fe99e331fbdc8aab2f30e3d48f64de",
+  "activeImportsBefore": 0,
+  "preparation": {
+    "version": 1,
+    "model": "Helsinki-NLP/Tatoeba-Challenge/zho-rus/opus-2021-05-16",
+    "sourceLanguage": "zh",
+    "targetLanguage": "ru",
+    "upstreamUrl": "https://object.pouta.csc.fi/Tatoeba-MT-models/zho-rus/opus-2021-05-16.zip",
+    "archiveBytes": 283528302,
+    "archiveSha256": "22b2dc9ceadae15b6b7f1041e9618aad813467b6f2c1877c9bc3c9d6de98e1b4",
+    "publishedSha256Available": false,
+    "archiveMembers": [
+      {
+        "name": "README.md",
+        "bytes": 1252,
+        "crc": 3030083373
+      },
+      {
+        "name": "LICENSE",
+        "bytes": 18652,
+        "crc": 3763447368
+      },
+      {
+        "name": "opus.spm32k-spm32k.transformer-align.model1.npz.best-perplexity.npz",
+        "bytes": 304834834,
+        "crc": 1403969510
+      },
+      {
+        "name": "opus.spm32k-spm32k.transformer-align.model1.npz.best-perplexity.yml",
+        "bytes": 1901,
+        "crc": 583599413
+      },
+      {
+        "name": "opus.spm32k-spm32k.vocab.yml",
+        "bytes": 1467132,
+        "crc": 2000161149
+      },
+      {
+        "name": "opus.spm32k-spm32k.transformer-align.valid1.log",
+        "bytes": 246,
+        "crc": 2932993620
+      },
+      {
+        "name": "opus.spm32k-spm32k.transformer-align.train1.log",
+        "bytes": 20731,
+        "crc": 3844054751
+      },
+      {
+        "name": "source.spm",
+        "bytes": 820933,
+        "crc": 2180622870
+      },
+      {
+        "name": "source.tcmodel",
+        "bytes": 0,
+        "crc": 0
+      },
+      {
+        "name": "target.spm",
+        "bytes": 1089410,
+        "crc": 2723535448
+      },
+      {
+        "name": "decoder.yml",
+        "bytes": 265,
+        "crc": 1388533428
+      },
+      {
+        "name": "preprocess.sh",
+        "bytes": 1413,
+        "crc": 4260718579
+      },
+      {
+        "name": "postprocess.sh",
+        "bytes": 80,
+        "crc": 4127195917
+      },
+      {
+        "name": "config.mk",
+        "bytes": 520,
+        "crc": 2600874278
+      }
+    ],
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://github.com/Helsinki-NLP/Tatoeba-Challenge/blob/master/models/LICENSE",
+    "licenseGitBlob": "2fb94156cd39cad415432aeb1ac5b38d5cb53e1e",
+    "sourceReadmeUrl": "https://github.com/Helsinki-NLP/Tatoeba-Challenge/blob/master/models/zho-rus/README.md",
+    "sourceReadmeGitBlob": "ec1716c92ad8eee951ec2ff4562d342d02ed49ce",
+    "attribution": "Helsinki-NLP / OPUS-MT / Jörg Tiedemann; Tatoeba Translation Challenge (2020.wmt-1.139)",
+    "changes": "Converted official Marian archive to CTranslate2 int8 for an isolated development pilot.",
+    "ctranslate2Version": "4.8.4",
+    "convertedSha256": "c5f4f85d533a404b79892a4cd71efadbf9135fea4efd8f2ae6e66cb6d389df82",
+    "convertedBytes": 81407637,
+    "modelDirectory": "raw",
+    "sourceSpm": "raw/source.spm",
+    "targetSpm": "raw/target.spm",
+    "sourceSpmSha256": "eb5c04a3c823d8e60c337e99fb937554b405b9481060c97699a94a9a41e4d7e3",
+    "targetSpmSha256": "e7d98ec26e2388ecfb46db33a9bc4668cd4c80cba56befc7b457935c2138a6e9",
+    "preparationSeconds": 2.7904394170000004,
+    "preparationPeakRssBytes": 602783744,
+    "automaticPromotion": false
+  },
+  "preprocessing": "Packaged preprocess.sh punctuation/control/spacing normalization then source.spm",
+  "upstreamPreprocessorSha256": "b07987a34cc3fc3b2addbd82aa90a5b4fdbee37c80065ddb20fbdd0fb4fa7754",
+  "decoding": {
+    "beamSize": 6,
+    "lengthPenalty": 1,
+    "maxDecodingLength": 200,
+    "maxInputLength": 512
+  },
+  "rows": [
+    {
+      "id": "ru-zh-equipment-negation",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "ru-zh-unconfirmed",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "ru-zh-numeric-units",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "ru-zh-registration-conditional",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "ru-zh-permissions",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "ru-zh-rent-deposit",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "ru-zh-transit",
+      "task": "ru-zh",
+      "status": "unsupported"
+    },
+    {
+      "id": "zh-ru-equipment-negation",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "В квартире есть прачечные машины, но нет телевизора.",
+      "seconds": 0.12713816700000002,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: washer"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 43,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "tv",
+          "washer"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-unconfirmed",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Устройство холодильников еще не подтверждено.",
+      "seconds": 0.08177954100000001,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: wardrobe"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 40,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "fridge",
+          "wardrobe"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-numeric-units",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Ежемесячная аренда 91 200 рублей, площадь 51,5 кв. м, расположенная на 16-м этаже.",
+      "seconds": 0.20683687500000003,
+      "checks": {
+        "passed": true,
+        "issues": [],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 54,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-conditional",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Прибытие животных зависит от согласия квартиры и не может быть непосредственной.",
+      "seconds": 0.13395208399999992,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Изменено наличие, отрицание или условие: pets",
+          "В переводе не сохранено условие или неопределённость",
+          "В переводе не сохранено отрицание"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 69,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": false,
+        "knownConceptsChecked": [
+          "pets"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-kitchen",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "На кухне есть кухня и микроволновые печи, в комнате нет компьютеров.",
+      "seconds": 0.16713641699999993,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: oven"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 56,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "computer",
+          "microwave",
+          "oven"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-bed-negation",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "У нас нет кровати. Только салат.",
+      "seconds": 0.09563679199999997,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "В переводе пропущен предмет или условие: sofa"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 25,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": true,
+        "missingNumbers": [],
+        "unitsPreserved": true,
+        "moneyRolesPreserved": true,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [
+          "bed",
+          "sofa"
+        ],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "zh-ru-rent-deposit",
+      "task": "zh-ru",
+      "status": "measured",
+      "text": "Ежемесячно арендовать 68 000 рублей.",
+      "seconds": 0.13406850000000015,
+      "checks": {
+        "passed": false,
+        "issues": [
+          "Числа перевода отличаются от оригинала",
+          "В переводе изменены единицы суммы, площади, времени или этажа",
+          "Проверьте, что суммы аренды и залога сохранили своё значение"
+        ],
+        "language": {
+          "target": "ru",
+          "han": 0,
+          "cyrillic": 26,
+          "latin": 0,
+          "passed": true
+        },
+        "numbersPreserved": false,
+        "missingNumbers": [
+          "34000"
+        ],
+        "unitsPreserved": false,
+        "moneyRolesPreserved": false,
+        "paymentPeriodsPreserved": true,
+        "extraNumbers": [],
+        "conditionalPreserved": true,
+        "knownConceptsChecked": [],
+        "automaticSemanticVerification": false
+      }
+    },
+    {
+      "id": "json-price-area",
+      "task": "listing",
+      "status": "unsupported"
+    },
+    {
+      "id": "json-unknown-equipment",
+      "task": "listing",
+      "status": "unsupported"
+    },
+    {
+      "id": "json-two-bedrooms",
+      "task": "listing",
+      "status": "unsupported"
+    },
+    {
+      "id": "json-negative-equipment",
+      "task": "listing",
+      "status": "unsupported"
+    }
+  ],
+  "applicable": 7,
+  "measured": 7,
+  "checksPassed": 1,
+  "unsupported": 11,
+  "modelLoadSeconds": 0.044512542000000016,
+  "modelReusedAcrossProbes": true,
+  "preparationReused": true,
+  "scriptSha256": "e9058ecfbe41937d6ddc63d63298a9c22b513e40ba35f2343726b7c25b130277",
+  "medianSeconds": 0.13395208399999992,
+  "maxSeconds": 0.20683687500000003,
+  "processPeakRssBytes": 204800000,
+  "elapsedSeconds": 1.159714833,
+  "automaticPromotion": false,
+  "nativeLanguageReviewCompleted": false,
+  "checkerSha256": {
+    "text_quality.py": "53058d583d0d52c1812ab2297b0568de8bd76c44ff74ce3086159e1b9fed3c1e"
+  },
+  "limitations": [
+    "Seven authored development phrases are not native-reviewed accuracy acceptance.",
+    "Only Chinese→Russian is supported; Russian→Chinese and JSON composition are not provided.",
+    "Preparation receipt records an earlier conversion process; this inference RSS includes conversion only when preparationReused is false."
+  ]
+}

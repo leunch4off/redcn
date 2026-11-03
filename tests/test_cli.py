@@ -58,13 +58,23 @@ class CLITests(unittest.TestCase):
                 result = cli.download_photos(['https://images.cdn-cian.ru/1.jpg', 'https://images.cdn-cian.ru/2.png'], Path(folder))
             self.assertTrue(Path(result[0]['path']).exists());self.assertIn('error', result[1]);self.assertTrue((Path(folder) / 'manifest.json').exists())
 
+    def test_photo_download_uses_actual_webp_bytes_despite_jpg_url_and_header(self):
+        from PIL import Image
+        data = io.BytesIO(); Image.new('RGB', (640, 480), 'white').save(data, 'WEBP')
+        content = data.getvalue()
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(cli, 'fetch_bytes', return_value=(content, 'image/jpeg')):
+                result = cli.download_photos(['https://images.cdn-cian.ru/fixture.jpg'], Path(folder))
+            self.assertEqual(Path(result[0]['path']).suffix, '.webp')
+            self.assertEqual(Path(result[0]['path']).read_bytes(), content)
+
     def test_batch_only_new_successful_eligible_items(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'batch.json'
             path.write_text(json.dumps([{'url':'https://cian.ru/1','seller':'owner'},{'url':'https://avito.ru/2','seller':'agent','commission':50},{'url':'https://avito.ru/3','seller':'agent','commission':51}]))
             def run():
                 stream=io.StringIO()
-                with contextlib.redirect_stdout(stream),patch.object(cli,'load_listing',return_value={'text':'fixture','images':[]}),patch.object(cli,'generate',return_value={'titles':['中文'],'body':'中文','tags':'#莫斯科'}):
+                with contextlib.redirect_stdout(stream),patch.object(cli,'load_listing',return_value={'text':'fixture','images':[],'fields':{'publicationStatus':'active','eligibleForNew':True}}),patch.object(cli,'generate',return_value={'titles':['中文'],'body':'中文','tags':'#莫斯科'}):
                     cli.main(['--batch',str(path),'--cache-dir',folder,'--json'])
                 return json.loads(stream.getvalue())
             self.assertEqual([x['status'] for x in run()],['new','new','filtered'])

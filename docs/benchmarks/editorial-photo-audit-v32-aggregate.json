@@ -1,0 +1,200 @@
+{
+  "version": 1,
+  "kind": "v32-editorial-photo-audit-aggregate",
+  "createdAt": "2026-11-03T22:14:49.861534+00:00",
+  "status": "applied-and-verified",
+  "scope": "Обезличенная сводка редакционной проверки 82 сохранённых карточек и дополнительной проверки фотографий.",
+  "editorialAudit": {
+    "savedCardsReviewed": 82,
+    "candidateBodies": 35,
+    "sourceConflictHoldCards": 47,
+    "candidateComposition": {
+      "initialCandidates": 28,
+      "additionalCandidates": 7,
+      "citylessCorrectionsWithinInitialCandidates": 2
+    },
+    "oldBodyReviewsBoundToExactHashes": 35,
+    "humanVerifiedReviews": 0,
+    "origin": "assistant-editorial",
+    "fullMergedBatchPrepared": true,
+    "appliedBodies": 35,
+    "additionalCandidateValidation": {
+      "finalCandidatesPassed": 7,
+      "inventoryItemsIncluded": 130,
+      "initialBatchReady": 6,
+      "initialBatchBlocked": 1,
+      "targetedRecheckReady": 1,
+      "targetedRecheckBlocked": 0,
+      "change": "Исправлена двусмысленная формулировка наличия интернета; проверка оплаты не ослаблялась.",
+      "nativeSourceCommit": "9a65a21c9d5aad60e7a010536a5354a14da07dc4",
+      "modelCalls": 0,
+      "livePayloadsUnchanged": true
+    },
+    "conflictCategories": [
+      {
+        "category": "transport",
+        "labelRu": "Маршруты: время, способ передвижения или неоднозначное соответствие",
+        "cardCount": 25
+      },
+      {
+        "category": "payments",
+        "labelRu": "Платежи: аренда, залог, предоплата, коммунальные и интернет",
+        "cardCount": 15
+      },
+      {
+        "category": "occupancy_conditions",
+        "labelRu": "Условия проживания: состав жильцов, дети, животные, курение, тишина или субаренда",
+        "cardCount": 19
+      },
+      {
+        "category": "lease_term",
+        "labelRu": "Срок аренды или договора",
+        "cardCount": 5
+      },
+      {
+        "category": "inventory",
+        "labelRu": "Наличие, отсутствие, тип или функция предметов",
+        "cardCount": 7
+      },
+      {
+        "category": "property_parameters",
+        "labelRu": "Площадь, планировка, санузлы, окна, высота или год постройки",
+        "cardCount": 10
+      }
+    ],
+    "categoryCounting": {
+      "method": "Категории назначены после прочтения русского поля reason для каждой из 47 исключённых карточек.",
+      "multipleCategoriesPerCard": true,
+      "uniqueCardsCovered": 47,
+      "membershipTotal": 81,
+      "notAdditiveToCardTotal": true,
+      "note": "Числа по категориям пересекаются: их нельзя складывать как число исключённых карточек."
+    },
+    "holdPolicy": "Для 47 карточек с источниковыми противоречиями описания и заголовки не заменялись. Их payload не менялся при обновлении 35 описаний; сравнение выполнено с состоянием после фотообновления.",
+    "optionalConflictHandling": "В одном дополнительном кандидате полностью опущено спорное необязательное направление окон; обязательные условия и предупреждение о сносе сохранены.",
+    "frozenTrainingDatasetChangedByThisRefresh": false,
+    "publicationProvenanceObserved": "assistant-editorial",
+    "appliedInventoryItems": 688,
+    "sourceConflictsResolvedAutomatically": 0
+  },
+  "photoReview": {
+    "origin": "assistant-visual-review",
+    "humanVerifiedReviews": 0,
+    "reviewEvents": 23,
+    "newOriginalImagesReviewed": 22,
+    "existingOriginalImagesRereviewed": 1,
+    "unavailableOriginalImages": 1,
+    "positiveClassWitnesses": 62,
+    "perImageNegativeLabels": 38,
+    "negativeLabelMeaning": "Отрицательная метка относится только к конкретному просмотренному кадру; она не означает отсутствие предмета во всей квартире.",
+    "coverageMeaning": "Доступность исходных файлов после применения фотообновления двух альбомов, затронутых прежним лимитом; это не полнота распознавания всех объектов.",
+    "unavailableOriginalPreview": {
+      "width": 640,
+      "height": 480,
+      "pixelCount": 307200,
+      "minimumOriginalPixelCount": 400000,
+      "provisional": true,
+      "publicationEligible": false
+    },
+    "exhaustiveRecognitionClaimed": false,
+    "modelInferenceRunForThisReviewPackage": false,
+    "modelWeightsChangedByThisReviewPackage": false,
+    "automaticCalibrationClaimed": false,
+    "appliedOriginals": 22,
+    "appliedCardsWithPhotoDataOrDerivedReviewUpdates": 68,
+    "sourceCardsInspectedByApply": 82,
+    "publicationsChangedByPhotoApply": false,
+    "catalogOrderAndEditsPreservedByPhotoApply": true,
+    "viewedMarkersPreservedByPhotoApply": true,
+    "applicationStatus": "applied",
+    "originalAvailabilityAfterBackfill": [
+      {
+        "sourcePhotoCount": 49,
+        "availableOriginalCount": 48,
+        "unavailableOriginalCount": 1,
+        "status": "partial"
+      },
+      {
+        "sourcePhotoCount": 34,
+        "availableOriginalCount": 34,
+        "unavailableOriginalCount": 0,
+        "status": "original-files-complete"
+      }
+    ]
+  },
+  "application": {
+    "status": "applied-and-verified",
+    "freshFullBatchPrepare": {
+      "blocked": 0,
+      "ready": 35,
+      "skipped": 0
+    },
+    "bodyCardsApplied": 35,
+    "bodyGenerationModeObserved": "assistant-editorial",
+    "humanVerified": false,
+    "inventoryItemsInAppliedBodies": 688,
+    "savedCardsAfterApplication": 82,
+    "editedTabCardCountAfterApplication": 38,
+    "originalCatalogOrderPreserved": true,
+    "originalViewedMarkersPreserved": true,
+    "viewedMarkerCount": 7,
+    "other47PayloadsUnchangedByBodyRefresh": true,
+    "other47ComparisonBaseline": "after photo backfill",
+    "modelCallsForBodyApplication": 0,
+    "bodyApplyAndVerificationSeconds": 14.173011749982834,
+    "preparedDocumentSealSha256": "7c622dae3cf5b1edeeadcd6f0cd7055793e12c771f57a80738d66798ac488436",
+    "appliedDocumentSealSha256": "cbf3d9185357b7c7e8567b590319ce68f587c1da2377a96cd1a320fed8b77411",
+    "countingNote": "Карточки, затронутые фотографиями, заголовками и описаниями, пересекаются. Счётчики 68, 2 и 35 нельзя складывать как число разных карточек."
+  },
+  "evidenceSha256": {
+    "candidateBodies35": "63a178cdd49ca2a08042fe7069e7a10a0f0a795a7129068c91a86058064c6b17",
+    "sourceConflictAudit47": "bdfa791583e1e8f7ff176060a86984386bc68f5f831457916755376d42c9ed32",
+    "additional7Validation": "1caa7cfef1ff6bb04efedcdf47394fb4148f6674607c7cb191efecd5781d2dcd",
+    "photoReviewPackage": "8cfe07478483dacc5631e91355cb28fe661fe3f7b3d4037a282447a0519a9b8a",
+    "sourceInstallationReceiptFile": "c8cc61f93e19d4fc48b8da5210109d277ee9f12d61113531f56d550a6b53f7a4",
+    "titleApplicationReceiptFile": "80727de49c0995255dc876af880475de0fa2d887629d0ffb66a1f6e90432e28c",
+    "photoApplicationReceiptFile": "29dff8c576956b03175375049e42773db6bf8f2c293f7d11785e4c33c017d0fd",
+    "bodyVerificationReceiptFile": "5cf126e34244097d14f9adc9839c3ce34a4443ed7ff95bbfb9b51bfc873519d6",
+    "bodyPreparedReceiptFile": "fe2794576e7760633d51920a1d2562c54634eaa075ebdfc36efd5b840d60368c",
+    "bodyAppliedReceiptFile": "473a4e5308b98f0162848a0f0c3a58668afd7ba42de7c5a7c82e8fc96e15db92"
+  },
+  "updatedAt": "2026-11-03T22:19:09.596173+00:00",
+  "auditHistory": [
+    {
+      "status": "prepared-pending-application",
+      "sha256": "2eb6d992d9d34b9731cde21ed5ea6c94edd2abf765d4e60656bcedb4c49791fc",
+      "candidateBodies": 35,
+      "sourceConflictHoldCards": 47,
+      "appliedBodies": 0
+    }
+  ],
+  "sourceInstallation": {
+    "sourceSnapshotCommit": "b254082d8f95905b62a2b57cfa0d71592c8e36eb",
+    "buildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+    "sourceFilesVerified": 905,
+    "sourceSnapshotVerified": true,
+    "liveCompatible": true,
+    "liveBuildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+    "desktopPhoneBuildsMatch": true,
+    "modelInferencePerformed": false,
+    "trainingPerformed": false,
+    "configurationWritesPerformed": false,
+    "sourceInstallListingPayloadsUnchanged": true,
+    "sourceInstallOrderAndViewsUnchanged": true,
+    "databaseBackupQuickChecksPassed": true,
+    "finishedAt": "2026-11-03T22:12:58.234410+00:00",
+    "status": "source-snapshot-installed-and-live-build-verified",
+    "dataPreservationScope": "Проверки неизменности данных относятся к установке исходников до отдельных одобренных исправлений заголовков, фотографий и описаний."
+  },
+  "titleCorrections": {
+    "cards": 2,
+    "titles": 6,
+    "modelCalls": 0,
+    "applied": true,
+    "catalogueOrderPreserved": true,
+    "viewedStatePreserved": true,
+    "bodyAndTagsPreserved": true,
+    "humanVerified": false,
+    "scope": "Убраны неподтверждённый город и обещание бесплатной регистрации только из двух отдельно проверенных карточек; обновлены все шесть вариантов заголовков."
+  }
+}

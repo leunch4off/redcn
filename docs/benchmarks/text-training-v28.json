@@ -1,0 +1,308 @@
+{
+  "version": 1,
+  "kind": "redcn-v28-local-training-and-readiness",
+  "sourceBaseCommit": "25e4648961ec42a9a70d20b5fdfd35cba5032c6f",
+  "dataset": {
+    "path": "data/learning/factual-curriculum-v28.json",
+    "sha256": "e5bcb3ee99e654e9cfb284d2f8fc4ae9fff29c820219ab35fa3b42f987e71b27",
+    "projectAuthored": true,
+    "nativeEditorAccepted": false,
+    "trainGroups": 120,
+    "validationGroups": 24,
+    "trainExamples": 600,
+    "validationExamples": 120,
+    "advertisingStyles": 12,
+    "historyCharacters": 240
+  },
+  "tokenAudit": {
+    "datasetSha256": "e5bcb3ee99e654e9cfb284d2f8fc4ae9fff29c820219ab35fa3b42f987e71b27",
+    "architecture": "arm64",
+    "maxSequenceLength": 1024,
+    "splits": {
+      "train": {
+        "examples": 600,
+        "minTokens": 203,
+        "maxTokens": 987,
+        "maxAnswerTokens": 270,
+        "skipped": 0,
+        "overLimit": [],
+        "byTask": {
+          "advertising": {
+            "min": 649,
+            "max": 987,
+            "rows": 360
+          },
+          "translation-ru-zh": {
+            "min": 204,
+            "max": 459,
+            "rows": 120
+          },
+          "translation-zh-ru": {
+            "min": 203,
+            "max": 458,
+            "rows": 120
+          }
+        }
+      },
+      "validation": {
+        "examples": 120,
+        "minTokens": 211,
+        "maxTokens": 946,
+        "maxAnswerTokens": 242,
+        "skipped": 0,
+        "overLimit": [],
+        "byTask": {
+          "advertising": {
+            "min": 635,
+            "max": 946,
+            "rows": 72
+          },
+          "translation-ru-zh": {
+            "min": 212,
+            "max": 427,
+            "rows": 24
+          },
+          "translation-zh-ru": {
+            "min": 211,
+            "max": 426,
+            "rows": 24
+          }
+        }
+      }
+    },
+    "first32ValidationTasks": {
+      "advertising": 16,
+      "translation-ru-zh": 8,
+      "translation-zh-ru": 8
+    }
+  },
+  "training": {
+    "training": {
+      "status": "trained-unaccepted",
+      "stepsCompleted": 800,
+      "stoppedEarly": false,
+      "examples": {
+        "train": 600,
+        "validation": 120
+      },
+      "skippedTooLongIds": {
+        "train": [],
+        "validation": []
+      },
+      "trainableParameters": 540672,
+      "changedParameterElements": 540672,
+      "baselineValidationLoss": 1.3529751133173704,
+      "finalValidationLoss": 0.03955728793516755,
+      "elapsedSeconds": 887.2137480410056,
+      "peakMemoryBytes": 1533586504,
+      "adapterSha256": "77bed5f85636711780da66d169ed8644b152ccf334377f8741721fe1820c0d6e",
+      "sampling": "shuffled",
+      "learningRate": 0.00002,
+      "seed": 20261104,
+      "packages": {
+        "mlx": "0.32.4",
+        "mlx-lm": "0.30.6"
+      },
+      "baseModel": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      "baseConfigSha256": "b045e57ea90b8f1b35f89f954b176a5c1faa02bd0af2c89bcec191239d66cef4"
+    },
+    "pilot": {
+      "stepsCompleted": 32,
+      "elapsedSeconds": 54.94613000000027,
+      "peakMemoryBytes": 1528039152,
+      "baselineValidationLoss": 1.3529751133173704,
+      "finalValidationLoss": 0.7001130664721131,
+      "adapterSha256": "5a4069e5ef19c6aac5a3cfcabd0d4dc9c0bb017006d48ca3df02736272eb460b"
+    },
+    "coverage": {
+      "uniqueTrainExamples": 600,
+      "uniqueTrainGroups": 120,
+      "sampledTaskCounts": {
+        "advertising": 474,
+        "translation-zh-ru": 161,
+        "translation-ru-zh": 165
+      }
+    },
+    "receiptSha256": "da9442e744943542b1e71f83e5c44f2a05a97fb02821e0cac530d257e1f08f9e",
+    "experiment": {
+      "finishedAt": 1793576005.6015239,
+      "selectedWeightsUnchanged": true,
+      "status": "trained-unaccepted",
+      "trainingReceiptSha256": "da9442e744943542b1e71f83e5c44f2a05a97fb02821e0cac530d257e1f08f9e",
+      "wallSeconds": 892.0358016249957
+    }
+  },
+  "pairedEvaluation": {
+    "seconds": 73.73909516700223,
+    "finishedAt": 1793576081.207556,
+    "reportSha256": "2dc64f506fa877ad4f74bd39d77f937527b880d44bd12dc607801341bfb5c87d",
+    "independentPropertyCases": 6,
+    "parameters": {
+      "topP": 0.9,
+      "listingTemperature": 0.75,
+      "listingMaxTokens": 768,
+      "translationTemperature": 0,
+      "translationMaxTokens": 512
+    },
+    "models": {
+      "current": {
+        "attempts": 30,
+        "status": {
+          "measured": 30
+        },
+        "tasks": {
+          "listing": {
+            "attempted": 18,
+            "measured": 18,
+            "measuredPassed": 0,
+            "validJson": 14
+          },
+          "ru-zh": {
+            "attempted": 6,
+            "measured": 6,
+            "measuredPassed": 0,
+            "validJson": null
+          },
+          "zh-ru": {
+            "attempted": 6,
+            "measured": 6,
+            "measuredPassed": 0,
+            "validJson": null
+          }
+        },
+        "issueCategories": {
+          "Модель не вернула полный перевод на выбранном языке": 3,
+          "Числа перевода отличаются от оригинала": 7,
+          "В переводе изменены единицы суммы, площади, времени или этажа": 5,
+          "Проверьте, что суммы аренды и залога сохранили своё значение": 12,
+          "В переводе изменён или пропущен период оплаты": 7,
+          "В переводе пропущен предмет или условие": 100,
+          "В переводе не сохранено условие или неопределённость": 1,
+          "В переводе не сохранено отрицание": 2,
+          "Пропущены наблюдавшиеся станции": 12,
+          "Изменено наличие, отрицание или условие": 6,
+          "В рекламном тексте изменено назначение суммы аренды или залога": 10,
+          "В рекламном тексте изменено ограничение или условие, требующее подтверждения": 13,
+          "Пропущена наблюдавшаяся станция": 17,
+          "В ИИ-черновике есть числа, отсутствующие в проверенном тексте": 6,
+          "Добавлен неподтверждённый предмет или условие": 12,
+          "В переводе пропущено условие оплаты": 25,
+          "Некорректный JSON title/body": 4,
+          "Модель не вернула полный китайский текст": 1,
+          "В рекламном тексте изменены сроки, этаж или подтверждённое количество": 5,
+          "В рекламном тексте пропущено или изменено название маршрута": 4,
+          "Добавлено неподтверждённое условие оплаты": 2,
+          "В рекламном тексте пропущены проверенные суммы, площадь или время": 2
+        }
+      },
+      "candidate": {
+        "attempts": 30,
+        "status": {
+          "measured": 28,
+          "incomplete": 2
+        },
+        "tasks": {
+          "listing": {
+            "attempted": 18,
+            "measured": 16,
+            "measuredPassed": 0,
+            "validJson": 16
+          },
+          "ru-zh": {
+            "attempted": 6,
+            "measured": 6,
+            "measuredPassed": 0,
+            "validJson": null
+          },
+          "zh-ru": {
+            "attempted": 6,
+            "measured": 6,
+            "measuredPassed": 0,
+            "validJson": null
+          }
+        },
+        "issueCategories": {
+          "В переводе изменены единицы суммы, площади, времени или этажа": 9,
+          "Проверьте, что суммы аренды и залога сохранили своё значение": 11,
+          "В переводе изменён или пропущен период оплаты": 5,
+          "Изменено наличие, отрицание или условие": 2,
+          "В переводе пропущен предмет или условие": 88,
+          "В переводе не сохранено условие или неопределённость": 1,
+          "Пропущены наблюдавшиеся станции": 4,
+          "Модель не вернула полный перевод на выбранном языке": 4,
+          "В рекламном тексте изменены сроки, этаж или подтверждённое количество": 6,
+          "Пропущена наблюдавшаяся станция": 14,
+          "В рекламном тексте изменено ограничение или условие, требующее подтверждения": 15,
+          "В рекламном тексте пропущено или изменено название маршрута": 15,
+          "Числа перевода отличаются от оригинала": 5,
+          "В переводе пропущено условие оплаты": 24,
+          "В рекламном тексте изменено назначение суммы аренды или залога": 9,
+          "Добавлено неподтверждённое условие оплаты": 1,
+          "Добавлен неподтверждённый предмет или условие": 5,
+          "В рекламном тексте пропущены проверенные суммы, площадь или время": 1,
+          "Некорректный JSON title/body": 2
+        }
+      }
+    },
+    "decision": {
+      "accepted": false,
+      "incomplete": [
+        "candidate:heldout-06-listing-2",
+        "candidate:heldout-06-listing-3"
+      ],
+      "message": "Сравнение прервано или часть ответов не измерена.",
+      "reason": "incomplete-probes"
+    },
+    "nativeSpeakerReviewCompleted": false,
+    "fallbackAllowed": false
+  },
+  "actualAutomaticPromotion": {
+    "decision": {
+      "accepted": false,
+      "reason": "incomplete-probes",
+      "message": "Сравнение прервано или часть ответов не измерена.",
+      "incomplete": [
+        "candidate:heldout-06-listing-2",
+        "candidate:heldout-06-listing-3"
+      ]
+    },
+    "selectedConfigurationUnchanged": true,
+    "reportSha256": "2dc64f506fa877ad4f74bd39d77f937527b880d44bd12dc607801341bfb5c87d"
+  },
+  "photoReadiness": {
+    "manifestSha256": "dc53ecb5e38e0a87e2fe6084c1e6738ab33c3c7f5016b9b272e7f047b49151ee",
+    "hashesVerified": 214,
+    "trainImages": 134,
+    "validationImages": 80,
+    "classes": 21,
+    "classesWithPotentiallySufficientValidationSupport": 0,
+    "integrityIssues": {},
+    "blockers": [
+      "apartment-or-source-grouping-unverified",
+      "independent-test-split-absent",
+      "individual-image-rights-unverified",
+      "classwise-validation-support-insufficient"
+    ],
+    "automaticAcceptance": false
+  },
+  "implementationVerification": {
+    "nativePython": {
+      "passed": 141,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nativeNode": {
+      "tests": 593,
+      "passed": 592,
+      "failed": 0,
+      "optionalSkipped": 1
+    },
+    "buildPassed": true
+  },
+  "limitations": [
+    "Synthetic validation loss is not factual or editorial accuracy.",
+    "The unchanged frozen six-property regression corpus is distinct from training; a larger unseen human-reviewed corpus remains required.",
+    "The paired translation probes retain a diagnostic decoding policy; only top_p is shared with every production text request.",
+    "No physical iPhone, native Chinese editorial or new photo-label acceptance is claimed."
+  ]
+}

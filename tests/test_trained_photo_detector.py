@@ -1,0 +1,250 @@
+import io
+import hashlib
+import json
+import math
+from pathlib import Path
+import sys
+import tempfile
+import threading
+import time
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'cli'))
+import trained_photo_detector as detector
+import vision_photo
+
+
+def rows():
+    return [[0.]*26 for _ in range(detector.ROWS)]
+
+
+def item(raw, index, feature, score=.9):
+    raw[index][:5] = [10-index, 10, math.log(10), math.log(10), 1.]
+    raw[index][5+detector.CLASS_IDS.index(feature)] = score
+
+
+class TrainedDetectorTests(unittest.TestCase):
+    def test_large_request_reaches_eof_after_slow_reader_exceeds_first_poll(self):
+        # Real OS transport: a request larger than a pipe buffer and a child
+        # that does not start reading until after communicate's first timeout.
+        content=b'photo-fixture-'*160_000
+        worker_source='''import base64,hashlib,json,sys,time
+time.sleep(.3)
+request=json.loads(sys.stdin.buffer.read())
+content=base64.b64decode(request['content'],validate=True)
+print(json.dumps({'status':'review','provider':'yolox-trained','model':'redcn-furniture-v1',
+    'candidates':[],'inputByteCount':len(content),'inputSha256':hashlib.sha256(content).hexdigest(),
+    'actualMime':request['mime']}),flush=True)
+'''
+        actual_popen=detector.subprocess.Popen
+        processes=[];timeouts=[];transports=[]
+        def spawn(*args,**kwargs):
+            transports.append(kwargs['stdin'])
+            process=actual_popen(*args,**kwargs);communicate=process.communicate
+            def measured(**options):
+                try:return communicate(**options)
+                except detector.subprocess.TimeoutExpired:
+                    timeouts.append(True);raise
+            process.communicate=measured;processes.append(process)
+            return process
+        with tempfile.TemporaryDirectory() as directory:
+            worker=Path(directory)/'slow-photo-reader.py';worker.write_text(worker_source)
+            with patch.object(detector,'__file__',str(worker)), \
+                    patch('photo_native_runtime.runtime_command',return_value=([sys.executable,'-I'],{'selection':'legacy'})), \
+                    patch.object(detector.subprocess,'Popen',side_effect=spawn):
+                result=detector.analyze(content,'image/webp',directory,deadline=time.monotonic()+2)
+        self.assertGreaterEqual(len(timeouts),1)
+        self.assertEqual(result['status'],'review',result)
+        self.assertEqual(result['inputByteCount'],len(content))
+        self.assertEqual(result['inputSha256'],hashlib.sha256(content).hexdigest())
+        self.assertEqual(result['actualMime'],'image/webp')
+        self.assertEqual(processes[0].poll(),0)
+        self.assertTrue(transports[0].closed)
+        self.assertTrue(processes[0].stdout.closed)
+
+    def test_real_slow_reader_is_reaped_and_temporary_input_closed_on_cancel_or_deadline(self):
+        actual_popen=detector.subprocess.Popen
+        for cancel_requested in (False,True):
+            processes=[];transports=[];timer=None
+            cancel=threading.Event()
+            def spawn(*args,**kwargs):
+                transports.append(kwargs['stdin'])
+                process=actual_popen(*args,**kwargs);processes.append(process)
+                return process
+            with self.subTest(cancel_requested=cancel_requested),tempfile.TemporaryDirectory() as directory:
+                worker=Path(directory)/'waiting-reader.py';worker.write_text('import time;time.sleep(30)\n')
+                with patch.object(detector,'__file__',str(worker)), \
+                        patch('photo_native_runtime.runtime_command',return_value=([sys.executable,'-I'],{'selection':'legacy'})), \
+                        patch.object(detector.subprocess,'Popen',side_effect=spawn):
+                    if cancel_requested:
+                        timer=threading.Timer(.2,cancel.set);timer.start()
+                    try:
+                        if cancel_requested:
+                            with self.assertRaisesRegex(ValueError,'отмен'):
+                                detector.analyze(b'large-photo'*100_000,'image/webp',directory,cancel=cancel,deadline=time.monotonic()+2)
+                        else:
+                            result=detector.analyze(b'large-photo'*100_000,'image/webp',directory,deadline=time.monotonic()+.2)
+                            self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+                    finally:
+                        if timer is not None:timer.cancel();timer.join()
+                self.assertEqual(len(processes),1)
+                self.assertIsNotNone(processes[0].poll())
+                self.assertTrue(transports[0].closed)
+                self.assertTrue(processes[0].stdout.closed)
+
+    def test_deadline_exhausted_while_staging_does_not_start_child_and_closes_file(self):
+        clock={'value':0};files=[];actual_temporary=detector.tempfile.TemporaryFile
+        def stage(*args,**kwargs):
+            stream=actual_temporary(*args,**kwargs);files.append(stream);clock['value']=3
+            return stream
+        with tempfile.TemporaryDirectory() as directory,patch.object(detector.time,'monotonic',side_effect=lambda:clock['value']), \
+                patch.object(detector.tempfile,'TemporaryFile',side_effect=stage), \
+                patch('photo_native_runtime.runtime_command',return_value=([sys.executable],{'selection':'legacy'})), \
+                patch.object(detector.subprocess,'Popen') as spawn:
+            result=detector.analyze(b'photo','image/webp',directory,deadline=2)
+        spawn.assert_not_called()
+        self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+        self.assertEqual(result['failurePhase'],'request-staging')
+        self.assertTrue(files[0].closed)
+
+    def test_new_class_has_box_but_never_publishes_or_counts(self):
+        raw = rows(); item(raw, 0, 'washer'); item(raw, 1, 'washer', .8)
+        result = detector.decode(raw, 832, 416, 'a'*64)
+        self.assertEqual([row['id'] for row in result], ['washer'])
+        self.assertEqual(len(result[0]['evidence']), 1)
+        self.assertFalse(result[0]['autoEligible']); self.assertIsNone(result[0]['count'])
+        self.assertEqual(result[0]['evidence'][0]['photoId'], 'a'*64)
+        self.assertAlmostEqual(result[0]['evidence'][0]['region'][0], 80/832)
+
+    def test_dataset_aliases_keep_broad_meaning_and_original_class(self):
+        for raw_feature, canonical in detector.CLASS_ALIASES.items():
+            raw = rows(); item(raw, 0, raw_feature)
+            result = detector.decode(raw, 416, 416, 'a'*64)
+            self.assertEqual([row['id'] for row in result], [canonical])
+            self.assertFalse(result[0]['autoEligible'])
+            self.assertIsNone(result[0]['count'])
+            self.assertEqual(result[0]['evidence'][0]['rawClassId'], raw_feature)
+            self.assertNotIn('wardrobe', [row['id'] for row in result])
+            self.assertNotIn('kitchenFurniture', [row['id'] for row in result])
+
+    def test_cupboard_and_cabinetry_share_nms_without_inventing_two_objects(self):
+        raw = rows(); item(raw, 0, 'cupboard', .9); item(raw, 1, 'cabinetry', .8)
+        result = detector.decode(raw, 416, 416, 'a'*64)
+        self.assertEqual([row['id'] for row in result], ['cabinet'])
+        self.assertEqual(len(result[0]['evidence']), 1)
+        self.assertIsNone(result[0]['count'])
+
+    def test_oven_never_creates_fridge_and_bad_scores_are_rejected(self):
+        raw = rows(); item(raw, 0, 'oven')
+        self.assertEqual([row['id'] for row in detector.decode(raw, 416, 416, 'a'*64)], ['oven'])
+        for bad in (float('nan'), True, 2.):
+            raw = rows(); raw[0][4] = bad
+            with self.assertRaises(ValueError): detector.decode(raw, 416, 416, 'a'*64)
+
+    def test_wrong_model_hash_fails_before_runtime_import(self):
+        with tempfile.TemporaryDirectory() as root:
+            folder=Path(root)/detector.ARTIFACT; folder.mkdir(parents=True)
+            receipt={'status':'trained-unaccepted','onnx':{'sha256':detector.MODEL_SHA,
+                'path':'model.onnx','inputShape':[1,3,416,416],
+                'outputEncoding':'raw-yolox','classIds':detector.CLASS_IDS}}
+            (folder/'trainreceipt.json').write_text(json.dumps(receipt))
+            (folder/'model.onnx').write_bytes(b'wrong weights')
+            with self.assertRaisesRegex(ValueError,'Контрольная'): detector.load_artifact(root)
+            self.assertEqual(detector.cache_identity(root),'unavailable')
+
+    def test_cancel_and_expired_deadline_never_start_worker(self):
+        cancel=threading.Event(); cancel.set()
+        with patch.object(detector.subprocess,'Popen') as start:
+            with self.assertRaises(ValueError): detector.analyze(b'photo','image/jpeg','/unused',cancel=cancel)
+            with self.assertRaises(ValueError): detector.analyze(b'photo','image/jpeg','/unused',deadline=time.monotonic()-1)
+            start.assert_not_called()
+
+    def test_selected_provider_bypasses_ollama_and_apple(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as folder, Image.new('RGB',(32,32)) as image, \
+                patch('photo_ai_settings.load_config', return_value={'enabled':True,'model':detector.MODEL}), \
+                patch.object(detector,'analyze',return_value={'provider':'yolox-trained','autoApply':False}) as analyze, \
+                patch('photo_ai_runtime.ensure_started',side_effect=AssertionError('Ollama must not start')), \
+                patch.object(vision_photo,'native_classify',side_effect=AssertionError('Apple fallback must not run')):
+            result=vision_photo.analyze_image(image,folder,content=b'fixture',mime='image/png')
+        self.assertEqual(result['provider'],'yolox-trained'); self.assertFalse(result['autoApply'])
+        self.assertEqual(analyze.call_args.args[:3],(b'fixture','image/png',folder))
+
+    def test_parent_forces_review_policy_even_if_worker_sets_old_auto_flags(self):
+        class Process:
+            returncode=0
+            def communicate(self, **kwargs):
+                return json.dumps({'provider':'yolox-trained','model':detector.MODEL,
+                    'autoApply':True,'candidates':[{'id':'sofa','autoEligible':True,'count':4}]}).encode(),b''
+            def poll(self):return 0
+        with patch.object(detector.subprocess,'Popen',return_value=Process()):
+            result=detector.analyze(b'fixture','image/jpeg','/unused')
+        self.assertFalse(result['autoApply']); self.assertFalse(result['candidates'][0]['autoEligible'])
+        self.assertIsNone(result['candidates'][0]['count'])
+
+    def test_detector_reports_image_timing_and_never_fake_tokens(self):
+        class Process:
+            returncode=0
+            def communicate(self, **kwargs):
+                return json.dumps({'status':'review','provider':'yolox-trained','model':detector.MODEL,
+                    'autoApply':False,'candidates':[], 'ai':{'inferenceSeconds':.05,'imagesPerSecond':20,
+                    'processedImages':1,'tokensPerSecond':999,'generatedTokens':99}}).encode(),b''
+            def poll(self):return 0
+        events=[]
+        with patch.object(detector.subprocess,'Popen',return_value=Process()):
+            result=detector.analyze(b'fixture','image/jpeg','/unused',status=lambda message,**fields:events.append(fields))
+        self.assertEqual(result['ai']['inferenceSeconds'],.05)
+        self.assertEqual(result['ai']['imagesPerSecond'],20)
+        self.assertFalse(result['ai']['tokenBased'])
+        self.assertNotIn('tokensPerSecond',result['ai'])
+        self.assertNotIn('generatedTokens',result['ai'])
+        self.assertEqual([row['ai']['phase'] for row in events],['loading','analyzing','complete'])
+
+    def test_cold_initialization_can_finish_after_twenty_seconds_but_obeys_outer_deadline(self):
+        class Process:
+            returncode=0
+            terminated=False
+            def communicate(self, **kwargs):
+                return json.dumps({'status':'review','provider':'yolox-trained','model':detector.MODEL,
+                    'autoApply':False,'candidates':[]}).encode(),b''
+            def poll(self):return 0
+        def run(deadline=None):
+            clock={'value':0}
+            process=Process()
+            def launch(*args,**kwargs):
+                # OS initialization/launch costs 25 seconds in this reproduction.
+                clock['value']=25
+                return process
+            with tempfile.TemporaryDirectory() as directory, \
+                    patch.object(detector.time,'monotonic',side_effect=lambda:clock['value']), \
+                    patch.object(detector.subprocess,'Popen',side_effect=launch), \
+                    patch('photo_native_runtime.runtime_command',return_value=(['python'],{'selection':'legacy'})):
+                return detector.analyze(b'photo','image/jpeg',directory,deadline=deadline)
+        self.assertEqual(run()['status'],'review')
+        result=run(deadline=10)
+        self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+        self.assertEqual(result['diagnostics']['budgetSeconds'],10)
+
+    def test_expired_worker_is_terminated_and_reaped(self):
+        clock={'value':0}
+        class Process:
+            terminated=False
+            reaped=False
+            def communicate(self, **kwargs):
+                clock['value']=61
+                raise detector.subprocess.TimeoutExpired(['worker'], .1)
+            def poll(self):return None
+            def terminate(self):self.terminated=True
+            def wait(self, timeout):self.reaped=True
+        process=Process()
+        with patch.object(detector.subprocess,'Popen',return_value=process), \
+                patch.object(detector.time,'monotonic',side_effect=lambda:clock['value']):
+            result=detector.analyze(b'fixture','image/jpeg','/unused')
+        self.assertEqual(result['status'],'unavailable')
+        self.assertEqual(result['errorCode'],'PHOTO_WORKER_TIMEOUT')
+        self.assertEqual(result['failurePhase'],'worker-startup-or-inference')
+        self.assertTrue(process.terminated); self.assertTrue(process.reaped)
+
+
+if __name__=='__main__':unittest.main()

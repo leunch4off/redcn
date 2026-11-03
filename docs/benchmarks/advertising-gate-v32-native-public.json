@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "release": "v32",
+  "kind": "native-production-paired-advertising-gate",
+  "status": "completed-candidate-rejected",
+  "scope": "Actual installed production evaluator; two isolated native workers using the same 12 live-contract requests. This is a model-quality comparison, separate from successful training.",
+  "source": {
+    "commit": "b254082d8f95905b62a2b57cfa0d71592c8e36eb",
+    "buildId": "fb4c4c15d0b987a00a10f59de5583f0ceb24e9d11d02bb862a8d08ceba53bf76",
+    "evaluatorSha256": "8ce6427f8eb1bf938fe71f5321c87e04004d33ce7e8c44f1a8485a7119795954",
+    "checkerHashes": {
+      "advertising_learning.py": "834813ec655f56a17ba328c7b700096a5ff88154b25be872f390682660bb6d08",
+      "advertising_promotion.py": "370c6ea852f1d928682156a0c5c9f3b4a3d26eaa3fd08192e0475d20fcb7d81c",
+      "fact_ledger.py": "b4db203579a60a412f6e20e2ea09daf3ca059c6cee5f8eb6bb0945bc6c663e4d",
+      "individual_copy.py": "b38d5c57037248509286fcf11c389d93e0e966553fb9cd810a0a0bec16cd4fc4",
+      "language_service.py": "6d2b38aaf6b5867e2c201130dc81a9aaa40dab2a43c6e1e3b62f4c9ed8bb461f",
+      "learning_memory.py": "34983269fe4c21ce3c63f2ee22c6e2cf42a12851ade5a0e62b48eb0166fbcc47",
+      "learning_provenance.py": "75452400e6393a06b87206220124e32e3e66f50137696432a05be141a032e933",
+      "local_text_model.py": "abb9593408ddbafdb90897cc11170f6a80c8460e51fce4869b67fdfd4bea3d08",
+      "node_runtime.py": "946c8928019b646e344d3aa7e1031ce0a7478fce51c375963de4f90f4bb04024",
+      "rental_conditions.py": "13ef28cd55a71c01ec887bf6718c4661e4c2bca3b73f424543f547098764afaf",
+      "text_evaluation_process.py": "e250706e0aca4eabb3db2c4d8d68289a9e81c7c6a46f1b129806c161f72a27f0",
+      "text_model_contract.py": "1e8d64707d36548a785e3e7f7f8eb885aa7e4981920e13a2ab874ac2693bec55",
+      "text_native_evaluation.py": "0b313d33d6c2bb08d3bcc56cecf8524dd71c20a395658ab45fc762f6aa8e39f7"
+    }
+  },
+  "evidence": {
+    "nativeReportSha256": "97bb1f97d5a55246ffa297588e2258e29b2cb0997ca78b1c9e275a369bc69a11",
+    "datasetSha256": "ed6f538726837ab761cba7a3fabd53052f1df6fe36f39bc905ffc93c6d373491",
+    "probeRequestsSha256": "0fd73293cc327720a42a3f1d5378a6a51b5becb1619642f98b2a020862a9261a",
+    "candidateWeightsSha256": "025bf9a523fc332e44c97fc890608547b5236b35c08ad052641a7fdcb6c1e4ef",
+    "candidateTrainingReceiptSha256": "ff04186874a6cac1a3ce30ef0d5a39ac74446a88d2c30dde2947c93497800884"
+  },
+  "dataset": {
+    "trainingGroups": 20,
+    "holdoutGroups": 6,
+    "variantsPerHoldout": 2,
+    "requestsPerSide": 12,
+    "inputDisjoint": true,
+    "trainingValidationDisjoint": true,
+    "humanVerifiedTrainingLabels": false,
+    "holdoutTargetsReceivedGradients": false
+  },
+  "candidate": {
+    "trainingCompletedSteps": 60,
+    "selectionAtGateStart": false,
+    "selectedByThisGate": false,
+    "qualityAccepted": false
+  },
+  "execution": {
+    "attemptOutcome": "completed",
+    "fullGateEligible": true,
+    "inputsStillFresh": true,
+    "elapsedSeconds": 350.21349029199337,
+    "maximumSeconds": 1800,
+    "offline": true,
+    "modelProcessIsolation": true,
+    "automaticPromotion": false,
+    "failureReason": null,
+    "supervisorInterrupted": false
+  },
+  "policy": {
+    "fallbackAllowed": false,
+    "humanEditorialQualityCertified": false,
+    "maximumAgeSeconds": 86400,
+    "minimumHoldoutGroups": 4,
+    "name": "paired-grounded-advertising-v1",
+    "probeSeconds": 55,
+    "promptContract": "live-individual-copy",
+    "requiresEveryCandidateProbe": true,
+    "requiresStrictImprovement": true,
+    "seed": 20261103,
+    "variants": 2
+  },
+  "current": {
+    "completedAnswers": 12,
+    "formallyPassed": 12,
+    "distinctRewritePairs": 6,
+    "expectedRewritePairs": 6,
+    "workerAdmitted": true,
+    "workerExitCode": 0,
+    "nativeArm64": true,
+    "terminalComplete": true,
+    "everyAnswerEOS": true,
+    "everyTokenCountMeasured": true,
+    "fallbackAnswers": 0,
+    "generationTokensTotal": 2904,
+    "generationSecondsTotal": 127.08441233396297,
+    "generationSecondsMedian": 10.638950687483884,
+    "generationSecondsMaximum": 11.278006375010591,
+    "workerElapsedSeconds": 146.43973549999646,
+    "answersSha256": "a3f959bea56021cb7e31c57cd829de4cb669e2053fc875e38e21c711e70a1cb0",
+    "resources": {
+      "guardStopReason": null,
+      "mlxPeakBytes": 2977678994,
+      "processGroupRssPeakBytes": 350912512,
+      "availableEstimateMinimumBytes": 835256320,
+      "swapBaselineBytes": 3570275450,
+      "swapPeakBytes": 3674011074,
+      "maximumSwapGrowthBytes": 103735624,
+      "limits": {
+        "consecutivePressureSamples": 2,
+        "maxProcessGroupRssBytes": 4500000000,
+        "maxSwapGrowthBytes": 536870912,
+        "minimumAvailableEstimateBytes": 805306368
+      }
+    },
+    "environment": {
+      "nativeArm64": true,
+      "packages": {
+        "mlx": "0.32.4",
+        "mlx-lm": "0.32.2",
+        "tokenizers": "0.23.3",
+        "transformers": "5.22.1"
+      },
+      "pythonVersion": "3.11.9"
+    }
+  },
+  "candidateResults": {
+    "completedAnswers": 12,
+    "formallyPassed": 10,
+    "distinctRewritePairs": 5,
+    "expectedRewritePairs": 6,
+    "workerAdmitted": true,
+    "workerExitCode": 0,
+    "nativeArm64": true,
+    "terminalComplete": true,
+    "everyAnswerEOS": true,
+    "everyTokenCountMeasured": true,
+    "fallbackAnswers": 0,
+    "generationTokensTotal": 2665,
+    "generationSecondsTotal": 120.54971375101013,
+    "generationSecondsMedian": 10.0109647079953,
+    "generationSecondsMaximum": 10.963603625015821,
+    "workerElapsedSeconds": 139.40793837502133,
+    "answersSha256": "c8781cf792d1148ce3ea4b70066de194d485eec9b87851ef1e5ebc6a90257f27",
+    "resources": {
+      "guardStopReason": null,
+      "mlxPeakBytes": 3024541246,
+      "processGroupRssPeakBytes": 297025536,
+      "availableEstimateMinimumBytes": 933117952,
+      "swapBaselineBytes": 3674011074,
+      "swapPeakBytes": 3674011074,
+      "maximumSwapGrowthBytes": 0,
+      "limits": {
+        "consecutivePressureSamples": 2,
+        "maxProcessGroupRssBytes": 4500000000,
+        "maxSwapGrowthBytes": 536870912,
+        "minimumAvailableEstimateBytes": 805306368
+      }
+    },
+    "environment": {
+      "nativeArm64": true,
+      "packages": {
+        "mlx": "0.32.4",
+        "mlx-lm": "0.32.2",
+        "tokenizers": "0.23.3",
+        "transformers": "5.22.1"
+      },
+      "pythonVersion": "3.11.9"
+    }
+  },
+  "decision": {
+    "accepted": false,
+    "reason": "candidate-factual-errors",
+    "candidateFailedAnswers": 2,
+    "regressions": 2,
+    "measuredImprovement": false,
+    "automaticPromotion": false,
+    "nativeSpeakerReviewCompleted": false,
+    "humanEditorialQualityCertified": false
+  },
+  "limitations": [
+    "All 24 native responses completed; formal completion does not certify editorial correctness.",
+    "The candidate omitted a required inventory item in two answers and repeated one complete rewrite pair.",
+    "Separate assistant review also found unsupported count transfer and an inherited source-to-prompt conflict; those observations do not alter the historical formal score.",
+    "Lower heldout training loss did not demonstrate improved generated advertisements. The trained candidate remains unselected."
+  ]
+}

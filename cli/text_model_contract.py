@@ -1,0 +1,253 @@
+"""Dependency-free contract for the optional local bilingual text adapter.
+
+Weights are distinct from dictionary/example memory. Training is supervised by
+approved or explicitly project-authored pairs; an output never approves itself.
+"""
+import hashlib
+import json
+import math
+from collections.abc import Mapping
+from pathlib import Path
+
+BASE_MODEL = 'mlx-community/Qwen2.5-0.5B-Instruct-4bit'
+ADVERTISING_MODEL = 'mlx-community/Qwen3-4B-Instruct-2507-4bit'
+INFERENCE_TOP_P = .9
+INFERENCE_MODELS = {
+    (896,24,14,2): BASE_MODEL,
+    (1536,28,12,2): 'mlx-community/Qwen2.5-1.5B-Instruct-4bit',
+    (2560,36,32,8): ADVERTISING_MODEL,
+}
+LORA = {'rank': 8, 'scale': 16.0, 'dropout': 0.0,
+        'keys': ['self_attn.q_proj', 'self_attn.v_proj']}
+LAYERS = 24
+EXPECTED_TRAINABLE = 540_672
+MAX_DATASET_BYTES = 8_000_000
+ADVERTISING_LORA = {'rank': 4, 'scale': 8.0, 'dropout': 0.0,
+                    'keys': ['self_attn.q_proj', 'self_attn.v_proj']}
+ADVERTISING_LAYERS = 4
+ADVERTISING_TRAINABLE = 163_840
+
+
+def sampling_parameters(temperature, *, top_p=INFERENCE_TOP_P):
+    """One sampler contract for the production worker and paired evaluator."""
+    if type(temperature) not in (int, float) or not 0 <= temperature <= 1.2:
+        raise ValueError('Invalid text sampling temperature')
+    if type(top_p) not in (int, float) or top_p != INFERENCE_TOP_P:
+        raise ValueError('Text evaluation must use the production top-p')
+    return {'temp': temperature, 'top_p': INFERENCE_TOP_P}
+
+
+def inference_sampling_parameters(model, temperature):
+    """Inference-only profile; the frozen 0.5B training/evaluation is unchanged."""
+    if model == ADVERTISING_MODEL:
+        return {'temp': temperature, 'top_p': .8, 'top_k': 20}
+    return sampling_parameters(temperature)
+
+
+def inference_memory_limit(model):
+    return 3_200_000_000 if model == ADVERTISING_MODEL else 2_500_000_000
+
+
+def canonical(value):
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+
+
+def content_sha(value):
+    return hashlib.sha256(canonical(value).encode()).hexdigest()
+
+
+def file_sha(path):
+    digest = hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for block in iter(lambda: stream.read(1024*1024), b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def expected_parameters(config):
+    """Count actual rank-eight q/v projections, never dummy extra parameters."""
+    if not isinstance(config, dict):
+        raise ValueError('Model configuration is required')
+    dimensions = tuple(config.get(k) for k in ('hidden_size', 'num_hidden_layers',
+        'num_attention_heads', 'num_key_value_heads'))
+    if dimensions != (896, 24, 14, 2) or config.get('model_type') != 'qwen2':
+        raise ValueError('Only the pinned Qwen2.5 0.5B architecture is supported')
+    hidden, layers, heads, kv_heads = dimensions
+    return layers*LORA['rank']*((hidden+hidden)+(hidden+hidden//heads*kv_heads))
+
+
+def inference_model(config):
+    """Identify supported bases; each training lane has its own exact contract.
+
+    Selecting a different base never makes an existing adapter compatible or
+    approves that model's quality.
+    """
+    if not isinstance(config,dict):
+        raise ValueError('Unsupported local text architecture')
+    shape=tuple(config.get(key) for key in ('hidden_size','num_hidden_layers','num_attention_heads','num_key_value_heads'))
+    if config.get('model_type') == 'qwen3':
+        quantization=config.get('quantization') or config.get('quantization_config') or {}
+        if (shape != (2560,36,32,8) or config.get('head_dim') != 128
+                or config.get('vocab_size') != 151936 or config.get('tie_word_embeddings') is not True
+                or config.get('rope_theta') != 5_000_000 or config.get('max_position_embeddings') != 262144
+                or not isinstance(quantization,dict) or quantization.get('bits') != 4 or quantization.get('group_size') != 64):
+            raise ValueError('Unsupported local advertising architecture')
+        return ADVERTISING_MODEL
+    if config.get('model_type') != 'qwen2' or shape == (2560,36,32,8):
+        raise ValueError('Unsupported local text architecture')
+    if shape not in INFERENCE_MODELS:
+        raise ValueError('Unsupported local text architecture')
+    return INFERENCE_MODELS[shape]
+
+
+def training_contract(config, lane='translation'):
+    """Explicit, incompatible adapter contracts for the two actual base models.
+
+    Advertising adapts only the last four q/v blocks of the already installed
+    4B model. It never attaches the historical 0.5B adapter to another base.
+    """
+    if lane == 'translation':
+        count = expected_parameters(config)
+        return {'lane': lane, 'name': 'translation-qwen2.5-0.5b-lora-v1',
+                'baseModel': BASE_MODEL, 'layers': LAYERS, 'lora': dict(LORA),
+                'trainableParameters': count, 'tensorCount': LAYERS*4,
+                'memoryBytes': 3_500_000_000, 'maxSequenceLength': 1024,
+                'chatTemplateKwargs': {}}
+    if lane != 'advertising' or inference_model(config) != ADVERTISING_MODEL:
+        raise ValueError('Advertising training requires the installed Qwen3 4B base')
+    hidden = config['hidden_size']
+    query = config['num_attention_heads']*config['head_dim']
+    value = config['num_key_value_heads']*config['head_dim']
+    count = ADVERTISING_LAYERS*ADVERTISING_LORA['rank']*(hidden+query+hidden+value)
+    if count != ADVERTISING_TRAINABLE:
+        raise ValueError('Unexpected advertising adapter dimensions')
+    return {'lane': lane, 'name': 'advertising-qwen3-4b-lora-v1',
+            'baseModel': ADVERTISING_MODEL, 'layers': ADVERTISING_LAYERS,
+            'lora': dict(ADVERTISING_LORA), 'trainableParameters': count,
+            'tensorCount': ADVERTISING_LAYERS*4, 'memoryBytes': 4_000_000_000,
+            'maxSequenceLength': 1536, 'chatTemplateKwargs': {'enable_thinking': False},
+            'targetFormat': 'live-advertising-answer-plus-native-terminator-v1'}
+
+
+def validate_dataset(value):
+    if not isinstance(value, dict) or value.get('version') != 1:
+        raise ValueError('Training dataset version 1 is required')
+    splits = value.get('splits')
+    if not isinstance(splits, dict):
+        raise ValueError('Separate train and validation splits are required')
+    seen_groups, seen_contents, seen_inputs, seen_ids = set(), set(), set(), set()
+    cleaned = {}
+    for split in ('train', 'validation'):
+        rows = splits.get(split)
+        if not isinstance(rows, list) or not 2 <= len(rows) <= 10_000:
+            raise ValueError('Each split needs 2–10000 supervised examples')
+        current_groups, current_contents, current_inputs, result = set(), set(), set(), []
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError('Invalid training record')
+            key, group = row.get('id'), row.get('groupId')
+            if not isinstance(key, str) or not key or key in seen_ids:
+                raise ValueError('Training IDs must be unique')
+            if not isinstance(group, str) or not group or len(group) > 128:
+                raise ValueError('A stable property/lexical group is required')
+            if group in seen_groups:
+                raise ValueError('Group leaks across train and validation')
+            if row.get('status') not in ('approved', 'project-authored'):
+                raise ValueError('Unapproved examples cannot train weights')
+            if not isinstance(row.get('source'), str) or not row['source']:
+                raise ValueError('Example provenance is required')
+            messages = row.get('messages')
+            if not isinstance(messages, list) or len(messages) not in (2, 3):
+                raise ValueError('Expected one user/assistant pair and optional system message')
+            roles = [message.get('role') if isinstance(message, dict) else None for message in messages]
+            if roles not in (['user', 'assistant'], ['system', 'user', 'assistant']):
+                raise ValueError('Expected one user/assistant pair and optional system message')
+            for message in messages:
+                text = message.get('content')
+                if not isinstance(text, str) or not text.strip() or len(text) > 6000:
+                    raise ValueError('Training text must be bounded nonempty text')
+            digest = content_sha(messages)
+            input_digest = content_sha(messages[:-1])
+            # Exact duplicates within either role are not independent examples.
+            if digest in seen_contents or digest in current_contents:
+                raise ValueError('Duplicate text across training records')
+            if input_digest in seen_inputs:
+                raise ValueError('The same input leaks across train and validation')
+            current_groups.add(group); current_contents.add(digest); current_inputs.add(input_digest); seen_ids.add(key)
+            result.append({**row, 'sha256': digest})
+        cleaned[split] = result
+        seen_groups.update(current_groups); seen_contents.update(current_contents); seen_inputs.update(current_inputs)
+    return {**value, 'splits': cleaned}
+
+
+def load_dataset(path):
+    path = Path(path)
+    if path.is_symlink() or not path.is_file() or not 0 < path.stat().st_size <= MAX_DATASET_BYTES:
+        raise ValueError('Dataset must be a regular JSON file up to 8 MB')
+    return validate_dataset(json.loads(path.read_text()))
+
+
+def _token_ids(value):
+    # Transformers 5 returns BatchEncoding by default; older installations and
+    # MLX wrappers may return the unbatched list directly. Dictionary keys are
+    # not token IDs, and no batched/tensor shape is silently flattened here.
+    if isinstance(value, Mapping):
+        if 'input_ids' not in value:
+            raise ValueError('Chat tokenizer did not return input_ids')
+        value=value['input_ids']
+    value=list(value)
+    if not value or any(type(token) is not int or token < 0 for token in value):
+        raise ValueError('Chat tokenizer must return one complete sequence of token IDs')
+    return value
+
+
+def encode_record(tokenizer, row, max_length, *, chat_template_kwargs=None, target_format=None):
+    """Only answer tokens receive loss; never silently discard a long answer."""
+    messages = row['messages']
+    kwargs = chat_template_kwargs or {}
+    prefix = _token_ids(tokenizer.apply_chat_template(messages[:-1], tokenize=True, add_generation_prompt=True, **kwargs))
+    if target_format is None:
+        full = _token_ids(tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=False, **kwargs))
+    elif target_format == 'live-advertising-answer-plus-native-terminator-v1':
+        prompt=tokenizer.apply_chat_template(messages[:-1],tokenize=False,add_generation_prompt=True,**kwargs)
+        rendered=tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=False,**kwargs)
+        target=messages[-1]['content']; eos=getattr(tokenizer,'eos_token',None)
+        if (not isinstance(prompt,str) or not isinstance(rendered,str) or not rendered.startswith(prompt)
+                or eos!='<|im_end|>' or any(marker in target for marker in ('<think>','</think>','<|im_'))):
+            raise ValueError('Advertising tokenizer does not expose the exact live answer boundary')
+        tail=rendered[len(prompt):]
+        # The installed Qwen3 full-conversation template inserts an empty
+        # thinking wrapper even though its live generation prefix has none.
+        # It is not part of the reviewed answer and is forbidden in published
+        # text. Supervise the exact live answer plus the verified native suffix.
+        empty_thinking='<think>\n\n</think>\n\n'
+        if tail.startswith(empty_thinking): tail=tail[len(empty_thinking):]
+        if tail not in (target+eos,target+eos+'\n'):
+            raise ValueError('Advertising template changes the reviewed target or native terminator')
+        full=_token_ids(tokenizer.encode(prompt+tail,add_special_tokens=False))
+    else:
+        raise ValueError('Unknown supervised assistant format')
+    if full[:len(prefix)] != prefix or not 0 < len(prefix) < len(full)-1:
+        raise ValueError('Chat tokenizer does not expose a stable assistant boundary')
+    if len(full) > max_length:
+        return None
+    return {'tokens': full, 'answerStart': len(prefix), 'id': row['id'], 'groupId': row['groupId']}
+
+
+def answer_loss_mask(token_count, answer_start):
+    """Targets are original positions 1..N-1, including the assistant terminator.
+
+The tokenizer's final template suffix is explicit supervision too; it is not
+silently trimmed. Native audit reports EOS and suffix positions separately.
+"""
+    if type(token_count) is not int or type(answer_start) is not int or not 1 <= answer_start < token_count:
+        raise ValueError('Invalid supervised assistant boundary')
+    return [position >= answer_start for position in range(1, token_count)]
+
+
+def validation_gate(before, after):
+    """Loss is only an experiment metric; human fact/language review is required."""
+    finite = all(type(v) in (int, float) and math.isfinite(v) for v in (before, after))
+    return {'lossImproved': bool(finite and after < before), 'autoPromote': False,
+            'requiresHumanReview': True,
+            'reason': 'Held-out loss does not establish factual accuracy, fluency or translation quality.'}

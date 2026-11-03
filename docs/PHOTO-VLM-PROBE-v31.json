@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "date": "2026-11-03",
+  "purpose": "Bounded comparison of installed local VLM photo observations; not calibration or model training",
+  "model": "qwen3-vl:2b-instruct-q4_K_M",
+  "modelDigest": "afc393e3572c07db0bc84aa460d928a16c75f3fbb9ca9e0dccc4fbd2dafb573e",
+  "runtime": "Ollama 0.40.13, isolated loopback service",
+  "renderer": "qwen3-vl-instruct",
+  "parser": "qwen3-vl-instruct",
+  "sample": {
+    "photos": 5,
+    "distinctListings": 5,
+    "originalBytesVerified": true,
+    "cases": ["kitchen", "fridge", "bedroom", "bath", "sofa"],
+    "review": "Existing assistant visual review plus separate assistant inspection of all five photographs",
+    "humanVerified": false,
+    "exhaustiveLabels": false,
+    "representativeCalibration": false
+  },
+  "productionMutations": {
+    "settings": false,
+    "cards": false,
+    "visionCache": false,
+    "weights": false
+  },
+  "resourcePolicy": {
+    "sharedForegroundGate": true,
+    "maxSecondsPerPhoto": 45,
+    "maxSecondsPerFivePhotoRun": 180,
+    "otherInferencePaused": true
+  },
+  "baseline": {
+    "schema": "id, visible, confidence, count, countExact, evidence; Russian evidence <=120 characters",
+    "numPredict": 1536,
+    "completed": 5,
+    "successful": 1,
+    "seconds": 176.001,
+    "photos": [
+      {"case": "kitchen", "status": "timeout", "seconds": 45.014},
+      {"case": "fridge", "status": "ok", "seconds": 14.930,
+        "candidates": ["bench", "fridge", "roomFurniture", "shelves", "table"],
+        "autoEligible": ["fridge", "shelves", "table"],
+        "review": "Fridge, table and shelves are supported by separate visual inspection. Bench/sofa is ambiguous. Generic roomFurniture remains review-only."},
+      {"case": "bedroom", "status": "invalid", "reason": "token limit truncation", "seconds": 42.902},
+      {"case": "bath", "status": "invalid", "reason": "token limit truncation", "seconds": 37.546},
+      {"case": "sofa", "status": "invalid", "reason": "token limit truncation", "seconds": 35.521}
+    ]
+  },
+  "rejectedCompactCandidate": {
+    "schema": "id, confidence, evidence; English evidence <=72 characters; caller supplies visible=true and no counts",
+    "numPredict": 1536,
+    "completed": 5,
+    "successful": 0,
+    "seconds": 180.007,
+    "photos": [
+      {"case": "kitchen", "status": "invalid", "reason": "token limit truncation", "generatedTokens": 1536, "seconds": 42.318},
+      {"case": "fridge", "status": "invalid", "reason": "token limit truncation", "generatedTokens": 1536, "seconds": 42.276},
+      {"case": "bedroom", "status": "invalid", "reason": "token limit truncation", "generatedTokens": 1536, "seconds": 36.735},
+      {"case": "bath", "status": "invalid", "reason": "token limit truncation", "generatedTokens": 1536, "seconds": 35.480},
+      {"case": "sofa", "status": "timeout", "reason": "remaining whole-run budget", "seconds": 23.149}
+    ],
+    "productionCandidateReverted": true
+  },
+  "singlePhotoDiagnostic": {
+    "case": "fridge",
+    "schema": "rejected compact candidate",
+    "maxSeconds": 45,
+    "seconds": 36.386,
+    "status": "invalid",
+    "doneReason": "length",
+    "generatedTokens": 1536,
+    "responseContentCharacters": 5129,
+    "objectEntriesStarted": 42,
+    "validJson": false,
+    "jsonErrorOffset": 5097,
+    "thinkingCharacters": 0,
+    "firstCategories": ["fridge", "table", "bench", "shelves"],
+    "repeatingSequence": ["cabinet", "roomFurniture", "coffeeTable", "tvStand", "bedAny", "shelves", "fridge"],
+    "unsupportedBySeparateVisualReview": ["coffeeTable", "tvStand", "bedAny"],
+    "exactRawResponseRetainedPrivately": true,
+    "interpretation": "The model repeats and invents categories within a truncated invalid response. A shorter wire schema did not repair the behavior. The evidence does not establish a template mismatch or a single causal decoding parameter."
+  },
+  "fixedPresenceProtocolProbe": {
+    "productionDeployed": false,
+    "schema": "One object with 55 canonical category properties, all required; every value is present, absent or uncertain; additionalProperties=false; no arrays, free text, counts or confidence on the wire",
+    "normalization": "Positive classifications are review-only proposals with confidence=null, count=null, autoEligible=false and no invented identifying detail. Absent and uncertain do not become property facts.",
+    "officialApiReferences": [
+      "https://docs.ollama.com/api/chat",
+      "https://docs.ollama.com/capabilities/structured-outputs"
+    ],
+    "singleFridgeFirst": {
+      "status": "ok",
+      "seconds": 18.048,
+      "generatedTokens": 495,
+      "knownFalsePositives": [],
+      "explicitNegativeCategoriesChecked": ["bedAny", "tv", "chairs"],
+      "unlabelledPredictions": ["coffeeTable", "desk", "roomFurniture"]
+    },
+    "fivePhotoRepeat": {
+      "completed": 5,
+      "structurallyValidResponses": 5,
+      "seconds": 80.438,
+      "maxSeconds": 180,
+      "positiveReviewWitnessesMatched": 28,
+      "positiveReviewWitnessesCompared": 32,
+      "alternativeGroupsMatched": 3,
+      "alternativeGroupsCompared": 3,
+      "autoAcceptedFacts": 0,
+      "photos": [
+        {"case": "fridge", "status": "ok", "seconds": 16.574, "generatedTokens": 495,
+          "present": ["roomFurniture", "desk", "sofa", "fridge", "table", "shelves", "coffeeTable", "bench"],
+          "matchedReviewPositives": ["fridge", "shelves", "table"],
+          "missedReviewPositives": [], "matchedAlternatives": [["sofa", "bench"]],
+          "knownFalsePositives": [], "explicitNegativeCategoriesChecked": ["bedAny", "tv", "chairs"],
+          "unlabelledPredictions": ["coffeeTable", "desk", "roomFurniture"]},
+        {"case": "kitchen", "status": "ok", "seconds": 16.008, "generatedTokens": 485,
+          "present": ["fridge", "oven", "hood", "sink", "microwave", "dishwasher", "kettle", "table", "kitchenFurniture", "washbasin", "shelves", "cabinet", "bench", "mirror", "curtains"],
+          "matchedReviewPositives": ["curtains", "dishwasher", "fridge", "hood", "kettle", "kitchenFurniture", "microwave", "mirror", "oven", "sink"],
+          "missedReviewPositives": ["coffeeTable", "stove"], "matchedAlternatives": [["shoeCabinet", "bench"]],
+          "unlabelledPredictions": ["cabinet", "shelves", "table", "washbasin"]},
+        {"case": "bedroom", "status": "ok", "seconds": 16.344, "generatedTokens": 491,
+          "present": ["bedAny", "mattress", "roomFurniture", "desk", "sofa", "armchair", "table", "chairs", "shelves", "ottoman", "curtains"],
+          "matchedReviewPositives": ["bedAny", "chairs", "curtains", "desk", "ottoman", "shelves", "sofa"],
+          "missedReviewPositives": [],
+          "unlabelledPredictions": ["armchair", "mattress", "roomFurniture", "table"],
+          "unsupportedReviewObjects": ["vanity table"]},
+        {"case": "bath", "status": "ok", "seconds": 15.914, "generatedTokens": 496,
+          "present": ["washer", "bath", "shower", "curtains"],
+          "matchedReviewPositives": ["bath", "shower", "washer"],
+          "missedReviewPositives": ["cabinet", "washbasin"],
+          "unlabelledPredictions": ["curtains"],
+          "unsupportedReviewObjects": ["toilet", "towel rail"]},
+        {"case": "sofa", "status": "ok", "seconds": 15.560, "generatedTokens": 490,
+          "present": ["wardrobe", "roomFurniture", "sofa", "armchair", "tvStand", "tv", "chairs", "closet", "shelves", "cabinet"],
+          "matchedReviewPositives": ["armchair", "shelves", "sofa", "tv", "tvStand"],
+          "missedReviewPositives": [], "matchedAlternatives": [["wardrobe", "cabinet"]],
+          "unlabelledPredictions": ["chairs", "closet", "roomFurniture"]}
+      ]
+    },
+    "interpretation": "Fixed required properties eliminated the repeated-array failure on these five photographs and retained the core fridge, bed and TV observations. This is a protocol success, not full recognition or precision calibration. Category overlap remains: desk/coffeeTable for the fridge scene, sink/washbasin in the kitchen, and closet without a confirmed walk-in closet. Unlabelled predictions require inspection and are not all declared false positives.",
+    "allOwnedProbeProcessesExited": true,
+    "ollamaLoadedModelsAfterProbe": []
+  },
+  "worldAlbumBudgetReview": {
+    "recommendedMaxSeconds": 600,
+    "configurationChangedByThisProbe": false,
+    "modelRemains": "redcn-furniture-world-v2",
+    "scope": "Whole-album inventory phase of asynchronous import or card preparation",
+    "bounds": "Album uses min(caller, configured budget, 1800); each World worker retains cold-start 60s / later 20s caps and the remaining album deadline.",
+    "outerCalls": "Import and card preparation return asynchronous job IDs; status polling has per-request timeouts but no shorter whole-job deadline.",
+    "memoryLifecycle": "One CPU model worker per photograph, sequential ORT, two intra-op threads. Worker exit releases its model session; timeout/cancel cleanup terminates, kills if required, reaps, and closes temporary input and pipes.",
+    "historicalWorldMaxRssBytes": 371228672,
+    "historicalMemoryReceipt": "benchmarks/photo-open-vocabulary-world-arm-20261101.json",
+    "new600SecondMemoryMeasurement": false,
+    "caveats": [
+      "The configuration is part of the per-photo cache identity, so changing 60 to 600 invalidates prior analysis cache entries once.",
+      "Mac import has a cancellation action. The current phone job panel has retry/resume but no job-cancel control; the album deadline still bounds the vision phase.",
+      "The separate Mac editor per-photo synchronous API now has a route-specific 125s HTTP deadline instead of 15s. This fixes premature client timeouts; raising the album budget does not alter the per-photo server limits.",
+      "The budget is additional processing time, not a promise that all photos or objects will be recognized. Errors and remaining photos retain partial status."
+    ]
+  },
+  "decision": {
+    "enableDirectOllamaForProduction": false,
+    "promoteTruncatedOrPartialJson": false,
+    "compactSchemaAccepted": false,
+    "modelTrainingClaim": false,
+    "retainedChange": "Report actual generated-token metrics on failed/truncated responses while continuing to reject their objects; give only the synchronous Mac photo-analysis API a 125s client deadline. Other request budgets remain unchanged.",
+    "fixedPresenceProtocolStatus": "Development probe only; no production switch or automatic factual acceptance"
+  },
+  "limitations": [
+    "This five-photo development probe is too small to validate per-class automatic acceptance.",
+    "Model-reported confidence is not a measured probability of correctness.",
+    "The supported feature catalog lacks toilet, towel rail and vanity table; rooms and brands have no inventory fields.",
+    "Failed or unprocessed photographs remain unknown; they do not establish object absence."
+  ],
+  "afterProbe": {
+    "allOwnedProbeProcessesExited": true,
+    "ollamaLoadedModels": [],
+    "existingOllamaServicePreserved": true
+  }
+}

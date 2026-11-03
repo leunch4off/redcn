@@ -29,7 +29,7 @@ test('furniture exceptions, TV stand, generic bed and counts stay faithful',()=>
  for(const id of ['fridge','table','chairs','tv','washer'])assert.equal(v.sourceAudit.furniture.find(r=>r.id===id).status,'absent',id);
 });
 test('mixed Cyrillic/Latin restrictions and conflicting contract lengths are preserved',()=>{
- assert.equal(v.registrationPolicy,'not_available');assert.equal(v.registration,'none');assert.equal(v.petPolicy,'no');assert.equal(v.smokingPolicy,'no');assert.equal(v.guestPolicy,'no');assert.equal(v.subletPolicy,'no');assert.equal(v.shortTermPolicy,'no');
+ assert.equal(v.registrationPolicy,'not_available');assert.equal(v.registration,undefined);assert.equal(v.petPolicy,'no');assert.equal(v.smokingPolicy,'no');assert.equal(v.guestPolicy,'no');assert.equal(v.subletPolicy,'no');assert.equal(v.shortTermPolicy,'no');
  assert.equal(v.contractMonths,'11');assert.equal(v.minMonths,'12');assert(result.warnings.some(w=>/11 месяцев.*12 месяцев/.test(w)));
 });
 test('same station on D1 and metro retains distinct times and transport identity',()=>{
@@ -45,7 +45,7 @@ test('explicit negative source never becomes a free registration or ready furnis
  const r=generateListing({...v,style:'story',registration:'provided',registrationMonths:'6',support:true});
  assert.doesNotMatch(r.body,/免费提供临时居住登记|免费协助办理临时居住登记|家具家电齐全|合租预算|双人床|✅ 冰箱|✅ 洗衣机/);
  assert(r.titles.every(t=>!t.includes('1人人均')));
- assert.match(r.body,/不提供临时居住登记/);assert.match(r.body,/电视柜/);assert.match(r.body,/140,000₽/);assert.doesNotMatch(r.tags,/莫大|友大|近地铁/);
+ assert.match(r.body,/抵达登记（临时居住登记）：提供办理协助/);assert.doesNotMatch(r.body,/不提供临时居住登记|宠物/);assert.match(r.body,/电视柜/);assert.match(r.body,/140,000₽/);assert.doesNotMatch(r.tags,/莫大|友大|近地铁/);
 });
 test('future installation and conflicts are shown and excluded from checked furniture',()=>{
  const plain=extractFacts('Хозяин может установить стиральную машину. Нет холодильника, стола и стульев. Есть диван. ТВ-тумба. Кровать.');
@@ -54,7 +54,7 @@ test('future installation and conflicts are shown and excluded from checked furn
  assert.equal(analyzeListingSource(source).sourceAudit.furniture.find(r=>r.id==='fridge').status,'conflict');
 });
 test('a hundred reproducible story variants preserve prices, restrictions and missing furniture',()=>{
- const variants=[];for(let n=1;n<=100;n++){const r=generateListing({...v,style:'story',copyVariant:n,titleVariant:n});variants.push(r.body);assert.match(r.body,/70,000₽/);assert.match(r.body,/140,000₽/);assert.match(r.body,/54㎡/);assert.match(r.body,/不接受宠物入住/);assert.doesNotMatch(r.body,/免费提供临时居住登记|✅ 洗衣机|双人床/);}
+ const variants=[];for(let n=1;n<=100;n++){const r=generateListing({...v,style:'story',copyVariant:n,titleVariant:n});variants.push(r.body);assert.match(r.body,/70,000₽/);assert.match(r.body,/140,000₽/);assert.match(r.body,/54㎡/);assert.doesNotMatch(r.body,/宠物/);assert.match(r.body,/抵达登记（临时居住登记）/);assert.doesNotMatch(r.body,/免费提供临时居住登记|✅ 洗衣机|双人床/);}
  assert.equal(new Set(variants).size,100);assert.deepEqual(generateListing({...v,copyVariant:41}),generateListing({...v,copyVariant:41}));
 });
 test('history freezes exact edited content and HTML escapes source and title',()=>{

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Public listing import, local cache and shared JS generation. Python 3.10+, Node 22+."""
 import argparse
+import base64
+import errno
+import http.client
 import hashlib
 import html
 from html.parser import HTMLParser
@@ -19,6 +22,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from photo_limits import PHOTO_SOURCE_LIMIT
 
 ROOT = Path(__file__).resolve().parents[1]
 LISTING_HOSTS = ('cian.ru', 'avito.ru')
@@ -33,7 +37,9 @@ class ChallengeError(ValueError):
 
 def normalize_url(raw):
     """Accept a pasted Markdown link or terminal line, without weakening host checks."""
-    raw = html.unescape(str(raw)).strip()
+    # Raw query parameters such as &region must not be decoded as the legacy
+    # HTML entity &reg (®). Decode only complete escaped ampersands from paste.
+    raw = re.sub(r'&(?:amp|#0*38|#x0*26);', '&', str(raw).strip(), flags=re.I)
     markdown = re.search(r'\[[^\]]*\]\((https://[^\s)]+)\)', raw)
     match = markdown or re.search(r'https://[^\s<>\[\]"\u201c\u201d]+', raw)
     if not match:
@@ -44,6 +50,7 @@ def normalize_url(raw):
 
 
 def allowed_url(url, images=False, resolve=True):
+    if not isinstance(url,str) or not url or len(url)>8192 or re.search(r'[\x00-\x20\x7f]',url):raise ValueError('Неверная или слишком длинная ссылка источника')
     parsed = urllib.parse.urlsplit(url)
     host = (parsed.hostname or '').lower()
     allowed = IMAGE_HOSTS if images else LISTING_HOSTS
@@ -67,7 +74,24 @@ class CheckedRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def fetch_bytes(url, images=False):
+def _transient_http_error(error):
+    if isinstance(error, urllib.error.HTTPError):return error.code in (500,502,503,504)
+    reason=getattr(error,'reason',error)
+    if isinstance(reason,ssl.SSLError):return False
+    if isinstance(reason,(TimeoutError,ConnectionResetError,ConnectionRefusedError,ConnectionAbortedError,BrokenPipeError)):return True
+    if isinstance(reason,socket.gaierror):return reason.errno==getattr(socket,'EAI_AGAIN',-3)
+    return isinstance(reason,OSError) and reason.errno in (errno.ETIMEDOUT,errno.ECONNRESET,errno.ECONNREFUSED,errno.ECONNABORTED,errno.ENETUNREACH,errno.EHOSTUNREACH,errno.EPIPE)
+
+
+def _http_status(status, attempt, reason=''):
+    from job_progress import emit
+    suffix=' после временной ошибки сети' if reason=='network' else ' после тайм-аута' if reason=='timeout' else ' после временного ответа сервера' if reason.startswith('http-') else ''
+    emit(status, 'HTTP: попытка '+str(attempt)+' из 2'+suffix+'…',stage='navigate',httpAttempt=attempt,httpMaxAttempts=2,httpReason=reason)
+
+
+def _fetch_bytes_direct(url, images=False, *, timeout=30, cancel=None, status=None):
+    """Two attempts within a cooperative socket/read budget; no protection retries."""
+    deadline=time.monotonic()+timeout
     url = allowed_url(url, images=images)
     request = urllib.request.Request(url, headers={'User-Agent': 'redcn/3.0 (single listing import)', 'Accept': 'image/*' if images else 'text/html'})
     # Python.org macOS installs may have no root bundle. Keep TLS verification;
@@ -77,23 +101,107 @@ def fetch_bytes(url, images=False):
         context=ssl.create_default_context(cafile=certifi.where())
     except ImportError: context=ssl.create_default_context()
     opener = urllib.request.build_opener(CheckedRedirect(images),urllib.request.HTTPSHandler(context=context))
+    retry_reason=''
     for attempt in range(2):
+        if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+        remaining=deadline-time.monotonic()
+        if remaining<=0:raise TimeoutError('Истёк общий срок HTTP-загрузки')
+        _http_status(status,attempt+1,retry_reason)
         try:
-            with opener.open(request, timeout=15) as response:
+            with opener.open(request, timeout=min(15,remaining)) as response:
                 content_type = response.headers.get_content_type()
                 if images and content_type not in ('image/jpeg', 'image/png', 'image/webp'):
                     raise ValueError('Неподдерживаемый формат фото: ' + content_type)
                 if not images and content_type not in ('text/html', 'application/xhtml+xml'):
                     raise ValueError('Источник вернул не HTML')
                 limit = MAX_IMAGE if images else MAX_HTML
-                content = response.read(limit + 1)
-                if len(content) > limit:
-                    raise ValueError('Файл превышает ограничение размера')
+                if isinstance(response,http.client.HTTPResponse):
+                    chunks=[];size=0
+                    while True:
+                        if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+                        remaining=deadline-time.monotonic()
+                        if remaining<=0:raise TimeoutError('Истёк общий срок HTTP-загрузки')
+                        try:response.fp.raw._sock.settimeout(max(.01,remaining))
+                        except AttributeError:pass
+                        chunk=response.read1(min(65536,limit+1-size))
+                        if not chunk:break
+                        chunks.append(chunk);size+=len(chunk)
+                        if size>limit:raise ValueError('Файл превышает ограничение размера')
+                    content=b''.join(chunks)
+                else:
+                    # Test transports and image adapters can provide a bounded
+                    # read implementation rather than an HTTPResponse object.
+                    content = response.read(limit + 1)
+                    if len(content) > limit:raise ValueError('Файл превышает ограничение размера')
                 return content, content_type
-        except (TimeoutError,urllib.error.URLError) as error:
-            if attempt == 0 and (isinstance(error,TimeoutError) or isinstance(getattr(error,'reason',None),TimeoutError)):
+        except (OSError,urllib.error.URLError) as error:
+            if attempt == 0 and _transient_http_error(error) and deadline-time.monotonic()>.15:
+                retry_reason='http-'+str(error.code) if isinstance(error,urllib.error.HTTPError) else 'timeout' if isinstance(getattr(error,'reason',error),TimeoutError) else 'network'
+                if cancel:
+                    if cancel.wait(.15):raise ValueError('Импорт отменён')
+                else:time.sleep(.15)
                 continue
             raise
+
+
+def _http_worker_command():
+    return [sys.executable,str(ROOT/'cli/http_fetch_worker.py')]
+
+
+def fetch_bytes(url, images=False, *, timeout=30, cancel=None, status=None):
+    if isinstance(timeout,bool) or not isinstance(timeout,(int,float)) or not 0<timeout<=60:raise ValueError('Срок HTTP-загрузки: больше нуля и до 60 секунд')
+    if images:return _fetch_bytes_direct(url,images=True,timeout=timeout,cancel=cancel,status=status)
+    url=allowed_url(url,resolve=False)
+    if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+    # A process boundary makes the listing deadline real even while DNS,
+    # certificate negotiation or slowly streamed headers block urllib.
+    deadline=time.monotonic()+timeout
+    process=subprocess.Popen(_http_worker_command(),stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8')
+    payload=json.dumps({'url':url,'timeout':timeout},ensure_ascii=False)
+    first=True;seen_events=set()
+    try:
+        while True:
+            if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+            remaining=deadline-time.monotonic()
+            if remaining<=0:raise TimeoutError('HTTP-загрузка не завершилась за '+str(timeout)+' с. Повторите запрос или вставьте текст объявления.')
+            try:
+                output,events=process.communicate(input=payload if first else None,timeout=min(.2,remaining));break
+            except subprocess.TimeoutExpired as pending:
+                events=pending.stderr or ''
+                if isinstance(events,bytes):events=events.decode('utf-8',errors='replace')
+                if pending.stdout and len(pending.stdout)>18_000_000:raise ValueError('Ответ HTTP-загрузчика превышает ограничение размера')
+            finally:first=False
+            for line in events.splitlines():
+                if line in seen_events:continue
+                seen_events.add(line)
+                try:
+                    event=json.loads(line)
+                    if event.get('event')=='attempt' and event.get('attempt') in (1,2):_http_status(status,event['attempt'],str(event.get('reason',''))[:40])
+                except (ValueError,TypeError,AttributeError):pass
+        for line in events.splitlines():
+            if line in seen_events:continue
+            try:
+                event=json.loads(line)
+                if event.get('event')=='attempt' and event.get('attempt') in (1,2):_http_status(status,event['attempt'],str(event.get('reason',''))[:40])
+            except (ValueError,TypeError,AttributeError):pass
+        if process.returncode or len(output)>18_000_000:raise ValueError('Изолированный HTTP-загрузчик не вернул допустимый ответ')
+        try:result=json.loads(output)
+        except ValueError:raise ValueError('HTTP-загрузчик вернул неверный ответ') from None
+        if result.get('ok'):
+            try:content=base64.b64decode(result['content'],validate=True)
+            except (ValueError,TypeError,KeyError):raise ValueError('HTTP-загрузчик вернул неверные данные') from None
+            if len(content)>MAX_HTML:raise ValueError('Файл превышает ограничение размера')
+            if result.get('contentType') not in ('text/html','application/xhtml+xml'):raise ValueError('Источник вернул не HTML')
+            return content,result['contentType']
+        error=result.get('error') or {};message=str(error.get('message') or 'Не удалось получить страницу')[:800]
+        if error.get('kind')=='http':raise urllib.error.HTTPError(url,int(error.get('status',0)),message,{},None)
+        if error.get('kind')=='timeout':raise TimeoutError(message)
+        if error.get('kind')=='tls':raise urllib.error.URLError(ssl.SSLCertVerificationError(message))
+        if error.get('kind')=='network':raise urllib.error.URLError(message)
+        raise ValueError(message)
+    finally:
+        if process.poll() is None:process.kill()
+        process.communicate()
 
 
 
@@ -143,20 +251,24 @@ class ListingHTML(HTMLParser):
 
 def parse_html(markup, base_url):
     if len(markup.encode('utf-8')) > MAX_HTML: raise ValueError('HTML превышает 8 МБ')
-    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card', markup):
-        node = shutil.which('node')
+    parser = ListingHTML()
+    parser.feed(markup)
+    # Inspect visible text before the structured adapter can return early.
+    # A script filename containing captcha is not a visible challenge.
+    if re.search(r'verify you are human|проверка браузера|доступ ограничен|checking your browser|подтвердите[, ]+что вы|пройдите проверку|вы не робот|проверяем.{0,30}браузер', ''.join(parser.parts)[:12000], re.I):
+        raise ChallengeError('Источник запросил проверку браузера. Откройте его в обычном Chrome вручную или вставьте текст; автоматически защита не обходится.')
+    if re.search(r'data-name=["\x27](?:Description|OfferTitleNew|OfferSummaryInfoItem)|_cianConfig\[["\x27]frontend-offer-card|data-marker=["\x27]item-view/(?:title-info|main-gallery|item-params|item-description|item-price)', markup):
+        from node_runtime import resolve_node, NodeRuntimeError
+        try: node = resolve_node()
+        except NodeRuntimeError: node = None
         if node:
-            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs')],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
+            parsed = subprocess.run([node,str(ROOT/'cli/analyze-source.mjs'),base_url],input=markup,text=True,encoding='utf-8',capture_output=True,timeout=30)
             if parsed.returncode: raise ValueError('Ошибка разбора HTML: '+parsed.stderr[:300])
             result = json.loads(parsed.stdout)
             if result.get('text'):
                 result['url'] = result.get('url') or base_url
-                return result
-    parser = ListingHTML()
-    parser.feed(markup)
-    # A script named captcha.js is not evidence of a visible challenge.
-    if re.search(r'verify you are human|проверка браузера|доступ ограничен|checking your browser|подтвердите[, ]+что вы|пройдите проверку|вы не робот|проверяем.{0,30}браузер', ''.join(parser.parts)[:12000], re.I):
-        raise ChallengeError('Источник запросил проверку браузера. Пройдите её в окне Chrome; автоматически защита не обходится.')
+                from source_schema_health import attach
+                return attach(markup, result, base_url)
     descriptions = []
     def walk(value):
         if isinstance(value, list):
@@ -191,7 +303,8 @@ def parse_html(markup, base_url):
                 images.append(url)
         except ValueError:
             continue
-    return {'url': base_url, 'text': text, 'images': images[:30]}
+    from source_schema_health import attach
+    return attach(markup, {'url': base_url, 'text': text, 'images': images[:PHOTO_SOURCE_LIMIT]}, base_url)
 
 
 def open_cache(directory):
@@ -202,27 +315,45 @@ def open_cache(directory):
     return connection
 
 
-def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None, browser_channel='chrome'):
+def load_listing(url, connection, refresh=False, loader='auto', browser_timeout=180, status=None, cancel=None, browser_channel='chrome', browser_scroll='sections'):
+    from job_progress import emit
+    if browser_scroll not in ('sections', 'page'):
+        raise ValueError('Режим прокрутки Chrome: sections или page')
+    if cancel and cancel.is_set():raise ValueError('Импорт отменён')
     # Resolve only on a network miss; cached pages remain available offline.
     url = normalize_url(url)
     row = connection.execute('SELECT fetched,payload FROM cache WHERE url=?', (url,)).fetchone()
     if row and not refresh and time.time() - row[0] < 86400:
-        return {**json.loads(row[1]), 'cached': True}
+        from source_adapters import adapter_for
+        cached = json.loads(row[1])
+        version = adapter_for(url).get('parserVersion')
+        if not version or cached.get('parserVersion') == version:
+            emit(status,'Берём уже прочитанное объявление из кеша Mac; Chrome не требуется.',stage='extract')
+            return {**cached, 'cached': True}
+        emit(status,'Правила разбора источника обновились. Перечитаем страницу вместо старого неполного кеша.',stage='extract')
     result = None
     if loader != 'chrome':
         try:
-            if status: status('Загрузка объявления по HTTP…')
-            content, _ = fetch_bytes(url)
+            emit(status,'Загружаем исходную страницу объявления по HTTP…',stage='navigate',maxTotalSeconds=30)
+            content, _ = fetch_bytes(url,cancel=cancel,status=status) if cancel is not None or status is not None else fetch_bytes(url)
+            emit(status,'Страница получена. Читаем описание, цену, площадь и фотографии…',stage='extract')
             result = parse_html(content.decode('utf-8', errors='replace'), url)
             if not re.search(r'\d[\d\s\xa0,.]*\s*(?:м²|м2|кв\.?\s*м|㎡)', result['text'], re.I) or not re.search(r'\d[\d\s\xa0]*\s*(?:₽|руб)', result['text'], re.I):
                 result = None
                 raise ValueError('HTTP-страница не содержит площади и цены; возможно, нужен JavaScript. Используйте Chrome или --input.')
         except (OSError, ValueError) as error:
+            if cancel and cancel.is_set():raise ValueError('Импорт отменён') from None
+            reason=getattr(error,'reason',error)
+            if isinstance(error,ChallengeError) or isinstance(error,urllib.error.HTTPError) and error.code in (401,403,429) or isinstance(reason,ssl.SSLError):
+                raise ChallengeError('Источник требует внимания: '+('HTTP '+str(error.code) if isinstance(error,urllib.error.HTTPError) else 'проверка HTTPS' if isinstance(reason,ssl.SSLError) else 'проверка браузера')+'. Откройте источник в обычном Chrome вручную или вставьте текст объявления. Автоматический повтор остановлен.') from None
             if loader == 'http': raise
-            if status: status('HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180])
+            emit(status,'HTTP не загрузил карточку. Открываем Chrome: '+str(error)[:180],stage='browser')
     if result is None:
         from browser_import import load_browser
-        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel)
+        result = load_browser(url, Path(connection.execute('PRAGMA database_list').fetchone()[2]).parent / (browser_channel+'-profile'), parse_html, allowed_url, browser_timeout, status, cancel, browser_channel, scroll_strategy=browser_scroll)
+    if cancel and cancel.is_set():raise ValueError('Импорт отменён')
+    from source_adapters import adapter_for
+    result['parserVersion']=adapter_for(url)['parserVersion']
     connection.execute('INSERT OR REPLACE INTO cache VALUES (?,?,?)', (url, time.time(), json.dumps(result, ensure_ascii=False)))
     connection.commit()
     return {**result, 'cached': False}
@@ -245,22 +376,73 @@ def eligible(seller, commission):
         return False
 
 
+def batch_publication_decision(listing, url):
+    """Classify observed source availability before generating a new candidate.
+
+    A manifest's eligibility is an operator filter, not evidence that its Avito
+    page is still published. Missing/partial availability remains retryable and
+    must not enter `seen`; old CIAN imports retain their existing intake flow.
+    """
+    holders = [listing]
+    if isinstance(listing.get('fields'), dict):
+        holders.append(listing['fields'])
+    known = ('active', 'archived', 'removed', 'unavailable', 'unknown')
+    states = [row.get('publicationStatus') for row in holders
+              if row.get('publicationStatus') in known]
+    inactive = next((state for state in states
+                     if state in ('archived', 'removed', 'unavailable')), None)
+    if inactive:
+        return {'status': 'filtered', 'publicationStatus': inactive,
+                'reason': 'Источник отмечает объявление как ' +
+                          {'archived': 'архивное', 'removed': 'снятое',
+                           'unavailable': 'недоступное'}[inactive] +
+                          '; оно исключено из новых.'}
+    host = (urllib.parse.urlsplit(url).hostname or '').lower()
+    is_avito = host == 'avito.ru' or host.endswith('.avito.ru')
+    veto = any(row.get('eligibleForNew') is False for row in holders)
+    state = 'active' if 'active' in states else 'unknown'
+    if veto or is_avito and state != 'active':
+        return {'status': 'pending', 'publicationStatus': state,
+                'reason': 'Статус публикации не подтверждён источником; '
+                          'объявление отложено на проверку и не добавлено в новые.'}
+    return {'status': 'new', 'publicationStatus': state}
+
+
 def generate(text, data=None, rules=None, prefs=None):
-    node = shutil.which('node')
-    if not node:
-        raise ValueError('Нужен Node.js 22+: сайт и CLI используют один генератор, без расхождения правил.')
-    result = subprocess.run([node, str(ROOT / 'cli/generate.mjs')], input=json.dumps({'text': text, 'data': data or {}, 'rules': rules or {}, 'prefs': prefs or {}}, ensure_ascii=False), text=True, encoding='utf-8', capture_output=True, check=False)
+    from fact_ledger import validate_listing_fields
+    if not isinstance(text, str):raise ValueError('Исходный текст объявления должен быть строкой')
+    validate_listing_fields(data if data is not None else {})
+    from node_runtime import resolve_node
+    node = resolve_node()
+    try:
+        result = subprocess.run([node, str(ROOT / 'cli/generate.mjs')], input=json.dumps({'text': text, 'data': data or {}, 'rules': rules or {}, 'prefs': prefs or {}}, ensure_ascii=False), text=True, encoding='utf-8', capture_output=True, check=False, timeout=30)
+    except subprocess.TimeoutExpired:
+        raise ValueError('Генератор не ответил за 30 секунд. Повторите подготовку объявления.') from None
+    except OSError:
+        raise ValueError('Не удалось запустить найденный Node.js. Проверьте его установку и перезапустите сервер.') from None
     if result.returncode:
         raise ValueError(result.stderr.strip() or 'Ошибка генерации')
-    return json.loads(result.stdout)
+    try: return json.loads(result.stdout)
+    except ValueError:
+        raise ValueError('Генератор вернул некорректный ответ. Повторите подготовку объявления.') from None
 
 
-def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=None):
+def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=None, photo_items=None):
     directory.mkdir(parents=True, exist_ok=True)
     results = []
+    metadata={row.get('url'):row for row in photo_items or [] if isinstance(row,dict) and isinstance(row.get('url'),str)}
     for index, url in enumerate(urls[:30], 1):
         try:
-            content, kind = fetch_bytes(url, images=True)
+            import photo_store
+            source=metadata.get(url);media_dir=cache_dir or directory/'.redcn-media';original=None
+            variants=source.get('variants',{}) if isinstance(source,dict) and isinstance(source.get('variants'),dict) else {}
+            observed=source.get('observedVariants',[]) if isinstance(source,dict) and isinstance(source.get('observedVariants'),list) else []
+            observed_urls={value for value in [url,*variants.values(),*[row.get('url') for row in observed if isinstance(row,dict)]] if isinstance(value,str) and value}
+            if source and source.get('photoId') and len(observed_urls)>1:
+                original=photo_store.load_observed_photo(media_dir,url,source)
+                content,kind,_=photo_store.asset(media_dir,original['id'])
+            else:content,kind=fetch_bytes(url,images=True)
+            kind=photo_store.image_mime(content)
             valid = (kind == 'image/jpeg' and content.startswith(b'\xff\xd8\xff')) or (kind == 'image/png' and content.startswith(b'\x89PNG\r\n\x1a\n')) or (kind == 'image/webp' and content.startswith(b'RIFF') and content[8:12] == b'WEBP')
             if not valid:
                 raise ValueError('Сигнатура файла не соответствует формату')
@@ -270,17 +452,35 @@ def download_photos(urls, directory, crop=False, crop_bottom=None, cache_dir=Non
             if not path.exists():
                 path.write_bytes(content)
             row={'url': url, 'path': str(path), 'sha256': digest}
-            if crop or crop_bottom is not None:
-                import base64
-                import photo_store
-                media_dir=cache_dir or directory/'.redcn-media'
-                original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode())
-                edited=photo_store.crop_photo(media_dir,original['id'],{'bottom':crop_bottom} if crop_bottom is not None else None)
-                row['crop']=edited
-                if edited.get('kind')=='crop':
-                    copy_path=directory/f'{index:02d}-crop-{edited["id"][:12]}.jpg';copy_path.write_bytes(photo_store.asset(media_dir,edited['id'])[0]);row['crop_path']=str(copy_path)
+            if original:row.update(originalId=original['id'],actualSourceUrl=original.get('sourceUrl',url),observedFallback=original.get('observedFallback',False),**{key:original[key] for key in ('variantStatus','variantReason','variantGroupSha','variantDecisionSha') if key in original})
+            if crop or crop_bottom is not None or original:
+                try:
+                    import base64
+                    if original is None:original=photo_store.attach_photo(media_dir,url,'data:'+kind+';base64,'+base64.b64encode(content).decode(),source=source,manual=False)
+                    row.update(originalId=original['id'],actualSourceUrl=original.get('sourceUrl',url))
+                    if crop or crop_bottom is not None:
+                        try:
+                            choice=photo_store.accepted_photo_for_url(media_dir,url,source=source)
+                            target=original['id'] if crop_bottom is not None else choice['selectedOriginal']['id']
+                            if crop_bottom is None and choice.get('reason')=='manual':edited=choice['selected']
+                            else:edited=photo_store.crop_photo(media_dir,target,{'bottom':crop_bottom} if crop_bottom is not None else None)
+                            row['crop']=edited
+                        except Exception as error:
+                            row['crop']={'status':'review','autoStatus':'unavailable','message':str(error)[:300] or 'Оригинал сохранён; кадрирование недоступно','errorClass':type(error).__name__}
+                    choice=photo_store.accepted_photo_for_url(media_dir,url,source=source)
+                    selected=choice['selected'];row.update(selectedId=selected['id'],selectionReason=choice['reason'])
+                    if selected['id']!=original['id']:
+                        prepared_content,prepared_mime,_=photo_store.asset(media_dir,selected['id'])
+                        extension={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[prepared_mime]
+                        label='crop' if selected.get('kind')=='crop' else 'prepared'
+                        copy_path=directory/f'{index:02d}-{label}-{selected["id"][:12]}.{extension}';copy_path.write_bytes(prepared_content);row['prepared_path']=str(copy_path)
+                        if selected.get('kind')=='crop':row['crop_path']=str(copy_path)
+                except Exception as error:
+                    # The original has already been saved. A crop failure must
+                    # not replace its successful manifest entry with an error.
+                    row['crop']={'status':'review','autoStatus':'unavailable','message':str(error)[:300] or 'Оригинал сохранён; кадрирование недоступно','errorClass':type(error).__name__}
             results.append(row)
-        except (OSError, ValueError) as error:
+        except Exception as error:
             results.append({'url': url, 'error': str(error)})
     (directory / 'manifest.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
     return results
@@ -299,9 +499,12 @@ def main(argv=None):
     parser.add_argument('--browser', action='store_true', help='Сразу открыть видимый Google Chrome')
     parser.add_argument('--browser-channel', choices=['chrome','chromium'], default='chrome', help='Google Chrome или совместимый браузер Playwright Chromium')
     parser.add_argument('--browser-timeout', type=int, default=180, help='Ожидание страницы / ручной проверки, 15–600 секунд')
+    parser.add_argument('--browser-scroll', choices=['sections','page'], default='sections', help='sections: сразу фото, описание и характеристики; page: последовательная прокрутка всей страницы')
     parser.add_argument('--serve', action='store_true', help='Запустить локальный сайт и открыть его в браузере')
     parser.add_argument('--open', action='store_true', help='После генерации открыть сохранённую карточку на локальном сайте')
     parser.add_argument('--port', type=int, default=8765)
+    parser.add_argument('--phone',action='store_true',help='Разрешить подключение телефона в локальной сети по одноразовой ссылке')
+    parser.add_argument('--phone-port',type=int,default=8767)
     parser.add_argument('--json', action='store_true', help='Машиночитаемый вывод')
     parser.add_argument('--output', type=Path, help='Сохранить результат в файл')
     parser.add_argument('--cache-dir', type=Path, default=Path.home() / '.cache' / 'redcn')
@@ -314,9 +517,10 @@ def main(argv=None):
     if (args.crop_photos or args.crop_bottom is not None) and not args.download_photos:parser.error('Кадрирование требует --download-photos DIRECTORY')
     if args.crop_bottom is not None and not 0 <= args.crop_bottom <= 40:parser.error('--crop-bottom: 0–40 процентов')
     if not 15 <= args.browser_timeout <= 600: parser.error('--browser-timeout: 15–600 секунд')
+    if not 1<=args.phone_port<=65535:parser.error('--phone-port: 1–65535')
     if args.serve:
         from local_server import serve
-        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel)
+        return serve(args.cache_dir, args.port, browser_channel=args.browser_channel,phone=args.phone,phone_port=args.phone_port)
     read_json = lambda p: json.loads(p.read_text(encoding='utf-8')) if p else {}
     data, rules, prefs = read_json(args.data), read_json(args.rules), read_json(args.prefs)
     if not isinstance(data, dict) or not isinstance(rules, dict) or not isinstance(prefs, dict):
@@ -340,11 +544,15 @@ def main(argv=None):
                 if connection.execute('SELECT 1 FROM seen WHERE url=?', (url,)).fetchone():
                     result.append({'url': url, 'status': 'seen'});continue
                 try:
-                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
+                    listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel, browser_scroll=args.browser_scroll)
+                    publication = batch_publication_decision(listing, url)
+                    if publication['status'] != 'new':
+                        result.append({'url': url, **publication})
+                        continue
                     generated = generate(listing['text'], {**listing.get('fields',{}), 'titleVariant':next_variant(connection,url), **data, **item.get('data', {}), 'url':url, 'source':listing['text']}, rules, prefs)
-                    row = {'url': url, 'status': 'new', 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
+                    row = {'url': url, **publication, 'seller': item['seller'], 'commission': item.get('commission'), 'listing': listing, **generated}
                     if args.download_photos:
-                        row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12],args.crop_photos,args.crop_bottom,args.cache_dir)
+                        row['photos'] = download_photos(listing['images'], args.download_photos / hashlib.sha256(url.encode()).hexdigest()[:12],args.crop_photos,args.crop_bottom,args.cache_dir,listing.get('photoItems'))
                     result.append(row)
                     connection.execute('INSERT OR REPLACE INTO seen VALUES (?,?)', (url, time.time()));connection.commit()
                 except (OSError, ValueError) as error:
@@ -361,14 +569,14 @@ def main(argv=None):
                 text = args.input.read_text(encoding='utf-8')
             else:
                 url = args.url or input('Ссылка на объявление ЦИАН / Авито: ').strip()
-                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel)
+                listing = load_listing(url, connection, args.refresh, loader, args.browser_timeout, progress, browser_channel=args.browser_channel, browser_scroll=args.browser_scroll)
                 text = listing['text']
             key = listing.get('url') if listing else hashlib.sha256(text.encode()).hexdigest()
             result = generate(text, {**(listing.get('fields',{}) if listing else {}), 'titleVariant':next_variant(connection,key), **data, 'source':text, **({'url':key} if listing else {})}, rules, prefs)
             if listing:
                 result['listing'] = listing
                 if args.download_photos:
-                    result['photos'] = download_photos(listing['images'], args.download_photos,args.crop_photos,args.crop_bottom,args.cache_dir)
+                    result['photos'] = download_photos(listing['images'], args.download_photos,args.crop_photos,args.crop_bottom,args.cache_dir,listing.get('photoItems'))
             output = json.dumps(result, ensure_ascii=False, indent=2) if args.json else '\n'.join(['ЗАГОЛОВКИ:', *[f'{i+1}. {t}' for i, t in enumerate(result['titles'])], '', 'ОПИСАНИЕ:', result['body'], '', result['tags'], '', 'Непереведённые фразы: '+', '.join(result['unknown'])])
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True);args.output.write_text(output, encoding='utf-8')
@@ -379,7 +587,7 @@ def main(argv=None):
             result_id = save_result(args.cache_dir, result)
             connection.close()
             connection = None
-            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel)
+            return serve(args.cache_dir, args.port, result_id, browser_channel=args.browser_channel,phone=args.phone,phone_port=args.phone_port)
     finally:
         if connection: connection.close()
     return 0

@@ -1,7 +1,7 @@
 {
   "project": "redcn",
-  "version": 3,
-  "total": 200,
+  "version": 31,
+  "total": 376,
   "tasks": [
     {
       "id": "RCN-001",
@@ -151,8 +151,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/http_fetch_worker.py",
+        "tests/test_http_import_retries.py",
+        "tests/test_cli.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-011"
+      ]
     },
     {
       "id": "RCN-012",
@@ -178,8 +185,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-014",
@@ -190,8 +200,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-015",
@@ -202,8 +215,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-016",
@@ -214,8 +230,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-017",
@@ -226,8 +245,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-018",
@@ -238,8 +260,19 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/fact_ledger.py",
+        "cli/local_server.py",
+        "cli/language_service.py",
+        "web/fact-ledger.mjs",
+        "tests/test_fact_ledger.py",
+        "tests/fact-ledger.test.mjs",
+        "tests/test_fact_ledger_browser.py",
+        "tests/test_workspace_boundaries.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-018"
+      ]
     },
     {
       "id": "RCN-019",
@@ -266,7 +299,10 @@
         "RCN-004"
       ],
       "status": "planned",
-      "evidence": []
+      "evidence": [
+        "docs/SOURCES-ROUTES-v26.md — один независимый обезличенный CIAN-снимок; несколько схем ещё не подтверждены",
+        "tests/fixtures/source-schema-corpus-v26.manifest.json"
+      ]
     },
     {
       "id": "RCN-021",
@@ -277,8 +313,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/http_fetch_worker.py",
+        "tests/test_http_import_retries.py",
+        "tests/test_cli.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-021"
+      ]
     },
     {
       "id": "RCN-022",
@@ -304,8 +347,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-024",
@@ -316,8 +362,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-025",
@@ -328,8 +377,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-026",
@@ -340,8 +392,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs"
+      ]
     },
     {
       "id": "RCN-027",
@@ -352,8 +407,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/source-fields.test.mjs",
+        "tests/avito-corpus.test.mjs",
+        "cli/redcn.py: batch_publication_decision; tests/test_batch_publication.py"
+      ]
     },
     {
       "id": "RCN-028",
@@ -379,8 +439,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/import-errors.mjs",
+        "tests/import-errors.test.mjs",
+        "tests/test_import_errors_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-029"
+      ]
     },
     {
       "id": "RCN-030",
@@ -391,8 +457,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/avito-corpus.test.mjs"
+      ]
     },
     {
       "id": "RCN-031",
@@ -478,8 +547,19 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "cli/search_adapters/cian.py",
+        "cli/search_adapters/avito.py",
+        "web/listing-watch.mjs",
+        "tests/test_listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "tests/listing-watch.test.mjs",
+        "tests/test_listing_watch_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-036"
+      ]
     },
     {
       "id": "RCN-037",
@@ -514,8 +594,19 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "cli/search_adapters/cian.py",
+        "cli/search_adapters/avito.py",
+        "web/listing-watch.mjs",
+        "tests/test_listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "tests/listing-watch.test.mjs",
+        "tests/test_listing_watch_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-039"
+      ]
     },
     {
       "id": "RCN-040",
@@ -526,8 +617,19 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "cli/search_adapters/cian.py",
+        "cli/search_adapters/avito.py",
+        "web/listing-watch.mjs",
+        "tests/test_listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "tests/listing-watch.test.mjs",
+        "tests/test_listing_watch_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-040"
+      ]
     },
     {
       "id": "RCN-041",
@@ -574,7 +676,11 @@
       "status": "done",
       "evidence": [
         "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
-        "tests/test_cli.py: fixture фото и manifest"
+        "tests/test_cli.py: fixture фото и manifest",
+        "cli/photo_store.py: image_mime, _original_metadata, attach_photo/load_photo — MIME по сигнатуре и декодеру, исходные байты сохраняются",
+        "tests/test_cli.py: test_photo_download_uses_actual_webp_bytes_despite_jpg_url_and_header",
+        "tests/test_photo_provenance.py: test_actual_webp_bytes_override_jpg_url_and_browser_mime_without_reencoding",
+        "docs/VERIFICATION.md; docs/SOURCE-RESEARCH-2026-11-01.md — проверка формата не доказывает чистоту фото или точность детектора"
       ]
     },
     {
@@ -590,7 +696,11 @@
       "status": "done",
       "evidence": [
         "cli/redcn.py: OG/JSON-LD, download_photos, batch folders",
-        "tests/test_cli.py: fixture фото и manifest"
+        "tests/test_cli.py: fixture фото и manifest",
+        "cli/redcn.py; cli/photo_store.py; cli/phone_relay.py — photoId, наблюдаемые variants, layout и происхождение проходят в медиа-конвейер",
+        "tests/test_photo_provenance.py: layout_metadata, cached_source_annotation, perceptual_candidate",
+        "tests/cian-conflicts.test.mjs: десять фото отдельно от одной планировки",
+        "docs/VERIFICATION.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md — похожие кадры лишь кандидаты, оригиналы не удаляются"
       ]
     },
     {
@@ -663,8 +773,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/photo_store.py",
+        "cli/dossier_backup.py",
+        "tests/test_dossier_backup.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-049"
+      ]
     },
     {
       "id": "RCN-050",
@@ -675,8 +791,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/presentation-studio.test.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30"
+      ]
     },
     {
       "id": "RCN-051",
@@ -729,8 +850,19 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/fact_ledger.py",
+        "cli/local_server.py",
+        "cli/language_service.py",
+        "web/fact-ledger.mjs",
+        "tests/test_fact_ledger.py",
+        "tests/fact-ledger.test.mjs",
+        "tests/test_fact_ledger_browser.py",
+        "tests/test_workspace_boundaries.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-054"
+      ]
     },
     {
       "id": "RCN-055",
@@ -741,8 +873,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/fact_ledger.py",
+        "cli/redcn.py",
+        "cli/generate.mjs",
+        "cli/language_service.py",
+        "tests/test_fact_ledger.py",
+        "tests/fact-ledger.test.mjs",
+        "tests/test_workspace_boundaries.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-055"
+      ]
     },
     {
       "id": "RCN-056",
@@ -753,8 +895,17 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/local_server.py",
+        "cli/phone_relay.py",
+        "cli/workspace_api.py",
+        "tests/test_phone_relay.py",
+        "tests/test_workspace_api.py",
+        "tests/test_shared_catalog_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-056"
+      ]
     },
     {
       "id": "RCN-057",
@@ -765,8 +916,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/WORKSPACE-OWNERSHIP-v26.md — владелец отдельного cache-dir и приглашённые роли",
+        "tests/test_workspace_ownership.py — 15 проверок HTTP/области на Mac",
+        "tests/test_workspace_ownership_browser.py — 3 Chrome-сценария входа/перезагрузки/перезапуска на Mac"
+      ]
     },
     {
       "id": "RCN-058",
@@ -789,8 +944,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/fact_ledger.py",
+        "web/fact-ledger.mjs",
+        "tests/test_fact_ledger.py",
+        "tests/test_fact_ledger_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-059"
+      ]
     },
     {
       "id": "RCN-060",
@@ -801,8 +963,17 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/fact-ledger.mjs",
+        "cli/fact_ledger.py",
+        "tests/fact-ledger.test.mjs",
+        "tests/test_fact_ledger.py",
+        "tests/test_fact_ledger_browser.py",
+        "tests/test_workspace_boundaries.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-060"
+      ]
     },
     {
       "id": "RCN-061",
@@ -957,8 +1128,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "scripts/install-redcn.py",
+        "scripts/package-installer.py",
+        "tests/test_install_package.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-070"
+      ]
     },
     {
       "id": "RCN-071",
@@ -1039,8 +1216,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/vision_photo.py",
+        "cli/classify-photo.swift",
+        "tests/test_vision.py",
+        "tests/test_ui_browser.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
     },
     {
       "id": "RCN-077",
@@ -1051,8 +1234,17 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/source-adapters/cian.mjs",
+        "web/source-adapters/avito.mjs",
+        "web/source-import.mjs",
+        "web/engine.mjs",
+        "web/fact-ledger.mjs",
+        "tests/source-witnesses.test.mjs",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-077"
+      ]
     },
     {
       "id": "RCN-078",
@@ -1063,8 +1255,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/initial-payment.mjs; tests/initial-payment.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-079",
@@ -1241,8 +1437,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-090",
@@ -1253,8 +1453,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-091",
@@ -1355,8 +1559,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-098",
@@ -1367,8 +1575,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-099",
@@ -1379,8 +1592,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/content-studio.mjs; tests/content-studio.test.mjs; tests/test_content_studio_browser.py",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-100",
@@ -1391,8 +1608,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs",
+        "tests/test_twenty_editor_browser.py"
+      ]
     },
     {
       "id": "RCN-101",
@@ -1633,8 +1854,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/GEO-ROUTES-PRIMARY-AUDIT-2026-11-01.md",
+        "data/moscow-transit-verified.json",
+        "tests/test_geo_catalog.py"
+      ]
     },
     {
       "id": "RCN-116",
@@ -1645,8 +1870,16 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/dictionary_reviews.py",
+        "web/dictionary-review.mjs",
+        "tests/test_dictionary_reviews.py",
+        "tests/dictionary-review.test.mjs",
+        "tests/test_dictionary_review_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-116"
+      ]
     },
     {
       "id": "RCN-117",
@@ -1657,8 +1890,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "web/listing-semantics.mjs; tests/semantic-content.test.mjs"
+      ]
     },
     {
       "id": "RCN-118",
@@ -1669,8 +1905,16 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/dictionary_reviews.py",
+        "web/dictionary-review.mjs",
+        "tests/test_dictionary_reviews.py",
+        "tests/dictionary-review.test.mjs",
+        "tests/test_dictionary_review_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-118"
+      ]
     },
     {
       "id": "RCN-119",
@@ -1696,8 +1940,16 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/dictionary_reviews.py",
+        "web/dictionary-review.mjs",
+        "tests/test_dictionary_reviews.py",
+        "tests/dictionary-review.test.mjs",
+        "tests/test_dictionary_review_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-120"
+      ]
     },
     {
       "id": "RCN-121",
@@ -1870,8 +2122,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/workflow.mjs",
+        "tests/workflow.test.mjs",
+        "tests/test_workflow_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-130"
+      ]
     },
     {
       "id": "RCN-131",
@@ -1942,8 +2200,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 16 подтверждённых пар станция–линия, полный реестр и точный RGB ещё не приняты",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
+      ]
     },
     {
       "id": "RCN-136",
@@ -1954,8 +2216,11 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
+      ]
     },
     {
       "id": "RCN-137",
@@ -1966,8 +2231,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_route_cache.py",
+        "tests/test_university_route_cache.py",
+        "tests/test_university_route_cache_browser.py",
+        "docs/RELEASE-v25.md"
+      ]
     },
     {
       "id": "RCN-138",
@@ -1990,8 +2260,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "data/city-pois.json",
+        "tests/test_city_pois.py",
+        "docs/CITY-PLACES-AND-CHINESE-STUDENT-EVIDENCE-2026-11-01.md"
+      ]
     },
     {
       "id": "RCN-140",
@@ -2002,8 +2276,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-140"
+      ]
     },
     {
       "id": "RCN-141",
@@ -2044,8 +2328,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-143"
+      ]
     },
     {
       "id": "RCN-144",
@@ -2056,8 +2350,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-144"
+      ]
     },
     {
       "id": "RCN-145",
@@ -2083,8 +2387,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-146"
+      ]
     },
     {
       "id": "RCN-147",
@@ -2095,8 +2409,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-147"
+      ]
     },
     {
       "id": "RCN-148",
@@ -2107,8 +2431,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-148"
+      ]
     },
     {
       "id": "RCN-149",
@@ -2119,8 +2453,13 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "tests/university-source-evidence.test.mjs",
+        "web/university-routes.mjs",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-149"
+      ]
     },
     {
       "id": "RCN-150",
@@ -2131,8 +2470,18 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/university_routes.py",
+        "web/university-routes.mjs",
+        "web/commute-compare.mjs",
+        "tests/commute-compare.test.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "tests/test_commute_compare_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-150"
+      ]
     },
     {
       "id": "RCN-151",
@@ -2287,8 +2636,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/fact-ledger.mjs",
+        "cli/fact_ledger.py",
+        "tests/fact-ledger.test.mjs",
+        "tests/test_fact_ledger_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-160"
+      ]
     },
     {
       "id": "RCN-161",
@@ -2379,8 +2735,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/workflow.mjs",
+        "tests/workflow.test.mjs",
+        "tests/test_workflow_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-166"
+      ]
     },
     {
       "id": "RCN-167",
@@ -2391,8 +2753,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/workflow.mjs",
+        "tests/workflow.test.mjs",
+        "tests/test_workflow_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-167"
+      ]
     },
     {
       "id": "RCN-168",
@@ -2403,8 +2771,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/workflow.mjs",
+        "tests/workflow.test.mjs",
+        "tests/test_workflow_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-168"
+      ]
     },
     {
       "id": "RCN-169",
@@ -2415,8 +2789,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/workflow.mjs",
+        "tests/workflow.test.mjs",
+        "tests/test_workflow_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-169"
+      ]
     },
     {
       "id": "RCN-170",
@@ -2427,8 +2807,12 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "docs/MOBILE-ACCEPTANCE-v26.md — узкий экран и visualViewport, без заявления о физической iOS-клавиатуре",
+        "tests/test_mobile_editor_learning_browser.py — 5 пройденных Chrome-сценариев на Mac, ввод/редактирование/Tab/сохранение/перезагрузка",
+        "tests/mobile-keyboard.test.mjs"
+      ]
     },
     {
       "id": "RCN-171",
@@ -2514,8 +2898,16 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "web/table-export.mjs",
+        "cli/table_export.py",
+        "tests/table-export.test.mjs",
+        "tests/test_table_export.py",
+        "tests/test_table_export_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-176"
+      ]
     },
     {
       "id": "RCN-177",
@@ -2526,8 +2918,17 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/access_roles.py",
+        "cli/phone_relay.py",
+        "web/access-roles.mjs",
+        "tests/test_access_roles.py",
+        "tests/access-roles.test.mjs",
+        "tests/test_access_roles_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-177"
+      ]
     },
     {
       "id": "RCN-178",
@@ -2538,8 +2939,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/publication_review.py",
+        "web/publication-review.mjs",
+        "tests/test_publication_review.py",
+        "tests/publication-review.test.mjs",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-178"
+      ]
     },
     {
       "id": "RCN-179",
@@ -2708,8 +3116,14 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "scripts/check-secrets.mjs",
+        "scripts/install-git-hooks.mjs",
+        "tests/secret-scan.test.mjs",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-189"
+      ]
     },
     {
       "id": "RCN-190",
@@ -2720,8 +3134,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        ".github/workflows/verification.yml",
+        "scripts/run-browser-regression.py",
+        "scripts/run-python-partition.py",
+        "tests/test_ci_editor_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-190"
+      ]
     },
     {
       "id": "RCN-191",
@@ -2813,8 +3234,16 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/activity_log.py",
+        "cli/listing_watch.py",
+        "cli/local_server.py",
+        "tests/test_listing_watch_extended.py",
+        "tests/test_workspace_boundaries.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-196"
+      ]
     },
     {
       "id": "RCN-197",
@@ -2825,8 +3254,16 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "tests/test_http_import_retries.py",
+        "cli/listing_watch.py",
+        "tests/test_listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-197"
+      ]
     },
     {
       "id": "RCN-198",
@@ -2837,8 +3274,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "web/listing-watch.mjs",
+        "tests/test_listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-198"
+      ]
     },
     {
       "id": "RCN-199",
@@ -2849,8 +3293,15 @@
       "depends_on": [
         "RCN-004"
       ],
-      "status": "planned",
-      "evidence": []
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "web/listing-watch.mjs",
+        "tests/test_listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-199"
+      ]
     },
     {
       "id": "RCN-200",
@@ -2869,7 +3320,2994 @@
         "docs/VERIFICATION.md",
         "GitHub issue #1 остаётся open"
       ]
+    },
+    {
+      "id": "RCN-201",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Снимок метро, МЦК и МЦД Москвы",
+      "acceptance": "Все записи ответа HH metro/1 включены с устойчивыми ID, линиями, координатами и датой; уникальные названия и записи по линиям считаются отдельно, статус движения не выдумывается.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/moscow-geo.json",
+        "tests/geo.test.mjs",
+        "docs/MOSCOW-GEO.md",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-202",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Снимок московских улиц и дорог",
+      "acceptance": "Именованные дороги в административной границе Москвы OSM загружены с исходным именем, источником и датой; поиск доступен автономно, пределы покрытия указаны.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/moscow-geo.json",
+        "scripts/update-moscow-geo.py",
+        "tests/test_geo_catalog.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-203",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Снимок остановок и платформ",
+      "acceptance": "Именованные остановочные объекты OSM в границе Москвы сохраняют отдельные ID и координаты; одинаковое имя не объединяет противоположные платформы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/moscow-geo.json",
+        "scripts/update-moscow-geo.py",
+        "tests/geo.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-204",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Полные китайские географические названия",
+      "acceptance": "Справочник использует проверенные и помеченные community-соответствия целого имени, операторский словарь имеет приоритет; неизвестное русское имя не разрывается на случайные куски.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/metro-zh-supplement.json",
+        "web/geo-catalog.mjs",
+        "tests/geo.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-205",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Постоянная услуга регистрации по прибытии",
+      "acceptance": "Виза прибытия (временная регистрация) обозначена в интерфейсе и китайском описании как помощь студии независимо от регистрации у собственника; исходное условие сохраняется в аудите.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/copy-v8.test.mjs",
+        "tests/test_ui_browser.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-206",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Автоподрезка отметки у края фото",
+      "acceptance": "OCR предлагает границу в долях реального размера фото, создаёт копию и повторно проверяет метку; оригинал неизменен, неуверенные случаи остаются на проверку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_store.py",
+        "tests/test_photos.py",
+        "docs/VERIFICATION.md#v8-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6",
+        "tests/test_photo_provenance.py: empty_ocr, small_or_multiple_distant_edge_regions, malformed_footer_ocr — консервативные состояния и кеш параметров",
+        "docs/SOURCE-RESEARCH-2026-11-01.md — на трёх реальных архивных кадрах OCR пропустил видимые знаки; точность watermark не принята",
+        "docs/VERIFICATION.md; RCN-329 — реальная калибровка и FP/FN остаются отдельной плановой приёмкой"
+      ]
+    },
+    {
+      "id": "RCN-207",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Компактные варианты по комплектации и бюджету",
+      "acceptance": "Структура и вводная меняются по варианту и подтверждённой комплектации; отдельные приборы не выводятся из духовки, пример бюджета 2/4 человек доступен только двум явно изолированным комнатам.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "web/fact-evidence.mjs",
+        "tests/copy-v8.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-208",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Дети и животные только по разрешению",
+      "acceptance": "Положительное разрешение из текста, плашки или подтверждённой отметки учитывается; молчание, запрет и конфликт не превращаются в разрешение в китайском тексте.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/fact-evidence.mjs",
+        "web/content-tools.mjs",
+        "tests/copy-v8.test.mjs",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-209",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Быстрый захват с прокруткой Chrome",
+      "acceptance": "Собственная вкладка ограниченно прокручивается, собирает отложенные данные, отдаёт метаданные полноты и закрывается; пользовательские вкладки не перенаправляются, проверка площадки ожидается вручную.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/browser_import.py",
+        "tests/test_browser_capture.py",
+        "tests/test_ui_browser.py",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-210",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Сверка полноты с официальными реестрами Москвы",
+      "acceptance": "После получения актуальных официальных выгрузок сравнить улицы, остановки и действующие станции, показать отсутствующие записи и дату подтверждения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-211",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Проверка остальных китайских названий МЦД",
+      "acceptance": "Найти источники для непереведённых названий МЦД и новых линий, проверить алиасы и не выдавать community-названия за официальные.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": [
+        "data/metro-published-names.json — происхождение названий отделено от официального статуса",
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 81 строка МЦД ещё без подтверждённого перевода"
+      ]
+    },
+    {
+      "id": "RCN-212",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Контрольная выборка распознавания мебели",
+      "acceptance": "Собрать разрешённую размеченную выборку кухонь и комнат и измерить точность по шкафам, стульям, вытяжкам, компьютерам и пианино.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-213",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Экземпляры предметов на нескольких ракурсах",
+      "acceptance": "Сопоставлять один предмет между разными фото, обосновывать точное количество отдельными видимыми экземплярами и показывать ошибки сопоставления.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/QUALITY-v26.md — интерфейс ручных связей и явных конфликтов; автоматическое тождество предметов не принято",
+        "cli/photo_instance_api.py",
+        "web/photo-instance-editor.mjs",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
+      ]
+    },
+    {
+      "id": "RCN-214",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Проверка китайских фраз оператором",
+      "acceptance": "Замечания из базы знаний переводить в версии утверждённого словаря с примерами до/после и сохранением исправленной формулировки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/dictionary_reviews.py",
+        "web/dictionary-review.mjs",
+        "tests/test_dictionary_reviews.py",
+        "tests/dictionary-review.test.mjs",
+        "tests/test_dictionary_review_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-214"
+      ]
+    },
+    {
+      "id": "RCN-215",
+      "section": "Расширение базы и автоматизации · октябрь 2026",
+      "title": "Полнота виртуальных фотогалерей",
+      "acceptance": "Проверить галереи с невидимыми слайдами и выдавать отдельный индикатор пропущенных фото вместо обещания полного сбора по прокрутке.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/gallery_coverage.py",
+        "tests/test_gallery_coverage.py",
+        "docs/benchmarks/photo-pipeline-staging-20261101.json"
+      ]
+    },
+    {
+      "id": "RCN-216",
+      "section": "iPhone и сервер на Mac",
+      "title": "Мобильная лента iPhone 14 Pro",
+      "acceptance": "Отдельный интерфейс 393×852 показывает готовые карточки и фотографии без запуска Chrome на телефоне.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.html",
+        "web/phone.css",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-217",
+      "section": "iPhone и сервер на Mac",
+      "title": "Веб-приложение на экране Домой",
+      "acceptance": "Поставлены manifest и иконки; установка на iPhone объясняется системными шагами, кнопка скрывается при запуске в standalone и не исчезает после одного открытия инструкции.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/pwa-install.mjs",
+        "web/manifest.webmanifest",
+        "tests/pwa-install.test.mjs",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-218",
+      "section": "iPhone и сервер на Mac",
+      "title": "Подключение телефона по локальному QR",
+      "acceptance": "Код создаётся локально, одноразовый и ограничен по времени; неподключённый клиент не читает карточки, фото и команды.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py",
+        "web/qr-code.mjs",
+        "tests/test_phone_relay.py",
+        "tests/qr-code.test.mjs",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-219",
+      "section": "iPhone и сервер на Mac",
+      "title": "Импорт по ссылке с телефона",
+      "acceptance": "Телефон отправляет допустимую ссылку в общую очередь Mac, видит состояние и получает готовую карточку с кешированными фото.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/local_server.py",
+        "web/phone.mjs",
+        "tests/test_phone_relay.py",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-220",
+      "section": "iPhone и сервер на Mac",
+      "title": "Автоматическая синхронизация карточек",
+      "acceptance": "Открытая лента и карточка обновляются после изменений на Mac; выбранное фото и прокрутка сохраняются, устаревший ответ не восстанавливает данные после потери сессии.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-221",
+      "section": "iPhone и сервер на Mac",
+      "title": "Фото и пакеты на iPhone",
+      "acceptance": "Отдельное изображение и ZIP скачиваются с Mac; обрезанный пакет содержит только проверенные копии; сохранение в Фото требует действия пользователя.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py",
+        "web/phone.mjs",
+        "tests/test_phone_relay.py",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-222",
+      "section": "iPhone и сервер на Mac",
+      "title": "Настройки студии и передача правок с Mac",
+      "acceptance": "Телефонный импорт наследует словарь и сервисные настройки Mac; готовая реальная генерация и правки текста передаются в мобильную ленту.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "web/phone-connection.mjs",
+        "cli/phone_relay.py",
+        "tests/test_phone_relay.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-223",
+      "section": "iPhone и сервер на Mac",
+      "title": "Основной редактор на узком экране",
+      "acceptance": "При ширине 393 px разделы редактора доступны без горизонтального переполнения, поля имеют размер от 16 px, основные цели касания от 44 px.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/styles.css",
+        "tests/test_phone_browser.py",
+        "docs/VERIFICATION.md#v9-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-224",
+      "section": "iPhone и сервер на Mac",
+      "title": "Защищённый доступ к Mac вне локальной сети",
+      "acceptance": "Отдельно настроить доверенный HTTPS или частную сеть, проверить адреса и доступ из мобильной сети; не открывать сервер публично автоматически.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-225",
+      "section": "iPhone и сервер на Mac",
+      "title": "Приёмка на физическом iPhone 14 Pro",
+      "acceptance": "Пользователь на самом iPhone проверяет установку из Safari, запуск с иконки, системное меню Фото, клавиатуру и доступ к Mac в своей сети.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-226",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Обновляемый цифровой код подключения iPhone",
+      "acceptance": "На Mac видны 8 цифр, таймер и копирование; действующий код переживает перезагрузку страницы, после входа или истечения появляется новый.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py",
+        "web/phone-connection.mjs",
+        "tests/test_pairing_codes.py",
+        "tests/test_pairing_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-227",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Отдельный вход приложения с экрана «Домой»",
+      "acceptance": "Свежий standalone-контекст без Safari-cookie принимает текущий код; повторный запуск сохраняет сессию, сообщение объясняет место получения кода.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "web/phone.html",
+        "tests/test_pairing_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-228",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Общий редактор дизайна публикации",
+      "acceptance": "Оформление, цвета, шрифт, формат листа, состав и порядок блоков сохраняются на Mac и загружаются для следующей карточки; JSON переносит шаблон.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "cli/card_assets.py",
+        "tests/presentation-studio.test.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-229",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Настраиваемый outro с данными объекта",
+      "acceptance": "Финальный PNG 1080×1440 использует адрес, подпись, контакт и бренд выбранной карточки; оригиналы фото сохраняются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-230",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Карта по координатам для outro",
+      "acceptance": "Настоящий фрагмент OSM с отметкой, атрибуцией и кешем строится только по координатам; отсутствие карты не создаёт выдуманного расположения.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_map.py",
+        "tests/test_listing_map.py",
+        "web/presentation-studio.mjs",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-231",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Самодостаточный HTML презентации",
+      "acceptance": "Файл содержит выбранные блоки, отредактированный текст и встроенные фото без личных вложений; сохраняется на Mac и скачивается.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "cli/card_assets.py",
+        "tests/test_card_api.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-232",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Автоматическое создание PDF на Mac",
+      "acceptance": "Тот же статический HTML печатается Chrome в PDF без ручного диалога, с фоном, китайским текстом и фото; файл доступен по авторизации.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "tests/test_card_assets.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-233",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Просмотр готовых страниц PDF",
+      "acceptance": "Кнопка создаёт PDF из текущего снимка макета и открывает настоящий файл внутри сайта с отдельным открытием; URL очищается после закрытия.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-234",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Статус сдачи и личные заметки квартиры",
+      "acceptance": "В работе, Сдана и В архиве сохраняются отдельно от рекламного текста; повторное открытие восстанавливает заметки и не затирает их при синхронизации.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/card-archive.mjs",
+        "tests/card-archive.test.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-235",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Договоры и планировки в досье квартиры",
+      "acceptance": "Файлы до 40 МиБ прикрепляются к постоянной карточке, скачиваются после авторизации, удаляются с подтверждением и не включаются в рекламные экспорты.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/card-archive.mjs",
+        "tests/test_card_api.py",
+        "tests/test_card_assets.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-236",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Хранение LiDAR и 3D-материалов квартиры",
+      "acceptance": "USDZ, OBJ, GLB/GLTF, PLY, STL и связанные форматы сохраняются и скачиваются без преобразования; досье связано с ID объекта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/card-archive.mjs",
+        "tests/test_card_api.py",
+        "tests/test_card_assets.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-237",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Готовые материалы и досье на телефоне",
+      "acceptance": "Подключённый iPhone получает HTML, PDF, intro/outro и личные вложения той же карточки; PNG открываются для системного сохранения в Фото.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "web/card-files.mjs",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-238",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Постоянная привязка досье и каталог Mac",
+      "acceptance": "Ссылка, черновик и библиотека сохраняют ID карточки; новый экспорт не создаёт другой объект, каталог Mac открывает подготовленные карточки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "cli/local_server.py",
+        "tests/test_presentation_browser.py",
+        "docs/VERIFICATION.md#v10-2026-10-30",
+        "https://github.com/leunch4off/redcn/pull/6"
+      ]
+    },
+    {
+      "id": "RCN-239",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Свободное размещение и изменение размеров блоков",
+      "acceptance": "Расширить редактор до перемещения блоков мышью и касанием с сеткой, размерами, выравниванием и отменой действий; сохранить печатную геометрию.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/design-canvas-editor.mjs",
+        "tests/design-canvas-editor.test.mjs",
+        "tests/test_design_canvas_browser.py",
+        "docs/VERIFICATION.md#v16"
+      ]
+    },
+    {
+      "id": "RCN-240",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Просмотр и измерения LiDAR/3D внутри карточки",
+      "acceptance": "Реализовать отдельный безопасный просмотр поддерживаемых моделей, масштаб, единицы и измерения с проверкой реальных сканов.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/model-viewer.mjs",
+        "tests/model-viewer.test.mjs",
+        "tests/test_model_viewer_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-240"
+      ]
+    },
+    {
+      "id": "RCN-241",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Резервные копии досье и готовых файлов",
+      "acceptance": "Добавить проверяемый экспорт и восстановление всей карточки с вложениями, шаблонами и версиями материалов на другом Mac.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/fixtures/macos-portability — полностью синтетический архив с исходного Mac",
+        "scripts/portable-mac-proof.py — проверка восстановленных связей и байтов",
+        "docs/CLOUD-BACKUP-AND-DEVICE-DELIVERY-v26.md — отдельный macOS runner имеет самостоятельный результат CI",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md",
+        "docs/benchmarks/other-mac-restore-v29-41463994376.json"
+      ]
+    },
+    {
+      "id": "RCN-242",
+      "section": "Дизайн, PDF и досье квартиры",
+      "title": "Клиентская копия досье с выбором доступа",
+      "acceptance": "Пользователь явно выбирает выдаваемые клиенту файлы; личные заметки и договоры других заселений остаются закрытыми.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-004"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/dossier_backup.py",
+        "cli/client_publication.py",
+        "web/dossier-transfer.mjs",
+        "tests/test_dossier_backup.py",
+        "tests/test_dossier_api.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-242"
+      ]
+    },
+    {
+      "id": "RCN-243",
+      "section": "Скорость и работа через интернет",
+      "title": "Временный HTTPS-доступ к телефону через интернет",
+      "acceptance": "Отдельный телефонный сервер получает HTTPS-ссылку без проброса роутера; по внешнему адресу проверены вход, Secure-cookie и отказ без сессии, рабочий стол не публикуется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/remote_access.py",
+        "cli/phone_relay.py",
+        "tests/test_remote_access.py",
+        "tests/test_external_phone.py",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-244",
+      "section": "Скорость и работа через интернет",
+      "title": "Готовность редактора и ленты до 10 секунд",
+      "acceptance": "На Mac браузерная приёмка проверяет редактор и ленту из 100 карточек менее чем за 10 секунд; недоступный сервер показывает повтор вместо долгого ожидания.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "tests/test_desktop_performance.py",
+        "tests/test_phone_performance.py",
+        "web/app.js",
+        "web/phone.mjs",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-245",
+      "section": "Скорость и работа через интернет",
+      "title": "Сжатие страниц и небольшие обложки",
+      "acceptance": "Текстовые ответы передаются gzip при согласовании; лента использует превью до 480×360, неизменённые карточки сохраняют изображения, оригиналы доступны отдельно.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/http_delivery.py",
+        "cli/media_preview.py",
+        "tests/test_http_delivery.py",
+        "tests/test_media_preview.py",
+        "web/phone.mjs",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-246",
+      "section": "Скорость и работа через интернет",
+      "title": "Отложенный запуск скрытых панелей и географии",
+      "acceptance": "Дизайнер, знания и индексы географии не создаются при пустом старте; открытие соответствующих разделов сохраняет все функции и данные каталога.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "web/phone.mjs",
+        "scripts/geo-catalog-runtime.mjs",
+        "tests/test_desktop_performance.py",
+        "tests/geo.test.mjs",
+        "docs/VERIFICATION.md#v11-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-247",
+      "section": "Скорость и работа через интернет",
+      "title": "Постоянный HTTPS-адрес установленного приложения",
+      "acceptance": "Подключить постоянный домен и управляемый туннель или частную сеть; после перезапуска Mac адрес и установленная иконка продолжают вести в тот же origin без новой установки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-248",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Автозапуск сервера после входа в macOS",
+      "acceptance": "Пользовательский LaunchAgent запускает сервер и телефон без браузера, восстанавливает свой процесс и не создаёт второй экземпляр; удаление сохраняет данные.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/background_server.py",
+        "scripts/macos-service.py",
+        "tests/test_background_server.py",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-249",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Реальные этапы загрузки на телефоне",
+      "acceptance": "Адрес, время и этапы связи/входа/карточек видны; таймаут и ошибки HTML-шлюза допускают повтор без раскрытия кода.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "web/phone.html",
+        "tests/test_phone_performance.py",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-250",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Диагностика сервера, DNS и HTTPS",
+      "acceptance": "Защищённая проверка с Mac отличает локальный ответ, процесс туннеля, DNS и внешний HTTPS; запросы ограничены по времени и не передают личные данные.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/connection_diagnostics.py",
+        "web/phone-connection.mjs",
+        "tests/test_connection_diagnostics.py",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-251",
+      "section": "Надёжное подключение и диагностика",
+      "title": "Подключение другого HTTPS-шлюза",
+      "acceptance": "Проверяемый публичный HTTPS-origin сохраняется для Tuna/ngrok/VPS; точные Host/Origin, loopback-прокси и Secure-cookie остаются обязательными.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/external_origin.py",
+        "cli/phone_relay.py",
+        "tests/test_custom_gateway.py",
+        "docs/CONNECTION-RU.md",
+        "docs/VERIFICATION.md#v12-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-252",
+      "section": "Понятный импорт и готовые фотографии",
+      "title": "Общий Node.js в фоновом сервере",
+      "acceptance": "Генератор и HTML-анализатор находят Node.js >=22 по абсолютному пути при коротком launchd PATH; проверка выполняется до Chrome, ошибки выполнения различаются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/node_runtime.py",
+        "cli/redcn.py",
+        "scripts/macos-service.py",
+        "tests/test_node_runtime.py",
+        "docs/IMPORT-AND-AUTO-PHOTOS.md",
+        "docs/VERIFICATION.md#v13-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-253",
+      "section": "Понятный импорт и готовые фотографии",
+      "title": "Этапы импорта и измеренное время на телефоне",
+      "acceptance": "Телефон показывает фактические этапы и счётчики, прошедшее время, среднее последних успешных операций отдельно для кеша/сети/фото и восстанавливает текущее задание после обновления.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/job_progress.py",
+        "cli/browser_import.py",
+        "cli/local_server.py",
+        "web/phone.mjs",
+        "tests/test_job_progress.py",
+        "tests/test_phone_job_browser.py",
+        "docs/IMPORT-AND-AUTO-PHOTOS.md",
+        "docs/VERIFICATION.md#v13-2026-10-30"
+      ]
+    },
+    {
+      "id": "RCN-254",
+      "section": "Понятный импорт и готовые фотографии",
+      "title": "Автоматическая подготовка фотографий для телефона",
+      "acceptance": "Импорт автоматически скачивает и проверяет края фото, использует только подтверждённые копии, сохраняет оригиналы и полный смешанный набор в галерее/ZIP; решения кешируются, сомнительные случаи остаются целиком.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-216"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_store.py",
+        "cli/phone_relay.py",
+        "web/phone.mjs",
+        "tests/test_auto_photo_crop.py",
+        "tests/test_phone_job_browser.py",
+        "docs/IMPORT-AND-AUTO-PHOTOS.md",
+        "docs/VERIFICATION.md#v13-2026-10-30",
+        "tests/test_photo_provenance.py: layout_metadata, cached_source_annotation, perceptual_candidate — сохранность исходников и происхождения",
+        "tests/test_client_publication_backend.py; tests/test_source_readiness.py; tests/source-readiness.test.mjs — производный ZIP и раздельная полнота исходника/фото",
+        "docs/VERIFICATION.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md; docs/SOURCE-RESEARCH-2026-11-01.md — знак не обнаружен не означает подтверждённую чистоту; реальная точность crop не принята"
+      ]
+    },
+    {
+      "id": "RCN-255",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Проверяемый корпус китайских фраз об аренде Москвы",
+      "acceptance": "405 пар с происхождением;14 прочитанных страниц5 доменов;исторические объявления не выдаются за действующие.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/chinese-rental-research.json",
+        "docs/CHINESE-RENTAL-SOURCES.md",
+        "tests/generation-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-256",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Большой RU–ZH словарь с лицензией и словоформами",
+      "acceptance": "89171 уникальная пара и35176 связей словоформ воспроизводимы;общие значения помечаются как непроверенные.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/ru-zh-open-lexicon.json",
+        "docs/OPEN-RU-ZH-LEXICON.md",
+        "tests/open-lexicon.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-257",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Материализованные каталоги китайских шаблонов",
+      "acceptance": "По262144 записей заголовков,описаний и наборов тегов;полный аудит хешей,уникальности и ограничений фактов.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/template-catalog/manifest.json",
+        "scripts/audit-template-catalog.mjs",
+        "tests/template-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-258",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Поиск полной базы без перегрузки интерфейса",
+      "acceptance": "Защищённый поиск,источники и страницы по40 записей;большая база не загружается при открытии редактора.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/language_service.py",
+        "web/language-studio.mjs",
+        "tests/test_language_service.py"
+      ]
+    },
+    {
+      "id": "RCN-259",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Независимые варианты заголовка,описания и тегов",
+      "acceptance": "Изменение одной части сохраняет остальные ручные правки,поля,медиа и постоянныйID;конфликт обновления возвращает409.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/app.js",
+        "web/phone.mjs",
+        "tests/test_language_service.py",
+        "tests/generation-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-260",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Перевод собственного русского черновика",
+      "acceptance": "Общий переводчик сайта иCLI,редактируемый предпросмотр и явное применение;неизвестные фразы и машинный перевод требуют проверки.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/ru-zh-translator.mjs",
+        "cli/language.mjs",
+        "web/language-studio.mjs",
+        "tests/ru-zh-translator.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-261",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Изолированный локальный машинный перевод",
+      "acceptance": "Отдельная nativeARM среда,официальныеRU→EN→ZH модели,ограничение времени,лицензионные уведомления и аудит чисел/словаря.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/nmt_worker.py",
+        "scripts/setup-translation-runtime.py",
+        "docs/LOCAL-TRANSLATION.md",
+        "tests/test_nmt_worker.py"
+      ]
+    },
+    {
+      "id": "RCN-262",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Независимая редактура китайским носителем",
+      "acceptance": "Проверить выборку реальных объявлений и переводов носителем,зафиксировать ошибки и правки без изменения подтверждённых фактов.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-263",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Оценка прямойRU→ZH модели на корпусе аренды",
+      "acceptance": "Сравнить качество,лицензию,память и скорость прямого перевода с текущим промежуточным английским на фиксированной выборке.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/LOCAL-TEXT-QUALITY-2026-11-01.md",
+        "docs/benchmarks/text-quality-20261101-native-comparison-final.json",
+        "docs/DIRECT-TRANSLATION-PILOT-2026-11-01.md"
+      ]
+    },
+    {
+      "id": "RCN-264",
+      "section": "Язык,перевод и разнообразие объявлений",
+      "title": "Пополнение словаря из одобренных исправлений",
+      "acceptance": "Оператор подтверждает пару;система хранит версию и источник,выявляет конфликты и не превращает машинный черновик в проверенный факт.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/dictionary_reviews.py",
+        "web/dictionary-review.mjs",
+        "tests/test_dictionary_reviews.py",
+        "tests/dictionary-review.test.mjs",
+        "tests/test_dictionary_review_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-264"
+      ]
+    },
+    {
+      "id": "RCN-265",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Московские вузы с китайскими названиями и источниками",
+      "acceptance": "У записей есть официальные источники и основание включения; обучение китайских студентов, китайская страница и общий международный приём различаются.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/moscow-universities.json",
+        "docs/MOSCOW-UNIVERSITIES-RU.md",
+        "tests/university-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-266",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Учебные кампусы и корпуса отдельно от контактных адресов",
+      "acceptance": "Местоположение связано с вузом, регионом и источником; учебный кампус, корпус и основной адрес не смешиваются, близость к квартире не выводится из справочника.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/moscow-universities.json",
+        "web/university-catalog.mjs",
+        "tests/university-catalog.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-267",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Версионированная база вузов SQLite",
+      "acceptance": "Ленивая загрузка по хешу, атомарное обновление только таблиц справочника, поиск RU/ZH/адресов и сохранность карточек.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/university_store.py",
+        "tests/test_university_store.py"
+      ]
+    },
+    {
+      "id": "RCN-268",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Вузы и кампусы в заголовках и описаниях",
+      "acceptance": "Алиасы переводятся в канонические китайские названия, личные правила сохраняют приоритет; время и способ поездки берутся только из заполненных данных.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "tests/university-generation.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-269",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Выбор вуза и кампуса в редакторе и базе знаний",
+      "acceptance": "Поиск показывает источники и тип адреса; явный выбор заполняет только учебные ориентиры, сохраняя адрес квартиры, метро и другие поля.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/university-ui.mjs",
+        "tests/test_university_ui_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-270",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Прокрутка Chrome по готовым разделам объявления",
+      "acceptance": "Готовые фотографии, описание и характеристики читаются без трёх одинаковых чтений; ожидание ограничено, неизвестная разметка использует запасную прокрутку.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/browser_import.py",
+        "tests/test_section_scroll.py",
+        "tests/test_browser_scroll_cli.py"
+      ]
+    },
+    {
+      "id": "RCN-271",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Полный охват факультетских учебных адресов",
+      "acceptance": "Дополнять справочник корпусами отдельных факультетов по первичным источникам; отдельно проверять переезды и закрытые подразделения.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 9 текущих и 1 исторический адрес, отдельные основания переезда/закрытия; заявленный объём ограничен",
+        "tests/test_university_lifecycle.py",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
+      ]
+    },
+    {
+      "id": "RCN-272",
+      "section": "Вузы, кампусы и быстрый импорт",
+      "title": "Достоверная статистика китайских студентов по вузам",
+      "acceptance": "Добавлять датированную статистику и подтверждённые отзывы; рейтинг популярности не строить по наличию китайской страницы или общему числу иностранцев.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "data/moscow-universities.json",
+        "tests/test_chinese_student_evidence.py",
+        "docs/CITY-PLACES-AND-CHINESE-STUDENT-EVIDENCE-2026-11-01.md"
+      ]
+    },
+    {
+      "id": "RCN-273",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Китайский макет Ciliev в стиле референса M16",
+      "acceptance": "Горизонтальный A4: тёмный фон, белый текст и золотистые акценты, агент с аватаром, параметры и галерея; исходная личность M16 не переносится.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "web/publication-render.mjs",
+        "docs/CILIEV-DESIGN-REFERENCE.md"
+      ]
+    },
+    {
+      "id": "RCN-274",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Единая модель координат для PDF и социальных обложек",
+      "acceptance": "Версия 2 задаёт поверхности, узлы, привязки и стили; предпросмотр, HTML и PNG используют одну геометрию.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "tests/publication-core.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-275",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Intro из трёх фотографий с параметрами квартиры",
+      "acceptance": "Портретный PNG 1080×1920 повторяет композицию референса; фотографии и китайские значения берутся из выбранной карточки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-render.mjs",
+        "tests/publication-core.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-276",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Тёмный outro с картой и учебными маршрутами",
+      "acceptance": "Настоящая карта по координатам, отдельные карточки только подтверждённых поездок, китайские подписи и сохранённая атрибуция.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_map.py",
+        "web/publication-model.mjs",
+        "tests/test_listing_map.py"
+      ]
+    },
+    {
+      "id": "RCN-277",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Независимое перемещение внутренних подписей",
+      "acceptance": "Заголовки маршрутов, время, остановки и отдельные подписи/значения параметров представлены самостоятельными редактируемыми узлами.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "tests/test_design_canvas_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-278",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Личные логотип и аватар консультанта",
+      "acceptance": "Приватные изображения до 4 МиБ, сохранённый оригинал и очищенное превью; шаблон хранит ссылки, загрузка защищена прежней авторизацией.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "cli/publication_schema.py",
+        "tests/test_publication_backend.py"
+      ]
+    },
+    {
+      "id": "RCN-279",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Постоянные привязки полей и оформления",
+      "acceptance": "Текстовые поля переключаются между данными карточки и постоянной надписью; шрифт, цвета, размеры, прозрачность и порядок слоёв сохраняются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/design-canvas-editor.mjs",
+        "web/presentation-studio.mjs",
+        "tests/design-canvas-editor.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-280",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Миграция и восстановление общего макета",
+      "acceptance": "Старые шаблоны читаются без потери контактов, сохраняется резервная копия, JSON переносит модель; явная загрузка сохранённой версии сохраняет локальный черновик.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/presentation-studio.mjs",
+        "tests/test_ciliev_studio_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-281",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Защита дизайна от перезаписи другим устройством",
+      "acceptance": "Проверка expectedUpdated возвращает 409 при конфликте; исходная версия локального черновика сохраняется через перезагрузку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_assets.py",
+        "web/presentation-studio.mjs",
+        "tests/test_publication_backend.py",
+        "tests/test_ciliev_studio_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-282",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Полный текст и фотографии в многостраничном PDF",
+      "acceptance": "Длинное описание продолжается на дополнительных листах, выбранные фото до 30 размещаются по страницам, шрифты и изображения ожидаются в ограниченный срок.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-render.mjs",
+        "cli/card_assets.py",
+        "tests/publication-core.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-283",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Ленивый дизайнер на телефоне",
+      "acceptance": "Крупный словарь и редактор загружаются отдельным модулем при открытии дизайна, без включения в первую загрузку ленты.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/phone-designer.mjs",
+        "web/phone.mjs",
+        "scripts/validate-pages.mjs"
+      ]
+    },
+    {
+      "id": "RCN-284",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Визуальная проверка готового комплекта Ciliev",
+      "acceptance": "Реальные HTML/PDF/intro/outro из одной карточки проверены по изображениям страниц, геометрии, китайским шрифтам и сохранению пользовательских данных.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/VERIFICATION.md#v16",
+        "tests/test_ciliev_studio_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-285",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Компактный макет без подтверждённых маршрутов",
+      "acceptance": "При отсутствии подтверждённых маршрутов автоматический макет убирает пустую маршрутную зону и может увеличить карту; явно заданные пользователем позиции сохраняются. Canvas, рамки выбора и HTML/PDF/PNG используют одинаковую результирующую геометрию; проверены случаи с нулём, одним и несколькими подтверждёнными маршрутами.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-274",
+        "RCN-276"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "web/publication-render.mjs",
+        "web/design-canvas-editor.mjs",
+        "tests/publication-compact.test.mjs",
+        "tests/test_publication_compact_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-285"
+      ]
+    },
+    {
+      "id": "RCN-286",
+      "section": "Ciliev: свободный макет и публикация",
+      "title": "Проверенные подрезки в дизайнере Mac",
+      "acceptance": "Дизайнер Mac автоматически использует ручную производную либо проверенную OCR-копию из backend; ручные правки имеют приоритет. HTML/PDF/PNG и повторное открытие сохраняют одинаковый выбор кадров. Оригиналы доступны и не перезаписываются, сомнительная OCR-подрезка не применяется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-275",
+        "RCN-282"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_store.py",
+        "web/photo-ui.mjs",
+        "web/phone.mjs",
+        "web/publication-model.mjs",
+        "tests/test_dossier_backup.py",
+        "tests/publication-compact.test.mjs",
+        "tests/test_publication_compact_browser.py",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-286"
+      ]
+    },
+    {
+      "id": "RCN-287",
+      "section": "Ciliev: следующие улучшения",
+      "title": "Ускорить первое открытие дизайнера на телефоне",
+      "acceptance": "На 393 px через внешний HTTPS измерить открытие canvas и готовность фотографий отдельно; сократить первую готовность редактора до 10 секунд, сохраняя общий генератор и авторизацию. Фактический замер v16: canvas 16,118 с, фото ещё готовятся.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-283"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/VERIFICATION.md#v16"
+      ]
+    },
+    {
+      "id": "RCN-288",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Безопасные пробелы переводчика в Safari",
+      "acceptance": "Выделение крайних пробелов не обращается к результату нулевого Unicode match. Перевод сохраняет пробелы и исходные позиции; строки с emoji и одиночными UTF-16 суррогатами проходят фикстуры без TypeError.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-256"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/ru-zh-translator.mjs",
+        "tests/ru-zh-translator.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-289",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Проверяемое исследование API и GitHub-парсеров ЦИАН",
+      "acceptance": "Официальный API кабинета отделён от внутреннего поиска; сохранены первичные ссылки, наблюдаемая схема запросов и ответов, лицензии и ограничения. Чужие заявления о доступности не выдаются за собственную живую проверку.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/CIAN-MONITOR-RESEARCH.md",
+        "docs/CIAN-MONITOR-RU.md"
+      ]
+    },
+    {
+      "id": "RCN-290",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Лёгкое обнаружение ссылок в выдаче ЦИАН",
+      "acceptance": "HTML, известный поисковый JSON и полученный самой страницей ответ Chrome преобразуются в ограниченный набор кандидатов с ID и канонической ссылкой. Описания, мебель и фотографии квартир не импортируются этим проходом. Неизвестная схема или проверка источника не становятся успешным пустым снимком.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-289"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "tests/test_listing_watch.py"
+      ]
+    },
+    {
+      "id": "RCN-291",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Категория новых ссылок и отдельное ручное сканирование",
+      "acceptance": "Интерфейсы Mac и телефона показывают новые и все найденные ссылки с датой источника либо временем обнаружения. Полный импорт выбранного объекта запускается явной кнопкой; отметка прочтения, поздние ответы и несохранённые настройки проверены фикстурами.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-290"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/listing-watch.mjs",
+        "web/listing-watch.css",
+        "web/app.js",
+        "web/phone.mjs",
+        "tests/listing-watch.test.mjs",
+        "tests/test_listing_watch_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-292",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Почасовое расписание, базовый снимок и честные даты",
+      "acceptance": "Настраиваемый интервал от часа до суток, следующий запуск и backoff сохраняются в отдельной SQLite. Первый подтверждённый снимок не объявляет старые ID новыми; явный пустой API-результат создаёт пустую базу. firstSeen не подставляется вместо publishedAt; после простоя нет лавины пропущенных проверок.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-290"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "tests/test_listing_watch.py",
+        "docs/CIAN-MONITOR-RU.md"
+      ]
+    },
+    {
+      "id": "RCN-293",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Ограниченный собственный процесс чтения выдачи",
+      "acceptance": "Проход имеет предел двух страниц и конечный срок исполнения, завершает только собственную группу процессов и не конкурирует с ручным импортом Chrome. Переходы, адреса и фильтры проверяются; локальные и сторонние назначения блокируются. Проверка источника отображается как внимание без автоматического обхода.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-290",
+        "RCN-252"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "tests/test_listing_watch.py",
+        "docs/CIAN-MONITOR-RU.md"
+      ]
+    },
+    {
+      "id": "RCN-294",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Кампания ровно десяти ручных проверок ЦИАН",
+      "acceptance": "Явно включённая кампания резервирует максимум десять ручных попыток, включая ошибки и отмены. Повторное завершение не удваивает счётчик; прогресс и прерванные попытки переживают перезапуск. Фоновая проверка выдачи квоту не расходует; одиннадцатый обычный импорт продолжает работать без записи кампании.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-253"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/import_diagnostics.py",
+        "cli/workspace_api.py",
+        "cli/local_server.py",
+        "tests/test_import_diagnostics.py",
+        "tests/test_workspace_api.py"
+      ]
+    },
+    {
+      "id": "RCN-295",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Автоматический приватный tg.zip с измерениями этапов",
+      "acceptance": "После десятой завершённой попытки атомарно создаётся tg.zip: этапы, прокрутка, три целевых блока, исходы и версии runtime. События ограничены; cookies, токены, исходные HTML, фото и досье не включаются. Архив проверяется по хешу и скачивается только через прежнюю авторизацию.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-294",
+        "RCN-250"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/import_diagnostics.py",
+        "cli/workspace_api.py",
+        "web/import-diagnostics.mjs",
+        "tests/test_import_diagnostics.py",
+        "tests/test_workspace_api.py",
+        "docs/IMPORT-DIAGNOSTICS-RU.md"
+      ]
+    },
+    {
+      "id": "RCN-296",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Настраиваемые контакты WeChat вместо телефонов в публикации",
+      "acceptance": "Указанный оператором WeChat ID остаётся читаемым текстом, а явная допустимая HTTPS-ссылка создаёт активную кнопку HTML/PDF. URL личного чата не выдумывается из логина. Привязки телефона и почты пусты, распознаваемые телефонные записи удаляются из экспортного текста без переписывания приватной карточки; цифры на фотографиях не объявляются проверенными.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-228",
+        "RCN-281"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "web/publication-render.mjs",
+        "web/presentation-studio.mjs",
+        "cli/publication_schema.py",
+        "tests/publication-wechat.test.mjs",
+        "tests/test_publication_backend.py",
+        "docs/WECHAT-PDF-RU.md"
+      ]
+    },
+    {
+      "id": "RCN-297",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Расстояния, подтверждённый транспорт и кнопки карт до кампусов",
+      "acceptance": "Для конкретного кампуса с двумя известными координатами считается и подписывается прямое расстояние. Время, номера автобусов, пересадки и остановки берутся из заполненных проверенных полей. Yandex, Google и OpenStreetMap открывают допустимый маршрут либо поиск; неизвестный вуз не получает выдуманных координат главного корпуса или времени поездки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-265",
+        "RCN-266",
+        "RCN-277"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/university-routes.mjs",
+        "cli/university_routes.py",
+        "web/publication-model.mjs",
+        "web/publication-render.mjs",
+        "tests/university-routes.test.mjs",
+        "tests/publication-routes.test.mjs",
+        "tests/test_university_routes.py",
+        "docs/UNIVERSITY-ROUTES-RU.md"
+      ]
+    },
+    {
+      "id": "RCN-298",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Отдельный маршрутный черновик телефона и защита CAS",
+      "acceptance": "Маршруты сохраняются отдельным действием с expectedUpdated, не переписывая текст, фото и прочие поля карточки. Ответ другой карточки, выход из сессии, позднее сохранение и новые серверные данные не стирают черновик. Конфликт 409 сохраняет правки и требует явного обновления основы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-297",
+        "RCN-281"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone-routes-controller.mjs",
+        "web/phone.mjs",
+        "cli/workspace_api.py",
+        "tests/phone-routes-controller.test.mjs",
+        "tests/test_phone_routes_controller_browser.py",
+        "tests/test_workspace_api.py"
+      ]
+    },
+    {
+      "id": "RCN-299",
+      "section": "Новые объявления, диагностика и маршруты v17",
+      "title": "Аддитивное обновление публикаций до revision 2",
+      "acceptance": "Старый version 2 получает новые WeChat и маршрутные элементы относительно существующих блоков без переноса прежних узлов, потери цвета или координат. revision 2 уважает намеренное удаление новых элементов; привязки и ограничения схемы совпадают в JavaScript и Python.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-280",
+        "RCN-296",
+        "RCN-297"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/publication-model.mjs",
+        "cli/publication_schema.py",
+        "tests/publication-wechat.test.mjs",
+        "tests/publication-routes.test.mjs",
+        "tests/test_publication_backend.py"
+      ]
+    },
+    {
+      "id": "RCN-300",
+      "section": "Мониторинг и маршруты: следующие улучшения",
+      "title": "Проверенные координаты кампусов и учебных корпусов",
+      "acceptance": "Добавить координаты конкретных адресных объектов с первичным источником, датой и точностью. Университет без выбранного здания не подменяется его главным корпусом; непроверенное геокодирование остаётся отдельным черновиком.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-266",
+        "RCN-297"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/GEO-FACULTY-v26-2026-11-01.md — 4 опубликованные точки конкретных зданий с методом и неизвестной метрической точностью",
+        "tests/university-coordinate-lifecycle.test.mjs",
+        "docs/benchmarks/roadmap-original-30-v29-acceptance.json",
+        "docs/ROADMAP-ORIGINAL-30-v29-ACCEPTANCE.md"
+      ]
+    },
+    {
+      "id": "RCN-301",
+      "section": "Мониторинг и маршруты: следующие улучшения",
+      "title": "Маршруты общественного транспорта через поддерживаемый API",
+      "acceptance": "Сначала подтвердить доступность, лицензию, стоимость и поддержку общественного транспорта выбранным API. Затем получать реальные автобусы, пересадки и времена с датой расчёта, защищённым ключом и обработкой устаревания; до этого значения не выдумываются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-297",
+        "RCN-300"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-302",
+      "section": "Мониторинг и маршруты: следующие улучшения",
+      "title": "Явное расширение охвата выдачи за две страницы",
+      "acceptance": "Реализовать ограниченный инкрементальный обход насыщенного поиска с контрольной границей публикаций, дедупликацией и пределами времени и частоты. Показывать фактическую полноту и пропуски; расширение фильтров и массовая загрузка квартир не выполняются молча.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-290",
+        "RCN-292",
+        "RCN-293"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_watch.py",
+        "tests/test_listing_watch_extended.py",
+        "web/listing-watch.mjs",
+        "docs/RELEASE-84-PROGRESS-2026-11-01.md",
+        "docs/ROADMAP-REMAINING-84-AUDIT.md · RCN-302"
+      ]
+    },
+    {
+      "id": "RCN-303",
+      "section": "Мониторинг и маршруты: следующие улучшения",
+      "title": "Необязательная доставка уведомлений в выбранный канал",
+      "acceptance": "Оператор явно выбирает собственный канал или устройство и включает доставку. Проверить адресата, безопасное хранение ключей, дедупликацию, повторную отправку и отключение; без настройки внешние сообщения и push не отправляются.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-291",
+        "RCN-292"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-304",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Совместимые сроки запросов для прежнего WebKit",
+      "acceptance": "Основные API-запросы телефона и чтение тела ответа получают собственный конечный срок и отмену без обязательных AbortSignal.timeout/any. Проверены отсутствие статических методов, поздний ответ, отмена внешним сигналом и освобождение таймера; физический iPhone проверяется отдельно.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/request-deadline.mjs",
+        "web/phone.mjs",
+        "tests/request-deadline.test.mjs",
+        "tests/test_phone_timeout_browser.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-305",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Публичный список только имеющейся мебели и техники",
+      "acceptance": "Китайский текст перечисляет подтверждённые положительные предметы; отсутствие холодильника, дивана или кровати не превращается в рекламную строку. Исходные отрицания и конфликты остаются в аудите и сами по себе не превращаются в наличие. Неизвестное оснащение не угадывается по духовке или виду кухни.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/engine.mjs",
+        "web/fact-evidence.mjs",
+        "tests/photo-facts-generation.test.mjs",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-306",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Общая политика фотодоказательств и ручного подтверждения",
+      "acceptance": "Сайт и CLI используют одну политику допуска визуальных наблюдений: конкретный предмет, видимость, порог уверенности, происхождение и хеш исходника. Некорректные, предполагаемые, будущие или отрицательные наблюдения не применяются автоматически. Ручное подтверждение и отказ сохраняют приоритет при повторном анализе.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-305"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/photo-observation-policy.mjs",
+        "web/fact-evidence.mjs",
+        "cli/generate.mjs",
+        "cli/photo_generation.py",
+        "tests/photo-facts-generation.test.mjs",
+        "tests/test_photo_ai_adapter.py",
+        "tests/test_photo_inventory_browser.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-307",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Пятьдесят семь категорий оснащения и русские признаки",
+      "acceptance": "Общий перечень содержит 57 согласованных категорий мебели и приборов с китайскими подписями и русскими/межъязычными признаками. Проверяются рабочее место, шкафы, кухонная и экранная техника, музыкальные инструменты; похожие слова и повторные ракурсы не добавляют скрытые предметы.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-306"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/fact-evidence.mjs",
+        "web/photo-observation-policy.mjs",
+        "cli/local_photo_ai.py",
+        "tests/photo-facts-generation.test.mjs",
+        "tests/test_local_photo_ai.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-308",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Структурированный анализ фотографий локальной моделью",
+      "acceptance": "Адаптер Ollama принимает ограниченную копию изображения и валидирует структурированный список видимых объектов. Разрешён только loopback; облачные модели, перенаправления, неподходящие модели, неверная схема и превышение размера отклоняются. Низкая уверенность и требующие проверки категории остаются кандидатами. Установка и точность модели не следуют из прохождения HTTP-фикстур.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-307"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/local_photo_ai.py",
+        "cli/vision_photo.py",
+        "tests/test_local_photo_ai.py",
+        "tests/test_photo_ai_adapter.py",
+        "docs/PHOTO-VISION-RESEARCH.md",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-309",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Постоянные приватные настройки локального фотоанализа",
+      "acceptance": "Включение, локальная модель, loopback endpoint, автоприменение и общий срок анализа хранятся атомарно в пользовательском кеше. Проверяются права файла, символические ссылки, неверные поля и защищённый HTTP-доступ. По умолчанию функция выключена; сетевые ключи и карточки не включаются в публичную сборку.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-308"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_ai_settings.py",
+        "cli/workspace_api.py",
+        "tests/test_photo_ai_settings.py",
+        "tests/test_workspace_api.py",
+        "tests/test_photo_generation.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-310",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Ограниченный проход фотоальбома с честным охватом",
+      "acceptance": "Проход анализирует максимум 30 доступных кешированных оригиналов в одном общем сроке, повторный SHA не распознаёт заново и показывает исход каждого фото. Недоступный оригинал, ошибка, превышение срока и усечённый альбом дают неполный охват; идентичный SHA-дубликат учитывается как повтор уже проверенного кадра; отсутствие находки не означает отсутствие предмета. Подсчёт объектов между ракурсами не суммируется.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-308",
+        "RCN-309"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/listing_photo_inventory.py",
+        "cli/photo_store.py",
+        "cli/job_progress.py",
+        "tests/test_listing_photo_inventory.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-311",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Обновление китайского текста после анализа фотографий",
+      "acceptance": "После допустимых находок общий генератор обновляет китайский текст и сохраняет происхождение предметов. Изменения оператора, внесённые во время анализа, защищены проверкой актуальности: поздний результат не переписывает новый текст и остаётся доступным для следующей генерации. Ошибка генерации не уничтожает сохранённые находки.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-306",
+        "RCN-310"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/photo_generation.py",
+        "cli/local_server.py",
+        "cli/phone_relay.py",
+        "tests/test_listing_photo_inventory.py",
+        "tests/test_photo_ai_adapter.py",
+        "tests/test_photo_generation.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-312",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Явный повторный анализ сохранённой квартиры",
+      "acceptance": "Оператор запускает повторную проверку фотографий существующей карточки отдельным действием. Анализ использует сохранённые оригиналы, сообщает этапы и не загружает объявление молча повторно; отмена, занятый процесс и поздний результат не повреждают карточку, подтверждения и личное досье.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-311"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/local_server.py",
+        "cli/phone_relay.py",
+        "web/photo-ui.mjs",
+        "web/phone.mjs",
+        "tests/test_listing_photo_inventory.py",
+        "tests/test_photo_generation.py",
+        "tests/test_photo_inventory_browser.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-313",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Просмотр находок и полноты фотоанализа на телефоне",
+      "acceptance": "Мобильная карточка показывает состояние анализа, проверенные и пропущенные фото, найденные категории и необходимость внимания. Неизвестные предметы не получают подпись об отсутствии. Отображение и ручной повтор используют текущую авторизованную карточку и не раскрывают приватные настройки другим сессиям.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-310",
+        "RCN-312"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/phone.mjs",
+        "cli/phone_relay.py",
+        "tests/test_phone_timeout_browser.py",
+        "tests/test_listing_photo_inventory.py",
+        "tests/test_photo_inventory_browser.py",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-314",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Двадцать различимых китайских композиций объявления",
+      "acceptance": "Заголовки и описания воспроизводимо чередуют 20 семейств: цена, транспорт, оснащение, абзац, список и другие подачи с совместимыми compact/detailed/story. Все переданные факты, условия и сервис сохраняются; факты чужого города и разрешения из примеров не переносятся. Старые 262144 ID каждого типа и NDJSON остаются совместимыми; новые runtime-оформления имеют отдельные метаданные.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/template-catalog.mjs",
+        "web/engine.mjs",
+        "tests/listing-styles.test.mjs",
+        "tests/template-catalog.test.mjs",
+        "docs/LISTING-STYLES-RU.md",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-315",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Полные и частичные китайские названия метро без подмены станции",
+      "acceptance": "Полное пользовательское правило и готовое китайское название проверяются раньше частей. Частичный перевод сохраняет неизвестные слова и русский оригинал со статусом проверки. Сокращение, опечатка и похожий слог не исправляются автоматически в другую станцию; данные линий и время поездки не выдумываются.",
+      "priority": "P1",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "web/metro-names.mjs",
+        "web/engine.mjs",
+        "tests/metro-names.test.mjs",
+        "docs/METRO-CHINESE-RU.md",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-316",
+      "section": "Фотоинвентаризация и китайские публикации v18",
+      "title": "Совместимая сборка новых модулей и обновление кеша",
+      "acceptance": "Новые модули входят в автономный Pages/Worker и маршруты ленивой загрузки без повторных глобальных объявлений. Service worker обновляет версию публичной оболочки без кеширования приватных карточек и фото. Синтаксис фактически собранного HTML, маршруты и исходные модули проходят завершающую проверку.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-304",
+        "RCN-306",
+        "RCN-314",
+        "RCN-315"
+      ],
+      "status": "done",
+      "evidence": [
+        "scripts/build.mjs",
+        "scripts/dev.mjs",
+        "scripts/validate-pages.mjs",
+        "web/sw.js",
+        "docs/phone-sw.js",
+        "worker/index.js",
+        "worker/server.js",
+        "docs/VERIFICATION.md"
+      ]
+    },
+    {
+      "id": "RCN-317",
+      "section": "Качество локального распознавания: следующие проверки",
+      "title": "Нативный замер локальной модели на Mac M2",
+      "acceptance": "На рабочем M2 проверить подписанный локальный runtime и выбранную модель на разрешённых реальных фотографиях: холодный/тёплый запуск, время p50/p95, память, тайм-ауты и работа одновременно с браузером. Сохранить версии и receipt; результат HTTP-фикстур не считать установкой или измерением качества.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-308",
+        "RCN-310"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/PHOTO-NATIVE-M2-2026-11-01.md",
+        "cli/photo_native_runtime.py",
+        "docs/benchmarks/photo-native-m2-20261101-v25.json"
+      ]
+    },
+    {
+      "id": "RCN-318",
+      "section": "Качество локального распознавания: следующие проверки",
+      "title": "Размеченный эталон мебели и техники для оценки качества",
+      "acceptance": "Собрать разрешённый набор кухонь, спален и рабочих зон с независимой ручной разметкой видимых объектов, неоднозначностей и повторных ракурсов. Рассчитать пропуски и ложные добавления по категориям; публиковать показатели только вместе с составом набора и методом проверки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-307",
+        "RCN-310"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-319",
+      "section": "Качество локального распознавания: следующие проверки",
+      "title": "Подтверждённые экземпляры предметов между ракурсами",
+      "acceptance": "Отделить один и тот же объект на повторных фотографиях от нескольких различных объектов. Сохранить связь экземпляров с кадрами и ручное подтверждение количества; до проверки такой дедупликации не объявлять сумму наблюдений точным количеством мебели в квартире.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-306",
+        "RCN-318"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/QUALITY-v26.md — вручную подтверждённые видимые экземпляры; точный инвентарь всей квартиры не заявляется",
+        "tests/test_photo_instance_editor_browser.py"
+      ]
+    },
+    {
+      "id": "RCN-320",
+      "section": "Отдельные адаптеры ЦИАН и Авито · v20",
+      "title": "Изолированные модули площадок",
+      "acceptance": "Диспетчер выбирает одну площадку по URL/маркерам. DOM и сопоставления полей ЦИАН и Авито находятся в отдельных модулях JavaScript и отдельных конфигурациях Chrome, общими остаются только безопасные механизмы и модель карточки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-304"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/source-import.mjs",
+        "web/source-adapters/cian.mjs",
+        "web/source-adapters/avito.mjs",
+        "cli/source_adapters/",
+        "tests/test_source_adapters.py"
+      ]
+    },
+    {
+      "id": "RCN-321",
+      "section": "Отдельные адаптеры ЦИАН и Авито · v20",
+      "title": "Семь разделов объявления Авито",
+      "acceptance": "По устойчивым data-marker и заголовкам читаются цена, фото, особенности, описание, расположение, квартира, дом, условия и правила. Повторный item-params не заменяет остальные блоки; запреты, нулевые суммы, диапазоны метро и неизвестная мебель не превращаются в обещания.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/source-adapters/avito.mjs",
+        "tests/avito-source.test.mjs",
+        "tests/fixtures/avito-52.html"
+      ]
+    },
+    {
+      "id": "RCN-322",
+      "section": "Отдельные адаптеры ЦИАН и Авито · v20",
+      "title": "Chrome с контрактом выбранной площадки",
+      "acceptance": "Адаптивная прокрутка использует только селекторы выбранного источника; незаполненный заголовок не скрывает отложенные правила, посторонние галереи и OG-коллаж Авито не попадают в альбом.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/browser_dom.py",
+        "cli/browser_import.py",
+        "tests/test_avito_browser.py",
+        "tests/test_section_scroll.py"
+      ]
+    },
+    {
+      "id": "RCN-323",
+      "section": "Отдельные адаптеры ЦИАН и Авито · v20",
+      "title": "Обновление прежнего неполного кеша Авито",
+      "acceptance": "Версия адаптера делает старый неполный кеш непригодным для следующего запроса Авито, после одного перечитывания действует обычный кеш. Кеш ЦИАН сохраняет прежнее поведение.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/redcn.py",
+        "cli/source_adapters/avito.py",
+        "tests/test_source_adapters.py"
+      ]
+    },
+    {
+      "id": "RCN-324",
+      "section": "Отдельные адаптеры ЦИАН и Авито · v20",
+      "title": "Расширенный корпус вариантов Авито",
+      "acceptance": "Проверить разные типы аренды, новые/прежние разметки Авито и квартиры без части разделов; добавлять обезличенные фикстуры, не копируя профили или исходные фотографии.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/RELEASE-20-INPUTS-2026-11-01.md",
+        "tests/avito-corpus.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-325",
+      "section": "Отдельные адаптеры ЦИАН и Авито · v20",
+      "title": "Приёмка живого импорта Авито после проверки источника",
+      "acceptance": "Подтвердить полный импорт живой ссылки в обычном Chrome после ручной проверки при её запросе, отдельно измерить запуск, ожидание источника и прокрутку; не объявлять офлайн-фикстуру доказательством живой доступности.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320"
+      ],
+      "status": "planned",
+      "evidence": []
+    },
+    {
+      "id": "RCN-326",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Единая клиентская проекция без упоминаний комиссии",
+      "acceptance": "Одна согласованная Python/JavaScript-политика проверяет генерацию, ручные шаблоны, старые сохранённые карточки, названия/описания/теги, подписи и метаданные, копирование сайта и телефона, HTML/PDF, intro/outro PNG, ZIP/post.txt и manifest. Ни наличие, ни отсутствие комиссии не публикуется; источник и ручная редакция сохраняются. Изолированная комиссионная фраза удаляется без потери аренды, залога, аванса и коммунальных платежей; неразделимое смешанное условие блокирует вывод с конкретным фрагментом. Приёмка всех путей включает собранный сайт и нативные проверки; произвольный растр с текстом не считать проверенным без отдельного доказательства.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-065",
+        "RCN-180",
+        "RCN-228",
+        "RCN-282"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/client-publication.mjs; cli/client_publication.py",
+        "web/engine.mjs; web/app.js; web/phone.mjs; web/photo-ui.mjs",
+        "web/publication-model.mjs; web/publication-render.mjs; web/presentation-studio.mjs; web/history.mjs; web/history-ui.mjs",
+        "cli/card_assets.py; cli/card_api.py; cli/phone_relay.py",
+        "tests/fixtures/client-publication-policy.json; tests/client-publication.test.mjs; tests/client-publication-frontend.test.mjs",
+        "tests/test_client_publication.py; tests/test_client_publication_backend.py",
+        "docs/VERIFICATION.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md — код и целевые проверки есть, итоговая общая нативная приёмка ещё ожидается",
+        "docs/VERIFICATION.md — 01.11.2026: archive, projection of 13 preserved cards, native phone/copy/ZIP/PDF, partial-source UI and save/reload checks; no new live imports"
+      ]
+    },
+    {
+      "id": "RCN-327",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Честная полнота секций и измеренные этапы импорта",
+      "acceptance": "Схема capture/sourceReadiness различает ready, partial, unknown, реально не найденный раздел и не посещённый из-за бюджета; reads=0 не доказывает отсутствие данных. Операция может завершиться с отдельными sourcePartial и photoPartial, без ложной галочки полноты и без предложения повторить фото для пробела исходника. Сайт, телефон, сохранённая карточка, прогресс и очищенная диагностика сохраняют согласованный статус и только измеренные времена/число вызовов; произвольный исходный текст в обратную связь не переносится. Синтетические DOM/HTTP-сценарии и нативная сборка должны подтвердить видимое поведение.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-010",
+        "RCN-322"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/browser_dom.py; cli/browser_import.py; cli/job_progress.py; cli/import_diagnostics.py",
+        "cli/source_readiness.py; cli/local_server.py; cli/phone_relay.py",
+        "web/source-readiness.mjs; web/app.js; web/phone.mjs; scripts/build.mjs",
+        "tests/test_section_scroll.py; tests/test_job_progress.py; tests/test_import_diagnostics.py; tests/test_source_readiness.py",
+        "tests/source-readiness.test.mjs; tests/test_source_readiness_browser.py",
+        "docs/IMPORT-RUN-AUDIT-2026-11-01.md; docs/VERIFICATION.md — исторические замеры отделены от новой нативной приёмки",
+        "docs/VERIFICATION.md — 01.11.2026: archive, projection of 13 preserved cards, native phone/copy/ZIP/PDF, partial-source UI and save/reload checks; no new live imports"
+      ]
+    },
+    {
+      "id": "RCN-328",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Контракт архивной карточки ЦИАН: фото и противоречивые факты",
+      "acceptance": "На обезличенном контракте предоставленного Safari-архива без исполнения стороннего JavaScript извлекаются 10 фото квартиры отдельно от одной планировки; реальные WebP-байты не считаются JPEG по URL .jpg. Сохраняются ID, наблюдаемые варианты, порядок, provenance и layout; рекомендации исключаются. Противоречия ванна/душ, залог 50% против 35000 при цене 65000 и кирпич/панель сохраняют свидетельства и не выдаются как согласованные факты. Две сущности Лианозово сохраняют разные ID/линии/режим/время; byCar не становится пешим. Создание, публикация, обновление, первое обнаружение и импорт не смешиваются. Проверка архива и общая нативная приёмка фиксируются отдельно от живой доступности сайта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-320",
+        "RCN-043",
+        "RCN-044",
+        "RCN-326"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/source-adapters/cian.mjs; web/engine.mjs; web/fact-evidence.mjs; cli/analyze-source.mjs; cli/generate.mjs",
+        "cli/source_adapters/cian.py; cli/redcn.py; cli/photo_store.py; cli/phone_relay.py",
+        "tests/fixtures/cian-conflicts-52.html; tests/cian-conflicts.test.mjs",
+        "tests/test_cli.py; tests/test_photo_provenance.py",
+        "docs/VERIFICATION.md; docs/SOURCE-RESEARCH-2026-11-01.md; docs/APPLIED-CODE-AUDIT-2026-11-01.md — контрактные проверки не равны полной приёмке живого импорта",
+        "docs/VERIFICATION.md — 01.11.2026: archive, projection of 13 preserved cards, native phone/copy/ZIP/PDF, partial-source UI and save/reload checks; no new live imports"
+      ]
+    },
+    {
+      "id": "RCN-329",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Калибровка watermark на реальных положительных и отрицательных кадрах",
+      "acceptance": "Разметить разрешённые реальные кадры со знаком и без него, включая низкий контраст, разные размеры, края и важные предметы. На фиксированных версиях детектора измерить false positive/false negative и пропуски отдельно от синтетических OCR-тестов. Проверить минимальную допустимую подрезку, потери площади/композиции, повторное обнаружение и сохранность оригиналов; неуверенный результат остаётся на ручной проверке. Публиковать точность только вместе с набором, разметкой и методом; отсутствие OCR-срабатывания не означает подтверждённую чистоту.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-206",
+        "RCN-254",
+        "RCN-328"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/SOURCE-RESEARCH-2026-11-01.md — реальная проверка трёх архивных кадров дала пропуски видимых логотипов, FP/FN на размеченном корпусе ещё не измерены",
+        "tests/test_photo_provenance.py — только правила консервативной обработки, не статистическая точность детектора"
+      ]
+    },
+    {
+      "id": "RCN-330",
+      "section": "Качество клиентской публикации, источника и фотографий · ноябрь 2026",
+      "title": "Выбор наблюдаемого варианта и единое принятое изображение",
+      "acceptance": "Для одного photoId сравниваются только реально наблюдаемые full/thumbnail/srcset-варианты с происхождением, доступностью, фактическим MIME, декодированием, размерами, качеством и отдельным состоянием watermark. Маленькое превью не повышается до оригинала и не выбирается автоматически без проверки качества. Сохранённая ручная правка имеет приоритет; единый принятый вариант/кадрирование применяется к галерее, телефону, intro/outro, HTML/PDF и ZIP. Исходники и отклонённые варианты сохраняются; выбор и причины воспроизводятся, в том числе после кеша и повторного импорта.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-044",
+        "RCN-254",
+        "RCN-328",
+        "RCN-329"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/SOURCE-RESEARCH-2026-11-01.md — наблюдаемые варианты и ограничения качества превью",
+        "cli/photo_store.py; tests/test_photo_provenance.py — происхождение и сохранность уже покрыты частично; единый выбор для всех форматов требует отдельной приёмки",
+        "cli/photo_variants.py",
+        "tests/test_dossier_variants_backup.py",
+        "tests/test_photo_variant_browser.py",
+        "docs/benchmarks/photo-pipeline-staging-20261101.json"
+      ]
+    },
+    {
+      "id": "RCN-331",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Приёмка двуязычного текстового адаптера",
+      "acceptance": "Измерить качество RU→ZH и ZH→RU на независимых размеченных объявлениях: мебель, отрицания, цена, единицы, метро и условия. Проверить оригинальность нескольких подач одной квартиры и отсутствие новых утверждений. Сравнить базу и адаптер; снижение loss или три короткие пробы не означают редакционную приёмку. До приёмки доступны только проверяемые черновики.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/local_text_model.py",
+        "scripts/train-local-text-model.py",
+        "scripts/evaluate-local-text-model.py",
+        "docs/LOCAL-LEARNING-v24.md",
+        "docs/QUALITY-v26.md — независимый от обучения корпус и исходные ответы; редакционной приёмки адаптера нет"
+      ]
+    },
+    {
+      "id": "RCN-332",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Локальная память правок с проверкой и контрольными точками",
+      "acceptance": "Правки текста, словаря, переводы, ручная мебель и наблюдения тегов сохраняются в частной памяти Mac. Неутверждённое не обучает веса; исправления заменяют принятый вариант только после проверки. Группы одной квартиры не пересекают train/validation. Фоновое обучение ограничено, уступает импорту и запросам, сохраняет checkpoint и завершается вместе с сервером. Приёмка включает контрактные тесты и экран 393×852.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/learning_memory.py; cli/learning_scheduler.py; cli/learning_service.py",
+        "web/learning-studio.mjs",
+        "tests/test_learning_memory.py; tests/test_learning_scheduler.py; tests/test_learning_service.py",
+        "tests/test_learning_studio_browser.py — три проверки в Chrome на Mac, 393×852",
+        "docs/LOCAL-LEARNING-v24.md"
+      ]
+    },
+    {
+      "id": "RCN-333",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Одна ошибка фото не сокращает весь альбом",
+      "acceptance": "На регрессионном альбоме из 19 фото список fields из одной обложки не перекрывает listing.images. Ошибка скачивания или обрезки отдельного кадра сохраняет остальные оригиналы; ZIP включает необрезанные оригиналы с причинами. Повтор использует сохранённые файлы, ошибки и численность видны на телефоне. Контрактная проверка не устанавливает причину конкретного живого прогона.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/phone_relay.py; cli/redcn.py; web/source-adapters/cian.mjs",
+        "web/media-core.mjs; web/photo-ui.mjs; web/photo-batch-status.mjs",
+        "tests/test_photo_batch_reliability.py; tests/photo-export-fallback.test.mjs; tests/photo-batch-status.test.mjs"
+      ]
+    },
+    {
+      "id": "RCN-334",
+      "section": "Локальное обучение и надёжность альбома · ноябрь 2026",
+      "title": "Проверка рекомендаций тегов по накопленной статистике",
+      "acceptance": "Накопить датированные наблюдения по реальным публикациям, отличать просмотры поста от популярности и эффекта отдельного тега. Сравнить рекомендации с контролем по сопоставимым объектам; малое число примеров и приблизительные значения остаются явно обозначенными. Подходящий тег выбирается по фактам квартиры раньше статистического ранжирования.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/learning_memory.py — ручные наблюдения и ранжирование без утверждения причинности",
+        "tests/test_learning_memory.py",
+        "cli/tag_post_evaluation.py",
+        "web/tag-post-stats.mjs",
+        "docs/QUALITY-v26.md — реальные датированные наблюдения и сравнимый контроль по-прежнему требуются",
+        "docs/RELEASE-v29.md — одобренных датированных наблюдений просмотров нет; статистический контроль не заявляется выполненным"
+      ]
+    },
+    {
+      "id": "RCN-335",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Единое происхождение и разбиение учебных корпусов",
+      "acceptance": "Для каждого примера сохраняются источник, разрешение использования, способ составления, хеш и группа квартиры. Проверка точных и близких дублей охватывает все корпуса, историю запросов и направления перевода; одна квартира целиком относится к одной части. Самостоятельно составленные примеры, правки оператора и ответы модели различаются; неподтверждённые ответы и контрольные задания не входят в обучение.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "docs/TRAINING-v28.md — частично: воспроизводимый синтетический корпус 120/24 групп, точное пересечение с замороженной контрольной выборкой отсутствует; глобальные близкие дубли и человеческая приёмка остаются",
+        "cli/text_corpus_audit.py; docs/TEXT-QUALITY-v29.md — 2952 строки, 308 групп; точные/близкие пересечения проверены, старые пробелы разрешений и хешей остаются"
+      ]
+    },
+    {
+      "id": "RCN-336",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Разбор ошибок прямых ответов модели",
+      "acceptance": "Для каждого контрольного ответа отдельно отмечаются формат, завершение, пропуски и добавления фактов: суммы и их роли, единицы и периоды, планировка, станции, предметы, условия и услуги. Сохранены исходный ответ, версия проверок и причина отказа; ограничение токенов не смешивается с ошибкой памяти, резервный генератор не засчитывается модели. По каждому классу ошибки есть независимые примеры для диагностики.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-335"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "docs/TRAINING-v28.md — частично: новый парный прогон 60 ответов с исходными ответами и причинами отказа в приватном отчёте; независимая диагностическая выборка ещё нужна",
+        "cli/text_evaluation_audit.py; cli/text_evaluation_process.py; docs/TEXT-QUALITY-v29.md — классификация отказов, отдельные процессы и долговечная запись ответов; аварийная первая попытка учтена"
+      ]
+    },
+    {
+      "id": "RCN-337",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Проверка обучающей цели и границ токенов",
+      "acceptance": "На установленном токенизаторе сверены рабочие system/user сообщения, assistant-префикс, EOS, границы маски loss и реальная длина всех примеров. Рабочая генерация и парная проверка явно согласуют температуру, top_p, seed и правила завершения. Тест подтверждает, какие токены обучаются; длинные примеры не теряются молча. После сохранения и повторной загрузки адаптера проверены loss и прямой ответ на учебных и отдельных проверочных примерах.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-335"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "docs/TRAINING-v28.md — частично: общий top_p=0.9, проверка длины на ARM64 всех 720 записей, 0 пропусков; полный критерий остаётся открытым",
+        "scripts/audit-text-objective-v29.py; scripts/check-text-reload-v29.py; docs/RELEASE-v29.md — все 720 строк, 0 пропусков; точное совпадение loss на 32 строках у обоих кандидатов; зависимость RCN-335 открыта",
+        "docs/benchmarks/text-v29-native-objective-reload-summary.json — нативные 720 строк, маска/EOS и два восстановления с разницей loss 0; происхождение RCN-335 остаётся открытым"
+      ]
+    },
+    {
+      "id": "RCN-338",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Учебный корпус сложных фактов аренды",
+      "acceptance": "Составить отдельные проверенные группы с десятичной ценой, арендой и залогом, коммунальными платежами, двумя станциями, разной комплектацией, отрицаниями, неизвестными и спорными условиями. Сохраняются различия регистрации у владельца и помощи студии. Все 12 рекламных подач представлены с историей и без неё; каждый эталон проходит проверку фактов до обучения. Контрольные объявления не переписываются в учебные.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-335",
+        "RCN-336",
+        "RCN-337"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "data/learning/factual-curriculum-v28.json; tests/test_factual_curriculum_v28.py — частично: 600/120 упражнений, 12 стилей, согласованные деньги и условия, история до 240 символов; расширенная человеческая приёмка не завершена",
+        "docs/TEXT-QUALITY-v29.md — v29 повторно использует ситуации v28; покрытие всех 12 подач без истории ещё не выполнено"
+      ]
+    },
+    {
+      "id": "RCN-339",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Следующий воспроизводимый цикл обучения текста",
+      "acceptance": "В отдельном каталоге выполнить заранее описанный эксперимент с зафиксированными базой, начальным адаптером, корпусом, seed и лимитами. Сохранить промежуточные точки, число увиденных примеров, время, пиковую память, изменённые веса и причины остановки. На независимой выборке сравнить прямые ответы с действующей моделью и опубликовать причины принятия или отказа; факт обучения не закрывает общую приёмку RCN-331.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-337",
+        "RCN-338",
+        "RCN-344",
+        "RCN-346"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "docs/TRAINING-v28.md — выполнен ограниченный эксперимент 800 шагов; кандидат отклонён, 0/30 полных проверок; расширенная независимая и ресурсная приёмка зависимостей остаётся",
+        "scripts/run-text-experiment-v29.py; data/quality/text-experiment-v29.json; docs/RELEASE-v29.md — два заранее зафиксированных режима по 240 шагов, реальное покрытие/время/память; зависимости приёмки остаются",
+        "docs/benchmarks/text-quality-v29-mixtures-public.json; docs/benchmarks/text-quality-v29-postfix-control-public.json — два обучения по 240 шагов, оба кандидата отклонены; 600 исходных ответов и отдельный свежий контроль 300"
+      ]
+    },
+    {
+      "id": "RCN-340",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Проверка сохранения перевода при обучении рекламе",
+      "acceptance": "До запуска зафиксировать состав смеси рекламных и двуязычных упражнений; сравнить хотя бы два обоснованных режима на одной независимой выборке RU→ZH и ZH→RU. Отдельно измерить изменение ошибок чисел, отрицаний, станций и полноты. Лучший рекламный формат не компенсирует ухудшение перевода; вывод содержит границы применимости, а не только средний loss.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-338",
+        "RCN-339"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "scripts/summarize-text-evaluation-v29.py; docs/TEXT-QUALITY-v29.md — две смеси от одинаковых весов; отдельные направления, завершённость и факты, усечённые ответы не получают зачёт",
+        "docs/benchmarks/text-quality-v29-mixtures-public.json — завершение переводов смеси B 30/30 в каждом направлении, полные факты 0/60; зависимости и независимая разметка остаются"
+      ]
+    },
+    {
+      "id": "RCN-341",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Завершённый ответ модели в пределах контракта",
+      "acceptance": "Исследовать ограниченную выдачу JSON и завершение EOS без изменения фактов запроса. Сравнить полную генерацию с формированием рекламной структуры моделью и подстановкой неизменяемых фактов проверенным генератором; вклад модели и генератора учитывается отдельно. На полном контрольном наборе измерить валидные схемы, усечения и длительность относительно текущего способа. Сломанный ответ не исправляется выдумыванием полей, не обрезается до видимости успеха и не заменяет ручной текст; отказы остаются видимыми пользователю.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-337",
+        "RCN-338"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/advertising_structure.py; scripts/evaluate-advertising-structure.py; tests/test_learning_studio_browser.py — ограниченная схема и неизменяемые факты, видимый вклад генератора, защита ручного текста",
+        "docs/benchmarks/text-structure-v29-native-public.json — структура 90/90 с EOS и допустимым JSON; факты переносит генератор; зависимости RCN-337/338 остаются"
+      ]
+    },
+    {
+      "id": "RCN-342",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Проверяемая точность валидатора фактов",
+      "acceptance": "Составить независимый набор правильных и неправильных перефразировок с ручными ожидаемыми решениями. Измерить ложные принятия и ложные отказы по типам фактов, включая 8.5W, роль суммы, период аренды, запрещённую комиссию, условные услуги и отсутствие данных. Исправление валидатора требует воспроизведения ошибки и повторного парного сравнения моделей; прежний отчёт не переиспользуется после изменения правил.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-336"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "data/quality/text-validator-v29.json; docs/TEXT-QUALITY-v29.md — 36 составленных с помощью ИИ контрольных случаев; ручные независимые ожидаемые решения ещё требуются"
+      ]
+    },
+    {
+      "id": "RCN-343",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Разнообразие серии объявлений без новых обещаний",
+      "acceptance": "Для каждой из не менее 10 независимых карточек запросить серию из 20 подач с сохранённой историей. Показать долю принятых уникальных текстов, число повторов, структуру и полноту фактов. Смена смайлов, регистра, пробелов или пунктуации не считается разнообразием; повторяемость и исчерпание вариантов видны. Отдельная китайская редактура по RCN-262 оценивает естественность и рекламную подачу.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-314",
+        "RCN-338",
+        "RCN-342"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/advertising_structure.py; scripts/evaluate-advertising-structure.py; docs/TEXT-QUALITY-v29.md — история, содержательный fingerprint и протокол 10 × 20; редактура RCN-262 остаётся",
+        "docs/benchmarks/text-structure-v29-native-public.json — 10 серий по 20 вариантов, повторов 0; 48 конечных планов, китайская редактура и зависимости остаются"
+      ]
+    },
+    {
+      "id": "RCN-344",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Расширенный независимый набор приёмки",
+      "acceptance": "Подготовить не менее 30 новых независимых групп квартир, отсутствующих во всех учебных корпусах. До обучения зафиксировать состав, хеши, задания двух направлений перевода и нескольких рекламных подач, критерии и допустимые лимиты. Сохранить исходные ответы текущих и новых весов; учесть все запуски и усечения. После раскрытия ошибок набор помечается диагностическим, следующая окончательная приёмка использует новые отложенные группы.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-335",
+        "RCN-336",
+        "RCN-342"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "data/quality/rental-heldout-v29.json; docs/TEXT-QUALITY-v29.md — 30 новых замороженных групп, 150 проб на модель; после раскрытия набор диагностический, зависимости остаются",
+        "docs/benchmarks/text-quality-v29-postfix-control-public.json — свежие 150+150 ответов на ранее замороженных 30 группах; после раскрытия набор диагностический, нужен новый слепой"
+      ]
+    },
+    {
+      "id": "RCN-345",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Отзыв согласия на использование обучающего примера",
+      "acceptance": "Оператор видит, из какой правки возник пример, кто и когда его подтвердил и в какие версии корпуса он включён. Отзыв исключает пример и его производные из будущих обучений, помечает затронутые кандидаты и предлагает переобучение; удаление строки не выдаётся за удаление её влияния из уже обученных весов. Повторное подтверждение и экспорт не восстанавливают отозванный пример молча.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-332",
+        "RCN-335"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/learning_provenance.py; tests/test_learning_consent.py; docs/LEARNING-OPERATIONS-v29.md#consent — отзыв, производные, состав корпусов и затронутые веса; зависимость происхождения остаётся"
+      ]
+    },
+    {
+      "id": "RCN-346",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Ресурсная приёмка обучения на Mac с 8 ГБ",
+      "acceptance": "На рабочем Mac измерить конкуренцию обучения, генерации, фотоанализа и браузера: память MLX и процесса, доступную память и swap, задержку пользовательского запроса, отмену и восстановление. Ограничения и условия остановки заданы до прогона; пользовательская работа получает приоритет. Проверить остановку при нехватке памяти и завершении сервера без изменения системного Python и чужих процессов.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "docs/TRAINING-v28.md — частично: 800 шагов на Mac с 8 ГБ, пик MLX — 1 533 586 504 байта; длительный и интерактивный ресурсный сценарий ещё не принят",
+        "scripts/native-training-acceptance.py; cli/training_resources.py; docs/LEARNING-OPERATIONS-v29.md#resources — реальные MLX/ONNX/Chrome на Mac 8 GiB, 13 проверок; low-memory ветвь без выделения аварийной нагрузки",
+        "docs/benchmarks/native-engineering-v29.json; docs/VERIFICATION.md — Mac 8 GiB, 13/13 ресурсных проверок; приоритет запроса, остановка/возобновление, собственные процессы и проверенный checkpoint; low-memory через управляемый порог, без OOM"
+      ]
+    },
+    {
+      "id": "RCN-347",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "История кандидатов и понятное решение о весах",
+      "acceptance": "В интерфейсе различаются выбранная модель, обучающийся кандидат, завершённый эксперимент и решение приёмки. Для каждой версии доступны источник, хеши, числа примеров, пробы, ошибки, время, память и причина отказа. Пользователь видит, что включённое автопринятие требует независимого допуска; данные старой квитанции не показываются как показатели текущего запуска.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-344",
+        "RCN-346"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "cli/model_history.py; web/model-history.mjs; docs/LEARNING-OPERATIONS-v29.md#history — выбранные веса, живой процесс и решение различаются; независимая приёмка остаётся"
+      ]
+    },
+    {
+      "id": "RCN-348",
+      "section": "Обучение текста и приёмка ИИ · v28",
+      "title": "Нативная приёмка переключения и отката адаптера",
+      "acceptance": "На изолированной копии Mac пройти полный путь от допустимого кандидата через атомарное переключение и перезапуск до отката. Проверить преждевременную остановку процесса, повреждённые или подменённые веса и устаревший отчёт: действующий адаптер сохраняется, журнал и настройки согласованы. До появления допустимого кандидата положительный сценарий на фикстуре не называется приёмкой качества обученных весов.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-347"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#text-training — план и критерии; приёмка ещё не завершена",
+        "scripts/verify-model-switch-v29.py; docs/LEARNING-OPERATIONS-v29.md#switch — пять нативных сценариев на синтетических весах; не приёмка качества реального кандидата"
+      ]
+    },
+    {
+      "id": "RCN-349",
+      "section": "Следующее обучение фотоанализа · v28",
+      "title": "Аудит готовности данных перед фотообучением",
+      "acceptance": "Команда без изменения данных проверяет манифест, хеши изображений, допустимость разметки, категории, группы квартир, пересечения частей и наличие проверенных отрицательных примеров. Отсутствующая метка отличается от подтверждённого отсутствия предмета. Отчёт перечисляет причины неготовности и покрытие классов, не раскрывает приватные фотографии и не даёт допуска весам; некорректный набор не получает успешный статус.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-306",
+        "RCN-310"
+      ],
+      "status": "done",
+      "evidence": [
+        "scripts/audit-photo-training-readiness.py",
+        "tests/test_photo_training_readiness.py — 9/9 Linux и 9/9 Mac; проверены отсутствие мутаций, разметка, хеши и пересечения",
+        "docs/PHOTO-TRAINING-READINESS-v28.md — фактический аудит 214 SHA на Mac, исходный manifest не изменён; данных для допуска 21 категории недостаточно"
+      ]
+    },
+    {
+      "id": "RCN-350",
+      "section": "Следующее обучение фотоанализа · v28",
+      "title": "Корпус аренды с независимыми группами квартир",
+      "acceptance": "Развить RCN-318 разрешёнными фото реальных квартир с происхождением, исходными хешами, группами квартиры и ручной проверкой близких дублей. Все ракурсы, обрезки и перевыставленные объявления одного объекта остаются в одной части. Отдельно выделены обучение, калибровка и отложенная приёмка; публичные неарендные данные не выдаются за подтверждение качества на московской аренде.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-349"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "cli/photo_training.py; scripts/photo-corpus.py; docs/PHOTO-QUALITY-v29.md — экспорт групп и исходных SHA реализован, разрешённый корпус реальных квартир ещё нужен"
+      ]
+    },
+    {
+      "id": "RCN-351",
+      "section": "Следующее обучение фотоанализа · v28",
+      "title": "Редкие предметы и проверенные отрицательные кадры",
+      "acceptance": "Для каждой оцениваемой категории явно различаются видимый предмет с рамкой, проверенное отсутствие и неизвестность. В выборке отдельно представлены посудомойка, стиральная машина, духовка, микроволновка и похожие панели; независимая проверка разрешает спорные метки. Состав и поддержка по классам опубликованы агрегатами; категория без положительных или отрицательных примеров не допускается автоматически.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-350"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "docs/PHOTO-QUALITY-v29.md — present/absent/unknown/rejected различаются; реальные редкие категории и проверенные отрицательные кадры ещё нужны"
+      ]
+    },
+    {
+      "id": "RCN-352",
+      "section": "Следующее обучение фотоанализа · v28",
+      "title": "Калибровка и допуск фото-категорий на новых данных",
+      "acceptance": "Порог каждой категории выбирается только по калибровочной части, затем однократно проверяется на отложенных квартирах. Отчёт содержит TP/FP/FN, precision, recall и доверительную границу отдельно по классам. Применяется действующий критерий допуска, включая достаточную положительную поддержку, проверенные отрицательные кадры и нижнюю границу точности; ослабление порога не подменяет улучшение модели. Непринятые категории остаются предложениями для человека.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-350",
+        "RCN-351"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "cli/photo_calibration.py; tests/test_photo_calibration.py; docs/PHOTO-QUALITY-v29.md — calibration/test, замороженные пороги и TP/FP/FN/Wilson; реальная новая калибровка не выполнена"
+      ]
+    },
+    {
+      "id": "RCN-353",
+      "section": "Следующее обучение фотоанализа · v28",
+      "title": "Разметка фото из решений оператора",
+      "acceptance": "Из журнала находок формируется приватная очередь разметки с исходным хешем, категорией, рамкой и решением человека. Подтверждение наличия, отказ, неизвестность и связь повторных ракурсов сохраняются раздельно. Экспорт принимает только проверенные записи, оставляет остальные pending и сохраняет разделение по квартире; уверенный ответ модели сам не становится учебной истиной.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-306",
+        "RCN-332",
+        "RCN-349"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "cli/photo_training.py; cli/photo_training_api.py; web/photo-training.mjs; tests/test_photo_training_browser.py; docs/PHOTO-QUALITY-v29.md — ручные рамки/решения, права точного набора SHA, pending и проверенный приватный экспорт",
+        "docs/benchmarks/native-engineering-v29.json; docs/PHOTO-QUALITY-v29.md — Linux и Mac Chrome проверили приватную очередь с исходным SHA, независимыми решениями, рамками и экспортом только проверенных записей; автоматический ответ остаётся pending"
+      ]
+    },
+    {
+      "id": "RCN-354",
+      "section": "Следующее обучение фотоанализа · v28",
+      "title": "Следующий фотоэксперимент по подготовленным данным",
+      "acceptance": "После прохождения аудита данных зафиксировать гипотезу, начальные веса, обучаемые слои, размеры изображений, seed и бюджет Mac. Сравнить текущий детектор и кандидат на одинаковых отложенных квартирах при рабочем пороге; сохранить ONNX-проверку, показатели по классам и причины выбора. Дополнительные эпохи на прежней неполной разметке не закрывают приёмку; сохранённая модель меняется только после допуска.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-349",
+        "RCN-351",
+        "RCN-352"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#photo-training — план и критерии; приёмка ещё не завершена",
+        "docs/PHOTO-QUALITY-v29.md — эксперимент не запущен: новые разрешённые группы, положительная/отрицательная разметка и калибровка ещё не готовы"
+      ]
+    },
+    {
+      "id": "RCN-355",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Полный сценарий карточки с новым ИИ",
+      "acceptance": "На изолированных данных пройти импорт сохранённого разрешённого источника, фотоанализ, ручное решение, рекламный черновик, правку, экспорт и повторное открытие на Mac и телефоне. Для каждого шага проверены версия карточки, происхождение фактов, актуальность изображения и отсутствие потерь при отмене или позднем ответе. Сценарий не импортирует реальные объекты в рабочую библиотеку и не меняет диагностическую кампанию.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-311",
+        "RCN-332",
+        "RCN-341",
+        "RCN-353"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "scripts/verify-card-workflow.py; docs/PROJECT-RELIABILITY-v29.md#workflow — изолированный сквозной сценарий и реальные форматы; Chrome phone viewport не физический iPhone",
+        "docs/benchmarks/native-engineering-v29.json — сквозной Mac core, 134,288 с, MLX/ONNX и реальные экспорты; fullCriterionMet=false, физический iPhone и зависимости остаются"
+      ]
+    },
+    {
+      "id": "RCN-356",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Длительный прогон смешанной нагрузки на Mac",
+      "acceptance": "В изолированной копии провести не менее двух часов чередования импорта, работы редактора, фотоанализа и разрешённого фонового обучения. Измерить p50/p95 задержек, память, очередь, ошибки и сохранность данных до и после сна/пробуждения. Протокол содержит реальные версии и длительность; краткий smoke-тест не называется испытанием устойчивости.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-346",
+        "RCN-355"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/project_soak.py; scripts/soak-project.py; docs/PROJECT-RELIABILITY-v29.md#soak — отдельный снимок источников, реальные фазы и ресурсный замок; физический сон/пробуждение не измерен",
+        "docs/benchmarks/native-engineering-v29.json — 7200,847 с / 246 операций / 0 ошибок на v28 с четырьмя файлами стенда; окончательная v29 и физический сон/пробуждение не приняты"
+      ]
+    },
+    {
+      "id": "RCN-357",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Восстановление AI-заданий после прерываний",
+      "acceptance": "Проверить остановку сервера, сон, потерю связи и повторный запрос на разных этапах обучения и сканирования. После восстановления один запрос не создаёт повторных результатов, ручные правки не откатываются, частичный checkpoint или отчёт не считается завершённым. Интерфейс объясняет, что можно продолжить, повторить или отменить, а блокировка ресурсов не остаётся навечно.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-346",
+        "RCN-355"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/import_job_journal.py; tests/test_import_recovery_integration.py; tests/test_learning_recovery.py; docs/PROJECT-RELIABILITY-v29.md#recovery — повтор запроса, checkpoint и блокировки; сон ещё не принят"
+      ]
+    },
+    {
+      "id": "RCN-358",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Перенос памяти обучения и версий моделей",
+      "acceptance": "Дополнить сценарий RCN-241 согласованным переносом одобренных примеров, истории отказов, словаря, настроек и квитанций обучения на другой Mac. Веса передаются только в приватном архиве с хешами или восстанавливаются по зафиксированному источнику; несовместимый runtime выявляется до запуска. Отчёты, привязанные к старому окружению, требуют новой приёмки и не включают автопринятие на новом устройстве молча.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-241",
+        "RCN-332",
+        "RCN-347"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/learning_transfer.py; tests/test_learning_transfer.py; tests/fixtures/macos-learning-v29/source.json; docs/LEARNING-OPERATIONS-v29.md#transfer — исторические версии и отзывы, хеши, отключённое принятие; синтетические веса не подтверждают runtime"
+      ]
+    },
+    {
+      "id": "RCN-359",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Автоматическая сверка roadmap с доказательствами",
+      "acceptance": "Проверка связывает ID задач, критерии, статус, существующие файлы и результаты конкретного коммита. Выявляются отсутствующие доказательства, устаревшие ссылки, дубли и циклы зависимостей; реальная приёмка и синтетический тест различаются. Сводка сайта и GitHub issue используют тот же план и не повышают процент готовности из-за одного создания интерфейса.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-200"
+      ],
+      "status": "done",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/roadmap_evidence.py; scripts/validate-roadmap-evidence.py; tests/test_roadmap_evidence.py; docs/PROJECT-RELIABILITY-v29.md#roadmap-proof — критерий/артефакт/коммит и все представления; прежняя нетипизированная история обозначена отдельно",
+        "cli/roadmap_evidence.py; tests/test_roadmap_evidence.py; .github/workflows/verification.yml; docs/VERIFICATION.md — автоматическая проверка неизменных ID/критериев, графа, ссылок, SHA доказательств и коммита; план, сайт и issue сверяются отдельно, исторические пробелы не скрываются"
+      ]
+    },
+    {
+      "id": "RCN-360",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Обнаружение изменения схем источников",
+      "acceptance": "На расширенных обезличенных снимках ЦИАН и Авито измерить покрытие критических полей и выявлять новые неподдержанные формы страницы. При отклонении схемы карточка получает понятный статус неполноты с исходным фрагментом для проверки; отсутствующее не превращается в ноль или запрет. Снимки не содержат секреты, а обновление адаптера сопровождается регрессионным примером без обхода защиты площадки.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-020",
+        "RCN-320"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/source_schema_health.py; tests/test_source_schema_health.py; docs/PROJECT-RELIABILITY-v29.md#source-drift — сигнал схемы и приватный фрагмент; расширенные реальные снимки ещё нужны"
+      ]
+    },
+    {
+      "id": "RCN-361",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Единая проверка готового клиентского комплекта",
+      "acceptance": "Перед передачей комплекта сверять одну принятую ревизию карточки, текста, фотографий и условий во всех заголовках, тегах, PDF, HTML, ZIP и материалах телефона. Комиссия и внутренние заметки не появляются в клиентских файлах; бесплатность, техника и маршруты опираются на подтверждённые факты. Проверить ручную правку во время генерации и показать, какие файлы устарели.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-178",
+        "RCN-311",
+        "RCN-343"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/client_bundle_consistency.py; web/presentation-export-boundary.mjs; tests/test_presentation_browser.py; docs/PROJECT-RELIABILITY-v29.md#client-bundle — конкретная ревизия, старый дизайнер и ручная правка; зависимости качества текста остаются",
+        "docs/benchmarks/native-engineering-v29.json — HTML/PNG/PDF/ZIP одной ревизии, устаревшие файлы сохранены и смешанный комплект отклонён; зависимость RCN-343 остаётся"
+      ]
+    },
+    {
+      "id": "RCN-362",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Обновление установленного приложения iPhone",
+      "acceptance": "Дополнить физическую приёмку RCN-225 обновлением уже установленного PWA: открытая карточка, новая сборка, перезапуск, временное отсутствие Mac и возврат сети. Версии оболочки и API совместимы, приватные ответы не попадают в публичный кеш, правки не теряются. Измерение открытия дизайнера ведётся по RCN-287; эмуляция Chrome не заменяет Safari на устройстве.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-225",
+        "RCN-287",
+        "RCN-316"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/acceptance_evidence.py; docs/PROJECT-RELIABILITY-v29.md#physical-pwa — форма физического протокола PWA; реальный iPhone ещё не проверен"
+      ]
+    },
+    {
+      "id": "RCN-363",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Согласованная версия сервера, сайта и моделей",
+      "acceptance": "Экран диагностики показывает идентификаторы сборки сайта и сервера, Git-коммит, выбранные модели и версии словаря с понятным указанием расхождений. Проверены вкладка со старым кешем, частичное обновление и перезапуск: пользователь понимает, какая версия обслуживает запрос. Проверка не раскрывает токены, приватные пути или содержимое карточек.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-191",
+        "RCN-347"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/release_diagnostics.py; scripts/build-release-identity.py; docs/PROJECT-RELIABILITY-v29.md#versions-diagnostics — идентичность процесса, старая вкладка и частичная сборка; зависимость истории моделей остаётся",
+        "docs/benchmarks/native-engineering-v29.json — настоящий DOM desktop/phone совпал с серверным buildId; зависимости RCN-347/357 остаются"
+      ]
+    },
+    {
+      "id": "RCN-364",
+      "section": "Развитие и эксплуатация проекта · v28",
+      "title": "Диагностический пакет обучения и сканирования",
+      "acceptance": "По явному действию собрать локальный архив агрегатов этапов, ошибок, очереди и квитанций нужного запуска. Предпросмотр перечисляет состав; секреты, исходные запросы, фотографии, адреса и личные данные исключены по умолчанию. Пакет позволяет воспроизвести версии и длительности без автоматической внешней отправки; проверить ограничение размера и удаление временных файлов.",
+      "priority": "P2",
+      "depends_on": [
+        "RCN-196",
+        "RCN-347",
+        "RCN-357"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/DEVELOPMENT-PLAN-v28.md#product-development — план и критерии; приёмка ещё не завершена",
+        "cli/release_diagnostics.py; tests/test_release_diagnostics.py; docs/PROJECT-RELIABILITY-v29.md#versions-diagnostics — локальный ZIP до 256000 байт после preview, без секретов/исходных карточек; зависимости восстановления остаются",
+        "docs/benchmarks/native-engineering-v29.json — явный диагностический ZIP, приватные исходники исключены, версии совпадают; без автоотправки, зависимости остаются"
+      ]
+    },
+    {
+      "id": "RCN-365",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Честный смысл словаря и числа текстовых вариантов",
+      "acceptance": "Для одного действующего профиля посчитать нормализованные словарные пары, русские ключи, пересечения наборов и проверенные учебные примеры отдельно. Объяснить происхождение 91 120 и 262 144; конечные семейства оформления и фразы начала не называются независимо написанными объявлениями или знанием модели. Проверить одинаковые обозначения в API, настольном и телефонном интерфейсе.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "cli/language.mjs; cli/language_service.py; web/language-studio.mjs; web/phone.mjs — единая нормализация, отдельные пары словаря и учебная память, конечные семейства подачи",
+        "docs/benchmarks/learning-truth-v30-audit.json; docs/benchmarks/text-reality-v30.json; docs/LEARNING-TRUTH-v30.md — 90 824 пары / 68 200 русских ключей для поставляемого словаря; 20 семейств / 12 начал / 48 общих атомов тегов; 262 144 были пространством комбинаций"
+      ]
+    },
+    {
+      "id": "RCN-366",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Новые фразы после сохранения объявления и при простое",
+      "acceptance": "После успешного сохранения исходного описания сформировать приватную очередь новых русских фрагментов с происхождением, контрольной суммой и дедупликацией. Повтор того же источника не увеличивает счётчик, точное совпадение со словарём отделено от нового фрагмента; пользователь видит результат и может явно утвердить перевод. Ограниченный проход в простое подхватывает пропущенные версии. Перенос сохраняет очередь; непроверенные фразы не объявляются обученными словами или человеческой разметкой.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-332"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/learning_discovery.py; cli/learning_capture.py; cli/local_server.py; cli/learning_scheduler.py; web/learning-studio.mjs; cli/workspace_backup.py — сохранение, очередь, явное утверждение и ограниченный фоновый проход",
+        "tests/test_learning_discovery.py; tests/test_learning_transfer.py; tests/test_learning_service.py; tests/test_learning_studio_browser.py — повторы, источники, проверка, перенос и приватность",
+        "docs/benchmarks/learning-truth-v30-audit.json — 82 карточки, 80 исходных описаний, 945 новых / 107 повторных / 34 известных фрагмента; рабочая память пополнена без утверждения примеров и изменения весов"
+      ]
+    },
+    {
+      "id": "RCN-367",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Разные описания на реальных карточках без подмены фактов",
+      "acceptance": "Исправить одинаковое начальное семейство и повтор результата по кнопке. На сохранённом снимке всех текущих карточек сравнить серии описаний после удаления различий только в пунктуации, пробелах и emoji; зафиксировать конечный диапазон разнообразия и неизвестные переводы. В браузере проверить 20 переписываний с перезагрузкой, сохранение ручного заголовка, тегов и фактов. Результат правил не обозначается как обучение весов или бесконечная креативность.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-365"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/rental-copy.mjs; cli/language.mjs; cli/language_service.py; web/app.js; scripts/verify-rental-copy-v30.py — выбор подачи, история и предотвращение повторов",
+        "docs/benchmarks/text-reality-v30.json — 82 карточки × 50 вариантов, 4 100 сравнений, 0 повторов в серии; 19 применимых семейств и 12 начал на этом снимке; отдельная нативная браузерная проверка"
+      ]
+    },
+    {
+      "id": "RCN-368",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Завершённый диагностический цикл текстового обучения",
+      "acceptance": "Создать корпус с явным авторством ассистента, разделить обучение, проверку и отдельные диагностические запросы. На Mac завершить ограниченный цикл с хешами входов и весов, числом действительно изменённых параметров, временем и памятью; сохранить ответы до и после. Сравнить также базу без адаптера. Решение о кандидате должно следовать ошибкам фактов, а снижение loss не объявляется приёмкой качества. Рабочие веса не меняются из-за самого завершения эксперимента.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-346"
+      ],
+      "status": "done",
+      "evidence": [
+        "data/learning/teacher-rental-v30.json; data/quality/teacher-rental-heldout-v30.json; scripts/run-teacher-text-v30.py; scripts/evaluate-base-text-v30.py; scripts/register-teacher-candidate-v30.py — авторский корпус, разбиение, ограниченные измерения и история без выбора модели",
+        "docs/benchmarks/text-training-native-v30.json — 240 шагов, 540 672 изменённых параметра, 46,526 с обучения, контрольная потеря 1,7270 → 0,9706, кандидат отклонён",
+        "docs/benchmarks/text-semantic-diagnostic-v30.json; docs/LEARNING-TRUTH-v30.md — 24 диагностических запроса для четырёх режимов; исходные ответы, ошибки старого проверяющего и семантический разбор ассистента отдельно от человеческой приёмки"
+      ]
+    },
+    {
+      "id": "RCN-369",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Проверка фотографий всех текущих объявлений",
+      "acceptance": "Для всех 82 карточек исходного снимка сверить состав и размеры исходных фотографий и выполнить визуальный разбор доступных изображений. Сохранить положительные свидетельства с точными SHA и авторством ассистента отдельно от результатов локального детектора; неизвестность не заменять отсутствием. В рабочей карточке показать результат без ложных количеств и без перезаписи более поздних ручных решений. Опубликовать агрегированный охват и список оставшихся непроверенных случаев без частных фотографий и адресов.",
+      "priority": "P0",
+      "depends_on": [],
+      "status": "done",
+      "evidence": [
+        "docs/benchmarks/photo-review-applied-v30-public.json — 82 карточки / 1155 просмотренных фото / 4 карточки без фото; 1149 актуальных привязок, 2954 положительных свидетельства, 947 добавленных признаков; 23 конфликта и 6 исключённых или заменённых фото сохранены отдельно",
+        "cli/photo_teacher_review.py; web/photo-teacher-review.mjs; scripts/apply-assistant-photo-reviews.py; tests/test_photo_teacher_review.py; tests/test_assistant_review_apply.py — привязка к исходным SHA, отказ от ложных количеств и человеческой разметки, сохранность текстов/ручных количеств/выбранных фото/хронологии; создана резервная копия базы",
+        "docs/PHOTO-REALITY-v30.md; docs/RELEASE-v30.md — обзор ассистента отделён от локального распознавания и обучения"
+      ]
+    },
+    {
+      "id": "RCN-370",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Ограниченный фотоэксперимент по явным меткам присутствия",
+      "acceptance": "На разрешённом корпусе с независимыми группами квартир сравнить исходную модель и отдельного кандидата после реального изменения параметров. Присутствие, проверенное отсутствие и неизвестность различаются; дубли исходных байтов не пересекают разбиение. Зафиксировать изменённые слои, бюджет, семя, ONNX, результаты по отложенным группам и публичный контроль сохранения прежних категорий. Опубликовать решение и ограничения; обучение без рамок не считать приёмкой точности локализации или допуском к автоприменению.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-349"
+      ],
+      "status": "done",
+      "evidence": [
+        "scripts/train-photo-presence-v30.py; cli/photo_presence_experiment.py; tests/test_photo_presence_experiment.py — разбиение по квартире и SHA, неизвестные классы замаскированы, рамки не выдумываются",
+        "docs/benchmarks/photo-training-v30-public.json — 240 реальных шагов; шесть тензоров / 4095 параметров; 151,758 с, CPU x86_64 на Mac; 146 → 154 из 472 положительных свидетельств на отложенных группах; публичные TP 37 → 41 и FP 20 → 24; ONNX сохранён, кандидат не принят",
+        "docs/PHOTO-REALITY-v30.md; docs/RELEASE-v30.md — происхождение меток, ограничения эксперимента и отдельный результат готового World без приписывания ему нового обучения"
+      ]
+    },
+    {
+      "id": "RCN-371",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Следующий текстовый кандидат без подмены смысла аренды",
+      "acceptance": "После диагностики текущего адаптера проверить происхождение данных, маску цели и соответствие учебных запросов рабочим. Подготовить целевые отношения: валюта, суммы и роли платежей, возврат залога, регистрация, отрицания, неизвестность, минимум срока и свойства мебели. До нового обучения заморозить свежие независимые группы приёмки, не переиспользуя разобранные диагностические ответы. Сравнить чистую базу и кандидаты по готовности прямого ответа и рекламе, получить независимую редакторскую проверку и допуск без регрессий; отклонённый кандидат остаётся в истории.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-335",
+        "RCN-337",
+        "RCN-342",
+        "RCN-368"
+      ],
+      "status": "planned",
+      "evidence": [
+        "docs/benchmarks/text-semantic-diagnostic-v30.json; docs/LEARNING-TRUTH-v30.md — текущий selected / teacher / base 0.5B / base 1.5B дают 5 / 2 / 7 / 8 ответов без правки по разбору ассистента; приёмки нового рабочего кандидата нет"
+      ]
+    },
+    {
+      "id": "RCN-372",
+      "section": "Проверяемое обучение и реальные результаты · v30",
+      "title": "Проверяемая фоновая цепочка от новых данных до кандидата",
+      "acceptance": "На длительном нативном сценарии провести новые исходные фразы и разрешённые фото через раздельные очереди, проверку меток и ограниченное обучение. В интерфейсе живые процессы, фактические шаги, последнее полезное действие и конкретный недостающий критерий видны без ручного обновления и без потери вводимого текста. При новых запросах пользователя процесс уступает ресурсы, восстанавливается после остановки и не переучивает неизменный набор бесконечно. Включённый текстовый планировщик не обозначается как круглосуточное фотообучение; каждый переход подтверждён собственной квитанцией.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-366",
+        "RCN-370",
+        "RCN-371"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/learning_scheduler.py; cli/learning_service.py; web/learning-studio.mjs; web/model-history.mjs; docs/LEARNING-TRUTH-v30.md — уже видны живой процесс, контрольная точка, очередь и причина ожидания; полный непрерывный цикл с допущенными новыми текстовыми и фото-весами ещё не пройден"
+      ]
+    },
+    {
+      "id": "RCN-373",
+      "section": "Совместимость, индивидуальный текст и устойчивый каталог · v31",
+      "title": "Совместимость редактора с прежним WebKit без Object.hasOwn и at",
+      "acceptance": "Убрать обязательную зависимость интерфейса от Object.hasOwn, Array.prototype.at и String.prototype.at без изменения глобальных объектов. На собранных desktop/phone оболочках с отключёнными API проверить открытие и сохранение карточки с предупреждением источника, повторную загрузку, маршруты и ленивый дизайнер; ошибки страницы и утечки приватной диагностики отсутствуют. Зафиксировать исходный коммит и нативный результат; Chrome с отключёнными API не называть физической приёмкой iPhone.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-304"
+      ],
+      "status": "done",
+      "evidence": [
+        "web/own-property.mjs; tests/own-property-compatibility.test.mjs; tests/test_own_property_browser.py — совместимый helper без глобального polyfill и проверки при отключённых Object.hasOwn, Array.prototype.at, String.prototype.at",
+        "docs/benchmarks/browser-global-patch-v31-native.json — нативный снимок stage003 на базе f42ab1f: оба сценария совместимости прошли в составе 6/6 Chrome-проверок за 155,408 с; рабочие хеши сохранены, физический iPhone и окончательный CI отдельно",
+        "docs/RELEASE-v31.md — причина ошибки и границы браузерной приёмки"
+      ]
+    },
+    {
+      "id": "RCN-374",
+      "section": "Совместимость, индивидуальный текст и устойчивый каталог · v31",
+      "title": "Просмотренные карточки, постоянный порядок и раздел изменённых",
+      "acceptance": "Открытие карточки сохраняет серую отметку просмотра в пространстве текущего пользователя, не меняя payload, время обновления и курсор синхронизации. Заголовок, описание и теги сохраняются на исходном месте каталога; отдельная вкладка содержит только доказанные изменения выбранного текста. Старые даты восстанавливаются из журнала импорта или первой ревизии, неизвестные остаются неизвестными. Проверить desktop/phone, reload, смену роли, запоздавший feed и view-ack, конкурентное сохранение, пагинацию и полный перенос метаданных с заменой ID. На установленной библиотеке выполнить миграцию после резервной копии и сохранить агрегатные доказательства сохранности данных.",
+      "priority": "P1",
+      "depends_on": [
+        "RCN-238",
+        "RCN-373"
+      ],
+      "status": "done",
+      "evidence": [
+        "cli/card_catalog.py; web/catalog-state.mjs; tests/test_card_catalog.py; tests/catalog-state.test.mjs; tests/test_catalog_state_browser.py — постоянный порядок, личный просмотр, выбранные изменения текста, гонки и перенос с заменой ID",
+        "docs/benchmarks/catalog-compatibility-v31-native-followup.json — 9/9 нативных Chrome-сценариев каталога и совместимости, включая reload, роли, задержанные ответы и 205 карточек; отдельный чистый повтор HTTP-ожидания",
+        "docs/benchmarks/catalog-migration-v31-native.json; docs/benchmarks/installation-v31-native.json — резервные копии, проверка копии и установленная миграция 82 карточек; payload/rowid/updated и прежние таблицы сохранены, 68 ранних импортов и 14 первых ревизий",
+        "docs/RELEASE-v31.md — рабочая установка и границы старой истории: нет доказанных исторических изменений выбранного текста; новые сохранения учитываются"
+      ]
+    },
+    {
+      "id": "RCN-375",
+      "section": "Совместимость, индивидуальный текст и устойчивый каталог · v31",
+      "title": "Индивидуальный рекламный текст модели через рабочие кнопки и импорт",
+      "acceptance": "Связать настоящие кнопки генерации и переписывания на Mac и телефоне, а также импорт с локальной моделью, возвращающей полный заголовок и описание по конкретной квартире; теги подбираются отдельно существующим механизмом по подтверждённым фактам и не приписываются генерации модели. Передавать только подтверждённые факты и актуальные принятые фото-свидетельства; сохранять суммы, роли платежей, условия, отрицания и неизвестность. Проверить завершённость ответа, отсутствие придуманных предметов или обещаний, осмысленное разнообразие нескольких квартир и защиту от устаревшего сохранения. Реальные ответы выбранной модели и альтернативы проверить отдельно от искусственных тестовых ответов; неуспех или запасной генератор показываются явно, прежний текст сохраняется. Не объявлять новое обучение или допуск весов по одному подключению модели.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-305",
+        "RCN-369"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/individual_copy.py; cli/local_content.py; cli/language_service.py; tests/test_individual_copy.py; tests/individual-copy.test.mjs — рабочий путь и проверки индивидуального текста подготовлены",
+        "docs/RELEASE-v31.md — прежняя кнопка не вызывала локальную модель; ранняя диагностика выбранного адаптера и базы 1.5B дала по 0/3 принятых ответов, итоговая нативная приёмка качества ожидается",
+        "docs/benchmarks/individual-real-ui-v31-native-followup.json; docs/benchmarks/individual-final-v31-native.json — реальные MLX кнопки Mac/телефона, сохранение, поздние проверки фактов; готовый Qwen3-4B установлен отдельно. Полный live-импорт с фото и моделью, расширенная оценка качества и разнообразия остаются вне подтверждённой приёмки."
+      ]
+    },
+    {
+      "id": "RCN-376",
+      "section": "Совместимость, индивидуальный текст и устойчивый каталог · v31",
+      "title": "Прогресс и отмена генерации, отдельный рекламный профиль и ресурсы",
+      "acceptance": "Показывать реальные этапы локального текстового запроса и измеренную скорость только при наличии данных; обеспечить конечный срок, отмену и сохранность старого текста при ошибке. Полностью передавать большой запрос медленно запускающемуся worker, корректно завершать принадлежащий запросу процесс и закрывать ресурсы. Настроить рекламный профиль отдельно от действующего перевода без молчаливой смены рабочего адаптера; зафиксировать backend, путь выбора и решение о качестве без приписывания готовой модели новых обученных весов. На целевом Mac измерить загрузку, генерацию, память, конкуренцию с другими задачами, отмену и освобождение ресурсов; приложить нативные квитанции рабочих кнопок и импорта.",
+      "priority": "P0",
+      "depends_on": [
+        "RCN-375"
+      ],
+      "status": "planned",
+      "evidence": [
+        "cli/local_text_model.py; tests/test_text_worker_transport.py — исправление незавершённого stdin и проверка медленного чтения, EOF, отмены, срока и закрытия ресурсов",
+        "docs/RELEASE-v31.md — прогресс, отдельный рекламный профиль и полная ресурсная приёмка остаются открытыми; новые обученные веса не приняты",
+        "docs/benchmarks/individual-real-ui-v31-native.json; docs/benchmarks/individual-real-ui-v31-native-followup.json; docs/benchmarks/individual-final-v31-native.json; docs/benchmarks/installation-v31-native.json — реальные токены/отмена/освобождение worker, отдельный установленный рекламный профиль и измеренная память. Полная конкуренция с другими задачами и квитанция нового live-импорта остаются в плане."
+      ]
     }
   ],
-  "github_issue_url": "https://github.com/leunch4off/redcn/issues/1"
+  "github_issue_url": "https://github.com/leunch4off/redcn/issues/1",
+  "review_url": "https://github.com/leunch4off/redcn/pull/6"
 }

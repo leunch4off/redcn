@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "kind": "post-hoc-codex-audit-of-native-heldout-answers",
+  "author": "Codex; no independent native-speaker acceptance",
+  "originalReceiptsUnchanged": true,
+  "frozenCheckerRescored": false,
+  "notAnAccuracyPercentage": true,
+  "phases": {
+    "base": {
+      "summary": {
+        "ru-zh": {
+          "requested": 6,
+          "measured": 6,
+          "checksPassed": 0
+        },
+        "zh-ru": {
+          "requested": 6,
+          "measured": 6,
+          "checksPassed": 0
+        },
+        "listing": {
+          "requested": 18,
+          "measured": 18,
+          "checksPassed": 0
+        }
+      },
+      "originality": [
+        {
+          "caseId": "heldout-01",
+          "parseableVariants": 1,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-02",
+          "parseableVariants": 3,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-03",
+          "parseableVariants": 3,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-04",
+          "parseableVariants": 3,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-05",
+          "parseableVariants": 3,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 2,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-06",
+          "parseableVariants": 2,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        }
+      ],
+      "seconds": 22.766906041000766,
+      "parseableListingAnswers": 15,
+      "propertiesWithThreeDifferentSurfaces": 0,
+      "sourceReceipt": "rental-heldout-0.5-base-v26.json"
+    },
+    "adapter": {
+      "summary": {
+        "ru-zh": {
+          "requested": 6,
+          "measured": 6,
+          "checksPassed": 0
+        },
+        "zh-ru": {
+          "requested": 6,
+          "measured": 6,
+          "checksPassed": 0
+        },
+        "listing": {
+          "requested": 18,
+          "measured": 18,
+          "checksPassed": 0
+        }
+      },
+      "originality": [
+        {
+          "caseId": "heldout-01",
+          "parseableVariants": 2,
+          "uniqueNormalizedTitles": 2,
+          "uniqueNormalizedBodies": 2,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-02",
+          "parseableVariants": 1,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-03",
+          "parseableVariants": 2,
+          "uniqueNormalizedTitles": 2,
+          "uniqueNormalizedBodies": 2,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-04",
+          "parseableVariants": 1,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-05",
+          "parseableVariants": 1,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        },
+        {
+          "caseId": "heldout-06",
+          "parseableVariants": 1,
+          "uniqueNormalizedTitles": 1,
+          "uniqueNormalizedBodies": 1,
+          "onlyEmojiOrPunctuationCountsAsVariation": false,
+          "allThreeSurfacesDifferent": false,
+          "nativeEditorialOriginalityAccepted": false
+        }
+      ],
+      "seconds": 23.89576058399689,
+      "parseableListingAnswers": 8,
+      "propertiesWithThreeDifferentSurfaces": 0,
+      "sourceReceipt": "rental-heldout-0.5-balanced-v26.json"
+    }
+  },
+  "observations": [
+    {
+      "phase": "base",
+      "probeId": "heldout-01-ru-zh",
+      "finding": "Currency changed from RUB to yuan and equipment/station identities changed.",
+      "sourceClaim": "70000 рублей в месяц",
+      "outputExcerpt": "70000 元/月",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "phase": "adapter",
+      "probeId": "heldout-01-ru-zh",
+      "finding": "Requested Chinese translation is primarily English, changes RUB to yuan, invents fireplaces and station identities.",
+      "outputExcerpt": "70000 yuan per month.",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "phase": "adapter",
+      "probeId": "heldout-04-listing-1",
+      "finding": "Uses deposit67000 as monthly sale price instead of rent65000.",
+      "sourceClaim": "月租65000卢布，押金67000卢布",
+      "outputExcerpt": "售价67000卢布/月",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "phase": "adapter",
+      "probeId": "heldout-02-listing-2",
+      "finding": "Reverses separate water/electricity fees to included. Title also contradicts body.",
+      "sourceClaim": "水电费另付",
+      "outputExcerpt": "租金80000卢布/月，包括水电费",
+      "detectedByFrozenChecks": false,
+      "checkerLimitation": "Frozen checker has no explicit utility fee scope; another title-length issue caused overall failure."
+    },
+    {
+      "phase": "base",
+      "probeId": "heldout-01-ru-zh",
+      "finding": "Output does preserve uncertainty using 未被证实, but frozen conditional expression does not recognize that synonym.",
+      "outputExcerpt": "行驶路线未被证实",
+      "detectedByFrozenChecks": false,
+      "checkerFalsePositive": "Conditional-preservation issue is a false positive; other errors still fail this answer."
+    },
+    {
+      "phase": "base",
+      "probeId": "heldout-02-listing-1",
+      "finding": "Valid short JSON copies known facts but omits all observed station names. Repeated exactly across three styles.",
+      "detectedByFrozenChecks": true
+    },
+    {
+      "phase": "adapter",
+      "probeId": "heldout-05-listing-3",
+      "finding": "Invents dishwasher and kitchen island and changes water fees to per-room.",
+      "outputExcerpt": "dishwasher & shower available, kitchen with fridge and kitchen island",
+      "detectedByFrozenChecks": true
+    }
+  ],
+  "limits": [
+    "Post-hoc error examples are not a blinded exhaustive human semantic score.",
+    "Zero passes is the conjunction of partial known checks; it does not mean zero correct words or zero semantic accuracy.",
+    "The dataset contains six anonymized real-listing-derived fact extracts with AI-assisted annotations, not six native-edited full advertisements.",
+    "Source fields that conflict remain excluded from generation; these results do not verify live availability or owner promises.",
+    "No model or adapter is promoted and no unreviewed output is published."
+  ]
+}
