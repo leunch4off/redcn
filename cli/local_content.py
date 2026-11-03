@@ -25,6 +25,7 @@ FACT_KEYS = ('city', 'district', 'districtZh', 'complex', 'metro', 'metroLine', 
 VOICES = ('自然简洁，少用表情，用短段落', '像认真介绍房子的朋友，先讲位置，再讲生活空间',
     '先说预算与空间，用清楚的小标题', '先写一个真实亮点，段落疏朗，最多三个表情',
     '不写套话，像房源笔记，先讲已确认的家具与布局')
+ADVERTISING_REFERENCE_VERSION = 'rental-facts-v1'
 
 
 def _clean(value, maximum=20_000):
@@ -267,14 +268,19 @@ def _with_advertising_conditions(rendered, fields):
 
 
 def advertising_baseline(fields, rules=None):
-    """The same public-fact projection is used by preview and weight acceptance."""
+    """Stable facts shared by preview, weight acceptance and frozen corpora.
+
+    UI identity, rewrite counters and advertising introductions are not factual
+    context. Keep the historical blocks and current production fact safeguards.
+    """
     from fact_ledger import validate_listing_fields
     from language_service import node_language
     if not isinstance(fields, dict):
         raise ValueError('Сначала выберите карточку объявления')
     validate_listing_fields(fields)
     grounded = {key: fields[key] for key in FACT_KEYS if key in fields}
-    baseline = _with_advertising_conditions(node_language({'action': 'generate', 'fields': grounded,
+    baseline = _with_advertising_conditions(node_language({'action': 'factual-reference',
+        'referenceVersion': ADVERTISING_REFERENCE_VERSION, 'fields': grounded,
         'rules': rules or {}, 'prefs': {'benefits': '', 'contact': '', 'brandTags': ''}}), grounded)
     if baseline.get('problems'):
         raise ValueError(' · '.join(baseline['problems']))

@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "kind": "v30-ci-followup",
+  "previousCommit": "b5235a4747c95111244c3416feda4988c640f21a",
+  "initialFailedRuns": [
+    {
+      "event": "push",
+      "id": 41585454596,
+      "url": "https://github.com/leunch4off/redcn/actions/runs/41585454596",
+      "conclusion": "failure"
+    },
+    {
+      "event": "pull_request",
+      "id": 41585460925,
+      "url": "https://github.com/leunch4off/redcn/actions/runs/41585460925",
+      "conclusion": "failure"
+    }
+  ],
+  "causes": [
+    {
+      "scope": "python (0)",
+      "reason": "v30 publication introduction entered frozen verifiedText via ordinary generate",
+      "subtestFailures": 562,
+      "affectedUniqueGroups": 176,
+      "corpusDataChanged": false,
+      "testEqualityWeakened": false
+    },
+    {
+      "scope": "python (2)",
+      "reason": "release diagnostics integration expectation still required v29",
+      "failures": 1,
+      "actualRelease": "v30"
+    }
+  ],
+  "fix": {
+    "internalAction": "factual-reference",
+    "referenceVersion": "rental-facts-v1",
+    "omitsOnlyNewAdvertisingIntroduction": true,
+    "ordinaryGenerationUnchanged": true,
+    "productionFactValidationShared": true
+  },
+  "frozenCorporaSha256": {
+    "data/learning/advertising-production-v27b.json": "e63a9ea7cacad1303e1569c3920ca91d74f72939e59a28d9e731cf8548d620ff",
+    "data/learning/factual-curriculum-v28.json": "e5bcb3ee99e654e9cfb284d2f8fc4ae9fff29c820219ab35fa3b42f987e71b27"
+  },
+  "changedSourceSha256": {
+    "web/engine.mjs": "df34875f22b0f2cbf19a3bfa09b979f78afdcc181828332b194b8de5a9de16aa",
+    "cli/language.mjs": "06cbe0809fd8590f8458e7a670e73d1c58d3dd3de244668477e9de51da101722",
+    "cli/local_content.py": "16612f0ed37faa640019bea529e7ae08074eddce02c89d9a20b953dc8c26db99",
+    "tests/rental-copy-api.test.mjs": "21cc6d05b39fb2eb81a7ce97e8054b0f13760a8e8e60797ac8af2e1598f3e685",
+    "tests/test_advertising_content.py": "ca25e8183ff920f4f46fbe0b2090b78543a6e957d4ffadc64db77c0eae085446",
+    "tests/test_import_recovery_integration.py": "976945b2403ace47dea8c27d0bb022fbb7d6c5e7a2bd3ed44817a4bf7c0408c1"
+  },
+  "native": {
+    "commands": [
+      {
+        "name": "build",
+        "returncode": 0,
+        "seconds": 0.9759987080000001,
+        "logSha256": "cd296fbb8753ab4866f01d933dde2712ed41ac559a83a73722e0714b6b4b5f96"
+      },
+      {
+        "name": "python-corpus",
+        "returncode": 0,
+        "seconds": 121.007076958,
+        "logSha256": "51375e36c87a1a55f49d1a97d77da1f53860d3dc887ca535177609577a874191"
+      },
+      {
+        "name": "javascript",
+        "returncode": 0,
+        "seconds": 13.918683999999999,
+        "logSha256": "6d2458908c5c4ef1f9590678151d6644f526fb7f6861a33bb1df90f8cd99a944"
+      }
+    ],
+    "corpusAndAdvertisingTests": {
+      "tests": 30,
+      "passed": 30,
+      "failed": 0
+    },
+    "releaseIntegrationTests": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "logSha256": "bb08d06a7e2bbd0aea8e7faae42ca12a88e4326f7f5d5f8510b65b201ea9f4af"
+    },
+    "javascript": {
+      "tests": 635,
+      "passed": 634,
+      "failed": 0,
+      "skipped": 1,
+      "skipReason": "optional ZXing"
+    }
+  },
+  "limits": [
+    "The earlier native receipts remain separate snapshots; overlapping test runs are not summed as unique tests.",
+    "Subsequent CI status is recorded by GitHub Actions for the exact resulting commit; this receipt does not predict it."
+  ]
+}

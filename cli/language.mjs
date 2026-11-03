@@ -1,6 +1,6 @@
 // The editor and Python API use the same engine and reviewed translation core.
 import {readFile,stat} from 'node:fs/promises';
-import {DICTIONARY,DEFAULT_PREFS,generateListing,generationCapabilities,translateDraft} from '../web/engine.mjs';
+import {DICTIONARY,DEFAULT_PREFS,FACTUAL_REFERENCE_VERSION,generateListing,generationCapabilities,translateDraft} from '../web/engine.mjs';
 import {setExtendedLexicon,getLexiconStats} from '../web/ru-zh-translator.mjs';
 import {RENTAL_LEXICON} from '../web/rental-lexicon.mjs';
 import {COMMUNITY_RENTAL_ENTRIES} from '../web/community-phrases.mjs';
@@ -80,6 +80,11 @@ try{
   }else if(input.action==='translate'){
     if(typeof input.text!=='string'||input.text.length>20_000)throw Error('Русский текст: до 20 000 символов');
     const open=await openLexicon();result=translateDraft(input.text,{rules,entries:open.entries,mode:'draft'});
+  }else if(input.action==='factual-reference'){
+    if(input.referenceVersion!==FACTUAL_REFERENCE_VERSION)throw Error('Неизвестная версия фактического контекста');
+    if(!input.fields||Array.isArray(input.fields)||typeof input.fields!=='object')throw Error('Нужны поля карточки');
+    result=generateListing({...input.fields,templateMode:'catalog'},rules,{...DEFAULT_PREFS,...(input.prefs||{})},{referenceVersion:input.referenceVersion});
+    if(result.problems?.length)throw Error(result.problems.join(' · '));
   }else if(input.action==='generate'){
     if(!input.fields||Array.isArray(input.fields)||typeof input.fields!=='object')throw Error('Нужны поля карточки');
     const fields={...input.fields,templateMode:'catalog'},prefs={...DEFAULT_PREFS,...(input.prefs||{})};

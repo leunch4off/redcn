@@ -44,6 +44,22 @@ class AdvertisingContentTests(unittest.TestCase):
             result = content.generate_preview(self.directory, data, cancel=cancel)
         return result, model
 
+    def test_factual_reference_uses_explicit_version_and_excludes_editor_variations(self):
+        fields = {**FIELDS, 'url': 'https://example.test/fictional-listing',
+                  'copyVariant': 42, 'titleVariant': 8, 'tagVariant': 9,
+                  'editorIdentity': 'fixture-editor', 'commission': 100,
+                  'copyHistory': {'version': 1, 'body': ['private-history']}, 'petPolicy': 'no'}
+        original = copy.deepcopy(fields)
+        with patch.object(language_service, 'node_language', return_value=copy.deepcopy(BASELINE)) as render:
+            grounded, baseline = content.advertising_baseline(fields)
+        self.assertEqual(render.call_args.args[0], {
+            'action': 'factual-reference', 'referenceVersion': 'rental-facts-v1',
+            'fields': {**FIELDS, 'petPolicy': 'no'}, 'rules': {},
+            'prefs': {'benefits': '', 'contact': '', 'brandTags': ''}})
+        self.assertEqual(grounded, {**FIELDS, 'petPolicy': 'no'})
+        self.assertIn('不接受宠物。', baseline['body'])
+        self.assertEqual(fields, original)
+
     def test_model_prompt_is_grounded_and_complete_with_no_private_source_or_commission(self):
         fields = {**FIELDS, 'photos': ['PRIVATE_PHOTO'], 'source': 'PRIVATE_SOURCE',
                   'commission': 12345, 'smokingPolicy': 'no'}

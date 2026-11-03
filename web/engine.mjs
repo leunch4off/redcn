@@ -194,7 +194,12 @@ export function extractUniversityReferences(text){
   if(foundCampuses.length===1)fields.campus=foundCampuses[0].ru;
   return {fields,evidence,universities:references,campuses:foundCampuses};
 }
-export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
+// Versioned factual context for model prompts and reproducible authored corpora.
+// Its historical factual blocks keep the same production validation; new
+// advertising introductions belong only to publication copy.
+export const FACTUAL_REFERENCE_VERSION='rental-facts-v1';
+export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS,{referenceVersion=null}={}) {
+  if(referenceVersion!==null&&referenceVersion!==FACTUAL_REFERENCE_VERSION)throw Error('Неизвестная версия фактического контекста');
   const schema=validateListingFields(v);if(!schema.valid)return {titles:[],body:'',tags:'',problems:schema.problems,unknown:[],tagSuggestions:[],semanticWarnings:[]};
   v={...v};
   const roomInfo=roomTerminology(v),semanticWarnings=[...roomInfo.warnings],studioProfile=normalizeListingStudioProfile(v.studioProfile);
@@ -380,7 +385,7 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   const blockContext={...titleContext,feature:[...titleFeatures.slice(bodyFeatureStart),...titleFeatures.slice(0,bodyFeatureStart)].slice(0,2).map(equipmentLabel).join('、'),...Object.fromEntries(Object.entries(sections).map(([key,value])=>[key,value.join('\n').replace(/^\n+|\n+$/g,'')]))};
   titles=titleIndexes.map(index=>renderListingTemplate('title',index,titleContext));
   body=renderListingTemplate('description',copyVariation,blockContext);
-  const lead=advertisingLead(blockContext,copyVariation);
+  const lead=referenceVersion?{text:'',id:null,available:0}:advertisingLead(blockContext,copyVariation);
   if(lead.text)body=lead.text+'\n\n'+body;
   if(templateMode){
     renderedTags=renderTemplate('tags',tagVariation,{tags:[...new Set(finalTags)]});
@@ -403,7 +408,7 @@ export function generateListing(v={},rules=DICTIONARY,prefs=DEFAULT_PREFS) {
   try{titles=titles.map(sanitizeClientText).filter(Boolean);body=sanitizeClientText(body);renderedTags=sanitizeClientText(renderedTags);tagSuggestions=tagSuggestions.filter(row=>!containsClientCommission(String(row.tag||'')));}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';}
   try{assertClientServiceClaims({fields:{...v,serviceBenefits:typeof prefs.benefits==='string'?prefs.benefits:''},titles,body,tags:renderedTags});}catch(error){problems.push(error.message);titles=[];body='';renderedTags='';tagSuggestions=[];}
   if(incompatiblePeriod||incompatibleCurrency||incompatibleDepositCurrency){titles=[];body='';renderedTags='';tagSuggestions=[];}
-  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo};
+  return {titles,body,tags:renderedTags,tagSuggestions,unknown:[...new Set(unknown)],translationWarnings:[...new Set(translationWarnings)],semanticWarnings:[...new Set(semanticWarnings)],roomTerminology:roomInfo,audience:descriptionAudience(v.audience),studioProfile,problems,templateInfo,...(referenceVersion?{referenceVersion}:{})};
 }
 
 // Trigger dictionaries describe vocabulary, not evidence. A larger vocabulary
